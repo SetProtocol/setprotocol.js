@@ -1,6 +1,6 @@
 {
-  "name": "setProtocol.js",
-  "version": "0.1.0",
+  "name": "setprotocol.js",
+  "version": "0.1.2",
   "description": "A javascript library for interacting with the {Set} protocol",
   "keywords": [
     "setProtocol.js",
@@ -10,9 +10,12 @@
     "basket",
     "ERC20"
   ],
-  "main": "lib/src/index.js",
-  "types": "lib/src/index.d.ts",
-  "scripts": {},
+  "main": "dist/SetProtocol.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "build": "babel src --presets babel-preset-es2017 --out-dir dist",
+    "prepublish": "npm run build"
+  },
   "config": {},
   "repository": {
     "type": "git",
@@ -22,7 +25,10 @@
   "engines": {
     "node": ">=6.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-es2017": "^6.24.1"
+  },
   "dependencies": {
     "truffle-contract": "^3.0.1"
   }
