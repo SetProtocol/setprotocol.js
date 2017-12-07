@@ -1,4 +1,4 @@
-import contract from 'truffle-contract';
+const contract = require('truffle-contract');
 
 const SetRegistryContract = contract(require('../contract-artifacts/SetRegistry.json'));
 const SetTokenContract = contract(require('../contract-artifacts/SetToken.json'));
@@ -78,7 +78,7 @@ class SetProtocol {
     const setsToProcess = setAddresses.map(processSet.bind(this));
     await Promise.all(setsToProcess);
     return results;    
-  }  
+  }
 
   /**
    *  Sets the Set Registry address that we want to use. This can be set before usage with Registry
