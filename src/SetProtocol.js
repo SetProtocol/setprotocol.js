@@ -1,4 +1,5 @@
-import contract from 'truffle-contract';
+const contract = require('truffle-contract');
+const _ = require('lodash');
 
 const SetRegistryContract = contract(require('../contract-artifacts/SetRegistry.json'));
 const SetTokenContract = contract(require('../contract-artifacts/SetToken.json'));
@@ -78,7 +79,7 @@ class SetProtocol {
     const setsToProcess = setAddresses.map(processSet.bind(this));
     await Promise.all(setsToProcess);
     return results;    
-  }  
+  }
 
   /**
    *  Sets the Set Registry address that we want to use. This can be set before usage with Registry
@@ -87,6 +88,17 @@ class SetProtocol {
   async createSetFromRegistryAsync(tokens, units, name, symbol, account) {
     const createReceipt = await this.setRegistryInstance.create(tokens, units, name, symbol, { from: account });
     return createReceipt;
+  }
+
+  /**
+   *  Removes an existing {Set} from the registry
+   */
+  async removeSetFromRegistryAsync(setAddress, account) {
+    const listOfSets = await this.getSetAddressesFromRegistryAsync();
+    const setAddressIndex = _.findIndex(listOfSets, set => set === setAddress);
+
+    const removeReceipt = await this.setRegistryInstance.remove(setAddress, setAddressIndex, { from: account });
+    return removeReceipt;
   }
 
   /**
@@ -99,12 +111,25 @@ class SetProtocol {
   }
 
   /**
-   *  Retrieves the list of all {Set} addresses from the {Set} registry
+   *  Retrieves the {Set} metadata from the {Set} registry
    *  Requires that the {Set} registry address has already been set.   
    */
   async getSetMetadataFromRegistryAsync(setAddress) {
     const setMetadata = await this.setRegistryInstance.getSetMetadata(setAddress);
     return setMetadata;  
+  }
+
+  /**
+   *  Retrieves the list of all logs for an address from the {Set} registry
+   *  Requires that the {Set} registry address has already been set.   
+   */
+  async getSetRegistryLogsForUserAsync(userAddress) {
+    const setRegistryLogs = await this.setRegistryInstance.allEvents({
+      fromBlock: 0,
+      toBlock: 'latest',
+      from: userAddress,
+    });
+    return setRegistryLogs;
   }
 
   /**
@@ -201,6 +226,45 @@ class SetProtocol {
 
     return totalSupply;
   }
+
+  /**
+   *  Retrieves the list of all logs for an address from the {Set} registry
+   *  Requires that the {Set} registry address has already been set.   
+   */
+  async getSetLogsForUserAsync(setAddress, userAddress) {
+    let setTokenInstance = await SetTokenContract.at(setAddress);
+    const setLogs = await setTokenInstance.allEvents({
+      fromBlock: 2000000,
+      toBlock: 'latest',
+      _sender: userAddress,
+    });
+    return setLogs;
+  }
+
+  /**
+   *  Retrieves the list of sorted logs for a list of set addresses
+   */
+  async getSetLogsForMultipleSetsUserAsync(setAddresses, userAddress) {
+    let results = [];
+    async function getSetLogsForToken(setAddress) {
+      const events = await this.getSetLogsForUserAsync(setAddress, userAddress);
+      const getLogsAsync = function () {
+        return new Promise(function (resolve, reject) {
+          events.get((err, logs) => {
+            if (err) { reject(err) };
+            resolve(logs);
+          });
+        });
+      }
+
+      const eventLogs = await getLogsAsync();
+      _.each(eventLogs, event => results.push(event));
+    }
+
+    const setsToProcess = setAddresses.map(getSetLogsForToken.bind(this));
+    await Promise.all(setsToProcess);
+    return _.sortBy(results, 'blockNumber');
+  }  
 
   /****************************************
   * ERC20 Token Functions
