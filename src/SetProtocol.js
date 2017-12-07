@@ -108,6 +108,19 @@ class SetProtocol {
   }
 
   /**
+   *  Retrieves the list of all logs for an address from the {Set} registry
+   *  Requires that the {Set} registry address has already been set.   
+   */
+  async getSetRegistryLogsForUserAsync(userAddress) {
+    const setRegistryLogs = await this.setRegistryInstance.allEvents({
+      fromBlock: 0,
+      toBlock: 'latest',
+      from: userAddress,
+    });
+    return setRegistryLogs;
+  }
+
+  /**
    *  Takes an array of set metadata retrieved from the {Set} contract
    *  @param   setMetadata    An array formatted piece of metadata from a {Set}
    *  The input expected is of the following shape:
@@ -200,6 +213,20 @@ class SetProtocol {
     let totalSupply = await setTokenInstance.totalSupply();
 
     return totalSupply;
+  }
+
+  /**
+   *  Retrieves the list of all logs for an address from the {Set} registry
+   *  Requires that the {Set} registry address has already been set.   
+   */
+  async getSetLogsForUserAsync(setAddress, userAddress) {
+    let setTokenInstance = await SetTokenContract.at(setAddress);
+    const setLogs = await setTokenInstance.allEvents({
+      fromBlock: 0,
+      toBlock: 'latest',
+      from: userAddress,
+    });
+    return setLogs;
   }
 
   /****************************************
