@@ -7,9 +7,13 @@ const provider = new HDWalletProvider("MENOMIC", "https://ropsten.infura.io/CVc0
 const setProtocol = new SetProtocol(provider, "0xa415bcfd9d8b70dafee7d53cddb636e1395683c7");
 
 async function doStuff() {
-  const sets = await setProtocol.updateSetRegistryAddress(SET_REGISTRY_ADDRESS).then(
-    () => setProtocol.getSetsFromRegistryAsync());
-  console.log(sets);
+  const testUserAddress = '0x69Bdb276A17Dd90F9D3A545944CCB20E593ae8E3';
+
+  const events = await setProtocol.updateSetRegistryAddress(SET_REGISTRY_ADDRESS).then(
+    () => setProtocol.getSetRegistryLogsForUserAsync(testUserAddress));
+  events.get((err, logs) => {
+    console.log(logs);  
+  });
 }
 
 doStuff();
