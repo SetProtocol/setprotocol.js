@@ -15,7 +15,7 @@ async function doStuff() {
   const setAddresses = [testSetAddress1, testSetAddress1];
 
   const events = await setProtocol.updateSetRegistryAddress(SET_REGISTRY_ADDRESS).then(
-    () => setProtocol.getSetLogsForMultipleSetsUserAsync(setAddresses, testUserAddress));
+    () => setProtocol.getSetRegistryLogsForUserAsync(testUserAddress));
   console.log('Final result', events);
 }
 
