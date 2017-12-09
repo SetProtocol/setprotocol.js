@@ -1,6 +1,8 @@
 const contract = require('truffle-contract');
 const _ = require('lodash');
 
+const Utils = require('./util/utils');
+
 const SetRegistryContract = contract(require('../contract-artifacts/SetRegistry.json'));
 const SetTokenContract = contract(require('../contract-artifacts/SetToken.json'));
 const ERC20 = contract(require('../contract-artifacts/ERC20.json'));
@@ -124,12 +126,13 @@ class SetProtocol {
    *  Requires that the {Set} registry address has already been set.   
    */
   async getSetRegistryLogsForUserAsync(userAddress) {
-    const setRegistryLogs = await this.setRegistryInstance.allEvents({
+    const setRegistryEvents = await this.setRegistryInstance.allEvents({
       fromBlock: 0,
       toBlock: 'latest',
       from: userAddress,
     });
-    return setRegistryLogs;
+    const logs = await Utils.getLogsAsync(setRegistryEvents);
+    return _.sortBy(logs, 'blockNumber');
   }
 
   /**
@@ -248,23 +251,14 @@ class SetProtocol {
     let results = [];
     async function getSetLogsForToken(setAddress) {
       const events = await this.getSetLogsForUserAsync(setAddress, userAddress);
-      const getLogsAsync = function () {
-        return new Promise(function (resolve, reject) {
-          events.get((err, logs) => {
-            if (err) { reject(err) };
-            resolve(logs);
-          });
-        });
-      }
-
-      const eventLogs = await getLogsAsync();
+      const eventLogs = await Utils.getLogsAsync(events);
       _.each(eventLogs, event => results.push(event));
     }
 
     const setsToProcess = setAddresses.map(getSetLogsForToken.bind(this));
     await Promise.all(setsToProcess);
     return _.sortBy(results, 'blockNumber');
-  }  
+  }
 
   /****************************************
   * ERC20 Token Functions
