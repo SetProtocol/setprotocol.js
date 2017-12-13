@@ -88,6 +88,14 @@ class SetProtocol {
    *  Requires that the {Set} registry address has already been set.
    */
   async createSetFromRegistryAsync(tokens, units, name, symbol, account) {
+    try {
+      async function checkErc20(token) { await ERC20.at(token); }
+      const tokensToCheck = tokens.map(checkErc20);
+      await Promise.all(tokensToCheck);
+    } catch (error) {
+      console.log(error)
+    }
+
     const createReceipt = await this.setRegistryInstance.create(tokens, units, name, symbol, { from: account });
     return createReceipt;
   }
@@ -268,30 +276,44 @@ class SetProtocol {
    *  Retrieves the token name of an ERC20 token
    */
   async getTokenName(tokenAddress) {
-    let tokenInstance = await ERC20.at(tokenAddress);
-    let tokenName = await tokenInstance.name();
+    try {
+      let tokenInstance = await ERC20.at(tokenAddress);
+      let tokenName = await tokenInstance.name();
 
-    return tokenName;
+      return tokenName;  
+    } catch (error) {
+      console.log('Error in retrieving token name', error, tokenAddress);
+    }
+    
   }
 
   /**
    *  Retrieves the token symbol of an ERC20 token
    */
   async getTokenSymbol(tokenAddress) {
-    let tokenInstance = await ERC20.at(tokenAddress);
-    let tokenSymbol = await tokenInstance.symbol();
+    try {
+      let tokenInstance = await ERC20.at(tokenAddress);
+      let tokenSymbol = await tokenInstance.symbol();
 
-    return tokenSymbol;
+      return tokenSymbol;  
+    } catch (error) {
+      console.log('Error in retrieving token symbol', error, tokenAddress);
+    }
+    
   }
 
   /**
    *  Retrieves the balance in wei of an ERC20 token for a user
    */
   async getUserBalance(tokenAddress, userAddress) {
-    let tokenInstance = await ERC20.at(tokenAddress);
-    let userBalance = await tokenInstance.balanceOf(userAddress);
+    try {
+      let tokenInstance = await ERC20.at(tokenAddress);
+      let userBalance = await tokenInstance.balanceOf(userAddress);
 
-    return userBalance;
+      return userBalance;  
+    } catch (error) {
+      console.log('Error in retrieving user balance', error, tokenAddress, userAddress);
+    }   
   }
 
   /**
