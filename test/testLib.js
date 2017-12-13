@@ -13,9 +13,13 @@ async function doStuff() {
   const testSetAddress1 = '0xfd0e68e60f7a217951ea8530afc88825a3480a18';
   const testSetAddress2 = '0x4c1a4a506e9c643bfff6d36fb4e2f86794a63536';
   const setAddresses = [testSetAddress1, testSetAddress1];
+  const badSetAddresses = [testSetAddress1, 0];
 
   const events = await setProtocol.updateSetRegistryAddress(SET_REGISTRY_ADDRESS).then(
-    () => setProtocol.getSetRegistryLogsForUserAsync(testUserAddress));
+    () => setProtocol.createSetFromRegistryAsync(badSetAddresses, [1, 1,], 'blah', 'blah', testUserAddress));
+    // () => setProtocol.getSetLogsForMultipleSetsUserAsync(setAddresses, testUserAddress));
+    // () => setProtocol.getSetAddressesFromRegistryAsync());
+    // () => setProtocol.removeSetFromRegistryAsync('0x8c8018a8d4968327b656db2d47a48a3dbc455306', '0x69Bdb276A17Dd90F9D3A545944CCB20E593ae8E3'));
   console.log('Final result', events);
 }
 
