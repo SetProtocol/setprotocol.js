@@ -96,7 +96,7 @@ class SetProtocol {
       console.log(error)
     }
 
-    const createReceipt = await this.setRegistryInstance.create(tokens, units, name, symbol, { from: account });
+    const createReceipt = this.setRegistryInstance.create(tokens, units, name, symbol, { from: account });
     return createReceipt;
   }
 
@@ -107,7 +107,7 @@ class SetProtocol {
     const listOfSets = await this.getSetAddressesFromRegistryAsync();
     const setAddressIndex = _.findIndex(listOfSets, set => set === setAddress);
 
-    const removeReceipt = await this.setRegistryInstance.remove(setAddress, setAddressIndex, { from: account });
+    const removeReceipt = this.setRegistryInstance.remove(setAddress, setAddressIndex, { from: account });
     return removeReceipt;
   }
 
@@ -213,7 +213,7 @@ class SetProtocol {
    */
   async issueSetAsync(setAddress, quantityInWei, account) {
     let setTokenInstance = await SetTokenContract.at(setAddress);
-    const issueReceipt = await setTokenInstance.issue(quantityInWei, { from: account });
+    const issueReceipt = setTokenInstance.issue(quantityInWei, { from: account });
 
     return issueReceipt;
   }
@@ -223,7 +223,7 @@ class SetProtocol {
    */
   async redeemSetAsync(setAddress, quantityInWei, account) {
     let setTokenInstance = await SetTokenContract.at(setAddress);
-    const redeemReceipt = await setTokenInstance.redeem(quantityInWei, { from: account });
+    const redeemReceipt = setTokenInstance.redeem(quantityInWei, { from: account });
 
     return redeemReceipt;  
   }
