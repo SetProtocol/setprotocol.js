@@ -80,7 +80,7 @@ class SetProtocol {
 
     const setsToProcess = setAddresses.map(processSet.bind(this));
     await Promise.all(setsToProcess);
-    return results;    
+    return results;
   }
 
   /**
@@ -122,16 +122,16 @@ class SetProtocol {
 
   /**
    *  Retrieves the {Set} metadata from the {Set} registry
-   *  Requires that the {Set} registry address has already been set.   
+   *  Requires that the {Set} registry address has already been set.
    */
   async getSetMetadataFromRegistryAsync(setAddress) {
     const setMetadata = await this.setRegistryInstance.getSetMetadata(setAddress);
-    return setMetadata;  
+    return setMetadata;
   }
 
   /**
    *  Retrieves the list of all logs for an address from the {Set} registry
-   *  Requires that the {Set} registry address has already been set.   
+   *  Requires that the {Set} registry address has already been set.
    */
   async getSetRegistryLogsForUserAsync(userAddress) {
     const setRegistryEvents = await this.setRegistryInstance.allEvents({
@@ -152,7 +152,7 @@ class SetProtocol {
    *     string, // name;
    *     string, // symbol;
    *     address[], // component tokens;
-   *     uint[] // component units;      
+   *     uint[] // component units;
    *  ] 
    *  @return   set  An object that follows the following shape:
    *  {
@@ -280,11 +280,10 @@ class SetProtocol {
       let tokenInstance = await ERC20.at(tokenAddress);
       let tokenName = await tokenInstance.name();
 
-      return tokenName;  
+      return tokenName;
     } catch (error) {
       console.log('Error in retrieving token name', error, tokenAddress);
     }
-    
   }
 
   /**
@@ -295,11 +294,10 @@ class SetProtocol {
       let tokenInstance = await ERC20.at(tokenAddress);
       let tokenSymbol = await tokenInstance.symbol();
 
-      return tokenSymbol;  
+      return tokenSymbol;
     } catch (error) {
       console.log('Error in retrieving token symbol', error, tokenAddress);
     }
-    
   }
 
   /**
@@ -310,36 +308,52 @@ class SetProtocol {
       let tokenInstance = await ERC20.at(tokenAddress);
       let userBalance = await tokenInstance.balanceOf(userAddress);
 
-      return userBalance;  
+      return userBalance;
     } catch (error) {
       console.log('Error in retrieving user balance', error, tokenAddress, userAddress);
-    }   
+    }
+  }
+
+  /**
+   *  Retrieves the decimals of an ERC20 token
+   */
+  async getDecimals(tokenAddress) {
+    try {
+      let tokenInstance = await ERC20.at(tokenAddress);
+      let decimals = await tokenInstance.decimals();
+
+      return decimals || 18;
+    } catch (error) {
+      console.log('Error in retrieving decimals', error, tokenAddress);
+    }
   }
 
   /**
    *  Given a list of tokens, retrieves the user balance as well as token metadata
    */
   async getUserBalancesForTokens(tokenAddresses, userAddress) {
-    let results = [];
-
     // For each token, get all the token metadata
     async function getUserBalanceAndAddtoResults(tokenAddress) {
       let token = { address: tokenAddress };
-      let tokenPromises = [
-        this.getTokenName(tokenAddress),
-        this.getTokenSymbol(tokenAddress),
-        this.getUserBalance(tokenAddress, userAddress)
-      ];
-      let tokenPromiseResults = await Promise.all(tokenPromises);
-      token.name = tokenPromiseResults[0];
-      token.symbol = tokenPromiseResults[1];
-      token.balance = tokenPromiseResults[2];
-      results.push(token);
+      let tokenInstance = await ERC20.at(tokenAddress);
+      token.name = await tokenInstance.name();
+      token.symbol = await tokenInstance.symbol();
+      token.balance = await tokenInstance.balanceOf(userAddress);
+      token.decimals = await tokenInstance.decimals();
+      return token;
     }
 
     const tokensToProcess = tokenAddresses.map(getUserBalanceAndAddtoResults.bind(this));
-    await Promise.all(tokensToProcess);
-    return results;    
+    return await Promise.all(tokensToProcess);
+  }
+
+  /**
+   *  Transfer token
+   */
+  async transfer(tokenAddress, userAddress, to, value) {
+    const tokenInstance = await ERC20.at(tokenAddress);
+    const reciept = await tokenInstance.transfer(to, value, {from: userAddress});
+    return reciept;
   }
 }
 
