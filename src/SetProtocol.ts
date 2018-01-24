@@ -1,11 +1,11 @@
-import contract = require('truffle-contract');
-import * as _ from 'lodash';
-import * as Web3 from 'web3';
-import { Utils } from './util/utils';
+import contract = require("truffle-contract");
+import * as _ from "lodash";
+import * as Web3 from "web3";
+import { Utils } from "./util/utils";
 
-import * as setRegistryJSON from '../contract-artifacts/SetRegistry.json';
-import * as setTokenJSON from '../contract-artifacts/SetToken.json';
-import * as ERC20JSON from '../contract-artifacts/ERC20.json';
+import * as setRegistryJSON from "../contract-artifacts/SetRegistry.json";
+import * as setTokenJSON from "../contract-artifacts/SetToken.json";
+import * as ERC20JSON from "../contract-artifacts/ERC20.json";
 
 const SetRegistryContract = contract(setRegistryJSON);
 const SetTokenContract = contract(setTokenJSON);
@@ -26,7 +26,7 @@ class SetProtocol {
    * @param   provider    The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
    *                      the Ethereum network.
    */
-  constructor(provider: Web3.Provider = null, setRegistryAddress: string = null) {
+  constructor(provider: Web3.Provider = undefined, setRegistryAddress: string = undefined) {
     if (provider) { this.setProvider(provider); }
   }
 
@@ -72,13 +72,13 @@ class SetProtocol {
    * }];
    */
   async getSetsFromRegistryAsync() {
-    let results: SetObject[] = [];
+    const results: SetObject[] = [];
 
     const setAddresses = await this.setRegistryInstance.getSetAddresses();
 
     // For each set, get the set metadata, supply, and component info
     async function processSet(setAddress: string) {
-      let metadata = await this.getSetMetadataFromRegistryAsync(setAddress);
+      const metadata = await this.getSetMetadataFromRegistryAsync(setAddress);
       results.push(await this.convertSetMetadataToObjectForm(metadata));
     }
 
@@ -97,7 +97,7 @@ class SetProtocol {
       const tokensToCheck = tokens.map(checkErc20);
       await Promise.all(tokensToCheck);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
 
     const createReceipt = this.setRegistryInstance.create(tokens, units, name, symbol, { from: account });
@@ -140,11 +140,11 @@ class SetProtocol {
   async getSetRegistryLogsForUserAsync(userAddress: string) {
     const setRegistryEvents = await this.setRegistryInstance.allEvents({
       fromBlock: 0,
-      toBlock: 'latest',
+      toBlock: "latest",
       from: userAddress,
     });
     const logs = await Utils.getLogsAsync(setRegistryEvents);
-    return _.sortBy(logs, 'blockNumber');
+    return _.sortBy(logs, "blockNumber");
   }
 
   /**
@@ -169,18 +169,18 @@ class SetProtocol {
    *  }
    */
   async convertSetMetadataToObjectForm(setMetadata: string[]) {
-    let setAddress: string = setMetadata[0];
-    let setTokenInstance = await SetTokenContract.at(setAddress);
-    let tokens = await setTokenInstance.getTokens();
-    let units = await setTokenInstance.getUnits();
-    let supply = await this.getSetTotalSupply(setAddress);
+    const setAddress: string = setMetadata[0];
+    const setTokenInstance = await SetTokenContract.at(setAddress);
+    const tokens = await setTokenInstance.getTokens();
+    const units = await setTokenInstance.getUnits();
+    const supply = await this.getSetTotalSupply(setAddress);
 
-    let components: SetComponent[] = [];
+    const components: SetComponent[] = [];
 
     // Function that takes a token and retrieves pertinent
     // information and adds it to the components array
     async function processToken(token: string, index: number) {
-      let [name, symbol] = await Promise.all([
+      const [name, symbol] = await Promise.all([
         this.getTokenName(token),
         this.getTokenSymbol(token),
       ]);
@@ -202,7 +202,7 @@ class SetProtocol {
       symbol: setMetadata[2],
       supply,
       components,
-    }
+    };
   }
 
   /****************************************
@@ -215,7 +215,7 @@ class SetProtocol {
    *  issue the desired quantity of {Set}s
    */
   async issueSetAsync(setAddress: string, quantityInWei: number, account: string) {
-    let setTokenInstance = await SetTokenContract.at(setAddress);
+    const setTokenInstance = await SetTokenContract.at(setAddress);
     const issueReceipt = setTokenInstance.issue(quantityInWei, { from: account });
 
     return issueReceipt;
@@ -225,7 +225,7 @@ class SetProtocol {
    *  Redeems a particular quantity of tokens from a particular {Set}s
    */
   async redeemSetAsync(setAddress: string, quantityInWei: number, account: string) {
-    let setTokenInstance = await SetTokenContract.at(setAddress);
+    const setTokenInstance = await SetTokenContract.at(setAddress);
     const redeemReceipt = setTokenInstance.redeem(quantityInWei, { from: account });
 
     return redeemReceipt;
@@ -235,8 +235,8 @@ class SetProtocol {
    *  Retrieves the totalSupply or quantity of tokens of an existing {Set}
    */
   async getSetTotalSupply(setAddress: string) {
-    let setTokenInstance = await SetTokenContract.at(setAddress);
-    let totalSupply = await setTokenInstance.totalSupply();
+    const setTokenInstance = await SetTokenContract.at(setAddress);
+    const totalSupply = await setTokenInstance.totalSupply();
 
     return totalSupply;
   }
@@ -246,10 +246,10 @@ class SetProtocol {
    *  Requires that the {Set} registry address has already been set.
    */
   async getSetLogsForUserAsync(setAddress: string, userAddress: string) {
-    let setTokenInstance = await SetTokenContract.at(setAddress);
+    const setTokenInstance = await SetTokenContract.at(setAddress);
     const setLogs = await setTokenInstance.allEvents({
       fromBlock: 2000000,
-      toBlock: 'latest',
+      toBlock: "latest",
       _sender: userAddress,
     });
     return setLogs;
@@ -259,7 +259,7 @@ class SetProtocol {
    *  Retrieves the list of sorted logs for a list of set addresses
    */
   async getSetLogsForMultipleSetsUserAsync(setAddresses: string[], userAddress: string) {
-    let results: Event[] = [];
+    const results: Event[] = [];
     async function getSetLogsForToken(setAddress: string) {
       const events = await this.getSetLogsForUserAsync(setAddress, userAddress);
       const eventLogs = await Utils.getLogsAsync(events);
@@ -268,7 +268,7 @@ class SetProtocol {
 
     const setsToProcess = setAddresses.map(getSetLogsForToken.bind(this));
     await Promise.all(setsToProcess);
-    return _.sortBy(results, 'blockNumber');
+    return _.sortBy(results, "blockNumber");
   }
 
   /****************************************
@@ -280,12 +280,12 @@ class SetProtocol {
    */
   async getTokenName(tokenAddress: string) {
     try {
-      let tokenInstance = await ERC20.at(tokenAddress);
-      let tokenName = await tokenInstance.name();
+      const tokenInstance = await ERC20.at(tokenAddress);
+      const tokenName = await tokenInstance.name();
 
       return tokenName;
     } catch (error) {
-      console.log('Error in retrieving token name', error, tokenAddress);
+      console.log("Error in retrieving token name", error, tokenAddress);
     }
   }
 
@@ -294,12 +294,12 @@ class SetProtocol {
    */
   async getTokenSymbol(tokenAddress: string) {
     try {
-      let tokenInstance = await ERC20.at(tokenAddress);
-      let tokenSymbol = await tokenInstance.symbol();
+      const tokenInstance = await ERC20.at(tokenAddress);
+      const tokenSymbol = await tokenInstance.symbol();
 
       return tokenSymbol;
     } catch (error) {
-      console.log('Error in retrieving token symbol', error, tokenAddress);
+      console.log("Error in retrieving token symbol", error, tokenAddress);
     }
   }
 
@@ -308,12 +308,12 @@ class SetProtocol {
    */
   async getUserBalance(tokenAddress: string, userAddress: string) {
     try {
-      let tokenInstance = await ERC20.at(tokenAddress);
-      let userBalance = await tokenInstance.balanceOf(userAddress);
+      const tokenInstance = await ERC20.at(tokenAddress);
+      const userBalance = await tokenInstance.balanceOf(userAddress);
 
       return userBalance;
     } catch (error) {
-      console.log('Error in retrieving user balance', error, tokenAddress, userAddress);
+      console.log("Error in retrieving user balance", error, tokenAddress, userAddress);
     }
   }
 
@@ -322,12 +322,12 @@ class SetProtocol {
    */
   async getDecimals(tokenAddress: string) {
     try {
-      let tokenInstance = await ERC20.at(tokenAddress);
-      let decimals = await tokenInstance.decimals();
+      const tokenInstance = await ERC20.at(tokenAddress);
+      const decimals = await tokenInstance.decimals();
 
       return decimals || 18;
     } catch (error) {
-      console.log('Error in retrieving decimals', error, tokenAddress);
+      console.log("Error in retrieving decimals", error, tokenAddress);
     }
   }
 
@@ -337,8 +337,8 @@ class SetProtocol {
   async getUserBalancesForTokens(tokenAddresses: string[], userAddress: string) {
     // For each token, get all the token metadata
     async function getUserBalanceAndAddtoResults(tokenAddress: string) {
-      let token: Token = { address: tokenAddress, name: "", symbol: "", balance: 0, decimals: 0 };
-      let tokenInstance = await ERC20.at(tokenAddress);
+      const token: Token = { address: tokenAddress, name: "", symbol: "", balance: 0, decimals: 0 };
+      const tokenInstance = await ERC20.at(tokenAddress);
       token.name = await tokenInstance.name();
       token.symbol = await tokenInstance.symbol();
       token.balance = await tokenInstance.balanceOf(userAddress);
@@ -360,4 +360,4 @@ class SetProtocol {
   }
 }
 
-export default SetProtocol
+export default SetProtocol;
