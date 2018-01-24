@@ -1,22 +1,25 @@
 {
-  "compilerOptions": {
-    "module": "commonjs",
-    "target": "es5",
-    "lib": [ "es2015", "dom" ],
-    "outDir": "lib",
-    "sourceMap": true,
-    "declaration": true,
-    "noImplicitAny": true,
-    "experimentalDecorators": true,
-    "strictNullChecks": true
-  },
-  "include": [
-    "./src/**/*",
-    "./test/**/*",
-    "../../node_modules/types-bn/index.d.ts",
-    "../../node_modules/types-ethereumjs-util/index.d.ts",
-    "../../node_modules/web3-typescript-typings/index.d.ts",
-    "../../node_modules/chai-typescript-typings/index.d.ts",
-    "../../node_modules/chai-as-promised-typescript-typings/index.d.ts"
-  ]
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es6",
+        "noImplicitAny": true,
+        "moduleResolution": "node",
+        "sourceMap": true,
+        "outDir": "dist",
+        "baseUrl": ".",
+        "paths": {
+            "*": [
+                "node_modules/*",
+                "src/types/*"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*",
+        "contract-artifacts/**/*",
+        "./node_modules/web3-typescript-typings/index.d.ts"
+    ],
+    "extends": [
+        "tslint-config-prettier"
+    ]
 }
