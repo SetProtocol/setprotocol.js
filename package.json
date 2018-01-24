@@ -49,7 +49,7 @@
     "truffle-hdwallet-provider": "0.0.3"
   },
   "lint-staged": {
-    "src/**/*.{ts,ts}": [
+    "src/**/*.ts": [
       "prettier --parser typescript --write",
       "git add"
     ]
