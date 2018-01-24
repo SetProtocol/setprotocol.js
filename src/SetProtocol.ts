@@ -27,7 +27,9 @@ class SetProtocol {
    *                      the Ethereum network.
    */
   constructor(provider: Web3.Provider = undefined, setRegistryAddress: string = undefined) {
-    if (provider) { this.setProvider(provider); }
+    if (provider) {
+      this.setProvider(provider);
+    }
   }
 
   /**
@@ -42,8 +44,8 @@ class SetProtocol {
   }
 
   /****************************************
-  * Set Registry Functions
-  ****************************************/
+   * Set Registry Functions
+   ****************************************/
 
   /**
    *  Sets the Set Registry address that we want to use. This can be set before usage with Registry
@@ -91,16 +93,26 @@ class SetProtocol {
    *  Sets the Set Registry address that we want to use. This can be set before usage with Registry
    *  Requires that the {Set} registry address has already been set.
    */
-  async createSetFromRegistryAsync(tokens: string[], units: number[], name: string, symbol: string, account: string) {
+  async createSetFromRegistryAsync(
+    tokens: string[],
+    units: number[],
+    name: string,
+    symbol: string,
+    account: string,
+  ) {
     try {
-      async function checkErc20(token: string) { await ERC20.at(token); }
+      async function checkErc20(token: string) {
+        await ERC20.at(token);
+      }
       const tokensToCheck = tokens.map(checkErc20);
       await Promise.all(tokensToCheck);
     } catch (error) {
       console.log(error);
     }
 
-    const createReceipt = this.setRegistryInstance.create(tokens, units, name, symbol, { from: account });
+    const createReceipt = this.setRegistryInstance.create(tokens, units, name, symbol, {
+      from: account,
+    });
     return createReceipt;
   }
 
@@ -111,7 +123,9 @@ class SetProtocol {
     const listOfSets = await this.getSetAddressesFromRegistryAsync();
     const setAddressIndex = _.findIndex(listOfSets, set => set === setAddress);
 
-    const removeReceipt = this.setRegistryInstance.remove(setAddress, setAddressIndex, { from: account });
+    const removeReceipt = this.setRegistryInstance.remove(setAddress, setAddressIndex, {
+      from: account,
+    });
     return removeReceipt;
   }
 
@@ -206,8 +220,8 @@ class SetProtocol {
   }
 
   /****************************************
-  * Set Token Functions
-  ****************************************/
+   * Set Token Functions
+   ****************************************/
 
   /**
    *  Issues a particular quantity of tokens from a particular {Set}s
@@ -272,8 +286,8 @@ class SetProtocol {
   }
 
   /****************************************
-  * ERC20 Token Functions
-  ****************************************/
+   * ERC20 Token Functions
+   ****************************************/
 
   /**
    *  Retrieves the token name of an ERC20 token
@@ -355,7 +369,7 @@ class SetProtocol {
    */
   async transfer(tokenAddress: string, userAddress: string, to: string, value: number) {
     const tokenInstance = await ERC20.at(tokenAddress);
-    const receipt = await tokenInstance.transfer(to, value, {from: userAddress});
+    const receipt = await tokenInstance.transfer(to, value, { from: userAddress });
     return receipt;
   }
 }
