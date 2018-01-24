@@ -8,7 +8,7 @@ const SetTokenContract = contract(require('../contract-artifacts/SetToken.json')
 const ERC20 = contract(require('../contract-artifacts/ERC20.json'));
 
 /**
- * The SetProtocol class is the single entry-point into the SetProtocol library. 
+ * The SetProtocol class is the single entry-point into the SetProtocol library.
  * It contains all of the library's functionality
  * and all calls to the library should be made through a SetProtocol instance.
  */
@@ -44,12 +44,12 @@ class SetProtocol {
   /**
    *  Sets the Set Registry address that we want to use. This can be set before usage with Registry
    *  NOTE: In our current setup, we are dealing with a single registry. Thus, we are allowing users
-   *  to set their registry. In the future, we may want to allow users to specify the registry in 
+   *  to set their registry. In the future, we may want to allow users to specify the registry in
    *  each of the functions
    */
   async updateSetRegistryAddress(setRegistryAddress) {
     this.setRegistryAddress = setRegistryAddress;
-    this.setRegistryInstance = await SetRegistryContract.at(setRegistryAddress); 
+    this.setRegistryInstance = await SetRegistryContract.at(setRegistryAddress);
   }
 
   /**
@@ -153,7 +153,7 @@ class SetProtocol {
    *     string, // symbol;
    *     address[], // component tokens;
    *     uint[] // component units;
-   *  ] 
+   *  ]
    *  @return   set  An object that follows the following shape:
    *  {
    *   address: "0x5259742d812cfec2a12bc1969506e75926e092cb"
@@ -168,13 +168,14 @@ class SetProtocol {
    */
   async convertSetMetadataToObjectForm(setMetadata) {
     let setAddress = setMetadata[0];
-    let tokens = setMetadata[3];
-    let units = setMetadata[4];
+    let setTokenInstance = await SetTokenContract.at(setAddress);
+    let tokens = await setTokenInstance.getTokens();
+    let units = await setTokenInstance.getUnits();
     let supply = await this.getSetTotalSupply(setAddress);
-    
+
     let components = [];
 
-    // Function that takes a token and retrieves pertinent 
+    // Function that takes a token and retrieves pertinent
     // information and adds it to the components array
     async function processToken(token, index) {
       let [name, symbol] = await Promise.all([
@@ -208,7 +209,7 @@ class SetProtocol {
 
   /**
    *  Issues a particular quantity of tokens from a particular {Set}s
-   *  Note: all the tokens in the {Set} must be approved before you can successfully 
+   *  Note: all the tokens in the {Set} must be approved before you can successfully
    *  issue the desired quantity of {Set}s
    */
   async issueSetAsync(setAddress, quantityInWei, account) {
@@ -225,7 +226,7 @@ class SetProtocol {
     let setTokenInstance = await SetTokenContract.at(setAddress);
     const redeemReceipt = setTokenInstance.redeem(quantityInWei, { from: account });
 
-    return redeemReceipt;  
+    return redeemReceipt;
   }
 
   /**
@@ -240,7 +241,7 @@ class SetProtocol {
 
   /**
    *  Retrieves the list of all logs for an address from the {Set} registry
-   *  Requires that the {Set} registry address has already been set.   
+   *  Requires that the {Set} registry address has already been set.
    */
   async getSetLogsForUserAsync(setAddress, userAddress) {
     let setTokenInstance = await SetTokenContract.at(setAddress);
