@@ -30,18 +30,17 @@ interface Token {
   decimals: number;
 }
 
-interface Event {
-  address: string;
-  args: Object;
-  blockHash: string;
-  blockNumber: string;
-  logIndex: number;
-  event: string;
-  removed: boolean;
-  transactionIndex: number;
+interface LogEntry {
+  logIndex: number | null;
+  transactionIndex: number | null;
   transactionHash: string;
+  blockHash: string | null;
+  blockNumber: number | null;
+  address: string;
+  data: string;
+  topics: string[];
 }
 
 interface AllEventsResult {
-  get(callback: (err: string, result: Event[]) => void): void;
+  get(callback: (err: Error, result: LogEntry[]) => void): void;
 }
