@@ -1,10 +1,10 @@
-declare module 'truffle-contract';
-declare module 'web3.js';
-declare module '*.json' {
-    const json: any;
-    /* tslint:disable */
-    export default json;
-    /* tslint:enable */
+declare module "truffle-contract";
+declare module "web3.js";
+declare module "*.json" {
+  const json: any;
+  /* tslint:disable */
+  export default json;
+  /* tslint:enable */
 }
 
 interface SetComponent {
