@@ -27,6 +27,7 @@ class SetProtocol {
    *                      the Ethereum network.
    */
   constructor(provider: Web3.Provider = undefined, setRegistryAddress: string = undefined) {
+    this.setRegistryAddress = setRegistryAddress;
     if (provider) {
       this.setProvider(provider);
     }
