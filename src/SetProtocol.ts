@@ -5,11 +5,11 @@ import { Utils } from "./util/utils";
 
 import * as setRegistryJSON from "../contract-artifacts/SetRegistry.json";
 import * as setTokenJSON from "../contract-artifacts/SetToken.json";
-import * as ERC20JSON from "../contract-artifacts/ERC20.json";
+import * as DetailedERC20JSON from "../contract-artifacts/DetailedERC20.json";
 
 const SetRegistryContract = contract(setRegistryJSON);
 const SetTokenContract = contract(setTokenJSON);
-const ERC20 = contract(ERC20JSON);
+const ERC20 = contract(DetailedERC20JSON);
 
 /**
  * The SetProtocol class is the single entry-point into the SetProtocol library.
