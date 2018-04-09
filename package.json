@@ -12,8 +12,9 @@
   ],
   "main": "dist/SetProtocol.js",
   "scripts": {
-    "prod": "npm run build",
-    "build": "npm run build-ts && npm run tslint",
+    "prod": "yarn run build",
+    "chain": "bash scripts/init_chain.sh",
+    "build": "yarn run build-ts && yarn run tslint",
     "build-ts": "tsc",
     "test": "jest --forceExit",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
@@ -49,6 +50,7 @@
   },
   "dependencies": {
     "lodash": "^4.17.4",
+    "set-protocol-contracts": "^0.1.0",
     "truffle-contract": "^3.0.1",
     "truffle-hdwallet-provider": "0.0.3"
   },

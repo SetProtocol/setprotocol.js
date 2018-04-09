@@ -2,3 +2,10 @@ dist/
 node_modules/
 .DS_Store
 docs/
+
+logs/
+
+/src/artifacts/ts/*.ts
+/src/artifacts/json/*.json
+
+yarn-error.log

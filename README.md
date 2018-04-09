@@ -5,7 +5,7 @@ Note: This is pre-alpha software. Things will constantly be changing and getting
 
 Build the project by performing the following:
 ```shell
-$ npm run build
+$ yarn run build
 ```
 
 ## Installation
@@ -14,13 +14,18 @@ Using npm:
 $ npm i -g npm
 $ npm i --save setprotocol.js
 ```
+Using yarn:
+```shell
+$ brew install yarn
+$ yarn add setprotocol.js
+```
 
 In Node.js:
 ```js
 // Import
 import SetProtocol from 'setprotocol.js';
 
-// or 
+// or
 const SetProtocol = require('setprotocol.js');
 
 // Like with web3, instantiate a new instance and pass in the provider
