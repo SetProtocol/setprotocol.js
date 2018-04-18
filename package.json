@@ -36,6 +36,7 @@
   "devDependencies": {
     "@types/jest": "^22.0.1",
     "@types/lodash": "^4.14.93",
+    "chai": "^4.1.2",
     "gh-pages": "^1.1.0",
     "husky": "^0.14.3",
     "jest": "^22.1.4",
@@ -50,7 +51,7 @@
   },
   "dependencies": {
     "lodash": "^4.17.4",
-    "set-protocol-contracts": "^0.1.0",
+    "set-protocol-contracts": "^0.2.0",
     "truffle-contract": "^3.0.1",
     "truffle-hdwallet-provider": "0.0.3"
   },
