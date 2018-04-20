@@ -1,16 +1,15 @@
-import contract = require("truffle-contract");
 import * as _ from "lodash";
 import * as Web3 from "web3";
-import { Utils } from "./util/utils";
 
 import { BigNumber } from "bignumber.js";
-import { Address, UInt } from "./types/common";
+import { Address, UInt, Token } from "./types/common";
 
-import * as setTokenJSON from "../contract-artifacts/SetToken.json";
-import * as DetailedERC20JSON from "../contract-artifacts/DetailedERC20.json";
+// wrappers
+import { SetTokenContract } from "./wrappers/SetToken_wrapper";
+import { DetailedERC20Contract as ERC20 } from "./wrappers/DetailedERC20_wrapper";
 
-const SetTokenContract = contract(setTokenJSON);
-const ERC20 = contract(DetailedERC20JSON);
+// const SetTokenContract = contract(setTokenJSON);
+// const ERC20 = contract(DetailedERC20JSON);
 
 /**
  * The SetProtocol class is the single entry-point into the SetProtocol library.
@@ -18,14 +17,14 @@ const ERC20 = contract(DetailedERC20JSON);
  * and all calls to the library should be made through a SetProtocol instance.
  */
 class SetProtocol {
-  provider: Web3.Provider; // A property storing the Web3.js Provider instance
+  provider: Web3; // A property storing the Web3.js Provider instance
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
    * @param   provider    The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
    *                      the Ethereum network.
    */
-  constructor(provider: Web3.Provider = undefined) {
+  constructor(provider: Web3 = undefined) {
     if (provider) {
       this.setProvider(provider);
     }
@@ -35,10 +34,8 @@ class SetProtocol {
    * Sets a new web3 provider for SetProtocol.js. Also adds the providers for all the contracts.
    * @param   provider    The Web3Provider you would like the SetProtocol.js library to use from now on.
    */
-  setProvider(provider: Web3.Provider) {
+  setProvider(provider: Web3) {
     this.provider = provider;
-    SetTokenContract.setProvider(this.provider);
-    ERC20.setProvider(this.provider);
   }
 
   /****************************************
@@ -50,51 +47,33 @@ class SetProtocol {
    *  Note: all the tokens in the {Set} must be approved before you can successfully
    *  issue the desired quantity of {Set}s
    */
-  async issueSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address) {
-    const setTokenInstance = await SetTokenContract.at(setAddress);
-    const issueReceipt = setTokenInstance.issue(quantityInWei, { from: userAddress });
+  async issueSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
+    const setTokenInstance = await SetTokenContract.at(
+      setAddress,
+      this.provider,
+      { from: userAddress }
+    );
 
-    return issueReceipt;
+    const txHash = setTokenInstance.issue.sendTransactionAsync(
+      quantityInWei,
+      { from: userAddress }
+    );
+
+    return txHash;
   }
 
   /**
    *  Redeems a particular quantity of tokens from a particular {Set}s
    */
-  async redeemSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address) {
-    const setTokenInstance = await SetTokenContract.at(setAddress);
-    const redeemReceipt = setTokenInstance.redeem(quantityInWei, { from: userAddress });
+  async redeemSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
+    const setTokenInstance = await SetTokenContract.at(
+      setAddress,
+      this.provider,
+      { from: userAddress }
+    );
+    const txHash = setTokenInstance.redeem.sendTransactionAsync(quantityInWei, { from: userAddress });
 
-    return redeemReceipt;
-  }
-
-  /**
-   *  Retrieves the list of all logs for an address
-   *  Requires that the {Set} registry address has already been set.
-   */
-  async getSetLogsForUserAsync(setAddress: Address, userAddress: Address) {
-    const setTokenInstance = await SetTokenContract.at(setAddress);
-    const setLogs = await setTokenInstance.allEvents({
-      fromBlock: 2000000,
-      toBlock: "latest",
-      _sender: userAddress,
-    });
-    return setLogs;
-  }
-
-  /**
-   *  Retrieves the list of sorted logs for a list of set addresses
-   */
-  async getSetLogsForMultipleSetsUserAsync(setAddresses: Address[], userAddress: Address) {
-    const results: Event[] = [];
-    async function getSetLogsForToken(setAddress: Address) {
-      const events = await this.getSetLogsForUserAsync(setAddress, userAddress);
-      const eventLogs = await Utils.getLogsAsync(events);
-      _.each(eventLogs, event => results.push(event));
-    }
-
-    const setsToProcess = setAddresses.map(getSetLogsForToken.bind(this));
-    await Promise.all(setsToProcess);
-    return _.sortBy(results, "blockNumber");
+    return txHash;
   }
 
   /****************************************
@@ -106,8 +85,13 @@ class SetProtocol {
    */
   async getTokenName(tokenAddress: Address) {
     try {
-      const tokenInstance = await ERC20.at(tokenAddress);
-      const tokenName = await tokenInstance.name();
+      const tokenInstance = await ERC20.at(
+        tokenAddress,
+        this.provider,
+        {},
+      );
+
+      const tokenName = await tokenInstance.name.callAsync();
 
       return tokenName;
     } catch (error) {
@@ -120,8 +104,12 @@ class SetProtocol {
    */
   async getTokenSymbol(tokenAddress: Address) {
     try {
-      const tokenInstance = await ERC20.at(tokenAddress);
-      const tokenSymbol = await tokenInstance.symbol();
+      const tokenInstance = await ERC20.at(
+        tokenAddress,
+        this.provider,
+        {},
+      );
+      const tokenSymbol = await tokenInstance.symbol.callAsync();
 
       return tokenSymbol;
     } catch (error) {
@@ -134,8 +122,12 @@ class SetProtocol {
    */
   async getUserBalance(tokenAddress: Address, userAddress: Address) {
     try {
-      const tokenInstance = await ERC20.at(tokenAddress);
-      const userBalance = await tokenInstance.balanceOf(userAddress);
+      const tokenInstance = await ERC20.at(
+        tokenAddress,
+        this.provider,
+        {},
+      );
+      const userBalance = await tokenInstance.balanceOf.callAsync(userAddress);
 
       return userBalance;
     } catch (error) {
@@ -146,9 +138,13 @@ class SetProtocol {
   /**
    *  Retrieves the totalSupply or quantity of tokens of an existing {Set}
    */
-  async getTotalSupply(setAddress: Address) {
-    const setTokenInstance = await ERC20.at(setAddress);
-    const totalSupply = await ERC20.totalSupply();
+  async getTotalSupply(tokenAddress: Address) {
+    const tokenInstance = await ERC20.at(
+        tokenAddress,
+        this.provider,
+        {},
+      );
+    const totalSupply = await tokenInstance.totalSupply.callAsync();
 
     return totalSupply;
   }
@@ -158,8 +154,12 @@ class SetProtocol {
    */
   async getDecimals(tokenAddress: Address) {
     try {
-      const tokenInstance = await ERC20.at(tokenAddress);
-      const decimals = await tokenInstance.decimals();
+      const tokenInstance = await ERC20.at(
+        tokenAddress,
+        this.provider,
+        {},
+      );
+      const decimals = await tokenInstance.decimals.callAsync();
 
       return decimals || 18;
     } catch (error) {
@@ -173,12 +173,22 @@ class SetProtocol {
   async getUserBalancesForTokens(tokenAddresses: Address[], userAddress: Address) {
     // For each token, get all the token metadata
     async function getUserBalanceAndAddtoResults(tokenAddress: Address) {
-      const token: Token = { address: tokenAddress, name: "", symbol: "", balance: 0, decimals: 0 };
-      const tokenInstance = await ERC20.at(tokenAddress);
-      token.name = await tokenInstance.name();
-      token.symbol = await tokenInstance.symbol();
-      token.balance = await tokenInstance.balanceOf(userAddress);
-      token.decimals = await tokenInstance.decimals();
+      const token: Token = {
+        address: tokenAddress,
+        name: "",
+        symbol: "",
+        balance: new BigNumber(0),
+        decimals: new BigNumber(0)
+      };
+      const tokenInstance = await ERC20.at(
+        tokenAddress,
+        this.provider,
+        {},
+      );
+      token.name = await tokenInstance.name.callAsync();
+      token.symbol = await tokenInstance.symbol.callAsync();
+      token.balance = await tokenInstance.balanceOf.callAsync(userAddress);
+      token.decimals = await tokenInstance.decimals.callAsync();
       return token;
     }
 
@@ -190,9 +200,13 @@ class SetProtocol {
    *  Transfer token
    */
   async transfer(tokenAddress: Address, userAddress: Address, to: Address, value: BigNumber) {
-    const tokenInstance = await ERC20.at(tokenAddress);
-    const receipt = await tokenInstance.transfer(to, value, { from: userAddress });
-    return receipt;
+    const tokenInstance = await ERC20.at(
+        tokenAddress,
+        this.provider,
+        {},
+      );
+    const txHash = await tokenInstance.transfer.sendTransactionAsync(to, value, { from: userAddress });
+    return txHash;
   }
 }
 

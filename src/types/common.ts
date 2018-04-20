@@ -38,3 +38,27 @@ export interface Log {
 export type Address = string;
 export type UInt = number | BigNumber;
 export type Bytes32 = string;
+
+export interface SetComponent {
+  address: string;
+  quantity: string;
+  name: string;
+  symbol: string;
+}
+
+export interface SetObject {
+  address: string;
+  component: SetComponent;
+  name: string;
+  symbol: string;
+  supply: BigNumber;
+}
+
+export interface Token {
+  address: string;
+  name: string;
+  symbol: string;
+  balance: BigNumber;
+  decimals: BigNumber;
+}
+
