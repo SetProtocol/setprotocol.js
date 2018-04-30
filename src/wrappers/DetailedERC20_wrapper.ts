@@ -3,13 +3,14 @@
  * Templates can be found at https://github.com/0xProject/0x.js/tree/development/packages/abi-gen-templates.
  */
 // tslint:disable-next-line:no-unused-variable
-import { TxData, TxDataPayable, classUtils } from "../types/common";
-import { promisify } from "@0xproject/utils";
-import { BigNumber } from "bignumber.js";
+import {TxData, TxDataPayable} from "../types/common";
+import {promisify} from "@0xproject/utils";
+import {classUtils} from "../types/common";
+import {BigNumber} from "bignumber.js";
 import * as fs from "fs-extra";
 import * as Web3 from "web3";
 
-import { BaseContract } from "./base_contract";
+import {BaseContract} from "./base_contract";
 
 export class DetailedERC20Contract extends BaseContract {
     public name = {
@@ -283,7 +284,7 @@ export class DetailedERC20Contract extends BaseContract {
                     wrapper.address = contract.address;
                     resolve();
                 }
-            });
+            })
         });
     }
     static async deployed(web3: Web3, defaults: Partial<TxData>): Promise<DetailedERC20Contract> {
@@ -300,7 +301,8 @@ export class DetailedERC20Contract extends BaseContract {
         return new DetailedERC20Contract(web3ContractInstance, defaults);
     }
     private static async getArtifactsData(web3: Web3):
-        Promise<any> {
+        Promise<any>
+    {
         try {
             const artifact = await fs.readFile("build/contracts/DetailedERC20.json", "utf8");
             const { abi, networks } = JSON.parse(artifact);
@@ -311,6 +313,6 @@ export class DetailedERC20Contract extends BaseContract {
     }
     constructor(web3ContractInstance: Web3.ContractInstance, defaults: Partial<TxData>) {
         super(web3ContractInstance, defaults);
-        classUtils.bindAll(this, ["web3ContractInstance", "defaults"]);
+        classUtils.bindAll(this, ['web3ContractInstance', 'defaults']);
     }
 } // tslint:disable:max-file-line-count

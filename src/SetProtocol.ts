@@ -1,15 +1,22 @@
 import * as _ from "lodash";
 import * as Web3 from "web3";
 
-import { BigNumber } from "bignumber.js";
 import { Address, UInt, Token } from "./types/common";
+import { BigNumber } from "./util/bignumber";
+import { isMultipleOf } from "./util/utils";
 
 // wrappers
 import { SetTokenContract } from "./wrappers/SetToken_wrapper";
 import { DetailedERC20Contract as ERC20 } from "./wrappers/DetailedERC20_wrapper";
 
-// const SetTokenContract = contract(setTokenJSON);
-// const ERC20 = contract(DetailedERC20JSON);
+// invariants
+import { TokenAssertions } from "./invariants/token";
+import { SetTokenAssertions } from "./invariants/setToken";
+
+export const ContractsError = {
+  SET_TOKEN_CONTRACT_NOT_FOUND: (setTokenAddress: string) =>
+    `Could not find a Set Token COntract at address ${setTokenAddress}`,
+};
 
 /**
  * The SetProtocol class is the single entry-point into the SetProtocol library.
@@ -17,8 +24,7 @@ import { DetailedERC20Contract as ERC20 } from "./wrappers/DetailedERC20_wrapper
  * and all calls to the library should be made through a SetProtocol instance.
  */
 class SetProtocol {
-  provider: Web3; // A property storing the Web3.js Provider instance
-
+  private provider: Web3; // A property storing the Web3.js Provider instance
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
    * @param   provider    The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
@@ -34,7 +40,7 @@ class SetProtocol {
    * Sets a new web3 provider for SetProtocol.js. Also adds the providers for all the contracts.
    * @param   provider    The Web3Provider you would like the SetProtocol.js library to use from now on.
    */
-  setProvider(provider: Web3) {
+  public setProvider(provider: Web3) {
     this.provider = provider;
   }
 
@@ -46,13 +52,31 @@ class SetProtocol {
    *  Issues a particular quantity of tokens from a particular {Set}s
    *  Note: all the tokens in the {Set} must be approved before you can successfully
    *  issue the desired quantity of {Set}s
+   *  Note: the quantityInWei must be a multiple of the Set's naturalUnit
    */
-  async issueSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
+  public async issueSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
     const setTokenInstance = await SetTokenContract.at(
       setAddress,
       this.provider,
       { from: userAddress }
     );
+
+    if (!setTokenInstance) {
+      throw new Error(ContractsError.SET_TOKEN_CONTRACT_NOT_FOUND(setAddress));
+    }
+
+    // SetTokenAssertions.isMultipleOfNaturalUnit(
+    //   setTokenInstance,
+    //   quantityInWei,
+    // );
+
+    // Check that the user has sufficient balance of each token
+    const components = await setTokenInstance.getComponents.callAsync();
+    const units = await setTokenInstance.getUnits.callAsync();
+
+    
+
+    // Check that the user has sufficient allowance of each token
 
     const txHash = setTokenInstance.issue.sendTransactionAsync(
       quantityInWei,
@@ -65,7 +89,7 @@ class SetProtocol {
   /**
    *  Redeems a particular quantity of tokens from a particular {Set}s
    */
-  async redeemSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
+  public async redeemSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
     const setTokenInstance = await SetTokenContract.at(
       setAddress,
       this.provider,
@@ -83,7 +107,7 @@ class SetProtocol {
   /**
    *  Retrieves the token name of an ERC20 token
    */
-  async getTokenName(tokenAddress: Address) {
+  public async getTokenName(tokenAddress: Address): Promise<string> {
     try {
       const tokenInstance = await ERC20.at(
         tokenAddress,
@@ -102,7 +126,7 @@ class SetProtocol {
   /**
    *  Retrieves the token symbol of an ERC20 token
    */
-  async getTokenSymbol(tokenAddress: Address) {
+  public async getTokenSymbol(tokenAddress: Address): Promise<string> {
     try {
       const tokenInstance = await ERC20.at(
         tokenAddress,
@@ -120,7 +144,7 @@ class SetProtocol {
   /**
    *  Retrieves the balance in wei of an ERC20 token for a user
    */
-  async getUserBalance(tokenAddress: Address, userAddress: Address) {
+  public async getUserBalance(tokenAddress: Address, userAddress: Address): Promise<BigNumber> {
     try {
       const tokenInstance = await ERC20.at(
         tokenAddress,
@@ -138,7 +162,7 @@ class SetProtocol {
   /**
    *  Retrieves the totalSupply or quantity of tokens of an existing {Set}
    */
-  async getTotalSupply(tokenAddress: Address) {
+  public async getTotalSupply(tokenAddress: Address): Promise<BigNumber> {
     const tokenInstance = await ERC20.at(
         tokenAddress,
         this.provider,
@@ -152,7 +176,7 @@ class SetProtocol {
   /**
    *  Retrieves the decimals of an ERC20 token
    */
-  async getDecimals(tokenAddress: Address) {
+  public async getDecimals(tokenAddress: Address): Promise<BigNumber> {
     try {
       const tokenInstance = await ERC20.at(
         tokenAddress,
@@ -161,7 +185,7 @@ class SetProtocol {
       );
       const decimals = await tokenInstance.decimals.callAsync();
 
-      return decimals || 18;
+      return decimals || new BigNumber(18);
     } catch (error) {
       console.log("Error in retrieving decimals", error, tokenAddress);
     }
@@ -170,7 +194,7 @@ class SetProtocol {
   /**
    *  Given a list of tokens, retrieves the user balance as well as token metadata
    */
-  async getUserBalancesForTokens(tokenAddresses: Address[], userAddress: Address) {
+  public async getUserBalancesForTokens(tokenAddresses: Address[], userAddress: Address) {
     // For each token, get all the token metadata
     async function getUserBalanceAndAddtoResults(tokenAddress: Address) {
       const token: Token = {
@@ -199,7 +223,7 @@ class SetProtocol {
   /**
    *  Transfer token
    */
-  async transfer(tokenAddress: Address, userAddress: Address, to: Address, value: BigNumber) {
+  public async transfer(tokenAddress: Address, userAddress: Address, to: Address, value: BigNumber) {
     const tokenInstance = await ERC20.at(
         tokenAddress,
         this.provider,
