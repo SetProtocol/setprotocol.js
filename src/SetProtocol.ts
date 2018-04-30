@@ -5,12 +5,13 @@ import { Address, UInt, Token } from "./types/common";
 import { BigNumber } from "./util/bignumber";
 
 // wrappers
-import { SetTokenContract } from "./wrappers/SetToken_wrapper";
-import { DetailedERC20Contract as ERC20 } from "./wrappers/DetailedERC20_wrapper";
+import { 
+  SetTokenContract,
+  ERC20Contract,
+} from "./wrappers";
 
 // invariants
-import { TokenAssertions } from "./invariants/token";
-import { SetTokenAssertions } from "./invariants/setToken";
+import { Assertions } from "./invariants";
 
 export const ContractsError = {
   SET_TOKEN_CONTRACT_NOT_FOUND: (setTokenAddress: string) =>
@@ -24,6 +25,7 @@ export const ContractsError = {
  */
 class SetProtocol {
   private provider: Web3; // A property storing the Web3.js Provider instance
+  private assertions: Assertions;
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
    * @param   provider    The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
@@ -32,6 +34,7 @@ class SetProtocol {
   constructor(provider: Web3 = undefined) {
     if (provider) {
       this.setProvider(provider);
+      this.assertions = new Assertions(provider);
     }
   }
 
