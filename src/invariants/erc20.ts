@@ -6,7 +6,7 @@ export const TokenAssertionErrors = {
       `Contract at ${address} does not implement ERC20 interface.`,
 };
 
-export class TokenAssertions {
+export class ERC20Assertions {
   public async hasSufficientBalance(
     token: ERC20,
     payer: string,

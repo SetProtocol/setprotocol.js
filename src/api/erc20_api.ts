@@ -9,10 +9,10 @@ import {
 } from "../wrappers";
 
 export const TokenAPIErrors = {
-  INSUFFICIENT_SENDER_BALANCE: (address) =>
-    `SENDER with address ${address} does not have sufficient balance in the specified token to execute this transfer.`,
-  INSUFFICIENT_SENDER_ALLOWANCE: (address) =>
-    `SENDER with address ${address} does not have sufficient allowance in the specified token to execute this transfer.`,
+  // INSUFFICIENT_SENDER_BALANCE: (address) =>
+  //   `SENDER with address ${address} does not have sufficient balance in the specified token to execute this transfer.`,
+  // INSUFFICIENT_SENDER_ALLOWANCE: (address) =>
+  //   `SENDER with address ${address} does not have sufficient allowance in the specified token to execute this transfer.`,
 };
 
 export class ERC20API {

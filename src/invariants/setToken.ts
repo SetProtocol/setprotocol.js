@@ -6,6 +6,9 @@ import { BigNumber } from "../util/bignumber";
 import { SetTokenContract } from "../wrappers/SetToken_wrapper";
 import { DetailedERC20Contract as ERC20 } from "../wrappers/DetailedERC20_wrapper";
 
+import { ERC20Assertions } from "./erc20";
+const erc20Assert = new ERC20Assertions();
+
 export const TokenAssertionErrors = {
   QUANTITY_NOT_MULTIPLE_OF_NATURAL_UNIT: (setAddress: string, quantity: BigNumber, naturalUnit: BigNumber) =>
     `Quantity ${quantity.toString()} for token at address (${setAddress}) is not a multiple of natural unit (${naturalUnit.toString()}).`,
@@ -34,16 +37,9 @@ export class SetTokenAssertions {
     }
   }
 
-  // TODO: We need to pull in a Web3 provider like dharma does
-
-
-  // TODO: This function should loop through each component
-  // And check if the user has enough balance in the ERC20 token
-  // Once you've been able to pull in the TokenInstnace, you can actually use token.ts
-  // to check the allowance of each token
   public async hasSufficientBalances(
     setToken: SetTokenContract,
-    quantityInWei: BigNumber[],
+    quantityInWei: BigNumber,
     payer: Address,
   ): Promise<void> {
     const components = await setToken.getComponents.callAsync();
@@ -55,22 +51,44 @@ export class SetTokenAssertions {
 
     const componentInstances = await Promise.all(componentInstancePromises);
 
-    const userComponentBalances = _.map(componentInstances, (componentInstance) => {
-      return 
+    const userHasSufficientBalancePromises = _.map(componentInstances, (componentInstance, index) => {
+      const requiredBalance = units[index].times(quantityInWei);
+      return erc20Assert.hasSufficientBalance(
+        componentInstance,
+        payer,
+        requiredBalance,
+        `User does not have enough balance of Token ${componentInstance}`,
+      );
     });
 
-    
+    await Promise.all(userHasSufficientBalancePromises);  
   }
 
-  // TODO: This function should loop through each component
-  // And check if the user has enough balance in the ERC20 token
-  // Once you've been able to pull in the TokenInstnace, you can actually use token.ts
-  // to check the allowance of each token
   public async hasSufficientAllowances(
     setToken: SetTokenContract,
-    quantityInWei: BigNumber[],
-    provider: Web3,
+    quantityInWei: BigNumber,
+    payer: Address,
   ): Promise<void> {
+    const components = await setToken.getComponents.callAsync();
+    const units = await setToken.getUnits.callAsync();
 
+    const componentInstancePromises = _.map(components, (component) => {
+      return ERC20.at(component, this.web3, { from: payer });
+    });
+
+    const componentInstances = await Promise.all(componentInstancePromises);
+
+    const userHasSufficientAllowancePromises = _.map(componentInstances, (componentInstance, index) => {
+      const requiredBalance = units[index].times(quantityInWei);
+      return erc20Assert.hasSufficientAllowance(
+        componentInstance,
+        payer,
+        componentInstance.address,
+        requiredBalance,
+        `User does not have enough allowance of Token ${componentInstance}`,
+      );
+    });
+
+    await Promise.all(userHasSufficientAllowancePromises);  
   }
 }

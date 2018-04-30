@@ -8,9 +8,11 @@ import {
   ERC20Contract as ERC20,
 } from "../wrappers";
 
-export const TokenAPIErrors = {
+export const SetTokenAPIErrors = {
   SET_TOKEN_CONTRACT_NOT_FOUND: (setTokenAddress: string) =>
     `Could not find a Set Token Contract at address ${setTokenAddress}`,
+  QUANTITY_NEEDS_TO_BE_NON_ZERO: (quantity: BigNumber) =>
+    `The quantity ${quantity.toString()} inputted needs to be non-zero`,  
 };
 
 export class SetTokenAPI {
@@ -40,16 +42,16 @@ export class SetTokenAPI {
     );
 
     if (!setTokenInstance) {
-      throw new Error(TokenAPIErrors.SET_TOKEN_CONTRACT_NOT_FOUND(setAddress));
+      throw new Error(SetTokenAPIErrors.SET_TOKEN_CONTRACT_NOT_FOUND(setAddress));
     }
 
-    this.assert.setToken.isMultipleOfNaturalUnit(setTokenInstance, quantityInWei);
-
-    // Check that the user has sufficient balance of each token
-    // const components = await setTokenInstance.getComponents.callAsync();
-    // const units = await setTokenInstance.getUnits.callAsync();
-
-    // Check that the user has sufficient allowance of each token
+    await this.assert.common.greaterThanZero(
+      quantityInWei,
+      SetTokenAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(quantityInWei)
+    );
+    await this.assert.setToken.isMultipleOfNaturalUnit(setTokenInstance, quantityInWei);
+    await this.assert.setToken.hasSufficientBalances(setTokenInstance, quantityInWei, userAddress);
+    await this.assert.setToken.hasSufficientAllowances(setTokenInstance, quantityInWei, userAddress);
 
     const txHash = setTokenInstance.issue.sendTransactionAsync(
       quantityInWei,
@@ -68,6 +70,19 @@ export class SetTokenAPI {
       this.provider,
       { from: userAddress }
     );
+
+    if (!setTokenInstance) {
+      throw new Error(SetTokenAPIErrors.SET_TOKEN_CONTRACT_NOT_FOUND(setAddress));
+    }
+
+    await this.assert.common.greaterThanZero(
+      quantityInWei,
+      SetTokenAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(quantityInWei)
+    );
+    await this.assert.setToken.isMultipleOfNaturalUnit(setTokenInstance, quantityInWei);
+    await this.assert.setToken.hasSufficientBalances(setTokenInstance, quantityInWei, userAddress);
+    await this.assert.setToken.hasSufficientAllowances(setTokenInstance, quantityInWei, userAddress);
+
     const txHash = setTokenInstance.redeem.sendTransactionAsync(quantityInWei, { from: userAddress });
 
     return txHash;
