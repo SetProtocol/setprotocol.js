@@ -44,9 +44,22 @@ export class SetTokenAssertions {
   public async hasSufficientBalances(
     setToken: SetTokenContract,
     quantityInWei: BigNumber[],
-    provider: Web3,
+    payer: Address,
   ): Promise<void> {
+    const components = await setToken.getComponents.callAsync();
+    const units = await setToken.getUnits.callAsync();
 
+    const componentInstancePromises = _.map(components, (component) => {
+      return ERC20.at(component, this.web3, { from: payer });
+    });
+
+    const componentInstances = await Promise.all(componentInstancePromises);
+
+    const userComponentBalances = _.map(componentInstances, (componentInstance) => {
+      return 
+    });
+
+    
   }
 
   // TODO: This function should loop through each component

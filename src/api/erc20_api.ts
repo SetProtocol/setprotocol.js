@@ -1,103 +1,28 @@
-import * as _ from "lodash";
 import * as Web3 from "web3";
+import { BigNumber } from "../util/bignumber";
+import { Address, UInt, Token } from "../types/common";
 
-import { Address, UInt, Token } from "./types/common";
-import { BigNumber } from "./util/bignumber";
-
-// wrappers
+import { Assertions } from "../invariants";
 import { 
   SetTokenContract,
-  ERC20Contract,
-} from "./wrappers";
+  ERC20Contract as ERC20,
+} from "../wrappers";
 
-// invariants
-import { Assertions } from "./invariants";
-
-export const ContractsError = {
-  SET_TOKEN_CONTRACT_NOT_FOUND: (setTokenAddress: string) =>
-    `Could not find a Set Token Contract at address ${setTokenAddress}`,
+export const TokenAPIErrors = {
+  INSUFFICIENT_SENDER_BALANCE: (address) =>
+    `SENDER with address ${address} does not have sufficient balance in the specified token to execute this transfer.`,
+  INSUFFICIENT_SENDER_ALLOWANCE: (address) =>
+    `SENDER with address ${address} does not have sufficient allowance in the specified token to execute this transfer.`,
 };
 
-/**
- * The SetProtocol class is the single entry-point into the SetProtocol library.
- * It contains all of the library's functionality
- * and all calls to the library should be made through a SetProtocol instance.
- */
-class SetProtocol {
-  private provider: Web3; // A property storing the Web3.js Provider instance
-  private assertions: Assertions;
-  /**
-   * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
-   * @param   provider    The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
-   *                      the Ethereum network.
-   */
-  constructor(provider: Web3 = undefined) {
-    if (provider) {
-      this.setProvider(provider);
-      this.assertions = new Assertions(provider);
-    }
+export class ERC20API {
+  private provider: Web3;
+  private assert: Assertions;
+
+  constructor(web3: Web3) {
+    this.provider = web3;
+    this.assert = new Assertions(this.provider);
   }
-
-  /**
-   * Sets a new web3 provider for SetProtocol.js. Also adds the providers for all the contracts.
-   * @param   provider    The Web3Provider you would like the SetProtocol.js library to use from now on.
-   */
-  public setProvider(provider: Web3) {
-    this.provider = provider;
-  }
-
-  /****************************************
-   * Set Token Functions
-   ****************************************/
-
-  /**
-   *  Issues a particular quantity of tokens from a particular {Set}s
-   *  Note: all the tokens in the {Set} must be approved before you can successfully
-   *  issue the desired quantity of {Set}s
-   *  Note: the quantityInWei must be a multiple of the Set's naturalUnit
-   */
-  public async issueSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
-    const setTokenInstance = await SetTokenContract.at(
-      setAddress,
-      this.provider,
-      { from: userAddress }
-    );
-
-    if (!setTokenInstance) {
-      throw new Error(ContractsError.SET_TOKEN_CONTRACT_NOT_FOUND(setAddress));
-    }
-
-    // Check that the user has sufficient balance of each token
-    // const components = await setTokenInstance.getComponents.callAsync();
-    // const units = await setTokenInstance.getUnits.callAsync();
-
-    // Check that the user has sufficient allowance of each token
-
-    const txHash = setTokenInstance.issue.sendTransactionAsync(
-      quantityInWei,
-      { from: userAddress }
-    );
-
-    return txHash;
-  }
-
-  /**
-   *  Redeems a particular quantity of tokens from a particular {Set}s
-   */
-  public async redeemSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
-    const setTokenInstance = await SetTokenContract.at(
-      setAddress,
-      this.provider,
-      { from: userAddress }
-    );
-    const txHash = setTokenInstance.redeem.sendTransactionAsync(quantityInWei, { from: userAddress });
-
-    return txHash;
-  }
-
-  /****************************************
-   * ERC20 Token Functions
-   ****************************************/
 
   /**
    *  Retrieves the token name of an ERC20 token
@@ -228,5 +153,3 @@ class SetProtocol {
     return txHash;
   }
 }
-
-export default SetProtocol;
