@@ -3,7 +3,6 @@ import * as Web3 from "web3";
 
 import { Address, UInt, Token } from "./types/common";
 import { BigNumber } from "./util/bignumber";
-import { isMultipleOf } from "./util/utils";
 
 // wrappers
 import { SetTokenContract } from "./wrappers/SetToken_wrapper";
@@ -15,7 +14,7 @@ import { SetTokenAssertions } from "./invariants/setToken";
 
 export const ContractsError = {
   SET_TOKEN_CONTRACT_NOT_FOUND: (setTokenAddress: string) =>
-    `Could not find a Set Token COntract at address ${setTokenAddress}`,
+    `Could not find a Set Token Contract at address ${setTokenAddress}`,
 };
 
 /**
@@ -65,16 +64,9 @@ class SetProtocol {
       throw new Error(ContractsError.SET_TOKEN_CONTRACT_NOT_FOUND(setAddress));
     }
 
-    // SetTokenAssertions.isMultipleOfNaturalUnit(
-    //   setTokenInstance,
-    //   quantityInWei,
-    // );
-
     // Check that the user has sufficient balance of each token
-    const components = await setTokenInstance.getComponents.callAsync();
-    const units = await setTokenInstance.getUnits.callAsync();
-
-    
+    // const components = await setTokenInstance.getComponents.callAsync();
+    // const units = await setTokenInstance.getUnits.callAsync();
 
     // Check that the user has sufficient allowance of each token
 

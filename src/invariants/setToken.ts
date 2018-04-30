@@ -12,6 +12,12 @@ export const TokenAssertionErrors = {
 };
 
 export class SetTokenAssertions {
+  private web3: Web3;
+
+  constructor(web3: Web3) {
+    this.web3 = web3;
+  }
+
   public async isMultipleOfNaturalUnit(
     setToken: SetTokenContract,
     quantityInWei: BigNumber,
@@ -28,14 +34,30 @@ export class SetTokenAssertions {
     }
   }
 
+  // TODO: We need to pull in a Web3 provider like dharma does
+
+
+  // TODO: This function should loop through each component
+  // And check if the user has enough balance in the ERC20 token
+  // Once you've been able to pull in the TokenInstnace, you can actually use token.ts
+  // to check the allowance of each token
   public async hasSufficientBalances(
     setToken: SetTokenContract,
     quantityInWei: BigNumber[],
     provider: Web3,
   ): Promise<void> {
-    
-    
 
-    
+  }
+
+  // TODO: This function should loop through each component
+  // And check if the user has enough balance in the ERC20 token
+  // Once you've been able to pull in the TokenInstnace, you can actually use token.ts
+  // to check the allowance of each token
+  public async hasSufficientAllowances(
+    setToken: SetTokenContract,
+    quantityInWei: BigNumber[],
+    provider: Web3,
+  ): Promise<void> {
+
   }
 }
