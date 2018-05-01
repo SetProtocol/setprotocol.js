@@ -12,7 +12,7 @@ import {
  */
 export default class SetProtocol {
   private provider: Web3; // A property storing the Web3.js Provider instance
-  public contracts: ContractsAPI; 
+  public contracts: ContractsAPI;
   public erc20: ERC20API;
   public setToken: SetTokenAPI;
 

@@ -46,7 +46,7 @@ export class SetTokenAPI {
       const newComponent = {
         address: componentAddress,
         unit: units[index],
-      }
+      };
       components.push(newComponent);
     });
 
