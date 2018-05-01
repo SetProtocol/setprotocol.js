@@ -14,6 +14,8 @@ export class ERC20Assertions {
     errorMessage: string,
   ): Promise<void> {
     const payerBalance = await token.balanceOf.callAsync(payer);
+    console.log("Payer balance", payerBalance);
+    console.log("Required balance", balanceRequired);
 
     if (payerBalance.lt(balanceRequired)) {
       throw new Error(errorMessage);

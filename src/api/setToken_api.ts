@@ -28,6 +28,15 @@ export class SetTokenAPI {
   }
 
   /**
+   *  Retrieves the token name of an ERC20 token
+   */
+  public async getNaturalUnit(setAddress: Address): Promise<BigNumber> {
+    const tokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
+    const naturalUnit = await tokenInstance.naturalUnit.callAsync();
+    return naturalUnit;
+  }
+
+  /**
    *  Issues a particular quantity of tokens from a particular {Set}s
    */
   public async issueSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {

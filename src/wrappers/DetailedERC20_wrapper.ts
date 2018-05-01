@@ -6,7 +6,7 @@
 import { TxData, TxDataPayable } from "../types/common";
 import { promisify } from "@0xproject/utils";
 import { classUtils } from "../types/common";
-import { BigNumber } from "bignumber.js";
+import { BigNumber } from "../util/bignumber";
 import * as fs from "fs-extra";
 import * as Web3 from "web3";
 
@@ -303,7 +303,7 @@ export class DetailedERC20Contract extends BaseContract {
     private static async getArtifactsData(web3: Web3):
         Promise<any> {
         try {
-            const artifact = await fs.readFile("build/contracts/DetailedERC20.json", "utf8");
+            const artifact = await fs.readFile("artifacts/DetailedERC20.json", "utf8");
             const { abi, networks } = JSON.parse(artifact);
             return { abi, networks };
         } catch (e) {

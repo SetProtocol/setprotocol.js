@@ -28,7 +28,7 @@ export class SetTokenAssertions {
 
     const naturalUnit = await setToken.naturalUnit.callAsync();
 
-    if (quantityInWei.mod(naturalUnit) !== new BigNumber(0)) {
+    if (!quantityInWei.mod(naturalUnit).isEqualTo(new BigNumber(0))) {
       throw new Error(TokenAssertionErrors.QUANTITY_NOT_MULTIPLE_OF_NATURAL_UNIT(
         setToken.address,
         quantityInWei,
@@ -44,6 +44,7 @@ export class SetTokenAssertions {
   ): Promise<void> {
     const components = await setToken.getComponents.callAsync();
     const units = await setToken.getUnits.callAsync();
+    const naturalUnit = await setToken.naturalUnit.callAsync();
 
     const componentInstancePromises = _.map(components, (component) => {
       return ERC20.at(component, this.web3, { from: payer });
@@ -52,12 +53,12 @@ export class SetTokenAssertions {
     const componentInstances = await Promise.all(componentInstancePromises);
 
     const userHasSufficientBalancePromises = _.map(componentInstances, (componentInstance, index) => {
-      const requiredBalance = units[index].times(quantityInWei);
+      const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
       return erc20Assert.hasSufficientBalance(
         componentInstance,
         payer,
         requiredBalance,
-        `User does not have enough balance of Token ${componentInstance}`,
+        `User does not have enough balance of token at address ${componentInstance.address}`,
       );
     });
 
@@ -71,6 +72,7 @@ export class SetTokenAssertions {
   ): Promise<void> {
     const components = await setToken.getComponents.callAsync();
     const units = await setToken.getUnits.callAsync();
+    const naturalUnit = await setToken.naturalUnit.callAsync();
 
     const componentInstancePromises = _.map(components, (component) => {
       return ERC20.at(component, this.web3, { from: payer });
@@ -79,13 +81,13 @@ export class SetTokenAssertions {
     const componentInstances = await Promise.all(componentInstancePromises);
 
     const userHasSufficientAllowancePromises = _.map(componentInstances, (componentInstance, index) => {
-      const requiredBalance = units[index].times(quantityInWei);
+      const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
       return erc20Assert.hasSufficientAllowance(
         componentInstance,
         payer,
         componentInstance.address,
         requiredBalance,
-        `User does not have enough allowance of Token ${componentInstance}`,
+        `User does not have enough allowance of token at address ${componentInstance.address}`,
       );
     });
 
