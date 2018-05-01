@@ -3,10 +3,13 @@ import { BigNumber } from "../util/bignumber";
 import { Address, UInt, Token } from "../types/common";
 
 import { Assertions } from "../invariants";
-import { 
+import {
   SetTokenContract,
   ERC20Contract as ERC20,
 } from "../wrappers";
+
+// APIs
+import { ContractsAPI } from ".";
 
 export const TokenAPIErrors = {
   // INSUFFICIENT_SENDER_BALANCE: (address) =>
@@ -18,9 +21,11 @@ export const TokenAPIErrors = {
 export class ERC20API {
   private provider: Web3;
   private assert: Assertions;
+  private contracts: ContractsAPI;
 
-  constructor(web3: Web3) {
+  constructor(web3: Web3, contracts: ContractsAPI) {
     this.provider = web3;
+    this.contracts = contracts;
     this.assert = new Assertions(this.provider);
   }
 
@@ -28,68 +33,35 @@ export class ERC20API {
    *  Retrieves the token name of an ERC20 token
    */
   public async getTokenName(tokenAddress: Address): Promise<string> {
-    try {
-      const tokenInstance = await ERC20.at(
-        tokenAddress,
-        this.provider,
-        {},
-      );
-
-      const tokenName = await tokenInstance.name.callAsync();
-
-      return tokenName;
-    } catch (error) {
-      console.log("Error in retrieving token name", error, tokenAddress);
-    }
+    const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+    const tokenName = await tokenInstance.name.callAsync();
+    return tokenName;
   }
 
   /**
    *  Retrieves the token symbol of an ERC20 token
    */
   public async getTokenSymbol(tokenAddress: Address): Promise<string> {
-    try {
-      const tokenInstance = await ERC20.at(
-        tokenAddress,
-        this.provider,
-        {},
-      );
-      const tokenSymbol = await tokenInstance.symbol.callAsync();
-
-      return tokenSymbol;
-    } catch (error) {
-      console.log("Error in retrieving token symbol", error, tokenAddress);
-    }
+    const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+    const tokenSymbol = await tokenInstance.symbol.callAsync();
+    return tokenSymbol;
   }
 
   /**
    *  Retrieves the balance in wei of an ERC20 token for a user
    */
   public async getUserBalance(tokenAddress: Address, userAddress: Address): Promise<BigNumber> {
-    try {
-      const tokenInstance = await ERC20.at(
-        tokenAddress,
-        this.provider,
-        {},
-      );
-      const userBalance = await tokenInstance.balanceOf.callAsync(userAddress);
-
-      return userBalance;
-    } catch (error) {
-      console.log("Error in retrieving user balance", error, tokenAddress, userAddress);
-    }
+    const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+    const userBalance = await tokenInstance.balanceOf.callAsync(userAddress);
+    return userBalance;
   }
 
   /**
    *  Retrieves the totalSupply or quantity of tokens of an existing {Set}
    */
   public async getTotalSupply(tokenAddress: Address): Promise<BigNumber> {
-    const tokenInstance = await ERC20.at(
-        tokenAddress,
-        this.provider,
-        {},
-      );
+    const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
     const totalSupply = await tokenInstance.totalSupply.callAsync();
-
     return totalSupply;
   }
 
@@ -97,18 +69,9 @@ export class ERC20API {
    *  Retrieves the decimals of an ERC20 token
    */
   public async getDecimals(tokenAddress: Address): Promise<BigNumber> {
-    try {
-      const tokenInstance = await ERC20.at(
-        tokenAddress,
-        this.provider,
-        {},
-      );
-      const decimals = await tokenInstance.decimals.callAsync();
-
-      return decimals || new BigNumber(18);
-    } catch (error) {
-      console.log("Error in retrieving decimals", error, tokenAddress);
-    }
+    const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+    const decimals = await tokenInstance.decimals.callAsync();
+    return decimals || new BigNumber(18);
   }
 
   /**
@@ -124,11 +87,7 @@ export class ERC20API {
         balance: new BigNumber(0),
         decimals: new BigNumber(0)
       };
-      const tokenInstance = await ERC20.at(
-        tokenAddress,
-        this.provider,
-        {},
-      );
+      const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
       token.name = await tokenInstance.name.callAsync();
       token.symbol = await tokenInstance.symbol.callAsync();
       token.balance = await tokenInstance.balanceOf.callAsync(userAddress);
@@ -144,11 +103,7 @@ export class ERC20API {
    *  Transfer token
    */
   public async transfer(tokenAddress: Address, userAddress: Address, to: Address, value: BigNumber) {
-    const tokenInstance = await ERC20.at(
-        tokenAddress,
-        this.provider,
-        {},
-      );
+    const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
     const txHash = await tokenInstance.transfer.sendTransactionAsync(to, value, { from: userAddress });
     return txHash;
   }

@@ -25,7 +25,7 @@ export class SetTokenAssertions {
     setToken: SetTokenContract,
     quantityInWei: BigNumber,
   ): Promise<void> {
-    
+
     const naturalUnit = await setToken.naturalUnit.callAsync();
 
     if (quantityInWei.mod(naturalUnit) !== new BigNumber(0)) {
@@ -61,7 +61,7 @@ export class SetTokenAssertions {
       );
     });
 
-    await Promise.all(userHasSufficientBalancePromises);  
+    await Promise.all(userHasSufficientBalancePromises);
   }
 
   public async hasSufficientAllowances(
@@ -89,6 +89,6 @@ export class SetTokenAssertions {
       );
     });
 
-    await Promise.all(userHasSufficientAllowancePromises);  
+    await Promise.all(userHasSufficientAllowancePromises);
   }
 }

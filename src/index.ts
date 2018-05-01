@@ -1,5 +1,5 @@
 import * as Web3 from "web3";
-import { 
+import {
   SetTokenAPI,
   ERC20API,
 } from "./api";

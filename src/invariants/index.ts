@@ -10,7 +10,7 @@ import { CommonAssertions } from "./common";
 
 export class Assertions {
   public account: AccountAssertions;
-  public setToken: SetTokenAssertions
+  public setToken: SetTokenAssertions;
   public token: ERC20Assertions;
   public common: CommonAssertions;
 
