@@ -39,6 +39,10 @@ const doStuff = async () => {
   // Try issuing
   await setProtocol.setToken.issueSetAsync(StableSetAddress, new BigNumber(10**9), OWNER);
 
+  const components = await setProtocol.setToken.getComponents(StableSetAddress);
+
+  console.log('Components', components);
+
 }
 
 doStuff();

@@ -1,4 +1,5 @@
 import * as Web3 from "web3";
+import * as _ from "lodash";
 import { BigNumber } from "../util/bignumber";
 import { Address, UInt, Token } from "../types/common";
 
@@ -16,6 +17,11 @@ export const SetTokenAPIErrors = {
     `The quantity ${quantity.toString()} inputted needs to be non-zero`,
 };
 
+interface Component {
+  address: Address;
+  unit: BigNumber;
+}
+
 export class SetTokenAPI {
   private provider: Web3;
   private assert: Assertions;
@@ -28,11 +34,31 @@ export class SetTokenAPI {
   }
 
   /**
-   *  Retrieves the token name of an ERC20 token
+   *  Retrieves the components and delivers their unit and addresses
+   */
+  public async getComponents(setAddress: Address): Promise<Component[]> {
+    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
+    const componentAddresses = await setTokenInstance.getComponents.callAsync();
+    const units = await setTokenInstance.getUnits.callAsync();
+    const components: Component[] = [];
+
+    _.each(componentAddresses, (componentAddress, index) => {
+      const newComponent = {
+        address: componentAddress,
+        unit: units[index],
+      }
+      components.push(newComponent);
+    });
+
+    return components;
+  }
+
+  /**
+   *  Retrieves the natural Unit for the {Set}
    */
   public async getNaturalUnit(setAddress: Address): Promise<BigNumber> {
-    const tokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    const naturalUnit = await tokenInstance.naturalUnit.callAsync();
+    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
+    const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
     return naturalUnit;
   }
 
