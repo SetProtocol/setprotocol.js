@@ -31,10 +31,14 @@ const doStuff = async () => {
   const stableSetNaturalUnit: BigNumber = await setProtocol.setToken.getNaturalUnit(StableSetAddress);
   console.log("Natural Unit", stableSetNaturalUnit.toString(10));
 
+  await setProtocol.erc20.setUnlimitedAllowanceAsync(TRUEUSDAddress, StableSetAddress, OWNER);
+  await setProtocol.erc20.setUnlimitedAllowanceAsync(DAIAddress, StableSetAddress, OWNER);
+
+
+
   // Try issuing
   await setProtocol.setToken.issueSetAsync(StableSetAddress, new BigNumber(10**9), OWNER);
 
-  
 }
 
 doStuff();

@@ -28,7 +28,7 @@ export class SetTokenAssertions {
 
     const naturalUnit = await setToken.naturalUnit.callAsync();
 
-    if (!quantityInWei.mod(naturalUnit).isEqualTo(new BigNumber(0))) {
+    if (!quantityInWei.mod(naturalUnit).eq(new BigNumber(0))) {
       throw new Error(TokenAssertionErrors.QUANTITY_NOT_MULTIPLE_OF_NATURAL_UNIT(
         setToken.address,
         quantityInWei,
@@ -85,7 +85,7 @@ export class SetTokenAssertions {
       return erc20Assert.hasSufficientAllowance(
         componentInstance,
         payer,
-        componentInstance.address,
+        setToken.address,
         requiredBalance,
         `User does not have enough allowance of token at address ${componentInstance.address}`,
       );

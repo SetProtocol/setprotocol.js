@@ -107,4 +107,33 @@ export class ERC20API {
     const txHash = await tokenInstance.transfer.sendTransactionAsync(to, value, { from: userAddress });
     return txHash;
   }
+
+  public async setAllowanceAsync(
+    tokenAddress: string,
+    spender: string,
+    allowance: BigNumber,
+    userAddress: string,
+  ): Promise<string> {
+    const tokenContract = await this.contracts.loadERC20TokenAsync(tokenAddress);
+    return tokenContract.approve.sendTransactionAsync(
+        spender,
+        allowance,
+        { from: userAddress },
+    );
+  }
+
+  public async setUnlimitedAllowanceAsync(
+    tokenAddress: string,
+    spender: string,
+    userAddress: string,
+  ): Promise<string> {
+    const tokenContract = await this.contracts.loadERC20TokenAsync(tokenAddress);
+    const unlimitedAllowance = new BigNumber(2).pow(256).minus(100);
+
+    return tokenContract.approve.sendTransactionAsync(
+        spender,
+        unlimitedAllowance,
+        { from: userAddress },
+    );
+  }
 }
