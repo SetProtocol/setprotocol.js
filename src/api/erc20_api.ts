@@ -11,7 +11,7 @@ import {
 // APIs
 import { ContractsAPI } from ".";
 
-export const TokenAPIErrors = {
+export const ERC20APIErrors = {
   // INSUFFICIENT_SENDER_BALANCE: (address) =>
   //   `SENDER with address ${address} does not have sufficient balance in the specified token to execute this transfer.`,
   // INSUFFICIENT_SENDER_ALLOWANCE: (address) =>
@@ -57,7 +57,7 @@ export class ERC20API {
   }
 
   /**
-   *  Retrieves the totalSupply or quantity of tokens of an existing {Set}
+   *  Retrieves the totalSupply or quantity of an ERC20 token
    */
   public async getTotalSupply(tokenAddress: Address): Promise<BigNumber> {
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
@@ -100,14 +100,17 @@ export class ERC20API {
   }
 
   /**
-   *  Transfer token
+   *  Asynchronously transfers token
    */
-  public async transfer(tokenAddress: Address, userAddress: Address, to: Address, value: BigNumber) {
+  public async transferAsync(tokenAddress: Address, userAddress: Address, to: Address, value: BigNumber) {
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
     const txHash = await tokenInstance.transfer.sendTransactionAsync(to, value, { from: userAddress });
     return txHash;
   }
 
+  /**
+   *  Asynchronously sets user allowance
+   */
   public async setAllowanceAsync(
     tokenAddress: string,
     spender: string,
@@ -122,6 +125,9 @@ export class ERC20API {
     );
   }
 
+  /**
+   *  Asynchronously sets user allowance to unlimited
+   */
   public async setUnlimitedAllowanceAsync(
     tokenAddress: string,
     spender: string,

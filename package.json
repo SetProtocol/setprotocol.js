@@ -21,8 +21,8 @@
     "watch-ts": "tsc -w",
     "tslint-check": "tslint-config-prettier-check ./tslint.json",
     "precommit": "lint-staged",
-    "clean-docs": "rm -rf docs/interfaces; rm -rf docs/modules; rm -rf docs/README.md",
-    "docs": "typedoc --theme markdown --excludeExternals  --externalPattern \"**/node_modules/**\" --ignoreCompilerErrors --out docs/ src/api; yarn run clean-docs",
+    "clean-docs": "rm -rf documentation/interfaces; rm -rf documentation/modules; rm -rf documentation/README.md",
+    "docs": "rm -rf documentation/classes; typedoc --theme markdown --excludeExternals  --externalPattern \"**/node_modules/**\" --ignoreCompilerErrors --out documentation/ src/api; yarn run clean-docs",
     "deploy-docs": "gh-pages -d docs"
   },
   "config": {},

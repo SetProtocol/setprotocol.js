@@ -35,7 +35,7 @@
 
 ⊕ **new SetTokenAPI**(web3: *`Web3`*, contracts: *[ContractsAPI](_contracts_api_.contractsapi.md)*): [SetTokenAPI](_settoken_api_.settokenapi.md)
 
-*Defined in [setToken_api.ts:28](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/setToken_api.ts#L28)*
+*Defined in [setToken_api.ts:28](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/setToken_api.ts#L28)*
 
 **Parameters:**
 
@@ -56,7 +56,7 @@ ___
 
 **● assert**: *`Assertions`*
 
-*Defined in [setToken_api.ts:27](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/setToken_api.ts#L27)*
+*Defined in [setToken_api.ts:27](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/setToken_api.ts#L27)*
 
 ___
 <a id="contracts"></a>
@@ -65,7 +65,7 @@ ___
 
 **● contracts**: *[ContractsAPI](_contracts_api_.contractsapi.md)*
 
-*Defined in [setToken_api.ts:28](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/setToken_api.ts#L28)*
+*Defined in [setToken_api.ts:28](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/setToken_api.ts#L28)*
 
 ___
 <a id="provider"></a>
@@ -74,7 +74,7 @@ ___
 
 **● provider**: *`Web3`*
 
-*Defined in [setToken_api.ts:26](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/setToken_api.ts#L26)*
+*Defined in [setToken_api.ts:26](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/setToken_api.ts#L26)*
 
 ___
 
@@ -86,17 +86,18 @@ ___
 
 ▸ **getComponents**(setAddress: *`Address`*): `Promise`<[Component](../interfaces/_settoken_api_.component.md)[]>
 
-*Defined in [setToken_api.ts:39](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/setToken_api.ts#L39)*
+*Defined in [setToken_api.ts:42](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/setToken_api.ts#L42)*
 
-Retrieves the components and delivers their unit and addresses
+Asynchronously retrieve a Set's components
 
 **Parameters:**
 
-| Param | Type |
-| ------ | ------ |
-| setAddress | `Address` | 
+| Param | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | `Address` |  Address the address of the Set |
 
 **Returns:** `Promise`<[Component](../interfaces/_settoken_api_.component.md)[]>
+a promise with the list of Components, an object with the address and unit
 
 ___
 <a id="getnaturalunit"></a>
@@ -105,9 +106,9 @@ ___
 
 ▸ **getNaturalUnit**(setAddress: *`Address`*): `Promise`<`BigNumber`>
 
-*Defined in [setToken_api.ts:59](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/setToken_api.ts#L59)*
+*Defined in [setToken_api.ts:64](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/setToken_api.ts#L64)*
 
-Retrieves the natural Unit for the {Set}
+Retrieves the natural Unit for the Set @param setAddress Address the address of the Set @return a promise with the Natural Unit
 
 **Parameters:**
 
@@ -124,9 +125,9 @@ ___
 
 ▸ **issueSetAsync**(setAddress: *`Address`*, quantityInWei: *`BigNumber`*, userAddress: *`Address`*): `Promise`<`string`>
 
-*Defined in [setToken_api.ts:68](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/setToken_api.ts#L68)*
+*Defined in [setToken_api.ts:76](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/setToken_api.ts#L76)*
 
-Issues a particular quantity of tokens from a particular {Set}s
+Asynchronously issues a particular quantity of tokens from a particular Sets @param setAddress Address the address of the Set @param quantityInWei The amount in Wei; This should be a multiple of the natural Unit @param userAddress The user address
 
 **Parameters:**
 
@@ -145,9 +146,9 @@ ___
 
 ▸ **redeemSetAsync**(setAddress: *`Address`*, quantityInWei: *`BigNumber`*, userAddress: *`Address`*): `Promise`<`string`>
 
-*Defined in [setToken_api.ts:90](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/setToken_api.ts#L90)*
+*Defined in [setToken_api.ts:101](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/setToken_api.ts#L101)*
 
-Redeems a particular quantity of tokens from a particular {Set}s
+Asynchronously redeems a particular quantity of tokens from a particular Sets @param setAddress Address the address of the Set @param quantityInWei The amount in Wei; This should be a multiple of the natural Unit @param userAddress The user address
 
 **Parameters:**
 
