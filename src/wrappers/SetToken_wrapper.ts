@@ -3,9 +3,10 @@
  * Templates can be found at https://github.com/0xProject/0x.js/tree/development/packages/abi-gen-templates.
  */
 // tslint:disable-next-line:no-unused-variable
-import { TxData, TxDataPayable, classUtils } from "../types/common";
+import { TxData, TxDataPayable } from "../types/common";
 import { promisify } from "@0xproject/utils";
-import { BigNumber } from "bignumber.js";
+import { classUtils } from "../types/common";
+import { BigNumber } from "../util/bignumber";
 import * as fs from "fs-extra";
 import * as Web3 from "web3";
 
@@ -94,64 +95,6 @@ export class SetTokenContract extends BaseContract {
             return result;
         },
     };
-    public transferFrom = {
-        async sendTransactionAsync(
-            _from: string,
-            _to: string,
-            _value: BigNumber,
-            txData: TxData = {},
-        ): Promise<string> {
-            const self = this as SetTokenContract;
-            const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
-                txData,
-                self.transferFrom.estimateGasAsync.bind(
-                    self,
-                    _from,
-                    _to,
-                    _value,
-                ),
-            );
-            const txHash = await promisify<string>(
-                self.web3ContractInstance.transferFrom, self.web3ContractInstance,
-            )(
-                _from,
-                _to,
-                _value,
-                txDataWithDefaults,
-            );
-            return txHash;
-        },
-        async estimateGasAsync(
-            _from: string,
-            _to: string,
-            _value: BigNumber,
-            txData: TxData = {},
-        ): Promise<number> {
-            const self = this as SetTokenContract;
-            const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
-                txData,
-            );
-            const gas = await promisify<number>(
-                self.web3ContractInstance.transferFrom.estimateGas, self.web3ContractInstance,
-            )(
-                _from,
-                _to,
-                _value,
-                txDataWithDefaults,
-            );
-            return gas;
-        },
-        getABIEncodedTransactionData(
-            _from: string,
-            _to: string,
-            _value: BigNumber,
-            txData: TxData = {},
-        ): string {
-            const self = this as SetTokenContract;
-            const abiEncodedTransactionData = self.web3ContractInstance.transferFrom.getData();
-            return abiEncodedTransactionData;
-        },
-    };
     public decimals = {
         async callAsync(
             defaultBlock?: any,
@@ -161,6 +104,21 @@ export class SetTokenContract extends BaseContract {
             const result = await promisify<BigNumber
     >(
                 self.web3ContractInstance.decimals.call,
+                self.web3ContractInstance,
+            )(
+            );
+            return result;
+        },
+    };
+    public naturalUnit = {
+        async callAsync(
+            defaultBlock?: any,
+        ): Promise<BigNumber
+    > {
+            const self = this as SetTokenContract;
+            const result = await promisify<BigNumber
+    >(
+                self.web3ContractInstance.naturalUnit.call,
                 self.web3ContractInstance,
             )(
             );
@@ -270,66 +228,14 @@ export class SetTokenContract extends BaseContract {
             return result;
         },
     };
-    public transfer = {
-        async sendTransactionAsync(
-            _to: string,
-            _value: BigNumber,
-            txData: TxData = {},
-        ): Promise<string> {
-            const self = this as SetTokenContract;
-            const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
-                txData,
-                self.transfer.estimateGasAsync.bind(
-                    self,
-                    _to,
-                    _value,
-                ),
-            );
-            const txHash = await promisify<string>(
-                self.web3ContractInstance.transfer, self.web3ContractInstance,
-            )(
-                _to,
-                _value,
-                txDataWithDefaults,
-            );
-            return txHash;
-        },
-        async estimateGasAsync(
-            _to: string,
-            _value: BigNumber,
-            txData: TxData = {},
-        ): Promise<number> {
-            const self = this as SetTokenContract;
-            const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
-                txData,
-            );
-            const gas = await promisify<number>(
-                self.web3ContractInstance.transfer.estimateGas, self.web3ContractInstance,
-            )(
-                _to,
-                _value,
-                txDataWithDefaults,
-            );
-            return gas;
-        },
-        getABIEncodedTransactionData(
-            _to: string,
-            _value: BigNumber,
-            txData: TxData = {},
-        ): string {
-            const self = this as SetTokenContract;
-            const abiEncodedTransactionData = self.web3ContractInstance.transfer.getData();
-            return abiEncodedTransactionData;
-        },
-    };
     public components = {
         async callAsync(
             index_0: BigNumber,
             defaultBlock?: any,
-        ): Promise<string
+        ): Promise<[string, BigNumber]
     > {
             const self = this as SetTokenContract;
-            const result = await promisify<string
+            const result = await promisify<[string, BigNumber]
     >(
                 self.web3ContractInstance.components.call,
                 self.web3ContractInstance,
@@ -406,23 +312,6 @@ export class SetTokenContract extends BaseContract {
             )(
                 _owner,
                 _spender,
-            );
-            return result;
-        },
-    };
-    public units = {
-        async callAsync(
-            index_0: BigNumber,
-            defaultBlock?: any,
-        ): Promise<BigNumber
-    > {
-            const self = this as SetTokenContract;
-            const result = await promisify<BigNumber
-    >(
-                self.web3ContractInstance.units.call,
-                self.web3ContractInstance,
-            )(
-                index_0,
             );
             return result;
         },
@@ -668,6 +557,116 @@ export class SetTokenContract extends BaseContract {
             return result;
         },
     };
+    public transfer = {
+        async sendTransactionAsync(
+            _to: string,
+            _value: BigNumber,
+            txData: TxData = {},
+        ): Promise<string> {
+            const self = this as SetTokenContract;
+            const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
+                txData,
+                self.transfer.estimateGasAsync.bind(
+                    self,
+                    _to,
+                    _value,
+                ),
+            );
+            const txHash = await promisify<string>(
+                self.web3ContractInstance.transfer, self.web3ContractInstance,
+            )(
+                _to,
+                _value,
+                txDataWithDefaults,
+            );
+            return txHash;
+        },
+        async estimateGasAsync(
+            _to: string,
+            _value: BigNumber,
+            txData: TxData = {},
+        ): Promise<number> {
+            const self = this as SetTokenContract;
+            const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
+                txData,
+            );
+            const gas = await promisify<number>(
+                self.web3ContractInstance.transfer.estimateGas, self.web3ContractInstance,
+            )(
+                _to,
+                _value,
+                txDataWithDefaults,
+            );
+            return gas;
+        },
+        getABIEncodedTransactionData(
+            _to: string,
+            _value: BigNumber,
+            txData: TxData = {},
+        ): string {
+            const self = this as SetTokenContract;
+            const abiEncodedTransactionData = self.web3ContractInstance.transfer.getData();
+            return abiEncodedTransactionData;
+        },
+    };
+    public transferFrom = {
+        async sendTransactionAsync(
+            _from: string,
+            _to: string,
+            _value: BigNumber,
+            txData: TxData = {},
+        ): Promise<string> {
+            const self = this as SetTokenContract;
+            const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
+                txData,
+                self.transferFrom.estimateGasAsync.bind(
+                    self,
+                    _from,
+                    _to,
+                    _value,
+                ),
+            );
+            const txHash = await promisify<string>(
+                self.web3ContractInstance.transferFrom, self.web3ContractInstance,
+            )(
+                _from,
+                _to,
+                _value,
+                txDataWithDefaults,
+            );
+            return txHash;
+        },
+        async estimateGasAsync(
+            _from: string,
+            _to: string,
+            _value: BigNumber,
+            txData: TxData = {},
+        ): Promise<number> {
+            const self = this as SetTokenContract;
+            const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
+                txData,
+            );
+            const gas = await promisify<number>(
+                self.web3ContractInstance.transferFrom.estimateGas, self.web3ContractInstance,
+            )(
+                _from,
+                _to,
+                _value,
+                txDataWithDefaults,
+            );
+            return gas;
+        },
+        getABIEncodedTransactionData(
+            _from: string,
+            _to: string,
+            _value: BigNumber,
+            txData: TxData = {},
+        ): string {
+            const self = this as SetTokenContract;
+            const abiEncodedTransactionData = self.web3ContractInstance.transferFrom.getData();
+            return abiEncodedTransactionData;
+        },
+    };
     async deploy(...args: any[]): Promise<any> {
         const wrapper = this;
         const rejected = false;
@@ -700,7 +699,7 @@ export class SetTokenContract extends BaseContract {
     private static async getArtifactsData(web3: Web3):
         Promise<any> {
         try {
-            const artifact = await fs.readFile("build/contracts/SetToken.json", "utf8");
+            const artifact = await fs.readFile("artifacts/SetToken.json", "utf8");
             const { abi, networks } = JSON.parse(artifact);
             return { abi, networks };
         } catch (e) {

@@ -30,9 +30,6 @@ const SetProtocol = require('setprotocol.js');
 
 // Like with web3, instantiate a new instance and pass in the provider
 const setProtocolInstance = new SetProtocol(currentProvider);
-
-// If using a registry, set the registry
-setProtocolInstance.updateSetRegistryAddress(registryAddress);
 ```
 
 For now, you will have to look at the source code itself for documentation, but we will be working to provide a rich set of documentation for this.
