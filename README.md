@@ -36,3 +36,20 @@ setProtocolInstance.updateSetRegistryAddress(registryAddress);
 ```
 
 For now, you will have to look at the source code itself for documentation, but we will be working to provide a rich set of documentation for this.
+
+## Testing
+##### Compile & Migrate Contracts
+
+Start `testrpc` and setup dependencies:
+```
+yarn chain
+```
+Wait until the `dependency migration complete` message appears before interacting with the contracts.
+
+#### Testing
+```
+yarn test:watch
+```
+
+## Troubleshooting
+Do not use Node version 10+ as it may have issues during `npm install` or `yarn install` with the `sha3` package.  Use `nvm install 9.11.1 && nvm use 9.11.1` for now.
