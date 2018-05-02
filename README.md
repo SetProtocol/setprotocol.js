@@ -53,5 +53,23 @@ Do not use Node version 10+ as it may have issues during `npm install` or `yarn 
 
 ## setProtocol.js API Reference
 * [contracts](docs/classes/_contracts_api_.contractsapi.md)
+  * [getERC20TokenCacheKey](docs/classes/_contracts_api_.contractsapi.md#geterc20tokencachekey)
+  * [getSetTokenCacheKey](docs/classes/_contracts_api_.contractsapi.md#getsettokencachekey)
+  * [loadERC20TokenAsync](docs/classes/_contracts_api_.contractsapi.md#loaderc20tokenasync)
+  * [loadSetTokenAsync](docs/classes/_contracts_api_.contractsapi.md#loadsettokenasync)
 * [erc20](docs/classes/_erc20_api_.erc20api.md)
+  * [getDecimals](_erc20_api_.erc20api.md#getdecimals)
+  * [getTokenName](_erc20_api_.erc20api.md#gettokenname)
+  * [getTokenSymbol](_erc20_api_.erc20api.md#gettokensymbol)
+  * [getTotalSupply](_erc20_api_.erc20api.md#gettotalsupply)
+  * [getUserBalance](_erc20_api_.erc20api.md#getuserbalance)
+  * [getUserBalancesForTokens](_erc20_api_.erc20api.md#getuserbalancesfortokens)
+  * [setAllowanceAsync](_erc20_api_.erc20api.md#setallowanceasync)
+  * [setUnlimitedAllowanceAsync](_erc20_api_.erc20api.md#setunlimitedallowanceasync)
+  * [transfer](_erc20_api_.erc20api.md#transfer)
+
 * [setToken](docs/classes/_settoken_api_.settokenapi.md)
+  * [getComponents](_settoken_api_.settokenapi.md#getcomponents)
+  * [getNaturalUnit](_settoken_api_.settokenapi.md#getnaturalunit)
+  * [issueSetAsync](_settoken_api_.settokenapi.md#issuesetasync)
+  * [redeemSetAsync](_settoken_api_.settokenapi.md#redeemsetasync)
