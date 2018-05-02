@@ -50,3 +50,26 @@ yarn test:watch
 
 ## Troubleshooting
 Do not use Node version 10+ as it may have issues during `npm install` or `yarn install` with the `sha3` package.  Use `nvm install 9.11.1 && nvm use 9.11.1` for now.
+
+## setProtocol.js API Reference
+* [contracts](docs/classes/_contracts_api_.contractsapi.md)
+  * [getERC20TokenCacheKey](docs/classes/_contracts_api_.contractsapi.md#geterc20tokencachekey)
+  * [getSetTokenCacheKey](docs/classes/_contracts_api_.contractsapi.md#getsettokencachekey)
+  * [loadERC20TokenAsync](docs/classes/_contracts_api_.contractsapi.md#loaderc20tokenasync)
+  * [loadSetTokenAsync](docs/classes/_contracts_api_.contractsapi.md#loadsettokenasync)
+* [erc20](docs/classes/_erc20_api_.erc20api.md)
+  * [getDecimals](docs/classes/_erc20_api_.erc20api.md#getdecimals)
+  * [getTokenName](docs/classes/_erc20_api_.erc20api.md#gettokenname)
+  * [getTokenSymbol](docs/classes/_erc20_api_.erc20api.md#gettokensymbol)
+  * [getTotalSupply](docs/classes/_erc20_api_.erc20api.md#gettotalsupply)
+  * [getUserBalance](docs/classes/_erc20_api_.erc20api.md#getuserbalance)
+  * [getUserBalancesForTokens](docs/classes/_erc20_api_.erc20api.md#getuserbalancesfortokens)
+  * [setAllowanceAsync](docs/classes/_erc20_api_.erc20api.md#setallowanceasync)
+  * [setUnlimitedAllowanceAsync](docs/classes/_erc20_api_.erc20api.md#setunlimitedallowanceasync)
+  * [transfer](docs/classes/_erc20_api_.erc20api.md#transfer)
+
+* [setToken](docs/classes/_settoken_api_.settokenapi.md)
+  * [getComponents](docs/classes/_settoken_api_.settokenapi.md#getcomponents)
+  * [getNaturalUnit](docs/classes/_settoken_api_.settokenapi.md#getnaturalunit)
+  * [issueSetAsync](docs/classes/_settoken_api_.settokenapi.md#issuesetasync)
+  * [redeemSetAsync](docs/classes/_settoken_api_.settokenapi.md#redeemsetasync)
