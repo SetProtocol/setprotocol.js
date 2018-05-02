@@ -15,6 +15,9 @@ const TRUEUSDAddress = "0xafbc3ff59c37ee69228db07467ac89c1c3263406";
 const DAIAddress = "0x9c1f89607cc49a7dae04b93121ddd758daa1eaa6";
 const StableSetAddress = "0x6137c6e7358baf51325f68a47690e3dda2c98ef6";
 
+const DEXSetAddress = "0xab53fa6e2b6aa121c8a7572c892621c67ef872ce";
+const ETH10SetAddress = "0xb8c9e207730715bcad51ed4563eee13e08988dfb";
+
 const doStuff = async () => {
   const trustTokenName = await setProtocol.erc20.getTokenName(TRUEUSDAddress);
   const ownerBalanceOfTrustToken: BigNumber = await setProtocol.erc20.getUserBalance(TRUEUSDAddress, OWNER);
@@ -39,9 +42,14 @@ const doStuff = async () => {
   // Try issuing
   await setProtocol.setToken.issueSetAsync(StableSetAddress, new BigNumber(10 ** 9), OWNER);
 
-  const components = await setProtocol.setToken.getComponents(StableSetAddress);
+  const stableSetcomponents = await setProtocol.setToken.getComponents(StableSetAddress);
+  console.log("Stable Set Components", stableSetcomponents);
 
-  console.log("Components", components);
+  const Eth10components = await setProtocol.setToken.getComponents(ETH10SetAddress);
+  console.log("ETH10 Set");
+  Eth10components.forEach((component) => {
+    console.log(`${component.address} is ${component.unit.toString(10)} units`);
+  });
 
 };
 
