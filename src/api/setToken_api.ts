@@ -58,7 +58,8 @@ export class SetTokenAPI {
 
   /**
    *  Retrieves the natural Unit for the Set
-   *  @param  setAddress Address the address of the Set
+   *
+   *  @param  setAddress the address of the Set
    *  @return            a promise with the Natural Unit
    */
   public async getNaturalUnit(setAddress: Address): Promise<BigNumber> {
@@ -69,6 +70,7 @@ export class SetTokenAPI {
 
   /**
    *  Asynchronously issues a particular quantity of tokens from a particular Sets
+   *
    *  @param  setAddress Address the address of the Set
    *  @param  quantityInWei The amount in Wei; This should be a multiple of the natural Unit
    *  @param  userAddress The user address
@@ -94,6 +96,7 @@ export class SetTokenAPI {
 
   /**
    *  Asynchronously redeems a particular quantity of tokens from a particular Sets
+   *
    *  @param  setAddress Address the address of the Set
    *  @param  quantityInWei The amount in Wei; This should be a multiple of the natural Unit
    *  @param  userAddress The user address
