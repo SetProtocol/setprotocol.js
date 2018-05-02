@@ -51,7 +51,7 @@ yarn test:watch
 ## Troubleshooting
 Do not use Node version 10+ as it may have issues during `npm install` or `yarn install` with the `sha3` package.  Use `nvm install 9.11.1 && nvm use 9.11.1` for now.
 
-## API Reference
-* ["contracts"](docs/classes/_contracts_contractsapi_.md)
-* ["erc20"](docs/classes/_erc20api_.md)
-* ["setToken"](docs/classes/_settokenapi_.md)
+## setProtocol.js API Reference
+* [contracts](docs/classes/_contracts_contractsapi_.md)
+* [erc20](docs/classes/_erc20api_.md)
+* [setToken](docs/classes/_settokenapi_.md)
