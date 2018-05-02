@@ -34,7 +34,7 @@
 
 ⊕ **new ContractsAPI**(web3: *`Web3`*): [ContractsAPI](_contracts_api_.contractsapi.md)
 
-*Defined in [contracts_api.ts:28](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/contracts_api.ts#L28)*
+*Defined in [contracts_api.ts:28](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L28)*
 
 **Parameters:**
 
@@ -54,7 +54,7 @@ ___
 
 **● cache**: *`object`*
 
-*Defined in [contracts_api.ts:28](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/contracts_api.ts#L28)*
+*Defined in [contracts_api.ts:28](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L28)*
 
 #### Type declaration
 
@@ -67,7 +67,7 @@ ___
 
 **● web3**: *`Web3`*
 
-*Defined in [contracts_api.ts:26](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/contracts_api.ts#L26)*
+*Defined in [contracts_api.ts:26](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L26)*
 
 ___
 
@@ -79,7 +79,7 @@ ___
 
 ▸ **getERC20TokenCacheKey**(tokenAddress: *`string`*): `string`
 
-*Defined in [contracts_api.ts:83](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/contracts_api.ts#L83)*
+*Defined in [contracts_api.ts:83](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L83)*
 
 **Parameters:**
 
@@ -96,7 +96,7 @@ ___
 
 ▸ **getSetTokenCacheKey**(tokenAddress: *`string`*): `string`
 
-*Defined in [contracts_api.ts:87](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/contracts_api.ts#L87)*
+*Defined in [contracts_api.ts:87](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L87)*
 
 **Parameters:**
 
@@ -113,7 +113,7 @@ ___
 
 ▸ **loadERC20TokenAsync**(tokenAddress: *`string`*, transactionOptions?: *`object`*): `Promise`<`ERC20Contract`>
 
-*Defined in [contracts_api.ts:59](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/contracts_api.ts#L59)*
+*Defined in [contracts_api.ts:59](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L59)*
 
 **Parameters:**
 
@@ -131,7 +131,7 @@ ___
 
 ▸ **loadSetTokenAsync**(setTokenAddress: *`string`*, transactionOptions?: *`object`*): `Promise`<`SetTokenContract`>
 
-*Defined in [contracts_api.ts:35](https://github.com/SetProtocol/setProtocol.js/blob/50270c7/src/api/contracts_api.ts#L35)*
+*Defined in [contracts_api.ts:35](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L35)*
 
 **Parameters:**
 

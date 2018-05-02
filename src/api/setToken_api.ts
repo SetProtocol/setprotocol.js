@@ -34,7 +34,10 @@ export class SetTokenAPI {
   }
 
   /**
-   *  Retrieves the components and delivers their unit and addresses
+   * Asynchronously retrieve a Set's components
+   *
+   * @param  setAddress Address the address of the Set
+   * @return            a promise with the list of Components, an object with the address and unit
    */
   public async getComponents(setAddress: Address): Promise<Component[]> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
@@ -54,7 +57,9 @@ export class SetTokenAPI {
   }
 
   /**
-   *  Retrieves the natural Unit for the {Set}
+   *  Retrieves the natural Unit for the Set
+   *  @param  setAddress Address the address of the Set
+   *  @return            a promise with the Natural Unit
    */
   public async getNaturalUnit(setAddress: Address): Promise<BigNumber> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
@@ -63,7 +68,10 @@ export class SetTokenAPI {
   }
 
   /**
-   *  Issues a particular quantity of tokens from a particular {Set}s
+   *  Asynchronously issues a particular quantity of tokens from a particular Sets
+   *  @param  setAddress Address the address of the Set
+   *  @param  quantityInWei The amount in Wei; This should be a multiple of the natural Unit
+   *  @param  userAddress The user address
    */
   public async issueSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress, { from: userAddress });
@@ -85,7 +93,10 @@ export class SetTokenAPI {
   }
 
   /**
-   *  Redeems a particular quantity of tokens from a particular {Set}s
+   *  Asynchronously redeems a particular quantity of tokens from a particular Sets
+   *  @param  setAddress Address the address of the Set
+   *  @param  quantityInWei The amount in Wei; This should be a multiple of the natural Unit
+   *  @param  userAddress The user address
    */
   public async redeemSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress, { from: userAddress });

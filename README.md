@@ -66,7 +66,7 @@ Do not use Node version 10+ as it may have issues during `npm install` or `yarn 
   * [getUserBalancesForTokens](documentation/classes/_erc20_api_.erc20api.md#getuserbalancesfortokens)
   * [setAllowanceAsync](documentation/classes/_erc20_api_.erc20api.md#setallowanceasync)
   * [setUnlimitedAllowanceAsync](documentation/classes/_erc20_api_.erc20api.md#setunlimitedallowanceasync)
-  * [transfer](documentation/classes/_erc20_api_.erc20api.md#transfer)
+  * [transferAsync](_erc20_api_.erc20api.md#transferasync)
 
 * [setToken](documentation/classes/_settoken_api_.settokenapi.md)
   * [getComponents](documentation/classes/_settoken_api_.settokenapi.md#getcomponents)
