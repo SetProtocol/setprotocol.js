@@ -66,7 +66,7 @@
     "jsonschema": "^1.2.4",
     "lodash": "^4.17.4",
     "lodash.compact": "^3.0.1",
-    "set-protocol-contracts": "^0.2.2",
+    "set-protocol-contracts": "^0.2.3",
     "truffle-contract": "^3.0.1",
     "truffle-hdwallet-provider": "0.0.3"
   },
