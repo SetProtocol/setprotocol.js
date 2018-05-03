@@ -302,8 +302,8 @@ export class DetailedERC20Contract extends BaseContract {
     private static async getArtifactsData(web3: Web3):
         Promise<any> {
         try {
-            const artifact = require("artifacts/DetailedERC20.json");
-            const { abi, networks } = JSON.parse(artifact);
+            const artifact = require("../../artifacts/DetailedERC20.json");
+            const { abi, networks } = artifact;
             return { abi, networks };
         } catch (e) {
             console.error("Artifacts malformed or nonexistent: " + e.toString());
