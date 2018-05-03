@@ -3,7 +3,7 @@ import * as Web3 from "web3";
 
 // Assertions
 import { AccountAssertions } from "./account";
-import { SetTokenAssertions } from "./setToken";
+import { SetTokenAssertions } from "./set_token";
 import { ERC20Assertions } from "./erc20";
 import { CommonAssertions } from "./common";
 import { SchemaAssertions } from "./schema";

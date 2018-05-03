@@ -21,7 +21,7 @@ export const ContractsError = {
   SET_TOKEN_CONTRACT_NOT_FOUND: (setTokenAddress: string) =>
     `Could not find a Set Token Contract at address ${setTokenAddress}`,
   ERC20_TOKEN_CONTRACT_NOT_FOUND: (tokenAddress: string) =>
-    `Could not find a ERC20 Token Contract at address ${tokenAddress}`,
+    `Could not find an ERC20 Token Contract at address ${tokenAddress}`,
 };
 
 export class ContractsAPI {

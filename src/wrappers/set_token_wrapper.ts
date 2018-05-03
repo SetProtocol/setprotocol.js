@@ -7,6 +7,11 @@ import { TxData, TxDataPayable } from "../types/common";
 import { promisify } from "@0xproject/utils";
 import { classUtils } from "../types/common";
 import { BigNumber } from "../util/bignumber";
+<<<<<<< HEAD:src/wrappers/SetToken_wrapper.ts
+=======
+import { SetToken as ContractArtifacts } from "set-protocol-contracts";
+import * as fs from "fs-extra";
+>>>>>>> Add testing framework to library:src/wrappers/set_token_wrapper.ts
 import * as Web3 from "web3";
 
 import { BaseContract } from "./base_contract";
@@ -684,17 +689,18 @@ export class SetTokenContract extends BaseContract {
     }
     static async deployed(web3: Web3, defaults: Partial<TxData>): Promise<SetTokenContract> {
         const currentNetwork = web3.version.network;
-        const { abi, networks } = await this.getArtifactsData(web3);
+        const { abi, networks }: { abi: any; networks: any } = ContractArtifacts;
         const web3ContractInstance = web3.eth.contract(abi).at(networks[currentNetwork].address);
 
         return new SetTokenContract(web3ContractInstance, defaults);
     }
     static async at(address: string, web3: Web3, defaults: Partial<TxData>): Promise<SetTokenContract> {
-        const { abi } = await this.getArtifactsData(web3);
+        const { abi }: { abi: any } = ContractArtifacts;
         const web3ContractInstance = web3.eth.contract(abi).at(address);
 
         return new SetTokenContract(web3ContractInstance, defaults);
     }
+<<<<<<< HEAD:src/wrappers/SetToken_wrapper.ts
     private static async getArtifactsData(web3: Web3):
         Promise<any> {
         try {
@@ -705,6 +711,8 @@ export class SetTokenContract extends BaseContract {
             console.error("Artifacts malformed or nonexistent: " + e.toString());
         }
     }
+=======
+>>>>>>> Add testing framework to library:src/wrappers/set_token_wrapper.ts
     constructor(web3ContractInstance: Web3.ContractInstance, defaults: Partial<TxData>) {
         super(web3ContractInstance, defaults);
         classUtils.bindAll(this, ["web3ContractInstance", "defaults"]);

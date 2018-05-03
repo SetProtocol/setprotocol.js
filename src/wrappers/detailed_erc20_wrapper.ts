@@ -7,6 +7,11 @@ import { TxData, TxDataPayable } from "../types/common";
 import { promisify } from "@0xproject/utils";
 import { classUtils } from "../types/common";
 import { BigNumber } from "../util/bignumber";
+<<<<<<< HEAD:src/wrappers/DetailedERC20_wrapper.ts
+=======
+import { DetailedERC20 as ContractArtifacts } from "set-protocol-contracts";
+import * as fs from "fs-extra";
+>>>>>>> Add testing framework to library:src/wrappers/detailed_erc20_wrapper.ts
 import * as Web3 from "web3";
 
 import { BaseContract } from "./base_contract";
@@ -288,26 +293,16 @@ export class DetailedERC20Contract extends BaseContract {
     }
     static async deployed(web3: Web3, defaults: Partial<TxData>): Promise<DetailedERC20Contract> {
         const currentNetwork = web3.version.network;
-        const { abi, networks } = await this.getArtifactsData(web3);
+        const { abi, networks }: { abi: any; networks: any } = ContractArtifacts;
         const web3ContractInstance = web3.eth.contract(abi).at(networks[currentNetwork].address);
 
         return new DetailedERC20Contract(web3ContractInstance, defaults);
     }
     static async at(address: string, web3: Web3, defaults: Partial<TxData>): Promise<DetailedERC20Contract> {
-        const { abi } = await this.getArtifactsData(web3);
+        const { abi }: { abi: any } = ContractArtifacts;
         const web3ContractInstance = web3.eth.contract(abi).at(address);
 
         return new DetailedERC20Contract(web3ContractInstance, defaults);
-    }
-    private static async getArtifactsData(web3: Web3):
-        Promise<any> {
-        try {
-            const artifact = require("../../artifacts/DetailedERC20.json");
-            const { abi, networks } = artifact;
-            return { abi, networks };
-        } catch (e) {
-            console.error("Artifacts malformed or nonexistent: " + e.toString());
-        }
     }
     constructor(web3ContractInstance: Web3.ContractInstance, defaults: Partial<TxData>) {
         super(web3ContractInstance, defaults);
