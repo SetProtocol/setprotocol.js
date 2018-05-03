@@ -43,7 +43,7 @@ export class SetTokenScenarioRunner {
         this.revertToSavedSnapshot = this.revertToSavedSnapshot.bind(this);
     }
 
-    public testIssueScenario(scenario: FillScenario) {
+    public testIssueScenario(scenario: SetIssueScenario) {
         describe(scenario.description, () => {
             beforeAll(() => {
                 ABIDecoder.addABI(this.setToken.abi);
@@ -57,8 +57,8 @@ export class SetTokenScenarioRunner {
 
             });
 
-            if (scenario.successfullyFills) {
-                test("emits log indicating successful fill", async () => {
+            if (scenario.successfullyIssues) {
+                test("emits log indicating successful issue", async () => {
                     const txHash = await this.setTokenApi.issueSetAsync(SetTokenContract.address, new BigNumber(1), ACCOUNTS[0].address);
 
                     const receipt = await this.web3Utils.getTransactionReceiptAsync(txHash);
@@ -77,7 +77,7 @@ export class SetTokenScenarioRunner {
         });
     }
 
-    public async testRedeemScenario(scenario: OrderCancellationScenario) {
+    public async testRedeemScenario(scenario: SetRedeemScenario) {
         describe(scenario.description, () => {
             beforeAll(() => {
                 ABIDecoder.addABI(this.setToken.abi);
@@ -91,8 +91,8 @@ export class SetTokenScenarioRunner {
 
             });
 
-            if (scenario.successfullyCancels) {
-                test("emits log indicating successful fill", async () => {
+            if (scenario.successfullyRedeems) {
+                test("emits log indicating successful redeem", async () => {
                     const txHash = await this.setTokenApi.redeemSetAsync(address, new BigNumber(1), ACCOUNTS[0].address);
                     const receipt = await this.web3Utils.getTransactionReceiptAsync(txHash);
 

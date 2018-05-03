@@ -50,21 +50,21 @@ describe("Set Token API (Integration Tests)", () => {
 
     describe("#issueSetAsync", () => {
         describe("Valid Set issues", () => {
-            VALID_ORDERS.forEach(scenarioRunner.testIssueScenario);
+            // VALID_ORDERS.forEach(scenarioRunner.testIssueScenario);
         });
 
         describe("Invalid Set issues", () => {
-            INVALID_ORDERS.forEach(scenarioRunner.testIssueScenario);
+            // INVALID_ORDERS.forEach(scenarioRunner.testIssueScenario);
         });
     });
 
     describe("#redeemSetAsync", () => {
         describe("Valid Set redeems", () => {
-            VALID_ORDERS.forEach(scenarioRunner.testRedeemScenario);
+            // VALID_ORDERS.forEach(scenarioRunner.testRedeemScenario);
         });
 
         describe("Invalid Set redeems", () => {
-            INVALID_ORDERS.forEach(scenarioRunner.testRedeemScenario);
+            // INVALID_ORDERS.forEach(scenarioRunner.testRedeemScenario);
         });
     });
 });
