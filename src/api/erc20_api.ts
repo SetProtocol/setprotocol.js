@@ -12,10 +12,10 @@ import {
 import { ContractsAPI } from ".";
 
 export const ERC20APIErrors = {
-  // INSUFFICIENT_SENDER_BALANCE: (address) =>
-  //   `SENDER with address ${address} does not have sufficient balance in the specified token to execute this transfer.`,
-  // INSUFFICIENT_SENDER_ALLOWANCE: (address) =>
-  //   `SENDER with address ${address} does not have sufficient allowance in the specified token to execute this transfer.`,
+  INSUFFICIENT_SENDER_BALANCE: (address: Address) =>
+    `SENDER with address ${address} does not have sufficient balance in the specified token to execute this transfer.`,
+  INSUFFICIENT_SENDER_ALLOWANCE: (address: Address) =>
+    `SENDER with address ${address} does not have sufficient allowance in the specified token to execute this transfer.`,
 };
 
 export class ERC20API {
@@ -33,6 +33,8 @@ export class ERC20API {
    *  Retrieves the token name of an ERC20 token
    */
   public async getTokenName(tokenAddress: Address): Promise<string> {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
     const tokenName = await tokenInstance.name.callAsync();
     return tokenName;
@@ -42,6 +44,8 @@ export class ERC20API {
    *  Retrieves the token symbol of an ERC20 token
    */
   public async getTokenSymbol(tokenAddress: Address): Promise<string> {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
     const tokenSymbol = await tokenInstance.symbol.callAsync();
     return tokenSymbol;
@@ -51,6 +55,9 @@ export class ERC20API {
    *  Retrieves the balance in wei of an ERC20 token for a user
    */
   public async getUserBalance(tokenAddress: Address, userAddress: Address): Promise<BigNumber> {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
+
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
     const userBalance = await tokenInstance.balanceOf.callAsync(userAddress);
     return userBalance;
@@ -60,6 +67,8 @@ export class ERC20API {
    *  Retrieves the totalSupply or quantity of an ERC20 token
    */
   public async getTotalSupply(tokenAddress: Address): Promise<BigNumber> {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
     const totalSupply = await tokenInstance.totalSupply.callAsync();
     return totalSupply;
@@ -69,6 +78,8 @@ export class ERC20API {
    *  Retrieves the decimals of an ERC20 token
    */
   public async getDecimals(tokenAddress: Address): Promise<BigNumber> {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
     const decimals = await tokenInstance.decimals.callAsync();
     return decimals || new BigNumber(18);
@@ -102,9 +113,22 @@ export class ERC20API {
   /**
    *  Asynchronously transfers token
    */
-  public async transferAsync(tokenAddress: Address, userAddress: Address, to: Address, value: BigNumber) {
+  public async transferAsync(tokenAddress: Address, from: Address, to: Address, value: BigNumber) {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    this.assert.schema.isValidAddress('from', from);
+    this.assert.schema.isValidAddress('to', to);
+    this.assert.schema.isValidNumber('value', value);
+
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
-    const txHash = await tokenInstance.transfer.sendTransactionAsync(to, value, { from: userAddress });
+
+    await this.assert.erc20.hasSufficientBalance(
+      tokenInstance,
+      from,
+      value,
+      ERC20APIErrors.INSUFFICIENT_SENDER_BALANCE(from),
+    );
+
+    const txHash = await tokenInstance.transfer.sendTransactionAsync(to, value, { from });
     return txHash;
   }
 
@@ -117,7 +141,13 @@ export class ERC20API {
     allowance: BigNumber,
     userAddress: string,
   ): Promise<string> {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.schema.isValidAddress('spender', spender);
+    this.assert.schema.isValidNumber('allowance', allowance);
+
     const tokenContract = await this.contracts.loadERC20TokenAsync(tokenAddress);
+
     return tokenContract.approve.sendTransactionAsync(
         spender,
         allowance,
@@ -133,6 +163,10 @@ export class ERC20API {
     spender: string,
     userAddress: string,
   ): Promise<string> {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.schema.isValidAddress('spender', spender);
+
     const tokenContract = await this.contracts.loadERC20TokenAsync(tokenAddress);
     const unlimitedAllowance = new BigNumber(2).pow(256).minus(100);
 

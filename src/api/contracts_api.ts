@@ -2,6 +2,8 @@ import * as _ from "lodash";
 import * as Web3 from "web3";
 import { BigNumber } from "../util/bignumber";
 
+import { Assertions } from "../invariants";
+
 // wrappers
 import {
     BaseContract,
@@ -23,19 +25,23 @@ export const ContractsError = {
 };
 
 export class ContractsAPI {
-  private web3: Web3;
+  private provider: Web3;
+  private assert: Assertions;
 
   private cache: { [contractName: string]: ContractWrapper };
 
-  public constructor(web3: Web3) {
-      this.web3 = web3;
+  public constructor(provider: Web3) {
+      this.provider = provider;
       this.cache = {};
+      this.assert = new Assertions(this.provider);
   }
 
   public async loadSetTokenAsync(
     setTokenAddress: string,
     transactionOptions: object = {},
   ): Promise<SetTokenContract> {
+    this.assert.schema.isValidAddress('setTokenAddress', setTokenAddress);
+
     const cacheKey = this.getSetTokenCacheKey(setTokenAddress);
 
     if (cacheKey in this.cache) {
@@ -43,13 +49,15 @@ export class ContractsAPI {
     } else {
       const setTokenContract = await SetTokenContract.at(
         setTokenAddress,
-        this.web3,
+        this.provider,
         transactionOptions,
       );
 
       if (!setTokenContract) {
         throw new Error(ContractsError.SET_TOKEN_CONTRACT_NOT_FOUND(setTokenAddress));
       }
+
+      this.assert.setToken.implementsSet(setTokenContract);
 
       this.cache[cacheKey] = setTokenContract;
       return setTokenContract;
@@ -60,6 +68,8 @@ export class ContractsAPI {
     tokenAddress: string,
     transactionOptions: object = {},
   ): Promise<ERC20Contract> {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
     const cacheKey = this.getERC20TokenCacheKey(tokenAddress);
 
     if (cacheKey in this.cache) {
@@ -67,13 +77,15 @@ export class ContractsAPI {
     } else {
       const tokenContract = await ERC20Contract.at(
         tokenAddress,
-        this.web3,
+        this.provider,
         transactionOptions,
       );
 
       if (!tokenContract) {
         throw new Error(ContractsError.ERC20_TOKEN_CONTRACT_NOT_FOUND(tokenAddress));
       }
+
+      this.assert.erc20.implementsERC20(tokenContract);
 
       this.cache[cacheKey] = tokenContract;
       return tokenContract;
