@@ -13,6 +13,10 @@ import {
 import { SetTokenAPI, ContractsAPI } from "../../../src/api";
 
 // Scenarios
+import {
+    SetIssueScenario,
+    SetRedeemScenario,
+} from "./scenarios/";
 
 // Types
 
@@ -88,7 +92,7 @@ export class SetTokenScenarioRunner {
             });
 
             beforeEach(async () => {
-
+                // Setup work for the network
             });
 
             if (scenario.successfullyRedeems) {
