@@ -6,15 +6,17 @@ import { Assertions } from "../invariants";
 
 // wrappers
 import {
-    BaseContract,
-    ContractWrapper,
-    ERC20Contract,
-    SetTokenContract,
+  BaseContract,
+  ContractWrapper,
+  ERC20Contract,
+  SetTokenContract,
+  SetTokenRegistryContract,
 } from "../wrappers";
 
 export interface SetContracts {
-    ERC20: ERC20Contract;
-    setToken: SetTokenContract;
+  ERC20: ERC20Contract;
+  setToken: SetTokenContract;
+  setTokenRegistry: SetTokenRegistryContract;
 }
 
 export const ContractsError = {
@@ -31,9 +33,9 @@ export class ContractsAPI {
   private cache: { [contractName: string]: ContractWrapper };
 
   public constructor(provider: Web3) {
-      this.provider = provider;
-      this.cache = {};
-      this.assert = new Assertions(this.provider);
+    this.provider = provider;
+    this.cache = {};
+    this.assert = new Assertions(this.provider);
   }
 
   public async loadSetTokenAsync(
@@ -75,11 +77,7 @@ export class ContractsAPI {
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as ERC20Contract;
     } else {
-      const tokenContract = await ERC20Contract.at(
-        tokenAddress,
-        this.provider,
-        transactionOptions,
-      );
+      const tokenContract = await ERC20Contract.at(tokenAddress, this.provider, transactionOptions);
 
       if (!tokenContract) {
         throw new Error(ContractsError.ERC20_TOKEN_CONTRACT_NOT_FOUND(tokenAddress));

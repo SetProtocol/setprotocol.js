@@ -2,11 +2,13 @@
 import * as ABIDecoder from "abi-decoder";
 import compact = require("lodash.compact");
 import * as Web3 from "web3";
+
 import { BigNumber } from "../../../src/util/bignumber";
 
 // Wrappers
 import {
     SetTokenContract,
+    SetTokenRegistryContract,
 } from "../../../src/wrappers";
 
 // APIs
@@ -28,7 +30,7 @@ const TX_DEFAULTS = { from: ACCOUNTS[0].address, gas: 4712388 };
 
 export class SetTokenScenarioRunner {
     public web3Utils: Web3Utils;
-    public setToken: SetTokenContract;
+    public setTokenRegistry: SetTokenRegistryContract;
     public setTokenApi: SetTokenAPI;
     public contractsApi: ContractsAPI;
 
@@ -50,11 +52,11 @@ export class SetTokenScenarioRunner {
     public testIssueScenario(scenario: SetIssueScenario) {
         describe(scenario.description, () => {
             beforeAll(() => {
-                ABIDecoder.addABI(this.setToken.abi);
+                ABIDecoder.addABI(this.setTokenRegistry.abi);
             });
 
             afterAll(() => {
-                ABIDecoder.removeABI(this.setToken.abi);
+                ABIDecoder.removeABI(this.setTokenRegistry.abi);
             });
 
             beforeEach(async () => {
@@ -63,7 +65,7 @@ export class SetTokenScenarioRunner {
 
             if (scenario.successfullyIssues) {
                 test("emits log indicating successful issue", async () => {
-                    const txHash = await this.setTokenApi.issueSetAsync(SetTokenContract.address, new BigNumber(1), ACCOUNTS[0].address);
+                    const txHash = await this.setTokenApi.issueSetAsync(scenario.setTokenAddress, scenario.quantity, scenario.userAddress);
 
                     const receipt = await this.web3Utils.getTransactionReceiptAsync(txHash);
 
@@ -74,7 +76,7 @@ export class SetTokenScenarioRunner {
             } else {
                 test(`throws ${scenario.errorType} error`, async () => {
                     await expect(
-                        this.setTokenApi.issueSetAsync(SetTokenContract.address, new BigNumber(1), ACCOUNTS[0].address),
+                        this.setTokenApi.issueSetAsync(scenario.setTokenAddress, scenario.quantity, scenario.userAddress),
                     ).rejects.toThrow(scenario.errorMessage);
                 });
             }
@@ -84,11 +86,11 @@ export class SetTokenScenarioRunner {
     public async testRedeemScenario(scenario: SetRedeemScenario) {
         describe(scenario.description, () => {
             beforeAll(() => {
-                ABIDecoder.addABI(this.setToken.abi);
+                ABIDecoder.addABI(this.setTokenRegistry.abi);
             });
 
             afterAll(() => {
-                ABIDecoder.removeABI(this.setToken.abi);
+                ABIDecoder.removeABI(this.setTokenRegistry.abi);
             });
 
             beforeEach(async () => {
@@ -97,7 +99,7 @@ export class SetTokenScenarioRunner {
 
             if (scenario.successfullyRedeems) {
                 test("emits log indicating successful redeem", async () => {
-                    const txHash = await this.setTokenApi.redeemSetAsync(address, new BigNumber(1), ACCOUNTS[0].address);
+                    const txHash = await this.setTokenApi.redeemSetAsync(scenario.setTokenAddress, scenario.quantity, scenario.userAddress);
                     const receipt = await this.web3Utils.getTransactionReceiptAsync(txHash);
 
                     const [setRedeemedLog] = compact(ABIDecoder.decodeLogs(receipt.logs));
@@ -107,7 +109,7 @@ export class SetTokenScenarioRunner {
             } else {
                 test(`throws ${scenario.errorType} error`, async () => {
                     await expect(
-                        this.setTokenApi.redeemSetAsync(address, new BigNumber(1), ACCOUNTS[0].address),
+                        this.setTokenApi.redeemSetAsync(scenario.setTokenAddress, scenario.quantity, scenario.userAddress),
                     ).rejects.toThrow(scenario.errorMessage);
                 });
             }
