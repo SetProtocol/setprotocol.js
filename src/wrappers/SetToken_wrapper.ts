@@ -7,7 +7,6 @@ import { TxData, TxDataPayable } from "../types/common";
 import { promisify } from "@0xproject/utils";
 import { classUtils } from "../types/common";
 import { BigNumber } from "../util/bignumber";
-import * as fs from "fs-extra";
 import * as Web3 from "web3";
 
 import { BaseContract } from "./base_contract";
@@ -699,8 +698,8 @@ export class SetTokenContract extends BaseContract {
     private static async getArtifactsData(web3: Web3):
         Promise<any> {
         try {
-            const artifact = await fs.readFile("artifacts/SetToken.json", "utf8");
-            const { abi, networks } = JSON.parse(artifact);
+            const artifact = require("../../artifacts/SetToken.json");
+            const { abi, networks } = artifact;
             return { abi, networks };
         } catch (e) {
             console.error("Artifacts malformed or nonexistent: " + e.toString());

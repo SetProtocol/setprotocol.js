@@ -1,6 +1,6 @@
 /**
  * These files have been borrowed from Dharma.js!
-*/
+ */
 
 import { Schema, Validator, ValidatorResult } from "jsonschema";
 import * as _ from "lodash";

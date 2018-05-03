@@ -1,6 +1,6 @@
 /**
  * These files have been borrowed from Dharma.js!
-*/
+ */
 
 export const addressSchema = {
     id: "/Address",

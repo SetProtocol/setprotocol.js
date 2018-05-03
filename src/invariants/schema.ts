@@ -9,7 +9,7 @@ export const SchemaAssertionsError = {
   ) => `
         Expected ${variableName} to conform to schema ${schemaId}
 
-        Encountered: ${JSON.stringify(value, null, "\t")}
+        Encountered: ${JSON.stringify(value, undefined, "\t")}
 
         Validation errors: ${validationResult.errors.join(", ")}
       `,

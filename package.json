@@ -1,6 +1,6 @@
 {
   "name": "setprotocol.js",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "description": "A javascript library for interacting with the {Set} protocol",
   "keywords": [
     "setProtocol.js",
@@ -42,7 +42,6 @@
     "@types/lodash": "^4.14.93",
     "bignumber.js": "^5.0.0",
     "chai": "^4.1.2",
-    "fs-extra": "^5.0.0",
     "gh-pages": "^1.1.0",
     "husky": "^0.14.3",
     "jest": "^22.1.4",

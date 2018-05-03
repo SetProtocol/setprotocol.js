@@ -40,7 +40,7 @@ export class ContractsAPI {
     setTokenAddress: string,
     transactionOptions: object = {},
   ): Promise<SetTokenContract> {
-    this.assert.schema.isValidAddress('setTokenAddress', setTokenAddress);
+    this.assert.schema.isValidAddress("setTokenAddress", setTokenAddress);
 
     const cacheKey = this.getSetTokenCacheKey(setTokenAddress);
 
@@ -68,7 +68,7 @@ export class ContractsAPI {
     tokenAddress: string,
     transactionOptions: object = {},
   ): Promise<ERC20Contract> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    this.assert.schema.isValidAddress("tokenAddress", tokenAddress);
 
     const cacheKey = this.getERC20TokenCacheKey(tokenAddress);
 
