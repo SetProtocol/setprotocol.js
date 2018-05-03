@@ -12,6 +12,8 @@ const erc20Assert = new ERC20Assertions();
 export const TokenAssertionErrors = {
   QUANTITY_NOT_MULTIPLE_OF_NATURAL_UNIT: (setAddress: string, quantity: BigNumber, naturalUnit: BigNumber) =>
     `Quantity ${quantity.toString()} for token at address (${setAddress}) is not a multiple of natural unit (${naturalUnit.toString()}).`,
+  MISSING_SET_METHOD: (address: string) =>
+    `Contract at ${address} does not implement SET.`,
 };
 
 export class SetTokenAssertions {
@@ -19,6 +21,16 @@ export class SetTokenAssertions {
 
   constructor(web3: Web3) {
     this.web3 = web3;
+  }
+
+  public async implementsSet(setInstance: SetTokenContract): Promise<void> {
+    const { address } = setInstance;
+
+    try {
+      await setInstance.naturalUnit.callAsync();
+    } catch (error) {
+      throw new Error(TokenAssertionErrors.MISSING_SET_METHOD(address));
+    }
   }
 
   public async isMultipleOfNaturalUnit(

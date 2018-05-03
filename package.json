@@ -19,6 +19,7 @@
     "test": "jest --forceExit",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
     "watch-ts": "tsc -w",
+    "playground": "yarn run build-ts; node dist/playground",
     "tslint-check": "tslint-config-prettier-check ./tslint.json",
     "precommit": "lint-staged",
     "clean-docs": "rm -rf documentation/interfaces; rm -rf documentation/modules; rm -rf documentation/README.md",
@@ -56,6 +57,7 @@
     "web3-typescript-typings": "^0.9.4"
   },
   "dependencies": {
+    "jsonschema": "^1.2.4",
     "lodash": "^4.17.4",
     "set-protocol-contracts": "^0.2.0",
     "truffle-contract": "^3.0.1",

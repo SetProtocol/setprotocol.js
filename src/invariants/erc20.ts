@@ -7,6 +7,19 @@ export const TokenAssertionErrors = {
 };
 
 export class ERC20Assertions {
+  // Throws if the given candidateContract does not respond to some methods from the ERC20 interface.
+  public async implementsERC20(tokenInstance: ERC20): Promise<void> {
+    const { address } = tokenInstance;
+
+    try {
+      await tokenInstance.balanceOf.callAsync(address);
+      await tokenInstance.allowance.callAsync(address, address);
+      await tokenInstance.totalSupply.callAsync();
+    } catch (error) {
+      throw new Error(TokenAssertionErrors.MISSING_ERC20_METHOD(address));
+    }
+  }
+
   public async hasSufficientBalance(
     token: ERC20,
     payer: string,

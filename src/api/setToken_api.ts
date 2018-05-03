@@ -40,6 +40,8 @@ export class SetTokenAPI {
    * @return            a promise with the list of Components, an object with the address and unit
    */
   public async getComponents(setAddress: Address): Promise<Component[]> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     const componentAddresses = await setTokenInstance.getComponents.callAsync();
     const units = await setTokenInstance.getUnits.callAsync();
@@ -63,6 +65,7 @@ export class SetTokenAPI {
    *  @return            a promise with the Natural Unit
    */
   public async getNaturalUnit(setAddress: Address): Promise<BigNumber> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
     return naturalUnit;
@@ -76,6 +79,10 @@ export class SetTokenAPI {
    *  @param  userAddress The user address
    */
   public async issueSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.schema.isValidNumber('quantityInWei', quantityInWei);
+
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress, { from: userAddress });
 
     await this.assert.common.greaterThanZero(
