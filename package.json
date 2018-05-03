@@ -1,6 +1,6 @@
 {
   "name": "setprotocol.js",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "A javascript library for interacting with the {Set} protocol",
   "keywords": [
     "setProtocol.js",
@@ -10,7 +10,7 @@
     "basket",
     "ERC20"
   ],
-  "main": "dist/SetProtocol.js",
+  "main": "dist/index.js",
   "scripts": {
     "prod": "yarn run build",
     "chain": "bash scripts/init_chain.sh",
@@ -29,7 +29,7 @@
   "config": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/SetProtocol/setProtocol.js"
+    "url": "https://github.com/SetProtocol/index.js"
   },
   "license": "Apache-2.0",
   "engines": {
