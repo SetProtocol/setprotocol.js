@@ -16,7 +16,6 @@ import { SetTokenAPI } from "../../../../src/api";
 export interface SetIssueScenario {
     description: string;
     successfullyIssues: boolean;
-    setTokenAddress: string;
     quantity: BigNumber;
     userAddress: string;
     errorType?: string;
@@ -26,7 +25,6 @@ export interface SetIssueScenario {
 export interface SetRedeemScenario {
     description: string;
     successfullyRedeems: boolean;
-    setTokenAddress: string;
     quantity: BigNumber;
     userAddress: string;
     errorType?: string;

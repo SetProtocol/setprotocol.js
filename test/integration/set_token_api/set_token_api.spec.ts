@@ -5,7 +5,7 @@ import * as Web3 from "web3";
 import { BigNumber } from "../../../src/util/bignumber";
 
 // APIs
-import { SetTokenAPI, ContractsAPI } from "../../../src/api";
+import { SetTokenAPI, ContractsAPI, ERC20API } from "../../../src/api";
 
 // Utils
 import { Web3Utils } from "../../../src/util/web3_utils";
@@ -42,6 +42,7 @@ describe("Set Token API (Integration Tests)", () => {
         scenarioRunner.web3Utils = new Web3Utils(web3);
         scenarioRunner.contractsApi = new ContractsAPI(web3);
         scenarioRunner.setTokenApi = new SetTokenAPI(web3, scenarioRunner.contractsApi);
+        scenarioRunner.erc20Api = new ERC20API(web3, scenarioRunner.contractsApi);
 
         scenarioRunner.setTokenRegistry = await SetTokenRegistryContract.deployed(web3, TX_DEFAULTS);
     });
@@ -52,10 +53,7 @@ describe("Set Token API (Integration Tests)", () => {
 
     describe("#issueSetAsync", () => {
         describe("Valid Set issues", () => {
-            // VALID_ORDERS.forEach(scenarioRunner.testIssueScenario);
-            test("runs tests", () => {
-                expect(1).toBe(1);
-            });
+            VALID_ISSUES.forEach(scenarioRunner.testIssueScenario);
         });
 
         describe("Invalid Set issues", () => {

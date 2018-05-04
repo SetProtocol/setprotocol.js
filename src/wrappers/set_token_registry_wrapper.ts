@@ -354,9 +354,7 @@ export class SetTokenRegistryContract extends BaseContract {
   }
   static async deployed(web3: Web3, defaults: Partial<TxData>): Promise<SetTokenRegistryContract> {
     const currentNetwork = web3.version.network;
-    console.log(currentNetwork);
     const { abi, networks }: { abi: any; networks: any } = ContractArtifacts;
-    console.log(networks);
     const web3ContractInstance = web3.eth.contract(abi).at(networks[currentNetwork].address);
 
     return new SetTokenRegistryContract(web3ContractInstance, defaults);

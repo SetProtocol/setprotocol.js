@@ -5233,9 +5233,9 @@ set-immediate-shim@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/set-immediate-shim/-/set-immediate-shim-1.0.1.tgz#4b2b1b27eb808a9f8dcc481a58e5e56f599f3f61"
 
-set-protocol-contracts@^0.2.2:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-0.2.2.tgz#d3ce65e411d68f8f19fc83fa5f3fc73c1dd89d17"
+set-protocol-contracts@^0.2.4:
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-0.2.4.tgz#92f4131addb6df49d465008bd698b94a4d26e5c5"
   dependencies:
     fs-extra "^5.0.0"
     truffle-hdwallet-provider "^0.0.3"
