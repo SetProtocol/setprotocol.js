@@ -85,11 +85,9 @@ export class SetTokenScenarioRunner {
             if (scenario.successfullyIssues) {
                 test("emits log indicating successful issue", async () => {
                     const txHash = await this.setTokenApi.issueSetAsync(primarySetToken.address, scenario.quantity, scenario.userAddress);
-
                     const receipt = await this.web3Utils.getTransactionReceiptAsync(txHash);
 
                     const logs: ReceiptLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));
-
                     expect(logs[logs.length - 1].name).toBe("LogIssuance");
                 });
             } else {
@@ -106,11 +104,11 @@ export class SetTokenScenarioRunner {
         let primarySetToken: SetTokenContract;
         describe(scenario.description, () => {
             beforeAll(() => {
-                ABIDecoder.addABI(this.setTokenRegistry.abi);
+                ABIDecoder.addABI(this.setToken.abi);
             });
 
             afterAll(() => {
-                ABIDecoder.removeABI(this.setTokenRegistry.abi);
+                ABIDecoder.removeABI(this.setToken.abi);
             });
 
             beforeEach(async () => {
@@ -125,9 +123,8 @@ export class SetTokenScenarioRunner {
                     const txHash = await this.setTokenApi.redeemSetAsync(primarySetToken.address, scenario.quantity, scenario.userAddress);
                     const receipt = await this.web3Utils.getTransactionReceiptAsync(txHash);
 
-                    const [setRedeemedLog] = compact(ABIDecoder.decodeLogs(receipt.logs));
-
-                    expect(setRedeemedLog.name).toBe("LogRedemption");
+                    const logs: ReceiptLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));
+                    expect(logs[logs.length - 1].name).toBe("LogRedemption");
                 });
             } else {
                 test(`throws ${scenario.errorType} error`, async () => {
