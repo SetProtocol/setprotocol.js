@@ -31,6 +31,7 @@ const TX_DEFAULTS = { from: ACCOUNTS[0].address, gas: 4712388 };
 
 export class SetTokenScenarioRunner {
     public web3Utils: Web3Utils;
+    public setToken: SetTokenContract;
     public setTokenRegistry: SetTokenRegistryContract;
     public setTokenApi: SetTokenAPI;
     public contractsApi: ContractsAPI;
@@ -57,11 +58,11 @@ export class SetTokenScenarioRunner {
         let primarySetToken: SetTokenContract;
         describe(scenario.description, () => {
             beforeAll(() => {
-                ABIDecoder.addABI(this.setTokenRegistry.abi);
+                ABIDecoder.addABI(this.setToken.abi);
             });
 
             afterAll(() => {
-                ABIDecoder.removeABI(this.setTokenRegistry.abi);
+                ABIDecoder.removeABI(this.setToken.abi);
             });
 
             beforeEach(async () => {
