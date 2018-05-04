@@ -44,8 +44,10 @@ describe("Set Token API (Integration Tests)", () => {
         scenarioRunner.setTokenApi = new SetTokenAPI(web3, scenarioRunner.contractsApi);
         scenarioRunner.erc20Api = new ERC20API(web3, scenarioRunner.contractsApi);
 
-        scenarioRunner.setToken = await SetTokenContract.deployed(web3, TX_DEFAULTS);
-        scenarioRunner.setTokenRegistry = await SetTokenRegistryContract.deployed(web3, TX_DEFAULTS);
+        const setTokenRegistryInstance = await SetTokenRegistryContract.deployed(web3, TX_DEFAULTS);
+        const setAddresses = await setTokenRegistryInstance.getSetAddresses.callAsync();
+        scenarioRunner.setTokenRegistry = setTokenRegistryInstance;
+        scenarioRunner.setToken = await SetTokenContract.at(setAddresses[0], web3, TX_DEFAULTS);
     });
 
     beforeEach(scenarioRunner.saveSnapshotAsync);

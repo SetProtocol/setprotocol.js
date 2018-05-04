@@ -29,6 +29,12 @@ import { ACCOUNTS } from "../../accounts";
 
 const TX_DEFAULTS = { from: ACCOUNTS[0].address, gas: 4712388 };
 
+interface ReceiptLog {
+    name: string;
+    events: Object[];
+    address: string;
+}
+
 export class SetTokenScenarioRunner {
     public web3Utils: Web3Utils;
     public setToken: SetTokenContract;
@@ -42,7 +48,6 @@ export class SetTokenScenarioRunner {
     private readonly web3: Web3;
 
     constructor(web3: Web3) {
-
         this.web3Utils = new Web3Utils(web3);
         this.web3 = web3;
 
@@ -56,6 +61,7 @@ export class SetTokenScenarioRunner {
     public async testIssueScenario(scenario: SetIssueScenario) {
         const TX_DEFAULTS = { from: ACCOUNTS[0].address, gas: 4712388 };
         let primarySetToken: SetTokenContract;
+
         describe(scenario.description, () => {
             beforeAll(() => {
                 ABIDecoder.addABI(this.setToken.abi);
@@ -67,7 +73,6 @@ export class SetTokenScenarioRunner {
 
             beforeEach(async () => {
                 const setAddresses = await this.setTokenRegistry.getSetAddresses.callAsync();
-                console.log(setAddresses);
                 primarySetToken = await this.contractsApi.loadSetTokenAsync(setAddresses[0], {
                   from: scenario.userAddress,
                 });
@@ -83,9 +88,9 @@ export class SetTokenScenarioRunner {
 
                     const receipt = await this.web3Utils.getTransactionReceiptAsync(txHash);
 
-                    const [setIssuedLog] = compact(ABIDecoder.decodeLogs(receipt.logs))
+                    const logs: ReceiptLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));
 
-                    expect(setIssuedLog.name).toBe("LogIssuance");
+                    expect(logs[logs.length - 1].name).toBe("LogIssuance");
                 });
             } else {
                 test(`throws ${scenario.errorType} error`, async () => {
