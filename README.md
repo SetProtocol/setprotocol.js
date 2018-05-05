@@ -50,7 +50,10 @@ yarn test:watch
 
 ## Troubleshooting
 Do not use Node version 10+ as it may have issues during `npm install` or `yarn install` with the `sha3` package.  Use `nvm install 9.11.1 && nvm use 9.11.1` for now.
+
 You also will need to be on `ganache-cli@6.0.3`.  Newer versions may work but some of the newer ones do not work so it is currently pegged to an earlier version.
+
+Occasionally, you may need to run `yarn run chain --reset` or just re-run `yarn chain` to make sure that you have up to date contracts after running `yarn install` with an update to the `set-protocol-contracts` package.
 
 ## setProtocol.js API Reference
 * [contracts](documentation/classes/_contracts_api_.contractsapi.md)
