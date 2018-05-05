@@ -14,6 +14,7 @@ import { ACCOUNTS } from "../../accounts";
 // Scenarios
 import {
     VALID_ISSUES,
+    INVALID_ISSUES,
 } from "./scenarios";
 
 // Runners
@@ -38,42 +39,39 @@ const scenarioRunner = new SetTokenScenarioRunner(web3);
 const TX_DEFAULTS = { from: ACCOUNTS[0].address, gas: 4712388 };
 
 describe("Set Token API (Integration Tests)", () => {
-    beforeAll(async () => {
-        scenarioRunner.web3Utils = new Web3Utils(web3);
-        scenarioRunner.contractsApi = new ContractsAPI(web3);
-        scenarioRunner.setTokenApi = new SetTokenAPI(web3, scenarioRunner.contractsApi);
-        scenarioRunner.erc20Api = new ERC20API(web3, scenarioRunner.contractsApi);
+  beforeAll(async () => {
+    scenarioRunner.web3Utils = new Web3Utils(web3);
+    scenarioRunner.contractsApi = new ContractsAPI(web3);
+    scenarioRunner.setTokenApi = new SetTokenAPI(web3, scenarioRunner.contractsApi);
+    scenarioRunner.erc20Api = new ERC20API(web3, scenarioRunner.contractsApi);
 
-        const setTokenRegistryInstance = await SetTokenRegistryContract.deployed(web3, TX_DEFAULTS);
-        const setAddresses = await setTokenRegistryInstance.getSetAddresses.callAsync();
-        scenarioRunner.setTokenRegistry = setTokenRegistryInstance;
-        scenarioRunner.setToken = await SetTokenContract.at(setAddresses[0], web3, TX_DEFAULTS);
+    const setTokenRegistryInstance = await SetTokenRegistryContract.deployed(web3, TX_DEFAULTS);
+    const setAddresses = await setTokenRegistryInstance.getSetAddresses.callAsync();
+    scenarioRunner.setTokenRegistry = setTokenRegistryInstance;
+    scenarioRunner.setToken = await SetTokenContract.at(setAddresses[0], web3, TX_DEFAULTS);
+  });
+
+  beforeEach(scenarioRunner.saveSnapshotAsync);
+
+  afterEach(scenarioRunner.revertToSavedSnapshot);
+
+  describe("#issueSetAsync", () => {
+    describe("Valid Set issues", () => {
+      VALID_ISSUES.forEach(scenarioRunner.testIssueScenario);
     });
 
-    beforeEach(scenarioRunner.saveSnapshotAsync);
+    describe("Invalid Set issues", () => {
+      INVALID_ISSUES.forEach(scenarioRunner.testIssueScenario);
+    });
+  });
 
-    afterEach(scenarioRunner.revertToSavedSnapshot);
-
-    describe("#issueSetAsync", () => {
-        describe("Valid Set issues", () => {
-            VALID_ISSUES.forEach(scenarioRunner.testIssueScenario);
-        });
-
-        describe("Invalid Set issues", () => {
-            // INVALID_ORDERS.forEach(scenarioRunner.testIssueScenario);
-            expect(1).toBe(1);
-        });
+  describe("#redeemSetAsync", () => {
+    describe("Valid Set redeems", () => {
+      // VALID_REDEEMS.forEach(scenarioRunner.testRedeemScenario);
     });
 
-    describe("#redeemSetAsync", () => {
-        describe("Valid Set redeems", () => {
-            // VALID_ORDERS.forEach(scenarioRunner.testRedeemScenario);
-            expect(1).toBe(1);
-        });
-
-        describe("Invalid Set redeems", () => {
-            // INVALID_ORDERS.forEach(scenarioRunner.testRedeemScenario);
-            expect(1).toBe(1);
-        });
+    describe("Invalid Set redeems", () => {
+      // INVALID_REDEEMS.forEach(scenarioRunner.testRedeemScenario);
     });
+  });
 });
