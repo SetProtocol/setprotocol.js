@@ -14,8 +14,9 @@
 
 ### Properties
 
+* [assert](_contracts_api_.contractsapi.md#assert)
 * [cache](_contracts_api_.contractsapi.md#cache)
-* [web3](_contracts_api_.contractsapi.md#web3)
+* [provider](_contracts_api_.contractsapi.md#provider)
 
 ### Methods
 
@@ -32,15 +33,15 @@
 
 ###  constructor
 
-⊕ **new ContractsAPI**(web3: *`Web3`*): [ContractsAPI](_contracts_api_.contractsapi.md)
+⊕ **new ContractsAPI**(provider: *`Web3`*): [ContractsAPI](_contracts_api_.contractsapi.md)
 
-*Defined in [contracts_api.ts:28](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L28)*
+*Defined in [contracts_api.ts:33](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/contracts_api.ts#L33)*
 
 **Parameters:**
 
 | Param | Type |
 | ------ | ------ |
-| web3 | `Web3` | 
+| provider | `Web3` | 
 
 **Returns:** [ContractsAPI](_contracts_api_.contractsapi.md)
 
@@ -48,26 +49,35 @@ ___
 
 ## Properties
 
+<a id="assert"></a>
+
+### `<Private>` assert
+
+**● assert**: *`Assertions`*
+
+*Defined in [contracts_api.ts:31](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/contracts_api.ts#L31)*
+
+___
 <a id="cache"></a>
 
 ### `<Private>` cache
 
 **● cache**: *`object`*
 
-*Defined in [contracts_api.ts:28](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L28)*
+*Defined in [contracts_api.ts:33](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/contracts_api.ts#L33)*
 
 #### Type declaration
 
 [contractName: `string`]: `ContractWrapper`
 
 ___
-<a id="web3"></a>
+<a id="provider"></a>
 
-### `<Private>` web3
+### `<Private>` provider
 
-**● web3**: *`Web3`*
+**● provider**: *`Web3`*
 
-*Defined in [contracts_api.ts:26](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L26)*
+*Defined in [contracts_api.ts:30](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/contracts_api.ts#L30)*
 
 ___
 
@@ -79,7 +89,7 @@ ___
 
 ▸ **getERC20TokenCacheKey**(tokenAddress: *`string`*): `string`
 
-*Defined in [contracts_api.ts:83](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L83)*
+*Defined in [contracts_api.ts:93](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/contracts_api.ts#L93)*
 
 **Parameters:**
 
@@ -96,7 +106,7 @@ ___
 
 ▸ **getSetTokenCacheKey**(tokenAddress: *`string`*): `string`
 
-*Defined in [contracts_api.ts:87](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L87)*
+*Defined in [contracts_api.ts:97](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/contracts_api.ts#L97)*
 
 **Parameters:**
 
@@ -113,7 +123,7 @@ ___
 
 ▸ **loadERC20TokenAsync**(tokenAddress: *`string`*, transactionOptions?: *`object`*): `Promise`<`ERC20Contract`>
 
-*Defined in [contracts_api.ts:59](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L59)*
+*Defined in [contracts_api.ts:69](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/contracts_api.ts#L69)*
 
 **Parameters:**
 
@@ -131,7 +141,7 @@ ___
 
 ▸ **loadSetTokenAsync**(setTokenAddress: *`string`*, transactionOptions?: *`object`*): `Promise`<`SetTokenContract`>
 
-*Defined in [contracts_api.ts:35](https://github.com/SetProtocol/setProtocol.js/blob/d672f9f/src/api/contracts_api.ts#L35)*
+*Defined in [contracts_api.ts:41](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/contracts_api.ts#L41)*
 
 **Parameters:**
 

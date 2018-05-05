@@ -1,9 +1,9 @@
 import { BigNumber } from "../util/bignumber";
-import { DetailedERC20Contract as ERC20 } from "../wrappers/DetailedERC20_wrapper";
+import { DetailedERC20Contract as ERC20 } from "../wrappers/detailed_erc20_wrapper";
 
 export const TokenAssertionErrors = {
   MISSING_ERC20_METHOD: (address: string) =>
-      `Contract at ${address} does not implement ERC20 interface.`,
+    `Contract at ${address} does not implement ERC20 interface.`,
 };
 
 export class ERC20Assertions {
