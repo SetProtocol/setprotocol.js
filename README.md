@@ -69,8 +69,8 @@ You also will need to be on `ganache-cli@6.0.3`.  Newer versions may work but so
   * [setUnlimitedAllowanceAsync](documentation/classes/_erc20_api_.erc20api.md#setunlimitedallowanceasync)
   * [transferAsync](_erc20_api_.erc20api.md#transferasync)
 
-* [setToken](documentation/classes/_settoken_api_.settokenapi.md)
-  * [getComponents](documentation/classes/_settoken_api_.settokenapi.md#getcomponents)
-  * [getNaturalUnit](documentation/classes/_settoken_api_.settokenapi.md#getnaturalunit)
-  * [issueSetAsync](documentation/classes/_settoken_api_.settokenapi.md#issuesetasync)
-  * [redeemSetAsync](documentation/classes/_settoken_api_.settokenapi.md#redeemsetasync)
+* [setToken](documentation/classes/_set_token_api_.settokenapi.md)
+  * [getComponents](documentation/classes/_set_token_api_.settokenapi.md#getcomponents)
+  * [getNaturalUnit](documentation/classes/_set_token_api_.settokenapi.md#getnaturalunit)
+  * [issueSetAsync](documentation/classes/_set_token_api_.settokenapi.md#issuesetasync)
+  * [redeemSetAsync](documentation/classes/_set_token_api_.settokenapi.md#redeemsetasync)
