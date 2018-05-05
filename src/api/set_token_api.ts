@@ -1,13 +1,10 @@
 import * as Web3 from "web3";
 import * as _ from "lodash";
 import { BigNumber } from "../util/bignumber";
-import { Address, UInt, Token } from "../types/common";
+import { Address, UInt, Token, Component } from "../types/common";
 
 import { Assertions } from "../invariants";
-import {
-  SetTokenContract,
-  ERC20Contract as ERC20,
-} from "../wrappers";
+import { SetTokenContract, ERC20Contract as ERC20 } from "../wrappers";
 
 // APIs
 import { ContractsAPI } from ".";
@@ -16,11 +13,6 @@ export const SetTokenAPIErrors = {
   QUANTITY_NEEDS_TO_BE_NON_ZERO: (quantity: BigNumber) =>
     `The quantity ${quantity.toString()} inputted needs to be non-zero`,
 };
-
-interface Component {
-  address: Address;
-  unit: BigNumber;
-}
 
 export class SetTokenAPI {
   private provider: Web3;
@@ -78,25 +70,34 @@ export class SetTokenAPI {
    *  @param  quantityInWei The amount in Wei; This should be a multiple of the natural Unit
    *  @param  userAddress The user address
    */
-  public async issueSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
+  public async issueSetAsync(
+    setAddress: Address,
+    quantityInWei: BigNumber,
+    userAddress: Address,
+  ): Promise<string> {
     this.assert.schema.isValidAddress("setAddress", setAddress);
     this.assert.schema.isValidAddress("userAddress", userAddress);
     this.assert.schema.isValidNumber("quantityInWei", quantityInWei);
 
-    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress, { from: userAddress });
+    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress, {
+      from: userAddress,
+    });
 
     await this.assert.common.greaterThanZero(
       quantityInWei,
-      SetTokenAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(quantityInWei)
+      SetTokenAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(quantityInWei),
     );
     await this.assert.setToken.isMultipleOfNaturalUnit(setTokenInstance, quantityInWei);
     await this.assert.setToken.hasSufficientBalances(setTokenInstance, quantityInWei, userAddress);
-    await this.assert.setToken.hasSufficientAllowances(setTokenInstance, quantityInWei, userAddress);
-
-    const txHash = setTokenInstance.issue.sendTransactionAsync(
+    await this.assert.setToken.hasSufficientAllowances(
+      setTokenInstance,
       quantityInWei,
-      { from: userAddress }
+      userAddress,
     );
+
+    const txHash = setTokenInstance.issue.sendTransactionAsync(quantityInWei, {
+      from: userAddress,
+    });
 
     return txHash;
   }
@@ -108,18 +109,30 @@ export class SetTokenAPI {
    *  @param  quantityInWei The amount in Wei; This should be a multiple of the natural Unit
    *  @param  userAddress The user address
    */
-  public async redeemSetAsync(setAddress: Address, quantityInWei: BigNumber, userAddress: Address): Promise<string> {
-    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress, { from: userAddress });
+  public async redeemSetAsync(
+    setAddress: Address,
+    quantityInWei: BigNumber,
+    userAddress: Address,
+  ): Promise<string> {
+    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress, {
+      from: userAddress,
+    });
 
     await this.assert.common.greaterThanZero(
       quantityInWei,
-      SetTokenAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(quantityInWei)
+      SetTokenAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(quantityInWei),
     );
     await this.assert.setToken.isMultipleOfNaturalUnit(setTokenInstance, quantityInWei);
     await this.assert.setToken.hasSufficientBalances(setTokenInstance, quantityInWei, userAddress);
-    await this.assert.setToken.hasSufficientAllowances(setTokenInstance, quantityInWei, userAddress);
+    await this.assert.setToken.hasSufficientAllowances(
+      setTokenInstance,
+      quantityInWei,
+      userAddress,
+    );
 
-    const txHash = setTokenInstance.redeem.sendTransactionAsync(quantityInWei, { from: userAddress });
+    const txHash = setTokenInstance.redeem.sendTransactionAsync(quantityInWei, {
+      from: userAddress,
+    });
 
     return txHash;
   }
