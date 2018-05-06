@@ -15,6 +15,8 @@ import { ACCOUNTS } from "../../accounts";
 import {
     VALID_ISSUES,
     INVALID_ISSUES,
+    VALID_REDEEMS,
+    INVALID_REDEEMS,
 } from "./scenarios";
 
 // Runners
@@ -26,7 +28,7 @@ import {
   SetTokenRegistryContract,
 } from "../../../src/wrappers";
 
-// Given that this is an integration test, we unmock the Dharma
+// Given that this is an integration test, we unmock the Set Protocol
 // smart contracts artifacts package to pull the most recently
 // deployed contracts on the current network.
 jest.unmock("set-protocol-contracts");
@@ -67,11 +69,11 @@ describe("Set Token API (Integration Tests)", () => {
 
   describe("#redeemSetAsync", () => {
     describe("Valid Set redeems", () => {
-      // VALID_REDEEMS.forEach(scenarioRunner.testRedeemScenario);
+      VALID_REDEEMS.forEach(scenarioRunner.testRedeemScenario);
     });
 
     describe("Invalid Set redeems", () => {
-      // INVALID_REDEEMS.forEach(scenarioRunner.testRedeemScenario);
+      INVALID_REDEEMS.forEach(scenarioRunner.testRedeemScenario);
     });
   });
 });

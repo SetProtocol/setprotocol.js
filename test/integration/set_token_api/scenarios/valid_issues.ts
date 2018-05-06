@@ -6,6 +6,7 @@ export const VALID_ISSUES: SetIssueScenario[] = [
   {
     description: "valid issue of set",
     successfullyIssues: true,
+    hasAllowances: true,
     selectSet: (
       setAddresses: string[],
     ) => setAddresses[0],
@@ -17,6 +18,7 @@ export const VALID_ISSUES: SetIssueScenario[] = [
   {
     description: "valid issue of a different set",
     successfullyIssues: true,
+    hasAllowances: true,
     selectSet: (
       setAddresses: string[],
     ) => setAddresses[setAddresses.length - 1],
