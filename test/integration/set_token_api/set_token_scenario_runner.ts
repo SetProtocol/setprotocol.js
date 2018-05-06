@@ -22,6 +22,7 @@ import {
 } from "./scenarios/";
 
 // Types
+import { Component } from "../../../src/types/common";
 
 // Utils
 import { Web3Utils } from "../../../src/util/web3_utils";
@@ -58,6 +59,7 @@ export class SetTokenScenarioRunner {
 
   public async testIssueScenario(scenario: SetIssueScenario) {
     let primarySetToken: SetTokenContract;
+    let components: Component[];
 
     describe(scenario.description, () => {
       beforeAll(() => {
@@ -75,20 +77,38 @@ export class SetTokenScenarioRunner {
         primarySetToken = await this.contractsApi.loadSetTokenAsync(primarySetAddress, {
           from: scenario.userAddress,
         });
-        const components = await primarySetToken.getComponents.callAsync();
-        _.each(components, async (component) => {
-            await this.erc20Api.setUnlimitedAllowanceAsync(component, primarySetAddress, scenario.userAddress);
-        });
       });
 
       if (scenario.successfullyIssues) {
         test("emits log indicating successful issue", async () => {
-          const quantity = scenario.getQuantity(await this.setTokenApi.getNaturalUnit(primarySetToken.address));
+          // Grab token balances at beginning
+          const components = await this.setTokenApi.getComponents(primarySetToken.address);
+          const componentBalances = await this.erc20Api.getUserBalancesForTokens(components.map(c => c.address), scenario.userAddress);
+
+          // Set allowances
+          await _.each(components, async (component) => {
+            if (scenario.hasAllowances) {
+              await this.erc20Api.setUnlimitedAllowanceAsync(component.address, primarySetToken.address, scenario.userAddress);
+            }
+          });
+
+          const naturalUnit = await this.setTokenApi.getNaturalUnit(primarySetToken.address);
+          const quantity = scenario.getQuantity(naturalUnit);
+
           const txHash = await this.setTokenApi.issueSetAsync(primarySetToken.address, quantity, scenario.userAddress);
           const receipt = await this.web3Utils.getTransactionReceiptAsync(txHash);
 
           const logs: ReceiptLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));
           expect(logs[logs.length - 1].name).toBe("LogIssuance");
+
+          // Check balances at end of set and underlying components
+          expect(await this.erc20Api.getUserBalance(primarySetToken.address, scenario.userAddress)).toEqual(quantity);
+
+          const newComponentBalances = await this.erc20Api.getUserBalancesForTokens(components.map(c => c.address), scenario.userAddress);
+          _.each(newComponentBalances, async (token, index) => {
+            // Difference between balances should equal the transfer value of token
+            expect(componentBalances[index].balance.minus(token.balance)).toEqual(components[index].unit.div(naturalUnit).times(quantity));
+          });
         });
       } else {
         test(`throws ${scenario.errorType} error`, async () => {

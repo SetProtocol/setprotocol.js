@@ -26,7 +26,7 @@ import {
   SetTokenRegistryContract,
 } from "../../../src/wrappers";
 
-// Given that this is an integration test, we unmock the Dharma
+// Given that this is an integration test, we unmock the Set Protocol
 // smart contracts artifacts package to pull the most recently
 // deployed contracts on the current network.
 jest.unmock("set-protocol-contracts");

@@ -3,10 +3,7 @@ import { BigNumber } from "../util/bignumber";
 import { Address, UInt, Token } from "../types/common";
 
 import { Assertions } from "../invariants";
-import {
-  SetTokenContract,
-  ERC20Contract as ERC20,
-} from "../wrappers";
+import { SetTokenContract, ERC20Contract as ERC20 } from "../wrappers";
 
 // APIs
 import { ContractsAPI } from ".";
@@ -88,7 +85,10 @@ export class ERC20API {
   /**
    *  Given a list of tokens, retrieves the user balance as well as token metadata
    */
-  public async getUserBalancesForTokens(tokenAddresses: Address[], userAddress: Address) {
+  public async getUserBalancesForTokens(
+    tokenAddresses: Address[],
+    userAddress: Address,
+  ): Promise<Token[]> {
     // For each token, get all the token metadata
     async function getUserBalanceAndAddtoResults(tokenAddress: Address) {
       const token: Token = {
@@ -96,7 +96,7 @@ export class ERC20API {
         name: "",
         symbol: "",
         balance: new BigNumber(0),
-        decimals: new BigNumber(0)
+        decimals: new BigNumber(0),
       };
       const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
       token.name = await tokenInstance.name.callAsync();
@@ -148,11 +148,7 @@ export class ERC20API {
 
     const tokenContract = await this.contracts.loadERC20TokenAsync(tokenAddress);
 
-    return tokenContract.approve.sendTransactionAsync(
-        spender,
-        allowance,
-        { from: userAddress },
-    );
+    return tokenContract.approve.sendTransactionAsync(spender, allowance, { from: userAddress });
   }
 
   /**
@@ -170,10 +166,8 @@ export class ERC20API {
     const tokenContract = await this.contracts.loadERC20TokenAsync(tokenAddress);
     const unlimitedAllowance = new BigNumber(2).pow(256).minus(100);
 
-    return tokenContract.approve.sendTransactionAsync(
-        spender,
-        unlimitedAllowance,
-        { from: userAddress },
-    );
+    return tokenContract.approve.sendTransactionAsync(spender, unlimitedAllowance, {
+      from: userAddress,
+    });
   }
 }
