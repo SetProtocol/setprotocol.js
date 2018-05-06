@@ -106,7 +106,7 @@ export class ERC20API {
       return token;
     }
 
-    const tokensToProcess = tokenAddresses.map(getUserBalanceAndAddtoResults.bind(this));
+    const tokensToProcess: Token[] = tokenAddresses.map(getUserBalanceAndAddtoResults.bind(this));
     return await Promise.all(tokensToProcess);
   }
 
