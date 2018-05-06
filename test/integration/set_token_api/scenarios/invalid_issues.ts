@@ -4,6 +4,20 @@ import { SetIssueScenario } from "./";
 
 export const INVALID_ISSUES: SetIssueScenario[] = [
   {
+    description: "invalid issue of set with not enough allowances",
+    successfullyIssues: false,
+    hasAllowances: false,
+    selectSet: (
+      setAddresses: string[],
+    ) => setAddresses[0],
+    getQuantity: (
+      naturalUnit: BigNumber,
+    ) => new BigNumber(naturalUnit.times(1)),
+    userAddress: ACCOUNTS[0].address,
+    errorType: "INSUFFICIENT_ALLOWANCES",
+    errorMessage: /User does not have enough allowance of token at address/,
+  },
+  {
     description: "invalid issue of set with too low of quantity",
     successfullyIssues: false,
     hasAllowances: true,
@@ -44,19 +58,5 @@ export const INVALID_ISSUES: SetIssueScenario[] = [
     userAddress: ACCOUNTS[2].address, // Only ACCOUNTS[0] has tokens in balance
     errorType: "INSUFFICIENT_BALANCE",
     errorMessage: /User does not have enough balance of token/,
-  },
-  {
-    description: "invalid issue of set with not enough allowances",
-    successfullyIssues: false,
-    hasAllowances: false,
-    selectSet: (
-      setAddresses: string[],
-    ) => setAddresses[0],
-    getQuantity: (
-      naturalUnit: BigNumber,
-    ) => new BigNumber(naturalUnit.times(1)),
-    userAddress: ACCOUNTS[0].address,
-    errorType: "INSUFFICIENT_ALLOWANCES",
-    errorMessage: /User does not have enough allowance of token at address/,
   },
 ];

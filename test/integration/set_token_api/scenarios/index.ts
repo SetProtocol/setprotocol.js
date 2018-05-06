@@ -35,13 +35,15 @@ export interface SetIssueScenario {
 export interface SetRedeemScenario {
   description: string;
   successfullyRedeems: boolean;
-  hasAllowances: boolean;
   selectSet: (
     setAddresses: string[],
   ) => string;
-  getQuantity: (
+  getIssueQuantity: (
     naturalUnit: BigNumber,
-  ) => BigNumber;
+  ) => BigNumber,
+  getRedeemQuantity: (
+    naturalUnit: BigNumber,
+  ) => BigNumber,
   userAddress: string;
   errorType?: string;
   errorMessage?: string | RegExp;

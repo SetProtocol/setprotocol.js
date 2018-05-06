@@ -6,23 +6,27 @@ export const VALID_REDEEMS: SetRedeemScenario[] = [
   {
     description: "valid redeem of set",
     successfullyRedeems: true,
-    hasAllowances: true,
     selectSet: (
       setAddresses: string[],
     ) => setAddresses[0],
-    getQuantity: (
+    getIssueQuantity: (
       naturalUnit: BigNumber,
-    ) => new BigNumber(naturalUnit.times(5)),
+    ) => new BigNumber(naturalUnit.times(1)),
+    getRedeemQuantity: (
+      naturalUnit: BigNumber,
+    ) => new BigNumber(naturalUnit.times(1)),
     userAddress: ACCOUNTS[0].address,
   },
   {
-    description: "valid redeem of a different set",
+    description: "valid redeem of another set",
     successfullyRedeems: true,
-    hasAllowances: true,
     selectSet: (
       setAddresses: string[],
     ) => setAddresses[setAddresses.length - 1],
-    getQuantity: (
+    getIssueQuantity: (
+      naturalUnit: BigNumber,
+    ) => new BigNumber(naturalUnit.times(2)),
+    getRedeemQuantity: (
       naturalUnit: BigNumber,
     ) => new BigNumber(naturalUnit.times(2)),
     userAddress: ACCOUNTS[0].address,
