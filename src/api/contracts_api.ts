@@ -19,13 +19,6 @@ export interface SetContracts {
   setTokenRegistry: SetTokenRegistryContract;
 }
 
-export const ContractsError = {
-  SET_TOKEN_CONTRACT_NOT_FOUND: (setTokenAddress: string) =>
-    `Could not find a Set Token Contract at address ${setTokenAddress}`,
-  ERC20_TOKEN_CONTRACT_NOT_FOUND: (tokenAddress: string) =>
-    `Could not find an ERC20 Token Contract at address ${tokenAddress}`,
-};
-
 export class ContractsAPI {
   private provider: Web3;
   private assert: Assertions;
@@ -55,11 +48,7 @@ export class ContractsAPI {
         transactionOptions,
       );
 
-      if (!setTokenContract) {
-        throw new Error(ContractsError.SET_TOKEN_CONTRACT_NOT_FOUND(setTokenAddress));
-      }
-
-      this.assert.setToken.implementsSet(setTokenContract);
+      await this.assert.setToken.implementsSet(setTokenContract);
 
       this.cache[cacheKey] = setTokenContract;
       return setTokenContract;
@@ -79,11 +68,7 @@ export class ContractsAPI {
     } else {
       const tokenContract = await ERC20Contract.at(tokenAddress, this.provider, transactionOptions);
 
-      if (!tokenContract) {
-        throw new Error(ContractsError.ERC20_TOKEN_CONTRACT_NOT_FOUND(tokenAddress));
-      }
-
-      this.assert.erc20.implementsERC20(tokenContract);
+      await this.assert.erc20.implementsERC20(tokenContract);
 
       this.cache[cacheKey] = tokenContract;
       return tokenContract;

@@ -97,6 +97,7 @@ export class SetTokenAPI {
 
     const txHash = setTokenInstance.issue.sendTransactionAsync(quantityInWei, {
       from: userAddress,
+      gas: 4712388,
     });
 
     return txHash;
@@ -114,6 +115,10 @@ export class SetTokenAPI {
     quantityInWei: BigNumber,
     userAddress: Address,
   ): Promise<string> {
+    this.assert.schema.isValidAddress("setAddress", setAddress);
+    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.schema.isValidNumber("quantityInWei", quantityInWei);
+
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress, {
       from: userAddress,
     });
@@ -123,15 +128,16 @@ export class SetTokenAPI {
       SetTokenAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(quantityInWei),
     );
     await this.assert.setToken.isMultipleOfNaturalUnit(setTokenInstance, quantityInWei);
-    await this.assert.setToken.hasSufficientBalances(setTokenInstance, quantityInWei, userAddress);
-    await this.assert.setToken.hasSufficientAllowances(
+    await this.assert.erc20.hasSufficientBalance(
       setTokenInstance,
-      quantityInWei,
       userAddress,
+      quantityInWei,
+      "Insufficient Balance",
     );
 
     const txHash = setTokenInstance.redeem.sendTransactionAsync(quantityInWei, {
       from: userAddress,
+      gas: 4712388,
     });
 
     return txHash;
