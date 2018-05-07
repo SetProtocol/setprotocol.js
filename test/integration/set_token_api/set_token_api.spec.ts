@@ -42,6 +42,8 @@ const TX_DEFAULTS = { from: ACCOUNTS[0].address, gas: 4712388 };
 
 describe("Set Token API (Integration Tests)", () => {
   beforeAll(async () => {
+    // All balances set already from development migration:
+    // https://github.com/SetProtocol/set-protocol-contracts/blob/master/migrations/migration_constants.js
     scenarioRunner.web3Utils = new Web3Utils(web3);
     scenarioRunner.contractsApi = new ContractsAPI(web3);
     scenarioRunner.setTokenApi = new SetTokenAPI(web3, scenarioRunner.contractsApi);
