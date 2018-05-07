@@ -7,10 +7,11 @@ import { TxData, TxDataPayable } from "../types/common";
 import { promisify } from "@0xproject/utils";
 import { classUtils } from "../types/common";
 import { BigNumber } from "../util/bignumber";
+import { Web3Utils } from "../util/web3_utils";
 import { DetailedERC20 as ContractArtifacts } from "set-protocol-contracts";
 import * as Web3 from "web3";
 
-import { BaseContract } from "./base_contract";
+import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./base_contract";
 
 export class DetailedERC20Contract extends BaseContract {
   public name = {
@@ -212,9 +213,19 @@ export class DetailedERC20Contract extends BaseContract {
     defaults: Partial<TxData>,
   ): Promise<DetailedERC20Contract> {
     const { abi }: { abi: any } = ContractArtifacts;
-    const web3ContractInstance = web3.eth.contract(abi).at(address);
+    const web3Utils = new Web3Utils(web3);
+    const contractExists = await web3Utils.doesContractExistAtAddressAsync(address);
+    const currentNetwork = await web3Utils.getNetworkIdAsync();
 
-    return new DetailedERC20Contract(web3ContractInstance, defaults);
+    if (contractExists) {
+      const web3ContractInstance = web3.eth.contract(abi).at(address);
+
+      return new DetailedERC20Contract(web3ContractInstance, defaults);
+    } else {
+      throw new Error(
+        CONTRACT_WRAPPER_ERRORS.CONTRACT_NOT_FOUND_ON_NETWORK("DetailedERC20", currentNetwork),
+      );
+    }
   }
   constructor(web3ContractInstance: Web3.ContractInstance, defaults: Partial<TxData>) {
     super(web3ContractInstance, defaults);

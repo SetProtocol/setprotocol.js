@@ -56,6 +56,7 @@ export class ERC20API {
     this.assert.schema.isValidAddress("userAddress", userAddress);
 
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+
     const userBalance = await tokenInstance.balanceOf.callAsync(userAddress);
     return userBalance;
   }
@@ -164,7 +165,7 @@ export class ERC20API {
     this.assert.schema.isValidAddress("spender", spender);
 
     const tokenContract = await this.contracts.loadERC20TokenAsync(tokenAddress);
-    const unlimitedAllowance = new BigNumber(2).pow(256).minus(100);
+    const unlimitedAllowance = new BigNumber(2).pow(256).minus(1);
 
     return tokenContract.approve.sendTransactionAsync(spender, unlimitedAllowance, {
       from: userAddress,
