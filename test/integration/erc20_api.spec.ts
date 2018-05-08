@@ -256,18 +256,18 @@ describe("Token API (Integration Tests)", () => {
         });
 
         test("should emit log indicating successful", async () => {
-            const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
-            const [approveLog] = compact(ABIDecoder.decodeLogs(receipt.logs));
+          const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
+          const [approveLog] = compact(ABIDecoder.decodeLogs(receipt.logs));
 
-            expect(approveLog.name).toBe("Approval");
+          expect(approveLog.name).toBe("Approval");
         });
 
         test("should return specified allowance to proxy", async () => {
-            const unlimitedAllowance = new BigNumber(2).pow(256).sub(1);
+          const unlimitedAllowance = new BigNumber(2).pow(256).sub(1);
 
-            await expect(
-                firstToken.allowance.callAsync(TOKEN_OWNER, TOKEN_OWNER),
-            ).resolves.toEqual(new BigNumber(unlimitedAllowance));
+          await expect(
+            firstToken.allowance.callAsync(TOKEN_OWNER, TOKEN_OWNER),
+          ).resolves.toEqual(new BigNumber(unlimitedAllowance));
         });
       });
     });
