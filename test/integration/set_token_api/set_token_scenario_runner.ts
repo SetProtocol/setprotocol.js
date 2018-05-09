@@ -59,7 +59,6 @@ export class SetTokenScenarioRunner {
 
   public async testIssueScenario(scenario: SetIssueScenario) {
     let primarySetToken: SetTokenContract;
-    let components: Component[];
 
     describe(scenario.description, () => {
       beforeAll(() => {
