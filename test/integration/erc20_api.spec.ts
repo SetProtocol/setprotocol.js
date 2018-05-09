@@ -37,7 +37,6 @@ describe("Token API (Integration Tests)", () => {
   let firstToken: ERC20Contract;
   let secondToken: ERC20Contract;
 
-  let setTokenRegistry: SetTokenRegistryContract;
   let primarySetToken: SetTokenContract;
 
   let currentNetworkId: number;
@@ -163,7 +162,7 @@ describe("Token API (Integration Tests)", () => {
           nonERC20 = await SetTokenRegistryContract.deployed(web3, TX_DEFAULTS);
         });
 
-        test("should throw MISSING_ERC20_METHOD", async () => {]
+        test("should throw MISSING_ERC20_METHOD", async () => {
           await expect(
             erc20Api.getUserBalance(nonERC20.address, TOKEN_OWNER),
           ).rejects.toThrow(TokenAssertionErrors.MISSING_ERC20_METHOD(nonERC20.address));

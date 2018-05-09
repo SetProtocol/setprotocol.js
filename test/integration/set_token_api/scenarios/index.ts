@@ -40,10 +40,10 @@ export interface SetRedeemScenario {
   ) => string;
   getIssueQuantity: (
     naturalUnit: BigNumber,
-  ) => BigNumber,
+  ) => BigNumber;
   getRedeemQuantity: (
     naturalUnit: BigNumber,
-  ) => BigNumber,
+  ) => BigNumber;
   userAddress: string;
   errorType?: string;
   errorMessage?: string | RegExp;
@@ -54,4 +54,4 @@ export {
   INVALID_ISSUES,
   VALID_REDEEMS,
   INVALID_REDEEMS,
-}
+};
