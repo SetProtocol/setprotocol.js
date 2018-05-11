@@ -366,6 +366,7 @@ export class SetTokenRegistryContract extends BaseContract {
     defaults: Partial<TxData>,
   ): Promise<SetTokenRegistryContract> {
     const { abi }: { abi: any } = ContractArtifacts;
+
     const web3Utils = new Web3Utils(web3);
     const contractExists = await web3Utils.doesContractExistAtAddressAsync(address);
     const currentNetwork = await web3Utils.getNetworkIdAsync();

@@ -66,15 +66,16 @@ describe("DetailedERC20 Token Contract Wrapper (Unit)", () => {
 
     const setTokenRegistryMock: any = mockContracts.SetTokenRegistry;
     const setTokenMock: any = mockContracts.SetToken;
+
     // Mock the returned token registry artifacts using the stored abi / network metadata
     setTokenRegistryMock.mock(tokenRegistryContractAbi, tokenRegistryContractNetworks);
-    setTokenMock.mock(setTokenContractAbi, setTokenContractNetworks);
-
     const tokenRegistry = await SetTokenRegistryContract.at(tokenRegistryContractNetworks[networkId].address, web3, TX_DEFAULTS);
     const setAddresses = await tokenRegistry.getSetAddresses.callAsync();
 
+    setTokenMock.mock(setTokenContractAbi, setTokenContractNetworks);
     const setToken = await SetTokenContract.at(setAddresses[0], web3, TX_DEFAULTS);
     const components = await setToken.getComponents.callAsync();
+
     firstTokenAddress = components[0];
   });
 
