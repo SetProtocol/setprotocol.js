@@ -97,7 +97,7 @@ export class SetTokenAPI {
 
     const txHash = setTokenInstance.issue.sendTransactionAsync(quantityInWei, {
       from: userAddress,
-      gas: 4712388,
+      gas: 4665264,
     });
 
     return txHash;
@@ -137,7 +137,7 @@ export class SetTokenAPI {
 
     const txHash = setTokenInstance.redeem.sendTransactionAsync(quantityInWei, {
       from: userAddress,
-      gas: 4712388,
+      gas: 4665264,
     });
 
     return txHash;
