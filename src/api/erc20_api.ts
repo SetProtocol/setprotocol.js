@@ -5,6 +5,8 @@ import { Address, UInt, Token } from "../types/common";
 import { Assertions } from "../invariants";
 import { SetTokenContract, ERC20Contract as ERC20 } from "../wrappers";
 
+const TRANSFER_GAS_MAXIMUM = 70000;
+
 // APIs
 import { ContractsAPI } from ".";
 
@@ -129,8 +131,7 @@ export class ERC20API {
       ERC20APIErrors.INSUFFICIENT_SENDER_BALANCE(from),
     );
 
-    const txHash = await tokenInstance.transfer.sendTransactionAsync(to, value, { from });
-    return txHash;
+    return tokenInstance.transfer.sendTransactionAsync(to, value, { from, gas: TRANSFER_GAS_MAXIMUM });
   }
 
   /**
@@ -149,7 +150,11 @@ export class ERC20API {
 
     const tokenContract = await this.contracts.loadERC20TokenAsync(tokenAddress);
 
-    return tokenContract.approve.sendTransactionAsync(spender, allowance, { from: userAddress });
+    return tokenContract.approve.sendTransactionAsync(
+      spender,
+      allowance,
+      { from: userAddress, gas: TRANSFER_GAS_MAXIMUM }
+    );
   }
 
   /**
@@ -169,6 +174,7 @@ export class ERC20API {
 
     return tokenContract.approve.sendTransactionAsync(spender, unlimitedAllowance, {
       from: userAddress,
+      gas: TRANSFER_GAS_MAXIMUM,
     });
   }
 }
