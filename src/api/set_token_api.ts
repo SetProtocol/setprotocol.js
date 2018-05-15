@@ -4,6 +4,7 @@ import { BigNumber } from "../util/bignumber";
 import { Address, UInt, Token, Component } from "../types/common";
 
 import { Assertions } from "../invariants";
+import { estimateIssueRedeemGasCost } from "../util/set_token_utils";
 import { SetTokenContract, ERC20Contract as ERC20 } from "../wrappers";
 
 // APIs
@@ -95,9 +96,12 @@ export class SetTokenAPI {
       userAddress,
     );
 
+    const numComponents = await setTokenInstance.componentCount.callAsync();
+    const gasEstimate = estimateIssueRedeemGasCost(numComponents);
+
     const txHash = setTokenInstance.issue.sendTransactionAsync(quantityInWei, {
       from: userAddress,
-      gas: 4712388,
+      gas: gasEstimate,
     });
 
     return txHash;
@@ -135,9 +139,12 @@ export class SetTokenAPI {
       "Insufficient Balance",
     );
 
+    const numComponents = await setTokenInstance.componentCount.callAsync();
+    const gasEstimate = estimateIssueRedeemGasCost(numComponents);
+
     const txHash = setTokenInstance.redeem.sendTransactionAsync(quantityInWei, {
       from: userAddress,
-      gas: 4712388,
+      gas: gasEstimate,
     });
 
     return txHash;
