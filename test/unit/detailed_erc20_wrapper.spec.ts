@@ -83,7 +83,7 @@ describe("DetailedERC20 Token Contract Wrapper (Unit)", () => {
   describe("#at()", () => {
     describe("contract address does not point to contract", () => {
       beforeAll(async () => {
-        let mockNetworks: { [index: number] : { address: string } } = {};
+        const mockNetworks: { [index: number]: { address: string } } = {};
 
         mockNetworks[networkId] = {
           address: ACCOUNTS[0].address,
@@ -104,7 +104,7 @@ describe("DetailedERC20 Token Contract Wrapper (Unit)", () => {
 
     describe("local artifacts readable and contract address associated w/ network id is valid", () => {
       beforeAll(async () => {
-        let mockNetworks: { [index: number] : { address: string } } = {};
+        const mockNetworks: { [index: number]: { address: string } } = {};
 
         mockNetworks[networkId] = {
           address: firstTokenAddress,

@@ -140,20 +140,6 @@ export class SetTokenContract extends BaseContract {
       return result;
     },
   };
-  public unredeemedComponents = {
-    async callAsync(
-      index_0: string,
-      index_1: string,
-      defaultBlock?: any,
-    ): Promise<[BigNumber, boolean]> {
-      const self = this as SetTokenContract;
-      const result = await promisify<[BigNumber, boolean]>(
-        self.web3ContractInstance.unredeemedComponents.call,
-        self.web3ContractInstance,
-      )(index_0, index_1);
-      return result;
-    },
-  };
   public symbol = {
     async callAsync(defaultBlock?: any): Promise<string> {
       const self = this as SetTokenContract;
@@ -225,56 +211,56 @@ export class SetTokenContract extends BaseContract {
     },
   };
   public issue = {
-    async sendTransactionAsync(quantity: BigNumber, txData: TxData = {}): Promise<string> {
+    async sendTransactionAsync(_quantity: BigNumber, txData: TxData = {}): Promise<string> {
       const self = this as SetTokenContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
         txData,
-        self.issue.estimateGasAsync.bind(self, quantity),
+        self.issue.estimateGasAsync.bind(self, _quantity),
       );
       const txHash = await promisify<string>(
         self.web3ContractInstance.issue,
         self.web3ContractInstance,
-      )(quantity, txDataWithDefaults);
+      )(_quantity, txDataWithDefaults);
       return txHash;
     },
-    async estimateGasAsync(quantity: BigNumber, txData: TxData = {}): Promise<number> {
+    async estimateGasAsync(_quantity: BigNumber, txData: TxData = {}): Promise<number> {
       const self = this as SetTokenContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
       const gas = await promisify<number>(
         self.web3ContractInstance.issue.estimateGas,
         self.web3ContractInstance,
-      )(quantity, txDataWithDefaults);
+      )(_quantity, txDataWithDefaults);
       return gas;
     },
-    getABIEncodedTransactionData(quantity: BigNumber, txData: TxData = {}): string {
+    getABIEncodedTransactionData(_quantity: BigNumber, txData: TxData = {}): string {
       const self = this as SetTokenContract;
       const abiEncodedTransactionData = self.web3ContractInstance.issue.getData();
       return abiEncodedTransactionData;
     },
   };
   public redeem = {
-    async sendTransactionAsync(quantity: BigNumber, txData: TxData = {}): Promise<string> {
+    async sendTransactionAsync(_quantity: BigNumber, txData: TxData = {}): Promise<string> {
       const self = this as SetTokenContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
         txData,
-        self.redeem.estimateGasAsync.bind(self, quantity),
+        self.redeem.estimateGasAsync.bind(self, _quantity),
       );
       const txHash = await promisify<string>(
         self.web3ContractInstance.redeem,
         self.web3ContractInstance,
-      )(quantity, txDataWithDefaults);
+      )(_quantity, txDataWithDefaults);
       return txHash;
     },
-    async estimateGasAsync(quantity: BigNumber, txData: TxData = {}): Promise<number> {
+    async estimateGasAsync(_quantity: BigNumber, txData: TxData = {}): Promise<number> {
       const self = this as SetTokenContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
       const gas = await promisify<number>(
         self.web3ContractInstance.redeem.estimateGas,
         self.web3ContractInstance,
-      )(quantity, txDataWithDefaults);
+      )(_quantity, txDataWithDefaults);
       return gas;
     },
-    getABIEncodedTransactionData(quantity: BigNumber, txData: TxData = {}): string {
+    getABIEncodedTransactionData(_quantity: BigNumber, txData: TxData = {}): string {
       const self = this as SetTokenContract;
       const abiEncodedTransactionData = self.web3ContractInstance.redeem.getData();
       return abiEncodedTransactionData;
@@ -282,24 +268,24 @@ export class SetTokenContract extends BaseContract {
   };
   public partialRedeem = {
     async sendTransactionAsync(
-      quantity: BigNumber,
-      excludedComponents: string[],
+      _quantity: BigNumber,
+      _componentsToExclude: string,
       txData: TxData = {},
     ): Promise<string> {
       const self = this as SetTokenContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
         txData,
-        self.partialRedeem.estimateGasAsync.bind(self, quantity, excludedComponents),
+        self.partialRedeem.estimateGasAsync.bind(self, _quantity, _componentsToExclude),
       );
       const txHash = await promisify<string>(
         self.web3ContractInstance.partialRedeem,
         self.web3ContractInstance,
-      )(quantity, excludedComponents, txDataWithDefaults);
+      )(_quantity, _componentsToExclude, txDataWithDefaults);
       return txHash;
     },
     async estimateGasAsync(
-      quantity: BigNumber,
-      excludedComponents: string[],
+      _quantity: BigNumber,
+      _componentsToExclude: string,
       txData: TxData = {},
     ): Promise<number> {
       const self = this as SetTokenContract;
@@ -307,12 +293,12 @@ export class SetTokenContract extends BaseContract {
       const gas = await promisify<number>(
         self.web3ContractInstance.partialRedeem.estimateGas,
         self.web3ContractInstance,
-      )(quantity, excludedComponents, txDataWithDefaults);
+      )(_quantity, _componentsToExclude, txDataWithDefaults);
       return gas;
     },
     getABIEncodedTransactionData(
-      quantity: BigNumber,
-      excludedComponents: string[],
+      _quantity: BigNumber,
+      _componentsToExclude: string,
       txData: TxData = {},
     ): string {
       const self = this as SetTokenContract;
@@ -321,53 +307,31 @@ export class SetTokenContract extends BaseContract {
     },
   };
   public redeemExcluded = {
-    async sendTransactionAsync(
-      componentsToRedeem: string[],
-      quantities: BigNumber[],
-      txData: TxData = {},
-    ): Promise<string> {
+    async sendTransactionAsync(_componentsToRedeem: string, txData: TxData = {}): Promise<string> {
       const self = this as SetTokenContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
         txData,
-        self.redeemExcluded.estimateGasAsync.bind(self, componentsToRedeem, quantities),
+        self.redeemExcluded.estimateGasAsync.bind(self, _componentsToRedeem),
       );
       const txHash = await promisify<string>(
         self.web3ContractInstance.redeemExcluded,
         self.web3ContractInstance,
-      )(componentsToRedeem, quantities, txDataWithDefaults);
+      )(_componentsToRedeem, txDataWithDefaults);
       return txHash;
     },
-    async estimateGasAsync(
-      componentsToRedeem: string[],
-      quantities: BigNumber[],
-      txData: TxData = {},
-    ): Promise<number> {
+    async estimateGasAsync(_componentsToRedeem: string, txData: TxData = {}): Promise<number> {
       const self = this as SetTokenContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
       const gas = await promisify<number>(
         self.web3ContractInstance.redeemExcluded.estimateGas,
         self.web3ContractInstance,
-      )(componentsToRedeem, quantities, txDataWithDefaults);
+      )(_componentsToRedeem, txDataWithDefaults);
       return gas;
     },
-    getABIEncodedTransactionData(
-      componentsToRedeem: string[],
-      quantities: BigNumber[],
-      txData: TxData = {},
-    ): string {
+    getABIEncodedTransactionData(_componentsToRedeem: string, txData: TxData = {}): string {
       const self = this as SetTokenContract;
       const abiEncodedTransactionData = self.web3ContractInstance.redeemExcluded.getData();
       return abiEncodedTransactionData;
-    },
-  };
-  public componentCount = {
-    async callAsync(defaultBlock?: any): Promise<BigNumber> {
-      const self = this as SetTokenContract;
-      const result = await promisify<BigNumber>(
-        self.web3ContractInstance.componentCount.call,
-        self.web3ContractInstance,
-      )();
-      return result;
     },
   };
   public getComponents = {
@@ -387,6 +351,20 @@ export class SetTokenContract extends BaseContract {
         self.web3ContractInstance.getUnits.call,
         self.web3ContractInstance,
       )();
+      return result;
+    },
+  };
+  public getUnredeemedBalance = {
+    async callAsync(
+      _componentAddress: string,
+      _userAddress: string,
+      defaultBlock?: any,
+    ): Promise<BigNumber> {
+      const self = this as SetTokenContract;
+      const result = await promisify<BigNumber>(
+        self.web3ContractInstance.getUnredeemedBalance.call,
+        self.web3ContractInstance,
+      )(_componentAddress, _userAddress);
       return result;
     },
   };
