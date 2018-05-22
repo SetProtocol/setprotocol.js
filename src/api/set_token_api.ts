@@ -96,7 +96,8 @@ export class SetTokenAPI {
       userAddress,
     );
 
-    const numComponents = await setTokenInstance.componentCount.callAsync();
+    const componentAddresses = await setTokenInstance.getComponents.callAsync();
+    const numComponents = new BigNumber(componentAddresses.length);
     const gasEstimate = estimateIssueRedeemGasCost(numComponents);
 
     const txHash = setTokenInstance.issue.sendTransactionAsync(quantityInWei, {
@@ -139,7 +140,8 @@ export class SetTokenAPI {
       "Insufficient Balance",
     );
 
-    const numComponents = await setTokenInstance.componentCount.callAsync();
+    const componentAddresses = await setTokenInstance.getComponents.callAsync();
+    const numComponents = new BigNumber(componentAddresses.length);
     const gasEstimate = estimateIssueRedeemGasCost(numComponents);
 
     const txHash = setTokenInstance.redeem.sendTransactionAsync(quantityInWei, {
