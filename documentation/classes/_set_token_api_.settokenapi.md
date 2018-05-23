@@ -35,7 +35,7 @@
 
 ⊕ **new SetTokenAPI**(web3: *`Web3`*, contracts: *[ContractsAPI](_contracts_api_.contractsapi.md)*): [SetTokenAPI](_set_token_api_.settokenapi.md)
 
-*Defined in [set_token_api.ts:20](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/set_token_api.ts#L20)*
+*Defined in [set_token_api.ts:21](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/set_token_api.ts#L21)*
 
 **Parameters:**
 
@@ -56,7 +56,7 @@ ___
 
 **● assert**: *`Assertions`*
 
-*Defined in [set_token_api.ts:19](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/set_token_api.ts#L19)*
+*Defined in [set_token_api.ts:20](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/set_token_api.ts#L20)*
 
 ___
 <a id="contracts"></a>
@@ -65,7 +65,7 @@ ___
 
 **● contracts**: *[ContractsAPI](_contracts_api_.contractsapi.md)*
 
-*Defined in [set_token_api.ts:20](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/set_token_api.ts#L20)*
+*Defined in [set_token_api.ts:21](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/set_token_api.ts#L21)*
 
 ___
 <a id="provider"></a>
@@ -74,7 +74,7 @@ ___
 
 **● provider**: *`Web3`*
 
-*Defined in [set_token_api.ts:18](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/set_token_api.ts#L18)*
+*Defined in [set_token_api.ts:19](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/set_token_api.ts#L19)*
 
 ___
 
@@ -86,7 +86,7 @@ ___
 
 ▸ **getComponents**(setAddress: *`Address`*): `Promise`<`Component`[]>
 
-*Defined in [set_token_api.ts:34](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/set_token_api.ts#L34)*
+*Defined in [set_token_api.ts:35](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/set_token_api.ts#L35)*
 
 Asynchronously retrieve a Set's components
 
@@ -106,7 +106,7 @@ ___
 
 ▸ **getNaturalUnit**(setAddress: *`Address`*): `Promise`<`BigNumber`>
 
-*Defined in [set_token_api.ts:59](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/set_token_api.ts#L59)*
+*Defined in [set_token_api.ts:60](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/set_token_api.ts#L60)*
 
 Retrieves the natural Unit for the Set
 
@@ -127,7 +127,7 @@ ___
 
 ▸ **issueSetAsync**(setAddress: *`Address`*, quantityInWei: *`BigNumber`*, userAddress: *`Address`*): `Promise`<`string`>
 
-*Defined in [set_token_api.ts:73](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/set_token_api.ts#L73)*
+*Defined in [set_token_api.ts:74](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/set_token_api.ts#L74)*
 
 Asynchronously issues a particular quantity of tokens from a particular Sets
 
@@ -150,7 +150,7 @@ ___
 
 ▸ **redeemSetAsync**(setAddress: *`Address`*, quantityInWei: *`BigNumber`*, userAddress: *`Address`*): `Promise`<`string`>
 
-*Defined in [set_token_api.ts:112](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/set_token_api.ts#L112)*
+*Defined in [set_token_api.ts:119](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/set_token_api.ts#L119)*
 
 Asynchronously redeems a particular quantity of tokens from a particular Sets
 

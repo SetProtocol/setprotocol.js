@@ -40,7 +40,7 @@
 
 ⊕ **new ERC20API**(web3: *`Web3`*, contracts: *[ContractsAPI](_contracts_api_.contractsapi.md)*): [ERC20API](_erc20_api_.erc20api.md)
 
-*Defined in [erc20_api.ts:24](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L24)*
+*Defined in [erc20_api.ts:23](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L23)*
 
 **Parameters:**
 
@@ -61,7 +61,7 @@ ___
 
 **● assert**: *`Assertions`*
 
-*Defined in [erc20_api.ts:23](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L23)*
+*Defined in [erc20_api.ts:22](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L22)*
 
 ___
 <a id="contracts"></a>
@@ -70,7 +70,7 @@ ___
 
 **● contracts**: *[ContractsAPI](_contracts_api_.contractsapi.md)*
 
-*Defined in [erc20_api.ts:24](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L24)*
+*Defined in [erc20_api.ts:23](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L23)*
 
 ___
 <a id="provider"></a>
@@ -79,7 +79,7 @@ ___
 
 **● provider**: *`Web3`*
 
-*Defined in [erc20_api.ts:22](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L22)*
+*Defined in [erc20_api.ts:21](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L21)*
 
 ___
 
@@ -91,7 +91,7 @@ ___
 
 ▸ **getDecimals**(tokenAddress: *`Address`*): `Promise`<`BigNumber`>
 
-*Defined in [erc20_api.ts:80](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L80)*
+*Defined in [erc20_api.ts:80](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L80)*
 
 Retrieves the decimals of an ERC20 token
 
@@ -110,7 +110,7 @@ ___
 
 ▸ **getTokenName**(tokenAddress: *`Address`*): `Promise`<`string`>
 
-*Defined in [erc20_api.ts:35](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L35)*
+*Defined in [erc20_api.ts:34](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L34)*
 
 Retrieves the token name of an ERC20 token
 
@@ -129,7 +129,7 @@ ___
 
 ▸ **getTokenSymbol**(tokenAddress: *`Address`*): `Promise`<`string`>
 
-*Defined in [erc20_api.ts:46](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L46)*
+*Defined in [erc20_api.ts:45](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L45)*
 
 Retrieves the token symbol of an ERC20 token
 
@@ -148,7 +148,7 @@ ___
 
 ▸ **getTotalSupply**(tokenAddress: *`Address`*): `Promise`<`BigNumber`>
 
-*Defined in [erc20_api.ts:69](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L69)*
+*Defined in [erc20_api.ts:69](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L69)*
 
 Retrieves the totalSupply or quantity of an ERC20 token
 
@@ -167,7 +167,7 @@ ___
 
 ▸ **getUserBalance**(tokenAddress: *`Address`*, userAddress: *`Address`*): `Promise`<`BigNumber`>
 
-*Defined in [erc20_api.ts:57](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L57)*
+*Defined in [erc20_api.ts:56](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L56)*
 
 Retrieves the balance in wei of an ERC20 token for a user
 
@@ -185,9 +185,9 @@ ___
 
 ###  getUserBalancesForTokens
 
-▸ **getUserBalancesForTokens**(tokenAddresses: *`Address`[]*, userAddress: *`Address`*): `Promise`<`Object`[]>
+▸ **getUserBalancesForTokens**(tokenAddresses: *`Address`[]*, userAddress: *`Address`*): `Promise`<`Token`[]>
 
-*Defined in [erc20_api.ts:91](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L91)*
+*Defined in [erc20_api.ts:91](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L91)*
 
 Given a list of tokens, retrieves the user balance as well as token metadata
 
@@ -198,7 +198,7 @@ Given a list of tokens, retrieves the user balance as well as token metadata
 | tokenAddresses | `Address`[] | 
 | userAddress | `Address` | 
 
-**Returns:** `Promise`<`Object`[]>
+**Returns:** `Promise`<`Token`[]>
 
 ___
 <a id="setallowanceasync"></a>
@@ -207,7 +207,7 @@ ___
 
 ▸ **setAllowanceAsync**(tokenAddress: *`string`*, spender: *`string`*, allowance: *`BigNumber`*, userAddress: *`string`*): `Promise`<`string`>
 
-*Defined in [erc20_api.ts:138](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L138)*
+*Defined in [erc20_api.ts:140](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L140)*
 
 Asynchronously sets user allowance
 
@@ -229,7 +229,7 @@ ___
 
 ▸ **setUnlimitedAllowanceAsync**(tokenAddress: *`string`*, spender: *`string`*, userAddress: *`string`*): `Promise`<`string`>
 
-*Defined in [erc20_api.ts:161](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L161)*
+*Defined in [erc20_api.ts:163](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L163)*
 
 Asynchronously sets user allowance to unlimited
 
@@ -250,7 +250,7 @@ ___
 
 ▸ **transferAsync**(tokenAddress: *`Address`*, from: *`Address`*, to: *`Address`*, value: *`BigNumber`*): `Promise`<`string`>
 
-*Defined in [erc20_api.ts:116](https://github.com/SetProtocol/setProtocol.js/blob/8bde908/src/api/erc20_api.ts#L116)*
+*Defined in [erc20_api.ts:119](https://github.com/SetProtocol/setProtocol.js/blob/c2b6da0/src/api/erc20_api.ts#L119)*
 
 Asynchronously transfers token
 
