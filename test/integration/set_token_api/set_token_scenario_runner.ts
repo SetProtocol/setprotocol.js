@@ -110,14 +110,14 @@ export class SetTokenScenarioRunner {
             // Difference between balances should equal the transfer value of token
             expect(componentBalances[index].balance.minus(token.balance)).toEqual(components[index].unit.div(naturalUnit).times(quantity));
           });
-        });
+        }, 10000);
       } else {
         test(`throws ${scenario.errorType} error`, async () => {
           const quantity = scenario.getQuantity(await this.setTokenApi.getNaturalUnit(primarySetToken.address));
           await expect(
             this.setTokenApi.issueSetAsync(primarySetToken.address, quantity, scenario.userAddress),
           ).rejects.toThrow(scenario.errorMessage);
-        });
+        }, 10000);
       }
     });
   }
@@ -176,7 +176,7 @@ export class SetTokenScenarioRunner {
             // Difference between balances should equal the transfer value of token
             expect(token.balance.minus(componentBalances[index].balance)).toEqual(components[index].unit.div(naturalUnit).times(quantity));
           });
-        });
+        }, 10000);
       } else {
         test(`throws ${scenario.errorType} error`, async () => {
           const quantity = scenario.getRedeemQuantity(await this.setTokenApi.getNaturalUnit(primarySetToken.address));
@@ -185,7 +185,7 @@ export class SetTokenScenarioRunner {
           ).rejects.toThrow(scenario.errorMessage);
         });
       }
-    });
+    }, 10000);
   }
 
   public async saveSnapshotAsync() {
