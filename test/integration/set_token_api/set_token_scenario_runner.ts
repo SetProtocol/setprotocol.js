@@ -183,9 +183,9 @@ export class SetTokenScenarioRunner {
           await expect(
             this.setTokenApi.redeemSetAsync(primarySetToken.address, quantity, scenario.userAddress),
           ).rejects.toThrow(scenario.errorMessage);
-        });
+        }, 10000);
       }
-    }, 10000);
+    });
   }
 
   public async saveSnapshotAsync() {
