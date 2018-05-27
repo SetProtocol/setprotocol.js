@@ -1,7 +1,7 @@
 import * as Web3 from "web3";
 import * as _ from "lodash";
 import { BigNumber } from "../util/bignumber";
-import { Address, UInt, Token, Component } from "../types/common";
+import { Address, UInt, Token, Component, TransactionOpts } from "../types/common";
 
 import { Assertions } from "../invariants";
 import { estimateIssueRedeemGasCost } from "../util/set_token_utils";
@@ -14,6 +14,8 @@ export const SetTokenAPIErrors = {
   QUANTITY_NEEDS_TO_BE_NON_ZERO: (quantity: BigNumber) =>
     `The quantity ${quantity.toString()} inputted needs to be non-zero`,
 };
+
+const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
 
 export class SetTokenAPI {
   private provider: Web3;
@@ -70,11 +72,13 @@ export class SetTokenAPI {
    *  @param  setAddress Address the address of the Set
    *  @param  quantityInWei The amount in Wei; This should be a multiple of the natural Unit
    *  @param  userAddress The user address
+   *  @param  txOpts The options for executing the transaction
    */
   public async issueSetAsync(
     setAddress: Address,
     quantityInWei: BigNumber,
     userAddress: Address,
+    txOpts?: TransactionOpts,
   ): Promise<string> {
     this.assert.schema.isValidAddress("setAddress", setAddress);
     this.assert.schema.isValidAddress("userAddress", userAddress);
@@ -101,9 +105,14 @@ export class SetTokenAPI {
 
     const gasEstimate = estimateIssueRedeemGasCost(numComponents);
 
+    const txSettings = Object.assign(
+      { gasLimit: gasEstimate, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
     const txHash = setTokenInstance.issue.sendTransactionAsync(quantityInWei, {
       from: userAddress,
-      gas: gasEstimate,
+      gas: txSettings.gasLimit,
+      gasPrice: txSettings.gasPrice,
     });
 
     return txHash;
@@ -115,11 +124,13 @@ export class SetTokenAPI {
    *  @param  setAddress Address the address of the Set
    *  @param  quantityInWei The amount in Wei; This should be a multiple of the natural Unit
    *  @param  userAddress The user address
+   *  @param  txOpts The options for executing the transaction
    */
   public async redeemSetAsync(
     setAddress: Address,
     quantityInWei: BigNumber,
     userAddress: Address,
+    txOpts?: TransactionOpts,
   ): Promise<string> {
     this.assert.schema.isValidAddress("setAddress", setAddress);
     this.assert.schema.isValidAddress("userAddress", userAddress);
@@ -145,9 +156,14 @@ export class SetTokenAPI {
     const numComponents = new BigNumber(componentAddresses.length);
     const gasEstimate = estimateIssueRedeemGasCost(numComponents);
 
+    const txSettings = Object.assign(
+      { gasLimit: gasEstimate, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
     const txHash = setTokenInstance.redeem.sendTransactionAsync(quantityInWei, {
       from: userAddress,
-      gas: gasEstimate,
+      gas: txSettings.gasLimit,
+      gasPrice: txSettings.gasPrice,
     });
 
     return txHash;
