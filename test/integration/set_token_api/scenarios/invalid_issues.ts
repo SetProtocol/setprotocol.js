@@ -2,7 +2,7 @@ import { BigNumber } from "../../../../src/util/bignumber";
 import { ACCOUNTS } from "../../../accounts";
 import { SetIssueScenario } from "./";
 
-const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwe
+const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
 
 export const INVALID_ISSUES: SetIssueScenario[] = [
   {
