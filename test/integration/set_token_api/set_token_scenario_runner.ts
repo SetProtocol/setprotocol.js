@@ -113,9 +113,27 @@ export class SetTokenScenarioRunner {
         }, 10000);
       } else {
         test(`throws ${scenario.errorType} error`, async () => {
+          // Grab token balances at beginning
+          const components = await this.setTokenApi.getComponents(primarySetToken.address);
+          const componentBalances = await this.erc20Api.getUserBalancesForTokens(components.map(c => c.address), scenario.userAddress);
+
+          // Set allowances
+          await _.each(components, async (component) => {
+            if (scenario.hasAllowances) {
+              await this.erc20Api.setUnlimitedAllowanceAsync(component.address, primarySetToken.address, scenario.userAddress);
+            } else {
+              await this.erc20Api.setAllowanceAsync(component.address, primarySetToken.address, new BigNumber(0), scenario.userAddress);
+            }
+          });
+
           const quantity = scenario.getQuantity(await this.setTokenApi.getNaturalUnit(primarySetToken.address));
           await expect(
-            this.setTokenApi.issueSetAsync(primarySetToken.address, quantity, scenario.userAddress),
+            this.setTokenApi.issueSetAsync(
+              primarySetToken.address,
+              quantity,
+              scenario.userAddress,
+              { gas: scenario.gasLimit, gasPrice: scenario.gasPrice }
+            ),
           ).rejects.toThrow(scenario.errorMessage);
         }, 10000);
       }
@@ -181,7 +199,12 @@ export class SetTokenScenarioRunner {
         test(`throws ${scenario.errorType} error`, async () => {
           const quantity = scenario.getRedeemQuantity(await this.setTokenApi.getNaturalUnit(primarySetToken.address));
           await expect(
-            this.setTokenApi.redeemSetAsync(primarySetToken.address, quantity, scenario.userAddress),
+            this.setTokenApi.redeemSetAsync(
+              primarySetToken.address,
+              quantity,
+              scenario.userAddress,
+              { gas: scenario.gasLimit, gasPrice: scenario.gasPrice }
+            ),
           ).rejects.toThrow(scenario.errorMessage);
         }, 10000);
       }

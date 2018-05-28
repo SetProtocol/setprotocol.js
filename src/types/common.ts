@@ -8,6 +8,11 @@ export interface TxData {
   nonce?: number;
 }
 
+export interface TransactionOpts {
+  gas?: number;
+  gasPrice?: BigNumber;
+}
+
 export const classUtils = {
   // This is useful for classes that have nested methods. Nested methods don't get bound out of the box.
   bindAll(self: any, exclude: string[] = ["contructor"], thisArg?: any): void {
