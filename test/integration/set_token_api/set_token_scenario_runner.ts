@@ -199,7 +199,12 @@ export class SetTokenScenarioRunner {
         test(`throws ${scenario.errorType} error`, async () => {
           const quantity = scenario.getRedeemQuantity(await this.setTokenApi.getNaturalUnit(primarySetToken.address));
           await expect(
-            this.setTokenApi.redeemSetAsync(primarySetToken.address, quantity, scenario.userAddress),
+            this.setTokenApi.redeemSetAsync(
+              primarySetToken.address,
+              quantity,
+              scenario.userAddress,
+              { gas: scenario.gasLimit, gasPrice: scenario.gasPrice }
+            ),
           ).rejects.toThrow(scenario.errorMessage);
         }, 10000);
       }
