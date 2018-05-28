@@ -105,13 +105,10 @@ export class SetTokenAPI {
 
     const gasEstimate = estimateIssueRedeemGasCost(numComponents);
 
-    const txSettings = Object.assign(
-      { gasLimit: gasEstimate, gasPrice: DEFAULT_GAS_PRICE },
-      txOpts,
-    );
+    const txSettings = Object.assign({ gas: gasEstimate, gasPrice: DEFAULT_GAS_PRICE }, txOpts);
     const txHash = setTokenInstance.issue.sendTransactionAsync(quantityInWei, {
       from: userAddress,
-      gas: txSettings.gasLimit,
+      gas: txSettings.gas,
       gasPrice: txSettings.gasPrice,
     });
 
@@ -156,13 +153,10 @@ export class SetTokenAPI {
     const numComponents = new BigNumber(componentAddresses.length);
     const gasEstimate = estimateIssueRedeemGasCost(numComponents);
 
-    const txSettings = Object.assign(
-      { gasLimit: gasEstimate, gasPrice: DEFAULT_GAS_PRICE },
-      txOpts,
-    );
+    const txSettings = Object.assign({ gas: gasEstimate, gasPrice: DEFAULT_GAS_PRICE }, txOpts);
     const txHash = setTokenInstance.redeem.sendTransactionAsync(quantityInWei, {
       from: userAddress,
-      gas: txSettings.gasLimit,
+      gas: txSettings.gas,
       gasPrice: txSettings.gasPrice,
     });
 
