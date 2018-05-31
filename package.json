@@ -1,6 +1,6 @@
 {
   "name": "setprotocol.js",
-  "version": "0.3.15",
+  "version": "0.3.16",
   "description": "A javascript library for interacting with the {Set} protocol",
   "keywords": [
     "setProtocol.js",
@@ -64,7 +64,7 @@
     "jsonschema": "^1.2.4",
     "lodash": "^4.17.4",
     "lodash.compact": "^3.0.1",
-    "set-protocol-contracts": "^0.2.8",
+    "set-protocol-contracts": "^0.2.9",
     "tiny-promisify": "^1.0.0",
     "truffle-contract": "^3.0.1",
     "truffle-hdwallet-provider": "0.0.3",
