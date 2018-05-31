@@ -30,6 +30,8 @@ export interface SetIssueScenario {
   userAddress: string;
   errorType?: string;
   errorMessage?: string | RegExp;
+  gasLimit?: number;
+  gasPrice?: BigNumber;
 }
 
 export interface SetRedeemScenario {
@@ -47,6 +49,8 @@ export interface SetRedeemScenario {
   userAddress: string;
   errorType?: string;
   errorMessage?: string | RegExp;
+  gasLimit?: number;
+  gasPrice?: BigNumber;
 }
 
 export {
