@@ -8,7 +8,7 @@ mkdir -p logs
 SET_PROTOCOL_JS_REPO=`pwd`
 LOGS=$SET_PROTOCOL_JS_REPO/logs/set_protocol_contract_migration.txt
 
-SET_PROTOCOL_SMART_CONTRACTS=$SET_PROTOCOL_JS_REPO/node_modules/set-protocol-contracts
+SET_PROTOCOL_SMART_CONTRACTS=$SET_PROTOCOL_JS_REPO/node_modules/set-protocol-contracts-v1
 
 cd $SET_PROTOCOL_SMART_CONTRACTS
 

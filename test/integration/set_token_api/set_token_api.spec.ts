@@ -31,7 +31,7 @@ import {
 // Given that this is an integration test, we unmock the Set Protocol
 // smart contracts artifacts package to pull the most recently
 // deployed contracts on the current network.
-jest.unmock("set-protocol-contracts");
+jest.unmock("set-protocol-contracts-v1");
 
 const provider = new Web3.providers.HttpProvider("http://localhost:8545");
 const web3 = new Web3(provider);

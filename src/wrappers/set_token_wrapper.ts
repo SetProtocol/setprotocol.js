@@ -8,7 +8,7 @@ import { promisify } from "@0xproject/utils";
 import { classUtils } from "../types/common";
 import { BigNumber } from "../util/bignumber";
 import { Web3Utils } from "../util/web3_utils";
-import { SetToken as ContractArtifacts } from "set-protocol-contracts";
+import { SetToken as ContractArtifacts } from "set-protocol-contracts-v1";
 import * as Web3 from "web3";
 
 import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./base_contract";

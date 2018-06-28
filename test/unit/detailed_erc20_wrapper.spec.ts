@@ -1,9 +1,9 @@
-jest.mock("set-protocol-contracts");
+jest.mock("set-protocol-contracts-v1");
 
 import * as promisify from "tiny-promisify";
 import { Web3Utils } from "../../src/util/web3_utils";
 import { ERC20Contract, SetTokenRegistryContract, SetTokenContract } from "../../src/wrappers";
-import * as mockContracts from "set-protocol-contracts";
+import * as mockContracts from "set-protocol-contracts-v1";
 import { CONTRACT_WRAPPER_ERRORS } from "../../src/wrappers/base_contract";
 import { ACCOUNTS } from "../accounts";
 import * as Web3 from "web3";
@@ -17,9 +17,9 @@ const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
 const TOKEN_REGISTRY_ARTIFACTS_PATH =
-  "node_modules/set-protocol-contracts/artifacts/json/SetTokenRegistry.json";
-const ERC20_ARTIFACTS_PATH = "node_modules/set-protocol-contracts/artifacts/json/DetailedERC20.json";
-const SET_TOKEN_ARTIFACTS_PATH = "node_modules/set-protocol-contracts/artifacts/json/SetToken.json";
+  "node_modules/set-protocol-contracts-v1/artifacts/json/SetTokenRegistry.json";
+const ERC20_ARTIFACTS_PATH = "node_modules/set-protocol-contracts-v1/artifacts/json/DetailedERC20.json";
+const SET_TOKEN_ARTIFACTS_PATH = "node_modules/set-protocol-contracts-v1/artifacts/json/SetToken.json";
 
 const TX_DEFAULTS = { from: ACCOUNTS[0].address, gas: 4712388 };
 
