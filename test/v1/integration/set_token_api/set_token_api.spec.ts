@@ -2,13 +2,13 @@
 import * as ABIDecoder from "abi-decoder";
 import * as Web3 from "web3";
 
-import { BigNumber } from "../../../src/util/bignumber";
+import { BigNumber } from "../../../../src/util/bignumber";
 
 // APIs
-import { SetTokenAPI, ContractsAPI, ERC20API } from "../../../src/api/v1";
+import { SetTokenAPI, ContractsAPI, ERC20API } from "../../../../src/api/v1";
 
 // Utils
-import { Web3Utils } from "../../../src/util/web3_utils";
+import { Web3Utils } from "../../../../src/util/web3_utils";
 import { ACCOUNTS } from "../../accounts";
 
 // Scenarios
@@ -26,7 +26,7 @@ import { SetTokenScenarioRunner } from "./set_token_scenario_runner";
 import {
   SetTokenContract,
   SetTokenRegistryContract,
-} from "../../../src/wrappers/v1";
+} from "../../../../src/wrappers/v1";
 
 // Given that this is an integration test, we unmock the Set Protocol
 // smart contracts artifacts package to pull the most recently

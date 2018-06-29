@@ -3,9 +3,9 @@ jest.mock("set-protocol-contracts-v1");
 import * as promisify from "tiny-promisify";
 import * as mockContracts from "set-protocol-contracts-v1";
 import * as Web3 from "web3";
-import { Web3Utils } from "../../src/util/web3_utils";
-import { ERC20Contract, SetTokenRegistryContract, SetTokenContract } from "../../src/wrappers/v1";
-import { CONTRACT_WRAPPER_ERRORS } from "../../src/wrappers/v1/base_contract";
+import { Web3Utils } from "../../../src/util/web3_utils";
+import { ERC20Contract, SetTokenRegistryContract, SetTokenContract } from "../../../src/wrappers/v1";
+import { CONTRACT_WRAPPER_ERRORS } from "../../../src/wrappers/v1/base_contract";
 import { ACCOUNTS } from "../accounts";
 
 // We use an unmocked version of "fs" in order to pull the correct

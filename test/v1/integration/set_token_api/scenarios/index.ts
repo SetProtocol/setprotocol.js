@@ -1,11 +1,11 @@
 // External
-import { BigNumber } from "../../../../src/util/bignumber";
+import { BigNumber } from "../../../../../src/util/bignumber";
 
 // Wrappers
 import {
   SetTokenContract,
   SetTokenRegistryContract,
-} from "../../../../src/wrappers/v1";
+} from "../../../../../src/wrappers/v1";
 
 // Scenarios
 import { VALID_ISSUES } from "./valid_issues";
@@ -13,7 +13,7 @@ import { INVALID_ISSUES } from "./invalid_issues";
 import { VALID_REDEEMS } from "./valid_redeems";
 import { INVALID_REDEEMS } from "./invalid_redeems";
 
-import { SetTokenAPI } from "../../../../src/api/v1";
+import { SetTokenAPI } from "../../../../../src/api/v1";
 
 export interface SetIssueScenario {
   description: string;
