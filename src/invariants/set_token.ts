@@ -3,8 +3,8 @@ import * as Web3 from "web3";
 
 import { Address, UInt } from "../types/common";
 import { BigNumber } from "../util/bignumber";
-import { SetTokenContract } from "../wrappers/set_token_wrapper";
-import { DetailedERC20Contract as ERC20 } from "../wrappers/detailed_erc20_wrapper";
+import { SetTokenContract } from "../wrappers/v1/set_token_wrapper";
+import { DetailedERC20Contract as ERC20 } from "../wrappers/v1/detailed_erc20_wrapper";
 
 import { ERC20Assertions } from "./erc20";
 const erc20Assert = new ERC20Assertions();

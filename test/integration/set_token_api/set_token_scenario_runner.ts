@@ -10,10 +10,10 @@ import { BigNumber } from "../../../src/util/bignumber";
 import {
   SetTokenContract,
   SetTokenRegistryContract,
-} from "../../../src/wrappers";
+} from "../../../src/wrappers/v1";
 
 // APIs
-import { SetTokenAPI, ContractsAPI, ERC20API } from "../../../src/api";
+import { SetTokenV1API, ContractsAPI, ERC20API } from "../../../src/api";
 
 // Scenarios
 import {
@@ -38,7 +38,7 @@ export class SetTokenScenarioRunner {
   public web3Utils: Web3Utils;
   public setToken: SetTokenContract;
   public setTokenRegistry: SetTokenRegistryContract;
-  public setTokenApi: SetTokenAPI;
+  public setTokenApi: SetTokenV1API;
   public contractsApi: ContractsAPI;
   public erc20Api: ERC20API;
 

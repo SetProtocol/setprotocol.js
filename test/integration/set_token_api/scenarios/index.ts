@@ -5,7 +5,7 @@ import { BigNumber } from "../../../../src/util/bignumber";
 import {
   SetTokenContract,
   SetTokenRegistryContract,
-} from "../../../../src/wrappers";
+} from "../../../../src/wrappers/v1";
 
 // Scenarios
 import { VALID_ISSUES } from "./valid_issues";

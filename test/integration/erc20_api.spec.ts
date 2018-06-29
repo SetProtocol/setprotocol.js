@@ -8,11 +8,11 @@ import * as Web3 from "web3";
 import { BigNumber } from "../../src/util/bignumber";
 import { Web3Utils } from "../../src/util/web3_utils";
 
-import { ContractsAPI, ERC20API, SetTokenAPI } from "../../src/api";
+import { ContractsAPI, ERC20API, SetTokenV1API } from "../../src/api";
 import { Assertions } from "../../src/invariants";
 import { ERC20APIErrors } from "../../src/api/erc20_api";
-import { ERC20Contract, SetTokenContract, SetTokenRegistryContract } from "../../src/wrappers";
-import { CONTRACT_WRAPPER_ERRORS } from "../../src/wrappers/base_contract";
+import { ERC20Contract, SetTokenContract, SetTokenRegistryContract } from "../../src/wrappers/v1";
+import { CONTRACT_WRAPPER_ERRORS } from "../../src/wrappers/v1/base_contract";
 import { TokenAssertionErrors } from "../../src/invariants/erc20";
 
 import { ACCOUNTS } from "../accounts";
@@ -51,7 +51,7 @@ describe("Token API (Integration Tests)", () => {
     const setAddresses = await setTokenRegistry.getSetAddresses.callAsync();
 
     const contractsApi = new ContractsAPI(web3);
-    const setTokenApi = new SetTokenAPI(web3, contractsApi);
+    const setTokenApi = new SetTokenV1API(web3, contractsApi);
 
     const components = await setTokenApi.getComponents(setAddresses[0]);
 

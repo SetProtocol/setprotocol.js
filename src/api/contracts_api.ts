@@ -6,12 +6,11 @@ import { Assertions } from "../invariants";
 
 // wrappers
 import {
-  BaseContract,
   ContractWrapper,
   ERC20Contract,
   SetTokenContract,
   SetTokenRegistryContract,
-} from "../wrappers";
+} from "../wrappers/v1";
 
 export interface SetContracts {
   ERC20: ERC20Contract;

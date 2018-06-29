@@ -1,9 +1,5 @@
 import * as Web3 from "web3";
-import {
-  ContractsAPI,
-  SetTokenAPI,
-  ERC20API,
-} from "./api";
+import { ContractsAPI, SetTokenV1API, ERC20API } from "./api";
 
 /**
  * The SetProtocol class is the single entry-point into the SetProtocol library.
@@ -14,7 +10,7 @@ export default class SetProtocol {
   private provider: Web3; // A property storing the Web3.js Provider instance
   public contracts: ContractsAPI;
   public erc20: ERC20API;
-  public setToken: SetTokenAPI;
+  public setTokenV1: SetTokenV1API;
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
@@ -26,6 +22,6 @@ export default class SetProtocol {
     this.contracts = new ContractsAPI(this.provider);
 
     this.erc20 = new ERC20API(this.provider, this.contracts);
-    this.setToken = new SetTokenAPI(this.provider, this.contracts);
+    this.setTokenV1 = new SetTokenV1API(this.provider, this.contracts);
   }
 }

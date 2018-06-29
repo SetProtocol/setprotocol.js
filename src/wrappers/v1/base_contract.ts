@@ -1,6 +1,6 @@
 import * as _ from "lodash";
 import * as Web3 from "web3";
-import { TxData, TxDataPayable } from "../types/common";
+import { TxData, TxDataPayable } from "../../types/common";
 
 export const CONTRACT_WRAPPER_ERRORS = {
   CONTRACT_NOT_FOUND_ON_NETWORK: (contractName: string, networkId: number) =>

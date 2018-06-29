@@ -5,7 +5,6 @@ import { Address, UInt, Token, Component, TransactionOpts } from "../types/commo
 
 import { Assertions } from "../invariants";
 import { estimateIssueRedeemGasCost } from "../util/set_token_utils";
-import { SetTokenContract, ERC20Contract as ERC20 } from "../wrappers";
 
 // APIs
 import { ContractsAPI } from ".";
@@ -17,7 +16,7 @@ export const SetTokenAPIErrors = {
 
 const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
 
-export class SetTokenAPI {
+export class SetTokenV1API {
   private provider: Web3;
   private assert: Assertions;
   private contracts: ContractsAPI;
