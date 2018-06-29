@@ -13,7 +13,7 @@ import {
 } from "../../../src/wrappers/v1";
 
 // APIs
-import { SetTokenV1API, ContractsAPI, ERC20API } from "../../../src/api";
+import { SetTokenAPI, ContractsAPI, ERC20API } from "../../../src/api/v1";
 
 // Scenarios
 import {
@@ -38,7 +38,7 @@ export class SetTokenScenarioRunner {
   public web3Utils: Web3Utils;
   public setToken: SetTokenContract;
   public setTokenRegistry: SetTokenRegistryContract;
-  public setTokenApi: SetTokenV1API;
+  public setTokenApi: SetTokenAPI;
   public contractsApi: ContractsAPI;
   public erc20Api: ERC20API;
 

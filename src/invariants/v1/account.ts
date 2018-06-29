@@ -1,4 +1,4 @@
-import { NULL_ADDRESS } from "../util/constants";
+import { NULL_ADDRESS } from "../../util/constants";
 
 export class AccountAssertions {
   public notNull(account: string, errorMessage: string) {

@@ -1,8 +1,8 @@
 import * as Web3 from "web3";
-import { BigNumber } from "../util/bignumber";
-import { Address, UInt, Token } from "../types/common";
+import { BigNumber } from "../../util/bignumber";
+import { Address, UInt, Token } from "../../types/common";
 
-import { Assertions } from "../invariants";
+import { Assertions } from "../../invariants/v1";
 
 const TRANSFER_GAS_MAXIMUM = 70000;
 

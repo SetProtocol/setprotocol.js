@@ -1,8 +1,8 @@
 import * as _ from "lodash";
 import * as Web3 from "web3";
-import { BigNumber } from "../util/bignumber";
+import { BigNumber } from "../../util/bignumber";
 
-import { Assertions } from "../invariants";
+import { Assertions } from "../../invariants/v1";
 
 // wrappers
 import {
@@ -10,7 +10,7 @@ import {
   ERC20Contract,
   SetTokenContract,
   SetTokenRegistryContract,
-} from "../wrappers/v1";
+} from "../../wrappers/v1";
 
 export interface SetContracts {
   ERC20: ERC20Contract;

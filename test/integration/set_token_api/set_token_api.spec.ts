@@ -5,7 +5,7 @@ import * as Web3 from "web3";
 import { BigNumber } from "../../../src/util/bignumber";
 
 // APIs
-import { SetTokenV1API, ContractsAPI, ERC20API } from "../../../src/api";
+import { SetTokenAPI, ContractsAPI, ERC20API } from "../../../src/api/v1";
 
 // Utils
 import { Web3Utils } from "../../../src/util/web3_utils";
@@ -20,7 +20,7 @@ import {
 } from "./scenarios";
 
 // Runners
-import { SetTokenScenarioRunner } from "./set_token_v1_scenario_runner";
+import { SetTokenScenarioRunner } from "./set_token_scenario_runner";
 
 // Wrappers
 import {
@@ -46,7 +46,7 @@ describe("Set Token API (Integration Tests)", () => {
     // https://github.com/SetProtocol/set-protocol-contracts/blob/master/migrations/migration_constants.js
     scenarioRunner.web3Utils = new Web3Utils(web3);
     scenarioRunner.contractsApi = new ContractsAPI(web3);
-    scenarioRunner.setTokenApi = new SetTokenV1API(web3, scenarioRunner.contractsApi);
+    scenarioRunner.setTokenApi = new SetTokenAPI(web3, scenarioRunner.contractsApi);
     scenarioRunner.erc20Api = new ERC20API(web3, scenarioRunner.contractsApi);
 
     const setTokenRegistryInstance = await SetTokenRegistryContract.deployed(web3, TX_DEFAULTS);

@@ -13,9 +13,7 @@ import { INVALID_ISSUES } from "./invalid_issues";
 import { VALID_REDEEMS } from "./valid_redeems";
 import { INVALID_REDEEMS } from "./invalid_redeems";
 
-// Types
-
-import { SetTokenAPI } from "../../../../src/api";
+import { SetTokenAPI } from "../../../../src/api/v1";
 
 export interface SetIssueScenario {
   description: string;

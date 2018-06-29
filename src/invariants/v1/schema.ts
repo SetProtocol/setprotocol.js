@@ -1,4 +1,4 @@
-import { Schema, Schemas, SchemaValidator, ValidatorResult } from "../schemas";
+import { Schema, Schemas, SchemaValidator, ValidatorResult } from "../../schemas";
 
 export const SchemaAssertionsError = {
   DOES_NOT_CONFORM_TO_SCHEMA: (
