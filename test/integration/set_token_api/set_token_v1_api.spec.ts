@@ -20,7 +20,7 @@ import {
 } from "./scenarios";
 
 // Runners
-import { SetTokenScenarioRunner } from "./set_token_scenario_runner";
+import { SetTokenScenarioRunner } from "./set_token_v1_scenario_runner";
 
 // Wrappers
 import {
