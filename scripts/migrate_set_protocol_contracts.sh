@@ -8,7 +8,7 @@ mkdir -p logs
 SET_PROTOCOL_JS_REPO=`pwd`
 LOGS=$SET_PROTOCOL_JS_REPO/logs/set_protocol_contract_migration.txt
 
-SET_PROTOCOL_SMART_CONTRACTS=$SET_PROTOCOL_JS_REPO/node_modules/set-protocol-contracts-v1
+SET_PROTOCOL_SMART_CONTRACTS=$SET_PROTOCOL_JS_REPO/node_modules/set-protocol-contracts
 
 cd $SET_PROTOCOL_SMART_CONTRACTS
 
@@ -24,6 +24,9 @@ echo -e "\n"
 
 echo -e "${CYAN}Transpiling newly generated artifacts for usage in the setProtocol.js repo...${NO_COLOR}"
 yarn run dist >> $LOGS 2>&1
+echo -e "\n"
+
+echo -e "${CYAN}V2 Set Protocol Contracts migration complete!${NO_COLOR}"
 echo -e "\n"
 
 echo -e "${GREEN}Dependency contract migrations complete, test chain is ready for use!${NO_COLOR}"
