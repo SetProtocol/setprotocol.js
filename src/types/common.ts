@@ -1,9 +1,11 @@
 import { BigNumber } from "bignumber.js";
 import * as _ from "lodash";
 
-import { v1 } from "../api";
-
-const { ContractsAPI: ContractsV1API, SetTokenAPI: SetTokenV1API, ERC20API: ERC20V1API } = v1;
+import {
+  ContractsAPI as ContractsV1API,
+  SetTokenAPI as SetTokenV1API,
+  ERC20API as ERC20V1API,
+} from "../api/v1";
 
 export interface TxData {
   from?: string;
@@ -77,7 +79,7 @@ export interface Token {
 }
 
 export interface SetProtocolV1 {
-  contracts: ContractsAPI;
-  erc20: ERC20API;
-  setToken: SetTokenAPI;
+  contracts: ContractsV1API;
+  erc20: ERC20V1API;
+  setToken: SetTokenV1API;
 }
