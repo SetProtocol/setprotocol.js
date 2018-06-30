@@ -1,11 +1,10 @@
 import * as Web3 from "web3";
 import * as _ from "lodash";
-import { BigNumber } from "../util/bignumber";
-import { Address, UInt, Token, Component, TransactionOpts } from "../types/common";
+import { BigNumber } from "../../util/bignumber";
+import { Address, UInt, Token, Component, TransactionOpts } from "../../types/common";
 
-import { Assertions } from "../invariants";
-import { estimateIssueRedeemGasCost } from "../util/set_token_utils";
-import { SetTokenContract, ERC20Contract as ERC20 } from "../wrappers";
+import { Assertions } from "../../invariants/v1";
+import { estimateIssueRedeemGasCost } from "../../util/set_token_utils";
 
 // APIs
 import { ContractsAPI } from ".";

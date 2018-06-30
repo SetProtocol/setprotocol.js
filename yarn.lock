@@ -5379,7 +5379,7 @@ set-immediate-shim@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/set-immediate-shim/-/set-immediate-shim-1.0.1.tgz#4b2b1b27eb808a9f8dcc481a58e5e56f599f3f61"
 
-set-protocol-contracts@^0.2.9:
+"set-protocol-contracts-v1@npm:set-protocol-contracts@0.2.9", set-protocol-contracts@^0.2.9:
   version "0.2.9"
   resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-0.2.9.tgz#1d9475936ca3b53e51e224b06da8207473597c19"
   dependencies:

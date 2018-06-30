@@ -5,10 +5,10 @@
 // tslint:disable-next-line:no-unused-variable
 import { TxData, TxDataPayable } from "../types/common";
 import { promisify } from "@0xproject/utils";
-import { classUtils } from "../types/common";
-import { BigNumber } from "../util/bignumber";
-import { Web3Utils } from "../util/web3_utils";
-import { DetailedERC20 as ContractArtifacts } from "set-protocol-contracts";
+import { classUtils } from "../../types/common";
+import { BigNumber } from "../../util/bignumber";
+import { Web3Utils } from "../../util/web3_utils";
+import { DetailedERC20 as ContractArtifacts } from "set-protocol-contracts-v1";
 import * as Web3 from "web3";
 
 import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./base_contract";

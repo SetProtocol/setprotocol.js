@@ -4,16 +4,16 @@ import compact = require("lodash.compact");
 import * as Web3 from "web3";
 import * as _ from "lodash";
 
-import { BigNumber } from "../../../src/util/bignumber";
+import { BigNumber } from "../../../../src/util/bignumber";
 
 // Wrappers
 import {
   SetTokenContract,
   SetTokenRegistryContract,
-} from "../../../src/wrappers";
+} from "../../../../src/wrappers/v1";
 
 // APIs
-import { SetTokenAPI, ContractsAPI, ERC20API } from "../../../src/api";
+import { SetTokenAPI, ContractsAPI, ERC20API } from "../../../../src/api/v1";
 
 // Scenarios
 import {
@@ -22,10 +22,10 @@ import {
 } from "./scenarios/";
 
 // Types
-import { Component } from "../../../src/types/common";
+import { Component } from "../../../../src/types/common";
 
 // Utils
-import { Web3Utils } from "../../../src/util/web3_utils";
+import { Web3Utils } from "../../../../src/util/web3_utils";
 import { ACCOUNTS } from "../../accounts";
 
 interface ReceiptLog {

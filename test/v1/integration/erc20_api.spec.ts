@@ -5,22 +5,22 @@ import compact = require("lodash.compact");
 import * as Web3 from "web3";
 
 // Utils
-import { BigNumber } from "../../src/util/bignumber";
-import { Web3Utils } from "../../src/util/web3_utils";
+import { BigNumber } from "../../../src/util/bignumber";
+import { Web3Utils } from "../../../src/util/web3_utils";
 
-import { ContractsAPI, ERC20API, SetTokenAPI } from "../../src/api";
-import { Assertions } from "../../src/invariants";
-import { ERC20APIErrors } from "../../src/api/erc20_api";
-import { ERC20Contract, SetTokenContract, SetTokenRegistryContract } from "../../src/wrappers";
-import { CONTRACT_WRAPPER_ERRORS } from "../../src/wrappers/base_contract";
-import { TokenAssertionErrors } from "../../src/invariants/erc20";
+import { ContractsAPI, ERC20API, SetTokenAPI } from "../../../src/api/v1";
+import { ERC20APIErrors } from "../../../src/api/v1/erc20_api";
+import { Assertions } from "../../../src/invariants/v1";
+import { TokenAssertionErrors } from "../../../src/invariants/v1/erc20";
+import { CONTRACT_WRAPPER_ERRORS } from "../../../src/wrappers/v1/base_contract";
+import { ERC20Contract, SetTokenContract, SetTokenRegistryContract } from "../../../src/wrappers/v1";
 
 import { ACCOUNTS } from "../accounts";
 
 // Given that this is an integration test, we unmock the Set Protocol
 // smart contracts artifacts package to pull the most recently
 // deployed contracts on the current network.
-jest.unmock("set-protocol-contracts");
+jest.unmock("set-protocol-contracts-v1");
 
 const provider = new Web3.providers.HttpProvider("http://localhost:8545");
 const web3 = new Web3(provider);

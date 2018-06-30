@@ -1,9 +1,8 @@
 import * as Web3 from "web3";
-import { BigNumber } from "../util/bignumber";
-import { Address, UInt, Token } from "../types/common";
+import { BigNumber } from "../../util/bignumber";
+import { Address, UInt, Token } from "../../types/common";
 
-import { Assertions } from "../invariants";
-import { SetTokenContract, ERC20Contract as ERC20 } from "../wrappers";
+import { Assertions } from "../../invariants/v1";
 
 const TRANSFER_GAS_MAXIMUM = 70000;
 
@@ -131,7 +130,10 @@ export class ERC20API {
       ERC20APIErrors.INSUFFICIENT_SENDER_BALANCE(from),
     );
 
-    return tokenInstance.transfer.sendTransactionAsync(to, value, { from, gas: TRANSFER_GAS_MAXIMUM });
+    return tokenInstance.transfer.sendTransactionAsync(to, value, {
+      from,
+      gas: TRANSFER_GAS_MAXIMUM,
+    });
   }
 
   /**
@@ -150,11 +152,10 @@ export class ERC20API {
 
     const tokenContract = await this.contracts.loadERC20TokenAsync(tokenAddress);
 
-    return tokenContract.approve.sendTransactionAsync(
-      spender,
-      allowance,
-      { from: userAddress, gas: TRANSFER_GAS_MAXIMUM }
-    );
+    return tokenContract.approve.sendTransactionAsync(spender, allowance, {
+      from: userAddress,
+      gas: TRANSFER_GAS_MAXIMUM,
+    });
   }
 
   /**

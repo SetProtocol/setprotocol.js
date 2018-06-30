@@ -26,6 +26,9 @@ echo -e "${CYAN}Transpiling newly generated artifacts for usage in the setProtoc
 yarn run dist >> $LOGS 2>&1
 echo -e "\n"
 
+echo -e "${CYAN}V2 Set Protocol Contracts migration complete!${NO_COLOR}"
+echo -e "\n"
+
 echo -e "${GREEN}Dependency contract migrations complete, test chain is ready for use!${NO_COLOR}"
 echo -e "${GREEN}Artifacts for the contracts deployed to the test chain can be imported directly from the \
 SetProtocol/set-protocol-contracts package.${NO_COLOR}"

@@ -1,5 +1,5 @@
-import { BigNumber } from "../util/bignumber";
-import { DetailedERC20Contract as ERC20 } from "../wrappers/detailed_erc20_wrapper";
+import { BigNumber } from "../../util/bignumber";
+import { DetailedERC20Contract as ERC20 } from "../../wrappers/v1/detailed_erc20_wrapper";
 
 export const TokenAssertionErrors = {
   MISSING_ERC20_METHOD: (address: string) =>

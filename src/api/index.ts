@@ -1,9 +1,3 @@
-import { ERC20API } from "./erc20_api";
-import { SetTokenAPI } from "./set_token_api";
-import { ContractsAPI } from "./contracts_api";
+import * as v1 from "./v1";
 
-export {
-    ContractsAPI,
-    ERC20API,
-    SetTokenAPI,
-};
+export { v1 };

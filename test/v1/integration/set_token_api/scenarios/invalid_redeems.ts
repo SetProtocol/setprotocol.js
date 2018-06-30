@@ -1,4 +1,4 @@
-import { BigNumber } from "../../../../src/util/bignumber";
+import { BigNumber } from "../../../../../src/util/bignumber";
 import { ACCOUNTS } from "../../../accounts";
 import { SetRedeemScenario } from "./";
 
