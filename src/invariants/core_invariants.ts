@@ -18,7 +18,7 @@
 
 import * as Web3 from "web3";
 
-export class SetTokenAssertions {
+export class CoreAssertions {
   private web3: Web3;
 
   constructor(web3: Web3) {
