@@ -9,11 +9,11 @@ const { expect } = chai;
 // SetProtocol.test.ts
 describe(`SetProtocol`, () => {
   const setProtocolInstance = new SetProtocol(provider);
-  it(`should run test suite`, () => {
-    expect(1).to.equal(1);
+  it(`should instantiate a new setProtocolInstance`, () => {
+    expect(setProtocolInstance instanceof SetProtocol);
   });
 
-  it(`should expose the V1 API`, () => {
-    expect(setProtocolInstance.v1).to.include.all.keys('contracts', 'erc20', 'setToken');
+  it(`should set a provider in setProtocolInstance`, () => {
+    expect(setProtocolInstance.provider).to.exist;
   });
 });
