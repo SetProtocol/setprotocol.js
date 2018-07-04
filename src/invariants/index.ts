@@ -18,7 +18,7 @@
 
 import * as Web3 from "web3";
 
-import { CoreAssertions } from "./set_token";
+import { CoreAssertions } from "./core_invariants";
 
 export class Assertions {
   public core: CoreAssertions;
