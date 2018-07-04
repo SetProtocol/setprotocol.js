@@ -42,7 +42,7 @@ export class CoreAPI {
    * @param  naturalUnit    Supplied as the lowest common denominator for the Set
    * @param  name           User-supplied name for Set (i.e. "DEX Set")
    * @param  symbol         User-supplied symbol for Set (i.e. "DEX")
-   * @return            a transaction hash to then later look up for the Set address
+   * @return                a transaction hash to then later look up for the Set address
    */
   public async create(
     userAddress: string,
