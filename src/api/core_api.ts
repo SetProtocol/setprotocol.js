@@ -16,6 +16,20 @@
 
 "use strict";
 
-import { CoreAPI } from "./core_api";
+import * as Web3 from "web3";
 
-export { CoreAPI };
+/**
+ * @title CoreAPI
+ * @author Set Protocol
+ *
+ * The Core handles all functions on the Core SetProtocol smart contract.
+ *
+ */
+
+export class CoreAPI {
+  private provider: Web3;
+
+  public constructor(provider: Web3) {
+    this.provider = provider;
+  }
+}

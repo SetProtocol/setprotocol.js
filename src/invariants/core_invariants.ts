@@ -16,6 +16,12 @@
 
 "use strict";
 
-import { CoreAPI } from "./core_api";
+import * as Web3 from "web3";
 
-export { CoreAPI };
+export class CoreAssertions {
+  private web3: Web3;
+
+  constructor(web3: Web3) {
+    this.web3 = web3;
+  }
+}

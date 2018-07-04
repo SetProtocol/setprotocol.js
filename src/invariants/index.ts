@@ -16,6 +16,14 @@
 
 "use strict";
 
-import { CoreAPI } from "./core_api";
+import * as Web3 from "web3";
 
-export { CoreAPI };
+import { CoreAssertions } from "./core_invariants";
+
+export class Assertions {
+  public core: CoreAssertions;
+
+  public constructor(web3: Web3) {
+    this.core = new CoreAssertions(web3);
+  }
+}
