@@ -14,19 +14,16 @@ cd $SET_PROTOCOL_SMART_CONTRACTS
 
 sleep 3
 
-echo -e "${CYAN}Installing Set Protocol contract deployment dependencies...${NO_COLOR}"
+echo -e "${CYAN}Installing {Set} Protocol contract deployment dependencies...${NO_COLOR}"
 yarn install >> $LOGS 2>&1
 echo -e "\n"
 
-echo -e "${CYAN}Running Set Protocol smart contract migrations...${NO_COLOR}"
+echo -e "${CYAN}Running {Set} Protocol smart contract migrations...${NO_COLOR}"
 yarn run deploy:development >> $LOGS 2>&1
 echo -e "\n"
 
 echo -e "${CYAN}Transpiling newly generated artifacts for usage in the setProtocol.js repo...${NO_COLOR}"
 yarn run dist >> $LOGS 2>&1
-echo -e "\n"
-
-echo -e "${CYAN}Set Protocol Contracts migration complete!${NO_COLOR}"
 echo -e "\n"
 
 echo -e "${GREEN}Dependency contract migrations complete, test chain is ready for use!${NO_COLOR}"
