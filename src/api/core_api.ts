@@ -38,6 +38,13 @@ export const CoreAPIErrors = {
 
 const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
 
+/**
+ * @title CoreAPI
+ * @author Set Protocol
+ *
+ * The Core API handles all functions on the Core SetProtocol smart contract.
+ *
+ */
 export class CoreAPI {
   private provider: Web3;
   private assert: Assertions;
