@@ -34,7 +34,9 @@ export class ContractsAPI {
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as CoreContract;
     } else {
-      const coreContract = await CoreContract.at(coreAddress, this.provider, transactionOptions);
+      const coreContract = await CoreContract.deployed(this.provider, transactionOptions);
+
+      await this.assert.core.implementsCore(coreContract);
 
       this.cache[cacheKey] = coreContract;
       return coreContract;

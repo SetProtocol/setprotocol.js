@@ -10,9 +10,12 @@ import { CoreContract } from "../wrappers";
 // APIs
 import { ContractsAPI } from ".";
 
-export const SetTokenAPIErrors = {
+export const CoreAPIErrors = {
+  COMPONENTS_AND_UNITS_EQUAL_LENGTHS: () =>
+    "The components and units arrays need to be equal lengths",
   QUANTITY_NEEDS_TO_BE_NON_ZERO: (quantity: BigNumber) =>
     `The quantity ${quantity.toString()} inputted needs to be non-zero`,
+  STRING_CANNOT_BE_EMPTY: (variable: string) => `The string ${variable} cannot be empty`,
 };
 
 const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
@@ -28,31 +31,59 @@ export class CoreAPI {
     this.assert = new Assertions(this.provider);
   }
 
+  /**
+   * Create a new Set, specifying the components, units, name, symbol to use.
+   *
+   * @param  userAddress    Address of the user
+   * @param  coreAddress    Address of the Core contract to use
+   * @param  factoryAddress Set Token factory address of the token being created
+   * @param  components     Component token addresses
+   * @param  units          Units of corresponding token components
+   * @param  naturalUnit    Supplied as the lowest common denominator for the Set
+   * @param  name           User-supplied name for Set (i.e. "DEX Set")
+   * @param  symbol         User-supplied symbol for Set (i.e. "DEX")
+   * @return            a transaction hash to then later look up for the Set address
+   */
   public async create(
+    userAddress: string,
+    coreAddress: string,
     factoryAddress: string,
     components: string[],
-    units: number[],
-    naturalUnit: number,
+    units: BigNumber[],
+    naturalUnit: BigNumber,
     name: string,
     symbol: string,
   ): Promise<string> {
-    const coreInstance = await this.contracts.loadCoreAsync(factoryAddress, {
-      from: factoryAddress,
-    });
+    this.assert.schema.isValidAddress("factoryAddress", factoryAddress);
+    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.schema.isValidAddress("coreAddress", coreAddress);
+    this.assert.common.isEqualLength(
+      components,
+      units,
+      CoreAPIErrors.COMPONENTS_AND_UNITS_EQUAL_LENGTHS(),
+    );
+    this.assert.common.greaterThanZero(
+      naturalUnit,
+      CoreAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(naturalUnit),
+    );
+    this.assert.common.isValidString(name, CoreAPIErrors.STRING_CANNOT_BE_EMPTY("name"));
+    this.assert.common.isValidString(symbol, CoreAPIErrors.STRING_CANNOT_BE_EMPTY("symbol"));
 
-    return coreInstance.sendTransactionAsync(
+    const coreInstance = await this.contracts.loadCoreAsync(coreAddress);
+
+    const txHash = await coreInstance.sendTransactionAsync(
       factoryAddress,
       components,
       units,
       naturalUnit,
       name,
       symbol,
-      { from: factoryAddress },
+      { from: userAddress },
     );
 
+    return txHash;
+
     /* Asserts */
-    // assert that factoryAddress is valid
-    // assert components length and units length are the same
     // assert that components are valid
     // component addresses exist as a parameter
     // component addresses map to valid ERC20 contracts
@@ -61,11 +92,9 @@ export class CoreAPI {
     // assert naturalUnit is valid
     // greater than zero
     // greater than greatest decimal amount
-    // assert name exists
-    // assert symbol exists
 
     /* Functionality */
     // invoke create() on core with given parameters
-    // return set address
+    // return txHash (transaction will have set address in it)
   }
 }
