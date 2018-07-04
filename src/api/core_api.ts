@@ -16,18 +16,13 @@
 
 "use strict";
 
-import * as _ from "lodash";
 import * as Web3 from "web3";
-import { BigNumber } from "../../util/bignumber";
-
-// wrappers
-import { CoreWrapper } from "../../wrappers";
 
 /**
  * @title CoreAPI
  * @author Set Protocol
  *
- * The Core handles all functions including creating, issuing, redeeming, withdrawing, and depositing
+ * The Core handles all functions on the Core SetProtocol smart contract.
  *
  */
 
