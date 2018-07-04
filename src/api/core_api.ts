@@ -1,35 +1,71 @@
-/*
-  Copyright 2018 Set Labs Inc.
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-
-"use strict";
-
 import * as Web3 from "web3";
+import * as _ from "lodash";
+import { BigNumber } from "../util/bignumber";
+import { Address, UInt, Token, Component, TransactionOpts } from "../types/common";
 
-/**
- * @title CoreAPI
- * @author Set Protocol
- *
- * The Core handles all functions on the Core SetProtocol smart contract.
- *
- */
+import { Assertions } from "../invariants";
+import { estimateIssueRedeemGasCost } from "../util/set_token_utils";
+import { CoreContract } from "../wrappers";
+
+// APIs
+import { ContractsAPI } from ".";
+
+export const SetTokenAPIErrors = {
+  QUANTITY_NEEDS_TO_BE_NON_ZERO: (quantity: BigNumber) =>
+    `The quantity ${quantity.toString()} inputted needs to be non-zero`,
+};
+
+const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
 
 export class CoreAPI {
   private provider: Web3;
+  private assert: Assertions;
+  private contracts: ContractsAPI;
 
-  public constructor(provider: Web3) {
-    this.provider = provider;
+  constructor(web3: Web3, contracts: ContractsAPI) {
+    this.provider = web3;
+    this.contracts = contracts;
+    this.assert = new Assertions(this.provider);
+  }
+
+  public async create(
+    factoryAddress: string,
+    components: string[],
+    units: number[],
+    naturalUnit: number,
+    name: string,
+    symbol: string,
+  ): Promise<string> {
+    const coreInstance = await this.contracts.loadCoreAsync(factoryAddress, {
+      from: factoryAddress,
+    });
+
+    return coreInstance.sendTransactionAsync(
+      factoryAddress,
+      components,
+      units,
+      naturalUnit,
+      name,
+      symbol,
+      { from: factoryAddress },
+    );
+
+    /* Asserts */
+    // assert that factoryAddress is valid
+    // assert components length and units length are the same
+    // assert that components are valid
+    // component addresses exist as a parameter
+    // component addresses map to valid ERC20 contracts
+    // assert that units are valid
+    // greater than zero
+    // assert naturalUnit is valid
+    // greater than zero
+    // greater than greatest decimal amount
+    // assert name exists
+    // assert symbol exists
+
+    /* Functionality */
+    // invoke create() on core with given parameters
+    // return set address
   }
 }

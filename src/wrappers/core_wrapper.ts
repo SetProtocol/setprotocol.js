@@ -21,19 +21,22 @@
  * Templates can be found at https://github.com/0xProject/0x.js/tree/development/packages/abi-gen-templates.
  */
 // tslint:disable-next-line:no-unused-variable
+
+import { TxData, TxDataPayable } from "../types/common";
 import { promisify } from "@0xproject/utils";
-import { BigNumber } from "bignumber.js";
-import * as fs from "fs-extra";
+import { classUtils } from "../types/common";
+import { BigNumber } from "../util/bignumber";
+import { Web3Utils } from "../util/web3_utils";
+import { Core as ContractArtifacts } from "set-protocol-contracts";
 import * as Web3 from "web3";
 
-import { classUtils, TxData, TxDataPayable } from "../types/common";
-import { BaseContract } from "./base_contract";
+import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./base_contract";
 
 export class CoreContract extends BaseContract {
   public validFactories = {
-    async callAsync(index_0: string, defaultBlock?: any): Promise<boolean> {
+    async callAsync(index_0: string, defaultBlock?: any): Promise<void> {
       const self = this as CoreContract;
-      const result = await promisify<boolean>(
+      const result = await promisify<void>(
         self.web3ContractInstance.validFactories.call,
         self.web3ContractInstance,
       )(index_0);
@@ -41,9 +44,9 @@ export class CoreContract extends BaseContract {
     },
   };
   public vaultAddress = {
-    async callAsync(defaultBlock?: any): Promise<string> {
+    async callAsync(defaultBlock?: any): Promise<void> {
       const self = this as CoreContract;
-      const result = await promisify<string>(
+      const result = await promisify<void>(
         self.web3ContractInstance.vaultAddress.call,
         self.web3ContractInstance,
       )();
@@ -77,11 +80,19 @@ export class CoreContract extends BaseContract {
       const abiEncodedTransactionData = self.web3ContractInstance.renounceOwnership.getData();
       return abiEncodedTransactionData;
     },
+    async callAsync(txData: TxData = {}): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.renounceOwnership.call,
+        self.web3ContractInstance,
+      )();
+      return result;
+    },
   };
   public transferProxyAddress = {
-    async callAsync(defaultBlock?: any): Promise<string> {
+    async callAsync(defaultBlock?: any): Promise<void> {
       const self = this as CoreContract;
-      const result = await promisify<string>(
+      const result = await promisify<void>(
         self.web3ContractInstance.transferProxyAddress.call,
         self.web3ContractInstance,
       )();
@@ -89,9 +100,9 @@ export class CoreContract extends BaseContract {
     },
   };
   public owner = {
-    async callAsync(defaultBlock?: any): Promise<string> {
+    async callAsync(defaultBlock?: any): Promise<void> {
       const self = this as CoreContract;
-      const result = await promisify<string>(
+      const result = await promisify<void>(
         self.web3ContractInstance.owner.call,
         self.web3ContractInstance,
       )();
@@ -125,11 +136,19 @@ export class CoreContract extends BaseContract {
       const abiEncodedTransactionData = self.web3ContractInstance.transferOwnership.getData();
       return abiEncodedTransactionData;
     },
+    async callAsync(_newOwner: string, txData: TxData = {}): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.transferOwnership.call,
+        self.web3ContractInstance,
+      )(_newOwner);
+      return result;
+    },
   };
   public validSets = {
-    async callAsync(index_0: string, defaultBlock?: any): Promise<boolean> {
+    async callAsync(index_0: string, defaultBlock?: any): Promise<void> {
       const self = this as CoreContract;
-      const result = await promisify<boolean>(
+      const result = await promisify<void>(
         self.web3ContractInstance.validSets.call,
         self.web3ContractInstance,
       )(index_0);
@@ -163,6 +182,14 @@ export class CoreContract extends BaseContract {
       const abiEncodedTransactionData = self.web3ContractInstance.setVaultAddress.getData();
       return abiEncodedTransactionData;
     },
+    async callAsync(_vaultAddress: string, txData: TxData = {}): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.setVaultAddress.call,
+        self.web3ContractInstance,
+      )(_vaultAddress);
+      return result;
+    },
   };
   public setTransferProxyAddress = {
     async sendTransactionAsync(
@@ -194,6 +221,14 @@ export class CoreContract extends BaseContract {
       const abiEncodedTransactionData = self.web3ContractInstance.setTransferProxyAddress.getData();
       return abiEncodedTransactionData;
     },
+    async callAsync(_transferProxyAddress: string, txData: TxData = {}): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.setTransferProxyAddress.call,
+        self.web3ContractInstance,
+      )(_transferProxyAddress);
+      return result;
+    },
   };
   public addFactory = {
     async sendTransactionAsync(_factoryAddress: string, txData: TxData = {}): Promise<string> {
@@ -222,6 +257,14 @@ export class CoreContract extends BaseContract {
       const abiEncodedTransactionData = self.web3ContractInstance.addFactory.getData();
       return abiEncodedTransactionData;
     },
+    async callAsync(_factoryAddress: string, txData: TxData = {}): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.addFactory.call,
+        self.web3ContractInstance,
+      )(_factoryAddress);
+      return result;
+    },
   };
   public removeFactory = {
     async sendTransactionAsync(_factoryAddress: string, txData: TxData = {}): Promise<string> {
@@ -249,6 +292,14 @@ export class CoreContract extends BaseContract {
       const self = this as CoreContract;
       const abiEncodedTransactionData = self.web3ContractInstance.removeFactory.getData();
       return abiEncodedTransactionData;
+    },
+    async callAsync(_factoryAddress: string, txData: TxData = {}): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.removeFactory.call,
+        self.web3ContractInstance,
+      )(_factoryAddress);
+      return result;
     },
   };
   public issue = {
@@ -290,6 +341,14 @@ export class CoreContract extends BaseContract {
       const abiEncodedTransactionData = self.web3ContractInstance.issue.getData();
       return abiEncodedTransactionData;
     },
+    async callAsync(_setAddress: string, _quantity: BigNumber, txData: TxData = {}): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.issue.call,
+        self.web3ContractInstance,
+      )(_setAddress, _quantity);
+      return result;
+    },
   };
   public batchDeposit = {
     async sendTransactionAsync(
@@ -329,6 +388,18 @@ export class CoreContract extends BaseContract {
       const self = this as CoreContract;
       const abiEncodedTransactionData = self.web3ContractInstance.batchDeposit.getData();
       return abiEncodedTransactionData;
+    },
+    async callAsync(
+      _tokenAddresses: string[],
+      _quantities: BigNumber[],
+      txData: TxData = {},
+    ): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.batchDeposit.call,
+        self.web3ContractInstance,
+      )(_tokenAddresses, _quantities);
+      return result;
     },
   };
   public batchWithdraw = {
@@ -370,6 +441,18 @@ export class CoreContract extends BaseContract {
       const abiEncodedTransactionData = self.web3ContractInstance.batchWithdraw.getData();
       return abiEncodedTransactionData;
     },
+    async callAsync(
+      _tokenAddresses: string[],
+      _quantities: BigNumber[],
+      txData: TxData = {},
+    ): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.batchWithdraw.call,
+        self.web3ContractInstance,
+      )(_tokenAddresses, _quantities);
+      return result;
+    },
   };
   public deposit = {
     async sendTransactionAsync(
@@ -410,6 +493,18 @@ export class CoreContract extends BaseContract {
       const abiEncodedTransactionData = self.web3ContractInstance.deposit.getData();
       return abiEncodedTransactionData;
     },
+    async callAsync(
+      _tokenAddress: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.deposit.call,
+        self.web3ContractInstance,
+      )(_tokenAddress, _quantity);
+      return result;
+    },
   };
   public withdraw = {
     async sendTransactionAsync(
@@ -449,6 +544,18 @@ export class CoreContract extends BaseContract {
       const self = this as CoreContract;
       const abiEncodedTransactionData = self.web3ContractInstance.withdraw.getData();
       return abiEncodedTransactionData;
+    },
+    async callAsync(
+      _tokenAddress: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.withdraw.call,
+        self.web3ContractInstance,
+      )(_tokenAddress, _quantity);
+      return result;
     },
   };
   public create = {
@@ -510,6 +617,70 @@ export class CoreContract extends BaseContract {
       const abiEncodedTransactionData = self.web3ContractInstance.create.getData();
       return abiEncodedTransactionData;
     },
+    async callAsync(
+      _factoryAddress: string,
+      _components: string[],
+      _units: BigNumber[],
+      _naturalUnit: BigNumber,
+      _name: string,
+      _symbol: string,
+      txData: TxData = {},
+    ): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.create.call,
+        self.web3ContractInstance,
+      )(_factoryAddress, _components, _units, _naturalUnit, _name, _symbol);
+      return result;
+    },
+  };
+  public redeem = {
+    async sendTransactionAsync(
+      _setAddress: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<string> {
+      const self = this as CoreContract;
+      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
+        txData,
+        self.redeem.estimateGasAsync.bind(self, _setAddress, _quantity),
+      );
+      const txHash = await promisify<string>(
+        self.web3ContractInstance.redeem,
+        self.web3ContractInstance,
+      )(_setAddress, _quantity, txDataWithDefaults);
+      return txHash;
+    },
+    async estimateGasAsync(
+      _setAddress: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<number> {
+      const self = this as CoreContract;
+      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
+      const gas = await promisify<number>(
+        self.web3ContractInstance.redeem.estimateGas,
+        self.web3ContractInstance,
+      )(_setAddress, _quantity, txDataWithDefaults);
+      return gas;
+    },
+    getABIEncodedTransactionData(
+      _setAddress: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): string {
+      const self = this as CoreContract;
+      const abiEncodedTransactionData = self.web3ContractInstance.redeem.getData();
+      return abiEncodedTransactionData;
+    },
+    async callAsync(_setAddress: string, _quantity: BigNumber, txData: TxData = {}): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.redeem.call,
+        self.web3ContractInstance,
+      )(_setAddress, _quantity);
+      return result;
+    },
   };
   async deploy(...args: any[]): Promise<any> {
     const wrapper = this;
@@ -532,24 +703,25 @@ export class CoreContract extends BaseContract {
   }
   static async deployed(web3: Web3, defaults: Partial<TxData>): Promise<CoreContract> {
     const currentNetwork = web3.version.network;
-    const { abi, networks } = await this.getArtifactsData(web3);
+    const { abi, networks }: { abi: any; networks: any } = ContractArtifacts;
     const web3ContractInstance = web3.eth.contract(abi).at(networks[currentNetwork].address);
 
     return new CoreContract(web3ContractInstance, defaults);
   }
   static async at(address: string, web3: Web3, defaults: Partial<TxData>): Promise<CoreContract> {
-    const { abi } = await this.getArtifactsData(web3);
-    const web3ContractInstance = web3.eth.contract(abi).at(address);
+    const { abi }: { abi: any } = ContractArtifacts;
+    const web3Utils = new Web3Utils(web3);
+    const contractExists = await web3Utils.doesContractExistAtAddressAsync(address);
+    const currentNetwork = await web3Utils.getNetworkIdAsync();
 
-    return new CoreContract(web3ContractInstance, defaults);
-  }
-  private static async getArtifactsData(web3: Web3): Promise<any> {
-    try {
-      const artifact = await fs.readFile("build/contracts/Core.json", "utf8");
-      const { abi, networks } = JSON.parse(artifact);
-      return { abi, networks };
-    } catch (e) {
-      console.error("Artifacts malformed or nonexistent: " + e.toString());
+    if (contractExists) {
+      const web3ContractInstance = web3.eth.contract(abi).at(address);
+
+      return new CoreContract(web3ContractInstance, defaults);
+    } else {
+      throw new Error(
+        CONTRACT_WRAPPER_ERRORS.CONTRACT_NOT_FOUND_ON_NETWORK("Core", currentNetwork),
+      );
     }
   }
   constructor(web3ContractInstance: Web3.ContractInstance, defaults: Partial<TxData>) {
