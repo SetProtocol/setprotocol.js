@@ -16,7 +16,7 @@
 
 "use strict";
 
-import { BaseContract } from "./base_contract";
+import { BaseContract } from "./base_wrapper";
 import { CoreContract } from "./core_wrapper";
 
 export type ContractWrapper = CoreContract;

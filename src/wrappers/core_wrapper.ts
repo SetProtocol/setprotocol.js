@@ -30,7 +30,7 @@ import { Web3Utils } from "../util/web3_utils";
 import { Core as ContractArtifacts } from "set-protocol-contracts";
 import * as Web3 from "web3";
 
-import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./base_contract";
+import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./base_wrapper";
 
 export class CoreContract extends BaseContract {
   public validFactories = {

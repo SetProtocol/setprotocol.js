@@ -11,7 +11,7 @@ import { Web3Utils } from "../util/web3_utils";
 import { DetailedERC20 as ContractArtifacts } from "set-protocol-contracts";
 import * as Web3 from "web3";
 
-import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./base_contract";
+import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./base_wrapper";
 
 export class DetailedERC20Contract extends BaseContract {
   public name = {
