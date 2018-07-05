@@ -89,7 +89,7 @@ export class CoreAPI {
 
     const coreInstance = await this.contracts.loadCoreAsync(coreAddress);
 
-    const txHash = await coreInstance.sendTransactionAsync(
+    const txHash = await coreInstance.create.sendTransactionAsync(
       factoryAddress,
       components,
       units,
