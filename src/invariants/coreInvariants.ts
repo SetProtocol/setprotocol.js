@@ -17,7 +17,7 @@
 "use strict";
 
 import { BigNumber } from "../util";
-import { CoreContract } from "../wrappers/core_wrapper";
+import { CoreContract } from "../wrappers/coreWrapper";
 
 export const CoreAssertionErrors = {
   MISSING_CORE_METHOD: (address: string) =>

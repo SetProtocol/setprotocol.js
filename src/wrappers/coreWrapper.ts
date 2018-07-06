@@ -23,12 +23,12 @@
 // tslint:disable-next-line:no-unused-variable
 
 import { promisify } from "@0xproject/utils";
-import { TxData, TxDataPayable } from "../types/common";
-import { BigNumber, classUtils, Web3Utils } from "../util";
 import { Core as ContractArtifacts } from "set-protocol-contracts";
 import * as Web3 from "web3";
 
-import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./base_wrapper";
+import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./baseWrapper";
+import { TxData, TxDataPayable } from "../types/common";
+import { BigNumber, classUtils, Web3Utils } from "../util";
 
 export class CoreContract extends BaseContract {
   public validFactories = {

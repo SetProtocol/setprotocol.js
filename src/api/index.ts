@@ -16,7 +16,7 @@
 
 "use strict";
 
-import { ContractsAPI } from "./contracts_api";
-import { CoreAPI } from "./core_api";
+import { ContractsAPI } from "./contractsApi";
+import { CoreAPI } from "./coreApi";
 
 export { ContractsAPI, CoreAPI };

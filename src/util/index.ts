@@ -17,6 +17,6 @@
 "use strict";
 
 export { BigNumber } from "./bignumber";
-export { classUtils } from "./class_utils";
-export { estimateIssueRedeemGasCost } from "./set_token_utils";
-export { Web3Utils } from "./web3_utils";
+export { classUtils } from "./classUtils";
+export { estimateIssueRedeemGasCost } from "./setTokenUtils";
+export { Web3Utils } from "./web3Utils";

@@ -20,8 +20,7 @@ import { Schema, Validator, ValidatorResult } from "jsonschema";
 import * as _ from "lodash";
 
 import { Schemas } from "./schemas";
-
-import * as customFormats from "./custom_formats";
+import { bigNumberFormat, wholeBigNumberFormat } from "./customFormats";
 
 /**
  * Borrowed, with slight modification, from the wonderful dharma codebase and 0x.js project codebase:
@@ -54,7 +53,7 @@ export class SchemaValidator {
   }
 
   public addCustomValidators() {
-    this._validator.customFormats.BigNumber = customFormats.bigNumberFormat;
-    this._validator.customFormats.wholeBigNumber = customFormats.wholeBigNumberFormat;
+    this._validator.customFormats.BigNumber = bigNumberFormat;
+    this._validator.customFormats.wholeBigNumber = wholeBigNumberFormat;
   }
 }

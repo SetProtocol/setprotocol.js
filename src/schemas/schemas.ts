@@ -22,7 +22,7 @@ import {
   bytesSchema,
   numberSchema,
   wholeNumberSchema,
-} from "./basic_type_schemas";
+} from "./basicTypeSchemas";
 
 export const Schemas = {
   addressSchema,

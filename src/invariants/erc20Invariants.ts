@@ -17,7 +17,7 @@
 "use strict";
 
 import { BigNumber } from "../util";
-import { DetailedERC20Contract as ERC20 } from "../wrappers/detailed_erc20_wrapper";
+import { DetailedERC20Contract as ERC20 } from "../wrappers/detailedErc20Wrapper";
 
 export const TokenAssertionErrors = {
   MISSING_ERC20_METHOD: (address: string) =>
