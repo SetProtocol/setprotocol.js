@@ -37,8 +37,8 @@ export default class SetProtocol {
    * @param   provider    The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
    *                      the Ethereum network.
    */
-  constructor(provider: Web3 = undefined) {
+  constructor(provider: Web3 = undefined, coreAddress: string = undefined) {
     this.provider = provider;
-    this.setCore = new CoreAPI(this.provider);
+    this.setCore = new CoreAPI(this.provider, coreAddress);
   }
 }

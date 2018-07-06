@@ -20,17 +20,20 @@ import * as chai from "chai";
 import * as Web3 from "web3";
 
 import SetProtocol from '../src';
+import { CoreContract } from "../src/wrappers";
+
+import { ACCOUNTS } from "./accounts";
 
 const provider = new Web3.providers.HttpProvider("http://localhost:8545");
+const web3 = new Web3(provider);
 const { expect } = chai;
 
-describe(`SetProtocol`, () => {
-  const setProtocolInstance = new SetProtocol(provider);
+const TX_DEFAULTS = { from: ACCOUNTS[0].address, gas: 4712388 };
+
+describe(`SetProtocol`, async () => {
+  const coreContract = await CoreContract.deployed(web3, TX_DEFAULTS);
+  const setProtocolInstance = new SetProtocol(web3, coreContract.address);
   it(`should instantiate a new setProtocolInstance`, () => {
     expect(setProtocolInstance instanceof SetProtocol);
-  });
-
-  it(`should set a provider in setProtocolInstance`, () => {
-    expect(setProtocolInstance.provider).to.exist;
   });
 });
