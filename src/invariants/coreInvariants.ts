@@ -16,13 +16,9 @@
 
 "use strict";
 
+import { CoreAssertionErrors } from "../errors";
 import { BigNumber } from "../util";
 import { CoreContract } from "../wrappers/coreWrapper";
-
-export const CoreAssertionErrors = {
-  MISSING_CORE_METHOD: (address: string) =>
-    `Contract at ${address} does not implement Core interface.`,
-};
 
 export class CoreAssertions {
   /**

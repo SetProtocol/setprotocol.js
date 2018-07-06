@@ -16,22 +16,8 @@
 
 "use strict";
 
+import { SchemaAssertionsError } from "../errors";
 import { Schema, Schemas, SchemaValidator, ValidatorResult } from "../schemas";
-
-export const SchemaAssertionsError = {
-  DOES_NOT_CONFORM_TO_SCHEMA: (
-    variableName: string,
-    schemaId: string,
-    value: any,
-    validationResult: ValidatorResult,
-  ) => `
-        Expected ${variableName} to conform to schema ${schemaId}
-
-        Encountered: ${JSON.stringify(value, undefined, "\t")}
-
-        Validation errors: ${validationResult.errors.join(", ")}
-      `,
-};
 
 /*
  * A bunch of this has been borrowed from the awesome Dharma.js's repo

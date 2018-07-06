@@ -16,13 +16,9 @@
 
 "use strict";
 
+import { Erc20AssertionErrors } from "../errors";
 import { BigNumber } from "../util";
 import { DetailedERC20Contract as ERC20 } from "../wrappers/detailedErc20Wrapper";
-
-export const TokenAssertionErrors = {
-  MISSING_ERC20_METHOD: (address: string) =>
-    `Contract at ${address} does not implement ERC20 interface.`,
-};
 
 export class ERC20Assertions {
   // Throws if the given candidateContract does not respond to some methods from the ERC20 interface.
@@ -34,7 +30,7 @@ export class ERC20Assertions {
       await tokenInstance.allowance.callAsync(address, address);
       await tokenInstance.totalSupply.callAsync();
     } catch (error) {
-      throw new Error(TokenAssertionErrors.MISSING_ERC20_METHOD(address));
+      throw new Error(Erc20AssertionErrors.MISSING_ERC20_METHOD(address));
     }
   }
 

@@ -21,18 +21,11 @@ import * as _ from "lodash";
 
 import { ContractsAPI } from ".";
 import { DEFAULT_GAS_PRICE } from "../constants";
+import { CoreAPIErrors } from "../errors";
 import { Assertions } from "../invariants";
 import { Address, Component, Token, TransactionOpts, UInt } from "../types/common";
 import { BigNumber, estimateIssueRedeemGasCost } from "../util";
 import { CoreContract } from "../wrappers";
-
-export const CoreAPIErrors = {
-  COMPONENTS_AND_UNITS_EQUAL_LENGTHS: () =>
-    "The components and units arrays need to be equal lengths",
-  QUANTITY_NEEDS_TO_BE_NON_ZERO: (quantity: BigNumber) =>
-    `The quantity ${quantity.toString()} inputted needs to be non-zero`,
-  STRING_CANNOT_BE_EMPTY: (variable: string) => `The string ${variable} cannot be empty`,
-};
 
 /**
  * @title CoreAPI
