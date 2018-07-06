@@ -42,7 +42,7 @@ export class SetTokenAPI {
   constructor(web3: Web3) {
     this.provider = web3;
     this.contracts = new ContractsAPI(this.provider);
-    this.assert = new Assertions(this.provider);
+    this.assert = new Assertions();
   }
 
   /**
@@ -53,9 +53,9 @@ export class SetTokenAPI {
    * @return             The balance of the user's Set
    */
   public async getBalanceOf(setAddress: string, userAddress: string): number {
-    // assert address is valid
-    // assert userAddress is valid
-    // assert set is valid
+    this.assert.schema.isValidAddress("userAddress", userAddress);
+    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
+    return await setTokenInstance.balanceOf(userAddress);
   }
 
   /**
@@ -65,8 +65,8 @@ export class SetTokenAPI {
    * @return            An array of addresses
    */
   public async getComponents(setAddress: string): string[] {
-    // assert address is valid
-    // assert set is valid
+    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
+    return await setTokenInstance.getComponents();
   }
 
   /**
@@ -76,8 +76,8 @@ export class SetTokenAPI {
    * @return            A string of the Set's name
    */
   public async getName(setAddress: string): string {
-    // assert address is valid
-    // assert set is valid
+    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
+    return await setTokenInstance.name();
   }
 
   /**
@@ -87,8 +87,8 @@ export class SetTokenAPI {
    * @return            The natural unit of the Set
    */
   public async getNaturalUnit(setAddress: string): number {
-    // assert address is valid
-    // assert set is valid
+    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
+    return await setTokenInstance.naturalUnit();
   }
 
   /**
@@ -98,8 +98,8 @@ export class SetTokenAPI {
    * @return            A string of the Set's symbol
    */
   public async getSymbol(setAddress: string): string {
-    // assert address is valid
-    // assert set is valid
+    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
+    return await setTokenInstance.symbol();
   }
 
   /**
@@ -109,8 +109,8 @@ export class SetTokenAPI {
    * @return            The total supply of the Set
    */
   public async getTotalSupply(setAddress: string): number {
-    // assert address is valid
-    // assert set is valid
+    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
+    return await setTokenInstance.totalSupply();
   }
 
   /**
@@ -121,7 +121,7 @@ export class SetTokenAPI {
    *                    correspond to the component tokens in the Set
    */
   public async getUnits(setAddress: string): number[] {
-    // assert address is valid
-    // assert set is valid
+    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
+    return await setTokenInstance.getUnits();
   }
 }
