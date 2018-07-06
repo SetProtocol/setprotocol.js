@@ -20,11 +20,11 @@
 import * as Web3 from "web3";
 
 // Assertions
-import { AccountAssertions } from "./accountInvariants";
-import { CommonAssertions } from "./commonInvariants";
-import { CoreAssertions } from "./coreInvariants";
-import { ERC20Assertions } from "./erc20Invariants";
-import { SchemaAssertions } from "./schemaInvariants";
+import { AccountAssertions } from "./AccountAssertions";
+import { CommonAssertions } from "./CommonAssertions";
+import { CoreAssertions } from "./CoreAssertions";
+import { ERC20Assertions } from "./ERC20Assertions";
+import { SchemaAssertions } from "./SchemaAssertions";
 
 export class Assertions {
   public account: AccountAssertions;

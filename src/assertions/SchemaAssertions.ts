@@ -16,8 +16,8 @@
 
 "use strict";
 
-import { SchemaAssertionsError } from "../errors";
-import { Schema, Schemas, SchemaValidator, ValidatorResult } from "../schemas";
+import { schemaAssertionsError } from "../errors";
+import { Schema, schemas, SchemaValidator, ValidatorResult } from "../schemas";
 
 /*
  * A bunch of this has been borrowed from the awesome Dharma.js's repo
@@ -30,23 +30,23 @@ export class SchemaAssertions {
   }
 
   public isValidAddress(variableName: string, value: any) {
-    this.assertConformsToSchema(variableName, value, Schemas.addressSchema);
+    this.assertConformsToSchema(variableName, value, schemas.addressSchema);
   }
 
   public isValidBytes32(variableName: string, value: any) {
-    this.assertConformsToSchema(variableName, value, Schemas.bytes32Schema);
+    this.assertConformsToSchema(variableName, value, schemas.bytes32Schema);
   }
 
   public isValidBytes(variableName: string, value: any) {
-    this.assertConformsToSchema(variableName, value, Schemas.bytesSchema);
+    this.assertConformsToSchema(variableName, value, schemas.bytesSchema);
   }
 
   public isValidNumber(variableName: string, value: any) {
-    this.assertConformsToSchema(variableName, value, Schemas.numberSchema);
+    this.assertConformsToSchema(variableName, value, schemas.numberSchema);
   }
 
   public IsValidWholeNumber(variableName: string, value: any) {
-    this.assertConformsToSchema(variableName, value, Schemas.wholeNumberSchema);
+    this.assertConformsToSchema(variableName, value, schemas.wholeNumberSchema);
   }
 
   private assertConformsToSchema(variableName: string, value: any, schema: Schema): void {
@@ -55,7 +55,7 @@ export class SchemaAssertions {
 
     if (hasValidationErrors) {
       throw new Error(
-        SchemaAssertionsError.DOES_NOT_CONFORM_TO_SCHEMA(
+        schemaAssertionsError.DOES_NOT_CONFORM_TO_SCHEMA(
           variableName,
           schema.id,
           value,

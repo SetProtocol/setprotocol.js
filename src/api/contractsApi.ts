@@ -19,7 +19,7 @@
 import * as _ from "lodash";
 import * as Web3 from "web3";
 
-import { Assertions } from "../invariants";
+import { Assertions } from "../assertions";
 import { BigNumber } from "../util";
 import { BaseContract, ContractWrapper, CoreContract } from "../wrappers";
 

@@ -19,4 +19,4 @@
 export { BigNumber } from "./bignumber";
 export { classUtils } from "./classUtils";
 export { estimateIssueRedeemGasCost } from "./setTokenUtils";
-export { Web3Utils } from "./web3Utils";
+export { Web3Utils } from "./Web3Utils";

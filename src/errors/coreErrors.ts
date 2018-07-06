@@ -18,7 +18,7 @@
 
 import { BigNumber } from "../util";
 
-export const CoreAPIErrors = {
+export const coreAPIErrors = {
   COMPONENTS_AND_UNITS_EQUAL_LENGTHS: () =>
     "The components and units arrays need to be equal lengths",
   QUANTITY_NEEDS_TO_BE_NON_ZERO: (quantity: BigNumber) =>
@@ -26,7 +26,7 @@ export const CoreAPIErrors = {
   STRING_CANNOT_BE_EMPTY: (variable: string) => `The string ${variable} cannot be empty`,
 };
 
-export const CoreAssertionErrors = {
+export const coreAssertionErrors = {
   MISSING_CORE_METHOD: (address: string) =>
     `Contract at ${address} does not implement Core interface.`,
 };

@@ -16,7 +16,7 @@
 
 "use strict";
 
-export const Erc20AssertionErrors = {
+export const erc20AssertionErrors = {
   MISSING_ERC20_METHOD: (address: string) =>
     `Contract at ${address} does not implement ERC20 interface.`,
 };

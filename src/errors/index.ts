@@ -16,6 +16,6 @@
 
 "use strict";
 
-export { CoreAPIErrors, CoreAssertionErrors } from "./coreErrors";
-export { Erc20AssertionErrors } from "./erc20Errors";
-export { SchemaAssertionsError } from "./schemaErrors";
+export { coreAPIErrors, coreAssertionErrors } from "./coreErrors";
+export { erc20AssertionErrors } from "./erc20Errors";
+export { schemaAssertionsError } from "./schemaErrors";

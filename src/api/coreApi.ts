@@ -21,8 +21,8 @@ import * as _ from "lodash";
 
 import { ContractsAPI } from ".";
 import { DEFAULT_GAS_PRICE } from "../constants";
-import { CoreAPIErrors } from "../errors";
-import { Assertions } from "../invariants";
+import { coreAPIErrors } from "../errors";
+import { Assertions } from "../assertions";
 import { Address, Component, Token, TransactionOpts, UInt } from "../types/common";
 import { BigNumber, estimateIssueRedeemGasCost } from "../util";
 import { CoreContract } from "../wrappers";
@@ -36,12 +36,14 @@ import { CoreContract } from "../wrappers";
  */
 export class CoreAPI {
   private provider: Web3;
+  private coreAddress: string;
   private assert: Assertions;
   private contracts: ContractsAPI;
 
-  constructor(web3: Web3, contracts: ContractsAPI) {
+  constructor(web3: Web3, coreAddress: string) {
     this.provider = web3;
-    this.contracts = contracts;
+    this.coreAddress = coreAddress;
+    this.contracts = new ContractsAPI(this.provider);
     this.assert = new Assertions(this.provider);
   }
 
@@ -49,7 +51,6 @@ export class CoreAPI {
    * Create a new Set, specifying the components, units, name, symbol to use.
    *
    * @param  userAddress    Address of the user
-   * @param  coreAddress    Address of the Core contract to use
    * @param  factoryAddress Set Token factory address of the token being created
    * @param  components     Component token addresses
    * @param  units          Units of corresponding token components
@@ -60,7 +61,6 @@ export class CoreAPI {
    */
   public async create(
     userAddress: string,
-    coreAddress: string,
     factoryAddress: string,
     components: string[],
     units: BigNumber[],
@@ -70,20 +70,20 @@ export class CoreAPI {
   ): Promise<string> {
     this.assert.schema.isValidAddress("factoryAddress", factoryAddress);
     this.assert.schema.isValidAddress("userAddress", userAddress);
-    this.assert.schema.isValidAddress("coreAddress", coreAddress);
+    this.assert.schema.isValidAddress("coreAddress", this.coreAddress);
     this.assert.common.isEqualLength(
       components,
       units,
-      CoreAPIErrors.COMPONENTS_AND_UNITS_EQUAL_LENGTHS(),
+      coreAPIErrors.COMPONENTS_AND_UNITS_EQUAL_LENGTHS(),
     );
     this.assert.common.greaterThanZero(
       naturalUnit,
-      CoreAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(naturalUnit),
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(naturalUnit),
     );
-    this.assert.common.isValidString(name, CoreAPIErrors.STRING_CANNOT_BE_EMPTY("name"));
-    this.assert.common.isValidString(symbol, CoreAPIErrors.STRING_CANNOT_BE_EMPTY("symbol"));
+    this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY("name"));
+    this.assert.common.isValidString(symbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY("symbol"));
 
-    const coreInstance = await this.contracts.loadCoreAsync(coreAddress);
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
     const txHash = await coreInstance.create.sendTransactionAsync(
       factoryAddress,

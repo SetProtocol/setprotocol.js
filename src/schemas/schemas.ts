@@ -24,7 +24,7 @@ import {
   wholeNumberSchema,
 } from "./basicTypeSchemas";
 
-export const Schemas = {
+export const schemas = {
   addressSchema,
   numberSchema,
   bytes32Schema,

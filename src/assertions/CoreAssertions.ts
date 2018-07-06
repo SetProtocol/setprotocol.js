@@ -16,9 +16,9 @@
 
 "use strict";
 
-import { CoreAssertionErrors } from "../errors";
+import { coreAssertionErrors } from "../errors";
 import { BigNumber } from "../util";
-import { CoreContract } from "../wrappers/coreWrapper";
+import { CoreContract } from "../wrappers/CoreContract";
 
 export class CoreAssertions {
   /**
@@ -35,7 +35,7 @@ export class CoreAssertions {
       await coreInstance.transferProxyAddress.callAsync();
       await coreInstance.owner.callAsync();
     } catch (error) {
-      throw new Error(CoreAssertionErrors.MISSING_CORE_METHOD(address));
+      throw new Error(coreAssertionErrors.MISSING_CORE_METHOD(address));
     }
   }
 }

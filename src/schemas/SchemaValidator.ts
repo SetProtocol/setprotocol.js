@@ -19,7 +19,7 @@
 import { Schema, Validator, ValidatorResult } from "jsonschema";
 import * as _ from "lodash";
 
-import { Schemas } from "./schemas";
+import { schemas } from "./schemas";
 import { bigNumberFormat, wholeBigNumberFormat } from "./customFormats";
 
 /**
@@ -34,7 +34,7 @@ export class SchemaValidator {
 
     this.addCustomValidators();
 
-    for (const schema of _.values(Schemas)) {
+    for (const schema of _.values(schemas)) {
       this._validator.addSchema(schema, schema.id);
     }
   }

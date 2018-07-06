@@ -18,7 +18,7 @@
 
 import { ValidatorResult } from "../schemas";
 
-export const SchemaAssertionsError = {
+export const schemaAssertionsError = {
   DOES_NOT_CONFORM_TO_SCHEMA: (
     variableName: string,
     schemaId: string,

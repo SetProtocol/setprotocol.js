@@ -26,7 +26,7 @@ import { promisify } from "@0xproject/utils";
 import { Core as ContractArtifacts } from "set-protocol-contracts";
 import * as Web3 from "web3";
 
-import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./baseWrapper";
+import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./BaseContract";
 import { TxData, TxDataPayable } from "../types/common";
 import { BigNumber, classUtils, Web3Utils } from "../util";
 
