@@ -83,6 +83,14 @@ export class CoreAPI {
     this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY("name"));
     this.assert.common.isValidString(symbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY("symbol"));
 
+    _.each(components, component => {
+      this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY("component"));
+    });
+
+    _.each(units, unit => {
+      this.assert.common.greaterThanZero(unit, coreAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(unit));
+    });
+
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
     const txHash = await coreInstance.create.sendTransactionAsync(
