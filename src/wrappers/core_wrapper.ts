@@ -22,11 +22,9 @@
  */
 // tslint:disable-next-line:no-unused-variable
 
-import { TxData, TxDataPayable } from "../types/common";
 import { promisify } from "@0xproject/utils";
-import { classUtils } from "../types/common";
-import { BigNumber } from "../util/bignumber";
-import { Web3Utils } from "../util/web3_utils";
+import { classUtils, TxData, TxDataPayable } from "../types/common";
+import { BigNumber, Web3Utils } from "../util";
 import { Core as ContractArtifacts } from "set-protocol-contracts";
 import * as Web3 from "web3";
 

@@ -1,4 +1,4 @@
-import { BigNumber } from "./bignumber";
+import { BigNumber } from ".";
 
 const TRANSFER_GAS_MAXIMUM = new BigNumber(70000);
 

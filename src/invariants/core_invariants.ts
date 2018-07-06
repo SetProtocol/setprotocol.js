@@ -16,12 +16,25 @@
 
 "use strict";
 
-import * as Web3 from "web3";
+import { BigNumber } from "../util";
+import { CoreContract } from "../wrappers/core_wrapper";
+
+export const CoreAssertionErrors = {
+  MISSING_CORE_METHOD: (address: string) =>
+    `Contract at ${address} does not implement Core interface.`,
+};
 
 export class CoreAssertions {
-  private web3: Web3;
+  // Throws if the given candidateContract does not respond to some methods from the Core interface.
+  public async implementsCore(coreInstance: CoreContract): Promise<void> {
+    const { address } = coreInstance;
 
-  constructor(web3: Web3) {
-    this.web3 = web3;
+    try {
+      await coreInstance.vaultAddress.callAsync();
+      await coreInstance.transferProxyAddress.callAsync();
+      await coreInstance.owner.callAsync();
+    } catch (error) {
+      throw new Error(CoreAssertionErrors.MISSING_CORE_METHOD(address));
+    }
   }
 }

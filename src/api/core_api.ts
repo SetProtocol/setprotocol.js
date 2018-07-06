@@ -18,15 +18,13 @@
 
 import * as Web3 from "web3";
 import * as _ from "lodash";
-import { BigNumber } from "../util/bignumber";
-import { Address, UInt, Token, Component, TransactionOpts } from "../types/common";
 
-import { Assertions } from "../invariants";
-import { estimateIssueRedeemGasCost } from "../util/set_token_utils";
-import { CoreContract } from "../wrappers";
-
-// APIs
 import { ContractsAPI } from ".";
+import { DEFAULT_GAS_PRICE } from "../constants";
+import { Assertions } from "../invariants";
+import { Address, Component, Token, TransactionOpts, UInt } from "../types/common";
+import { BigNumber, estimateIssueRedeemGasCost } from "../util";
+import { CoreContract } from "../wrappers";
 
 export const CoreAPIErrors = {
   COMPONENTS_AND_UNITS_EQUAL_LENGTHS: () =>
@@ -35,8 +33,6 @@ export const CoreAPIErrors = {
     `The quantity ${quantity.toString()} inputted needs to be non-zero`,
   STRING_CANNOT_BE_EMPTY: (variable: string) => `The string ${variable} cannot be empty`,
 };
-
-const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
 
 /**
  * @title CoreAPI

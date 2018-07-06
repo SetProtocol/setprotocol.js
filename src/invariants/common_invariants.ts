@@ -1,4 +1,4 @@
-import { BigNumber } from "../util/bignumber";
+import { BigNumber } from "../util";
 
 export class CommonAssertions {
   public greaterThanZero(quantity: BigNumber, errorMessage: string) {

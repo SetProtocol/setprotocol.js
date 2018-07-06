@@ -20,21 +20,24 @@
 import * as Web3 from "web3";
 
 // Assertions
-import { AccountAssertions } from "./account";
-import { CommonAssertions } from "./common";
-import { SchemaAssertions } from "./schema";
-import { CoreAssertions } from "./core";
+import { AccountAssertions } from "./account_invariants";
+import { CommonAssertions } from "./common_invariants";
+import { CoreAssertions } from "./core_invariants";
+import { ERC20Assertions } from "./erc20_invariants";
+import { SchemaAssertions } from "./schema_invariants";
 
 export class Assertions {
   public account: AccountAssertions;
   public common: CommonAssertions;
-  public schema: SchemaAssertions;
   public core: CoreAssertions;
+  public erc20: ERC20Assertions;
+  public schema: SchemaAssertions;
 
   public constructor(web3: Web3) {
-    this.common = new CommonAssertions();
     this.account = new AccountAssertions();
-    this.schema = new SchemaAssertions();
+    this.common = new CommonAssertions();
     this.core = new CoreAssertions();
+    this.erc20 = new ERC20Assertions();
+    this.schema = new SchemaAssertions();
   }
 }

@@ -1,4 +1,4 @@
-import { BigNumber } from "../util/bignumber";
+import { BigNumber } from "../util";
 import { DetailedERC20Contract as ERC20 } from "../wrappers/detailed_erc20_wrapper";
 
 export const TokenAssertionErrors = {
