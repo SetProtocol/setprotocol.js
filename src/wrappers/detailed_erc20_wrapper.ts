@@ -3,9 +3,9 @@
  * Templates can be found at https://github.com/0xProject/0x.js/tree/development/packages/abi-gen-templates.
  */
 // tslint:disable-next-line:no-unused-variable
-import { classUtils, TxData, TxDataPayable } from "../types/common";
+import { TxData, TxDataPayable } from "../types/common";
 import { promisify } from "@0xproject/utils";
-import { BigNumber, Web3Utils } from "../util";
+import { BigNumber, classUtils, Web3Utils } from "../util";
 import { DetailedERC20 as ContractArtifacts } from "set-protocol-contracts";
 import * as Web3 from "web3";
 

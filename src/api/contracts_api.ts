@@ -23,10 +23,6 @@ import { Assertions } from "../invariants";
 import { BigNumber } from "../util";
 import { BaseContract, ContractWrapper, CoreContract } from "../wrappers";
 
-export interface SetContracts {
-  Core: CoreContract;
-}
-
 /**
  * @title ContractsAPI
  * @author Set Protocol

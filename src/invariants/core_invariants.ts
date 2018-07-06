@@ -25,7 +25,12 @@ export const CoreAssertionErrors = {
 };
 
 export class CoreAssertions {
-  // Throws if the given candidateContract does not respond to some methods from the Core interface.
+  /**
+   * Throws if the given candidateContract does not respond to some methods from the Core interface.
+   *
+   * @param  coreInstance An instance of the core contract
+   * @return              Void Promise
+   */
   public async implementsCore(coreInstance: CoreContract): Promise<void> {
     const { address } = coreInstance;
 
