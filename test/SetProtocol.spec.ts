@@ -57,7 +57,7 @@ describe('SetProtocol', async () => {
   });
 
   test('should instantiate a new setProtocolInstance', async () => {
-    // deploy Core
+    // Deploy Core
     const coreContractInstance = await coreContract.new();
 
     const setProtocolInstance = new SetProtocol(web3, coreContractInstance.address);

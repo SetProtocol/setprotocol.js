@@ -20,12 +20,12 @@ import * as Web3 from "web3";
 import * as _ from "lodash";
 
 import { ContractsAPI } from ".";
-import { DEFAULT_GAS_PRICE } from "../constants";
+import { DEFAULT_GAS_PRICE, ZERO } from "../constants";
 import { coreAPIErrors } from "../errors";
 import { Assertions } from "../assertions";
 import { Address, Component, Token, TransactionOpts, UInt } from "../types/common";
 import { BigNumber, estimateIssueRedeemGasCost } from "../util";
-import { CoreContract } from "../wrappers";
+import { CoreContract, DetailedERC20Contract } from "../wrappers";
 
 /**
  * @title CoreAPI
@@ -83,9 +83,36 @@ export class CoreAPI {
     this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY("name"));
     this.assert.common.isValidString(symbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY("symbol"));
 
-    _.each(components, component => {
-      this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY("component"));
-    });
+    let minDecimals = new BigNumber(18);
+    let tokenDecimals;
+    await Promise.all(
+      components.map(async componentAddress => {
+        this.assert.common.isValidString(
+          componentAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY("component"),
+        );
+        this.assert.schema.isValidAddress("componentAddress", componentAddress);
+
+        const tokenContract = await DetailedERC20Contract.at(componentAddress, this.provider, {});
+
+        try {
+          tokenDecimals = await tokenContract.decimals.callAsync();
+          if (tokenDecimals.lt(minDecimals)) {
+            minDecimals = tokenDecimals;
+          }
+        } catch (err) {
+          minDecimals = ZERO;
+        }
+
+        await this.assert.erc20.implementsERC20(tokenContract);
+      }),
+    );
+
+    this.assert.core.validateNaturalUnit(
+      naturalUnit,
+      minDecimals,
+      coreAPIErrors.INVALID_NATURAL_UNIT(),
+    );
 
     _.each(units, unit => {
       this.assert.common.greaterThanZero(unit, coreAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(unit));
@@ -104,19 +131,5 @@ export class CoreAPI {
     );
 
     return txHash;
-
-    /* Asserts */
-    // assert that components are valid
-    // component addresses exist as a parameter
-    // component addresses map to valid ERC20 contracts
-    // assert that units are valid
-    // greater than zero
-    // assert naturalUnit is valid
-    // greater than zero
-    // greater than greatest decimal amount
-
-    /* Functionality */
-    // invoke create() on core with given parameters
-    // return txHash (transaction will have set address in it)
   }
 }

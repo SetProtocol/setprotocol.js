@@ -24,6 +24,7 @@ export const coreAPIErrors = {
   QUANTITY_NEEDS_TO_BE_NON_ZERO: (quantity: BigNumber) =>
     `The quantity ${quantity.toString()} inputted needs to be non-zero`,
   STRING_CANNOT_BE_EMPTY: (variable: string) => `The string ${variable} cannot be empty`,
+  INVALID_NATURAL_UNIT: () => "Natural unit must be larger than minimum unit allowed by components",
 };
 
 export const coreAssertionErrors = {

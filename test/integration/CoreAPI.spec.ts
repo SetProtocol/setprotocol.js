@@ -20,20 +20,22 @@
 // smart contracts artifacts package to pull the most recently
 // deployed contracts on the current network.
 jest.unmock("set-protocol-contracts");
-jest.setTimeout(10000);
+jest.setTimeout(20000);
 
 import * as chai from "chai";
 import * as Web3 from "web3";
 import * as ABIDecoder from "abi-decoder";
+import * as _ from "lodash";
 import compact = require("lodash.compact");
 
-import { Core } from "set-protocol-contracts";
+import { Core, SetTokenFactory, DummyToken } from "set-protocol-contracts";
 
 import { ACCOUNTS } from "../accounts";
-import SetProtocol from '../../src';
-import { CoreContract } from '../../src/wrappers';
+import { testSets, TestSet } from "../testSets";
+import { CoreAPI } from '../../src/api';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../../src/constants";
 import { Web3Utils } from "../../src/util/Web3Utils";
+import { ReceiptLog } from "../../src/types/common";
 
 const { expect } = chai;
 
@@ -48,6 +50,14 @@ const txDefaults = { from: ACCOUNTS[0].address, gasPrice: DEFAULT_GAS_PRICE, gas
 const coreContract = contract(Core);
 coreContract.setProvider(provider);
 coreContract.defaults(txDefaults);
+
+const setTokenFactoryContract = contract(SetTokenFactory);
+setTokenFactoryContract.setProvider(provider);
+setTokenFactoryContract.defaults(txDefaults);
+
+const dummyTokenContract = contract(DummyToken);
+dummyTokenContract.setProvider(provider);
+dummyTokenContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
 
@@ -70,17 +80,56 @@ describe("Core API", () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test("Core can be instantiated", async () => {
+  test("CoreAPI can be instantiated", async () => {
     // deploy Core
     const coreContractInstance = await coreContract.new();
-    expect(new CoreContract(coreContractInstance, txDefaults));
+    expect(new CoreAPI(web3, coreContractInstance.address));
   });
 
   describe("create", async () => {
-    test("creates a new set with valid parameters", async () => {
-      // deploy Core
+    let coreAPI: CoreAPI;
+    let setToCreate: TestSet;
+    let componentAddresses: string[];
+    let setTokenFactoryInstance: any;
+
+    beforeEach(async () => {
+      // Deploy Core
       const coreContractInstance = await coreContract.new();
-      expect(true);
+      // Deploy SetTokenFactory
+      setTokenFactoryInstance = await setTokenFactoryContract.new();
+
+      setToCreate = testSets[0];
+      // Deploy DummyTokens to add to Set
+      componentAddresses = [];
+      await Promise.all(setToCreate.components.map(async component => {
+        const dummyTokenInstance = await dummyTokenContract.new(
+          component.name,
+          component.symbol,
+          component.decimals,
+          component.supply
+        );
+        console.log("test" + dummyTokenInstance.address);
+        componentAddresses.push(dummyTokenInstance.address);
+      }));
+      coreAPI = new CoreAPI(web3, coreContractInstance.address);
+    });
+
+    test("creates a new set with valid parameters", async () => {
+      console.log(componentAddresses);
+      console.log(setToCreate.units);
+      const txHash = await coreAPI.create(
+        ACCOUNTS[0].address,
+        setTokenFactoryInstance.address,
+        componentAddresses,
+        setToCreate.units,
+        setToCreate.naturalUnit,
+        setToCreate.setName,
+        setToCreate.setSymbol
+      );
+      const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
+
+      const logs: ReceiptLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));
+      expect(logs[logs.length - 1].name).to.equal("SetTokenCreated");
     });
   });
 });

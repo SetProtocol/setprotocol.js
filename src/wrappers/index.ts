@@ -18,6 +18,7 @@
 
 import { BaseContract } from "./BaseContract";
 import { CoreContract } from "./CoreContract";
+import { DetailedERC20Contract } from "./DetailedERC20Contract";
 
 export type ContractWrapper = BaseContract;
-export { BaseContract, CoreContract };
+export { BaseContract, CoreContract, DetailedERC20Contract };
