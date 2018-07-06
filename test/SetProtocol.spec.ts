@@ -33,7 +33,7 @@ const TX_DEFAULTS = { from: ACCOUNTS[0].address, gas: 4712388 };
 describe('SetProtocol', async () => {
   const coreContract = await CoreContract.deployed(web3, TX_DEFAULTS);
   const setProtocolInstance = new SetProtocol(web3, coreContract.address);
-  it('should instantiate a new setProtocolInstance', () => {
+  test('should instantiate a new setProtocolInstance', () => {
     expect(setProtocolInstance instanceof SetProtocol);
   });
 });
