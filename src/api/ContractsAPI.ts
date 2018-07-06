@@ -38,7 +38,7 @@ export class ContractsAPI {
   public constructor(provider: Web3) {
     this.provider = provider;
     this.cache = {};
-    this.assert = new Assertions(this.provider);
+    this.assert = new Assertions();
   }
 
   /**

@@ -44,7 +44,7 @@ export class CoreAPI {
     this.provider = web3;
     this.coreAddress = coreAddress;
     this.contracts = new ContractsAPI(this.provider);
-    this.assert = new Assertions(this.provider);
+    this.assert = new Assertions();
   }
 
   /**
