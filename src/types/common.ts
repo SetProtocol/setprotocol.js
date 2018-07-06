@@ -33,11 +33,17 @@ export interface TransactionOpts {
 
 export interface TxData {
   from?: string;
-  gas?: number;
+  gas?: BigNumber;
   gasPrice?: BigNumber;
   nonce?: number;
 }
 
 export interface TxDataPayable extends TxData {
   value?: BigNumber;
+}
+
+export interface ReceiptLog {
+  name: string;
+  events: Object[];
+  address: string;
 }

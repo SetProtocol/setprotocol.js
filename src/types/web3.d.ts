@@ -99,6 +99,8 @@ declare module "web3" {
 
     interface Contract<A extends ContractInstance> {
       at(address: string): A;
+      address: string;
+      abi: Web3.ContractAbi;
     }
 
     interface FilterObject {

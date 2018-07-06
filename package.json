@@ -83,7 +83,8 @@
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "testPathIgnorePatterns": [
-      "/dist/"
+      "/dist/",
+      "/_versions/"
     ],
     "moduleFileExtensions": [
       "ts",

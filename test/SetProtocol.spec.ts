@@ -14,26 +14,53 @@
   limitations under the License.
 */
 
-'use strict';
+"use strict";
+
+// Given that this is an integration test, we unmock the Set Protocol
+// smart contracts artifacts package to pull the most recently
+// deployed contracts on the current network.
+jest.unmock("set-protocol-contracts");
 
 import * as chai from "chai";
 import * as Web3 from "web3";
 
-import SetProtocol from '../src';
-import { CoreContract } from "../src/wrappers";
+import { Core } from "set-protocol-contracts";
 
 import { ACCOUNTS } from "./accounts";
+import SetProtocol from '../src';
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../src/constants";
+import { Web3Utils } from "../src/util/Web3Utils";
+
+const { expect } = chai;
+
+const contract = require("truffle-contract");
 
 const provider = new Web3.providers.HttpProvider("http://localhost:8545");
 const web3 = new Web3(provider);
-const { expect } = chai;
+const web3Utils = new Web3Utils(web3);
 
-const TX_DEFAULTS = { from: ACCOUNTS[0].address, gas: 4712388 };
+const txDefaults = { from: ACCOUNTS[0].address, gasPrice: DEFAULT_GAS_PRICE, gas: DEFAULT_GAS_LIMIT };
+
+const coreContract = contract(Core);
+coreContract.setProvider(provider);
+coreContract.defaults(txDefaults);
+
+let currentSnapshotId: number;
 
 describe('SetProtocol', async () => {
-  const coreContract = await CoreContract.deployed(web3, TX_DEFAULTS);
-  const setProtocolInstance = new SetProtocol(web3, coreContract.address);
-  test('should instantiate a new setProtocolInstance', () => {
+  beforeEach(async () => {
+    currentSnapshotId = await web3Utils.saveTestSnapshot();
+  });
+
+  afterEach(() => {
+    web3Utils.revertToSnapshot(currentSnapshotId);
+  });
+
+  test('should instantiate a new setProtocolInstance', async () => {
+    // deploy Core
+    const coreContractInstance = await coreContract.new();
+
+    const setProtocolInstance = new SetProtocol(web3, coreContractInstance.address);
     expect(setProtocolInstance instanceof SetProtocol);
   });
 });

@@ -14,11 +14,73 @@
   limitations under the License.
 */
 
-'use strict';
+"use strict";
+
+// Given that this is an integration test, we unmock the Set Protocol
+// smart contracts artifacts package to pull the most recently
+// deployed contracts on the current network.
+jest.unmock("set-protocol-contracts");
+jest.setTimeout(10000);
+
+import * as chai from "chai";
+import * as Web3 from "web3";
+import * as ABIDecoder from "abi-decoder";
+import compact = require("lodash.compact");
+
+import { Core } from "set-protocol-contracts";
+
+import { ACCOUNTS } from "../accounts";
+import SetProtocol from '../../src';
+import { CoreContract } from '../../src/wrappers';
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../../src/constants";
+import { Web3Utils } from "../../src/util/Web3Utils";
+
+const { expect } = chai;
+
+const contract = require("truffle-contract");
+
+const provider = new Web3.providers.HttpProvider("http://localhost:8545");
+const web3 = new Web3(provider);
+const web3Utils = new Web3Utils(web3);
+
+const txDefaults = { from: ACCOUNTS[0].address, gasPrice: DEFAULT_GAS_PRICE, gas: DEFAULT_GAS_LIMIT };
+
+const coreContract = contract(Core);
+coreContract.setProvider(provider);
+coreContract.defaults(txDefaults);
+
+let currentSnapshotId: number;
 
 describe("Core API", () => {
-  /* Remove this test() after adding first test. Yarn test fails without at least 1 test */
-  test("Initialize Core", async () => {
-    expect(true);
+  let contract;
+
+  beforeAll(() => {
+    ABIDecoder.addABI(coreContract.abi);
+  });
+
+  afterAll(() => {
+    ABIDecoder.removeABI(coreContract.abi);
+  });
+
+  beforeEach(async () => {
+    currentSnapshotId = await web3Utils.saveTestSnapshot();
+  });
+
+  afterEach(async () => {
+    await web3Utils.revertToSnapshot(currentSnapshotId);
+  });
+
+  test("Core can be instantiated", async () => {
+    // deploy Core
+    const coreContractInstance = await coreContract.new();
+    expect(new CoreContract(coreContractInstance, txDefaults));
+  });
+
+  describe("create", async () => {
+    test("creates a new set with valid parameters", async () => {
+      // deploy Core
+      const coreContractInstance = await coreContract.new();
+      expect(true);
+    });
   });
 });
