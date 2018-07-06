@@ -108,15 +108,12 @@ describe("Core API", () => {
           component.decimals,
           component.supply
         );
-        console.log("test" + dummyTokenInstance.address);
         componentAddresses.push(dummyTokenInstance.address);
       }));
       coreAPI = new CoreAPI(web3, coreContractInstance.address);
     });
 
     test("creates a new set with valid parameters", async () => {
-      console.log(componentAddresses);
-      console.log(setToCreate.units);
       const txHash = await coreAPI.create(
         ACCOUNTS[0].address,
         setTokenFactoryInstance.address,
