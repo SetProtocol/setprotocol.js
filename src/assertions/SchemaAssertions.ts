@@ -17,7 +17,7 @@
 "use strict";
 
 import { schemaAssertionsError } from "../errors";
-import { Schema, schemas, SchemaValidator, ValidatorResult } from "../schemas";
+import { schemas, Schema, SchemaValidator, ValidatorResult } from "../schemas";
 
 /*
  * A bunch of this has been borrowed from the awesome Dharma.js's repo
