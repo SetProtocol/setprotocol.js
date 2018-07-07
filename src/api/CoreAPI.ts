@@ -20,7 +20,7 @@ import * as Web3 from "web3";
 import * as _ from "lodash";
 
 import { ContractsAPI } from ".";
-import { DEFAULT_GAS_PRICE, ZERO } from "../constants";
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from "../constants";
 import { coreAPIErrors } from "../errors";
 import { Assertions } from "../assertions";
 import { Address, Component, Token, TransactionOpts, UInt } from "../types/common";
@@ -57,6 +57,7 @@ export class CoreAPI {
    * @param  naturalUnit    Supplied as the lowest common denominator for the Set
    * @param  name           User-supplied name for Set (i.e. "DEX Set")
    * @param  symbol         User-supplied symbol for Set (i.e. "DEX")
+   * @param  txOpts         The options for executing the transaction
    * @return                a transaction hash to then later look up for the Set address
    */
   public async create(
@@ -67,6 +68,7 @@ export class CoreAPI {
     naturalUnit: BigNumber,
     name: string,
     symbol: string,
+    txOpts?: TransactionOpts,
   ): Promise<string> {
     this.assert.schema.isValidAddress("factoryAddress", factoryAddress);
     this.assert.schema.isValidAddress("userAddress", userAddress);
@@ -120,6 +122,10 @@ export class CoreAPI {
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
+    const txSettings = Object.assign(
+      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
     const txHash = await coreInstance.create.sendTransactionAsync(
       factoryAddress,
       components,
@@ -127,7 +133,7 @@ export class CoreAPI {
       naturalUnit,
       name,
       symbol,
-      { from: userAddress },
+      txSettings,
     );
 
     return txHash;
