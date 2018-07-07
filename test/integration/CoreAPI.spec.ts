@@ -33,6 +33,7 @@ import { Core, SetTokenFactory, DummyToken } from "set-protocol-contracts";
 import { ACCOUNTS } from "../accounts";
 import { testSets, TestSet } from "../testSets";
 import { CoreAPI } from '../../src/api';
+import { CoreContract } from '../../src/contracts';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../../src/constants";
 import { Web3Utils } from "../../src/util/Web3Utils";
 import { ReceiptLog } from "../../src/types/common";
@@ -95,8 +96,14 @@ describe("Core API", () => {
     beforeEach(async () => {
       // Deploy Core
       const coreContractInstance = await coreContract.new();
+      const coreWrapper = new CoreContract(coreContractInstance, txDefaults);
       // Deploy SetTokenFactory
       setTokenFactoryInstance = await setTokenFactoryContract.new();
+      // Enable Factory
+      await coreWrapper.enableFactory.sendTransactionAsync(
+        setTokenFactoryInstance.address,
+        txDefaults
+      );
 
       setToCreate = testSets[0];
       // Deploy DummyTokens to add to Set
