@@ -22,10 +22,10 @@ import * as _ from "lodash";
 import { ContractsAPI } from ".";
 import { DEFAULT_GAS_PRICE } from "../constants";
 import { CoreAPIErrors } from "../errors";
-import { Assertions } from "../invariants";
+import { Assertions } from "../assertions";
 import { Address, Component, Token, TransactionOpts, UInt } from "../types/common";
 import { BigNumber, estimateIssueRedeemGasCost } from "../util";
-import { CoreContract } from "../wrappers";
+import { CoreContract } from "../contracts";
 
 /**
  * @title  SetTokenAPI

@@ -28,7 +28,7 @@ import * as Web3 from "web3";
 
 import { TxData, TxDataPayable } from "../types";
 import { classUtils } from "../util";
-import { BaseContract } from "./baseWrapper";
+import { BaseContract } from "./BaseContract";
 
 export class SetTokenContract extends BaseContract {
   public name = {
