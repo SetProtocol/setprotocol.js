@@ -97,6 +97,7 @@ describe("Core API", () => {
       // Deploy Core
       const coreContractInstance = await coreContract.new();
       const coreWrapper = new CoreContract(coreContractInstance, txDefaults);
+      coreAPI = new CoreAPI(web3, coreContractInstance.address);
       // Deploy SetTokenFactory
       setTokenFactoryInstance = await setTokenFactoryContract.new();
       // Enable Factory
@@ -117,7 +118,6 @@ describe("Core API", () => {
         );
         componentAddresses.push(dummyTokenInstance.address);
       }));
-      coreAPI = new CoreAPI(web3, coreContractInstance.address);
     });
 
     test("creates a new set with valid parameters", async () => {
