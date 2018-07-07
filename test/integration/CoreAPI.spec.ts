@@ -28,7 +28,7 @@ import * as ABIDecoder from "abi-decoder";
 import * as _ from "lodash";
 import compact = require("lodash.compact");
 
-import { Core, SetTokenFactory, DummyToken } from "set-protocol-contracts";
+import { Core, SetTokenFactory, StandardTokenMock } from "set-protocol-contracts";
 
 import { ACCOUNTS } from "../accounts";
 import { testSets, TestSet } from "../testSets";
@@ -56,9 +56,9 @@ const setTokenFactoryContract = contract(SetTokenFactory);
 setTokenFactoryContract.setProvider(provider);
 setTokenFactoryContract.defaults(txDefaults);
 
-const dummyTokenContract = contract(DummyToken);
-dummyTokenContract.setProvider(provider);
-dummyTokenContract.defaults(txDefaults);
+const standardTokenMockContract = contract(StandardTokenMock);
+standardTokenMockContract.setProvider(provider);
+standardTokenMockContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
 
@@ -121,13 +121,14 @@ describe("Core API", () => {
       // Deploy DummyTokens to add to Set
       componentAddresses = [];
       await Promise.all(setToCreate.components.map(async component => {
-        const dummyTokenInstance = await dummyTokenContract.new(
+        const standardTokenMockInstance = await standardTokenMockContract.new(
+          ACCOUNTS[0].address,
+          component.supply,
           component.name,
           component.symbol,
           component.decimals,
-          component.supply
         );
-        componentAddresses.push(dummyTokenInstance.address);
+        componentAddresses.push(standardTokenMockInstance.address);
       }));
     });
 
