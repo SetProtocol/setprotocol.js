@@ -25,7 +25,7 @@ import { coreAPIErrors } from "../errors";
 import { Assertions } from "../assertions";
 import { Address, Component, Token, TransactionOpts, UInt } from "../types/common";
 import { BigNumber, estimateIssueRedeemGasCost } from "../util";
-import { CoreContract, DetailedERC20Contract } from "../wrappers";
+import { CoreContract, DetailedERC20Contract } from "../contracts";
 
 /**
  * @title CoreAPI

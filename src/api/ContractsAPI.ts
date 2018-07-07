@@ -21,7 +21,7 @@ import * as Web3 from "web3";
 
 import { Assertions } from "../assertions";
 import { BigNumber } from "../util";
-import { BaseContract, ContractWrapper, CoreContract } from "../wrappers";
+import { BaseContract, ContractWrapper, CoreContract } from "../contracts";
 
 /**
  * @title ContractsAPI

@@ -18,7 +18,7 @@
 
 import { erc20AssertionErrors } from "../errors";
 import { BigNumber } from "../util";
-import { DetailedERC20Contract as ERC20 } from "../wrappers/DetailedERC20Contract";
+import { DetailedERC20Contract as ERC20 } from "../contracts/DetailedERC20Contract";
 
 export class ERC20Assertions {
   // Throws if the given candidateContract does not respond to some methods from the ERC20 interface.
