@@ -18,6 +18,7 @@
 
 import { coreAssertionErrors } from "../errors";
 import { BigNumber } from "../util";
+import { ZERO } from "../constants";
 import { CoreContract } from "../contracts/CoreContract";
 
 export class CoreAssertions {
@@ -41,6 +42,16 @@ export class CoreAssertions {
 
   public validateNaturalUnit(naturalUnit: BigNumber, minDecimal: BigNumber, errorMessage: string) {
     if (naturalUnit.lt(10 ** (18 - minDecimal.toNumber()))) {
+      throw new Error(errorMessage);
+    }
+  }
+
+  public isMultipleOfNaturalUnit(
+    naturalUnit: BigNumber,
+    quantityInWei: BigNumber,
+    errorMessage: string,
+  ) {
+    if (!quantityInWei.mod(naturalUnit).eq(ZERO)) {
       throw new Error(errorMessage);
     }
   }
