@@ -27,7 +27,7 @@ import * as Web3 from "web3";
 import { Core } from "set-protocol-contracts";
 
 import { ACCOUNTS } from "./accounts";
-import SetProtocol from '../src';
+import SetProtocol from "../src";
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../src/constants";
 import { Web3Utils } from "../src/util/Web3Utils";
 
@@ -39,7 +39,11 @@ const provider = new Web3.providers.HttpProvider("http://localhost:8545");
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
-const txDefaults = { from: ACCOUNTS[0].address, gasPrice: DEFAULT_GAS_PRICE, gas: DEFAULT_GAS_LIMIT };
+const txDefaults = {
+  from: ACCOUNTS[0].address,
+  gasPrice: DEFAULT_GAS_PRICE,
+  gas: DEFAULT_GAS_LIMIT,
+};
 
 const coreContract = contract(Core);
 coreContract.setProvider(provider);
@@ -47,7 +51,7 @@ coreContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
 
-describe('SetProtocol', async () => {
+describe("SetProtocol", async () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
   });
@@ -56,7 +60,7 @@ describe('SetProtocol', async () => {
     web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test('should instantiate a new setProtocolInstance', async () => {
+  test("should instantiate a new setProtocolInstance", async () => {
     // Deploy Core
     const coreContractInstance = await coreContract.new();
 

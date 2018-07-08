@@ -32,8 +32,8 @@ import { Core, SetTokenFactory, StandardTokenMock } from "set-protocol-contracts
 
 import { ACCOUNTS } from "../accounts";
 import { testSets, TestSet } from "../testSets";
-import { CoreAPI } from '../../src/api';
-import { CoreContract, SetTokenFactoryContract } from '../../src/contracts';
+import { CoreAPI } from "../../src/api";
+import { CoreContract, SetTokenFactoryContract } from "../../src/contracts";
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../../src/constants";
 import { Web3Utils } from "../../src/util/Web3Utils";
 import { ReceiptLog } from "../../src/types/common";
@@ -46,7 +46,11 @@ const provider = new Web3.providers.HttpProvider("http://localhost:8545");
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
-const txDefaults = { from: ACCOUNTS[0].address, gasPrice: DEFAULT_GAS_PRICE, gas: DEFAULT_GAS_LIMIT };
+const txDefaults = {
+  from: ACCOUNTS[0].address,
+  gasPrice: DEFAULT_GAS_PRICE,
+  gas: DEFAULT_GAS_LIMIT,
+};
 
 const coreContract = contract(Core);
 coreContract.setProvider(provider);
@@ -103,33 +107,35 @@ describe("Core API", () => {
       const setTokenFactoryWrapper = await SetTokenFactoryContract.at(
         setTokenFactoryInstance.address,
         web3,
-        txDefaults
+        txDefaults,
       );
       // Authorize Core
       await setTokenFactoryWrapper.addAuthorizedAddress.sendTransactionAsync(
         coreContractInstance.address,
-        txDefaults
+        txDefaults,
       );
 
       // Enable Factory
       await coreWrapper.enableFactory.sendTransactionAsync(
         setTokenFactoryInstance.address,
-        txDefaults
+        txDefaults,
       );
 
       setToCreate = testSets[0];
       // Deploy DummyTokens to add to Set
       componentAddresses = [];
-      await Promise.all(setToCreate.components.map(async component => {
-        const standardTokenMockInstance = await standardTokenMockContract.new(
-          ACCOUNTS[0].address,
-          component.supply,
-          component.name,
-          component.symbol,
-          component.decimals,
-        );
-        componentAddresses.push(standardTokenMockInstance.address);
-      }));
+      await Promise.all(
+        setToCreate.components.map(async component => {
+          const standardTokenMockInstance = await standardTokenMockContract.new(
+            ACCOUNTS[0].address,
+            component.supply,
+            component.name,
+            component.symbol,
+            component.decimals,
+          );
+          componentAddresses.push(standardTokenMockInstance.address);
+        }),
+      );
     });
 
     test("creates a new set with valid parameters", async () => {
@@ -140,7 +146,7 @@ describe("Core API", () => {
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
-        setToCreate.setSymbol
+        setToCreate.setSymbol,
       );
       const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
 
