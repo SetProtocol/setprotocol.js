@@ -82,7 +82,11 @@ export class ContractsAPI {
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as SetTokenContract;
     } else {
-      const setTokenContract = await SetTokenContract.deployed(this.provider, transactionOptions);
+      const setTokenContract = await SetTokenContract.at(
+        setTokenAddress,
+        this.provider,
+        transactionOptions,
+      );
       await this.assert.setToken.implementsSetToken(setTokenContract);
       this.cache[cacheKey] = setTokenContract;
       return setTokenContract;

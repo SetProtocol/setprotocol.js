@@ -16,9 +16,9 @@
 
 "use strict";
 
-import { SetTokenAssertionErrors } from "../errors";
+import { setTokenAssertionsErrors } from "../errors";
 import { BigNumber } from "../util";
-import { SetTokenWrapper } from "../wrappers/SetTokenWrapper";
+import { SetTokenContract } from "../contracts/SetTokenContract";
 
 export class SetTokenAssertions {
   /**
@@ -27,7 +27,7 @@ export class SetTokenAssertions {
    * @param  setTokenInstance An instance of the Set Token contract
    * @return                  Void Promise
    */
-  public async implementsSetToken(setTokenInstance: SetTokenWrapper): Promise<void> {
+  public async implementsSetToken(setTokenInstance: SetTokenContract): Promise<void> {
     const { address } = setTokenInstance;
 
     try {
@@ -37,7 +37,7 @@ export class SetTokenAssertions {
       await setTokenInstance.naturalUnit.callAsync();
       await setTokenInstance.symbol.callAsync();
     } catch (error) {
-      throw new Error(SetTokenAssertionErrors.IS_NOT_A_VALID_SET(address));
+      throw new Error(setTokenAssertionsErrors.IS_NOT_A_VALID_SET(address));
     }
   }
 }

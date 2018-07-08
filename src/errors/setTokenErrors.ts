@@ -18,7 +18,7 @@
 
 import { ValidatorResult } from "../schemas";
 
-export const SetTokenAssertionsError = {
+export const setTokenAssertionsErrors = {
   IS_NOT_A_VALID_SET: (setAddress: string) =>
-    `Contract at ${address} is not a valid Set token address.`,
+    `Contract at ${setAddress} is not a valid Set token address.`,
 };

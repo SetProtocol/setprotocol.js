@@ -41,8 +41,8 @@ export class SetTokenAPI {
 
   constructor(web3: Web3) {
     this.provider = web3;
-    this.contracts = new ContractsAPI(this.provider);
     this.assert = new Assertions();
+    this.contracts = new ContractsAPI(this.provider);
   }
 
   /**

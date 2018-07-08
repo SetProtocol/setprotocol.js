@@ -23,12 +23,13 @@
 // tslint:disable-next-line:no-unused-variable
 import { promisify } from "@0xproject/utils";
 import { BigNumber } from "bignumber.js";
+import { SetToken as ContractArtifacts } from "set-protocol-contracts";
 import * as fs from "fs-extra";
 import * as Web3 from "web3";
 
-import { TxData, TxDataPayable } from "../types";
-import { classUtils } from "../util";
 import { BaseContract } from "./BaseContract";
+import { TxData, TxDataPayable } from "../common";
+import { classUtils } from "../util";
 
 export class SetTokenContract extends BaseContract {
   public name = {
@@ -498,7 +499,7 @@ export class SetTokenContract extends BaseContract {
   }
   static async deployed(web3: Web3, defaults: Partial<TxData>): Promise<SetTokenContract> {
     const currentNetwork = web3.version.network;
-    const { abi, networks } = await this.getArtifactsData(web3);
+    const { abi, networks }: { abi: any; networks: any } = ContractArtifacts;
     const web3ContractInstance = web3.eth.contract(abi).at(networks[currentNetwork].address);
 
     return new SetTokenContract(web3ContractInstance, defaults);
@@ -508,19 +509,10 @@ export class SetTokenContract extends BaseContract {
     web3: Web3,
     defaults: Partial<TxData>,
   ): Promise<SetTokenContract> {
-    const { abi } = await this.getArtifactsData(web3);
+    const { abi }: { abi: any } = ContractArtifacts;
     const web3ContractInstance = web3.eth.contract(abi).at(address);
 
     return new SetTokenContract(web3ContractInstance, defaults);
-  }
-  private static async getArtifactsData(web3: Web3): Promise<any> {
-    try {
-      const artifact = await fs.readFile("build/contracts/SetToken.json", "utf8");
-      const { abi, networks } = JSON.parse(artifact);
-      return { abi, networks };
-    } catch (e) {
-      console.error("Artifacts malformed or nonexistent: " + e.toString());
-    }
   }
   constructor(web3ContractInstance: Web3.ContractInstance, defaults: Partial<TxData>) {
     super(web3ContractInstance, defaults);
