@@ -16,12 +16,33 @@
 
 "use strict";
 
-import BigNumber from "bignumber.js";
+export const addressSchema = {
+  id: "/Address",
+  type: "string",
+  pattern: "^0x[0-9a-fA-F]{40}$",
+};
 
-// By default BigNumber's `toString` method converts to exponential notation if the value has
-// more then 20 digits. We want to avoid this behavior, so we set EXPONENTIAL_AT to a high number
-BigNumber.config({
-  EXPONENTIAL_AT: 1000,
-});
+export const bytes32Schema = {
+  id: "/Bytes32",
+  type: "string",
+  pattern: "^0x[0-9a-fA-F]{64}$",
+};
 
-export { BigNumber };
+export const bytesSchema = {
+  id: "/Bytes",
+  type: "string",
+  pattern: "^0x[0-9a-fA-F]*$",
+};
+
+export const numberSchema = {
+  id: "/Number",
+  type: "object",
+  // Ensures that the object meets the validator.customFormats.BigNumber format.
+  format: "BigNumber",
+};
+
+export const wholeNumberSchema = {
+  id: "/WholeNumber",
+  type: "object",
+  format: "wholeBigNumber",
+};

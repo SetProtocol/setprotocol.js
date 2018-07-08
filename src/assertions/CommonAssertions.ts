@@ -16,12 +16,23 @@
 
 "use strict";
 
-import BigNumber from "bignumber.js";
+import { BigNumber } from "../util";
 
-// By default BigNumber's `toString` method converts to exponential notation if the value has
-// more then 20 digits. We want to avoid this behavior, so we set EXPONENTIAL_AT to a high number
-BigNumber.config({
-  EXPONENTIAL_AT: 1000,
-});
+export class CommonAssertions {
+  public greaterThanZero(quantity: BigNumber, errorMessage: string) {
+    if (quantity.lte(new BigNumber(0))) {
+      throw new Error(errorMessage);
+    }
+  }
+  public isEqualLength(arr1: any[], arr2: any[], errorMessage: string) {
+    if (arr1.length !== arr2.length) {
+      throw new Error(errorMessage);
+    }
+  }
 
-export { BigNumber };
+  public isValidString(value: string, errorMessage: string) {
+    if (!value) {
+      throw new Error(errorMessage);
+    }
+  }
+}

@@ -16,14 +16,12 @@
 
 "use strict";
 
-import * as Web3 from "web3";
+import { NULL_ADDRESS } from "../constants";
 
-import { CoreAssertions } from "./core_invariants";
-
-export class Assertions {
-  public core: CoreAssertions;
-
-  public constructor(web3: Web3) {
-    this.core = new CoreAssertions(web3);
+export class AccountAssertions {
+  public notNull(account: string, errorMessage: string) {
+    if (account === NULL_ADDRESS) {
+      throw new Error(errorMessage);
+    }
   }
 }

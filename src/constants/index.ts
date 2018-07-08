@@ -14,10 +14,11 @@
   limitations under the License.
 */
 
-'use strict';
+"use strict";
 
-describe("Core API", () => {
-  /* Remove this test() after adding first test. Yarn test fails without at least 1 test */
-  test("Initialize Core", async () => {
-    expect(true);
-});
+import { BigNumber } from "../util";
+
+export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const ZERO: BigNumber = new BigNumber(0);
+export const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
+export const DEFAULT_GAS_LIMIT: BigNumber = new BigNumber(6000000); // default of 6 million gas

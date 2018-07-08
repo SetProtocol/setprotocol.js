@@ -20,6 +20,12 @@ import * as _ from "lodash";
 import * as Web3 from "web3";
 
 import { TxData, TxDataPayable } from "../types/common";
+import { BigNumber } from "../util";
+
+export const CONTRACT_WRAPPER_ERRORS = {
+  CONTRACT_NOT_FOUND_ON_NETWORK: (contractName: string, networkId: number) =>
+    `Unable to find address for contract ${contractName} on network with id ${networkId}`,
+};
 
 export class BaseContract {
   public address: string;
@@ -54,7 +60,7 @@ export class BaseContract {
     };
     if (_.isUndefined(txDataWithDefaults.gas) && !_.isUndefined(estimateGasAsync)) {
       const estimatedGas = await estimateGasAsync(txData);
-      txDataWithDefaults.gas = estimatedGas;
+      txDataWithDefaults.gas = new BigNumber(estimatedGas);
     }
     return txDataWithDefaults;
   }

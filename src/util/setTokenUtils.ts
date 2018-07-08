@@ -16,20 +16,15 @@
 
 "use strict";
 
-import * as Web3 from "web3";
+import { BigNumber } from ".";
 
-/**
- * @title CoreAPI
- * @author Set Protocol
- *
- * The Core handles all functions on the Core SetProtocol smart contract.
- *
- */
+const TRANSFER_GAS_MAXIMUM = new BigNumber(70000);
 
-export class CoreAPI {
-  private provider: Web3;
+export const estimateIssueRedeemGasCost = (numComponents: BigNumber): number => {
+  const baseIssueRedeemGasCost = new BigNumber(70000);
 
-  public constructor(provider: Web3) {
-    this.provider = provider;
-  }
-}
+  return numComponents
+    .times(TRANSFER_GAS_MAXIMUM)
+    .plus(baseIssueRedeemGasCost)
+    .toNumber();
+};

@@ -16,12 +16,10 @@
 
 "use strict";
 
-import * as Web3 from "web3";
+import { BaseContract } from "./BaseContract";
+import { CoreContract } from "./CoreContract";
+import { DetailedERC20Contract } from "./DetailedERC20Contract";
+import { SetTokenFactoryContract } from "./SetTokenFactoryContract";
 
-export class CoreAssertions {
-  private web3: Web3;
-
-  constructor(web3: Web3) {
-    this.web3 = web3;
-  }
-}
+export type ContractWrapper = BaseContract;
+export { BaseContract, CoreContract, DetailedERC20Contract, SetTokenFactoryContract };

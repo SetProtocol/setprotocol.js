@@ -16,7 +16,7 @@
 
 "use strict";
 
-import { BaseContract } from "./base_wrapper";
-import { CoreContract } from "./core_wrapper";
-
-export { BaseContract, CoreContract };
+export const erc20AssertionErrors = {
+  MISSING_ERC20_METHOD: (address: string) =>
+    `Contract at ${address} does not implement ERC20 interface.`,
+};
