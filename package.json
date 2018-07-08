@@ -71,8 +71,17 @@
     "web3-typescript-typings": "0xProject/web3-typescript-typings",
     "web3-utils": "1.0.0-beta.29"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
   "lint-staged": {
     "src/**/*.ts": [
+      "prettier --parser typescript --write",
+      "git add"
+    ],
+    "test/**/*.ts": [
       "prettier --parser typescript --write",
       "git add"
     ]
