@@ -5289,7 +5289,7 @@ set-immediate-shim@^1.0.1:
 
 "set-protocol-contracts@git://github.com/SetProtocol/set-protocol-contracts.git":
   version "0.2.9"
-  resolved "git://github.com/SetProtocol/set-protocol-contracts.git#f131f66dc4b5b073572f34f4cefd9b12d1f71777"
+  resolved "git://github.com/SetProtocol/set-protocol-contracts.git#5124bc7bb31802a31065aa3e79a1c9c0ddb87c37"
   dependencies:
     fs-extra "^5.0.0"
     openzeppelin-zos "^1.9.1"
