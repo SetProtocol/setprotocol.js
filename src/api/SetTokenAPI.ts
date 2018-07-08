@@ -55,7 +55,7 @@ export class SetTokenAPI {
   public async getBalanceOf(setAddress: string, userAddress: string): number {
     this.assert.schema.isValidAddress("userAddress", userAddress);
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    return await setTokenInstance.balanceOf(userAddress);
+    return await setTokenInstance.balanceOf.callAsync(userAddress);
   }
 
   /**
@@ -66,7 +66,7 @@ export class SetTokenAPI {
    */
   public async getComponents(setAddress: string): string[] {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    return await setTokenInstance.getComponents();
+    return await setTokenInstance.getComponents.callAsync();
   }
 
   /**
@@ -77,7 +77,7 @@ export class SetTokenAPI {
    */
   public async getName(setAddress: string): string {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    return await setTokenInstance.name();
+    return await setTokenInstance.name.callAsync();
   }
 
   /**
@@ -88,7 +88,7 @@ export class SetTokenAPI {
    */
   public async getNaturalUnit(setAddress: string): number {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    return await setTokenInstance.naturalUnit();
+    return await setTokenInstance.naturalUnit.callAsync();
   }
 
   /**
@@ -99,7 +99,7 @@ export class SetTokenAPI {
    */
   public async getSymbol(setAddress: string): string {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    return await setTokenInstance.symbol();
+    return await setTokenInstance.symbol.callAsync();
   }
 
   /**
@@ -110,7 +110,7 @@ export class SetTokenAPI {
    */
   public async getTotalSupply(setAddress: string): number {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    return await setTokenInstance.totalSupply();
+    return await setTokenInstance.totalSupply.callAsync();
   }
 
   /**
@@ -122,6 +122,6 @@ export class SetTokenAPI {
    */
   public async getUnits(setAddress: string): number[] {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    return await setTokenInstance.getUnits();
+    return await setTokenInstance.getUnits.callAsync();
   }
 }
