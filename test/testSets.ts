@@ -79,7 +79,7 @@ export const testSets: TestSet[] = [
     naturalUnit: new BigNumber(10 ** 13),
   },
   {
-    setName: "ExthereumX",
+    setName: "EthereumX",
     setSymbol: "ETHX",
     targetPriceInUSD: 100.00,
     components: [
