@@ -33,6 +33,7 @@ export class Assertions {
   public core: CoreAssertions;
   public erc20: ERC20Assertions;
   public schema: SchemaAssertions;
+  public setToken: SetTokenAssertions;
 
   public constructor() {
     this.account = new AccountAssertions();

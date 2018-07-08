@@ -62,11 +62,13 @@ export class SetTokenAssertions {
     const components = await setTokenInstance.getComponents.callAsync();
     const units = await setTokenInstance.getUnits.callAsync();
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
+
     // Create component ERC20 token instances
-    const componentInstancePromises = _.map(components, component => {
-      return ERC20.at(component, this.web3, { from: ownerAddress });
-    });
+    const componentInstancePromises = _.map(components, component =>
+      ERC20.at(component, this.web3, { from: ownerAddress }),
+    );
     const componentInstances = await Promise.all(componentInstancePromises);
+
     // Assert that user has sufficient allowances for each component token
     const userHasSufficientBalancePromises = _.map(
       componentInstances,
@@ -99,11 +101,13 @@ export class SetTokenAssertions {
     const components = await setTokenInstance.getComponents.callAsync();
     const units = await setTokenInstance.getUnits.callAsync();
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
+
     // Create component ERC20 token instances
-    const componentInstancePromises = _.map(components, component => {
-      return ERC20.at(component, this.web3, { from: ownerAddress });
-    });
+    const componentInstancePromises = _.map(components, component =>
+      ERC20.at(component, this.web3, { from: ownerAddress }),
+    );
     const componentInstances = await Promise.all(componentInstancePromises);
+
     // Assert that user has sufficient allowances for each component token
     const userHasSufficientAllowancePromises = _.map(
       componentInstances,
