@@ -28,7 +28,13 @@ import * as ABIDecoder from "abi-decoder";
 import * as _ from "lodash";
 import compact = require("lodash.compact");
 
-import { Core, SetTokenFactory, StandardTokenMock, TransferProxy } from "set-protocol-contracts";
+import {
+  Core,
+  SetTokenFactory,
+  StandardTokenMock,
+  TransferProxy,
+  Vault,
+} from "set-protocol-contracts";
 
 import { ACCOUNTS } from "../accounts";
 import { testSets, TestSet } from "../testSets";
@@ -40,6 +46,7 @@ import {
   DetailedERC20Contract,
   SetTokenFactoryContract,
   TransferProxyContract,
+  VaultContract,
 } from "../../src/contracts";
 import {
   DEFAULT_GAS_PRICE,
@@ -78,6 +85,10 @@ standardTokenMockContract.defaults(txDefaults);
 const transferProxyContract = contract(TransferProxy);
 transferProxyContract.setProvider(provider);
 transferProxyContract.defaults(txDefaults);
+
+const vaultContract = contract(Vault);
+vaultContract.setProvider(provider);
+vaultContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
 
@@ -196,10 +207,21 @@ describe("Core API", () => {
         web3,
         txDefaults,
       );
+      // Deploy Vault
+      const vaultInstance = await vaultContract.new();
+      const vaultWrapper = await VaultContract.at(vaultInstance.address, web3, txDefaults);
 
       // Authorize Core
       await setTokenFactoryWrapper.addAuthorizedAddress.sendTransactionAsync(
         coreContractInstance.address,
+        txDefaults,
+      );
+      await transferProxyWrapper.addAuthorizedAddress.sendTransactionAsync(
+        coreContractInstance.address,
+        txDefaults,
+      );
+      await vaultWrapper.addAuthorizedAddress.sendTransactionAsync(
+        vaultInstance.address,
         txDefaults,
       );
 

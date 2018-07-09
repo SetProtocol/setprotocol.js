@@ -21,11 +21,11 @@ import * as _ from "lodash";
 
 import { ContractsAPI } from ".";
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from "../constants";
-import { coreAPIErrors } from "../errors";
+import { coreAPIErrors, erc20AssertionErrors } from "../errors";
 import { Assertions } from "../assertions";
 import { Address, Component, Token, TransactionOpts, UInt } from "../types/common";
 import { BigNumber, estimateIssueRedeemGasCost } from "../util";
-import { CoreContract, DetailedERC20Contract } from "../contracts";
+import { CoreContract, DetailedERC20Contract, SetTokenContract } from "../contracts";
 
 /**
  * @title CoreAPI
@@ -172,18 +172,15 @@ export class CoreAPI {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
     );
 
-    // TODO (awaiting SetTokenContract PR):
-    // const setTokenContract = await SetTokenContract.at(setAddress, this.provider, {});
-    // const naturalUnit = setTokenContract.naturalUnit.callAsync();
-    // this.assert.core.isMultipleOfNaturalUnit(
-    //   naturalUnit,
-    //   quantityInWei,
-    //   coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
-    // );
-    //
-    // TODO (add setToken related assertions)
-    // this.assert.setToken.hasSufficientBalance(setTokenContract, userAddress);
-    // this.assert.setToken.hasSufficientAllowance(setTokenContract, quantityInWei, userAddress);
+    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
+    this.assert.core.isMultipleOfNaturalUnit(
+      setTokenContract,
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
+    );
+
+    this.assert.setToken.hasSufficientBalances(setTokenContract, userAddress, quantityInWei);
+    this.assert.setToken.hasSufficientAllowances(setTokenContract, userAddress, quantityInWei);
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -222,17 +219,28 @@ export class CoreAPI {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
     );
 
-    // TODO (awaiting SetTokenContract PR):
-    // const setTokenContract = await SetTokenContract.at(setAddress, this.provider, {});
-    // this.assert.core.isMultipleOfNaturalUnit(
-    //   setTokenContract,
-    //   quantityInWei,
-    //   coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
-    // );
-    //
-    // TODO (add setToken related assertions)
-    // this.assert.setToken.hasSufficientBalance(setTokenContract, userAddress);
-    // this.assert.setToken.hasSufficientAllowance(setTokenContract, quantityInWei, userAddress);
+    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
+    this.assert.core.isMultipleOfNaturalUnit(
+      setTokenContract,
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
+    );
+
+    // SetToken is also a DetailedERC20 token
+    const detailedERC20Contract = await DetailedERC20Contract.at(setAddress, this.web3, {});
+    this.assert.erc20.hasSufficientBalance(
+      detailedERC20Contract,
+      userAddress,
+      quantityInWei,
+      erc20AssertionErrors.INSUFFICIENT_BALANCE(),
+    );
+    this.assert.erc20.hasSufficientAllowance(
+      detailedERC20Contract,
+      userAddress,
+      setTokenContract.address,
+      quantityInWei,
+      erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
+    );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 

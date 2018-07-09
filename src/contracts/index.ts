@@ -22,6 +22,7 @@ import { DetailedERC20Contract } from "./DetailedERC20Contract";
 import { SetTokenContract } from "./SetTokenContract";
 import { SetTokenFactoryContract } from "./SetTokenFactoryContract";
 import { TransferProxyContract } from "./TransferProxyContract";
+import { VaultContract } from "./VaultContract";
 
 export type ContractWrapper = BaseContract;
 export {
@@ -31,4 +32,5 @@ export {
   SetTokenContract,
   SetTokenFactoryContract,
   TransferProxyContract,
+  VaultContract,
 };

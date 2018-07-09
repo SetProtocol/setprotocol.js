@@ -23,17 +23,17 @@
 // tslint:disable-next-line:no-unused-variable
 
 import { promisify } from "@0xproject/utils";
-import { TransferProxy as ContractArtifacts } from "set-protocol-contracts";
+import { Vault as ContractArtifacts } from "set-protocol-contracts";
 import * as Web3 from "web3";
 
 import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./BaseContract";
 import { TxData, TxDataPayable } from "../types/common";
 import { BigNumber, classUtils, Web3Utils } from "../util";
 
-export class TransferProxyContract extends BaseContract {
+export class VaultContract extends BaseContract {
   public addAuthorizedAddress = {
     async sendTransactionAsync(_authTarget: string, txData: TxData = {}): Promise<string> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
         txData,
         self.addAuthorizedAddress.estimateGasAsync.bind(self, _authTarget),
@@ -45,7 +45,7 @@ export class TransferProxyContract extends BaseContract {
       return txHash;
     },
     async estimateGasAsync(_authTarget: string, txData: TxData = {}): Promise<number> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
       const gas = await promisify<number>(
         self.web3ContractInstance.addAuthorizedAddress.estimateGas,
@@ -54,12 +54,12 @@ export class TransferProxyContract extends BaseContract {
       return gas;
     },
     getABIEncodedTransactionData(_authTarget: string, txData: TxData = {}): string {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const abiEncodedTransactionData = self.web3ContractInstance.addAuthorizedAddress.getData();
       return abiEncodedTransactionData;
     },
     async callAsync(_authTarget: string, txData: TxData = {}): Promise<void> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const result = await promisify<void>(
         self.web3ContractInstance.addAuthorizedAddress.call,
         self.web3ContractInstance,
@@ -67,19 +67,9 @@ export class TransferProxyContract extends BaseContract {
       return result;
     },
   };
-  public vaultAddress = {
-    async callAsync(defaultBlock?: any): Promise<string> {
-      const self = this as TransferProxyContract;
-      const result = await promisify<string>(
-        self.web3ContractInstance.vaultAddress.call,
-        self.web3ContractInstance,
-      )();
-      return result;
-    },
-  };
   public authorities = {
     async callAsync(index_0: BigNumber, defaultBlock?: any): Promise<string> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const result = await promisify<string>(
         self.web3ContractInstance.authorities.call,
         self.web3ContractInstance,
@@ -89,7 +79,7 @@ export class TransferProxyContract extends BaseContract {
   };
   public removeAuthorizedAddress = {
     async sendTransactionAsync(_authTarget: string, txData: TxData = {}): Promise<string> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
         txData,
         self.removeAuthorizedAddress.estimateGasAsync.bind(self, _authTarget),
@@ -101,7 +91,7 @@ export class TransferProxyContract extends BaseContract {
       return txHash;
     },
     async estimateGasAsync(_authTarget: string, txData: TxData = {}): Promise<number> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
       const gas = await promisify<number>(
         self.web3ContractInstance.removeAuthorizedAddress.estimateGas,
@@ -110,12 +100,12 @@ export class TransferProxyContract extends BaseContract {
       return gas;
     },
     getABIEncodedTransactionData(_authTarget: string, txData: TxData = {}): string {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const abiEncodedTransactionData = self.web3ContractInstance.removeAuthorizedAddress.getData();
       return abiEncodedTransactionData;
     },
     async callAsync(_authTarget: string, txData: TxData = {}): Promise<void> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const result = await promisify<void>(
         self.web3ContractInstance.removeAuthorizedAddress.call,
         self.web3ContractInstance,
@@ -125,7 +115,7 @@ export class TransferProxyContract extends BaseContract {
   };
   public renounceOwnership = {
     async sendTransactionAsync(txData: TxData = {}): Promise<string> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
         txData,
         self.renounceOwnership.estimateGasAsync.bind(self),
@@ -137,7 +127,7 @@ export class TransferProxyContract extends BaseContract {
       return txHash;
     },
     async estimateGasAsync(txData: TxData = {}): Promise<number> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
       const gas = await promisify<number>(
         self.web3ContractInstance.renounceOwnership.estimateGas,
@@ -146,12 +136,12 @@ export class TransferProxyContract extends BaseContract {
       return gas;
     },
     getABIEncodedTransactionData(txData: TxData = {}): string {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const abiEncodedTransactionData = self.web3ContractInstance.renounceOwnership.getData();
       return abiEncodedTransactionData;
     },
     async callAsync(txData: TxData = {}): Promise<void> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const result = await promisify<void>(
         self.web3ContractInstance.renounceOwnership.call,
         self.web3ContractInstance,
@@ -161,7 +151,7 @@ export class TransferProxyContract extends BaseContract {
   };
   public owner = {
     async callAsync(defaultBlock?: any): Promise<string> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const result = await promisify<string>(
         self.web3ContractInstance.owner.call,
         self.web3ContractInstance,
@@ -175,7 +165,7 @@ export class TransferProxyContract extends BaseContract {
       _index: BigNumber,
       txData: TxData = {},
     ): Promise<string> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
         txData,
         self.removeAuthorizedAddressAtIndex.estimateGasAsync.bind(self, _authTarget, _index),
@@ -191,7 +181,7 @@ export class TransferProxyContract extends BaseContract {
       _index: BigNumber,
       txData: TxData = {},
     ): Promise<number> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
       const gas = await promisify<number>(
         self.web3ContractInstance.removeAuthorizedAddressAtIndex.estimateGas,
@@ -204,12 +194,12 @@ export class TransferProxyContract extends BaseContract {
       _index: BigNumber,
       txData: TxData = {},
     ): string {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const abiEncodedTransactionData = self.web3ContractInstance.removeAuthorizedAddressAtIndex.getData();
       return abiEncodedTransactionData;
     },
     async callAsync(_authTarget: string, _index: BigNumber, txData: TxData = {}): Promise<void> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const result = await promisify<void>(
         self.web3ContractInstance.removeAuthorizedAddressAtIndex.call,
         self.web3ContractInstance,
@@ -219,7 +209,7 @@ export class TransferProxyContract extends BaseContract {
   };
   public authorized = {
     async callAsync(index_0: string, defaultBlock?: any): Promise<boolean> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const result = await promisify<boolean>(
         self.web3ContractInstance.authorized.call,
         self.web3ContractInstance,
@@ -227,9 +217,19 @@ export class TransferProxyContract extends BaseContract {
       return result;
     },
   };
+  public balances = {
+    async callAsync(index_0: string, index_1: string, defaultBlock?: any): Promise<BigNumber> {
+      const self = this as VaultContract;
+      const result = await promisify<BigNumber>(
+        self.web3ContractInstance.balances.call,
+        self.web3ContractInstance,
+      )(index_0, index_1);
+      return result;
+    },
+  };
   public getAuthorizedAddresses = {
     async callAsync(defaultBlock?: any): Promise<string[]> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const result = await promisify<string[]>(
         self.web3ContractInstance.getAuthorizedAddresses.call,
         self.web3ContractInstance,
@@ -239,7 +239,7 @@ export class TransferProxyContract extends BaseContract {
   };
   public transferOwnership = {
     async sendTransactionAsync(_newOwner: string, txData: TxData = {}): Promise<string> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
         txData,
         self.transferOwnership.estimateGasAsync.bind(self, _newOwner),
@@ -251,7 +251,7 @@ export class TransferProxyContract extends BaseContract {
       return txHash;
     },
     async estimateGasAsync(_newOwner: string, txData: TxData = {}): Promise<number> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
       const gas = await promisify<number>(
         self.web3ContractInstance.transferOwnership.estimateGas,
@@ -260,12 +260,12 @@ export class TransferProxyContract extends BaseContract {
       return gas;
     },
     getABIEncodedTransactionData(_newOwner: string, txData: TxData = {}): string {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const abiEncodedTransactionData = self.web3ContractInstance.transferOwnership.getData();
       return abiEncodedTransactionData;
     },
     async callAsync(_newOwner: string, txData: TxData = {}): Promise<void> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const result = await promisify<void>(
         self.web3ContractInstance.transferOwnership.call,
         self.web3ContractInstance,
@@ -273,95 +273,181 @@ export class TransferProxyContract extends BaseContract {
       return result;
     },
   };
-  public setVaultAddress = {
-    async sendTransactionAsync(_vaultAddress: string, txData: TxData = {}): Promise<string> {
-      const self = this as TransferProxyContract;
+  public withdrawTo = {
+    async sendTransactionAsync(
+      _tokenAddress: string,
+      _to: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<string> {
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
         txData,
-        self.setVaultAddress.estimateGasAsync.bind(self, _vaultAddress),
+        self.withdrawTo.estimateGasAsync.bind(self, _tokenAddress, _to, _quantity),
       );
       const txHash = await promisify<string>(
-        self.web3ContractInstance.setVaultAddress,
+        self.web3ContractInstance.withdrawTo,
         self.web3ContractInstance,
-      )(_vaultAddress, txDataWithDefaults);
+      )(_tokenAddress, _to, _quantity, txDataWithDefaults);
       return txHash;
     },
-    async estimateGasAsync(_vaultAddress: string, txData: TxData = {}): Promise<number> {
-      const self = this as TransferProxyContract;
+    async estimateGasAsync(
+      _tokenAddress: string,
+      _to: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<number> {
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
       const gas = await promisify<number>(
-        self.web3ContractInstance.setVaultAddress.estimateGas,
+        self.web3ContractInstance.withdrawTo.estimateGas,
         self.web3ContractInstance,
-      )(_vaultAddress, txDataWithDefaults);
+      )(_tokenAddress, _to, _quantity, txDataWithDefaults);
       return gas;
     },
-    getABIEncodedTransactionData(_vaultAddress: string, txData: TxData = {}): string {
-      const self = this as TransferProxyContract;
-      const abiEncodedTransactionData = self.web3ContractInstance.setVaultAddress.getData();
+    getABIEncodedTransactionData(
+      _tokenAddress: string,
+      _to: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): string {
+      const self = this as VaultContract;
+      const abiEncodedTransactionData = self.web3ContractInstance.withdrawTo.getData();
       return abiEncodedTransactionData;
     },
-    async callAsync(_vaultAddress: string, txData: TxData = {}): Promise<void> {
-      const self = this as TransferProxyContract;
+    async callAsync(
+      _tokenAddress: string,
+      _to: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<void> {
+      const self = this as VaultContract;
       const result = await promisify<void>(
-        self.web3ContractInstance.setVaultAddress.call,
+        self.web3ContractInstance.withdrawTo.call,
         self.web3ContractInstance,
-      )(_vaultAddress);
+      )(_tokenAddress, _to, _quantity);
       return result;
     },
   };
-  public transferToVault = {
+  public incrementTokenOwner = {
     async sendTransactionAsync(
-      _from: string,
+      _owner: string,
       _tokenAddress: string,
       _quantity: BigNumber,
       txData: TxData = {},
     ): Promise<string> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
         txData,
-        self.transferToVault.estimateGasAsync.bind(self, _from, _tokenAddress, _quantity),
+        self.incrementTokenOwner.estimateGasAsync.bind(self, _owner, _tokenAddress, _quantity),
       );
       const txHash = await promisify<string>(
-        self.web3ContractInstance.transferToVault,
+        self.web3ContractInstance.incrementTokenOwner,
         self.web3ContractInstance,
-      )(_from, _tokenAddress, _quantity, txDataWithDefaults);
+      )(_owner, _tokenAddress, _quantity, txDataWithDefaults);
       return txHash;
     },
     async estimateGasAsync(
-      _from: string,
+      _owner: string,
       _tokenAddress: string,
       _quantity: BigNumber,
       txData: TxData = {},
     ): Promise<number> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
       const gas = await promisify<number>(
-        self.web3ContractInstance.transferToVault.estimateGas,
+        self.web3ContractInstance.incrementTokenOwner.estimateGas,
         self.web3ContractInstance,
-      )(_from, _tokenAddress, _quantity, txDataWithDefaults);
+      )(_owner, _tokenAddress, _quantity, txDataWithDefaults);
       return gas;
     },
     getABIEncodedTransactionData(
-      _from: string,
+      _owner: string,
       _tokenAddress: string,
       _quantity: BigNumber,
       txData: TxData = {},
     ): string {
-      const self = this as TransferProxyContract;
-      const abiEncodedTransactionData = self.web3ContractInstance.transferToVault.getData();
+      const self = this as VaultContract;
+      const abiEncodedTransactionData = self.web3ContractInstance.incrementTokenOwner.getData();
       return abiEncodedTransactionData;
     },
     async callAsync(
-      _from: string,
+      _owner: string,
       _tokenAddress: string,
       _quantity: BigNumber,
       txData: TxData = {},
     ): Promise<void> {
-      const self = this as TransferProxyContract;
+      const self = this as VaultContract;
       const result = await promisify<void>(
-        self.web3ContractInstance.transferToVault.call,
+        self.web3ContractInstance.incrementTokenOwner.call,
         self.web3ContractInstance,
-      )(_from, _tokenAddress, _quantity);
+      )(_owner, _tokenAddress, _quantity);
+      return result;
+    },
+  };
+  public decrementTokenOwner = {
+    async sendTransactionAsync(
+      _owner: string,
+      _tokenAddress: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<string> {
+      const self = this as VaultContract;
+      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
+        txData,
+        self.decrementTokenOwner.estimateGasAsync.bind(self, _owner, _tokenAddress, _quantity),
+      );
+      const txHash = await promisify<string>(
+        self.web3ContractInstance.decrementTokenOwner,
+        self.web3ContractInstance,
+      )(_owner, _tokenAddress, _quantity, txDataWithDefaults);
+      return txHash;
+    },
+    async estimateGasAsync(
+      _owner: string,
+      _tokenAddress: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<number> {
+      const self = this as VaultContract;
+      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
+      const gas = await promisify<number>(
+        self.web3ContractInstance.decrementTokenOwner.estimateGas,
+        self.web3ContractInstance,
+      )(_owner, _tokenAddress, _quantity, txDataWithDefaults);
+      return gas;
+    },
+    getABIEncodedTransactionData(
+      _owner: string,
+      _tokenAddress: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): string {
+      const self = this as VaultContract;
+      const abiEncodedTransactionData = self.web3ContractInstance.decrementTokenOwner.getData();
+      return abiEncodedTransactionData;
+    },
+    async callAsync(
+      _owner: string,
+      _tokenAddress: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<void> {
+      const self = this as VaultContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.decrementTokenOwner.call,
+        self.web3ContractInstance,
+      )(_owner, _tokenAddress, _quantity);
+      return result;
+    },
+  };
+  public getOwnerBalance = {
+    async callAsync(_owner: string, _tokenAddress: string, defaultBlock?: any): Promise<BigNumber> {
+      const self = this as VaultContract;
+      const result = await promisify<BigNumber>(
+        self.web3ContractInstance.getOwnerBalance.call,
+        self.web3ContractInstance,
+      )(_owner, _tokenAddress);
       return result;
     },
   };
@@ -384,18 +470,14 @@ export class TransferProxyContract extends BaseContract {
       );
     });
   }
-  static async deployed(web3: Web3, defaults: Partial<TxData>): Promise<TransferProxyContract> {
+  static async deployed(web3: Web3, defaults: Partial<TxData>): Promise<VaultContract> {
     const currentNetwork = web3.version.network;
     const { abi, networks }: { abi: any; networks: any } = ContractArtifacts;
     const web3ContractInstance = web3.eth.contract(abi).at(networks[currentNetwork].address);
 
-    return new TransferProxyContract(web3ContractInstance, defaults);
+    return new VaultContract(web3ContractInstance, defaults);
   }
-  static async at(
-    address: string,
-    web3: Web3,
-    defaults: Partial<TxData>,
-  ): Promise<TransferProxyContract> {
+  static async at(address: string, web3: Web3, defaults: Partial<TxData>): Promise<VaultContract> {
     const { abi }: { abi: any } = ContractArtifacts;
     const web3Utils = new Web3Utils(web3);
     const contractExists = await web3Utils.doesContractExistAtAddressAsync(address);
@@ -404,7 +486,7 @@ export class TransferProxyContract extends BaseContract {
     if (contractExists) {
       const web3ContractInstance = web3.eth.contract(abi).at(address);
 
-      return new TransferProxyContract(web3ContractInstance, defaults);
+      return new VaultContract(web3ContractInstance, defaults);
     } else {
       throw new Error(
         CONTRACT_WRAPPER_ERRORS.CONTRACT_NOT_FOUND_ON_NETWORK("TransferProxy", currentNetwork),

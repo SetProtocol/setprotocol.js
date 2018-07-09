@@ -17,6 +17,7 @@
 "use strict";
 
 import * as _ from "lodash";
+import * as Web3 from "web3";
 
 import { ERC20Assertions } from "./ERC20Assertions";
 import { DetailedERC20Contract, SetTokenContract } from "../contracts";
