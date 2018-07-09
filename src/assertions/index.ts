@@ -35,12 +35,12 @@ export class Assertions {
   public schema: SchemaAssertions;
   public setToken: SetTokenAssertions;
 
-  public constructor() {
+  public constructor(web3) {
     this.account = new AccountAssertions();
     this.common = new CommonAssertions();
     this.core = new CoreAssertions();
     this.erc20 = new ERC20Assertions();
     this.schema = new SchemaAssertions();
-    this.setToken = new SetTokenAssertions();
+    this.setToken = new SetTokenAssertions(web3);
   }
 }

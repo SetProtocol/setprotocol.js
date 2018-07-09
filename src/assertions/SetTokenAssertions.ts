@@ -16,16 +16,23 @@
 
 "use strict";
 
-import _ from "lodash";
+import * as _ from "lodash";
 
 import { ERC20Assertions } from "./ERC20Assertions";
+import { DetailedERC20Contract, SetTokenContract } from "../contracts";
 import { setTokenAssertionsErrors } from "../errors";
+import { Address } from "../types/common";
 import { BigNumber } from "../util";
-import { ERC20, SetTokenContract } from "../contracts";
 
 const erc20Assertions = new ERC20Assertions();
 
 export class SetTokenAssertions {
+  private web3: Web3;
+
+  constructor(web3: Web3) {
+    this.web3 = web3;
+  }
+
   /**
    * Throws if the given candidateContract does not respond to some methods from the Set Token interface.
    *
@@ -65,7 +72,7 @@ export class SetTokenAssertions {
 
     // Create component ERC20 token instances
     const componentInstancePromises = _.map(components, component =>
-      ERC20.at(component, this.web3, { from: ownerAddress }),
+      DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 
@@ -104,7 +111,7 @@ export class SetTokenAssertions {
 
     // Create component ERC20 token instances
     const componentInstancePromises = _.map(components, component =>
-      ERC20.at(component, this.web3, { from: ownerAddress }),
+      DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 
