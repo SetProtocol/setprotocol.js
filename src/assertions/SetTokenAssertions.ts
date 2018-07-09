@@ -76,7 +76,7 @@ export class SetTokenAssertions {
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 
-    // Assert that user has sufficient allowances for each component token
+    // Assert that user has sufficient balance for each component token
     const userHasSufficientBalancePromises = _.map(
       componentInstances,
       (componentInstance, index) => {
