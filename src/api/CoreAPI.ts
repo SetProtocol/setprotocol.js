@@ -126,6 +126,17 @@ export class CoreAPI {
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
     );
+
+    // const setAddress = await coreInstance.create.callAsync(
+    //   factoryAddress,
+    //   components,
+    //   units,
+    //   naturalUnit,
+    //   name,
+    //   symbol,
+    //   txSettings,
+    // );
+    // console.log(setAddress);
     const txHash = await coreInstance.create.sendTransactionAsync(
       factoryAddress,
       components,
@@ -171,8 +182,8 @@ export class CoreAPI {
     // );
     //
     // TODO (add setToken related assertions)
-    // this.assert.setToken.hasSufficientBalance(setTokeContract, userAddress);
-    // this.assert.setToken.hasSufficientAllowance(setTokeContract, quantityInWei, userAddress);
+    // this.assert.setToken.hasSufficientBalance(setTokenContract, userAddress);
+    // this.assert.setToken.hasSufficientAllowance(setTokenContract, quantityInWei, userAddress);
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -213,16 +224,15 @@ export class CoreAPI {
 
     // TODO (awaiting SetTokenContract PR):
     // const setTokenContract = await SetTokenContract.at(setAddress, this.provider, {});
-    // const naturalUnit = setTokenContract.naturalUnit.callAsync();
     // this.assert.core.isMultipleOfNaturalUnit(
-    //   naturalUnit,
+    //   setTokenContract,
     //   quantityInWei,
     //   coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
     // );
     //
     // TODO (add setToken related assertions)
-    // this.assert.setToken.hasSufficientBalance(setTokeContract, userAddress);
-    // this.assert.setToken.hasSufficientAllowance(setTokeContract, quantityInWei, userAddress);
+    // this.assert.setToken.hasSufficientBalance(setTokenContract, userAddress);
+    // this.assert.setToken.hasSufficientAllowance(setTokenContract, quantityInWei, userAddress);
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 

@@ -19,7 +19,10 @@
 import { coreAssertionErrors } from "../errors";
 import { BigNumber } from "../util";
 import { ZERO } from "../constants";
-import { CoreContract } from "../contracts/CoreContract";
+import {
+  CoreContract,
+  // SetTokenContract,
+} from "../contracts/CoreContract";
 
 export class CoreAssertions {
   /**
@@ -46,13 +49,14 @@ export class CoreAssertions {
     }
   }
 
-  public isMultipleOfNaturalUnit(
-    naturalUnit: BigNumber,
-    quantityInWei: BigNumber,
-    errorMessage: string,
-  ) {
-    if (!quantityInWei.mod(naturalUnit).eq(ZERO)) {
-      throw new Error(errorMessage);
-    }
-  }
+  // public isMultipleOfNaturalUnit(
+  //   setTokenContract: SetTokenContract,
+  //   quantityInWei: BigNumber,
+  //   errorMessage: string,
+  // ) {
+  //   const naturalUnit = setTokenContract.naturalUnit.callAsync();
+  //   if (!quantityInWei.mod(naturalUnit).eq(ZERO)) {
+  //     throw new Error(errorMessage);
+  //   }
+  // }
 }

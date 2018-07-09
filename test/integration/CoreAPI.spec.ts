@@ -28,15 +28,26 @@ import * as ABIDecoder from "abi-decoder";
 import * as _ from "lodash";
 import compact = require("lodash.compact");
 
-import { Core, SetTokenFactory, StandardTokenMock } from "set-protocol-contracts";
+import { Core, SetTokenFactory, StandardTokenMock, TransferProxy } from "set-protocol-contracts";
 
 import { ACCOUNTS } from "../accounts";
 import { testSets, TestSet } from "../testSets";
+import { getFormattedLogsFromTxHash } from "../logs";
+import { extractNewSetTokenAddressFromLogs } from "../contract_logs/core";
 import { CoreAPI } from "../../src/api";
-import { CoreContract, SetTokenFactoryContract } from "../../src/contracts";
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../../src/constants";
+import {
+  CoreContract,
+  DetailedERC20Contract,
+  SetTokenFactoryContract,
+  TransferProxyContract,
+} from "../../src/contracts";
+import {
+  DEFAULT_GAS_PRICE,
+  DEFAULT_GAS_LIMIT,
+  UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+} from "../../src/constants";
 import { Web3Utils } from "../../src/util/Web3Utils";
-import { ReceiptLog } from "../../src/types/common";
+import { BigNumber } from "../../src/util";
 
 const { expect } = chai;
 
@@ -63,6 +74,10 @@ setTokenFactoryContract.defaults(txDefaults);
 const standardTokenMockContract = contract(StandardTokenMock);
 standardTokenMockContract.setProvider(provider);
 standardTokenMockContract.defaults(txDefaults);
+
+const transferProxyContract = contract(TransferProxy);
+transferProxyContract.setProvider(provider);
+transferProxyContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
 
@@ -150,8 +165,97 @@ describe("Core API", () => {
       );
       const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
 
-      const logs: ReceiptLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));
-      expect(logs[logs.length - 1].name).to.equal("SetTokenCreated");
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      expect(formattedLogs[formattedLogs.length - 1].event).to.equal("SetTokenCreated");
     });
   });
+
+  describe("issue", async () => {
+    let coreAPI: CoreAPI;
+    let setToCreate: TestSet;
+    let componentAddresses: string[];
+    let setTokenFactoryInstance: any;
+    let setTokenAddress: string;
+
+    beforeEach(async () => {
+      // Deploy Core
+      const coreContractInstance = await coreContract.new();
+      const coreWrapper = await CoreContract.at(coreContractInstance.address, web3, txDefaults);
+      coreAPI = new CoreAPI(web3, coreContractInstance.address);
+      // Deploy SetTokenFactory
+      setTokenFactoryInstance = await setTokenFactoryContract.new();
+      const setTokenFactoryWrapper = await SetTokenFactoryContract.at(
+        setTokenFactoryInstance.address,
+        web3,
+        txDefaults,
+      );
+      // Deploy TransferProxy
+      const transferProxyInstance = await transferProxyContract.new();
+      const transferProxyWrapper = await TransferProxyContract.at(
+        transferProxyInstance.address,
+        web3,
+        txDefaults,
+      );
+
+      // Authorize Core
+      await setTokenFactoryWrapper.addAuthorizedAddress.sendTransactionAsync(
+        coreContractInstance.address,
+        txDefaults,
+      );
+
+      // Enable Factory
+      await coreWrapper.enableFactory.sendTransactionAsync(
+        setTokenFactoryInstance.address,
+        txDefaults,
+      );
+
+      setToCreate = testSets[0];
+      // Deploy DummyTokens to add to Set
+      componentAddresses = [];
+      await Promise.all(
+        setToCreate.components.map(async component => {
+          const standardTokenMockInstance = await standardTokenMockContract.new(
+            ACCOUNTS[0].address,
+            component.supply,
+            component.name,
+            component.symbol,
+            component.decimals,
+          );
+          componentAddresses.push(standardTokenMockInstance.address);
+          const tokenWrapper = await DetailedERC20Contract.at(
+            standardTokenMockInstance.address,
+            web3,
+            txDefaults,
+          );
+          await tokenWrapper.approve.sendTransactionAsync(
+            transferProxyInstance.address,
+            UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+            { from: ACCOUNTS[0].address },
+          );
+        }),
+      );
+
+      // Create a Set
+      const txHash = await coreAPI.create(
+        ACCOUNTS[0].address,
+        setTokenFactoryInstance.address,
+        componentAddresses,
+        setToCreate.units,
+        setToCreate.naturalUnit,
+        setToCreate.setName,
+        setToCreate.setSymbol,
+      );
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+    });
+
+    test("issues a new set with valid parameters", async () => {
+      const txHash = await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(300));
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      console.log(formattedLogs);
+      expect(true);
+    });
+  });
+
+  describe("redeem", async () => {});
 });
