@@ -19,7 +19,8 @@
 import { BaseContract } from "./BaseContract";
 import { CoreContract } from "./CoreContract";
 import { DetailedERC20Contract } from "./DetailedERC20Contract";
+import { SetTokenContract } from "./SetTokenContract";
 import { SetTokenFactoryContract } from "./SetTokenFactoryContract";
 
 export type ContractWrapper = BaseContract;
-export { BaseContract, CoreContract, DetailedERC20Contract, SetTokenFactoryContract };
+export { BaseContract, CoreContract, DetailedERC20Contract, SetTokenContract, SetTokenFactoryContract };

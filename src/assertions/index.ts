@@ -25,6 +25,7 @@ import { CommonAssertions } from "./CommonAssertions";
 import { CoreAssertions } from "./CoreAssertions";
 import { ERC20Assertions } from "./ERC20Assertions";
 import { SchemaAssertions } from "./SchemaAssertions";
+import { SetTokenAssertions } from "./SetTokenAssertions";
 
 export class Assertions {
   public account: AccountAssertions;
@@ -32,6 +33,7 @@ export class Assertions {
   public core: CoreAssertions;
   public erc20: ERC20Assertions;
   public schema: SchemaAssertions;
+  public setToken: SetTokenAssertions;
 
   public constructor(web3: Web3) {
     this.account = new AccountAssertions();
@@ -39,5 +41,6 @@ export class Assertions {
     this.core = new CoreAssertions();
     this.erc20 = new ERC20Assertions();
     this.schema = new SchemaAssertions();
+    this.setToken = new SetTokenAssertions(web3);
   }
 }

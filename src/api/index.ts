@@ -18,5 +18,6 @@
 
 import { ContractsAPI } from "./ContractsAPI";
 import { CoreAPI } from "./CoreAPI";
+import { SetTokenAPI } from "./SetTokenAPI";
 
-export { ContractsAPI, CoreAPI };
+export { ContractsAPI, CoreAPI, SetTokenAPI };

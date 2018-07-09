@@ -29,16 +29,16 @@ import { CoreAPI } from "./api";
  * of SetProtocol with the web3 provider argument
  */
 export default class SetProtocol {
-  private provider: Web3;
+  private web3: Web3;
   public setCore: CoreAPI;
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
-   * @param   provider    The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
-   *                      the Ethereum network.
+   * @param web3 The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
+   *             the Ethereum network.
    */
-  constructor(provider: Web3 = undefined, coreAddress: string = undefined) {
-    this.provider = provider;
-    this.setCore = new CoreAPI(this.provider, coreAddress);
+  constructor(web3: Web3 = undefined, coreAddress: string = undefined) {
+    this.web3 = web3;
+    this.setCore = new CoreAPI(this.web3, coreAddress);
   }
 }

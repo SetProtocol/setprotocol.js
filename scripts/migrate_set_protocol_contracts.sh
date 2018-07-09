@@ -19,7 +19,7 @@ yarn install >> $LOGS 2>&1
 echo -e "\n"
 
 echo -e "${CYAN}Running Set Protocol smart contract migrations...${NO_COLOR}"
-yarn run deploy:development >> $LOGS 2>&1
+truffle migrate --network development
 echo -e "\n"
 
 echo -e "${CYAN}Transpiling newly generated artifacts for usage in the setProtocol.js repo...${NO_COLOR}"

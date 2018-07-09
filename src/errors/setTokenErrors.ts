@@ -16,7 +16,9 @@
 
 "use strict";
 
-export { coreAPIErrors, coreAssertionErrors } from "./coreErrors";
-export { erc20AssertionErrors } from "./erc20Errors";
-export { schemaAssertionsError } from "./schemaErrors";
-export { setTokenAssertionsErrors } from "./setTokenErrors";
+import { ValidatorResult } from "../schemas";
+
+export const setTokenAssertionsErrors = {
+  IS_NOT_A_VALID_SET: (setAddress: string) =>
+    `Contract at ${setAddress} is not a valid Set token address.`,
+};

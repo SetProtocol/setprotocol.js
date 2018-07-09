@@ -22,21 +22,21 @@
 jest.unmock("set-protocol-contracts");
 jest.setTimeout(30000);
 
-import * as chai from "chai";
-import * as Web3 from "web3";
 import * as ABIDecoder from "abi-decoder";
+import * as chai from "chai";
 import * as _ from "lodash";
+import * as Web3 from "web3";
 import compact = require("lodash.compact");
 
-import { Core, SetTokenFactory, StandardTokenMock } from "set-protocol-contracts";
+import { Core, SetToken, SetTokenFactory, StandardTokenMock } from "set-protocol-contracts";
 
 import { ACCOUNTS } from "../accounts";
 import { testSets, TestSet } from "../testSets";
-import { CoreAPI } from "../../src/api";
-import { CoreContract, SetTokenFactoryContract } from "../../src/contracts";
+import { CoreAPI, SetTokenAPI } from "../../src/api";
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../../src/constants";
-import { Web3Utils } from "../../src/util/Web3Utils";
+import { CoreContract, SetTokenContract, SetTokenFactoryContract } from "../../src/contracts";
 import { ReceiptLog } from "../../src/types/common";
+import { Web3Utils } from "../../src/util";
 
 const { expect } = chai;
 
@@ -60,15 +60,17 @@ const setTokenFactoryContract = contract(SetTokenFactory);
 setTokenFactoryContract.setProvider(provider);
 setTokenFactoryContract.defaults(txDefaults);
 
+const setTokenContract = contract(SetToken);
+setTokenContract.setProvider(provider);
+setTokenContract.defaults(txDefaults);
+
 const standardTokenMockContract = contract(StandardTokenMock);
 standardTokenMockContract.setProvider(provider);
 standardTokenMockContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
 
-describe("Core API", () => {
-  let contract;
-
+describe("Set Token API", () => {
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
   });
@@ -85,23 +87,29 @@ describe("Core API", () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test("CoreAPI can be instantiated", async () => {
-    // deploy Core
-    const coreContractInstance = await coreContract.new();
-    expect(new CoreAPI(web3, coreContractInstance.address));
+  test("SetTokenAPI can be instantiated", async () => {
+    const setTokenAPI = new SetTokenAPI(web3);
+    expect(setTokenAPI);
+    expect(setTokenAPI.getSymbol);
+    expect(setTokenAPI.getName);
+    expect(setTokenAPI.getComponents);
+    expect(setTokenAPI.getUnits);
+    expect(setTokenAPI.getTotalSupply);
+    expect(setTokenAPI.getBalanceOf);
   });
 
-  describe("create", async () => {
-    let coreAPI: CoreAPI;
-    let setToCreate: TestSet;
+  describe("getters", async () => {
     let componentAddresses: string[];
-    let setTokenFactoryInstance: any;
+    let setToCreate: TestSet;
+    let setTokenAPI: SetTokenAPI;
+    let setTokenInstance: setTokenContract;
 
     beforeEach(async () => {
       // Deploy Core
       const coreContractInstance = await coreContract.new();
       const coreWrapper = await CoreContract.at(coreContractInstance.address, web3, txDefaults);
       coreAPI = new CoreAPI(web3, coreContractInstance.address);
+      setTokenAPI = new SetTokenAPI(web3);
       // Deploy SetTokenFactory
       setTokenFactoryInstance = await setTokenFactoryContract.new();
       const setTokenFactoryWrapper = await SetTokenFactoryContract.at(
@@ -136,9 +144,8 @@ describe("Core API", () => {
           componentAddresses.push(standardTokenMockInstance.address);
         }),
       );
-    });
 
-    test("creates a new set with valid parameters", async () => {
+      // Create Set Token
       const txHash = await coreAPI.create(
         ACCOUNTS[0].address,
         setTokenFactoryInstance.address,
@@ -149,9 +156,47 @@ describe("Core API", () => {
         setToCreate.setSymbol,
       );
       const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
-
       const logs: ReceiptLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));
-      expect(logs[logs.length - 1].name).to.equal("SetTokenCreated");
+      const setTokenContractAddress = logs[logs.length - 1].address;
+      // Deploy Set Token
+      setTokenInstance = await setTokenContract.new(
+        setTokenContractAddress,
+        componentAddresses,
+        setToCreate.units,
+        setToCreate.naturalUnit,
+        setToCreate.setName,
+        setToCreate.setSymbol,
+      );
+    });
+
+    test("gets Set token symbol", async () => {
+      const symbol = await setTokenAPI.getSymbol(setTokenInstance.address);
+      expect(symbol).to.equal(setToCreate.setSymbol);
+    });
+
+    test("gets Set token name", async () => {
+      const name = await setTokenAPI.getName(setTokenInstance.address);
+      expect(name).to.equal(setToCreate.setName);
+    });
+
+    test("get Set token natural units", async () => {
+      const naturalUnit = await setTokenAPI.getNaturalUnit(setTokenInstance.address);
+      expect(naturalUnit.toNumber()).to.equal(setToCreate.naturalUnit.toNumber());
+    });
+
+    test("get Set token units", async () => {
+      const units = await setTokenAPI.getUnits(setTokenInstance.address);
+      _.forEach(units, (unit, i) => unit.toNumber() === setToCreate.units[i].toNumber());
+    });
+
+    test("get total supply of Set tokens", async () => {
+      const totalSupply = await setTokenAPI.getTotalSupply(setTokenInstance.address);
+      expect(totalSupply.toNumber()).to.equal(0);
+    });
+
+    test("get balance of user's Set tokens", async () => {
+      const balance = await setTokenAPI.getBalanceOf(setTokenInstance.address, ACCOUNTS[0].address);
+      expect(balance.toNumber()).to.equal(0);
     });
   });
 });

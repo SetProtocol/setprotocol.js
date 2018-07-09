@@ -21,7 +21,7 @@ import * as Web3 from "web3";
 
 import { Assertions } from "../assertions";
 import { BigNumber } from "../util";
-import { BaseContract, ContractWrapper, CoreContract } from "../contracts";
+import { BaseContract, ContractWrapper, CoreContract, SetTokenContract } from "../contracts";
 
 /**
  * @title ContractsAPI
@@ -31,20 +31,20 @@ import { BaseContract, ContractWrapper, CoreContract } from "../contracts";
  *
  */
 export class ContractsAPI {
-  private provider: Web3;
+  private web3: Web3;
   private assert: Assertions;
   private cache: { [contractName: string]: ContractWrapper };
 
-  public constructor(provider: Web3) {
-    this.provider = provider;
+  public constructor(web3: Web3) {
+    this.web3 = web3;
     this.cache = {};
-    this.assert = new Assertions(this.provider);
+    this.assert = new Assertions(this.web3);
   }
 
   /**
-   * Create a new Set, specifying the components, units, name, symbol to use.
+   * Load Core contract
    *
-   * @param  coreAddress        Address of the Core contract to use
+   * @param  coreAddress        Address of the Core contract
    * @param  transactionOptions Options sent into the contract deployed method
    * @return                    The Core Contract
    */
@@ -58,7 +58,7 @@ export class ContractsAPI {
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as CoreContract;
     } else {
-      const coreContract = await CoreContract.at(coreAddress, this.provider, transactionOptions);
+      const coreContract = await CoreContract.at(coreAddress, this.web3, transactionOptions);
       await this.assert.core.implementsCore(coreContract);
       this.cache[cacheKey] = coreContract;
       return coreContract;
@@ -66,12 +66,50 @@ export class ContractsAPI {
   }
 
   /**
-   * Creates a string used for accessing values in the cache
+   * Load Set Token contract
+   *
+   * @param  setTokenAddress    Address of the Set Token contract
+   * @param  transactionOptions Options sent into the contract deployed method
+   * @return                    The Set Token Contract
+   */
+  public async loadSetTokenAsync(
+    setTokenAddress: string,
+    transactionOptions: object = {},
+  ): Promise<SetTokenContract> {
+    this.assert.schema.isValidAddress("setTokenAddress", setTokenAddress);
+    const cacheKey = this.getSetTokenCacheKey(setTokenAddress);
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as SetTokenContract;
+    } else {
+      const setTokenContract = await SetTokenContract.at(
+        setTokenAddress,
+        this.web3,
+        transactionOptions,
+      );
+      await this.assert.setToken.implementsSetToken(setTokenContract);
+      this.cache[cacheKey] = setTokenContract;
+      return setTokenContract;
+    }
+  }
+
+  /**
+   * Creates a string used for accessing values in the core cache
    *
    * @param  coreAddress        Address of the Core contract to use
    * @return                    The cache key
    */
   private getCoreCacheKey(coreAddress: string): string {
     return `Core_${coreAddress}`;
+  }
+
+  /**
+   * Creates a string used for accessing values in the set token cache
+   *
+   * @param  setTokenAddress        Address of the Core contract to use
+   * @return                    The cache key
+   */
+  private getSetTokenCacheKey(setTokenAddress: string): string {
+    return `SetToken_${setTokenAddress}`;
   }
 }
