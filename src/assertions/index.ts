@@ -35,7 +35,7 @@ export class Assertions {
   public schema: SchemaAssertions;
   public setToken: SetTokenAssertions;
 
-  public constructor(web3) {
+  public constructor(web3: Web3) {
     this.account = new AccountAssertions();
     this.common = new CommonAssertions();
     this.core = new CoreAssertions();

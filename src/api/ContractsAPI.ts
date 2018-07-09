@@ -31,14 +31,14 @@ import { BaseContract, ContractWrapper, CoreContract, SetTokenContract } from ".
  *
  */
 export class ContractsAPI {
-  private provider: Web3;
+  private web3: Web3;
   private assert: Assertions;
   private cache: { [contractName: string]: ContractWrapper };
 
-  public constructor(provider: Web3) {
-    this.provider = provider;
+  public constructor(web3: Web3) {
+    this.web3 = web3;
     this.cache = {};
-    this.assert = new Assertions();
+    this.assert = new Assertions(this.web3);
   }
 
   /**
@@ -58,7 +58,7 @@ export class ContractsAPI {
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as CoreContract;
     } else {
-      const coreContract = await CoreContract.at(coreAddress, this.provider, transactionOptions);
+      const coreContract = await CoreContract.at(coreAddress, this.web3, transactionOptions);
       await this.assert.core.implementsCore(coreContract);
       this.cache[cacheKey] = coreContract;
       return coreContract;
@@ -84,7 +84,7 @@ export class ContractsAPI {
     } else {
       const setTokenContract = await SetTokenContract.at(
         setTokenAddress,
-        this.provider,
+        this.web3,
         transactionOptions,
       );
       await this.assert.setToken.implementsSetToken(setTokenContract);

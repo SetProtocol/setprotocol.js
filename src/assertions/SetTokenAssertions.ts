@@ -48,6 +48,8 @@ export class SetTokenAssertions {
       await setTokenInstance.decimals.callAsync();
       await setTokenInstance.naturalUnit.callAsync();
       await setTokenInstance.symbol.callAsync();
+      await setTokenInstance.getComponents.callAsync();
+      await setTokenInstance.getUnits.callAsync();
     } catch (error) {
       throw new Error(setTokenAssertionsErrors.IS_NOT_A_VALID_SET(address));
     }

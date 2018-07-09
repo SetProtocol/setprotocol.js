@@ -35,16 +35,16 @@ import { CoreContract, DetailedERC20Contract } from "../contracts";
  *
  */
 export class CoreAPI {
-  private provider: Web3;
+  private web3: Web3;
   private coreAddress: string;
   private assert: Assertions;
   private contracts: ContractsAPI;
 
-  constructor(web3: Web3, coreAddress: string) {
-    this.provider = web3;
+  public constructor(web3: Web3, coreAddress: string) {
+    this.web3 = web3;
     this.coreAddress = coreAddress;
-    this.contracts = new ContractsAPI(this.provider);
-    this.assert = new Assertions();
+    this.assert = new Assertions(this.web3);
+    this.contracts = new ContractsAPI(this.web3);
   }
 
   /**
@@ -95,7 +95,7 @@ export class CoreAPI {
         );
         this.assert.schema.isValidAddress("componentAddress", componentAddress);
 
-        const tokenContract = await DetailedERC20Contract.at(componentAddress, this.provider, {});
+        const tokenContract = await DetailedERC20Contract.at(componentAddress, this.web3, {});
 
         try {
           tokenDecimals = await tokenContract.decimals.callAsync();

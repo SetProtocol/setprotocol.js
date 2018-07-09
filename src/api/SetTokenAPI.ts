@@ -35,14 +35,14 @@ import { CoreContract } from "../contracts";
  *
  */
 export class SetTokenAPI {
-  private provider: Web3;
+  private web3: Web3;
   private assert: Assertions;
   private contracts: ContractsAPI;
 
-  constructor(web3: Web3) {
-    this.provider = web3;
-    this.assert = new Assertions();
-    this.contracts = new ContractsAPI(this.provider);
+  public constructor(web3: Web3) {
+    this.web3 = web3;
+    this.assert = new Assertions(this.web3);
+    this.contracts = new ContractsAPI(this.web3);
   }
 
   /**

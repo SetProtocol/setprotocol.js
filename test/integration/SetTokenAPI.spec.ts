@@ -20,11 +20,11 @@
 // smart contracts artifacts package to pull the most recently
 // deployed contracts on the current network.
 jest.unmock("set-protocol-contracts");
-jest.setTimeout(20000);
+jest.setTimeout(30000);
 
-import * as _ from "lodash";
 import * as ABIDecoder from "abi-decoder";
 import * as chai from "chai";
+import * as _ from "lodash";
 import * as Web3 from "web3";
 import compact = require("lodash.compact");
 
@@ -71,8 +71,6 @@ standardTokenMockContract.defaults(txDefaults);
 let currentSnapshotId: number;
 
 describe("Set Token API", () => {
-  let contract;
-
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
   });
@@ -160,7 +158,7 @@ describe("Set Token API", () => {
       const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
       const logs: ReceiptLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));
       const setTokenContractAddress = logs[logs.length - 1].address;
-      // Deploy
+      // Deploy Set Token
       setTokenInstance = await setTokenContract.new(
         setTokenContractAddress,
         componentAddresses,

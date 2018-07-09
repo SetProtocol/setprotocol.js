@@ -20,7 +20,7 @@
 // smart contracts artifacts package to pull the most recently
 // deployed contracts on the current network.
 jest.unmock("set-protocol-contracts");
-jest.setTimeout(20000);
+jest.setTimeout(30000);
 
 import * as chai from "chai";
 import * as Web3 from "web3";
