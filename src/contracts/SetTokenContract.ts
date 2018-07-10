@@ -27,9 +27,9 @@ import { SetToken as ContractArtifacts } from "set-protocol-contracts";
 import * as fs from "fs-extra";
 import * as Web3 from "web3";
 
-import { BaseContract } from "./BaseContract";
-import { TxData, TxDataPayable } from "../common";
-import { classUtils } from "../util";
+import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./BaseContract";
+import { TxData, TxDataPayable } from "../types/common";
+import { BigNumber, classUtils, Web3Utils } from "../util";
 
 export class SetTokenContract extends BaseContract {
   public name = {
@@ -510,9 +510,19 @@ export class SetTokenContract extends BaseContract {
     defaults: Partial<TxData>,
   ): Promise<SetTokenContract> {
     const { abi }: { abi: any } = ContractArtifacts;
-    const web3ContractInstance = web3.eth.contract(abi).at(address);
+    const web3Utils = new Web3Utils(web3);
+    const contractExists = await web3Utils.doesContractExistAtAddressAsync(address);
+    const currentNetwork = await web3Utils.getNetworkIdAsync();
 
-    return new SetTokenContract(web3ContractInstance, defaults);
+    if (contractExists) {
+      const web3ContractInstance = web3.eth.contract(abi).at(address);
+
+      return new SetTokenContract(web3ContractInstance, defaults);
+    } else {
+      throw new Error(
+        CONTRACT_WRAPPER_ERRORS.CONTRACT_NOT_FOUND_ON_NETWORK("SetToken", currentNetwork),
+      );
+    }
   }
   constructor(web3ContractInstance: Web3.ContractInstance, defaults: Partial<TxData>) {
     super(web3ContractInstance, defaults);

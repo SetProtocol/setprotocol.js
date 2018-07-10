@@ -226,17 +226,18 @@ export class ERC20Contract extends BaseContract {
   }
   static async at(address: string, web3: Web3, defaults: Partial<TxData>): Promise<ERC20Contract> {
     const { abi }: { abi: any } = ContractArtifacts;
-    const web3ContractInstance = web3.eth.contract(abi).at(address);
+    const web3Utils = new Web3Utils(web3);
+    const contractExists = await web3Utils.doesContractExistAtAddressAsync(address);
+    const currentNetwork = await web3Utils.getNetworkIdAsync();
 
-    return new ERC20Contract(web3ContractInstance, defaults);
-  }
-  private static async getArtifactsData(web3: Web3): Promise<any> {
-    try {
-      const artifact = await fs.readFile("build/contracts/ERC20.json", "utf8");
-      const { abi, networks } = JSON.parse(artifact);
-      return { abi, networks };
-    } catch (e) {
-      console.error("Artifacts malformed or nonexistent: " + e.toString());
+    if (contractExists) {
+      const web3ContractInstance = web3.eth.contract(abi).at(address);
+
+      return new ERC20Contract(web3ContractInstance, defaults);
+    } else {
+      throw new Error(
+        CONTRACT_WRAPPER_ERRORS.CONTRACT_NOT_FOUND_ON_NETWORK("ERC20", currentNetwork),
+      );
     }
   }
   constructor(web3ContractInstance: Web3.ContractInstance, defaults: Partial<TxData>) {

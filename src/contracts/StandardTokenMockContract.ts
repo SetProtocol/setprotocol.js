@@ -21,15 +21,16 @@
  * Templates can be found at https://github.com/0xProject/0x.js/tree/development/packages/abi-gen-templates.
  */
 // tslint:disable-next-line:no-unused-variable
+
 import { promisify } from "@0xproject/utils";
 import { BigNumber } from "bignumber.js";
 import * as fs from "fs-extra";
 import { StandardTokenMock as ContractArtifacts } from "set-protocol-contracts";
 import * as Web3 from "web3";
 
-import { BaseContract } from "./BaseContract";
-import { TxData, TxDataPayable } from "../common";
-import { classUtils } from "../util";
+import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./BaseContract";
+import { TxData, TxDataPayable } from "../types/common";
+import { BigNumber, classUtils, Web3Utils } from "../util";
 
 export class StandardTokenMockContract extends BaseContract {
   public name = {
@@ -368,9 +369,19 @@ export class StandardTokenMockContract extends BaseContract {
     defaults: Partial<TxData>,
   ): Promise<StandardTokenMockContract> {
     const { abi }: { abi: any } = ContractArtifacts;
-    const web3ContractInstance = web3.eth.contract(abi).at(address);
+    const web3Utils = new Web3Utils(web3);
+    const contractExists = await web3Utils.doesContractExistAtAddressAsync(address);
+    const currentNetwork = await web3Utils.getNetworkIdAsync();
 
-    return new StandardTokenMockContract(web3ContractInstance, defaults);
+    if (contractExists) {
+      const web3ContractInstance = web3.eth.contract(abi).at(address);
+
+      return new StandardTokenMockContract(web3ContractInstance, defaults);
+    } else {
+      throw new Error(
+        CONTRACT_WRAPPER_ERRORS.CONTRACT_NOT_FOUND_ON_NETWORK("StandardTokenMock", currentNetwork),
+      );
+    }
   }
   constructor(web3ContractInstance: Web3.ContractInstance, defaults: Partial<TxData>) {
     super(web3ContractInstance, defaults);
