@@ -50,7 +50,7 @@ export class CoreAssertions {
     setTokenContract: SetTokenContract,
     quantityInWei: BigNumber,
     errorMessage: string,
-  ) {
+  ): Promise<void> {
     const naturalUnit = await setTokenContract.naturalUnit.callAsync();
     if (!quantityInWei.mod(naturalUnit).eq(ZERO)) {
       throw new Error(errorMessage);

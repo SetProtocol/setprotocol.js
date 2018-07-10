@@ -489,7 +489,7 @@ export class VaultContract extends BaseContract {
       return new VaultContract(web3ContractInstance, defaults);
     } else {
       throw new Error(
-        CONTRACT_WRAPPER_ERRORS.CONTRACT_NOT_FOUND_ON_NETWORK("TransferProxy", currentNetwork),
+        CONTRACT_WRAPPER_ERRORS.CONTRACT_NOT_FOUND_ON_NETWORK("Vault", currentNetwork),
       );
     }
   }

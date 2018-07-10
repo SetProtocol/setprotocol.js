@@ -74,17 +74,19 @@ export class SetTokenAssertions {
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
 
     // Create component ERC20 token instances
-    const componentInstancePromises = _.map(components, component =>
-      DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
+    const componentInstancePromises = _.map(
+      components,
+      async component =>
+        await DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 
     // Assert that user has sufficient balance for each component token
     const userHasSufficientBalancePromises = _.map(
       componentInstances,
-      (componentInstance, index) => {
+      async (componentInstance, index) => {
         const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
-        return erc20Assertions.hasSufficientBalance(
+        await erc20Assertions.hasSufficientBalance(
           componentInstance,
           ownerAddress,
           requiredBalance,
@@ -114,17 +116,19 @@ export class SetTokenAssertions {
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
 
     // Create component ERC20 token instances
-    const componentInstancePromises = _.map(components, component =>
-      DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
+    const componentInstancePromises = _.map(
+      components,
+      async component =>
+        await DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 
     // Assert that user has sufficient allowances for each component token
     const userHasSufficientAllowancePromises = _.map(
       componentInstances,
-      (componentInstance, index) => {
+      async (componentInstance, index) => {
         const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
-        return erc20Assertions.hasSufficientAllowance(
+        return await erc20Assertions.hasSufficientAllowance(
           componentInstance,
           ownerAddress,
           spenderAddress,

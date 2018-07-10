@@ -183,14 +183,14 @@ export class CoreAPI {
     );
 
     const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
-    this.assert.core.isMultipleOfNaturalUnit(
+    await this.assert.core.isMultipleOfNaturalUnit(
       setTokenContract,
       quantityInWei,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
     );
 
-    this.assert.setToken.hasSufficientBalances(setTokenContract, userAddress, quantityInWei);
-    this.assert.setToken.hasSufficientAllowances(
+    await this.assert.setToken.hasSufficientBalances(setTokenContract, userAddress, quantityInWei);
+    await this.assert.setToken.hasSufficientAllowances(
       setTokenContract,
       userAddress,
       this.transferProxyAddress,
@@ -235,7 +235,7 @@ export class CoreAPI {
     );
 
     const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
-    this.assert.core.isMultipleOfNaturalUnit(
+    await this.assert.core.isMultipleOfNaturalUnit(
       setTokenContract,
       quantityInWei,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
@@ -243,7 +243,7 @@ export class CoreAPI {
 
     // SetToken is also a DetailedERC20 token
     const detailedERC20Contract = await DetailedERC20Contract.at(setAddress, this.web3, {});
-    this.assert.erc20.hasSufficientBalance(
+    await this.assert.erc20.hasSufficientBalance(
       detailedERC20Contract,
       userAddress,
       quantityInWei,

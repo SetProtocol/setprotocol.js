@@ -45,6 +45,7 @@ import {
   CoreContract,
   DetailedERC20Contract,
   SetTokenFactoryContract,
+  StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
 } from "../../src/contracts";
@@ -89,6 +90,10 @@ transferProxyContract.defaults(txDefaults);
 const vaultContract = contract(Vault);
 vaultContract.setProvider(provider);
 vaultContract.defaults(txDefaults);
+
+const standardTokenMockContract = contract(StandardTokenMock);
+standardTokenMockContract.setProvider(provider);
+standardTokenMockContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
 
@@ -266,8 +271,7 @@ describe("Core API", () => {
           );
           componentAddresses.push(standardTokenMockInstance.address);
 
-          console.log(standardTokenMockInstance.address);
-          const tokenWrapper = await DetailedERC20Contract.at(
+          const tokenWrapper = await StandardTokenMockContract.at(
             standardTokenMockInstance.address,
             web3,
             txDefaults,
@@ -297,7 +301,6 @@ describe("Core API", () => {
     test("issues a new set with valid parameters", async () => {
       const txHash = await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      console.log(formattedLogs);
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal("IssuanceComponentDeposited");
     });
   });
