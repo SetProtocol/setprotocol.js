@@ -36,16 +36,36 @@ import { CoreContract, DetailedERC20Contract, SetTokenContract } from "../contra
  */
 export class CoreAPI {
   private web3: Web3;
-  private coreAddress: string;
+  private coreAddress: Address;
+  private transferProxyAddress: Address;
+  private vaultAddress: Address;
   private assert: Assertions;
   private contracts: ContractsAPI;
 
-  public constructor(web3: Web3, coreAddress: string) {
+  public constructor(
+    web3: Web3,
+    coreAddress: Address,
+    transferProxyAddress: Address = undefined,
+    vaultAddress: Address = undefined,
+  ) {
     this.web3 = web3;
-    this.assert = new Assertions(this.web3);
-    this.assert.schema.isValidAddress("coreAddress", coreAddress);
-    this.coreAddress = coreAddress;
     this.contracts = new ContractsAPI(this.web3);
+    this.assert = new Assertions(this.web3);
+
+    if (coreAddress) {
+      this.assert.schema.isValidAddress("coreAddress", coreAddress);
+      this.coreAddress = coreAddress;
+    }
+
+    if (transferProxyAddress) {
+      this.assert.schema.isValidAddress("transferProxyAddress", transferProxyAddress);
+      this.transferProxyAddress = transferProxyAddress;
+    }
+
+    if (vaultAddress) {
+      this.assert.schema.isValidAddress("vaultAddress", vaultAddress);
+      this.vaultAddress = vaultAddress;
+    }
   }
 
   /**
@@ -127,16 +147,6 @@ export class CoreAPI {
       txOpts,
     );
 
-    // const setAddress = await coreInstance.create.callAsync(
-    //   factoryAddress,
-    //   components,
-    //   units,
-    //   naturalUnit,
-    //   name,
-    //   symbol,
-    //   txSettings,
-    // );
-    // console.log(setAddress);
     const txHash = await coreInstance.create.sendTransactionAsync(
       factoryAddress,
       components,
@@ -180,7 +190,12 @@ export class CoreAPI {
     );
 
     this.assert.setToken.hasSufficientBalances(setTokenContract, userAddress, quantityInWei);
-    this.assert.setToken.hasSufficientAllowances(setTokenContract, userAddress, quantityInWei);
+    this.assert.setToken.hasSufficientAllowances(
+      setTokenContract,
+      userAddress,
+      this.transferProxyAddress,
+      quantityInWei,
+    );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -233,13 +248,6 @@ export class CoreAPI {
       userAddress,
       quantityInWei,
       erc20AssertionErrors.INSUFFICIENT_BALANCE(),
-    );
-    this.assert.erc20.hasSufficientAllowance(
-      detailedERC20Contract,
-      userAddress,
-      setTokenContract.address,
-      quantityInWei,
-      erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);

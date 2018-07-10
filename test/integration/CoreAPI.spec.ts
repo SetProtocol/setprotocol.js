@@ -113,8 +113,8 @@ describe("Core API", () => {
 
   test("CoreAPI can be instantiated", async () => {
     // deploy Core
-    const coreContractInstance = await coreContract.new();
-    expect(new CoreAPI(web3, coreContractInstance.address));
+    const coreInstance = await coreContract.new();
+    expect(new CoreAPI(web3, coreInstance.address));
   });
 
   describe("create", async () => {
@@ -125,9 +125,9 @@ describe("Core API", () => {
 
     beforeEach(async () => {
       // Deploy Core
-      const coreContractInstance = await coreContract.new();
-      const coreWrapper = await CoreContract.at(coreContractInstance.address, web3, txDefaults);
-      coreAPI = new CoreAPI(web3, coreContractInstance.address);
+      const coreInstance = await coreContract.new();
+      const coreWrapper = await CoreContract.at(coreInstance.address, web3, txDefaults);
+      coreAPI = new CoreAPI(web3, coreInstance.address);
       // Deploy SetTokenFactory
       setTokenFactoryInstance = await setTokenFactoryContract.new();
       const setTokenFactoryWrapper = await SetTokenFactoryContract.at(
@@ -137,7 +137,13 @@ describe("Core API", () => {
       );
       // Authorize Core
       await setTokenFactoryWrapper.addAuthorizedAddress.sendTransactionAsync(
-        coreContractInstance.address,
+        coreInstance.address,
+        txDefaults,
+      );
+
+      // Set Core Address
+      await setTokenFactoryWrapper.setCoreAddress.sendTransactionAsync(
+        coreInstance.address,
         txDefaults,
       );
 
@@ -190,9 +196,9 @@ describe("Core API", () => {
 
     beforeEach(async () => {
       // Deploy Core
-      const coreContractInstance = await coreContract.new();
-      const coreWrapper = await CoreContract.at(coreContractInstance.address, web3, txDefaults);
-      coreAPI = new CoreAPI(web3, coreContractInstance.address);
+      const coreInstance = await coreContract.new();
+      const coreWrapper = await CoreContract.at(coreInstance.address, web3, txDefaults);
+
       // Deploy SetTokenFactory
       setTokenFactoryInstance = await setTokenFactoryContract.new();
       const setTokenFactoryWrapper = await SetTokenFactoryContract.at(
@@ -211,17 +217,32 @@ describe("Core API", () => {
       const vaultInstance = await vaultContract.new();
       const vaultWrapper = await VaultContract.at(vaultInstance.address, web3, txDefaults);
 
+      coreAPI = new CoreAPI(web3, coreInstance.address, transferProxyInstance.address);
+
       // Authorize Core
       await setTokenFactoryWrapper.addAuthorizedAddress.sendTransactionAsync(
-        coreContractInstance.address,
+        coreInstance.address,
         txDefaults,
       );
       await transferProxyWrapper.addAuthorizedAddress.sendTransactionAsync(
-        coreContractInstance.address,
+        coreInstance.address,
         txDefaults,
       );
       await vaultWrapper.addAuthorizedAddress.sendTransactionAsync(
-        vaultInstance.address,
+        coreInstance.address,
+        txDefaults,
+      );
+
+      // Set Vault and TransferProxy
+      await coreWrapper.setVaultAddress.sendTransactionAsync(vaultInstance.address, txDefaults);
+      await coreWrapper.setTransferProxyAddress.sendTransactionAsync(
+        transferProxyInstance.address,
+        txDefaults,
+      );
+
+      // Set Core Address
+      await setTokenFactoryWrapper.setCoreAddress.sendTransactionAsync(
+        coreInstance.address,
         txDefaults,
       );
 
@@ -244,6 +265,8 @@ describe("Core API", () => {
             component.decimals,
           );
           componentAddresses.push(standardTokenMockInstance.address);
+
+          console.log(standardTokenMockInstance.address);
           const tokenWrapper = await DetailedERC20Contract.at(
             standardTokenMockInstance.address,
             web3,
@@ -272,10 +295,10 @@ describe("Core API", () => {
     });
 
     test("issues a new set with valid parameters", async () => {
-      const txHash = await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(300));
+      const txHash = await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       console.log(formattedLogs);
-      expect(true);
+      expect(formattedLogs[formattedLogs.length - 1].event).to.equal("IssuanceComponentDeposited");
     });
   });
 

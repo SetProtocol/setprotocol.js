@@ -19,6 +19,7 @@
 import * as Web3 from "web3";
 
 import { CoreAPI } from "./api";
+import { Address } from "types/common";
 
 /**
  * @title SetProtocol
@@ -37,8 +38,13 @@ export default class SetProtocol {
    * @param web3 The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
    *             the Ethereum network.
    */
-  constructor(web3: Web3 = undefined, coreAddress: string = undefined) {
+  constructor(
+    web3: Web3 = undefined,
+    coreAddress: Address = undefined,
+    transferProxyAddress: Address = undefined,
+    vaultAddress: Address = undefined,
+  ) {
     this.web3 = web3;
-    this.setCore = new CoreAPI(this.web3, coreAddress);
+    this.setCore = new CoreAPI(this.web3, coreAddress, transferProxyAddress, vaultAddress);
   }
 }

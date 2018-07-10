@@ -69,7 +69,7 @@ export class SetTokenAssertions {
     ownerAddress: Address,
     quantityInWei: BigNumber,
   ): Promise<void> {
-    const components = await setTokenInstance.getComponents.callAsync();
+    const components: Address[] = await setTokenInstance.getComponents.callAsync();
     const units = await setTokenInstance.getUnits.callAsync();
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
 
@@ -106,6 +106,7 @@ export class SetTokenAssertions {
   public async hasSufficientAllowances(
     setTokenInstance: SetTokenContract,
     ownerAddress: Address,
+    spenderAddress: Address,
     quantityInWei: BigNumber,
   ): Promise<void> {
     const components = await setTokenInstance.getComponents.callAsync();
@@ -126,7 +127,7 @@ export class SetTokenAssertions {
         return erc20Assertions.hasSufficientAllowance(
           componentInstance,
           ownerAddress,
-          setTokenInstance.address,
+          spenderAddress,
           requiredBalance,
           `User does not have enough allowance of token at address ${componentInstance.address}`,
         );
