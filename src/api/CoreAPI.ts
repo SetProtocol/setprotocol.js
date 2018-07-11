@@ -52,10 +52,8 @@ export class CoreAPI {
     this.contracts = new ContractsAPI(this.web3);
     this.assert = new Assertions(this.web3);
 
-    if (coreAddress) {
-      this.assert.schema.isValidAddress("coreAddress", coreAddress);
-      this.coreAddress = coreAddress;
-    }
+    this.assert.schema.isValidAddress("coreAddress", coreAddress);
+    this.coreAddress = coreAddress;
 
     if (transferProxyAddress) {
       this.assert.schema.isValidAddress("transferProxyAddress", transferProxyAddress);
