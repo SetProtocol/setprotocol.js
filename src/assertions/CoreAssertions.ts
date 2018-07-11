@@ -18,7 +18,7 @@
 
 import { coreAssertionErrors } from "../errors";
 import { BigNumber } from "../util";
-import { CoreContract } from "../contracts/CoreContract";
+import { CoreContract, SetTokenContract } from "../contracts";
 
 export class CoreAssertions {
   /**

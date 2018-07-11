@@ -42,8 +42,18 @@ export interface TxDataPayable extends TxData {
   value?: BigNumber;
 }
 
-export interface ReceiptLog {
-  name: string;
-  events: Object[];
-  address: string;
+export interface Log {
+  event: string;
+  address: Address;
+  args: any;
+}
+
+export interface CreateLogArgs {
+  _setTokenAddress: Address;
+  _factoryAddress: Address;
+  _components: Address[];
+  _units: BigNumber[];
+  _naturalUnit: BigNumber;
+  _name: string;
+  _symbol: string;
 }

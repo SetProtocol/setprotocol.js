@@ -24,7 +24,7 @@ jest.unmock("set-protocol-contracts");
 import * as chai from "chai";
 import * as Web3 from "web3";
 
-import { Core } from "set-protocol-contracts";
+import { Core, TransferProxy, Vault } from "set-protocol-contracts";
 
 import { ACCOUNTS } from "./accounts";
 import SetProtocol from "../src";
@@ -49,6 +49,14 @@ const coreContract = contract(Core);
 coreContract.setProvider(provider);
 coreContract.defaults(txDefaults);
 
+const transferProxyContract = contract(TransferProxy);
+transferProxyContract.setProvider(provider);
+transferProxyContract.defaults(txDefaults);
+
+const vaultContract = contract(Vault);
+vaultContract.setProvider(provider);
+vaultContract.defaults(txDefaults);
+
 let currentSnapshotId: number;
 
 describe("SetProtocol", async () => {
@@ -63,8 +71,15 @@ describe("SetProtocol", async () => {
   test("should instantiate a new setProtocolInstance", async () => {
     // Deploy Core
     const coreContractInstance = await coreContract.new();
+    const transferProxyInstance = await transferProxyContract.new();
+    const vaultInstance = await vaultContract.new();
 
-    const setProtocolInstance = new SetProtocol(web3, coreContractInstance.address);
+    const setProtocolInstance = new SetProtocol(
+      web3,
+      coreContractInstance.address,
+      transferProxyInstance.address,
+      vaultInstance.address,
+    );
     expect(setProtocolInstance instanceof SetProtocol);
   });
 });

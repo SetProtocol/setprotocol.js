@@ -17,9 +17,10 @@
 "use strict";
 
 import { NULL_ADDRESS } from "../constants";
+import { Address } from "../types/common";
 
 export class AccountAssertions {
-  public notNull(account: string, errorMessage: string) {
+  public notNull(account: Address, errorMessage: string) {
     if (account === NULL_ADDRESS) {
       throw new Error(errorMessage);
     }

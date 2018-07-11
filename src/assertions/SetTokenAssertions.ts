@@ -17,12 +17,14 @@
 "use strict";
 
 import * as _ from "lodash";
+import * as Web3 from "web3";
 
 import { ERC20Assertions } from "./ERC20Assertions";
 import { DetailedERC20Contract, SetTokenContract } from "../contracts";
 import { setTokenAssertionsErrors } from "../errors";
 import { Address } from "../types/common";
 import { BigNumber } from "../util";
+import { ZERO } from "../constants";
 
 const erc20Assertions = new ERC20Assertions();
 
@@ -68,22 +70,24 @@ export class SetTokenAssertions {
     ownerAddress: Address,
     quantityInWei: BigNumber,
   ): Promise<void> {
-    const components = await setTokenInstance.getComponents.callAsync();
+    const components: Address[] = await setTokenInstance.getComponents.callAsync();
     const units = await setTokenInstance.getUnits.callAsync();
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
 
     // Create component ERC20 token instances
-    const componentInstancePromises = _.map(components, component =>
-      DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
+    const componentInstancePromises = _.map(
+      components,
+      async component =>
+        await DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 
     // Assert that user has sufficient balance for each component token
     const userHasSufficientBalancePromises = _.map(
       componentInstances,
-      (componentInstance, index) => {
+      async (componentInstance, index) => {
         const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
-        return erc20Assertions.hasSufficientBalance(
+        await erc20Assertions.hasSufficientBalance(
           componentInstance,
           ownerAddress,
           requiredBalance,
@@ -105,6 +109,7 @@ export class SetTokenAssertions {
   public async hasSufficientAllowances(
     setTokenInstance: SetTokenContract,
     ownerAddress: Address,
+    spenderAddress: Address,
     quantityInWei: BigNumber,
   ): Promise<void> {
     const components = await setTokenInstance.getComponents.callAsync();
@@ -112,25 +117,38 @@ export class SetTokenAssertions {
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
 
     // Create component ERC20 token instances
-    const componentInstancePromises = _.map(components, component =>
-      DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
+    const componentInstancePromises = _.map(
+      components,
+      async component =>
+        await DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 
     // Assert that user has sufficient allowances for each component token
     const userHasSufficientAllowancePromises = _.map(
       componentInstances,
-      (componentInstance, index) => {
+      async (componentInstance, index) => {
         const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
-        return erc20Assertions.hasSufficientAllowance(
+        return await erc20Assertions.hasSufficientAllowance(
           componentInstance,
           ownerAddress,
-          setTokenInstance.address,
+          spenderAddress,
           requiredBalance,
           `User does not have enough allowance of token at address ${componentInstance.address}`,
         );
       },
     );
     await Promise.all(userHasSufficientAllowancePromises);
+  }
+
+  public async isMultipleOfNaturalUnit(
+    setTokenInstance: SetTokenContract,
+    quantityInWei: BigNumber,
+    errorMessage: string,
+  ): Promise<void> {
+    const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
+    if (!quantityInWei.mod(naturalUnit).eq(ZERO)) {
+      throw new Error(errorMessage);
+    }
   }
 }

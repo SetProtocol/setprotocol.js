@@ -26,6 +26,7 @@ import { CoreAssertions } from "./CoreAssertions";
 import { ERC20Assertions } from "./ERC20Assertions";
 import { SchemaAssertions } from "./SchemaAssertions";
 import { SetTokenAssertions } from "./SetTokenAssertions";
+import { VaultAssertions } from "./VaultAssertions";
 
 export class Assertions {
   public account: AccountAssertions;
@@ -42,5 +43,6 @@ export class Assertions {
     this.erc20 = new ERC20Assertions();
     this.schema = new SchemaAssertions();
     this.setToken = new SetTokenAssertions(web3);
+    this.vault = new VaultAssertions(web3);
   }
 }

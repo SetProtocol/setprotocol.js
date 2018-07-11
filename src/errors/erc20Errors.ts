@@ -19,4 +19,6 @@
 export const erc20AssertionErrors = {
   MISSING_ERC20_METHOD: (address: string) =>
     `Contract at ${address} does not implement ERC20 interface.`,
+  INSUFFICIENT_BALANCE: () => "User does not have enough balance.",
+  INSUFFICIENT_ALLOWANCE: () => "User not approved for enough allowance.",
 };

@@ -21,11 +21,11 @@ import * as _ from "lodash";
 
 import { ContractsAPI } from ".";
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from "../constants";
-import { coreAPIErrors } from "../errors";
+import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from "../errors";
 import { Assertions } from "../assertions";
 import { Address, Component, Token, TransactionOpts, UInt } from "../types/common";
 import { BigNumber, estimateIssueRedeemGasCost } from "../util";
-import { CoreContract, DetailedERC20Contract } from "../contracts";
+import { CoreContract, DetailedERC20Contract, SetTokenContract, VaultContract } from "../contracts";
 
 /**
  * @title CoreAPI
@@ -36,15 +36,34 @@ import { CoreContract, DetailedERC20Contract } from "../contracts";
  */
 export class CoreAPI {
   private web3: Web3;
-  private coreAddress: string;
+  private coreAddress: Address;
+  private transferProxyAddress: Address;
+  private vaultAddress: Address;
   private assert: Assertions;
   private contracts: ContractsAPI;
 
-  public constructor(web3: Web3, coreAddress: string) {
+  public constructor(
+    web3: Web3,
+    coreAddress: Address,
+    transferProxyAddress: Address = undefined,
+    vaultAddress: Address = undefined,
+  ) {
     this.web3 = web3;
-    this.coreAddress = coreAddress;
-    this.assert = new Assertions(this.web3);
     this.contracts = new ContractsAPI(this.web3);
+    this.assert = new Assertions(this.web3);
+
+    this.assert.schema.isValidAddress("coreAddress", coreAddress);
+    this.coreAddress = coreAddress;
+
+    if (transferProxyAddress) {
+      this.assert.schema.isValidAddress("transferProxyAddress", transferProxyAddress);
+      this.transferProxyAddress = transferProxyAddress;
+    }
+
+    if (vaultAddress) {
+      this.assert.schema.isValidAddress("vaultAddress", vaultAddress);
+      this.vaultAddress = vaultAddress;
+    }
   }
 
   /**
@@ -61,9 +80,9 @@ export class CoreAPI {
    * @return                a transaction hash to then later look up for the Set address
    */
   public async create(
-    userAddress: string,
-    factoryAddress: string,
-    components: string[],
+    userAddress: Address,
+    factoryAddress: Address,
+    components: Address[],
     units: BigNumber[],
     naturalUnit: BigNumber,
     name: string,
@@ -72,7 +91,6 @@ export class CoreAPI {
   ): Promise<string> {
     this.assert.schema.isValidAddress("factoryAddress", factoryAddress);
     this.assert.schema.isValidAddress("userAddress", userAddress);
-    this.assert.schema.isValidAddress("coreAddress", this.coreAddress);
     this.assert.common.isEqualLength(
       components,
       units,
@@ -80,7 +98,7 @@ export class CoreAPI {
     );
     this.assert.common.greaterThanZero(
       naturalUnit,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(naturalUnit),
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(naturalUnit),
     );
     this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY("name"));
     this.assert.common.isValidString(symbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY("symbol"));
@@ -117,7 +135,7 @@ export class CoreAPI {
     );
 
     _.each(units, unit => {
-      this.assert.common.greaterThanZero(unit, coreAPIErrors.QUANTITY_NEEDS_TO_BE_NON_ZERO(unit));
+      this.assert.common.greaterThanZero(unit, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(unit));
     });
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
@@ -126,6 +144,7 @@ export class CoreAPI {
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
     );
+
     const txHash = await coreInstance.create.sendTransactionAsync(
       factoryAddress,
       components,
@@ -133,6 +152,119 @@ export class CoreAPI {
       naturalUnit,
       name,
       symbol,
+      txSettings,
+    );
+
+    return txHash;
+  }
+
+  /**
+   * Asynchronously issues a particular quantity of tokens from a particular Sets
+   *
+   * @param  userAddress    Address of the user
+   * @param  setAddress     Set token address of Set being issued
+   * @param  quantityInWei  Number of Sets a user wants to issue in Wei
+   * @param  txOpts         The options for executing the transaction
+   * @return                a transaction hash to then later look up for the Set address
+   */
+  public async issue(
+    userAddress: Address,
+    setAddress: Address,
+    quantityInWei: BigNumber,
+    txOpts?: TransactionOpts,
+  ): Promise<string> {
+    this.assert.schema.isValidAddress("setAddress", setAddress);
+    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.common.greaterThanZero(
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
+    );
+
+    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
+    await this.assert.setToken.isMultipleOfNaturalUnit(
+      setTokenContract,
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
+    );
+
+    await this.assert.setToken.hasSufficientBalances(setTokenContract, userAddress, quantityInWei);
+    await this.assert.setToken.hasSufficientAllowances(
+      setTokenContract,
+      userAddress,
+      this.transferProxyAddress,
+      quantityInWei,
+    );
+
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+
+    const txSettings = Object.assign(
+      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
+    const txHash = await coreInstance.issue.sendTransactionAsync(
+      setAddress,
+      quantityInWei,
+      txSettings,
+    );
+
+    return txHash;
+  }
+
+  /**
+   * Asynchronously redeems a particular quantity of tokens from a particular Sets
+   *
+   * @param  userAddress    Address of the user
+   * @param  setAddress     Set token address of Set being issued
+   * @param  quantityInWei  Number of Sets a user wants to redeem in Wei
+   * @param  txOpts         The options for executing the transaction
+   * @return                a transaction hash to then later look up for the Set address
+   */
+  public async redeem(
+    userAddress: Address,
+    setAddress: Address,
+    quantityInWei: BigNumber,
+    txOpts?: TransactionOpts,
+  ): Promise<string> {
+    this.assert.schema.isValidAddress("setAddress", setAddress);
+    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.common.greaterThanZero(
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
+    );
+
+    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
+    await this.assert.setToken.isMultipleOfNaturalUnit(
+      setTokenContract,
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
+    );
+
+    // SetToken is also a DetailedERC20 token.
+    // Check balances of token in token balance as well as Vault balance (should be same)
+    const detailedERC20Contract = await DetailedERC20Contract.at(setAddress, this.web3, {});
+    await this.assert.erc20.hasSufficientBalance(
+      detailedERC20Contract,
+      userAddress,
+      quantityInWei,
+      erc20AssertionErrors.INSUFFICIENT_BALANCE(),
+    );
+    const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
+    await this.assert.vault.hasSufficientBalances(
+      vaultContract,
+      setTokenContract,
+      quantityInWei,
+      vaultAssertionErrors.INSUFFICIENT_BALANCE(),
+    );
+
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+
+    const txSettings = Object.assign(
+      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
+    const txHash = await coreInstance.redeem.sendTransactionAsync(
+      setAddress,
+      quantityInWei,
       txSettings,
     );
 

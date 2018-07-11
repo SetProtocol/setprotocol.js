@@ -21,6 +21,18 @@ import { CoreContract } from "./CoreContract";
 import { DetailedERC20Contract } from "./DetailedERC20Contract";
 import { SetTokenContract } from "./SetTokenContract";
 import { SetTokenFactoryContract } from "./SetTokenFactoryContract";
+import { StandardTokenMockContract } from "./StandardTokenMockContract";
+import { TransferProxyContract } from "./TransferProxyContract";
+import { VaultContract } from "./VaultContract";
 
 export type ContractWrapper = BaseContract;
-export { BaseContract, CoreContract, DetailedERC20Contract, SetTokenContract, SetTokenFactoryContract };
+export {
+  BaseContract,
+  CoreContract,
+  DetailedERC20Contract,
+  SetTokenContract,
+  SetTokenFactoryContract,
+  StandardTokenMockContract,
+  TransferProxyContract,
+  VaultContract,
+};
