@@ -38,8 +38,7 @@ import {
 
 import { ACCOUNTS } from "../accounts";
 import { testSets, TestSet } from "../testSets";
-import { getFormattedLogsFromTxHash } from "../logs";
-import { extractNewSetTokenAddressFromLogs } from "../contract_logs/core";
+import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from "../logs";
 import { CoreAPI } from "../../src/api";
 import {
   CoreContract,
