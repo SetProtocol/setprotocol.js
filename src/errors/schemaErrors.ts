@@ -25,7 +25,7 @@ export const schemaAssertionsError = {
     value: any,
     validationResult: ValidatorResult,
   ) => `
-        Expected ${variableName} to conform to schema ${schemaId}
+        Expected ${variableName} to conform to schema ${schemaId}.
 
         Encountered: ${JSON.stringify(value, undefined, "\t")}
 

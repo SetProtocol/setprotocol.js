@@ -17,5 +17,5 @@
 "use strict";
 
 export const vaultAssertionErrors = {
-  INSUFFICIENT_BALANCE: () => "User does not have enough balance in vault",
+  INSUFFICIENT_BALANCE: () => "User does not have enough balance in vault.",
 };
