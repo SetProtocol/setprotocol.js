@@ -335,7 +335,12 @@ describe("Core API", () => {
       const vaultInstance = await vaultContract.new();
       const vaultWrapper = await VaultContract.at(vaultInstance.address, web3, txDefaults);
 
-      coreAPI = new CoreAPI(web3, coreInstance.address, transferProxyInstance.address);
+      coreAPI = new CoreAPI(
+        web3,
+        coreInstance.address,
+        transferProxyInstance.address,
+        vaultInstance.address,
+      );
 
       // Authorize Core
       await setTokenFactoryWrapper.addAuthorizedAddress.sendTransactionAsync(
