@@ -16,13 +16,6 @@
 
 "use strict";
 
-import { NULL_ADDRESS } from "../constants";
-import { Address } from "../types/common";
-
-export class AccountAssertions {
-  public notNull(account: Address, errorMessage: string) {
-    if (account === NULL_ADDRESS) {
-      throw new Error(errorMessage);
-    }
-  }
-}
+export const vaultAssertionErrors = {
+  INSUFFICIENT_BALANCE: () => "User does not have enough balance in vault",
+};

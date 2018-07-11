@@ -139,4 +139,15 @@ export class SetTokenAssertions {
     );
     await Promise.all(userHasSufficientAllowancePromises);
   }
+
+  public async isMultipleOfNaturalUnit(
+    setTokenInstance: SetTokenContract,
+    quantityInWei: BigNumber,
+    errorMessage: string,
+  ): Promise<void> {
+    const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
+    if (!quantityInWei.mod(naturalUnit).eq(ZERO)) {
+      throw new Error(errorMessage);
+    }
+  }
 }

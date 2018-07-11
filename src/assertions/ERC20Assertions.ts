@@ -19,6 +19,7 @@
 import { erc20AssertionErrors } from "../errors";
 import { BigNumber } from "../util";
 import { DetailedERC20Contract as ERC20 } from "../contracts/DetailedERC20Contract";
+import { Address } from "../types/common";
 
 export class ERC20Assertions {
   // Throws if the given candidateContract does not respond to some methods from the ERC20 interface.
@@ -36,7 +37,7 @@ export class ERC20Assertions {
 
   public async hasSufficientBalance(
     token: ERC20,
-    payer: string,
+    payer: Address,
     balanceRequired: BigNumber,
     errorMessage: string,
   ): Promise<void> {

@@ -45,15 +45,4 @@ export class CoreAssertions {
       throw new Error(errorMessage);
     }
   }
-
-  public async isMultipleOfNaturalUnit(
-    setTokenContract: SetTokenContract,
-    quantityInWei: BigNumber,
-    errorMessage: string,
-  ): Promise<void> {
-    const naturalUnit = await setTokenContract.naturalUnit.callAsync();
-    if (!quantityInWei.mod(naturalUnit).eq(ZERO)) {
-      throw new Error(errorMessage);
-    }
-  }
 }

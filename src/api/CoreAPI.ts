@@ -21,7 +21,7 @@ import * as _ from "lodash";
 
 import { ContractsAPI } from ".";
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from "../constants";
-import { coreAPIErrors, erc20AssertionErrors } from "../errors";
+import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from "../errors";
 import { Assertions } from "../assertions";
 import { Address, Component, Token, TransactionOpts, UInt } from "../types/common";
 import { BigNumber, estimateIssueRedeemGasCost } from "../util";
@@ -183,7 +183,7 @@ export class CoreAPI {
     );
 
     const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
-    await this.assert.core.isMultipleOfNaturalUnit(
+    await this.assert.setToken.isMultipleOfNaturalUnit(
       setTokenContract,
       quantityInWei,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
@@ -235,19 +235,28 @@ export class CoreAPI {
     );
 
     const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
-    await this.assert.core.isMultipleOfNaturalUnit(
+    await this.assert.setToken.isMultipleOfNaturalUnit(
       setTokenContract,
       quantityInWei,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
     );
 
-    // SetToken is also a DetailedERC20 token
+    // SetToken is also a DetailedERC20 token.
+    // Check balances of token in token balance as well as Vault balance (should be same)
     const detailedERC20Contract = await DetailedERC20Contract.at(setAddress, this.web3, {});
     await this.assert.erc20.hasSufficientBalance(
       detailedERC20Contract,
       userAddress,
       quantityInWei,
       erc20AssertionErrors.INSUFFICIENT_BALANCE(),
+    );
+    const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
+    await this.assert.vault.hasSufficientBalance(
+      vaultContract,
+      userAddress,
+      setAddress,
+      quantityInWei,
+      vaultAssertionErrors.INSUFFICIENT_BALANCE(),
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);

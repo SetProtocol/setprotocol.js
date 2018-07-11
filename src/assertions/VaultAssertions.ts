@@ -16,12 +16,21 @@
 
 "use strict";
 
-import { NULL_ADDRESS } from "../constants";
+import { BigNumber } from "../util";
+import { VaultContract } from "../contracts/VaultContract";
 import { Address } from "../types/common";
 
-export class AccountAssertions {
-  public notNull(account: Address, errorMessage: string) {
-    if (account === NULL_ADDRESS) {
+export class VaultAssertions {
+  public async hasSufficientBalance(
+    vault: VaultContract,
+    owner: Address,
+    tokenAddress: Address,
+    balanceRequired: BigNumber,
+    errorMessage: string,
+  ): Promise<void> {
+    const ownerBalance = await vault.getOwnerBalance.callAsync(owner, tokenAddress);
+
+    if (ownerBalance.lt(balanceRequired)) {
       throw new Error(errorMessage);
     }
   }
