@@ -16,22 +16,62 @@
 
 "use strict";
 
+import * as _ from "lodash";
+import * as Web3 from "web3";
+
 import { BigNumber } from "../util";
-import { VaultContract } from "../contracts/VaultContract";
+import { VaultContract, SetTokenContract, DetailedERC20Contract } from "../contracts";
 import { Address } from "../types/common";
 
 export class VaultAssertions {
-  public async hasSufficientBalance(
-    vault: VaultContract,
-    owner: Address,
-    tokenAddress: Address,
-    balanceRequired: BigNumber,
+  private web3: Web3;
+
+  constructor(web3: Web3) {
+    this.web3 = web3;
+  }
+
+  /**
+   * Throws if the Set doesn't have a sufficient balance for its tokens in the Vault
+   *
+   * @param  vaultInstance    An instance of the Vault contract
+   * @param  setTokenInstance An instance of the Set token contract
+   * @param  quantityInWei    Amount of a Set in wei
+   * @return                  Void Promise
+   */
+  public async hasSufficientBalances(
+    vaultInstance: VaultContract,
+    setTokenInstance: SetTokenContract,
+    quantityInWei: BigNumber,
     errorMessage: string,
   ): Promise<void> {
-    const ownerBalance = await vault.getOwnerBalance.callAsync(owner, tokenAddress);
+    const components: Address[] = await setTokenInstance.getComponents.callAsync();
+    const units = await setTokenInstance.getUnits.callAsync();
+    const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
 
-    if (ownerBalance.lt(balanceRequired)) {
-      throw new Error(errorMessage);
-    }
+    const setTokenAddress = setTokenInstance.address;
+
+    // Create component ERC20 token instances
+    const componentInstancePromises = _.map(
+      components,
+      async component =>
+        await DetailedERC20Contract.at(component, this.web3, { from: setTokenAddress }),
+    );
+    const componentInstances = await Promise.all(componentInstancePromises);
+
+    // Assert that user has sufficient balance for each component token
+    const setHasSufficientBalancePromises = _.map(
+      componentInstances,
+      async (componentInstance, index) => {
+        const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
+        const ownerBalance = await vaultInstance.getOwnerBalance.callAsync(
+          setTokenAddress,
+          components[index],
+        );
+        if (ownerBalance.lt(requiredBalance)) {
+          throw new Error(errorMessage);
+        }
+      },
+    );
+    await Promise.all(setHasSufficientBalancePromises);
   }
 }

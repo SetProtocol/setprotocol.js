@@ -249,10 +249,9 @@ export class CoreAPI {
       erc20AssertionErrors.INSUFFICIENT_BALANCE(),
     );
     const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
-    await this.assert.vault.hasSufficientBalance(
+    await this.assert.vault.hasSufficientBalances(
       vaultContract,
-      userAddress,
-      setAddress,
+      setTokenContract,
       quantityInWei,
       vaultAssertionErrors.INSUFFICIENT_BALANCE(),
     );

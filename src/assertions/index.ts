@@ -43,6 +43,6 @@ export class Assertions {
     this.erc20 = new ERC20Assertions();
     this.schema = new SchemaAssertions();
     this.setToken = new SetTokenAssertions(web3);
-    this.vault = new VaultAssertions();
+    this.vault = new VaultAssertions(web3);
   }
 }
