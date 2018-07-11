@@ -2,7 +2,7 @@ import * as ABIDecoder from "abi-decoder";
 import * as _ from "lodash";
 import * as Web3 from "web3";
 import { BigNumber } from "bignumber.js";
-import { Log } from "../src/types/common";
+import { Log, Address, CreateLogArgs } from "../src/types/common";
 
 export async function getFormattedLogsFromTxHash(web3: Web3, txHash: string): Promise<Log[]> {
   const receipt = await web3.eth.getTransactionReceipt(txHash);
@@ -65,4 +65,10 @@ export function formatLogEntry(logs: ABIDecoder.DecodedLog): Log {
     address,
     args,
   };
+}
+
+export function extractNewSetTokenAddressFromLogs(logs: Log[]): Address {
+  const createLog = logs[logs.length - 1];
+  const args: CreateLogArgs = createLog.args;
+  return args._setTokenAddress;
 }
