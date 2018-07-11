@@ -24,6 +24,7 @@ import { DetailedERC20Contract, SetTokenContract } from "../contracts";
 import { setTokenAssertionsErrors } from "../errors";
 import { Address } from "../types/common";
 import { BigNumber } from "../util";
+import { ZERO } from "../constants";
 
 const erc20Assertions = new ERC20Assertions();
 
