@@ -28,6 +28,8 @@ import * as ABIDecoder from "abi-decoder";
 import * as _ from "lodash";
 import compact = require("lodash.compact");
 
+import { Core } from "set-protocol-contracts";
+
 import { ACCOUNTS } from "../accounts";
 import { testSets, TestSet } from "../testSets";
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from "../logs";
@@ -42,6 +44,8 @@ import {
   deployTokensForSetWithApproval,
 } from "../helpers/coreHelpers";
 
+const contract = require("truffle-contract");
+
 const { expect } = chai;
 
 const provider = new Web3.providers.HttpProvider("http://localhost:8545");
@@ -53,6 +57,10 @@ const txDefaults = {
   gasPrice: DEFAULT_GAS_PRICE,
   gas: DEFAULT_GAS_LIMIT,
 };
+
+const coreContract = contract(Core);
+coreContract.setProvider(provider);
+coreContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
 
@@ -80,14 +88,20 @@ describe("Core API", () => {
   });
 
   describe("create", async () => {
-    beforeEach(async () => {
-      const coreAPI = await initializeCoreAPI(provider);
-      const setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+    let coreAPI: CoreAPI;
+    let setTokenFactoryAddress: Address;
+    let setToCreate: TestSet;
+    let componentAddresses: Address[];
 
-      const setToCreate: TestSet = testSets[0];
-      const componentAddresses: Address[] = await deployTokensForSetWithApproval(
+    beforeEach(async () => {
+      coreAPI = await initializeCoreAPI(provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+
+      setToCreate = testSets[0];
+      componentAddresses = await deployTokensForSetWithApproval(
         setToCreate,
-        core.provider,
+        coreAPI.transferProxyAddress,
+        provider,
       );
     });
 
@@ -109,12 +123,18 @@ describe("Core API", () => {
   });
 
   describe("issue", async () => {
-    beforeEach(async () => {
-      const coreAPI = await initializeCoreAPI(provider);
-      const setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+    let coreAPI: CoreAPI;
+    let setTokenFactoryAddress: Address;
+    let setToCreate: TestSet;
+    let componentAddresses: Address[];
+    let setTokenAddress: Address;
 
-      const setToCreate: TestSet = testSets[0];
-      const componentAddresses: Address[] = await deployTokensForSetWithApproval(
+    beforeEach(async () => {
+      coreAPI = await initializeCoreAPI(provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+
+      setToCreate = testSets[0];
+      componentAddresses = await deployTokensForSetWithApproval(
         setToCreate,
         coreAPI.transferProxyAddress,
         provider,
@@ -131,7 +151,7 @@ describe("Core API", () => {
         setToCreate.setSymbol,
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      const setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
     });
 
     test("issues a new set with valid parameters", async () => {
@@ -143,17 +163,17 @@ describe("Core API", () => {
 
   describe("redeem", async () => {
     let coreAPI: CoreAPI;
+    let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
-    let componentAddresses: string[];
-    let setTokenFactoryInstance: any;
-    let setTokenAddress: string;
+    let componentAddresses: Address[];
+    let setTokenAddress: Address;
 
     beforeEach(async () => {
-      const coreAPI = await initializeCoreAPI(provider);
-      const setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+      coreAPI = await initializeCoreAPI(provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
 
-      const setToCreate: TestSet = testSets[0];
-      const componentAddresses: Address[] = await deployTokensForSetWithApproval(
+      setToCreate = testSets[0];
+      componentAddresses = await deployTokensForSetWithApproval(
         setToCreate,
         coreAPI.transferProxyAddress,
         provider,
@@ -170,7 +190,7 @@ describe("Core API", () => {
         setToCreate.setSymbol,
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      const setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
 
       // Issue a Set to user
       txHash = await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));

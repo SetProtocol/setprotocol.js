@@ -15,6 +15,14 @@ import {
 import { ACCOUNTS } from "../accounts";
 import { Address, TransactionOpts } from "../../src/types/common";
 import { TestSet } from "../testSets";
+import {
+  CoreContract,
+  SetTokenFactoryContract,
+  StandardTokenMockContract,
+  TransferProxyContract,
+  VaultContract,
+} from "../../src/contracts";
+import { CoreAPI } from "../../src/api";
 
 const contract = require("truffle-contract");
 
@@ -24,7 +32,7 @@ const txDefaults = {
   gas: DEFAULT_GAS_LIMIT,
 };
 
-export const deployCore = async (provider: Web3.Provider) => {
+export const deployCore = async (provider: Web3.Provider.HttpProvider) => {
   const web3 = new Web3(provider);
 
   const coreContract = contract(Core);
@@ -40,6 +48,10 @@ export const deployCore = async (provider: Web3.Provider) => {
 
 export const deploySetTokenFactory = async (coreAddress: Address, provider: Web3.Provider) => {
   const web3 = new Web3(provider);
+
+  const setTokenFactoryContract = contract(SetTokenFactory);
+  setTokenFactoryContract.setProvider(provider);
+  setTokenFactoryContract.defaults(txDefaults);
 
   // Deploy SetTokenFactory
   const setTokenFactoryInstance = await setTokenFactoryContract.new();
@@ -139,7 +151,8 @@ export const deployVault = async (coreAddress: Address, provider: Web3.Provider)
 
 export const initializeCoreAPI = async (provider: Web3.Provider) => {
   const web3 = new Web3(provider);
-  const coreAddress = await deployCore(web3, provider);
+
+  const coreAddress = await deployCore(provider);
   const transferProxyAddress = await deployTransferProxy(coreAddress, provider);
   const vaultAddress = await deployVault(coreAddress, provider);
 
