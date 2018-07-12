@@ -28,14 +28,22 @@ import * as ABIDecoder from "abi-decoder";
 import * as _ from "lodash";
 import compact = require("lodash.compact");
 
-import { Core } from "set-protocol-contracts";
+import { Core, StandardTokenMock, Vault } from "set-protocol-contracts";
 
 import { ACCOUNTS } from "../accounts";
 import { testSets, TestSet } from "../testSets";
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from "../logs";
 import { CoreAPI } from "../../src/api";
-import { DetailedERC20Contract } from "../../src/contracts";
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../../src/constants";
+import {
+  DetailedERC20Contract,
+  StandardTokenMockContract,
+  VaultContract,
+} from "../../src/contracts";
+import {
+  DEFAULT_GAS_PRICE,
+  DEFAULT_GAS_LIMIT,
+  UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+} from "../../src/constants";
 import { Web3Utils } from "../../src/util/Web3Utils";
 import { BigNumber } from "../../src/util";
 import {
@@ -207,74 +215,29 @@ describe("Core API", () => {
 
   describe("deposit", async () => {
     let coreAPI: CoreAPI;
+    let setTokenFactoryAddress: Address;
+    let setToCreate: TestSet;
+    let componentAddresses: Address[];
+
     let tokenAddress: Address;
     let vaultWrapper: VaultContract;
 
     beforeEach(async () => {
-      // Deploy Core
-      const coreInstance = await coreContract.new();
-      const coreWrapper = await CoreContract.at(coreInstance.address, web3, txDefaults);
-
-      // Deploy SetTokenFactory
-      setTokenFactoryInstance = await setTokenFactoryContract.new();
-      const setTokenFactoryWrapper = await SetTokenFactoryContract.at(
-        setTokenFactoryInstance.address,
-        web3,
-        txDefaults,
-      );
-      // Deploy TransferProxy
-      const transferProxyInstance = await transferProxyContract.new();
-      const transferProxyWrapper = await TransferProxyContract.at(
-        transferProxyInstance.address,
-        web3,
-        txDefaults,
-      );
-      // Deploy Vault
-      const vaultInstance = await vaultContract.new();
-      vaultWrapper = await VaultContract.at(vaultInstance.address, web3, txDefaults);
-
-      coreAPI = new CoreAPI(
-        web3,
-        coreInstance.address,
-        transferProxyInstance.address,
-        vaultInstance.address,
-      );
-
-      // Authorize Core
-      await setTokenFactoryWrapper.addAuthorizedAddress.sendTransactionAsync(
-        coreInstance.address,
-        txDefaults,
-      );
-      await transferProxyWrapper.addAuthorizedAddress.sendTransactionAsync(
-        coreInstance.address,
-        txDefaults,
-      );
-      await vaultWrapper.addAuthorizedAddress.sendTransactionAsync(
-        coreInstance.address,
-        txDefaults,
-      );
-
-      // Set Vault and TransferProxy
-      await coreWrapper.setVaultAddress.sendTransactionAsync(vaultInstance.address, txDefaults);
-      await coreWrapper.setTransferProxyAddress.sendTransactionAsync(
-        transferProxyInstance.address,
-        txDefaults,
-      );
-
-      // Set Core Address
-      await setTokenFactoryWrapper.setCoreAddress.sendTransactionAsync(
-        coreInstance.address,
-        txDefaults,
-      );
-
-      // Enable Factory
-      await coreWrapper.enableFactory.sendTransactionAsync(
-        setTokenFactoryInstance.address,
-        txDefaults,
-      );
+      coreAPI = await initializeCoreAPI(provider);
 
       setToCreate = testSets[0];
       const component = setToCreate.components[0];
+
+      const vaultContract = contract(Vault);
+      vaultContract.setProvider(provider);
+      vaultContract.defaults(txDefaults);
+
+      // Deploy Vault
+      vaultWrapper = await VaultContract.at(coreAPI.vaultAddress, web3, txDefaults);
+
+      const standardTokenMockContract = contract(StandardTokenMock);
+      standardTokenMockContract.setProvider(provider);
+      standardTokenMockContract.defaults(txDefaults);
 
       const standardTokenMockInstance = await standardTokenMockContract.new(
         ACCOUNTS[0].address,
@@ -290,7 +253,7 @@ describe("Core API", () => {
         txDefaults,
       );
       await tokenWrapper.approve.sendTransactionAsync(
-        transferProxyInstance.address,
+        coreAPI.transferProxyAddress,
         UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
         { from: ACCOUNTS[0].address },
       );
