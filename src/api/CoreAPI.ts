@@ -36,11 +36,12 @@ import { CoreContract, DetailedERC20Contract, SetTokenContract, VaultContract } 
  */
 export class CoreAPI {
   private web3: Web3;
-  private coreAddress: Address;
-  private transferProxyAddress: Address;
-  private vaultAddress: Address;
   private assert: Assertions;
   private contracts: ContractsAPI;
+
+  public coreAddress: Address;
+  public transferProxyAddress: Address;
+  public vaultAddress: Address;
 
   public constructor(
     web3: Web3,
@@ -77,7 +78,7 @@ export class CoreAPI {
    * @param  name           User-supplied name for Set (i.e. "DEX Set")
    * @param  symbol         User-supplied symbol for Set (i.e. "DEX")
    * @param  txOpts         The options for executing the transaction
-   * @return                a transaction hash to then later look up for the Set address
+   * @return                A transaction hash to then later look up for the Set address
    */
   public async create(
     userAddress: Address,
@@ -165,7 +166,7 @@ export class CoreAPI {
    * @param  setAddress     Set token address of Set being issued
    * @param  quantityInWei  Number of Sets a user wants to issue in Wei
    * @param  txOpts         The options for executing the transaction
-   * @return                a transaction hash to then later look up for the Set address
+   * @return                A transaction hash to then later look up
    */
   public async issue(
     userAddress: Address,
@@ -217,7 +218,7 @@ export class CoreAPI {
    * @param  setAddress     Set token address of Set being issued
    * @param  quantityInWei  Number of Sets a user wants to redeem in Wei
    * @param  txOpts         The options for executing the transaction
-   * @return                a transaction hash to then later look up for the Set address
+   * @return                A transaction hash to then later look up
    */
   public async redeem(
     userAddress: Address,
@@ -316,6 +317,65 @@ export class CoreAPI {
     const txHash = await coreInstance.deposit.sendTransactionAsync(
       tokenAddress,
       quantityInWei,
+      txSettings,
+    );
+
+    return txHash;
+  }
+
+  /**
+   * Composite method to redeem and withdraw with a single transaction
+   *
+   * Normally, you should expect to be able to withdraw all of the tokens.
+   * However, some have central abilities to freeze transfers (e.g. EOS). _toWithdraw
+   * allows you to optionally specify which component tokens to transfer
+   * back to the user. The rest will remain in the vault under the users' addresses.
+   *
+   * @param  userAddress       The address of the user
+   * @param  setAddress        The address of the Set token
+   * @param  quantityInWei     The number of tokens to redeem
+   * @param  tokensToWithdraw  Array of token addresses to withdraw
+   * @param  txOpts            The options for executing the transaction
+   * @return                   A transaction hash to then later look up
+   */
+  public async redeemAndWithdraw(
+    userAddress: Address,
+    setAddress: Address,
+    quantityInWei: BigNumber,
+    tokensToWithdraw: Address[],
+    txOpts?: TransactionOpts,
+  ): Promise<string> {
+    this.assert.schema.isValidAddress("setAddress", setAddress);
+    this.assert.common.greaterThanZero(
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
+    );
+
+    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
+    const components = await setTokenContract.getComponents.callAsync();
+
+    let toWithdraw: BigNumber = ZERO;
+    const tokensToWithdrawMapping = {};
+    _.each(tokensToWithdraw, withdrawTokenAddress => {
+      this.assert.schema.isValidAddress("withdrawTokenAddress", withdrawTokenAddress);
+      tokensToWithdrawMapping[withdrawTokenAddress] = true;
+    });
+    _.each(components, (component, componentIndex) => {
+      if (tokensToWithdrawMapping[component]) {
+        toWithdraw = toWithdraw.plus(new BigNumber(2).pow(componentIndex));
+      }
+    });
+
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+
+    const txSettings = Object.assign(
+      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
+    const txHash = await coreInstance.redeemAndWithdraw.sendTransactionAsync(
+      setAddress,
+      quantityInWei,
+      toWithdraw,
       txSettings,
     );
 

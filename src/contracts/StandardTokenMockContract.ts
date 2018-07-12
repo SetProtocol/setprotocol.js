@@ -23,8 +23,6 @@
 // tslint:disable-next-line:no-unused-variable
 
 import { promisify } from "@0xproject/utils";
-import { BigNumber } from "bignumber.js";
-import * as fs from "fs-extra";
 import { StandardTokenMock as ContractArtifacts } from "set-protocol-contracts";
 import * as Web3 from "web3";
 

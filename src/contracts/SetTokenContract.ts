@@ -21,10 +21,9 @@
  * Templates can be found at https://github.com/0xProject/0x.js/tree/development/packages/abi-gen-templates.
  */
 // tslint:disable-next-line:no-unused-variable
+
 import { promisify } from "@0xproject/utils";
-import { BigNumber } from "bignumber.js";
 import { SetToken as ContractArtifacts } from "set-protocol-contracts";
-import * as fs from "fs-extra";
 import * as Web3 from "web3";
 
 import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./BaseContract";
