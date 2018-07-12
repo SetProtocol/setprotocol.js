@@ -287,50 +287,32 @@ describe("Core API", () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
-    let componentAddresses: Address[];
-
-    let tokenAddress: Address;
+    let tokenAddresses: Address[];
     let vaultWrapper: VaultContract;
 
     beforeEach(async () => {
       coreAPI = await initializeCoreAPI(provider);
 
       setToCreate = testSets[0];
-      const component = setToCreate.components[0];
+      tokenAddresses = await deployTokensForSetWithApproval(
+        setToCreate,
+        coreAPI.transferProxyAddress,
+        provider,
+      );
 
+      coreAPI = await initializeCoreAPI(provider);
+
+      const setToCreate = testSets[0];
       const vaultContract = contract(Vault);
       vaultContract.setProvider(provider);
       vaultContract.defaults(txDefaults);
 
       // Deploy Vault
       vaultWrapper = await VaultContract.at(coreAPI.vaultAddress, web3, txDefaults);
-
-      const standardTokenMockContract = contract(StandardTokenMock);
-      standardTokenMockContract.setProvider(provider);
-      standardTokenMockContract.defaults(txDefaults);
-
-      const standardTokenMockInstance = await standardTokenMockContract.new(
-        ACCOUNTS[0].address,
-        component.supply,
-        component.name,
-        component.symbol,
-        component.decimals,
-      );
-
-      const tokenWrapper = await StandardTokenMockContract.at(
-        standardTokenMockInstance.address,
-        web3,
-        txDefaults,
-      );
-      await tokenWrapper.approve.sendTransactionAsync(
-        coreAPI.transferProxyAddress,
-        UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-        { from: ACCOUNTS[0].address },
-      );
-      tokenAddress = tokenWrapper.address;
     });
 
     test("deposits a token into the vault with valid parameters", async () => {
+      const tokenAddress = tokenAddresses[0];
       let userBalance = await vaultWrapper.getOwnerBalance.callAsync(
         ACCOUNTS[0].address,
         tokenAddress,
@@ -344,6 +326,34 @@ describe("Core API", () => {
       );
       userBalance = await vaultWrapper.getOwnerBalance.callAsync(ACCOUNTS[0].address, tokenAddress);
       expect(Number(userBalance)).to.equal(100);
+    });
+
+    test("batch deposits tokens into the vault with valid parameters", async () => {
+      const quantities = tokenAddresses.map(() => new BigNumber(100));
+      await Promise.all(
+        tokenAddresses.map(async tokenAddress => {
+          const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
+            ACCOUNTS[0].address,
+            tokenAddress,
+          );
+          expect(Number(userBalance)).to.equal(0);
+        }),
+      );
+      const txHash = await coreAPI.batchDeposit(
+        ACCOUNTS[0].address,
+        tokenAddresses,
+        quantities,
+        txDefaults,
+      );
+      await Promise.all(
+        tokenAddresses.map(async tokenAddress => {
+          const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
+            ACCOUNTS[0].address,
+            tokenAddress,
+          );
+          expect(Number(userBalance)).to.equal(100);
+        }),
+      );
     });
   });
 });
