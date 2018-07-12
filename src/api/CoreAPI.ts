@@ -355,11 +355,13 @@ export class CoreAPI {
     const components = await setTokenContract.getComponents.callAsync();
 
     let toWithdraw: BigNumber = ZERO;
-    let componentIndex;
+    const tokensToWithdrawMapping = {};
     _.each(tokensToWithdraw, withdrawTokenAddress => {
       this.assert.schema.isValidAddress("withdrawTokenAddress", withdrawTokenAddress);
-      componentIndex = components.indexOf(withdrawTokenAddress);
-      if (componentIndex >= 0) {
+      tokensToWithdrawMapping[withdrawTokenAddress] = true;
+    });
+    _.each(components, (component, componentIndex) => {
+      if (tokensToWithdrawMapping[component]) {
         toWithdraw = toWithdraw.plus(new BigNumber(2).pow(componentIndex));
       }
     });
