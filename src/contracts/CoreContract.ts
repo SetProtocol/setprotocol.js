@@ -31,6 +31,62 @@ import { TxData, TxDataPayable } from "../types/common";
 import { BigNumber, classUtils, Web3Utils } from "../util";
 
 export class CoreContract extends BaseContract {
+  public cancelOrder = {
+    async sendTransactionAsync(
+      _addresses: string[],
+      _values: BigNumber[],
+      _cancelQuantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<string> {
+      const self = this as CoreContract;
+      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
+        txData,
+        self.cancelOrder.estimateGasAsync.bind(self, _addresses, _values, _cancelQuantity),
+      );
+      const txHash = await promisify<string>(
+        self.web3ContractInstance.cancelOrder,
+        self.web3ContractInstance,
+      )(_addresses, _values, _cancelQuantity, txDataWithDefaults);
+      return txHash;
+    },
+    async estimateGasAsync(
+      _addresses: string[],
+      _values: BigNumber[],
+      _cancelQuantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<number> {
+      const self = this as CoreContract;
+      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
+      const gas = await promisify<number>(
+        self.web3ContractInstance.cancelOrder.estimateGas,
+        self.web3ContractInstance,
+      )(_addresses, _values, _cancelQuantity, txDataWithDefaults);
+      return gas;
+    },
+    getABIEncodedTransactionData(
+      _addresses: string[],
+      _values: BigNumber[],
+      _cancelQuantity: BigNumber,
+      txData: TxData = {},
+    ): string {
+      const self = this as CoreContract;
+      const abiEncodedTransactionData = self.web3ContractInstance.cancelOrder.getData();
+      return abiEncodedTransactionData;
+    },
+    async callAsync(
+      _addresses: string[],
+      _values: BigNumber[],
+      _cancelQuantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.cancelOrder.call,
+        self.web3ContractInstance,
+      )(_addresses, _values, _cancelQuantity);
+      return result;
+    },
+  };
   public validFactories = {
     async callAsync(_factory: string, defaultBlock?: any): Promise<boolean> {
       const self = this as CoreContract;
@@ -416,87 +472,6 @@ export class CoreContract extends BaseContract {
       return result;
     },
   };
-  public fillOrder = {
-    async sendTransactionAsync(
-      _addresses: string[],
-      _values: BigNumber[],
-      _fillQuantity: BigNumber,
-      _v: number | BigNumber,
-      _r: string,
-      _s: string,
-      _orderData: string,
-      txData: TxData = {},
-    ): Promise<string> {
-      const self = this as CoreContract;
-      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
-        txData,
-        self.fillOrder.estimateGasAsync.bind(
-          self,
-          _addresses,
-          _values,
-          _fillQuantity,
-          _v,
-          _r,
-          _s,
-          _orderData,
-        ),
-      );
-      const txHash = await promisify<string>(
-        self.web3ContractInstance.fillOrder,
-        self.web3ContractInstance,
-      )(_addresses, _values, _fillQuantity, _v, _r, _s, _orderData, txDataWithDefaults);
-      return txHash;
-    },
-    async estimateGasAsync(
-      _addresses: string[],
-      _values: BigNumber[],
-      _fillQuantity: BigNumber,
-      _v: number | BigNumber,
-      _r: string,
-      _s: string,
-      _orderData: string,
-      txData: TxData = {},
-    ): Promise<number> {
-      const self = this as CoreContract;
-      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
-      const gas = await promisify<number>(
-        self.web3ContractInstance.fillOrder.estimateGas,
-        self.web3ContractInstance,
-      )(_addresses, _values, _fillQuantity, _v, _r, _s, _orderData, txDataWithDefaults);
-      return gas;
-    },
-    getABIEncodedTransactionData(
-      _addresses: string[],
-      _values: BigNumber[],
-      _fillQuantity: BigNumber,
-      _v: number | BigNumber,
-      _r: string,
-      _s: string,
-      _orderData: string,
-      txData: TxData = {},
-    ): string {
-      const self = this as CoreContract;
-      const abiEncodedTransactionData = self.web3ContractInstance.fillOrder.getData();
-      return abiEncodedTransactionData;
-    },
-    async callAsync(
-      _addresses: string[],
-      _values: BigNumber[],
-      _fillQuantity: BigNumber,
-      _v: number | BigNumber,
-      _r: string,
-      _s: string,
-      _orderData: string,
-      txData: TxData = {},
-    ): Promise<void> {
-      const self = this as CoreContract;
-      const result = await promisify<void>(
-        self.web3ContractInstance.fillOrder.call,
-        self.web3ContractInstance,
-      )(_addresses, _values, _fillQuantity, _v, _r, _s, _orderData);
-      return result;
-    },
-  };
   public renounceOwnership = {
     async sendTransactionAsync(txData: TxData = {}): Promise<string> {
       const self = this as CoreContract;
@@ -673,62 +648,6 @@ export class CoreContract extends BaseContract {
       return result;
     },
   };
-  public cancelOrder = {
-    async sendTransactionAsync(
-      _addresses: string[],
-      _values: BigNumber[],
-      _cancelQuantity: BigNumber,
-      txData: TxData = {},
-    ): Promise<string> {
-      const self = this as CoreContract;
-      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
-        txData,
-        self.cancelOrder.estimateGasAsync.bind(self, _addresses, _values, _cancelQuantity),
-      );
-      const txHash = await promisify<string>(
-        self.web3ContractInstance.cancelOrder,
-        self.web3ContractInstance,
-      )(_addresses, _values, _cancelQuantity, txDataWithDefaults);
-      return txHash;
-    },
-    async estimateGasAsync(
-      _addresses: string[],
-      _values: BigNumber[],
-      _cancelQuantity: BigNumber,
-      txData: TxData = {},
-    ): Promise<number> {
-      const self = this as CoreContract;
-      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
-      const gas = await promisify<number>(
-        self.web3ContractInstance.cancelOrder.estimateGas,
-        self.web3ContractInstance,
-      )(_addresses, _values, _cancelQuantity, txDataWithDefaults);
-      return gas;
-    },
-    getABIEncodedTransactionData(
-      _addresses: string[],
-      _values: BigNumber[],
-      _cancelQuantity: BigNumber,
-      txData: TxData = {},
-    ): string {
-      const self = this as CoreContract;
-      const abiEncodedTransactionData = self.web3ContractInstance.cancelOrder.getData();
-      return abiEncodedTransactionData;
-    },
-    async callAsync(
-      _addresses: string[],
-      _values: BigNumber[],
-      _cancelQuantity: BigNumber,
-      txData: TxData = {},
-    ): Promise<void> {
-      const self = this as CoreContract;
-      const result = await promisify<void>(
-        self.web3ContractInstance.cancelOrder.call,
-        self.web3ContractInstance,
-      )(_addresses, _values, _cancelQuantity);
-      return result;
-    },
-  };
   public enableFactory = {
     async sendTransactionAsync(_factoryAddress: string, txData: TxData = {}): Promise<string> {
       const self = this as CoreContract;
@@ -775,6 +694,62 @@ export class CoreContract extends BaseContract {
       return result;
     },
   };
+  public redeemAndWithdraw = {
+    async sendTransactionAsync(
+      _setAddress: string,
+      _quantity: BigNumber,
+      _toWithdraw: BigNumber,
+      txData: TxData = {},
+    ): Promise<string> {
+      const self = this as CoreContract;
+      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
+        txData,
+        self.redeemAndWithdraw.estimateGasAsync.bind(self, _setAddress, _quantity, _toWithdraw),
+      );
+      const txHash = await promisify<string>(
+        self.web3ContractInstance.redeemAndWithdraw,
+        self.web3ContractInstance,
+      )(_setAddress, _quantity, _toWithdraw, txDataWithDefaults);
+      return txHash;
+    },
+    async estimateGasAsync(
+      _setAddress: string,
+      _quantity: BigNumber,
+      _toWithdraw: BigNumber,
+      txData: TxData = {},
+    ): Promise<number> {
+      const self = this as CoreContract;
+      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
+      const gas = await promisify<number>(
+        self.web3ContractInstance.redeemAndWithdraw.estimateGas,
+        self.web3ContractInstance,
+      )(_setAddress, _quantity, _toWithdraw, txDataWithDefaults);
+      return gas;
+    },
+    getABIEncodedTransactionData(
+      _setAddress: string,
+      _quantity: BigNumber,
+      _toWithdraw: BigNumber,
+      txData: TxData = {},
+    ): string {
+      const self = this as CoreContract;
+      const abiEncodedTransactionData = self.web3ContractInstance.redeemAndWithdraw.getData();
+      return abiEncodedTransactionData;
+    },
+    async callAsync(
+      _setAddress: string,
+      _quantity: BigNumber,
+      _toWithdraw: BigNumber,
+      txData: TxData = {},
+    ): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.redeemAndWithdraw.call,
+        self.web3ContractInstance,
+      )(_setAddress, _quantity, _toWithdraw);
+      return result;
+    },
+  };
   public state = {
     async callAsync(defaultBlock?: any): Promise<[string, string]> {
       const self = this as CoreContract;
@@ -782,6 +757,82 @@ export class CoreContract extends BaseContract {
         self.web3ContractInstance.state.call,
         self.web3ContractInstance,
       )();
+      return result;
+    },
+  };
+  public fillOrder = {
+    async sendTransactionAsync(
+      _addresses: string[],
+      _values: BigNumber[],
+      _fillQuantity: BigNumber,
+      _v: number | BigNumber,
+      sigBytes: string[],
+      _orderData: string,
+      txData: TxData = {},
+    ): Promise<string> {
+      const self = this as CoreContract;
+      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
+        txData,
+        self.fillOrder.estimateGasAsync.bind(
+          self,
+          _addresses,
+          _values,
+          _fillQuantity,
+          _v,
+          sigBytes,
+          _orderData,
+        ),
+      );
+      const txHash = await promisify<string>(
+        self.web3ContractInstance.fillOrder,
+        self.web3ContractInstance,
+      )(_addresses, _values, _fillQuantity, _v, sigBytes, _orderData, txDataWithDefaults);
+      return txHash;
+    },
+    async estimateGasAsync(
+      _addresses: string[],
+      _values: BigNumber[],
+      _fillQuantity: BigNumber,
+      _v: number | BigNumber,
+      sigBytes: string[],
+      _orderData: string,
+      txData: TxData = {},
+    ): Promise<number> {
+      const self = this as CoreContract;
+      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(txData);
+      const gas = await promisify<number>(
+        self.web3ContractInstance.fillOrder.estimateGas,
+        self.web3ContractInstance,
+      )(_addresses, _values, _fillQuantity, _v, sigBytes, _orderData, txDataWithDefaults);
+      return gas;
+    },
+    getABIEncodedTransactionData(
+      _addresses: string[],
+      _values: BigNumber[],
+      _fillQuantity: BigNumber,
+      _v: number | BigNumber,
+      sigBytes: string[],
+      _orderData: string,
+      txData: TxData = {},
+    ): string {
+      const self = this as CoreContract;
+      const abiEncodedTransactionData = self.web3ContractInstance.fillOrder.getData();
+      return abiEncodedTransactionData;
+    },
+    async callAsync(
+      _addresses: string[],
+      _values: BigNumber[],
+      _fillQuantity: BigNumber,
+      _v: number | BigNumber,
+      sigBytes: string[],
+      _orderData: string,
+      txData: TxData = {},
+    ): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.fillOrder.call,
+        self.web3ContractInstance,
+      )(_addresses, _values, _fillQuantity, _v, sigBytes, _orderData);
       return result;
     },
   };

@@ -21,15 +21,14 @@
  * Templates can be found at https://github.com/0xProject/0x.js/tree/development/packages/abi-gen-templates.
  */
 // tslint:disable-next-line:no-unused-variable
+
 import { promisify } from "@0xproject/utils";
-import { BigNumber } from "bignumber.js";
-import * as fs from "fs-extra";
 import { ERC20 as ContractArtifacts } from "set-protocol-contracts";
 import * as Web3 from "web3";
 
-import { BaseContract } from "./BaseContract";
-import { TxData, TxDataPayable } from "../common";
-import { classUtils } from "../util";
+import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./BaseContract";
+import { TxData, TxDataPayable } from "../types/common";
+import { BigNumber, classUtils, Web3Utils } from "../util";
 
 export class ERC20Contract extends BaseContract {
   public totalSupply = {
