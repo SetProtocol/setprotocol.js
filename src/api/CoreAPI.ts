@@ -36,11 +36,12 @@ import { CoreContract, DetailedERC20Contract, SetTokenContract, VaultContract } 
  */
 export class CoreAPI {
   private web3: Web3;
-  private coreAddress: Address;
-  private transferProxyAddress: Address;
-  private vaultAddress: Address;
   private assert: Assertions;
   private contracts: ContractsAPI;
+
+  public coreAddress: Address;
+  public transferProxyAddress: Address;
+  public vaultAddress: Address;
 
   public constructor(
     web3: Web3,
