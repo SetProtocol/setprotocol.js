@@ -331,6 +331,7 @@ export class CoreAPI {
    * allows you to optionally specify which component tokens to transfer
    * back to the user. The rest will remain in the vault under the users' addresses.
    *
+   * @param  userAddress       The address of the user
    * @param  setAddress        The address of the Set token
    * @param  quantityInWei     The number of tokens to redeem
    * @param  tokensToWithdraw  Array of token addresses to withdraw
@@ -338,6 +339,7 @@ export class CoreAPI {
    * @return                   A transaction hash to then later look up
    */
   public async redeemAndWithdraw(
+    userAddress: Address,
     setAddress: Address,
     quantityInWei: BigNumber,
     tokensToWithdraw: Address[],

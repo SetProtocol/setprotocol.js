@@ -213,6 +213,76 @@ describe("Core API", () => {
     });
   });
 
+  describe("redeemAndWithdraw", async () => {
+    let coreAPI: CoreAPI;
+    let setTokenFactoryAddress: Address;
+    let setToCreate: TestSet;
+    let componentAddresses: Address[];
+    let setTokenAddress: Address;
+
+    beforeEach(async () => {
+      coreAPI = await initializeCoreAPI(provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+
+      setToCreate = testSets[0];
+      componentAddresses = await deployTokensForSetWithApproval(
+        setToCreate,
+        coreAPI.transferProxyAddress,
+        provider,
+      );
+
+      // Create a Set
+      const txHash = await coreAPI.create(
+        ACCOUNTS[0].address,
+        setTokenFactoryAddress,
+        componentAddresses,
+        setToCreate.units,
+        setToCreate.naturalUnit,
+        setToCreate.setName,
+        setToCreate.setSymbol,
+      );
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+
+      // Issue a Set to user
+      txHash = await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
+      formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+    });
+
+    test("redeems a set with valid parameters", async () => {
+      const setTokenWrapper = await DetailedERC20Contract.at(setTokenAddress, web3, txDefaults);
+      const componentTokenWrapper = await DetailedERC20Contract.at(
+        componentAddresses[0],
+        web3,
+        txDefaults,
+      );
+
+      const oldComponentBalance = await componentTokenWrapper.balanceOf.callAsync(
+        ACCOUNTS[0].address,
+      );
+      const quantity = new BigNumber(100);
+
+      expect(Number(await setTokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(100);
+      const txHash = await coreAPI.redeemAndWithdraw(
+        ACCOUNTS[0].address,
+        setTokenAddress,
+        quantity,
+        [componentAddresses[0]],
+      );
+      const componentTransferValue = quantity
+        .div(setToCreate.naturalUnit)
+        .mul(setToCreate.units[0]);
+      const newComponentBalance = await componentTokenWrapper.balanceOf.callAsync(
+        ACCOUNTS[0].address,
+      );
+
+      expect(Number(newComponentBalance)).to.equal(
+        Number(oldComponentBalance.plus(componentTransferValue)),
+      );
+      expect(Number(await setTokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(0);
+    });
+  });
+
   describe("deposit", async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
