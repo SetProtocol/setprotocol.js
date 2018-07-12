@@ -95,7 +95,7 @@ export class CoreAPI {
     this.assert.common.isEqualLength(
       components,
       units,
-      coreAPIErrors.COMPONENTS_AND_UNITS_EQUAL_LENGTHS(),
+      coreAPIErrors.TOKENS_AND_UNITS_EQUAL_LENGTHS(),
     );
     this.assert.common.greaterThanZero(
       naturalUnit,
@@ -277,7 +277,7 @@ export class CoreAPI {
    *
    * @param  userAddress   Address of the user
    * @param  tokenAddress  Address of the ERC20 token
-   * @param  quantityInWei Number of Sets a user wants to redeem in Wei
+   * @param  quantityInWei Number of tokens a user wants to deposit into the vault
    * @return               A transaction hash
    */
   public async deposit(
@@ -367,15 +367,86 @@ export class CoreAPI {
     });
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    
+    const txSettings = Object.assign(
+      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
+
+    const txHash = await coreInstance.redeemAndWithdraw.sendTransactionAsync(
+      setAddress,
+      quantityInWei,
+      toWithdraw,
+      txSettings,
+    );
+  }
+
+  /*
+   * Asynchronously batch deposits tokens to the vault
+   *
+   * @param  userAddress       Address of the user
+   * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to deposit into the vault
+   * @param  quantitiesInWei[] Numbers of tokens a user wants to deposit into the vault
+   * @return                   A transaction hash
+   */
+  public async batchDeposit(
+    userAddress: Address,
+    tokenAddresses: Address[],
+    quantitiesInWei: BigNumber[],
+    txOpts?: TransactionOpts,
+  ): Promise<string> {
+    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.common.isEqualLength(
+      tokenAddresses,
+      quantitiesInWei,
+      coreAPIErrors.TOKENS_AND_UNITS_EQUAL_LENGTHS(),
+    );
+    // Token assertions
+    await Promise.all(
+      tokenAddresses.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY("tokenAddress"),
+        );
+        this.assert.schema.isValidAddress("tokenAddress", tokenAddress);
+        const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(tokenContract);
+
+        // Check balance
+        await this.assert.erc20.hasSufficientBalance(
+          tokenContract,
+          userAddress,
+          quantitiesInWei[i],
+          erc20AssertionErrors.INSUFFICIENT_BALANCE(),
+        );
+        // Check allowance
+        await this.assert.erc20.hasSufficientAllowance(
+          tokenContract,
+          userAddress,
+          this.transferProxyAddress,
+          quantitiesInWei[i],
+          erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
+        );
+      }),
+    );
+    // Quantity assertions
+    quantitiesInWei.map(quantity => {
+      this.assert.common.greaterThanZero(
+        quantity,
+        coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+      );
+    });
+
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
     const txSettings = Object.assign(
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
     );
-    const txHash = await coreInstance.redeemAndWithdraw.sendTransactionAsync(
-      setAddress,
-      quantityInWei,
-      toWithdraw,
+
+    const txHash = await coreInstance.batchDeposit.sendTransactionAsync(
+      tokenAddresses,
+      quantitiesInWei,
       txSettings,
     );
 
