@@ -300,8 +300,6 @@ describe("Core API", () => {
         provider,
       );
 
-      coreAPI = await initializeCoreAPI(provider);
-
       const setToCreate = testSets[0];
       const vaultContract = contract(Vault);
       vaultContract.setProvider(provider);
