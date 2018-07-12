@@ -427,4 +427,113 @@ describe("Core API", () => {
       expect(Number(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(0);
     });
   });
+
+  describe("deposit", async () => {
+    let coreAPI: CoreAPI;
+    let tokenAddress: Address;
+    let vaultWrapper: VaultContract;
+
+    beforeEach(async () => {
+      // Deploy Core
+      const coreInstance = await coreContract.new();
+      const coreWrapper = await CoreContract.at(coreInstance.address, web3, txDefaults);
+
+      // Deploy SetTokenFactory
+      setTokenFactoryInstance = await setTokenFactoryContract.new();
+      const setTokenFactoryWrapper = await SetTokenFactoryContract.at(
+        setTokenFactoryInstance.address,
+        web3,
+        txDefaults,
+      );
+      // Deploy TransferProxy
+      const transferProxyInstance = await transferProxyContract.new();
+      const transferProxyWrapper = await TransferProxyContract.at(
+        transferProxyInstance.address,
+        web3,
+        txDefaults,
+      );
+      // Deploy Vault
+      const vaultInstance = await vaultContract.new();
+      vaultWrapper = await VaultContract.at(vaultInstance.address, web3, txDefaults);
+
+      coreAPI = new CoreAPI(
+        web3,
+        coreInstance.address,
+        transferProxyInstance.address,
+        vaultInstance.address,
+      );
+
+      // Authorize Core
+      await setTokenFactoryWrapper.addAuthorizedAddress.sendTransactionAsync(
+        coreInstance.address,
+        txDefaults,
+      );
+      await transferProxyWrapper.addAuthorizedAddress.sendTransactionAsync(
+        coreInstance.address,
+        txDefaults,
+      );
+      await vaultWrapper.addAuthorizedAddress.sendTransactionAsync(
+        coreInstance.address,
+        txDefaults,
+      );
+
+      // Set Vault and TransferProxy
+      await coreWrapper.setVaultAddress.sendTransactionAsync(vaultInstance.address, txDefaults);
+      await coreWrapper.setTransferProxyAddress.sendTransactionAsync(
+        transferProxyInstance.address,
+        txDefaults,
+      );
+
+      // Set Core Address
+      await setTokenFactoryWrapper.setCoreAddress.sendTransactionAsync(
+        coreInstance.address,
+        txDefaults,
+      );
+
+      // Enable Factory
+      await coreWrapper.enableFactory.sendTransactionAsync(
+        setTokenFactoryInstance.address,
+        txDefaults,
+      );
+
+      setToCreate = testSets[0];
+      const component = setToCreate.components[0];
+
+      const standardTokenMockInstance = await standardTokenMockContract.new(
+        ACCOUNTS[0].address,
+        component.supply,
+        component.name,
+        component.symbol,
+        component.decimals,
+      );
+
+      const tokenWrapper = await StandardTokenMockContract.at(
+        standardTokenMockInstance.address,
+        web3,
+        txDefaults,
+      );
+      await tokenWrapper.approve.sendTransactionAsync(
+        transferProxyInstance.address,
+        UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+        { from: ACCOUNTS[0].address },
+      );
+      tokenAddress = tokenWrapper.address;
+    });
+
+    test("deposits a token into the vault with valid parameters", async () => {
+      let userBalance = await vaultWrapper.getOwnerBalance.callAsync(
+        ACCOUNTS[0].address,
+        tokenAddress,
+      );
+      expect(Number(userBalance)).to.equal(0);
+      const txHash = await coreAPI.deposit(
+        ACCOUNTS[0].address,
+        tokenAddress,
+        new BigNumber(100),
+        txDefaults,
+      );
+      userBalance = await vaultWrapper.getOwnerBalance.callAsync(ACCOUNTS[0].address, tokenAddress);
+      expect(Number(userBalance)).to.equal(100);
+    });
+  });
 });

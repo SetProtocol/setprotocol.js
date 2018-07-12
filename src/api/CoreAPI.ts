@@ -270,4 +270,55 @@ export class CoreAPI {
 
     return txHash;
   }
+
+  /**
+   * Asynchronously deposits tokens to the vault
+   *
+   * @param  userAddress   Address of the user
+   * @param  tokenAddress  Address of the ERC20 token
+   * @param  quantityInWei Number of Sets a user wants to redeem in Wei
+   * @return               A transaction hash
+   */
+  public async deposit(
+    userAddress: Address,
+    tokenAddress: Address,
+    quantityInWei: BigNumber,
+    txOpts?: TransactionOpts,
+  ): Promise<string> {
+    this.assert.schema.isValidAddress("tokenAddress", tokenAddress);
+    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.common.greaterThanZero(
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
+    );
+
+    const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+    await this.assert.erc20.hasSufficientBalance(
+      detailedERC20Contract,
+      userAddress,
+      quantityInWei,
+      erc20AssertionErrors.INSUFFICIENT_BALANCE(),
+    );
+    await this.assert.erc20.hasSufficientAllowance(
+      detailedERC20Contract,
+      userAddress,
+      this.transferProxyAddress,
+      quantityInWei,
+      erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
+    );
+
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+
+    const txSettings = Object.assign(
+      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
+    const txHash = await coreInstance.deposit.sendTransactionAsync(
+      tokenAddress,
+      quantityInWei,
+      txSettings,
+    );
+
+    return txHash;
+  }
 }
