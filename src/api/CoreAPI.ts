@@ -344,10 +344,10 @@ export class CoreAPI {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
     );
 
-    const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+    const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
 
     await this.assert.vault.hasSufficientTokenBalance(
-      detailedERC20Contract,
+      vaultContract,
       tokenAddress,
       userAddress,
       quantityInWei,

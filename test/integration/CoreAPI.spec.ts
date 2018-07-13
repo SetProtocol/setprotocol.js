@@ -305,7 +305,6 @@ describe("Core API", () => {
       vaultContract.setProvider(provider);
       vaultContract.defaults(txDefaults);
 
-      // Deploy Vault
       vaultWrapper = await VaultContract.at(coreAPI.vaultAddress, web3, txDefaults);
     });
 
@@ -352,6 +351,62 @@ describe("Core API", () => {
           expect(Number(userBalance)).to.equal(100);
         }),
       );
+    });
+  });
+
+  describe("withdraw", async () => {
+    let coreAPI: CoreAPI;
+    let setTokenFactoryAddress: Address;
+    let setToCreate: TestSet;
+    let tokenAddresses: Address[];
+    let vaultWrapper: VaultContract;
+
+    beforeEach(async () => {
+      coreAPI = await initializeCoreAPI(provider);
+
+      setToCreate = testSets[0];
+      tokenAddresses = await deployTokensForSetWithApproval(
+        setToCreate,
+        coreAPI.transferProxyAddress,
+        provider,
+      );
+
+      const setToCreate = testSets[0];
+      const vaultContract = contract(Vault);
+      vaultContract.setProvider(provider);
+      vaultContract.defaults(txDefaults);
+
+      vaultWrapper = await VaultContract.at(coreAPI.vaultAddress, web3, txDefaults);
+
+      // Deposit tokens
+      const tokenAddress = tokenAddresses[0];
+      let userBalance = await vaultWrapper.getOwnerBalance.callAsync(
+        ACCOUNTS[0].address,
+        tokenAddress,
+      );
+      const txHash = await coreAPI.deposit(
+        ACCOUNTS[0].address,
+        tokenAddress,
+        new BigNumber(100),
+        txDefaults,
+      );
+    });
+
+    test("withdraws a token from the vault with valid parameters", async () => {
+      const tokenAddress = tokenAddresses[0];
+      let userBalance = await vaultWrapper.getOwnerBalance.callAsync(
+        ACCOUNTS[0].address,
+        tokenAddress,
+      );
+      expect(Number(userBalance)).to.equal(100);
+      const txHash = await coreAPI.withdraw(
+        ACCOUNTS[0].address,
+        tokenAddress,
+        new BigNumber(100),
+        txDefaults,
+      );
+      userBalance = await vaultWrapper.getOwnerBalance.callAsync(ACCOUNTS[0].address, tokenAddress);
+      expect(Number(userBalance)).to.equal(0);
     });
   });
 });
