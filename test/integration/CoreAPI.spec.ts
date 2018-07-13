@@ -378,16 +378,12 @@ describe("Core API", () => {
 
       vaultWrapper = await VaultContract.at(coreAPI.vaultAddress, web3, txDefaults);
 
-      // Deposit tokens
-      const tokenAddress = tokenAddresses[0];
-      let userBalance = await vaultWrapper.getOwnerBalance.callAsync(
+      // Batch deposits all the tokens
+      const quantities = tokenAddresses.map(() => new BigNumber(100));
+      const txHash = await coreAPI.batchDeposit(
         ACCOUNTS[0].address,
-        tokenAddress,
-      );
-      const txHash = await coreAPI.deposit(
-        ACCOUNTS[0].address,
-        tokenAddress,
-        new BigNumber(100),
+        tokenAddresses,
+        quantities,
         txDefaults,
       );
     });
@@ -407,6 +403,34 @@ describe("Core API", () => {
       );
       userBalance = await vaultWrapper.getOwnerBalance.callAsync(ACCOUNTS[0].address, tokenAddress);
       expect(Number(userBalance)).to.equal(0);
+    });
+
+    test("batch withdraws tokens from the vault with valid parameters", async () => {
+      const quantities = tokenAddresses.map(() => new BigNumber(100));
+      await Promise.all(
+        tokenAddresses.map(async tokenAddress => {
+          const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
+            ACCOUNTS[0].address,
+            tokenAddress,
+          );
+          expect(Number(userBalance)).to.equal(100);
+        }),
+      );
+      const txHash = await coreAPI.batchWithdraw(
+        ACCOUNTS[0].address,
+        tokenAddresses,
+        quantities,
+        txDefaults,
+      );
+      await Promise.all(
+        tokenAddresses.map(async tokenAddress => {
+          const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
+            ACCOUNTS[0].address,
+            tokenAddress,
+          );
+          expect(Number(userBalance)).to.equal(0);
+        }),
+      );
     });
   });
 });

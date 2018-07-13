@@ -527,7 +527,7 @@ export class CoreAPI {
           coreAPIErrors.STRING_CANNOT_BE_EMPTY("tokenAddress"),
         );
         this.assert.schema.isValidAddress("tokenAddress", tokenAddress);
-        const vault = await VaultContract.at(this.vaultAddress, this.web3, {});
+        const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
 
         // Check balance
         await this.assert.vault.hasSufficientTokenBalance(
