@@ -498,4 +498,68 @@ export class CoreAPI {
 
     return txHash;
   }
+
+  /*
+   * Asynchronously batch withdraws tokens from the vault
+   *
+   * @param  userAddress       Address of the user
+   * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to withdraw from the vault
+   * @param  quantitiesInWei[] Numbers of tokens a user wants to withdraw from the vault
+   * @return                   A transaction hash
+   */
+  public async batchWithdraw(
+    userAddress: Address,
+    tokenAddresses: Address[],
+    quantitiesInWei: BigNumber[],
+    txOpts?: TransactionOpts,
+  ): Promise<string> {
+    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.common.isEqualLength(
+      tokenAddresses,
+      quantitiesInWei,
+      coreAPIErrors.TOKENS_AND_UNITS_EQUAL_LENGTHS(),
+    );
+    // Token assertions
+    await Promise.all(
+      tokenAddresses.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY("tokenAddress"),
+        );
+        this.assert.schema.isValidAddress("tokenAddress", tokenAddress);
+        const vault = await VaultContract.at(this.vaultAddress, this.web3, {});
+
+        // Check balance
+        await this.assert.vault.hasSufficientTokenBalance(
+          vaultContract,
+          tokenAddress,
+          userAddress,
+          quantitiesInWei[i],
+          vaultAssertionErrors.INSUFFICIENT_TOKEN_BALANCE(),
+        );
+      }),
+    );
+    // Quantity assertions
+    quantitiesInWei.map(quantity => {
+      this.assert.common.greaterThanZero(
+        quantity,
+        coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+      );
+    });
+
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+
+    const txSettings = Object.assign(
+      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
+
+    const txHash = await coreInstance.batchWithdraw.sendTransactionAsync(
+      tokenAddresses,
+      quantitiesInWei,
+      txSettings,
+    );
+
+    return txHash;
+  }
 }
