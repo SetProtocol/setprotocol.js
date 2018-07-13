@@ -250,11 +250,11 @@ export class CoreAPI {
       erc20AssertionErrors.INSUFFICIENT_BALANCE(),
     );
     const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
-    await this.assert.vault.hasSufficientBalances(
+    await this.assert.vault.hasSufficientSetTokensBalances(
       vaultContract,
       setTokenContract,
       quantityInWei,
-      vaultAssertionErrors.INSUFFICIENT_BALANCE(),
+      vaultAssertionErrors.INSUFFICIENT_SET_TOKENS_BALANCE(),
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
@@ -324,6 +324,52 @@ export class CoreAPI {
   }
 
   /**
+   * Asynchronously withdraw tokens from the vault
+   *
+   * @param  userAddress   Address of the user
+   * @param  tokenAddress  Address of the ERC20 token
+   * @param  quantityInWei Number of tokens a user wants to withdraw from the vault
+   * @return               A transaction hash
+   */
+  public async withdraw(
+    userAddress: Address,
+    tokenAddress: Address,
+    quantityInWei: BigNumber,
+    txOpts?: TransactionOpts,
+  ): Promise<string> {
+    this.assert.schema.isValidAddress("tokenAddress", tokenAddress);
+    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.common.greaterThanZero(
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
+    );
+
+    const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+
+    await this.assert.vault.hasSufficientTokenBalance(
+      detailedERC20Contract,
+      tokenAddress,
+      userAddress,
+      quantityInWei,
+      vaultAssertionErrors.INSUFFICIENT_TOKEN_BALANCE(),
+    );
+
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+
+    const txSettings = Object.assign(
+      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
+    const txHash = await coreInstance.withdraw.sendTransactionAsync(
+      tokenAddress,
+      quantityInWei,
+      txSettings,
+    );
+
+    return txHash;
+  }
+
+  /**
    * Composite method to redeem and withdraw with a single transaction
    *
    * Normally, you should expect to be able to withdraw all of the tokens.
@@ -367,7 +413,7 @@ export class CoreAPI {
     });
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-    
+
     const txSettings = Object.assign(
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,

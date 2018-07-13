@@ -17,5 +17,6 @@
 "use strict";
 
 export const vaultAssertionErrors = {
-  INSUFFICIENT_BALANCE: () => "User does not have enough balance in vault.",
+  INSUFFICIENT_TOKEN_BALANCE: () => "User does not have enough balance of the token in vault.",
+  INSUFFICIENT_SET_TOKENS_BALANCE: () => "User does not have enough balance of tokens in vault.",
 };

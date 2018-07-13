@@ -31,6 +31,30 @@ export class VaultAssertions {
   }
 
   /**
+   * Throws if the Vault doesn't have enough of token
+   *
+   * @param  vaultInstance    An instance of the Vault contract
+   * @param  tokenAddress     An instance of the Set token contract
+   * @param  ownerAddress     Address of owner withdrawing from vault
+   * @param  quantityInWei    Amount of a Set in wei
+   * @return                  Void Promise
+   */
+  public async hasSufficientTokenBalance(
+    vaultInstance: VaultContract,
+    tokenAddress: Address,
+    ownerAddress: Address,
+    quantityInWei: BigNumber,
+    errorMessage: string,
+  ): Promise<void> {
+    // Assert that user has sufficient balance of Set
+    const ownerBalance = await vaultInstance.getOwnerBalance.callAsync(ownerAddress, tokenAddress);
+
+    if (ownerBalance.lt(quantityInWei)) {
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
    * Throws if the Set doesn't have a sufficient balance for its tokens in the Vault
    *
    * @param  vaultInstance    An instance of the Vault contract
@@ -38,7 +62,7 @@ export class VaultAssertions {
    * @param  quantityInWei    Amount of a Set in wei
    * @return                  Void Promise
    */
-  public async hasSufficientBalances(
+  public async hasSufficientSetTokensBalances(
     vaultInstance: VaultContract,
     setTokenInstance: SetTokenContract,
     quantityInWei: BigNumber,
