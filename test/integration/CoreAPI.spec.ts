@@ -390,29 +390,44 @@ describe("Core API", () => {
 
     test("withdraws a token from the vault with valid parameters", async () => {
       const tokenAddress = tokenAddresses[0];
-      let userBalance = await vaultWrapper.getOwnerBalance.callAsync(
+      let userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
         ACCOUNTS[0].address,
         tokenAddress,
       );
-      expect(Number(userBalance)).to.equal(100);
+      expect(Number(userVaultBalance)).to.equal(100);
+
+      const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
+      const oldUserTokenBalance = await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address);
+
       const txHash = await coreAPI.withdraw(
         ACCOUNTS[0].address,
         tokenAddress,
         new BigNumber(100),
         txDefaults,
       );
-      userBalance = await vaultWrapper.getOwnerBalance.callAsync(ACCOUNTS[0].address, tokenAddress);
-      expect(Number(userBalance)).to.equal(0);
+
+      const newUserTokenBalance = await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address);
+      expect(Number(oldUserTokenBalance)).to.equal(Number(newUserTokenBalance.plus(100)));
+
+      userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
+        ACCOUNTS[0].address,
+        tokenAddress,
+      );
+      expect(Number(userVaultBalance)).to.equal(0);
     });
 
     test("batch withdraws tokens from the vault with valid parameters", async () => {
       const quantities = tokenAddresses.map(() => new BigNumber(100));
+      const oldTokenBalances = [];
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
             ACCOUNTS[0].address,
             tokenAddress,
           );
+
+          const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
+          oldTokenBalances.push(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address));
           expect(Number(userBalance)).to.equal(100);
         }),
       );
@@ -423,10 +438,14 @@ describe("Core API", () => {
         txDefaults,
       );
       await Promise.all(
-        tokenAddresses.map(async tokenAddress => {
+        tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
             ACCOUNTS[0].address,
             tokenAddress,
+          );
+          const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
+          expect(Number(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(
+            Number(oldTokenBalances[index].plus(100)),
           );
           expect(Number(userBalance)).to.equal(0);
         }),

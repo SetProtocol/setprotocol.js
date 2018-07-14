@@ -346,6 +346,9 @@ export class CoreAPI {
 
     const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
 
+    const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+    this.assert.erc20.implementsERC20(detailedERC20Contract);
+
     await this.assert.vault.hasSufficientTokenBalance(
       vaultContract,
       tokenAddress,
@@ -527,7 +530,11 @@ export class CoreAPI {
           coreAPIErrors.STRING_CANNOT_BE_EMPTY("tokenAddress"),
         );
         this.assert.schema.isValidAddress("tokenAddress", tokenAddress);
+
         const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
+
+        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        this.assert.erc20.implementsERC20(detailedERC20Contract);
 
         // Check balance
         await this.assert.vault.hasSufficientTokenBalance(
@@ -540,7 +547,7 @@ export class CoreAPI {
       }),
     );
     // Quantity assertions
-    quantitiesInWei.map(quantity => {
+    _.each(quantitiesInWei, quantity => {
       this.assert.common.greaterThanZero(
         quantity,
         coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
