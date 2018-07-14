@@ -95,6 +95,8 @@ describe("Core API", () => {
     expect(new CoreAPI(web3, coreInstance.address));
   });
 
+  /* ============ Create ============ */
+
   describe("create", async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
@@ -129,6 +131,8 @@ describe("Core API", () => {
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal("SetTokenCreated");
     });
   });
+
+  /* ============ Issue ============ */
 
   describe("issue", async () => {
     let coreAPI: CoreAPI;
@@ -168,6 +172,8 @@ describe("Core API", () => {
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal("IssuanceComponentDeposited");
     });
   });
+
+  /* ============ Redeem ============ */
 
   describe("redeem", async () => {
     let coreAPI: CoreAPI;
@@ -212,6 +218,8 @@ describe("Core API", () => {
       expect(Number(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(0);
     });
   });
+
+  /* ============ Redeem and Withdraw ============ */
 
   describe("redeemAndWithdraw", async () => {
     let coreAPI: CoreAPI;
@@ -282,6 +290,8 @@ describe("Core API", () => {
       expect(Number(await setTokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(0);
     });
   });
+
+  /* ============ Deposit ============ */
 
   describe("deposit", async () => {
     let coreAPI: CoreAPI;
@@ -450,6 +460,36 @@ describe("Core API", () => {
           expect(Number(userBalance)).to.equal(0);
         }),
       );
+    });
+    /* ============ Core State Getters ============ */
+    describe("Core State Getters", async () => {
+      let coreAPI: CoreAPI;
+
+      beforeEach(async () => {
+        coreAPI = await initializeCoreAPI(provider);
+      });
+
+      test("gets transfer proxy address", async () => {
+        const transferProxyAddress = await coreAPI.getTransferProxyAddress();
+        expect(coreAPI.transferProxyAddress).to.equal(transferProxyAddress);
+      });
+
+      test("gets vault address", async () => {
+        const vaultAddress = await coreAPI.getVaultAddress();
+        expect(coreAPI.vaultAddress).to.equal(vaultAddress);
+      });
+
+      test("gets factory addresses", async () => {
+        const factoryAddresses = await coreAPI.getFactories();
+        console.log("factoryAddresses", factoryAddresses);
+        // expect(coreAPI.vaultAddress).to.equal(vaultAddress);
+      });
+
+      test("gets is valid factory address", async () => {
+        let isValidVaultAddress = await coreAPI.getIsValidFactory(coreAPI.vaultAddress);
+        expect(isValidVaultAddress);
+        isValidVaultAddress = await coreAPI.getIsValidFactory();
+      });
     });
   });
 });

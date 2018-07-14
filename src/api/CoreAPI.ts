@@ -67,6 +67,8 @@ export class CoreAPI {
     }
   }
 
+  /* ============ Public Functions ============ */
+
   /**
    * Create a new Set, specifying the components, units, name, symbol to use.
    *
@@ -568,5 +570,64 @@ export class CoreAPI {
     );
 
     return txHash;
+  }
+
+  /* ============ Core State Getters ============ */
+
+  /*
+   * Asynchronously gets the exchange address for a given exhange id
+   *
+   * @param  exchangeId Enum id of the exchange
+   * @return            An exchange address
+   */
+  public async getExchangeAddress(exchangeId: number): Address {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const exchangeAddress = await coreInstance.exchanges(exchangeId);
+    return exchangeAddress;
+  }
+
+  /*
+   * Asynchronously gets the transfer proxy address
+   *
+   * @return Transfer proxy address
+   */
+  public async getTransferProxyAddress(): Address {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const transferProxyAddress = await coreInstance.transferProxyAddress.callAsync();
+    return transferProxyAddress;
+  }
+
+  /*
+   * Asynchronously gets the vault address
+   *
+   * @return Vault address
+   */
+  public async getVaultAddress(): Address {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const vaultAddress = await coreInstance.vaultAddress.callAsync();
+    return vaultAddress;
+  }
+
+  /*
+   * Asynchronously gets factory addresses
+   *
+   * @return Array of factory addresses
+   */
+  public async getFactories(): Address[] {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const factoryAddresses = await coreInstance.factories.callAsync();
+    return factoryAddresses;
+  }
+
+  /*
+   * Asynchronously validates if an address is a valid factory address
+   *
+   * @return Boolean equalling if factory address is valid
+   */
+  public async getIsValidFactory(factoryAddress: Address): boolean {
+    this.assert.schema.isValidAddress("factoryAddress", factoryAddress);
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const isValidFactoryAddress = await coreInstance.validFactories.callAsync(factoryAddress);
+    return isValidFactoryAddress;
   }
 }
