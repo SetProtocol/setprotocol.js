@@ -20,8 +20,15 @@ import * as _ from "lodash";
 import * as Web3 from "web3";
 
 import { Assertions } from "../assertions";
+import {
+  BaseContract,
+  ContractWrapper,
+  CoreContract,
+  SetTokenContract,
+  VaultContract,
+} from "../contracts";
+import { Address } from "../types/common";
 import { BigNumber } from "../util";
-import { BaseContract, ContractWrapper, CoreContract, SetTokenContract } from "../contracts";
 
 /**
  * @title ContractsAPI
@@ -49,7 +56,7 @@ export class ContractsAPI {
    * @return                    The Core Contract
    */
   public async loadCoreAsync(
-    coreAddress: string,
+    coreAddress: Address,
     transactionOptions: object = {},
   ): Promise<CoreContract> {
     this.assert.schema.isValidAddress("coreAddress", coreAddress);
@@ -73,7 +80,7 @@ export class ContractsAPI {
    * @return                    The Set Token Contract
    */
   public async loadSetTokenAsync(
-    setTokenAddress: string,
+    setTokenAddress: Address,
     transactionOptions: object = {},
   ): Promise<SetTokenContract> {
     this.assert.schema.isValidAddress("setTokenAddress", setTokenAddress);
@@ -94,22 +101,55 @@ export class ContractsAPI {
   }
 
   /**
+   * Load Vault contract
+   *
+   * @param  vaultAddress       Address of the Vault contract
+   * @param  transactionOptions Options sent into the contract deployed method
+   * @return                    The Vault Contract
+   */
+  public async loadVaultAsync(
+    vaultAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<VaultContract> {
+    this.assert.schema.isValidAddress("vaultAddress", vaultAddress);
+    const cacheKey = this.getCoreCacheKey(vaultAddress);
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as VaultContract;
+    } else {
+      const vaultContract = await VaultContract.at(vaultAddress, this.web3, transactionOptions);
+      this.cache[cacheKey] = vaultContract;
+      return vaultContract;
+    }
+  }
+
+  /**
    * Creates a string used for accessing values in the core cache
    *
-   * @param  coreAddress        Address of the Core contract to use
-   * @return                    The cache key
+   * @param  coreAddress Address of the Core contract to use
+   * @return             The cache key
    */
-  private getCoreCacheKey(coreAddress: string): string {
+  private getCoreCacheKey(coreAddress: Address): string {
     return `Core_${coreAddress}`;
   }
 
   /**
    * Creates a string used for accessing values in the set token cache
    *
-   * @param  setTokenAddress        Address of the Core contract to use
-   * @return                    The cache key
+   * @param  setTokenAddress Address of the Set Token contract to use
+   * @return                 The cache key
    */
-  private getSetTokenCacheKey(setTokenAddress: string): string {
+  private getSetTokenCacheKey(setTokenAddress: Address): string {
     return `SetToken_${setTokenAddress}`;
+  }
+
+  /**
+   * Creates a string used for accessing values in the vault cache
+   *
+   * @param  vaultAddress Address of the Vault contract to use
+   * @return              The cache key
+   */
+  private getVaultCacheKey(vaultAddress: Address): string {
+    return `Vault_${vaultAddress}`;
   }
 }
