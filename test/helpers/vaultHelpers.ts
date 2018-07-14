@@ -34,7 +34,7 @@ const txDefaults = {
   gas: DEFAULT_GAS_LIMIT,
 };
 
-export const initializeVaultAPI = async (provider: Web3.Provider, coreAddress: Address) => {
+export const initializeVaultAPI = async (provider: Web3.Provider, vaultAddress: Address) => {
   const vaultContract = contract(Vault);
   vaultContract.setProvider(provider);
   vaultContract.defaults(txDefaults);
@@ -42,8 +42,8 @@ export const initializeVaultAPI = async (provider: Web3.Provider, coreAddress: A
   // Instantiate web3
   const web3 = new Web3(provider);
 
-  // Deploy Vault
-  vaultWrapper = await VaultContract.at(coreAddress, web3, txDefaults);
+  // Instantiate VaultAPI
+  vaultWrapper = await VaultContract.at(vaultAddress, web3, txDefaults);
   const vaultAPI = new VaultAPI(web3, vaultWrapper.address);
   return vaultAPI;
 };
