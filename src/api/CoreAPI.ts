@@ -613,6 +613,7 @@ export class CoreAPI {
    *
    * @return Array of factory addresses
    */
+
   public async getFactories(): Address[] {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const factoryAddresses = await coreInstance.factories.callAsync();
@@ -622,12 +623,38 @@ export class CoreAPI {
   /*
    * Asynchronously validates if an address is a valid factory address
    *
-   * @return Boolean equalling if factory address is valid
+   * @param  factoryAddress Address of the factory contract
+   * @return                Boolean equalling if factory address is valid
    */
   public async getIsValidFactory(factoryAddress: Address): boolean {
     this.assert.schema.isValidAddress("factoryAddress", factoryAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidFactoryAddress = await coreInstance.validFactories.callAsync(factoryAddress);
     return isValidFactoryAddress;
+  }
+
+  /*
+   * Asynchronously gets Set addresses
+   *
+   * @return Array of Set addresses
+   */
+
+  public async getSetAddresses(): Address[] {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const setAddresses = await coreInstance.setTokens.callAsync();
+    return setAddresses;
+  }
+
+  /*
+   * Asynchronously validates if an address is a valid Set address
+   *
+   * @param  setAddress Address of the Set contract
+   * @return            Boolean equalling if Set address is valid
+   */
+  public async getIsValidSet(setAddress: Address): boolean {
+    this.assert.schema.isValidAddress("setAddress", setAddress);
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const isValidSetAddress = await coreInstance.validSets.callAsync(setAddress);
+    return isValidSetAddress;
   }
 }

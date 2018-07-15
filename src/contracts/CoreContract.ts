@@ -1115,7 +1115,6 @@ export class CoreContract extends BaseContract {
     const web3Utils = new Web3Utils(web3);
     const contractExists = await web3Utils.doesContractExistAtAddressAsync(address);
     const currentNetwork = await web3Utils.getNetworkIdAsync();
-
     if (contractExists) {
       const web3ContractInstance = web3.eth.contract(abi).at(address);
 
