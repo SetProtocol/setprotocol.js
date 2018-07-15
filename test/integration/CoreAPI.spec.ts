@@ -494,16 +494,6 @@ describe("Core API", () => {
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
     });
 
-    test("gets transfer proxy address", async () => {
-      const transferProxyAddress = await coreAPI.getTransferProxyAddress();
-      expect(coreAPI.transferProxyAddress).to.equal(transferProxyAddress);
-    });
-
-    test("gets vault address", async () => {
-      const vaultAddress = await coreAPI.getVaultAddress();
-      expect(coreAPI.vaultAddress).to.equal(vaultAddress);
-    });
-
     /* Enable this when we add exchange functionality
      *
     test("gets exchange address", async () => {
@@ -513,6 +503,16 @@ describe("Core API", () => {
       expect(exchangeAddress).to.equal();
     };
     */
+
+    test("gets transfer proxy address", async () => {
+      const transferProxyAddress = await coreAPI.getTransferProxyAddress();
+      expect(coreAPI.transferProxyAddress).to.equal(transferProxyAddress);
+    });
+
+    test("gets vault address", async () => {
+      const vaultAddress = await coreAPI.getVaultAddress();
+      expect(coreAPI.vaultAddress).to.equal(vaultAddress);
+    });
 
     test("gets factory addresses", async () => {
       const factoryAddresses = await coreAPI.getFactories();

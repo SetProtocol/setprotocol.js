@@ -621,6 +621,18 @@ export class CoreAPI {
   }
 
   /*
+   * Asynchronously gets Set addresses
+   *
+   * @return Array of Set addresses
+   */
+
+  public async getSetAddresses(): Address[] {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const setAddresses = await coreInstance.setTokens.callAsync();
+    return setAddresses;
+  }
+
+  /*
    * Asynchronously validates if an address is a valid factory address
    *
    * @param  factoryAddress Address of the factory contract
@@ -631,18 +643,6 @@ export class CoreAPI {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidFactoryAddress = await coreInstance.validFactories.callAsync(factoryAddress);
     return isValidFactoryAddress;
-  }
-
-  /*
-   * Asynchronously gets Set addresses
-   *
-   * @return Array of Set addresses
-   */
-
-  public async getSetAddresses(): Address[] {
-    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-    const setAddresses = await coreInstance.setTokens.callAsync();
-    return setAddresses;
   }
 
   /*
