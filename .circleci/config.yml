@@ -2,6 +2,9 @@ version: 2
 
 jobs:
   build:
+    dependencies:
+        pre:
+            - yarn global add truffle
     docker:
       - image: circleci/node:9.6.1
     steps:
