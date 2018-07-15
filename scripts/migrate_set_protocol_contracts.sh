@@ -18,12 +18,12 @@ echo -e "${CYAN}Installing Set Protocol contract deployment dependencies...${NO_
 yarn install >> $LOGS 2>&1
 echo -e "\n"
 
-echo -e "${CYAN}Running Set Protocol smart contract migrations...${NO_COLOR}"
-truffle migrate --network development
-echo -e "\n"
-
 echo -e "${CYAN}Transpiling newly generated artifacts for usage in the setProtocol.js repo...${NO_COLOR}"
 yarn run dist >> $LOGS 2>&1
+echo -e "\n"
+
+echo -e "${CYAN}Running Set Protocol smart contract migrations...${NO_COLOR}"
+truffle migrate --network development
 echo -e "\n"
 
 echo -e "${CYAN}Set Protocol Contracts migration complete!${NO_COLOR}"
