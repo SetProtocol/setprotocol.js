@@ -42,6 +42,7 @@ import {
 import {
   DEFAULT_GAS_PRICE,
   DEFAULT_GAS_LIMIT,
+  NULL_ADDRESS,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
 } from "../../src/constants";
 import { Web3Utils } from "../../src/util/Web3Utils";
@@ -95,6 +96,8 @@ describe("Core API", () => {
     expect(new CoreAPI(web3, coreInstance.address));
   });
 
+  /* ============ Create ============ */
+
   describe("create", async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
@@ -129,6 +132,8 @@ describe("Core API", () => {
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal("SetTokenCreated");
     });
   });
+
+  /* ============ Issue ============ */
 
   describe("issue", async () => {
     let coreAPI: CoreAPI;
@@ -168,6 +173,8 @@ describe("Core API", () => {
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal("IssuanceComponentDeposited");
     });
   });
+
+  /* ============ Redeem ============ */
 
   describe("redeem", async () => {
     let coreAPI: CoreAPI;
@@ -212,6 +219,8 @@ describe("Core API", () => {
       expect(Number(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(0);
     });
   });
+
+  /* ============ Redeem and Withdraw ============ */
 
   describe("redeemAndWithdraw", async () => {
     let coreAPI: CoreAPI;
@@ -282,6 +291,8 @@ describe("Core API", () => {
       expect(Number(await setTokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(0);
     });
   });
+
+  /* ============ Deposit ============ */
 
   describe("deposit", async () => {
     let coreAPI: CoreAPI;
@@ -371,7 +382,6 @@ describe("Core API", () => {
         provider,
       );
 
-      const setToCreate = testSets[0];
       const vaultContract = contract(Vault);
       vaultContract.setProvider(provider);
       vaultContract.defaults(txDefaults);
@@ -450,6 +460,84 @@ describe("Core API", () => {
           expect(Number(userBalance)).to.equal(0);
         }),
       );
+    });
+  });
+
+  /* ============ Core State Getters ============ */
+  describe("Core State Getters", async () => {
+    let coreAPI: CoreAPI;
+    let setTokenFactoryAddress: Address;
+    let setTokenAddress: Address;
+
+    beforeEach(async () => {
+      coreAPI = await initializeCoreAPI(provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+
+      setToCreate = testSets[0];
+      componentAddresses = await deployTokensForSetWithApproval(
+        setToCreate,
+        coreAPI.transferProxyAddress,
+        provider,
+      );
+
+      // Create a Set
+      const txHash = await coreAPI.create(
+        ACCOUNTS[0].address,
+        setTokenFactoryAddress,
+        componentAddresses,
+        setToCreate.units,
+        setToCreate.naturalUnit,
+        setToCreate.setName,
+        setToCreate.setSymbol,
+      );
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+    });
+
+    /* Enable this when we add exchange functionality
+     *
+    test("gets exchange address", async () => {
+      const exchangeId = 0;
+      const exchangeAddress = await coreAPI.getExchangeAddress(exchangeId);
+      // TODO: Fill the `equal` with an exchange address when we get exchange functionality working
+      expect(exchangeAddress).to.equal();
+    };
+    */
+
+    test("gets transfer proxy address", async () => {
+      const transferProxyAddress = await coreAPI.getTransferProxyAddress();
+      expect(coreAPI.transferProxyAddress).to.equal(transferProxyAddress);
+    });
+
+    test("gets vault address", async () => {
+      const vaultAddress = await coreAPI.getVaultAddress();
+      expect(coreAPI.vaultAddress).to.equal(vaultAddress);
+    });
+
+    test("gets factory addresses", async () => {
+      const factoryAddresses = await coreAPI.getFactories();
+      expect(factoryAddresses.length).to.equal(1);
+      expect(factoryAddresses[0]).to.equal(setTokenFactoryAddress);
+    });
+
+    test("gets Set addresses", async () => {
+      const setAddresses = await coreAPI.getSetAddresses();
+      expect(setAddresses.length).to.equal(1);
+      expect(setAddresses[0]).to.equal(setTokenAddress);
+    });
+
+    test("gets is valid factory address", async () => {
+      let isValidVaultAddress = await coreAPI.getIsValidFactory(setTokenFactoryAddress);
+      expect(isValidVaultAddress).to.equal(true);
+      isValidVaultAddress = await coreAPI.getIsValidFactory(NULL_ADDRESS);
+      expect(isValidVaultAddress).to.equal(false);
+    });
+
+    test("gets is valid Set address", async () => {
+      let isValidSetAddress = await coreAPI.getIsValidSet(setTokenAddress);
+      expect(isValidSetAddress).to.equal(true);
+      isValidSetAddress = await coreAPI.getIsValidSet(NULL_ADDRESS);
+      expect(isValidSetAddress).to.equal(false);
     });
   });
 });
