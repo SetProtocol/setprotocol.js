@@ -7,7 +7,7 @@ jobs:
     steps:
         - checkout
         - run:
-            name: global installs
+            name: globals
             command: yarn global add truffle
         - run: yarn
         - run:
