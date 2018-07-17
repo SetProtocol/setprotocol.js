@@ -21,7 +21,6 @@
     "tslint": "tslint -c tslint.json -p tsconfig.json",
     "watch-ts": "tsc -w",
     "playground": "yarn run build-ts; node dist/playground",
-    "tslint-check": "tslint-config-prettier-check ./tslint.json",
     "precommit": "lint-staged",
     "clean-docs": "rm -rf documentation/interfaces; rm -rf documentation/modules; rm -rf documentation/README.md",
     "docs": "rm -rf documentation/classes; typedoc --theme markdown --excludeExternals  --externalPattern \"**/node_modules/**\" --ignoreCompilerErrors --out documentation/ src/api; yarn run clean-docs",
@@ -46,10 +45,9 @@
     "husky": "^0.14.3",
     "jest": "^22.1.4",
     "lint-staged": "^6.0.1",
-    "prettier": "1.10.2",
     "ts-jest": "^22.0.1",
     "tslint": "^5.9.1",
-    "tslint-config-prettier": "^1.6.0",
+    "tslint-eslint-rules": "^5.3.1",
     "typedoc": "^0.11.1",
     "typedoc-plugin-markdown": "^1.1.6",
     "typescript": "^2.6.2"
@@ -78,11 +76,11 @@
   },
   "lint-staged": {
     "src/**/*.ts": [
-      "prettier --parser typescript --write",
+      "yarn tslint --fix",
       "git add"
     ],
     "test/**/*.ts": [
-      "prettier --parser typescript --write",
+      "yarn tslint --fix",
       "git add"
     ]
   },

@@ -7,7 +7,8 @@
         ],
         "indent": [
             true,
-            "spaces"
+            "spaces",
+            2
         ],
         "one-line": [
             true,
@@ -17,7 +18,8 @@
         "no-var-keyword": true,
         "quotemark": [
             true,
-            "double",
+            "single",
+            "jsx-double",
             "avoid-escape"
         ],
         "semicolon": [
@@ -55,9 +57,34 @@
         "no-trailing-whitespace": true,
         "no-null-keyword": true,
         "prefer-const": true,
-        "jsdoc-format": true
+        "jsdoc-format": true,
+        "arrow-parens": [true, "ban-single-arg-parens"],
+        "no-mixed-spaces-and-tabs": [
+            true,
+            "smart-tabs"
+        ],
+        "trailing-comma": [
+          true,
+          {
+            "multiline": {
+              "objects": "always",
+              "arrays": "always"
+            }
+          }
+        ],
+        "max-line-length": [
+            true,
+            100
+        ],
+        "ter-no-mixed-spaces-and-tabs": [
+            true,
+            {
+                "type": "tabs",
+                "smartTabs": true
+            }
+        ]
     },
     "extends": [
-        "tslint-config-prettier"
+        "tslint-eslint-rules"
     ]
 }
