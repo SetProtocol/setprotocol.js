@@ -1,4 +1,4 @@
-import { BigNumber } from '../src/util';
+import { BigNumber } from "../src/util";
 
 interface Component {
   name: string;
@@ -21,40 +21,37 @@ export const testSets: TestSet[] = [
   {
     setName: "StableSet",
     setSymbol: "STBL",
-    targetPriceInUSD: 1.00,
+    targetPriceInUSD: 1.0,
     components: [
       {
         name: "TrueUSD",
         symbol: "TUSD",
         decimals: 18,
-        price: 1.00,
-        supply: 12013114 * 10 ** 18
+        price: 1.0,
+        supply: 12013114 * 10 ** 18,
       },
       {
         name: "Dai",
         symbol: "Dai",
         decimals: 18,
-        price: 1.00,
-        supply: 29028274 * 10 ** 18
+        price: 1.0,
+        supply: 29028274 * 10 ** 18,
       },
     ],
-    units: [
-      new BigNumber(5),
-      new BigNumber(5),
-    ],
+    units: [new BigNumber(5), new BigNumber(5)],
     naturalUnit: new BigNumber(10),
   },
   {
     setName: "Decentralized Exchange",
     setSymbol: "DEX",
-    targetPriceInUSD: 100.00,
+    targetPriceInUSD: 100.0,
     components: [
       {
         name: "0x Protocol",
         symbol: "ZRX",
         decimals: 18,
         price: 1.16,
-        supply: 1000000000 * 10 ** 18
+        supply: 1000000000 * 10 ** 18,
       },
       {
         name: "Kyber Network",
@@ -68,27 +65,23 @@ export const testSets: TestSet[] = [
         symbol: "AST",
         decimals: 4,
         price: 0.54,
-        supply: 500000000 * 10 ** 4
+        supply: 500000000 * 10 ** 4,
       },
     ],
-    units: [
-      new BigNumber(505823196193389),
-      new BigNumber(129066795398825),
-      new BigNumber(1),
-    ],
+    units: [new BigNumber(505823196193389), new BigNumber(129066795398825), new BigNumber(1)],
     naturalUnit: new BigNumber(10 ** 13),
   },
   {
     setName: "EthereumX",
     setSymbol: "ETHX",
-    targetPriceInUSD: 100.00,
+    targetPriceInUSD: 100.0,
     components: [
       {
         name: "VeChain",
         symbol: "VEN",
         decimals: 18,
-        price: 4.60,
-        supply: 873378637 * 10 ** 18
+        price: 4.6,
+        supply: 873378637 * 10 ** 18,
       },
       {
         name: "OmiseGO",
@@ -101,15 +94,15 @@ export const testSets: TestSet[] = [
         name: "ICON",
         symbol: "ICX",
         decimals: 18,
-        price: 4.40,
-        supply: 400228740 * 10 ** 18
+        price: 4.4,
+        supply: 400228740 * 10 ** 18,
       },
       {
         name: "BinanceCoin",
         symbol: "BNB",
         decimals: 18,
         price: 14.16,
-        supply: 194972068 * 10 ** 18
+        supply: 194972068 * 10 ** 18,
       },
       {
         name: "Aeternity",
@@ -122,36 +115,36 @@ export const testSets: TestSet[] = [
         name: "Bytom",
         symbol: "BTM",
         decimals: 8,
-        price: 1.00,
-        supply: 1407000000 * 10 ** 8
+        price: 1.0,
+        supply: 1407000000 * 10 ** 8,
       },
       {
         name: "Populous",
         symbol: "PPT",
         decimals: 8,
         price: 23.43,
-        supply: 53252246 * 10 ** 8
+        supply: 53252246 * 10 ** 8,
       },
       {
         name: "Zilliqa",
         symbol: "ZIL",
         decimals: 12,
         price: 0.103,
-        supply: 12600000000 * 10 **12,
+        supply: 12600000000 * 10 ** 12,
       },
       {
         name: "Maker",
         symbol: "MKR",
         decimals: 18,
         price: 1040.96,
-        supply: 1000000 * 10 ** 18
+        supply: 1000000 * 10 ** 18,
       },
       {
         name: "RChain",
         symbol: "RHOC",
         decimals: 8,
         price: 1.75,
-        supply: 870663574 * 10 ** 8
+        supply: 870663574 * 10 ** 8,
       },
     ],
     units: [
