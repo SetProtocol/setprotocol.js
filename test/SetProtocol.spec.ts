@@ -14,28 +14,28 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
 // Given that this is an integration test, we unmock the Set Protocol
 // smart contracts artifacts package to pull the most recently
 // deployed contracts on the current network.
-jest.unmock("set-protocol-contracts");
+jest.unmock('set-protocol-contracts');
 
-import * as chai from "chai";
-import * as Web3 from "web3";
+import * as chai from 'chai';
+import * as Web3 from 'web3';
 
-import { Core, TransferProxy, Vault } from "set-protocol-contracts";
+import { Core, TransferProxy, Vault } from 'set-protocol-contracts';
 
-import { ACCOUNTS } from "./accounts";
-import SetProtocol from "../src";
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../src/constants";
-import { Web3Utils } from "../src/util/Web3Utils";
+import { ACCOUNTS } from './accounts';
+import SetProtocol from '../src';
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../src/constants';
+import { Web3Utils } from '../src/util/Web3Utils';
 
 const { expect } = chai;
 
-const contract = require("truffle-contract");
+const contract = require('truffle-contract');
 
-const provider = new Web3.providers.HttpProvider("http://localhost:8545");
+const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
@@ -59,7 +59,7 @@ vaultContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
 
-describe("SetProtocol", async () => {
+describe('SetProtocol', async () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
   });
@@ -68,7 +68,7 @@ describe("SetProtocol", async () => {
     web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test("should instantiate a new setProtocolInstance", async () => {
+  test('should instantiate a new setProtocolInstance', async () => {
     // Deploy Core
     const coreContractInstance = await coreContract.new();
     const transferProxyInstance = await transferProxyContract.new();

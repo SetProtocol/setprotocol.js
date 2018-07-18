@@ -14,9 +14,8 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import { ValidatorResult } from "../schemas";
 
 export const setTokenAssertionsErrors = {
   IS_NOT_A_VALID_SET: (setAddress: string) =>

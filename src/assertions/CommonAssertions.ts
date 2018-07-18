@@ -14,9 +14,9 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import { BigNumber } from "../util";
+import { BigNumber } from '../util';
 
 export class CommonAssertions {
   public greaterThanZero(quantity: BigNumber, errorMessage: string) {

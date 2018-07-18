@@ -1,6 +1,5 @@
-import * as _ from "lodash";
 
-import { BigNumber } from "../util";
+import { BigNumber } from '../util';
 
 export type Address = string;
 export type Bytes32 = string;

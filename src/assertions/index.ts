@@ -14,19 +14,19 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
 // External
-import * as Web3 from "web3";
+import * as Web3 from 'web3';
 
 // Assertions
-import { AccountAssertions } from "./AccountAssertions";
-import { CommonAssertions } from "./CommonAssertions";
-import { CoreAssertions } from "./CoreAssertions";
-import { ERC20Assertions } from "./ERC20Assertions";
-import { SchemaAssertions } from "./SchemaAssertions";
-import { SetTokenAssertions } from "./SetTokenAssertions";
-import { VaultAssertions } from "./VaultAssertions";
+import { AccountAssertions } from './AccountAssertions';
+import { CommonAssertions } from './CommonAssertions';
+import { CoreAssertions } from './CoreAssertions';
+import { ERC20Assertions } from './ERC20Assertions';
+import { SchemaAssertions } from './SchemaAssertions';
+import { SetTokenAssertions } from './SetTokenAssertions';
+import { VaultAssertions } from './VaultAssertions';
 
 export class Assertions {
   public account: AccountAssertions;

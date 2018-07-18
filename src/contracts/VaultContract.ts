@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
 /**
  * This file is auto-generated using abi-gen. Don't edit directly.
@@ -22,13 +22,13 @@
  */
 // tslint:disable-next-line:no-unused-variable
 
-import { promisify } from "@0xproject/utils";
-import { Vault as ContractArtifacts } from "set-protocol-contracts";
-import * as Web3 from "web3";
+import { promisify } from '@0xproject/utils';
+import { Vault as ContractArtifacts } from 'set-protocol-contracts';
+import * as Web3 from 'web3';
 
-import { BaseContract, CONTRACT_WRAPPER_ERRORS } from "./BaseContract";
-import { TxData, TxDataPayable } from "../types/common";
-import { BigNumber, classUtils, Web3Utils } from "../util";
+import { BaseContract, CONTRACT_WRAPPER_ERRORS } from './BaseContract';
+import { TxData } from '../types/common';
+import { BigNumber, classUtils, Web3Utils } from '../util';
 
 export class VaultContract extends BaseContract {
   public addAuthorizedAddress = {
@@ -453,7 +453,6 @@ export class VaultContract extends BaseContract {
   };
   async deploy(...args: any[]): Promise<any> {
     const wrapper = this;
-    const rejected = false;
 
     return new Promise((resolve, reject) => {
       wrapper.web3ContractInstance.new(
@@ -489,12 +488,12 @@ export class VaultContract extends BaseContract {
       return new VaultContract(web3ContractInstance, defaults);
     } else {
       throw new Error(
-        CONTRACT_WRAPPER_ERRORS.CONTRACT_NOT_FOUND_ON_NETWORK("Vault", currentNetwork),
+        CONTRACT_WRAPPER_ERRORS.CONTRACT_NOT_FOUND_ON_NETWORK('Vault', currentNetwork),
       );
     }
   }
   constructor(web3ContractInstance: Web3.ContractInstance, defaults: Partial<TxData>) {
     super(web3ContractInstance, defaults);
-    classUtils.bindAll(this, ["web3ContractInstance", "defaults"]);
+    classUtils.bindAll(this, ['web3ContractInstance', 'defaults']);
   }
 } // tslint:disable:max-file-line-count

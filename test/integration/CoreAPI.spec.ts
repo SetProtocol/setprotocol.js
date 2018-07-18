@@ -14,50 +14,46 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
 // Given that this is an integration test, we unmock the Set Protocol
 // smart contracts artifacts package to pull the most recently
 // deployed contracts on the current network.
-jest.unmock("set-protocol-contracts");
+jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
-import * as chai from "chai";
-import * as Web3 from "web3";
-import * as ABIDecoder from "abi-decoder";
-import * as _ from "lodash";
-import compact = require("lodash.compact");
+import * as chai from 'chai';
+import * as Web3 from 'web3';
+import * as ABIDecoder from 'abi-decoder';
 
-import { Core, StandardTokenMock, Vault } from "set-protocol-contracts";
+import { Core, Vault } from 'set-protocol-contracts';
 
-import { ACCOUNTS } from "../accounts";
-import { testSets, TestSet } from "../testSets";
-import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from "../logs";
-import { CoreAPI } from "../../src/api";
+import { ACCOUNTS } from '../accounts';
+import { testSets, TestSet } from '../testSets';
+import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../logs';
+import { CoreAPI } from '../../src/api';
 import {
   DetailedERC20Contract,
-  StandardTokenMockContract,
   VaultContract,
-} from "../../src/contracts";
+} from '../../src/contracts';
 import {
   DEFAULT_GAS_PRICE,
   DEFAULT_GAS_LIMIT,
   NULL_ADDRESS,
-  UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-} from "../../src/constants";
-import { Web3Utils } from "../../src/util/Web3Utils";
-import { BigNumber } from "../../src/util";
+} from '../../src/constants';
+import { Web3Utils } from '../../src/util/Web3Utils';
+import { BigNumber } from '../../src/util';
 import {
   initializeCoreAPI,
   deploySetTokenFactory,
   deployTokensForSetWithApproval,
-} from "../helpers/coreHelpers";
+} from '../helpers/coreHelpers';
 
-const contract = require("truffle-contract");
+const contract = require('truffle-contract');
 
 const { expect } = chai;
 
-const provider = new Web3.providers.HttpProvider("http://localhost:8545");
+const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
@@ -73,7 +69,7 @@ coreContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
 
-describe("Core API", () => {
+describe('Core API', () => {
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
   });
@@ -90,7 +86,7 @@ describe("Core API", () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test("CoreAPI can be instantiated", async () => {
+  test('CoreAPI can be instantiated', async () => {
     // deploy Core
     const coreInstance = await coreContract.new();
     expect(new CoreAPI(web3, coreInstance.address));
@@ -98,7 +94,7 @@ describe("Core API", () => {
 
   /* ============ Create ============ */
 
-  describe("create", async () => {
+  describe('create', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
@@ -116,7 +112,7 @@ describe("Core API", () => {
       );
     });
 
-    test("creates a new set with valid parameters", async () => {
+    test('creates a new set with valid parameters', async () => {
       const txHash = await coreAPI.create(
         ACCOUNTS[0].address,
         setTokenFactoryAddress,
@@ -126,16 +122,16 @@ describe("Core API", () => {
         setToCreate.setName,
         setToCreate.setSymbol,
       );
-      const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
+      await web3Utils.getTransactionReceiptAsync(txHash);
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      expect(formattedLogs[formattedLogs.length - 1].event).to.equal("SetTokenCreated");
+      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('SetTokenCreated');
     });
   });
 
   /* ============ Issue ============ */
 
-  describe("issue", async () => {
+  describe('issue', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
@@ -167,16 +163,16 @@ describe("Core API", () => {
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
     });
 
-    test("issues a new set with valid parameters", async () => {
+    test('issues a new set with valid parameters', async () => {
       const txHash = await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      expect(formattedLogs[formattedLogs.length - 1].event).to.equal("IssuanceComponentDeposited");
+      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('IssuanceComponentDeposited');
     });
   });
 
   /* ============ Redeem ============ */
 
-  describe("redeem", async () => {
+  describe('redeem', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
@@ -208,21 +204,20 @@ describe("Core API", () => {
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
 
       // Issue a Set to user
-      txHash = await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
-      formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
     });
 
-    test("redeems a set with valid parameters", async () => {
+    test('redeems a set with valid parameters', async () => {
       const tokenWrapper = await DetailedERC20Contract.at(setTokenAddress, web3, txDefaults);
       expect(Number(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(100);
-      const txHash = await coreAPI.redeem(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
+      txHash = await coreAPI.redeem(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
       expect(Number(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(0);
     });
   });
 
   /* ============ Redeem and Withdraw ============ */
 
-  describe("redeemAndWithdraw", async () => {
+  describe('redeemAndWithdraw', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
@@ -254,11 +249,10 @@ describe("Core API", () => {
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
 
       // Issue a Set to user
-      txHash = await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
-      formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
     });
 
-    test("redeems a set with valid parameters", async () => {
+    test('redeems a set with valid parameters', async () => {
       const setTokenWrapper = await DetailedERC20Contract.at(setTokenAddress, web3, txDefaults);
       const componentTokenWrapper = await DetailedERC20Contract.at(
         componentAddresses[0],
@@ -272,7 +266,7 @@ describe("Core API", () => {
       const quantity = new BigNumber(100);
 
       expect(Number(await setTokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(100);
-      const txHash = await coreAPI.redeemAndWithdraw(
+      await coreAPI.redeemAndWithdraw(
         ACCOUNTS[0].address,
         setTokenAddress,
         quantity,
@@ -294,7 +288,7 @@ describe("Core API", () => {
 
   /* ============ Deposit ============ */
 
-  describe("deposit", async () => {
+  describe('deposit', async () => {
     let coreAPI: CoreAPI;
     let tokenAddresses: Address[];
     let vaultWrapper: VaultContract;
@@ -316,14 +310,14 @@ describe("Core API", () => {
       vaultWrapper = await VaultContract.at(coreAPI.vaultAddress, web3, txDefaults);
     });
 
-    test("deposits a token into the vault with valid parameters", async () => {
+    test('deposits a token into the vault with valid parameters', async () => {
       const tokenAddress = tokenAddresses[0];
       let userBalance = await vaultWrapper.getOwnerBalance.callAsync(
         ACCOUNTS[0].address,
         tokenAddress,
       );
       expect(Number(userBalance)).to.equal(0);
-      const txHash = await coreAPI.deposit(
+      await coreAPI.deposit(
         ACCOUNTS[0].address,
         tokenAddress,
         new BigNumber(100),
@@ -333,7 +327,7 @@ describe("Core API", () => {
       expect(Number(userBalance)).to.equal(100);
     });
 
-    test("batch deposits tokens into the vault with valid parameters", async () => {
+    test('batch deposits tokens into the vault with valid parameters', async () => {
       const quantities = tokenAddresses.map(() => new BigNumber(100));
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
@@ -344,7 +338,7 @@ describe("Core API", () => {
           expect(Number(userBalance)).to.equal(0);
         }),
       );
-      const txHash = await coreAPI.batchDeposit(
+      await coreAPI.batchDeposit(
         ACCOUNTS[0].address,
         tokenAddresses,
         quantities,
@@ -362,7 +356,7 @@ describe("Core API", () => {
     });
   });
 
-  describe("withdraw", async () => {
+  describe('withdraw', async () => {
     let coreAPI: CoreAPI;
     let setToCreate: TestSet;
     let tokenAddresses: Address[];
@@ -386,7 +380,7 @@ describe("Core API", () => {
 
       // Batch deposits all the tokens
       const quantities = tokenAddresses.map(() => new BigNumber(100));
-      const txHash = await coreAPI.batchDeposit(
+      await coreAPI.batchDeposit(
         ACCOUNTS[0].address,
         tokenAddresses,
         quantities,
@@ -394,7 +388,7 @@ describe("Core API", () => {
       );
     });
 
-    test("withdraws a token from the vault with valid parameters", async () => {
+    test('withdraws a token from the vault with valid parameters', async () => {
       const tokenAddress = tokenAddresses[0];
       let userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
         ACCOUNTS[0].address,
@@ -405,7 +399,7 @@ describe("Core API", () => {
       const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
       const oldUserTokenBalance = await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address);
 
-      const txHash = await coreAPI.withdraw(
+      await coreAPI.withdraw(
         ACCOUNTS[0].address,
         tokenAddress,
         new BigNumber(100),
@@ -422,7 +416,7 @@ describe("Core API", () => {
       expect(Number(userVaultBalance)).to.equal(0);
     });
 
-    test("batch withdraws tokens from the vault with valid parameters", async () => {
+    test('batch withdraws tokens from the vault with valid parameters', async () => {
       const quantities = tokenAddresses.map(() => new BigNumber(100));
       const oldTokenBalances = [];
       await Promise.all(
@@ -437,7 +431,7 @@ describe("Core API", () => {
           expect(Number(userBalance)).to.equal(100);
         }),
       );
-      const txHash = await coreAPI.batchWithdraw(
+      await coreAPI.batchWithdraw(
         ACCOUNTS[0].address,
         tokenAddresses,
         quantities,
@@ -460,7 +454,7 @@ describe("Core API", () => {
   });
 
   /* ============ Core State Getters ============ */
-  describe("Core State Getters", async () => {
+  describe('Core State Getters', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setTokenAddress: Address;
@@ -500,36 +494,36 @@ describe("Core API", () => {
     };
     */
 
-    test("gets transfer proxy address", async () => {
+    test('gets transfer proxy address', async () => {
       const transferProxyAddress = await coreAPI.getTransferProxyAddress();
       expect(coreAPI.transferProxyAddress).to.equal(transferProxyAddress);
     });
 
-    test("gets vault address", async () => {
+    test('gets vault address', async () => {
       const vaultAddress = await coreAPI.getVaultAddress();
       expect(coreAPI.vaultAddress).to.equal(vaultAddress);
     });
 
-    test("gets factory addresses", async () => {
+    test('gets factory addresses', async () => {
       const factoryAddresses = await coreAPI.getFactories();
       expect(factoryAddresses.length).to.equal(1);
       expect(factoryAddresses[0]).to.equal(setTokenFactoryAddress);
     });
 
-    test("gets Set addresses", async () => {
+    test('gets Set addresses', async () => {
       const setAddresses = await coreAPI.getSetAddresses();
       expect(setAddresses.length).to.equal(1);
       expect(setAddresses[0]).to.equal(setTokenAddress);
     });
 
-    test("gets is valid factory address", async () => {
+    test('gets is valid factory address', async () => {
       let isValidVaultAddress = await coreAPI.getIsValidFactory(setTokenFactoryAddress);
       expect(isValidVaultAddress).to.equal(true);
       isValidVaultAddress = await coreAPI.getIsValidFactory(NULL_ADDRESS);
       expect(isValidVaultAddress).to.equal(false);
     });
 
-    test("gets is valid Set address", async () => {
+    test('gets is valid Set address', async () => {
       let isValidSetAddress = await coreAPI.getIsValidSet(setTokenAddress);
       expect(isValidSetAddress).to.equal(true);
       isValidSetAddress = await coreAPI.getIsValidSet(NULL_ADDRESS);

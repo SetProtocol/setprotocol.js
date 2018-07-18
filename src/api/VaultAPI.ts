@@ -14,14 +14,13 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import * as Web3 from "web3";
-import * as _ from "lodash";
+import * as Web3 from 'web3';
 
-import { ContractsAPI } from ".";
-import { Assertions } from "../assertions";
-import { Address } from "../types/common";
+import { ContractsAPI } from '.';
+import { Assertions } from '../assertions';
+import { Address } from '../types/common';
 
 /**
  * @title  VaultAPI
@@ -50,8 +49,8 @@ export class VaultAPI {
    * @return              The balance of the user's Set
    */
   public async getOwnerBalance(ownerAddress: Address, tokenAddress: Address): number {
-    this.assert.schema.isValidAddress("ownerAddress", ownerAddress);
-    this.assert.schema.isValidAddress("tokenAddress", tokenAddress);
+    this.assert.schema.isValidAddress('ownerAddress', ownerAddress);
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     const vaultInstance = await this.contracts.loadVaultAsync(this.vaultAddress);
     return await vaultInstance.getOwnerBalance.callAsync(ownerAddress, tokenAddress);
   }

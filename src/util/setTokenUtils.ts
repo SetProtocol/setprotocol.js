@@ -14,9 +14,9 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import { BigNumber } from ".";
+import { BigNumber } from '.';
 
 const TRANSFER_GAS_MAXIMUM = new BigNumber(70000);
 

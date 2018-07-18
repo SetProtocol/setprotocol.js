@@ -14,8 +14,8 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-export { ValidatorResult, Schema } from "jsonschema";
-export { SchemaValidator } from "./SchemaValidator";
-export { schemas } from "./schemas";
+export { ValidatorResult, Schema } from 'jsonschema';
+export { SchemaValidator } from './SchemaValidator';
+export { schemas } from './schemas';

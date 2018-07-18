@@ -56,13 +56,10 @@
         "no-internal-module": true,
         "no-trailing-whitespace": true,
         "no-null-keyword": true,
+        "no-unused-variable": true,
         "prefer-const": true,
         "jsdoc-format": true,
         "arrow-parens": [true, "ban-single-arg-parens"],
-        "no-mixed-spaces-and-tabs": [
-            true,
-            "smart-tabs"
-        ],
         "trailing-comma": [
           true,
           {
@@ -74,7 +71,7 @@
         ],
         "max-line-length": [
             true,
-            100
+            120
         ],
         "ter-no-mixed-spaces-and-tabs": [
             true,

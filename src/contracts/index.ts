@@ -14,16 +14,16 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import { BaseContract } from "./BaseContract";
-import { CoreContract } from "./CoreContract";
-import { DetailedERC20Contract } from "./DetailedERC20Contract";
-import { SetTokenContract } from "./SetTokenContract";
-import { SetTokenFactoryContract } from "./SetTokenFactoryContract";
-import { StandardTokenMockContract } from "./StandardTokenMockContract";
-import { TransferProxyContract } from "./TransferProxyContract";
-import { VaultContract } from "./VaultContract";
+import { BaseContract } from './BaseContract';
+import { CoreContract } from './CoreContract';
+import { DetailedERC20Contract } from './DetailedERC20Contract';
+import { SetTokenContract } from './SetTokenContract';
+import { SetTokenFactoryContract } from './SetTokenFactoryContract';
+import { StandardTokenMockContract } from './StandardTokenMockContract';
+import { TransferProxyContract } from './TransferProxyContract';
+import { VaultContract } from './VaultContract';
 
 export type ContractWrapper = BaseContract;
 export {

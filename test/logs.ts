@@ -1,8 +1,8 @@
-import * as ABIDecoder from "abi-decoder";
-import * as _ from "lodash";
-import * as Web3 from "web3";
-import { BigNumber } from "bignumber.js";
-import { Log, Address, CreateLogArgs } from "../src/types/common";
+import * as ABIDecoder from 'abi-decoder';
+import * as _ from 'lodash';
+import * as Web3 from 'web3';
+import { BigNumber } from 'bignumber.js';
+import { Log, Address, CreateLogArgs } from '../src/types/common';
 
 export async function getFormattedLogsFromTxHash(web3: Web3, txHash: string): Promise<Log[]> {
   const receipt = await web3.eth.getTransactionReceipt(txHash);

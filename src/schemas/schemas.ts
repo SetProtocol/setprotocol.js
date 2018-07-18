@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
 import {
   addressSchema,
@@ -22,7 +22,7 @@ import {
   bytesSchema,
   numberSchema,
   wholeNumberSchema,
-} from "./basicTypeSchemas";
+} from './basicTypeSchemas';
 
 export const schemas = {
   addressSchema,

@@ -14,9 +14,9 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-export { BigNumber } from "./bignumber";
-export { classUtils } from "./classUtils";
-export { estimateIssueRedeemGasCost } from "./setTokenUtils";
-export { Web3Utils } from "./Web3Utils";
+export { BigNumber } from './bignumber';
+export { classUtils } from './classUtils';
+export { estimateIssueRedeemGasCost } from './setTokenUtils';
+export { Web3Utils } from './Web3Utils';

@@ -14,19 +14,19 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import { BigNumber } from "../util";
+import { BigNumber } from '../util';
 
 export const coreAPIErrors = {
-  TOKENS_AND_UNITS_EQUAL_LENGTHS: () => "The tokens and units arrays need to be equal lengths.",
+  TOKENS_AND_UNITS_EQUAL_LENGTHS: () => 'The tokens and units arrays need to be equal lengths.',
   QUANTITY_NEEDS_TO_BE_POSITIVE: (quantity: BigNumber) =>
     `The quantity ${quantity.toString()} inputted needs to be greater than zero.`,
   STRING_CANNOT_BE_EMPTY: (variable: string) => `The string ${variable} cannot be empty.`,
   INVALID_NATURAL_UNIT: () =>
-    "Natural unit must be larger than minimum unit allowed by components.",
+    'Natural unit must be larger than minimum unit allowed by components.',
   QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT: () =>
-    "Quantity needs to be multiple of natural unit.",
+    'Quantity needs to be multiple of natural unit.',
 };
 
 export const coreAssertionErrors = {

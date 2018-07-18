@@ -14,21 +14,18 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import * as _ from "lodash";
-import * as Web3 from "web3";
+import * as Web3 from 'web3';
 
-import { Assertions } from "../assertions";
+import { Assertions } from '../assertions';
 import {
-  BaseContract,
   ContractWrapper,
   CoreContract,
   SetTokenContract,
   VaultContract,
-} from "../contracts";
-import { Address } from "../types/common";
-import { BigNumber } from "../util";
+} from '../contracts';
+import { Address } from '../types/common';
 
 /**
  * @title ContractsAPI
@@ -59,7 +56,7 @@ export class ContractsAPI {
     coreAddress: Address,
     transactionOptions: object = {},
   ): Promise<CoreContract> {
-    this.assert.schema.isValidAddress("coreAddress", coreAddress);
+    this.assert.schema.isValidAddress('coreAddress', coreAddress);
     const cacheKey = this.getCoreCacheKey(coreAddress);
 
     if (cacheKey in this.cache) {
@@ -83,7 +80,7 @@ export class ContractsAPI {
     setTokenAddress: Address,
     transactionOptions: object = {},
   ): Promise<SetTokenContract> {
-    this.assert.schema.isValidAddress("setTokenAddress", setTokenAddress);
+    this.assert.schema.isValidAddress('setTokenAddress', setTokenAddress);
     const cacheKey = this.getSetTokenCacheKey(setTokenAddress);
 
     if (cacheKey in this.cache) {
@@ -111,8 +108,8 @@ export class ContractsAPI {
     vaultAddress: Address,
     transactionOptions: object = {},
   ): Promise<VaultContract> {
-    this.assert.schema.isValidAddress("vaultAddress", vaultAddress);
-    const cacheKey = this.getCoreCacheKey(vaultAddress);
+    this.assert.schema.isValidAddress('vaultAddress', vaultAddress);
+    const cacheKey = this.getVaultCacheKey(vaultAddress);
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as VaultContract;
