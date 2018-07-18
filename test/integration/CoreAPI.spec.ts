@@ -249,8 +249,7 @@ describe('Core API', () => {
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
 
       // Issue a Set to user
-      txHash = await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
-      formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
     });
 
     test('redeems a set with valid parameters', async () => {
@@ -472,7 +471,7 @@ describe('Core API', () => {
       );
 
       // Create a Set
-      await coreAPI.create(
+      const txHash = await coreAPI.create(
         ACCOUNTS[0].address,
         setTokenFactoryAddress,
         componentAddresses,
