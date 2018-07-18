@@ -40,13 +40,13 @@ export async function getFormattedLogsFromTxHash(web3: Web3, txHash: string): Pr
  */
 export function formatLogEntry(logs: ABIDecoder.DecodedLog): Log {
   const { name, events, address } = logs;
-  let args: any = {};
+  const args: any = {};
 
   // Loop through each event and add to args
   _.each(events, event => {
     const { name, type, value } = event;
 
-    var argValue: any = value;
+    let argValue: any = value;
     switch (true) {
       case /^(uint)\d*\[\]/.test(type): {
         break;

@@ -296,22 +296,19 @@ describe("Core API", () => {
 
   describe("deposit", async () => {
     let coreAPI: CoreAPI;
-    let setTokenFactoryAddress: Address;
-    let setToCreate: TestSet;
     let tokenAddresses: Address[];
     let vaultWrapper: VaultContract;
 
     beforeEach(async () => {
       coreAPI = await initializeCoreAPI(provider);
 
-      setToCreate = testSets[0];
+      const setToCreate = testSets[0];
       tokenAddresses = await deployTokensForSetWithApproval(
         setToCreate,
         coreAPI.transferProxyAddress,
         provider,
       );
 
-      const setToCreate = testSets[0];
       const vaultContract = contract(Vault);
       vaultContract.setProvider(provider);
       vaultContract.defaults(txDefaults);
@@ -367,7 +364,6 @@ describe("Core API", () => {
 
   describe("withdraw", async () => {
     let coreAPI: CoreAPI;
-    let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
     let tokenAddresses: Address[];
     let vaultWrapper: VaultContract;
