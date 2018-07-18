@@ -1,4 +1,4 @@
-import * as Web3 from "web3";
+import * as Web3 from 'web3';
 
 import {
   Core,
@@ -6,25 +6,25 @@ import {
   StandardTokenMock,
   TransferProxy,
   Vault,
-} from "set-protocol-contracts";
+} from 'set-protocol-contracts';
 import {
   DEFAULT_GAS_PRICE,
   DEFAULT_GAS_LIMIT,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-} from "../../src/constants";
-import { ACCOUNTS } from "../accounts";
-import { Address, TransactionOpts } from "../../src/types/common";
-import { TestSet } from "../testSets";
+} from '../../src/constants';
+import { ACCOUNTS } from '../accounts';
+import { Address } from '../../src/types/common';
+import { TestSet } from '../testSets';
 import {
   CoreContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
-} from "../../src/contracts";
-import { CoreAPI } from "../../src/api";
+} from '../../src/contracts';
+import { CoreAPI } from '../../src/api';
 
-const contract = require("truffle-contract");
+const contract = require('truffle-contract');
 
 const txDefaults = {
   from: ACCOUNTS[0].address,
@@ -33,15 +33,12 @@ const txDefaults = {
 };
 
 export const deployCore = async (provider: Web3.Provider.HttpProvider) => {
-  const web3 = new Web3(provider);
-
   const coreContract = contract(Core);
   coreContract.setProvider(provider);
   coreContract.defaults(txDefaults);
 
   // Deploy Core
   const coreInstance = await coreContract.new();
-  const coreWrapper = await CoreContract.at(coreInstance.address, web3, txDefaults);
 
   return coreInstance.address;
 };

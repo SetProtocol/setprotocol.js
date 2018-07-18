@@ -14,35 +14,35 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
 // Given that this is an integration test, we unmock the Set Protocol
 // smart contracts artifacts package to pull the most recently
 // deployed contracts on the current network.
-jest.unmock("set-protocol-contracts");
+jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
-import * as ABIDecoder from "abi-decoder";
-import * as chai from "chai";
-import * as _ from "lodash";
-import * as Web3 from "web3";
-import compact = require("lodash.compact");
+import * as ABIDecoder from 'abi-decoder';
+import * as chai from 'chai';
+import * as _ from 'lodash';
+import * as Web3 from 'web3';
+import compact = require('lodash.compact');
 
-import { Core, SetToken, SetTokenFactory, StandardTokenMock } from "set-protocol-contracts";
+import { Core, SetToken, SetTokenFactory, StandardTokenMock } from 'set-protocol-contracts';
 
-import { ACCOUNTS } from "../accounts";
-import { testSets, TestSet } from "../testSets";
-import { CoreAPI, SetTokenAPI } from "../../src/api";
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../../src/constants";
-import { CoreContract, SetTokenContract, SetTokenFactoryContract } from "../../src/contracts";
-import { ReceiptLog } from "../../src/types/common";
-import { Web3Utils } from "../../src/util";
+import { ACCOUNTS } from '../accounts';
+import { testSets, TestSet } from '../testSets';
+import { CoreAPI, SetTokenAPI } from '../../src/api';
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
+import { CoreContract, SetTokenFactoryContract } from '../../src/contracts';
+import { ReceiptLog } from '../../src/types/common';
+import { Web3Utils } from '../../src/util';
 
 const { expect } = chai;
 
-const contract = require("truffle-contract");
+const contract = require('truffle-contract');
 
-const provider = new Web3.providers.HttpProvider("http://localhost:8545");
+const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
@@ -70,7 +70,7 @@ standardTokenMockContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
 
-describe("Set Token API", () => {
+describe('Set Token API', () => {
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
   });
@@ -87,7 +87,7 @@ describe("Set Token API", () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test("SetTokenAPI can be instantiated", async () => {
+  test('SetTokenAPI can be instantiated', async () => {
     const setTokenAPI = new SetTokenAPI(web3);
     expect(setTokenAPI);
     expect(setTokenAPI.getSymbol);
@@ -98,7 +98,7 @@ describe("Set Token API", () => {
     expect(setTokenAPI.getBalanceOf);
   });
 
-  describe("getters", async () => {
+  describe('getters', async () => {
     let componentAddresses: string[];
     let setToCreate: TestSet;
     let setTokenAPI: SetTokenAPI;
@@ -169,27 +169,27 @@ describe("Set Token API", () => {
       );
     });
 
-    test("gets Set token symbol", async () => {
+    test('gets Set token symbol', async () => {
       const symbol = await setTokenAPI.getSymbol(setTokenInstance.address);
       expect(symbol).to.equal(setToCreate.setSymbol);
     });
 
-    test("gets Set token name", async () => {
+    test('gets Set token name', async () => {
       const name = await setTokenAPI.getName(setTokenInstance.address);
       expect(name).to.equal(setToCreate.setName);
     });
 
-    test("get Set token natural units", async () => {
+    test('get Set token natural units', async () => {
       const naturalUnit = await setTokenAPI.getNaturalUnit(setTokenInstance.address);
       expect(naturalUnit.toNumber()).to.equal(setToCreate.naturalUnit.toNumber());
     });
 
-    test("get Set token units", async () => {
+    test('get Set token units', async () => {
       const units = await setTokenAPI.getUnits(setTokenInstance.address);
       _.forEach(units, (unit, i) => unit.toNumber() === setToCreate.units[i].toNumber());
     });
 
-    test("get total supply of Set tokens", async () => {
+    test('get total supply of Set tokens', async () => {
       const totalSupply = await setTokenAPI.getTotalSupply(setTokenInstance.address);
       expect(totalSupply.toNumber()).to.equal(0);
     });

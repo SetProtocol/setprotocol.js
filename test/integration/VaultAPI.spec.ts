@@ -14,35 +14,33 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
 // Given that this is an integration test, we unmock the Set Protocol
 // smart contracts artifacts package to pull the most recently
 // deployed contracts on the current network.
-jest.unmock("set-protocol-contracts");
+jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
-import * as ABIDecoder from "abi-decoder";
-import * as chai from "chai";
-import * as _ from "lodash";
-import * as Web3 from "web3";
+import * as ABIDecoder from 'abi-decoder';
+import * as chai from 'chai';
+import * as Web3 from 'web3';
 
-import { Core, Vault } from "set-protocol-contracts";
+import { Core } from 'set-protocol-contracts';
 
-import { ACCOUNTS } from "../accounts";
-import { testSets, TestSet } from "../testSets";
-import { VaultAPI } from "../../src/api";
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../../src/constants";
-import { VaultContract } from "../../src/contracts";
-import { Address } from "../../src/types/common";
-import { BigNumber, Web3Utils } from "../../src/util";
-import { deployTokensForSetWithApproval, initializeCoreAPI, initializeVaultAPI } from "../helpers";
+import { ACCOUNTS } from '../accounts';
+import { testSets, TestSet } from '../testSets';
+import { VaultAPI } from '../../src/api';
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
+import { Address } from '../../src/types/common';
+import { BigNumber, Web3Utils } from '../../src/util';
+import { deployTokensForSetWithApproval, initializeCoreAPI, initializeVaultAPI } from '../helpers';
 
 const { expect } = chai;
 
-const contract = require("truffle-contract");
+const contract = require('truffle-contract');
 
-const provider = new Web3.providers.HttpProvider("http://localhost:8545");
+const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
@@ -58,7 +56,7 @@ coreContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
 
-describe("Vault API", () => {
+describe('Vault API', () => {
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
   });
@@ -75,13 +73,13 @@ describe("Vault API", () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test("VaultAPI can be instantiated", async () => {
+  test('VaultAPI can be instantiated', async () => {
     coreAPI = await initializeCoreAPI(provider);
     vaultAPI = await initializeVaultAPI(provider, coreAPI.vaultAddress);
     expect(vaultAPI.getOwnerBalance);
   });
 
-  describe("getOwnerBalance", async () => {
+  describe('getOwnerBalance', async () => {
     let coreAPI: CoreAPI;
     let vaultAPI: VaultAPI;
     let setToCreate: TestSet;
@@ -99,7 +97,7 @@ describe("Vault API", () => {
       );
     });
 
-    test("gets owner balance", async () => {
+    test('gets owner balance', async () => {
       let balance: BigNumber;
       const account = ACCOUNTS[0].address;
       const token = tokenAddresses[0];

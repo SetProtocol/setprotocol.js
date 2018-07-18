@@ -14,11 +14,11 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import { BigNumber } from "../util";
+import { BigNumber } from '../util';
 
-export const NULL_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 export const ZERO: BigNumber = new BigNumber(0);
 export const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
 export const DEFAULT_GAS_LIMIT: BigNumber = new BigNumber(6712390); // default of 6.7 million gas

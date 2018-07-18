@@ -14,18 +14,18 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import * as Web3 from "web3";
-import * as _ from "lodash";
+import * as Web3 from 'web3';
+import * as _ from 'lodash';
 
-import { ContractsAPI } from ".";
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from "../constants";
-import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from "../errors";
-import { Assertions } from "../assertions";
-import { Address, Component, Token, TransactionOpts, UInt } from "../types/common";
-import { BigNumber, estimateIssueRedeemGasCost } from "../util";
-import { CoreContract, DetailedERC20Contract, SetTokenContract, VaultContract } from "../contracts";
+import { ContractsAPI } from '.';
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
+import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
+import { Assertions } from '../assertions';
+import { Address, TransactionOpts } from '../types/common';
+import { BigNumber } from '../util';
+import { CoreContract, DetailedERC20Contract, SetTokenContract, VaultContract } from '../contracts';
 
 /**
  * @title CoreAPI
@@ -53,16 +53,16 @@ export class CoreAPI {
     this.contracts = new ContractsAPI(this.web3);
     this.assert = new Assertions(this.web3);
 
-    this.assert.schema.isValidAddress("coreAddress", coreAddress);
+    this.assert.schema.isValidAddress('coreAddress', coreAddress);
     this.coreAddress = coreAddress;
 
     if (transferProxyAddress) {
-      this.assert.schema.isValidAddress("transferProxyAddress", transferProxyAddress);
+      this.assert.schema.isValidAddress('transferProxyAddress', transferProxyAddress);
       this.transferProxyAddress = transferProxyAddress;
     }
 
     if (vaultAddress) {
-      this.assert.schema.isValidAddress("vaultAddress", vaultAddress);
+      this.assert.schema.isValidAddress('vaultAddress', vaultAddress);
       this.vaultAddress = vaultAddress;
     }
   }
@@ -92,8 +92,8 @@ export class CoreAPI {
     symbol: string,
     txOpts?: TransactionOpts,
   ): Promise<string> {
-    this.assert.schema.isValidAddress("factoryAddress", factoryAddress);
-    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
     this.assert.common.isEqualLength(
       components,
       units,
@@ -103,8 +103,8 @@ export class CoreAPI {
       naturalUnit,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(naturalUnit),
     );
-    this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY("name"));
-    this.assert.common.isValidString(symbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY("symbol"));
+    this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY('name'));
+    this.assert.common.isValidString(symbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY('symbol'));
 
     let minDecimals = new BigNumber(18);
     let tokenDecimals;
@@ -112,9 +112,9 @@ export class CoreAPI {
       components.map(async componentAddress => {
         this.assert.common.isValidString(
           componentAddress,
-          coreAPIErrors.STRING_CANNOT_BE_EMPTY("component"),
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('component'),
         );
-        this.assert.schema.isValidAddress("componentAddress", componentAddress);
+        this.assert.schema.isValidAddress('componentAddress', componentAddress);
 
         const tokenContract = await DetailedERC20Contract.at(componentAddress, this.web3, {});
 
@@ -176,8 +176,8 @@ export class CoreAPI {
     quantityInWei: BigNumber,
     txOpts?: TransactionOpts,
   ): Promise<string> {
-    this.assert.schema.isValidAddress("setAddress", setAddress);
-    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
     this.assert.common.greaterThanZero(
       quantityInWei,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
@@ -228,8 +228,8 @@ export class CoreAPI {
     quantityInWei: BigNumber,
     txOpts?: TransactionOpts,
   ): Promise<string> {
-    this.assert.schema.isValidAddress("setAddress", setAddress);
-    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
     this.assert.common.greaterThanZero(
       quantityInWei,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
@@ -288,8 +288,8 @@ export class CoreAPI {
     quantityInWei: BigNumber,
     txOpts?: TransactionOpts,
   ): Promise<string> {
-    this.assert.schema.isValidAddress("tokenAddress", tokenAddress);
-    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
     this.assert.common.greaterThanZero(
       quantityInWei,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
@@ -339,8 +339,8 @@ export class CoreAPI {
     quantityInWei: BigNumber,
     txOpts?: TransactionOpts,
   ): Promise<string> {
-    this.assert.schema.isValidAddress("tokenAddress", tokenAddress);
-    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
     this.assert.common.greaterThanZero(
       quantityInWei,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
@@ -396,7 +396,7 @@ export class CoreAPI {
     tokensToWithdraw: Address[],
     txOpts?: TransactionOpts,
   ): Promise<string> {
-    this.assert.schema.isValidAddress("setAddress", setAddress);
+    this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.common.greaterThanZero(
       quantityInWei,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
@@ -408,7 +408,7 @@ export class CoreAPI {
     let toWithdraw: BigNumber = ZERO;
     const tokensToWithdrawMapping = {};
     _.each(tokensToWithdraw, withdrawTokenAddress => {
-      this.assert.schema.isValidAddress("withdrawTokenAddress", withdrawTokenAddress);
+      this.assert.schema.isValidAddress('withdrawTokenAddress', withdrawTokenAddress);
       tokensToWithdrawMapping[withdrawTokenAddress] = true;
     });
     _.each(components, (component, componentIndex) => {
@@ -430,6 +430,8 @@ export class CoreAPI {
       toWithdraw,
       txSettings,
     );
+
+    return txHash;
   }
 
   /*
@@ -446,7 +448,7 @@ export class CoreAPI {
     quantitiesInWei: BigNumber[],
     txOpts?: TransactionOpts,
   ): Promise<string> {
-    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
     this.assert.common.isEqualLength(
       tokenAddresses,
       quantitiesInWei,
@@ -457,9 +459,9 @@ export class CoreAPI {
       tokenAddresses.map(async (tokenAddress, i) => {
         this.assert.common.isValidString(
           tokenAddress,
-          coreAPIErrors.STRING_CANNOT_BE_EMPTY("tokenAddress"),
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
         );
-        this.assert.schema.isValidAddress("tokenAddress", tokenAddress);
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
         const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
         await this.assert.erc20.implementsERC20(tokenContract);
 
@@ -518,7 +520,7 @@ export class CoreAPI {
     quantitiesInWei: BigNumber[],
     txOpts?: TransactionOpts,
   ): Promise<string> {
-    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
     this.assert.common.isEqualLength(
       tokenAddresses,
       quantitiesInWei,
@@ -529,9 +531,9 @@ export class CoreAPI {
       tokenAddresses.map(async (tokenAddress, i) => {
         this.assert.common.isValidString(
           tokenAddress,
-          coreAPIErrors.STRING_CANNOT_BE_EMPTY("tokenAddress"),
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
         );
-        this.assert.schema.isValidAddress("tokenAddress", tokenAddress);
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
 
         const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
 
@@ -639,7 +641,7 @@ export class CoreAPI {
    * @return                Boolean equalling if factory address is valid
    */
   public async getIsValidFactory(factoryAddress: Address): boolean {
-    this.assert.schema.isValidAddress("factoryAddress", factoryAddress);
+    this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidFactoryAddress = await coreInstance.validFactories.callAsync(factoryAddress);
     return isValidFactoryAddress;
@@ -652,7 +654,7 @@ export class CoreAPI {
    * @return            Boolean equalling if Set address is valid
    */
   public async getIsValidSet(setAddress: Address): boolean {
-    this.assert.schema.isValidAddress("setAddress", setAddress);
+    this.assert.schema.isValidAddress('setAddress', setAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidSetAddress = await coreInstance.validSets.callAsync(setAddress);
     return isValidSetAddress;

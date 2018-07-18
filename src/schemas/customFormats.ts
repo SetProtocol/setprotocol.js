@@ -14,21 +14,21 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import { BigNumber } from "../util";
+import { BigNumber } from '../util';
 // NOTE: The input's format only matters if the input is required (since, if an input
 // is required by the schema but undefined, the validator will throw an error at another point.)
 // Hence, we can skip validating format if the input is undefined.
 
 export const bigNumberFormat = function(input: any) {
-  const regex = RegExp("^\\d+(\\.\\d+)?$");
+  const regex = RegExp('^\\d+(\\.\\d+)?$');
 
   return input === undefined || (isBigNumber(input) && regex.test(input.toString()));
 };
 
 export const wholeBigNumberFormat = function(input: any) {
-  const regex = RegExp("^\\d+$");
+  const regex = RegExp('^\\d+$');
 
   return input === undefined || (isBigNumber(input) && regex.test(input.toString()));
 };
@@ -48,6 +48,6 @@ function isBigNumber(object: any): boolean {
   return (
     object.isBigNumber ||
     object instanceof BigNumber ||
-    (object.constructor && object.constructor.name === "BigNumber")
+    (object.constructor && object.constructor.name === 'BigNumber')
   );
 }

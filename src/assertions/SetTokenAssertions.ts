@@ -14,17 +14,17 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import * as _ from "lodash";
-import * as Web3 from "web3";
+import * as _ from 'lodash';
+import * as Web3 from 'web3';
 
-import { ERC20Assertions } from "./ERC20Assertions";
-import { DetailedERC20Contract, SetTokenContract } from "../contracts";
-import { setTokenAssertionsErrors } from "../errors";
-import { Address } from "../types/common";
-import { BigNumber } from "../util";
-import { ZERO } from "../constants";
+import { ERC20Assertions } from './ERC20Assertions';
+import { DetailedERC20Contract, SetTokenContract } from '../contracts';
+import { setTokenAssertionsErrors } from '../errors';
+import { Address } from '../types/common';
+import { BigNumber } from '../util';
+import { ZERO } from '../constants';
 
 const erc20Assertions = new ERC20Assertions();
 

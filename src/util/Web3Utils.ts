@@ -14,16 +14,16 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import * as promisify from "tiny-promisify";
-import * as Web3 from "web3";
+import * as promisify from 'tiny-promisify';
+import * as Web3 from 'web3';
 
 // Web3 1.0.0 and onwards is currently in beta, but has some
 // useful utils builtin we like to leverage -- particularly
 // a function for calculating hashes of tightly packed arguments
 // in a manner that is identical to Solidity's methadology.
-import * as Web3BetaUtils from "web3-utils";
+import * as Web3BetaUtils from 'web3-utils';
 
 export class Web3Utils {
   private web3: Web3;
@@ -57,12 +57,12 @@ export class Web3Utils {
   }
 
   public async saveTestSnapshot(): Promise<number> {
-    const response = await this.sendJsonRpcRequestAsync("evm_snapshot", []);
+    const response = await this.sendJsonRpcRequestAsync('evm_snapshot', []);
     return parseInt(response.result, 16);
   }
 
   public async revertToSnapshot(snapshotId: number): Promise<boolean> {
-    const response = await this.sendJsonRpcRequestAsync("evm_revert", [snapshotId]);
+    const response = await this.sendJsonRpcRequestAsync('evm_revert', [snapshotId]);
     return response.result;
   }
 
@@ -72,7 +72,7 @@ export class Web3Utils {
    * @returns {Promise<number>}
    */
   public async getCurrentBlockTime(): Promise<number> {
-    const latestBlock = await promisify(this.web3.eth.getBlock)("latest");
+    const latestBlock = await promisify(this.web3.eth.getBlock)('latest');
 
     return latestBlock.timestamp;
   }
@@ -85,12 +85,12 @@ export class Web3Utils {
    * @returns {Promise<boolean>}
    */
   public async increaseTime(seconds: number): Promise<boolean> {
-    const increaseTimeResponse = await this.sendJsonRpcRequestAsync("evm_increaseTime", [seconds]);
+    const increaseTimeResponse = await this.sendJsonRpcRequestAsync('evm_increaseTime', [seconds]);
 
     // A new block must be mined to make this effective.
     const blockMineResponse = await this.mineBlock();
 
-    return !increaseTimeResponse["error"] && !blockMineResponse["error"];
+    return !increaseTimeResponse['error'] && !blockMineResponse['error'];
   }
 
   /**
@@ -99,7 +99,7 @@ export class Web3Utils {
    * @returns {Promise<"web3".Web3.JSONRPCResponsePayload>}
    */
   public async mineBlock(): Promise<Web3.JSONRPCResponsePayload> {
-    return this.sendJsonRpcRequestAsync("evm_mine", []);
+    return this.sendJsonRpcRequestAsync('evm_mine', []);
   }
 
   private async sendJsonRpcRequestAsync(
@@ -109,7 +109,7 @@ export class Web3Utils {
     return promisify(this.web3.currentProvider.sendAsync, {
       context: this.web3.currentProvider,
     })({
-      jsonrpc: "2.0",
+      jsonrpc: '2.0',
       method,
       params,
       id: new Date().getTime(),

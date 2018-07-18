@@ -14,19 +14,19 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import * as Web3 from "web3";
+import * as Web3 from 'web3';
 
-import { Vault } from "set-protocol-contracts";
+import { Vault } from 'set-protocol-contracts';
 
-import { ACCOUNTS } from "../accounts";
-import { VaultAPI } from "../../src/api";
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from "../../src/constants";
-import { VaultContract } from "../../src/contracts";
-import { Address } from "../../src/types/common";
+import { ACCOUNTS } from '../accounts';
+import { VaultAPI } from '../../src/api';
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
+import { VaultContract } from '../../src/contracts';
+import { Address } from '../../src/types/common';
 
-const contract = require("truffle-contract");
+const contract = require('truffle-contract');
 
 const txDefaults = {
   from: ACCOUNTS[0].address,

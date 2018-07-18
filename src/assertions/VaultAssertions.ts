@@ -14,14 +14,14 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import * as _ from "lodash";
-import * as Web3 from "web3";
+import * as _ from 'lodash';
+import * as Web3 from 'web3';
 
-import { BigNumber } from "../util";
-import { VaultContract, SetTokenContract, DetailedERC20Contract } from "../contracts";
-import { Address } from "../types/common";
+import { BigNumber } from '../util';
+import { VaultContract, SetTokenContract, DetailedERC20Contract } from '../contracts';
+import { Address } from '../types/common';
 
 export class VaultAssertions {
   private web3: Web3;

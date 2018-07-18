@@ -14,11 +14,11 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import { ContractsAPI } from "./ContractsAPI";
-import { CoreAPI } from "./CoreAPI";
-import { SetTokenAPI } from "./SetTokenAPI";
-import { VaultAPI } from "./VaultAPI";
+import { ContractsAPI } from './ContractsAPI';
+import { CoreAPI } from './CoreAPI';
+import { SetTokenAPI } from './SetTokenAPI';
+import { VaultAPI } from './VaultAPI';
 
 export { ContractsAPI, CoreAPI, SetTokenAPI, VaultAPI };

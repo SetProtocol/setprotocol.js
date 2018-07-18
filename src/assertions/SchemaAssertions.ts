@@ -14,10 +14,10 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import { schemaAssertionsError } from "../errors";
-import { schemas, Schema, SchemaValidator, ValidatorResult } from "../schemas";
+import { schemaAssertionsError } from '../errors';
+import { schemas, Schema, SchemaValidator } from '../schemas';
 
 /*
  * A bunch of this has been borrowed from the awesome Dharma.js's repo

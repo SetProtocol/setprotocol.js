@@ -14,11 +14,11 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import { coreAssertionErrors } from "../errors";
-import { BigNumber } from "../util";
-import { CoreContract, SetTokenContract } from "../contracts";
+import { coreAssertionErrors } from '../errors';
+import { BigNumber } from '../util';
+import { CoreContract } from '../contracts';
 
 export class CoreAssertions {
   /**

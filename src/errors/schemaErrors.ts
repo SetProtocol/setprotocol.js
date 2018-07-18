@@ -14,9 +14,9 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import { ValidatorResult } from "../schemas";
+import { ValidatorResult } from '../schemas';
 
 export const schemaAssertionsError = {
   DOES_NOT_CONFORM_TO_SCHEMA: (
@@ -27,8 +27,8 @@ export const schemaAssertionsError = {
   ) => `
         Expected ${variableName} to conform to schema ${schemaId}.
 
-        Encountered: ${JSON.stringify(value, undefined, "\t")}
+        Encountered: ${JSON.stringify(value, undefined, '\t')}
 
-        Validation errors: ${validationResult.errors.join(", ")}
+        Validation errors: ${validationResult.errors.join(', ')}
       `,
 };

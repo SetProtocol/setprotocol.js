@@ -14,18 +14,12 @@
   limitations under the License.
 */
 
-"use strict";
+'use strict';
 
-import * as Web3 from "web3";
-import * as _ from "lodash";
+import * as Web3 from 'web3';
 
-import { ContractsAPI } from ".";
-import { DEFAULT_GAS_PRICE } from "../constants";
-import { CoreAPIErrors } from "../errors";
-import { Assertions } from "../assertions";
-import { Address, Component, Token, TransactionOpts, UInt } from "../types/common";
-import { BigNumber, estimateIssueRedeemGasCost } from "../util";
-import { CoreContract } from "../contracts";
+import { ContractsAPI } from '.';
+import { Assertions } from '../assertions';
 
 /**
  * @title  SetTokenAPI
@@ -53,7 +47,7 @@ export class SetTokenAPI {
    * @return             The balance of the user's Set
    */
   public async getBalanceOf(setAddress: string, userAddress: string): number {
-    this.assert.schema.isValidAddress("userAddress", userAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     return await setTokenInstance.balanceOf.callAsync(userAddress);
   }
