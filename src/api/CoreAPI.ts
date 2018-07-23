@@ -97,7 +97,7 @@ export class CoreAPI {
     this.assert.common.isEqualLength(
       components,
       units,
-      coreAPIErrors.TOKENS_AND_UNITS_EQUAL_LENGTHS(),
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('components', 'units'),
     );
     this.assert.common.greaterThanZero(
       naturalUnit,
@@ -349,7 +349,7 @@ export class CoreAPI {
     const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
 
     const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-    this.assert.erc20.implementsERC20(detailedERC20Contract);
+    await this.assert.erc20.implementsERC20(detailedERC20Contract);
 
     await this.assert.vault.hasSufficientTokenBalance(
       vaultContract,
@@ -452,7 +452,7 @@ export class CoreAPI {
     this.assert.common.isEqualLength(
       tokenAddresses,
       quantitiesInWei,
-      coreAPIErrors.TOKENS_AND_UNITS_EQUAL_LENGTHS(),
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('tokenAddresses', 'quantitiesInWei'),
     );
     // Token assertions
     await Promise.all(
@@ -524,7 +524,7 @@ export class CoreAPI {
     this.assert.common.isEqualLength(
       tokenAddresses,
       quantitiesInWei,
-      coreAPIErrors.TOKENS_AND_UNITS_EQUAL_LENGTHS(),
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('tokenAddresses', 'quantitiesInWei'),
     );
     // Token assertions
     await Promise.all(
@@ -538,7 +538,7 @@ export class CoreAPI {
         const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
 
         const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-        this.assert.erc20.implementsERC20(detailedERC20Contract);
+        await this.assert.erc20.implementsERC20(detailedERC20Contract);
 
         // Check balance
         await this.assert.vault.hasSufficientTokenBalance(
@@ -572,6 +572,88 @@ export class CoreAPI {
     );
 
     return txHash;
+  }
+
+  /*
+   * Creates a new Issuance Order
+   *
+   * @param  setAddress                Address of the Set token for issuance order
+   * @param  quantity                  Number of Set tokens to create as part of issuance order
+   * @param  requiredComponents        Addresses of required component tokens of Set
+   * @param  requiredComponentAmounts  Amounts of each required component needed
+   * @param  makerAddress              Address of person making the order
+   * @param  makerToken                Address of token the issuer is paying in
+   * @param  makerTokenAmount          Number of tokens being exchanged for aggregate order size
+   * @param  expiration                Unix timestamp of expiration
+   * @param  relayerAddress            Address of relayer of order
+   * @param  relayerFeeBaseToken       Address of token paid to relayer
+   * @param  relayerFeeAmount          Number of token paid to relayer
+   * @param  salt                      Random salt number
+   * @return                           A transaction hash
+   */
+  public async createIssuanceOrder(
+    setAddress: Address,
+    quantity: BigNumber,
+    requiredComponents: Address[],
+    requiredComponentAmounts: BigNumber[],
+    makerAddress: Address,
+    makerToken: Address,
+    makerTokenAmount: BigNumber,
+    expiration: number,
+    relayerAddress: Address,
+    relayerFeeBaseToken: Address,
+    relayerFeeAmount: BigNumber,
+    salt: BigNumber,
+  ): Promise<string> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('makerAddress', makerAddress);
+    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
+    this.assert.schema.isValidAddress('relayerFeeBaseToken', relayerFeeBaseToken);
+    this.assert.common.greaterThanZero(
+      quantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+    );
+    // Token assertions
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
+        );
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
+        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(detailedERC20Contract);
+
+        this.assert.common.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+    this.assert.common.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+    const makerTokenContract = await DetailedERC20Contract.at(makerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(makerTokenContract);
+    this.assert.common.greaterThanZero(
+      makerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
+    );
+    const relayerFeeBaseTokenContract = await DetailedERC20Contract.at(relayerFeeBaseToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerFeeBaseTokenContract);
+    this.assert.common.greaterThanZero(
+      relayerFeeAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerFeeAmount),
+    );
+    this.assert.common.greaterThanZero(
+      salt,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(salt),
+    );
+
+    // TODO: Create an Issuance Order
   }
 
   /* ============ Core State Getters ============ */
