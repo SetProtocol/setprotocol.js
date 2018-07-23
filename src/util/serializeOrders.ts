@@ -45,7 +45,7 @@ export function generateDirectFillOrderBodyBuffer(
   orders: DirectFillOrder[],
   web3: Web3,
 ): Buffer {
-  // Generate header for entire ordersData
+  // Generate header for direct fill order
   const takerOrderHeader: Buffer[] = [
     paddedBufferForData(3),
     paddedBufferForData(orders.length), // Include the number of orders as part of header
