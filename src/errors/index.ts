@@ -19,5 +19,5 @@
 export { coreAPIErrors, coreAssertionErrors } from './coreErrors';
 export { erc20AssertionErrors } from './erc20Errors';
 export { schemaAssertionsError } from './schemaErrors';
-export { setTokenAssertionsErrors } from './setTokenErrors';
+export { generateOrder } from './setTokenErrors';
 export { vaultAssertionErrors } from './vaultErrors';
