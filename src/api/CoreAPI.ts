@@ -23,7 +23,7 @@ import { ContractsAPI } from '.';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { Address, TransactionOpts } from '../types/common';
+import { Address, TransactionOpts, IssuanceOrder } from '../types/common';
 import { BigNumber } from '../util';
 import { CoreContract, DetailedERC20Contract, SetTokenContract, VaultContract } from '../contracts';
 
@@ -599,12 +599,12 @@ export class CoreAPI {
     makerAddress: Address,
     makerToken: Address,
     makerTokenAmount: BigNumber,
-    expiration: number,
+    expiration: BigNumber,
     relayerAddress: Address,
     relayerFeeBaseToken: Address,
     relayerFeeAmount: BigNumber,
     salt: BigNumber,
-  ): Promise<string> {
+  ): IssuanceOrder {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('makerAddress', makerAddress);
     this.assert.schema.isValidAddress('relayerAddress', relayerAddress);

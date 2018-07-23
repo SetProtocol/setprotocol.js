@@ -25,6 +25,22 @@ export interface Token {
   decimals: BigNumber;
 }
 
+export interface IssuanceOrder {
+  setAddress: string;
+  makerAddress: string;
+  makerToken: string;
+  relayerAddress: string;
+  relayerToken: string;
+  quantity: BigNumber;
+  makerTokenAmount: BigNumber;
+  expiration: BigNumber;
+  relayerTokenAmount: BigNumber;
+  salt: BigNumber;
+  requiredComponents: string[];
+  requiredComponentAmounts: BigNumber[];
+  orderHash: string;
+}
+
 export interface TransactionOpts {
   gas?: number;
   gasPrice?: BigNumber;
