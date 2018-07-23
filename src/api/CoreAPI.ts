@@ -18,12 +18,13 @@
 
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
+import { hashOrderHex, signMessage } from 'set-protocol-contracts/utils';
 
 import { ContractsAPI } from '.';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { Address, TransactionOpts, IssuanceOrder } from '../types/common';
+import { Address, TransactionOpts, IssuanceOrder, SignedIssuanceOrder } from '../types/common';
 import { BigNumber } from '../util';
 import { CoreContract, DetailedERC20Contract, SetTokenContract, VaultContract } from '../contracts';
 
@@ -604,7 +605,7 @@ export class CoreAPI {
     relayerFeeBaseToken: Address,
     relayerFeeAmount: BigNumber,
     salt: BigNumber,
-  ): IssuanceOrder {
+  ): SignedIssuanceOrder {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('makerAddress', makerAddress);
     this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
@@ -653,7 +654,23 @@ export class CoreAPI {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(salt),
     );
 
-    // TODO: Create an Issuance Order
+    const order: IssuanceOrder = {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      relayerTokenAmount,
+      salt,
+      requiredComponents,
+      requiredComponentAmounts,
+    };
+    const orderHash = hashOrderHex(order);
+    const signature = await signMessage(orderHash, makerAddress);
+    return Object.assign({}, order, { signature });
   }
 
   /* ============ Core State Getters ============ */

@@ -25,6 +25,12 @@ export interface Token {
   decimals: BigNumber;
 }
 
+export interface ECSig {
+  v: string;
+  r: string;
+  s: string;
+}
+
 export interface IssuanceOrder {
   setAddress: string;
   makerAddress: string;
@@ -38,7 +44,22 @@ export interface IssuanceOrder {
   salt: BigNumber;
   requiredComponents: string[];
   requiredComponentAmounts: BigNumber[];
-  orderHash: string;
+}
+
+export interface SignedIssuanceOrder {
+  setAddress: string;
+  makerAddress: string;
+  makerToken: string;
+  relayerAddress: string;
+  relayerToken: string;
+  quantity: BigNumber;
+  makerTokenAmount: BigNumber;
+  expiration: BigNumber;
+  relayerTokenAmount: BigNumber;
+  salt: BigNumber;
+  requiredComponents: string[];
+  requiredComponentAmounts: BigNumber[];
+  signature: ECSig;
 }
 
 export interface TransactionOpts {
