@@ -28,6 +28,13 @@ import * as ABIDecoder from 'abi-decoder';
 
 import { Core, Vault } from 'set-protocol-contracts';
 
+import {
+  generateTimeStamp,
+  generateSalt,
+  hashOrderHex,
+  signMessage,
+} from 'set-protocol-utils';
+
 import { ACCOUNTS } from '../accounts';
 import { testSets, TestSet } from '../testSets';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../logs';
@@ -450,6 +457,76 @@ describe('Core API', () => {
           expect(Number(userBalance)).to.equal(0);
         }),
       );
+    });
+  });
+
+  /* ============ Create Issuance Order ============ */
+
+  describe('createIssuanceOrder', async () => {
+    let coreAPI: CoreAPI;
+    let setTokenFactoryAddress: Address;
+    let setToCreate: TestSet;
+    let componentAddresses: Address[];
+
+    beforeEach(async () => {
+      coreAPI = await initializeCoreAPI(provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+
+      setToCreate = testSets[0];
+      componentAddresses = await deployTokensForSetWithApproval(
+        setToCreate,
+        coreAPI.transferProxyAddress,
+        provider,
+      );
+
+      // Create a Set
+      const txHash = await coreAPI.create(
+        ACCOUNTS[0].address,
+        setTokenFactoryAddress,
+        componentAddresses,
+        setToCreate.units,
+        setToCreate.naturalUnit,
+        setToCreate.setName,
+        setToCreate.setSymbol,
+      );
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+    });
+
+    test('creates a new set with valid parameters', async () => {
+      const order = {
+        setAddress: setTokenAddress,
+        quantity: new BigNumber(123),
+        requiredComponents: componentAddresses,
+        requiredComponentAmounts: componentAddresses.map(component => 1),
+        makerAddress: ACCOUNTS[0].address,
+        makerToken: componentAddresses[0],
+        makerTokenAmount: new BigNumber(4),
+        expiration: generateTimeStamp(60),
+        relayerAddress: ACCOUNTS[1].address,
+        relayerFeeBaseToken: componentAddresses[0],
+        relayerFeeAmount: new BigNumber(1),
+        salt: generateSalt(),
+      };
+
+      const signedIssuanceOrder = await coreAPI.createIssuanceOrder(
+        setAddress: order.setAddress,
+        quantity: order.quantity,
+        requiredComponents: order.requiredComponents,
+        requiredComponentAmounts: order.requiredComponentAmounts,
+        makerAddress: order.makerAddress,
+        makerToken: order.makerToken,
+        makerTokenAmount: order.makerTokenAmount,
+        expiration: order.expiration,
+        relayerAddress: order.relayerAddress,
+        relayerFeeBaseToken: order.relayerFeeBaseToken,
+        relayerFeeAmount: order.relayerFeeAmount,
+        salt: order.salt,
+      );
+
+      const signature = await signMessage(hashOrderHex(order, order.makerAddress));
+
+      expect(signature).to.equal(signedIssuanceOrder.signature);
     });
   });
 

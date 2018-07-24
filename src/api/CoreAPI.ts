@@ -18,7 +18,7 @@
 
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
-import { hashOrderHex, signMessage } from 'set-protocol-contracts/utils/orderWrapper';
+import { hashOrderHex, signMessage } from 'set-protocol-utils';
 
 import { ContractsAPI } from '.';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
