@@ -60,7 +60,7 @@ export function takerWalletOrderToBuffer(
  * @return                   Entire taker wallet exchange data as a buffer
  */
 
-export function generateTakerWalletOrderBuffer(
+export function generateTakerWalletOrdersBuffer(
   makerTokenAddress: Address,
   orders: TakerWalletOrder[],
   web3: Web3,
@@ -113,7 +113,7 @@ export function generateSerializedOrders(
     } else if (key === '2') {
       // Handle Kyber Network
     } else if (key === '3') {
-      orderBuffer.push(generateTakerWalletOrderBuffer(makerTokenAddress, exchangeOrders, web3));
+      orderBuffer.push(generateTakerWalletOrdersBuffer(makerTokenAddress, exchangeOrders, web3));
     }
   });
   return ethUtil.bufferToHex(Buffer.concat(orderBuffer));
