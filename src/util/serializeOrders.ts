@@ -66,14 +66,14 @@ export function generateTakerWalletOrdersBuffer(
   orders: TakerWalletOrder[],
   web3: Web3,
 ): Buffer {
-  // Generate header for direct fill order
+  // Generate header for taker wallet order
   const takerOrderHeader: Buffer[] = [
     paddedBufferForData(3), // Todo: Replace with set-protocol-contracts constants
     paddedBufferForData(orders.length), // Include the number of orders as part of header
     paddedBufferForData(makerTokenAddress),
     paddedBufferForData(0), // Taker wallet orders do not take any maker token to execute
   ];
-  // Turn all direct fill orders to buffers
+  // Turn all taker wallet orders to buffers
   const takerOrderBody: Buffer = _.map(orders, ({takerTokenAddress, takerTokenAmount}) =>
     takerWalletOrderToBuffer(takerTokenAddress, takerTokenAmount, web3));
   return Buffer.concat([
@@ -86,7 +86,7 @@ export function generateTakerWalletOrdersBuffer(
  * Generates a byte string representing serialized exchange orders across different exchanges.
  *
  * @param  makerTokenAddress Address of the token used to pay for the order
- * @param  orders            Array of TakerWalletOrders
+ * @param  orders            Array of orders from various exchanges
  * @param  web3              web3 instance instantiated with `new Web3(provider);`
  * @return                   Buffer with all exchange orders formatted and concatenated
  */
