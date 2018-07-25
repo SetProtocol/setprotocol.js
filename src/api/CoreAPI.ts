@@ -591,7 +591,7 @@ export class CoreAPI {
    * @param  relayerTokenAmount        Number of token paid to relayer
    * @return                           A transaction hash
    */
-  public async createIssuanceOrder(
+  public async createSignedIssuanceOrder(
     setAddress: Address,
     quantity: BigNumber,
     requiredComponents: Address[],

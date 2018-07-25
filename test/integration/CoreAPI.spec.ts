@@ -461,7 +461,7 @@ describe('Core API', () => {
 
   /* ============ Create Issuance Order ============ */
 
-  describe('createIssuanceOrder', async () => {
+  describe('createSignedIssuanceOrder', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
@@ -507,7 +507,7 @@ describe('Core API', () => {
         relayerFeeAmount: new BigNumber(1),
       };
 
-      const signedIssuanceOrder = await coreAPI.createIssuanceOrder(
+      const signedIssuanceOrder = await coreAPI.createSignedIssuanceOrder(
         setAddress: order.setAddress,
         quantity: order.quantity,
         requiredComponents: order.requiredComponents,
