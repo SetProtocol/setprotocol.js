@@ -36,7 +36,7 @@ function paddedBufferForData(
  *
  * @param  takerTokenAddress Address of the token the taker will fill in the taker wallet order
  * @param  takerTokenAmount  Amount of tokens the taker will fill in the order
- * @param  web3              web3 instance
+ * @param  web3              web3 instance instantiated with `new Web3(provider);`
  * @return                   Taker wallet order as a buffer
  */
 
@@ -52,11 +52,12 @@ export function takerWalletOrderToBuffer(
 }
 
 /**
- * Takes taker wallet orders and generates a taker wallet data buffer.
+ * Takes taker wallet orders and generates a buffer representing all orders the
+ * taker can fill directly from their wallet.
  *
  * @param  makerTokenAddress Address of the token used to pay for the order
  * @param  orders            Array of TakerWalletOrders
- * @param  web3              web3 instance
+ * @param  web3              web3 instance instantiated with `new Web3(provider);`
  * @return                   Entire taker wallet exchange data as a buffer
  */
 
@@ -67,7 +68,7 @@ export function generateTakerWalletOrdersBuffer(
 ): Buffer {
   // Generate header for direct fill order
   const takerOrderHeader: Buffer[] = [
-    paddedBufferForData(3),
+    paddedBufferForData(3), // Todo: Replace with set-protocol-contracts constants
     paddedBufferForData(orders.length), // Include the number of orders as part of header
     paddedBufferForData(makerTokenAddress),
     paddedBufferForData(0), // Taker wallet orders do not take any maker token to execute
@@ -82,11 +83,11 @@ export function generateTakerWalletOrdersBuffer(
 }
 
 /**
- * Generates an entire serialized exchange order
+ * Generates a byte string representing serialized exchange orders across different exchanges.
  *
  * @param  makerTokenAddress Address of the token used to pay for the order
  * @param  orders            Array of TakerWalletOrders
- * @param  web3              web3 instance
+ * @param  web3              web3 instance instantiated with `new Web3(provider);`
  * @return                   Entire taker wallet exchange data as a buffer
  */
 
