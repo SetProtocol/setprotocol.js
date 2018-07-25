@@ -110,6 +110,58 @@ export const deployTokensForSetWithApproval = async (
   return componentAddresses;
 };
 
+export const approveForFill = async (
+  makerAddress: Address,
+  makerToken: Address,
+  relayerAddress: Address,
+  relayerToken: Address,
+  takerAddress: Address,
+  transferProxyAddress: Address,
+) => {
+  let txOpts = {
+    from: ACCOUNTS[0].address,
+    gasPrice: DEFAULT_GAS_PRICE,
+    gas: DEFAULT_GAS_LIMIT,
+  };
+  const makerTokenWrapper = await StandardTokenMockContract.at(
+    standardTokenMockInstance.address,
+    web3,
+    txOpts,
+  );
+  const relayerTokenWrapper = await StandardTokenMockContract.at(
+    standardTokenMockInstance.address,
+    web3,
+    txOpts,
+  );
+
+  txOpts = {
+    from: makerAddress,
+    gasPrice: DEFAULT_GAS_PRICE,
+    gas: DEFAULT_GAS_LIMIT,
+  };
+  await makerTokenWrapper.approve.sendTransactionAsync(
+    transferProxyAddress,
+    UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+    txOpts,
+  );
+  await relayerTokenWrapper.approve.sendTransactionAsync(
+    transferProxyAddress,
+    UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+    txOpts,
+  );
+
+  txOpts = {
+    from: takerAddress,
+    gasPrice: DEFAULT_GAS_PRICE,
+    gas: DEFAULT_GAS_LIMIT,
+  };
+  await relayerTokenWrapper.approve.sendTransactionAsync(
+    transferProxyAddress,
+    UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+    txOpts,
+  );
+};
+
 export const deployTransferProxy = async (coreAddress: Address, provider: Web3.Provider) => {
   const web3 = new Web3(provider);
 

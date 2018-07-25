@@ -53,6 +53,7 @@ import {
   initializeCoreAPI,
   deploySetTokenFactory,
   deployTokensForSetWithApproval,
+  approveForFill,
 } from '../helpers/coreHelpers';
 
 const contract = require('truffle-contract');
@@ -560,8 +561,6 @@ describe('Core API', () => {
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
-
-      // TODO: Handle allowance setting for fillOrder to succeed
     });
 
     test('fills an issuance order with valid parameters', async () => {
@@ -608,6 +607,15 @@ describe('Core API', () => {
         salt,
         signature,
       } = signedIssuanceOrder;
+
+      await approveForFill(
+        makerAddress,
+        makerToken,
+        relayerAddress,
+        relayerToken,
+        takerAddress,
+        coreAPI.transferProxyAddress,
+      );
 
       const txHash = await coreAPI.fillIssuanceOrder(
         [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
