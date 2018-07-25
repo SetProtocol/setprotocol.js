@@ -775,6 +775,98 @@ export class CoreAPI {
     return txHash;
   }
 
+  /*
+   * Cancels an Issuance Order
+   *
+   * @param  setAddress                Address of the Set token for issuance order
+   * @param  quantity                  Number of Set tokens to create as part of issuance order
+   * @param  requiredComponents        Addresses of required component tokens of Set
+   * @param  requiredComponentAmounts  Amounts of each required component needed
+   * @param  makerAddress              Address of person making the order
+   * @param  makerToken                Address of token the issuer is paying in
+   * @param  makerTokenAmount          Number of tokens being exchanged for aggregate order size
+   * @param  expiration                Unix timestamp of expiration
+   * @param  relayerAddress            Address of relayer of order
+   * @param  relayerFeeBaseToken       Address of token paid to relayer
+   * @param  relayerFeeAmount          Number of token paid to relayer
+   * @param  salt                      Random number salt added to issuance order
+   * @param  quantityToCancel          Number of Set to fill in this call
+   * @return                           A transaction hash
+   */
+  public async cancelIssuanceOrder(
+    setAddress: Address,
+    quantity: BigNumber,
+    requiredComponents: Address[],
+    requiredComponentAmounts: BigNumber[],
+    makerAddress: Address,
+    makerToken: Address,
+    makerTokenAmount: BigNumber,
+    expiration: BigNumber,
+    relayerAddress: Address,
+    relayerFeeBaseToken: Address,
+    relayerFeeAmount: BigNumber,
+    salt: BigNumber,
+    quantityToCancel: BigNumber,
+  ): Promise<string> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('makerAddress', makerAddress);
+    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
+    this.assert.schema.isValidAddress('relayerFeeBaseToken', relayerFeeBaseToken);
+    this.assert.common.greaterThanZero(
+      quantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+    );
+    // Token assertions
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
+        );
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
+        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(detailedERC20Contract);
+
+        this.assert.common.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+    this.assert.common.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+    const makerTokenContract = await DetailedERC20Contract.at(makerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(makerTokenContract);
+    this.assert.common.greaterThanZero(
+      makerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
+    );
+    const relayerFeeBaseTokenContract = await DetailedERC20Contract.at(relayerFeeBaseToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerFeeBaseTokenContract);
+    this.assert.common.greaterThanZero(
+      relayerFeeAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerFeeAmount),
+    );
+    this.assert.common.greaterThanZero(
+      quantityToCancel,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerFeeAmount),
+    );
+
+    const txHash = await coreInstance.cancelOrder.sendTransactionAsync(
+      [setAddress, makerAddress, makerToken, relayerAddress, relayerFeeBaseToken],
+      [quantity, makerTokenAmount, expiration, relayerFeeAmount, salt],
+      requiredComponents,
+      requiredComponentAmounts,
+      quantityToCancel,
+    );
+
+    return txHash;
+  }
+
   /* ============ Core State Getters ============ */
 
   /*
