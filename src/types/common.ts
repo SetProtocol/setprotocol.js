@@ -59,7 +59,7 @@ export interface CreateLogArgs {
 
 /* Orders */
 
-export interface DirectFillOrder {
+export interface TakerWalletOrder {
   exchange: number;
   takerTokenAddress: Address;
   takerTokenAmount: BigNumber;

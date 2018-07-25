@@ -19,5 +19,5 @@
 export { BigNumber } from './bignumber';
 export { classUtils } from './classUtils';
 export { estimateIssueRedeemGasCost } from './setTokenUtils';
-export { generateOrder } from './serializeOrders';
+export { generateSerializedOrders } from './serializeOrders';
 export { Web3Utils } from './Web3Utils';

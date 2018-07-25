@@ -21,7 +21,9 @@ import * as ethUtil from 'ethereumjs-util';
 import * as Web3 from 'web3';
 
 import { BigNumber } from '.';
-import { Address, Bytes32, DirectFillOrder } from '../types/common';
+import { Address, Bytes32, TakerWalletOrder } from '../types/common';
+
+// Replace with paddedBufferForData from set-protocol-utils package
 
 function paddedBufferForData(
   data: any
@@ -29,7 +31,16 @@ function paddedBufferForData(
   return ethUtil.setLengthLeft(ethUtil.toBuffer(data), 32);
 }
 
-export function directFillOrderToBuffer(
+/**
+ * Takes a taker wallet order object and turns it into a buffer.
+ *
+ * @param  takerTokenAddress Address of the token the taker will fill in the taker wallet order
+ * @param  takerTokenAmount  Amount of tokens the taker will fill in the order
+ * @param  web3              web3 instance
+ * @return                   Taker wallet order as a buffer
+ */
+
+export function takerWalletOrderToBuffer(
   takerTokenAddress: Address,
   takerTokenAmount: BigNumber,
   web3: Web3,
@@ -40,9 +51,18 @@ export function directFillOrderToBuffer(
   return Buffer.concat(takerWalletOrder);
 }
 
-export function generateDirectFillOrderBodyBuffer(
+/**
+ * Takes taker wallet orders and generates a taker wallet data buffer.
+ *
+ * @param  makerTokenAddress Address of the token used to pay for the order
+ * @param  orders            Array of TakerWalletOrders
+ * @param  web3              web3 instance
+ * @return                   Entire taker wallet exchange data as a buffer
+ */
+
+export function generateTakerWalletOrderBuffer(
   makerTokenAddress: Address,
-  orders: DirectFillOrder[],
+  orders: TakerWalletOrder[],
   web3: Web3,
 ): Buffer {
   // Generate header for direct fill order
@@ -54,14 +74,23 @@ export function generateDirectFillOrderBodyBuffer(
   ];
   // Turn all direct fill orders to buffers
   const takerOrderBody: Buffer = _.map(orders, ({takerTokenAddress, takerTokenAmount}) =>
-    directFillOrderToBuffer(takerTokenAddress, takerTokenAmount, web3));
+    takerWalletOrderToBuffer(takerTokenAddress, takerTokenAmount, web3));
   return Buffer.concat([
     Buffer.concat(takerOrderHeader),
     Buffer.concat(takerOrderBody),
   ]);
 }
 
-export function generateOrder(
+/**
+ * Generates an entire serialized exchange order
+ *
+ * @param  makerTokenAddress Address of the token used to pay for the order
+ * @param  orders            Array of TakerWalletOrders
+ * @param  web3              web3 instance
+ * @return                   Entire taker wallet exchange data as a buffer
+ */
+
+export function generateSerializedOrders(
   makerTokenAddress: Address,
   orders: object[],
   web3: Web3,
@@ -84,7 +113,7 @@ export function generateOrder(
     } else if (key === '2') {
       // Handle Kyber Network
     } else if (key === '3') {
-      orderBuffer.push(generateDirectFillOrderBodyBuffer(makerTokenAddress, exchangeOrders, web3));
+      orderBuffer.push(generateTakerWalletOrderBuffer(makerTokenAddress, exchangeOrders, web3));
     }
   });
   return ethUtil.bufferToHex(Buffer.concat(orderBuffer));
