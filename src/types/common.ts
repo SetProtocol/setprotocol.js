@@ -56,3 +56,11 @@ export interface CreateLogArgs {
   _name: string;
   _symbol: string;
 }
+
+/* Orders */
+
+export interface TakerWalletOrder {
+  exchange: number;
+  takerTokenAddress: Address;
+  takerTokenAmount: BigNumber;
+}
