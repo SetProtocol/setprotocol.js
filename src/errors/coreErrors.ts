@@ -29,6 +29,7 @@ export const coreAPIErrors = {
   QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT: () =>
     'Quantity needs to be multiple of natural unit.',
   SIGNATURE_MISMATCH: () => 'Signature does not match issuance order attributes.',
+  EXPIRATION_PASSED: () => 'Expiration date has already passed.',
 };
 
 export const coreAssertionErrors = {

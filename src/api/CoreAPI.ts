@@ -585,7 +585,7 @@ export class CoreAPI {
    * @param  makerAddress              Address of person making the order
    * @param  makerToken                Address of token the issuer is paying in
    * @param  makerTokenAmount          Number of tokens being exchanged for aggregate order size
-   * @param  expiration                Unix timestamp of expiration
+   * @param  expiration                Unix timestamp of expiration (in seconds)
    * @param  relayerAddress            Address of relayer of order
    * @param  relayerToken              Address of token paid to relayer
    * @param  relayerTokenAmount        Number of token paid to relayer
@@ -645,6 +645,10 @@ export class CoreAPI {
     this.assert.common.greaterThanZero(
       relayerTokenAmount,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerTokenAmount),
+    );
+    this.assert.common.isValidExpiration(
+      expiration,
+      coreAPIErrors.EXPIRATION_PASSED(),
     );
 
     const order: IssuanceOrder = {
@@ -750,6 +754,10 @@ export class CoreAPI {
       signature,
       coreAPIErrors.SIGNATURE_MISMATCH(),
     );
+    this.assert.common.isValidExpiration(
+      expiration,
+      coreAPIErrors.EXPIRATION_PASSED(),
+    );
 
     const txHash = await coreInstance.fillOrder.sendTransactionAsync(
       [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
@@ -836,6 +844,10 @@ export class CoreAPI {
     this.assert.common.greaterThanZero(
       quantityToCancel,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToCancel),
+    );
+    this.assert.common.isValidExpiration(
+      expiration,
+      coreAPIErrors.EXPIRATION_PASSED(),
     );
 
     const txHash = await coreInstance.cancelOrder.sendTransactionAsync(

@@ -35,4 +35,10 @@ export class CommonAssertions {
       throw new Error(errorMessage);
     }
   }
+
+  public isValidExpiration(expiration: BigNumber) {
+    if (Date.now() > Number(expiration.mul(1000))) {
+      throw new Error(errorMessage);
+    }
+  }
 }
