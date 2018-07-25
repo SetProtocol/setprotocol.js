@@ -587,8 +587,8 @@ export class CoreAPI {
    * @param  makerTokenAmount          Number of tokens being exchanged for aggregate order size
    * @param  expiration                Unix timestamp of expiration
    * @param  relayerAddress            Address of relayer of order
-   * @param  relayerFeeBaseToken       Address of token paid to relayer
-   * @param  relayerFeeAmount          Number of token paid to relayer
+   * @param  relayerToken              Address of token paid to relayer
+   * @param  relayerTokenAmount        Number of token paid to relayer
    * @return                           A transaction hash
    */
   public async createIssuanceOrder(
@@ -601,18 +601,17 @@ export class CoreAPI {
     makerTokenAmount: BigNumber,
     expiration: BigNumber,
     relayerAddress: Address,
-    relayerFeeBaseToken: Address,
-    relayerFeeAmount: BigNumber,
+    relayerToken: Address,
+    relayerTokenAmount: BigNumber,
   ): Promise<SignedIssuanceOrder> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('makerAddress', makerAddress);
     this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
-    this.assert.schema.isValidAddress('relayerFeeBaseToken', relayerFeeBaseToken);
+    this.assert.schema.isValidAddress('relayerToken', relayerToken);
     this.assert.common.greaterThanZero(
       quantity,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
     );
-    // Token assertions
     await Promise.all(
       requiredComponents.map(async (tokenAddress, i) => {
         this.assert.common.isValidString(
@@ -641,11 +640,11 @@ export class CoreAPI {
       makerTokenAmount,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
     );
-    const relayerFeeBaseTokenContract = await DetailedERC20Contract.at(relayerFeeBaseToken, this.web3, {});
-    await this.assert.erc20.implementsERC20(relayerFeeBaseTokenContract);
+    const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerTokenContract);
     this.assert.common.greaterThanZero(
-      relayerFeeAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerFeeAmount),
+      relayerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerTokenAmount),
     );
 
     const order: IssuanceOrder = {
@@ -670,49 +669,40 @@ export class CoreAPI {
   /*
    * Fills an Issuance Order
    *
-   * @param  setAddress                Address of the Set token for issuance order
-   * @param  quantity                  Number of Set tokens to create as part of issuance order
-   * @param  requiredComponents        Addresses of required component tokens of Set
-   * @param  requiredComponentAmounts  Amounts of each required component needed
-   * @param  makerAddress              Address of person making the order
-   * @param  makerToken                Address of token the issuer is paying in
-   * @param  makerTokenAmount          Number of tokens being exchanged for aggregate order size
-   * @param  expiration                Unix timestamp of expiration
-   * @param  relayerAddress            Address of relayer of order
-   * @param  relayerFeeBaseToken       Address of token paid to relayer
-   * @param  relayerFeeAmount          Number of token paid to relayer
-   * @param  salt                      Random number salt added to issuance order
-   * @param  signature                 Signature of issuance order
+   * @param  issuanceOrder             Issuance order to fill
+   * @param  signature                 Signature of the order
    * @param  quantityToFill            Number of Set to fill in this call
    * @param  ordersData                Bytes representation of orders used to fill issuance order
    * @return                           A transaction hash
    */
   public async fillIssuanceOrder(
-    setAddress: Address,
-    quantity: BigNumber,
-    requiredComponents: Address[],
-    requiredComponentAmounts: BigNumber[],
-    makerAddress: Address,
-    makerToken: Address,
-    makerTokenAmount: BigNumber,
-    expiration: BigNumber,
-    relayerAddress: Address,
-    relayerFeeBaseToken: Address,
-    relayerFeeAmount: BigNumber,
-    salt: BigNumber,
-    signature: ECSig,
+    issuanceOrder: IssuanceOrder
     quantityToFill: BigNumber,
     ordersData: string,
   ): Promise<string> {
+    const {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      relayerTokenAmount,
+      requiredComponents,
+      requiredComponentAmounts,
+      salt,
+    } = issuanceOrder;
+
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('makerAddress', makerAddress);
     this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
-    this.assert.schema.isValidAddress('relayerFeeBaseToken', relayerFeeBaseToken);
+    this.assert.schema.isValidAddress('relayerToken', relayerToken);
     this.assert.common.greaterThanZero(
       quantity,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
     );
-    // Token assertions
     await Promise.all(
       requiredComponents.map(async (tokenAddress, i) => {
         this.assert.common.isValidString(
@@ -741,29 +731,29 @@ export class CoreAPI {
       makerTokenAmount,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
     );
-    const relayerFeeBaseTokenContract = await DetailedERC20Contract.at(relayerFeeBaseToken, this.web3, {});
-    await this.assert.erc20.implementsERC20(relayerFeeBaseTokenContract);
+    const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerTokenContract);
     this.assert.common.greaterThanZero(
-      relayerFeeAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerFeeAmount),
+      relayerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerTokenAmount),
     );
     this.assert.common.greaterThanZero(
       quantityToFill,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerFeeAmount),
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill),
     );
-
-    // TODO: More ordersData validation
     this.assert.common.isValidString(
       ordersData,
       coreAPIErrors.STRING_CANNOT_BE_EMPTY('ordersData'),
     );
-
-    // TODO: Validate signature
-    // this.assert.core.isValidSignature
+    await this.assert.core.isValidSignature(
+      issuanceOrder,
+      signature,
+      coreAPIErrors.SIGNATURE_MISMATCH(),
+    );
 
     const txHash = await coreInstance.fillOrder.sendTransactionAsync(
-      [setAddress, makerAddress, makerToken, relayerAddress, relayerFeeBaseToken],
-      [quantity, makerTokenAmount, expiration, relayerFeeAmount, salt],
+      [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
+      [quantity, makerTokenAmount, expiration, relayerTokenAmount, salt],
       requiredComponents,
       requiredComponentAmounts,
       quantityToFill,
@@ -778,45 +768,37 @@ export class CoreAPI {
   /*
    * Cancels an Issuance Order
    *
-   * @param  setAddress                Address of the Set token for issuance order
-   * @param  quantity                  Number of Set tokens to create as part of issuance order
-   * @param  requiredComponents        Addresses of required component tokens of Set
-   * @param  requiredComponentAmounts  Amounts of each required component needed
-   * @param  makerAddress              Address of person making the order
-   * @param  makerToken                Address of token the issuer is paying in
-   * @param  makerTokenAmount          Number of tokens being exchanged for aggregate order size
-   * @param  expiration                Unix timestamp of expiration
-   * @param  relayerAddress            Address of relayer of order
-   * @param  relayerFeeBaseToken       Address of token paid to relayer
-   * @param  relayerFeeAmount          Number of token paid to relayer
-   * @param  salt                      Random number salt added to issuance order
+   * @param  issuanceOrder             Issuance order to fill
    * @param  quantityToCancel          Number of Set to fill in this call
    * @return                           A transaction hash
    */
   public async cancelIssuanceOrder(
-    setAddress: Address,
-    quantity: BigNumber,
-    requiredComponents: Address[],
-    requiredComponentAmounts: BigNumber[],
-    makerAddress: Address,
-    makerToken: Address,
-    makerTokenAmount: BigNumber,
-    expiration: BigNumber,
-    relayerAddress: Address,
-    relayerFeeBaseToken: Address,
-    relayerFeeAmount: BigNumber,
-    salt: BigNumber,
+    issuanceOrder: IssuanceOrder,
     quantityToCancel: BigNumber,
   ): Promise<string> {
+    const {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      relayerTokenAmount,
+      requiredComponents,
+      requiredComponentAmounts,
+      salt,
+    } = issuanceOrder;
+
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('makerAddress', makerAddress);
     this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
-    this.assert.schema.isValidAddress('relayerFeeBaseToken', relayerFeeBaseToken);
+    this.assert.schema.isValidAddress('relayerToken', relayerToken);
     this.assert.common.greaterThanZero(
       quantity,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
     );
-    // Token assertions
     await Promise.all(
       requiredComponents.map(async (tokenAddress, i) => {
         this.assert.common.isValidString(
@@ -845,20 +827,20 @@ export class CoreAPI {
       makerTokenAmount,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
     );
-    const relayerFeeBaseTokenContract = await DetailedERC20Contract.at(relayerFeeBaseToken, this.web3, {});
-    await this.assert.erc20.implementsERC20(relayerFeeBaseTokenContract);
+    const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerTokenContract);
     this.assert.common.greaterThanZero(
-      relayerFeeAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerFeeAmount),
+      relayerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerTokenAmount),
     );
     this.assert.common.greaterThanZero(
       quantityToCancel,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerFeeAmount),
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToCancel),
     );
 
     const txHash = await coreInstance.cancelOrder.sendTransactionAsync(
-      [setAddress, makerAddress, makerToken, relayerAddress, relayerFeeBaseToken],
-      [quantity, makerTokenAmount, expiration, relayerFeeAmount, salt],
+      [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
+      [quantity, makerTokenAmount, expiration, relayerTokenAmount, salt],
       requiredComponents,
       requiredComponentAmounts,
       quantityToCancel,

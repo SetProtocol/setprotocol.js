@@ -16,6 +16,8 @@
 
 'use strict';
 
+import * as _ from 'lodash';
+import { hashOrderHex, signMessage } from 'set-protocol-utils';
 import { coreAssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 import { CoreContract } from '../contracts';
@@ -41,6 +43,15 @@ export class CoreAssertions {
 
   public validateNaturalUnit(naturalUnit: BigNumber, minDecimal: BigNumber, errorMessage: string) {
     if (naturalUnit.lt(10 ** (18 - minDecimal.toNumber()))) {
+      throw new Error(errorMessage);
+    }
+  }
+
+  public async isValidSignature(issuanceOrder: IssuanceOrder, signature: ECSig, errorMessage: string) {
+    const orderHash = hashOrderHex(issuanceOrder);
+    const orderSignature = await signMessage(orderHash, issuanceOrder.makerAddress);
+
+    if (!_.isEqual(signature, orderSignature)) {
       throw new Error(errorMessage);
     }
   }
