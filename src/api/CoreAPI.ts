@@ -18,7 +18,7 @@
 
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
-import { hashOrderHex, signMessage } from 'set-protocol-utils';
+import { hashOrderHex, signMessage, generateSalt } from 'set-protocol-utils';
 
 import { ContractsAPI } from '.';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
@@ -576,7 +576,7 @@ export class CoreAPI {
   }
 
   /*
-   * Creates a new Issuance Order
+   * Creates a new Issuance Order including the signature
    *
    * @param  setAddress                Address of the Set token for issuance order
    * @param  quantity                  Number of Set tokens to create as part of issuance order
@@ -589,7 +589,6 @@ export class CoreAPI {
    * @param  relayerAddress            Address of relayer of order
    * @param  relayerFeeBaseToken       Address of token paid to relayer
    * @param  relayerFeeAmount          Number of token paid to relayer
-   * @param  salt                      Random salt number
    * @return                           A transaction hash
    */
   public async createIssuanceOrder(
@@ -604,8 +603,107 @@ export class CoreAPI {
     relayerAddress: Address,
     relayerFeeBaseToken: Address,
     relayerFeeAmount: BigNumber,
+  ): Promise<SignedIssuanceOrder> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('makerAddress', makerAddress);
+    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
+    this.assert.schema.isValidAddress('relayerFeeBaseToken', relayerFeeBaseToken);
+    this.assert.common.greaterThanZero(
+      quantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+    );
+    // Token assertions
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
+        );
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
+        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(detailedERC20Contract);
+
+        this.assert.common.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+    this.assert.common.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+    const makerTokenContract = await DetailedERC20Contract.at(makerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(makerTokenContract);
+    this.assert.common.greaterThanZero(
+      makerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
+    );
+    const relayerFeeBaseTokenContract = await DetailedERC20Contract.at(relayerFeeBaseToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerFeeBaseTokenContract);
+    this.assert.common.greaterThanZero(
+      relayerFeeAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerFeeAmount),
+    );
+
+    const order: IssuanceOrder = {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      relayerTokenAmount,
+      requiredComponents,
+      requiredComponentAmounts,
+      salt: generateSalt(),
+    };
+    const orderHash = hashOrderHex(order);
+    const signature = await signMessage(orderHash, makerAddress);
+    return Object.assign({}, order, { signature });
+  }
+
+  /*
+   * Fills an Issuance Order
+   *
+   * @param  setAddress                Address of the Set token for issuance order
+   * @param  quantity                  Number of Set tokens to create as part of issuance order
+   * @param  requiredComponents        Addresses of required component tokens of Set
+   * @param  requiredComponentAmounts  Amounts of each required component needed
+   * @param  makerAddress              Address of person making the order
+   * @param  makerToken                Address of token the issuer is paying in
+   * @param  makerTokenAmount          Number of tokens being exchanged for aggregate order size
+   * @param  expiration                Unix timestamp of expiration
+   * @param  relayerAddress            Address of relayer of order
+   * @param  relayerFeeBaseToken       Address of token paid to relayer
+   * @param  relayerFeeAmount          Number of token paid to relayer
+   * @param  salt                      Random number salt added to issuance order
+   * @param  signature                 Signature of issuance order
+   * @param  quantityToFill            Number of Set to fill in this call
+   * @param  ordersData                Bytes representation of orders used to fill issuance order
+   * @return                           A transaction hash
+   */
+  public async fillIssuanceOrder(
+    setAddress: Address,
+    quantity: BigNumber,
+    requiredComponents: Address[],
+    requiredComponentAmounts: BigNumber[],
+    makerAddress: Address,
+    makerToken: Address,
+    makerTokenAmount: BigNumber,
+    expiration: BigNumber,
+    relayerAddress: Address,
+    relayerFeeBaseToken: Address,
+    relayerFeeAmount: BigNumber,
     salt: BigNumber,
-  ): SignedIssuanceOrder {
+    signature: ECSig,
+    quantityToFill: BigNumber,
+    ordersData: string,
+  ): Promise<string> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('makerAddress', makerAddress);
     this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
@@ -650,27 +748,31 @@ export class CoreAPI {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerFeeAmount),
     );
     this.assert.common.greaterThanZero(
-      salt,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(salt),
+      quantityToFill,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerFeeAmount),
     );
 
-    const order: IssuanceOrder = {
-      setAddress,
-      makerAddress,
-      makerToken,
-      relayerAddress,
-      relayerToken,
-      quantity,
-      makerTokenAmount,
-      expiration,
-      relayerTokenAmount,
-      salt,
+    // TODO: More ordersData validation
+    this.assert.common.isValidString(
+      ordersData,
+      coreAPIErrors.STRING_CANNOT_BE_EMPTY('ordersData'),
+    );
+
+    // TODO: Validate signature
+    // this.assert.core.isValidSignature
+
+    const txHash = await coreInstance.fillOrder.sendTransactionAsync(
+      [setAddress, makerAddress, makerToken, relayerAddress, relayerFeeBaseToken],
+      [quantity, makerTokenAmount, expiration, relayerFeeAmount, salt],
       requiredComponents,
       requiredComponentAmounts,
-    };
-    const orderHash = hashOrderHex(order);
-    const signature = await signMessage(orderHash, makerAddress);
-    return Object.assign({}, order, { signature });
+      quantityToFill,
+      signature.v,
+      [signature.r, signature.s],
+      ordersData,
+    );
+
+    return txHash;
   }
 
   /* ============ Core State Getters ============ */

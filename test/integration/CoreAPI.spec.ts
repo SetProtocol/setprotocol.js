@@ -30,7 +30,6 @@ import { Core, Vault } from 'set-protocol-contracts';
 
 import {
   generateTimeStamp,
-  generateSalt,
   hashOrderHex,
   signMessage,
 } from 'set-protocol-utils';
@@ -506,7 +505,6 @@ describe('Core API', () => {
         relayerAddress: ACCOUNTS[1].address,
         relayerFeeBaseToken: componentAddresses[0],
         relayerFeeAmount: new BigNumber(1),
-        salt: generateSalt(),
       };
 
       const signedIssuanceOrder = await coreAPI.createIssuanceOrder(
@@ -521,10 +519,11 @@ describe('Core API', () => {
         relayerAddress: order.relayerAddress,
         relayerFeeBaseToken: order.relayerFeeBaseToken,
         relayerFeeAmount: order.relayerFeeAmount,
-        salt: order.salt,
       );
 
-      const signature = await signMessage(hashOrderHex(order, order.makerAddress));
+      const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });
+
+      const signature = await signMessage(hashOrderHex(orderWithSalt, order.makerAddress));
 
       expect(signature).to.equal(signedIssuanceOrder.signature);
     });

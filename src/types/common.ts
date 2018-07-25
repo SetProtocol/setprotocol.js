@@ -26,7 +26,7 @@ export interface Token {
 }
 
 export interface ECSig {
-  v: string;
+  v: UInt;
   r: string;
   s: string;
 }
