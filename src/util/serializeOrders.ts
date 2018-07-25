@@ -58,7 +58,7 @@ export function takerWalletOrderToBuffer(
  * @param  makerTokenAddress Address of the token used to pay for the order
  * @param  orders            Array of TakerWalletOrders
  * @param  web3              web3 instance instantiated with `new Web3(provider);`
- * @return                   Entire taker wallet exchange data as a buffer
+ * @return                   Entire taker wallet orders data as a buffer
  */
 
 export function generateTakerWalletOrdersBuffer(
@@ -88,7 +88,7 @@ export function generateTakerWalletOrdersBuffer(
  * @param  makerTokenAddress Address of the token used to pay for the order
  * @param  orders            Array of TakerWalletOrders
  * @param  web3              web3 instance instantiated with `new Web3(provider);`
- * @return                   Entire taker wallet exchange data as a buffer
+ * @return                   Buffer with all exchange orders formatted and concatenated
  */
 
 export function generateSerializedOrders(
