@@ -680,7 +680,7 @@ export class CoreAPI {
    * @return                           A transaction hash
    */
   public async fillIssuanceOrder(
-    issuanceOrder: IssuanceOrder
+    issuanceOrder: IssuanceOrder,
     quantityToFill: BigNumber,
     orderData: string,
   ): Promise<string> {

@@ -56,7 +56,6 @@
         "no-internal-module": true,
         "no-trailing-whitespace": true,
         "no-null-keyword": true,
-        "no-unused-variable": true,
         "prefer-const": true,
         "jsdoc-format": true,
         "arrow-parens": [true, "ban-single-arg-parens"],
