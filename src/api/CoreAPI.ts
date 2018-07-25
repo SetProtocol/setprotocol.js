@@ -672,13 +672,13 @@ export class CoreAPI {
    * @param  issuanceOrder             Issuance order to fill
    * @param  signature                 Signature of the order
    * @param  quantityToFill            Number of Set to fill in this call
-   * @param  ordersData                Bytes representation of orders used to fill issuance order
+   * @param  orderData                 Bytes representation of orders used to fill issuance order
    * @return                           A transaction hash
    */
   public async fillIssuanceOrder(
     issuanceOrder: IssuanceOrder
     quantityToFill: BigNumber,
-    ordersData: string,
+    orderData: string,
   ): Promise<string> {
     const {
       setAddress,
@@ -742,8 +742,8 @@ export class CoreAPI {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill),
     );
     this.assert.common.isValidString(
-      ordersData,
-      coreAPIErrors.STRING_CANNOT_BE_EMPTY('ordersData'),
+      orderData,
+      coreAPIErrors.STRING_CANNOT_BE_EMPTY('orderData'),
     );
     await this.assert.core.isValidSignature(
       issuanceOrder,
@@ -759,7 +759,7 @@ export class CoreAPI {
       quantityToFill,
       signature.v,
       [signature.r, signature.s],
-      ordersData,
+      orderData,
     );
 
     return txHash;

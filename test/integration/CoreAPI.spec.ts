@@ -492,7 +492,7 @@ describe('Core API', () => {
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
     });
 
-    test('creates a new set with valid parameters', async () => {
+    test('creates a new issuance order with valid parameters', async () => {
       const order = {
         setAddress: setTokenAddress,
         quantity: new BigNumber(123),
@@ -503,8 +503,8 @@ describe('Core API', () => {
         makerTokenAmount: new BigNumber(4),
         expiration: generateTimeStamp(60),
         relayerAddress: ACCOUNTS[1].address,
-        relayerFeeBaseToken: componentAddresses[0],
-        relayerFeeAmount: new BigNumber(1),
+        relayerToken: componentAddresses[0],
+        relayerTokenAmount: new BigNumber(1),
       };
 
       const signedIssuanceOrder = await coreAPI.createSignedIssuanceOrder(
@@ -517,8 +517,8 @@ describe('Core API', () => {
         makerTokenAmount: order.makerTokenAmount,
         expiration: order.expiration,
         relayerAddress: order.relayerAddress,
-        relayerFeeBaseToken: order.relayerFeeBaseToken,
-        relayerFeeAmount: order.relayerFeeAmount,
+        relayerToken: order.relayerToken,
+        relayerTokenAmount: order.relayerTokenAmount,
       );
 
       const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });
@@ -526,6 +526,196 @@ describe('Core API', () => {
       const signature = await signMessage(hashOrderHex(orderWithSalt, order.makerAddress));
 
       expect(signature).to.equal(signedIssuanceOrder.signature);
+    });
+  });
+
+  /* ============ Fill Issuance Order ============ */
+
+  describe('fillIssuanceOrder', async () => {
+    let coreAPI: CoreAPI;
+    let setTokenFactoryAddress: Address;
+    let setToCreate: TestSet;
+    let componentAddresses: Address[];
+
+    beforeEach(async () => {
+      coreAPI = await initializeCoreAPI(provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+
+      setToCreate = testSets[0];
+      componentAddresses = await deployTokensForSetWithApproval(
+        setToCreate,
+        coreAPI.transferProxyAddress,
+        provider,
+      );
+
+      // Create a Set
+      const txHash = await coreAPI.create(
+        ACCOUNTS[0].address,
+        setTokenFactoryAddress,
+        componentAddresses,
+        setToCreate.units,
+        setToCreate.naturalUnit,
+        setToCreate.setName,
+        setToCreate.setSymbol,
+      );
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+
+      // TODO: Handle allowance setting for fillOrder to succeed
+    });
+
+    test('fills an issuance order with valid parameters', async () => {
+      const order = {
+        setAddress: setTokenAddress,
+        quantity: new BigNumber(123),
+        requiredComponents: componentAddresses,
+        requiredComponentAmounts: componentAddresses.map(component => 1),
+        makerAddress: ACCOUNTS[0].address,
+        makerToken: componentAddresses[0],
+        makerTokenAmount: new BigNumber(4),
+        expiration: generateTimeStamp(60),
+        relayerAddress: ACCOUNTS[1].address,
+        relayerToken: componentAddresses[0],
+        relayerTokenAmount: new BigNumber(1),
+      };
+
+      const signedIssuanceOrder = await coreAPI.createSignedIssuanceOrder(
+        setAddress: order.setAddress,
+        quantity: order.quantity,
+        requiredComponents: order.requiredComponents,
+        requiredComponentAmounts: order.requiredComponentAmounts,
+        makerAddress: order.makerAddress,
+        makerToken: order.makerToken,
+        makerTokenAmount: order.makerTokenAmount,
+        expiration: order.expiration,
+        relayerAddress: order.relayerAddress,
+        relayerToken: order.relayerToken,
+        relayerTokenAmount: order.relayerTokenAmount,
+      );
+
+      const {
+        setAddress,
+        makerAddress,
+        makerToken,
+        relayerAddress,
+        relayerToken,
+        quantity,
+        makerTokenAmount,
+        expiration,
+        relayerTokenAmount,
+        requiredComponents,
+        requiredComponentAmounts,
+        salt,
+        signature,
+      } = signedIssuanceOrder;
+
+      const txHash = await coreAPI.fillIssuanceOrder(
+        [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
+        [quantity, makerTokenAmount, expiration, relayerTokenAmount, salt],
+        requiredComponents,
+        requiredComponentAmounts,
+        new BigNumber(10),
+        signature.v,
+        [signature.r, signature.s],
+        orderData,
+      );
+
+      await web3Utils.getTransactionReceiptAsync(txHash);
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogFill');
+    });
+  });
+
+  /* ============ Cancel Issuance Order ============ */
+
+  describe('cancelIssuanceOrder', async () => {
+    let coreAPI: CoreAPI;
+    let setTokenFactoryAddress: Address;
+    let setToCreate: TestSet;
+    let componentAddresses: Address[];
+
+    beforeEach(async () => {
+      coreAPI = await initializeCoreAPI(provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+
+      setToCreate = testSets[0];
+      componentAddresses = await deployTokensForSetWithApproval(
+        setToCreate,
+        coreAPI.transferProxyAddress,
+        provider,
+      );
+
+      // Create a Set
+      const txHash = await coreAPI.create(
+        ACCOUNTS[0].address,
+        setTokenFactoryAddress,
+        componentAddresses,
+        setToCreate.units,
+        setToCreate.naturalUnit,
+        setToCreate.setName,
+        setToCreate.setSymbol,
+      );
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+    });
+
+    test('fills an issuance order with valid parameters', async () => {
+      const order = {
+        setAddress: setTokenAddress,
+        quantity: new BigNumber(123),
+        requiredComponents: componentAddresses,
+        requiredComponentAmounts: componentAddresses.map(component => 1),
+        makerAddress: ACCOUNTS[0].address,
+        makerToken: componentAddresses[0],
+        makerTokenAmount: new BigNumber(4),
+        expiration: generateTimeStamp(60),
+        relayerAddress: ACCOUNTS[1].address,
+        relayerToken: componentAddresses[0],
+        relayerTokenAmount: new BigNumber(1),
+      };
+
+      const signedIssuanceOrder = await coreAPI.createSignedIssuanceOrder(
+        setAddress: order.setAddress,
+        quantity: order.quantity,
+        requiredComponents: order.requiredComponents,
+        requiredComponentAmounts: order.requiredComponentAmounts,
+        makerAddress: order.makerAddress,
+        makerToken: order.makerToken,
+        makerTokenAmount: order.makerTokenAmount,
+        expiration: order.expiration,
+        relayerAddress: order.relayerAddress,
+        relayerToken: order.relayerToken,
+        relayerTokenAmount: order.relayerTokenAmount,
+      );
+
+      const {
+        setAddress,
+        makerAddress,
+        makerToken,
+        relayerAddress,
+        relayerToken,
+        quantity,
+        makerTokenAmount,
+        expiration,
+        relayerTokenAmount,
+        requiredComponents,
+        requiredComponentAmounts,
+        salt,
+      } = signedIssuanceOrder;
+
+      const txHash = await coreAPI.cancelIssuanceOrder(
+        [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
+        [quantity, makerTokenAmount, expiration, relayerTokenAmount, salt],
+        requiredComponents,
+        requiredComponentAmounts,
+        new BigNumber(10),
+      );
+
+      await web3Utils.getTransactionReceiptAsync(txHash);
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogCancel');
     });
   });
 
