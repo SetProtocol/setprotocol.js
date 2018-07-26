@@ -1,6 +1,6 @@
 import { BigNumber } from '../src/util';
 
-interface Component {
+export interface Token {
   name: string;
   symbol: string;
   decimals: number;
@@ -12,7 +12,7 @@ export interface TestSet {
   setName: string;
   setSymbol: string;
   targetPriceInUSD: number;
-  components: Component[];
+  components: Token[];
   units: BigNumber[];
   naturalUnit: BigNumber;
 }

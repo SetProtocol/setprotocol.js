@@ -30,7 +30,7 @@ import { Core } from 'set-protocol-contracts';
 
 import { ACCOUNTS } from '../accounts';
 import { testSets, TestSet } from '../testSets';
-import { VaultAPI } from '../../src/api';
+import { CoreAPI, VaultAPI } from '../../src/api';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
 import { Address } from '../../src/types/common';
 import { BigNumber, Web3Utils } from '../../src/util';
@@ -57,6 +57,9 @@ coreContract.defaults(txDefaults);
 let currentSnapshotId: number;
 
 describe('Vault API', () => {
+  let coreAPI: CoreAPI;
+  let vaultAPI: VaultAPI;
+
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
   });

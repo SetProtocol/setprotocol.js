@@ -62,11 +62,6 @@ export interface SignedIssuanceOrder {
   signature: ECSig;
 }
 
-export interface TransactionOpts {
-  gas?: number;
-  gasPrice?: BigNumber;
-}
-
 export interface TxData {
   from?: string;
   gas?: BigNumber;

@@ -20,6 +20,8 @@ import * as Web3 from 'web3';
 
 import { ContractsAPI } from '.';
 import { Assertions } from '../assertions';
+import { Address } from '../types/common';
+import { BigNumber } from '../util';
 
 /**
  * @title  SetTokenAPI
@@ -46,7 +48,7 @@ export class SetTokenAPI {
    * @param  userAddress Address of the user
    * @return             The balance of the user's Set
    */
-  public async getBalanceOf(setAddress: string, userAddress: string): number {
+  public async getBalanceOf(setAddress: Address, userAddress: Address): Promise<BigNumber> {
     this.assert.schema.isValidAddress('userAddress', userAddress);
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     return await setTokenInstance.balanceOf.callAsync(userAddress);
@@ -58,7 +60,7 @@ export class SetTokenAPI {
    * @param  setAddress Address of the Set
    * @return            An array of addresses
    */
-  public async getComponents(setAddress: string): string[] {
+  public async getComponents(setAddress: Address): Promise<Address[]> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     return await setTokenInstance.getComponents.callAsync();
   }
@@ -69,7 +71,7 @@ export class SetTokenAPI {
    * @param  setAddress Address of the Set
    * @return            A string of the Set's name
    */
-  public async getName(setAddress: string): string {
+  public async getName(setAddress: Address): Promise<string> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     return await setTokenInstance.name.callAsync();
   }
@@ -80,7 +82,7 @@ export class SetTokenAPI {
    * @param  setAddress Address of the Set
    * @return            The natural unit of the Set
    */
-  public async getNaturalUnit(setAddress: string): number {
+  public async getNaturalUnit(setAddress: Address): Promise<BigNumber> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     return await setTokenInstance.naturalUnit.callAsync();
   }
@@ -91,7 +93,7 @@ export class SetTokenAPI {
    * @param  setAddress Address of the Set
    * @return            A string of the Set's symbol
    */
-  public async getSymbol(setAddress: string): string {
+  public async getSymbol(setAddress: Address): Promise<string> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     return await setTokenInstance.symbol.callAsync();
   }
@@ -102,7 +104,7 @@ export class SetTokenAPI {
    * @param  setAddress Address of the Set
    * @return            The total supply of the Set
    */
-  public async getTotalSupply(setAddress: string): number {
+  public async getTotalSupply(setAddress: Address): Promise<BigNumber> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     return await setTokenInstance.totalSupply.callAsync();
   }
@@ -114,7 +116,7 @@ export class SetTokenAPI {
    * @return            An array of units that make up the Set composition which
    *                    correspond to the component tokens in the Set
    */
-  public async getUnits(setAddress: string): number[] {
+  public async getUnits(setAddress: Address): Promise<BigNumber[]> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     return await setTokenInstance.getUnits.callAsync();
   }

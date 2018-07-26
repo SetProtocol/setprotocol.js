@@ -16,12 +16,7 @@
         "node_modules/@0xproject/typescript-typings/types"
       ]
     },
-    "declarationDir": "dist/types",
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "declarationDir": "dist/types"
   },
   "include": [
     "src/**/*",

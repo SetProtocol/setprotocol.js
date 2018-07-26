@@ -21,7 +21,7 @@ import { Utils } from 'set-protocol-utils';
 import { coreAssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 import { CoreContract } from '../contracts';
-import { ECSig } from '../types/common';
+import { ECSig, IssuanceOrder } from '../types/common';
 
 const setProtocolUtils = new Utils();
 

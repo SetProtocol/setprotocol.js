@@ -33,7 +33,7 @@ const txDefaults = {
   gas: DEFAULT_GAS_LIMIT,
 };
 
-export const deployCore = async (provider: Web3.Provider.HttpProvider) => {
+export const deployCore = async (provider: Web3.Provider) => {
   const coreContract = contract(Core);
   coreContract.setProvider(provider);
   coreContract.defaults(txDefaults);
@@ -84,7 +84,7 @@ export const deployTokensForSetWithApproval = async (
   standardTokenMockContract.defaults(txDefaults);
 
   // Deploy StandardTokenMocks to add to Set
-  const componentAddresses = [];
+  const componentAddresses: Address[] = [];
   await Promise.all(
     setToDeploy.components.map(async component => {
       const standardTokenMockInstance = await standardTokenMockContract.new(

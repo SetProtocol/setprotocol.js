@@ -24,9 +24,9 @@ import { ContractsAPI } from '.';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { Address, TransactionOpts, IssuanceOrder, SignedIssuanceOrder } from '../types/common';
+import { Address, TxData, IssuanceOrder, SignedIssuanceOrder } from '../types/common';
 import { BigNumber } from '../util';
-import { CoreContract, DetailedERC20Contract, SetTokenContract, VaultContract } from '../contracts';
+import { DetailedERC20Contract, SetTokenContract, VaultContract } from '../contracts';
 
 /**
  * @title CoreAPI
@@ -39,7 +39,7 @@ export class CoreAPI {
   private web3: Web3;
   private assert: Assertions;
   private contracts: ContractsAPI;
-  private setProtocolUtils: Utils;
+  private setProtocolUtils: any;
 
   public coreAddress: Address;
   public transferProxyAddress: Address;
@@ -94,7 +94,7 @@ export class CoreAPI {
     naturalUnit: BigNumber,
     name: string,
     symbol: string,
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
     this.assert.schema.isValidAddress('userAddress', userAddress);
@@ -178,7 +178,7 @@ export class CoreAPI {
     userAddress: Address,
     setAddress: Address,
     quantityInWei: BigNumber,
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('userAddress', userAddress);
@@ -230,7 +230,7 @@ export class CoreAPI {
     userAddress: Address,
     setAddress: Address,
     quantityInWei: BigNumber,
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('userAddress', userAddress);
@@ -290,7 +290,7 @@ export class CoreAPI {
     userAddress: Address,
     tokenAddress: Address,
     quantityInWei: BigNumber,
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     this.assert.schema.isValidAddress('userAddress', userAddress);
@@ -341,7 +341,7 @@ export class CoreAPI {
     userAddress: Address,
     tokenAddress: Address,
     quantityInWei: BigNumber,
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     this.assert.schema.isValidAddress('userAddress', userAddress);
@@ -398,7 +398,7 @@ export class CoreAPI {
     setAddress: Address,
     quantityInWei: BigNumber,
     tokensToWithdraw: Address[],
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.common.greaterThanZero(
@@ -410,7 +410,7 @@ export class CoreAPI {
     const components = await setTokenContract.getComponents.callAsync();
 
     let toWithdraw: BigNumber = ZERO;
-    const tokensToWithdrawMapping = {};
+    const tokensToWithdrawMapping: any = {};
     _.each(tokensToWithdraw, withdrawTokenAddress => {
       this.assert.schema.isValidAddress('withdrawTokenAddress', withdrawTokenAddress);
       tokensToWithdrawMapping[withdrawTokenAddress] = true;
@@ -450,7 +450,7 @@ export class CoreAPI {
     userAddress: Address,
     tokenAddresses: Address[],
     quantitiesInWei: BigNumber[],
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('userAddress', userAddress);
     this.assert.common.isEqualLength(
@@ -522,7 +522,7 @@ export class CoreAPI {
     userAddress: Address,
     tokenAddresses: Address[],
     quantitiesInWei: BigNumber[],
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('userAddress', userAddress);
     this.assert.common.isEqualLength(
@@ -690,7 +690,7 @@ export class CoreAPI {
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orderData: string,
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     const {
       setAddress,
@@ -705,8 +705,9 @@ export class CoreAPI {
       requiredComponents,
       requiredComponentAmounts,
       salt,
-      signature,
     } = signedIssuanceOrder;
+
+    const { signature, ...issuanceOrder } = signedIssuanceOrder;
 
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('makerAddress', makerAddress);
@@ -800,7 +801,7 @@ export class CoreAPI {
   public async cancelIssuanceOrder(
     issuanceOrder: IssuanceOrder,
     quantityToCancel: BigNumber,
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     const {
       setAddress,
@@ -894,9 +895,9 @@ export class CoreAPI {
    * @param  exchangeId Enum id of the exchange
    * @return            An exchange address
    */
-  public async getExchangeAddress(exchangeId: number): Address {
+  public async getExchangeAddress(exchangeId: number): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-    const exchangeAddress = await coreInstance.exchanges(exchangeId);
+    const exchangeAddress = await coreInstance.exchanges.callAsync(exchangeId);
     return exchangeAddress;
   }
 
@@ -905,7 +906,7 @@ export class CoreAPI {
    *
    * @return Transfer proxy address
    */
-  public async getTransferProxyAddress(): Address {
+  public async getTransferProxyAddress(): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const transferProxyAddress = await coreInstance.transferProxyAddress.callAsync();
     return transferProxyAddress;
@@ -916,7 +917,7 @@ export class CoreAPI {
    *
    * @return Vault address
    */
-  public async getVaultAddress(): Address {
+  public async getVaultAddress(): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const vaultAddress = await coreInstance.vaultAddress.callAsync();
     return vaultAddress;
@@ -928,7 +929,7 @@ export class CoreAPI {
    * @return Array of factory addresses
    */
 
-  public async getFactories(): Address[] {
+  public async getFactories(): Promise<Address[]> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const factoryAddresses = await coreInstance.factories.callAsync();
     return factoryAddresses;
@@ -940,7 +941,7 @@ export class CoreAPI {
    * @return Array of Set addresses
    */
 
-  public async getSetAddresses(): Address[] {
+  public async getSetAddresses(): Promise<Address[]> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const setAddresses = await coreInstance.setTokens.callAsync();
     return setAddresses;
@@ -952,7 +953,7 @@ export class CoreAPI {
    * @param  factoryAddress Address of the factory contract
    * @return                Boolean equalling if factory address is valid
    */
-  public async getIsValidFactory(factoryAddress: Address): boolean {
+  public async getIsValidFactory(factoryAddress: Address): Promise<boolean> {
     this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidFactoryAddress = await coreInstance.validFactories.callAsync(factoryAddress);
@@ -965,7 +966,7 @@ export class CoreAPI {
    * @param  setAddress Address of the Set contract
    * @return            Boolean equalling if Set address is valid
    */
-  public async getIsValidSet(setAddress: Address): boolean {
+  public async getIsValidSet(setAddress: Address): Promise<boolean> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidSetAddress = await coreInstance.validSets.callAsync(setAddress);

@@ -19,7 +19,7 @@
 import * as Web3 from 'web3';
 
 import { CoreAPI } from './api';
-import { Address } from 'types/common';
+import { Address } from './types/common';
 
 /**
  * @title SetProtocol

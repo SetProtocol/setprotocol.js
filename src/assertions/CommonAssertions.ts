@@ -37,7 +37,7 @@ export class CommonAssertions {
     }
   }
 
-  public isValidExpiration(expiration: BigNumber) {
+  public isValidExpiration(expiration: BigNumber, errorMessage: string) {
     if (Date.now() > expiration.times(1000).toNumber()) {
       throw new Error(errorMessage);
     }
