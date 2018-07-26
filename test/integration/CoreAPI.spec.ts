@@ -128,7 +128,6 @@ describe('Core API', () => {
         setToCreate.setName,
         setToCreate.setSymbol,
       );
-      await web3Utils.getTransactionReceiptAsync(txHash);
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal('SetTokenCreated');
@@ -585,6 +584,7 @@ describe('Core API', () => {
         relayerToken: componentAddresses[0],
         relayerTokenAmount: new BigNumber(1),
       };
+      const takerAddress = ACCOUNTS[2].address;
 
       const signedIssuanceOrder = await coreAPI.createSignedIssuanceOrder(
         order.setAddress,
@@ -627,17 +627,11 @@ describe('Core API', () => {
       );
 
       const txHash = await coreAPI.fillIssuanceOrder(
-        [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
-        [quantity, makerTokenAmount, expiration, relayerTokenAmount, salt],
-        requiredComponents,
-        requiredComponentAmounts,
+        takerAddress,
+        signedIssuanceOrder,
         new BigNumber(10),
-        signature.v,
-        [signature.r, signature.s],
         orderData,
       );
-
-      await web3Utils.getTransactionReceiptAsync(txHash);
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogFill');
@@ -680,7 +674,7 @@ describe('Core API', () => {
     test('cancels an issuance order with valid parameters', async () => {
       const order: IssuanceOrder = {
         setAddress: setTokenAddress,
-        quantity: new BigNumber(123),
+        quantity: new BigNumber(100),
         requiredComponents: componentAddresses,
         requiredComponentAmounts: componentAddresses.map(component => new BigNumber(1)),
         makerAddress: ACCOUNTS[0].address,
@@ -706,29 +700,13 @@ describe('Core API', () => {
         order.relayerTokenAmount,
       );
 
-      const {
-        setAddress,
-        makerAddress,
-        makerToken,
-        relayerAddress,
-        relayerToken,
-        quantity,
-        makerTokenAmount,
-        expiration,
-        relayerTokenAmount,
-        requiredComponents,
-        requiredComponentAmounts,
-        salt,
-      } = signedIssuanceOrder;
-
       const txHash = await coreAPI.cancelIssuanceOrder(
         order,
         new BigNumber(10),
       );
 
-      await web3Utils.getTransactionReceiptAsync(txHash);
-
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      console.log(await web3.eth.getTransactionReceipt(txHash));
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogCancel');
     });
   });

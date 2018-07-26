@@ -677,16 +677,20 @@ export class CoreAPI {
   /*
    * Fills an Issuance Order
    *
+   * @param  userAddress               Address of user doing the fill
    * @param  issuanceOrder             Issuance order to fill
    * @param  signature                 Signature of the order
    * @param  quantityToFill            Number of Set to fill in this call
    * @param  orderData                 Bytes representation of orders used to fill issuance order
+   * @param  txOpts                    The options for executing the transaction
    * @return                           A transaction hash
    */
   public async fillIssuanceOrder(
-    issuanceOrder: IssuanceOrder,
+    userAddress: Address,
+    signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orderData: string,
+    txOpts?: TransactionOpts,
   ): Promise<string> {
     const {
       setAddress,
@@ -701,7 +705,8 @@ export class CoreAPI {
       requiredComponents,
       requiredComponentAmounts,
       salt,
-    } = issuanceOrder;
+      signature,
+    } = signedIssuanceOrder;
 
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('makerAddress', makerAddress);
@@ -763,6 +768,11 @@ export class CoreAPI {
       coreAPIErrors.EXPIRATION_PASSED(),
     );
 
+    const txSettings = Object.assign(
+      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
+
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const txHash = await coreInstance.fillOrder.sendTransactionAsync(
       [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
@@ -773,6 +783,7 @@ export class CoreAPI {
       signature.v,
       [signature.r, signature.s],
       orderData,
+      txSettings,
     );
 
     return txHash;
@@ -783,11 +794,13 @@ export class CoreAPI {
    *
    * @param  issuanceOrder             Issuance order to fill
    * @param  quantityToCancel          Number of Set to fill in this call
+   * @param  txOpts                    The options for executing the transaction
    * @return                           A transaction hash
    */
   public async cancelIssuanceOrder(
     issuanceOrder: IssuanceOrder,
     quantityToCancel: BigNumber,
+    txOpts?: TransactionOpts,
   ): Promise<string> {
     const {
       setAddress,
@@ -855,6 +868,11 @@ export class CoreAPI {
       coreAPIErrors.EXPIRATION_PASSED(),
     );
 
+    const txSettings = Object.assign(
+      { from: makerAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
+
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const txHash = await coreInstance.cancelOrder.sendTransactionAsync(
       [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
@@ -862,6 +880,7 @@ export class CoreAPI {
       requiredComponents,
       requiredComponentAmounts,
       quantityToCancel,
+      txSettings,
     );
 
     return txHash;
