@@ -17,10 +17,11 @@
 'use strict';
 
 import { BigNumber } from '../util';
+import { ZERO } from '../constants';
 
 export class CommonAssertions {
   public greaterThanZero(quantity: BigNumber, errorMessage: string) {
-    if (quantity.lte(new BigNumber(0))) {
+    if (quantity.lte(ZERO)) {
       throw new Error(errorMessage);
     }
   }
@@ -37,7 +38,7 @@ export class CommonAssertions {
   }
 
   public isValidExpiration(expiration: BigNumber) {
-    if (Date.now() > Number(expiration.mul(1000))) {
+    if (Date.now() > expiration.times(1000).toNumber()) {
       throw new Error(errorMessage);
     }
   }

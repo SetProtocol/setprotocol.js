@@ -18,7 +18,7 @@
 
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
-import { hashOrderHex, signMessage, generateSalt } from 'set-protocol-utils';
+import { Utils } from 'set-protocol-utils';
 
 import { ContractsAPI } from '.';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
@@ -39,6 +39,7 @@ export class CoreAPI {
   private web3: Web3;
   private assert: Assertions;
   private contracts: ContractsAPI;
+  private setProtocolUtils: Utils;
 
   public coreAddress: Address;
   public transferProxyAddress: Address;
@@ -56,6 +57,8 @@ export class CoreAPI {
 
     this.assert.schema.isValidAddress('coreAddress', coreAddress);
     this.coreAddress = coreAddress;
+
+    this.setProtocolUtils = new Utils(this.web3);
 
     if (transferProxyAddress) {
       this.assert.schema.isValidAddress('transferProxyAddress', transferProxyAddress);
@@ -663,10 +666,11 @@ export class CoreAPI {
       relayerTokenAmount,
       requiredComponents,
       requiredComponentAmounts,
-      salt: generateSalt(),
+      salt: Utils.generateSalt(),
     };
-    const orderHash = hashOrderHex(order);
-    const signature = await signMessage(orderHash, makerAddress);
+    const orderHash = Utils.hashOrderHex(order);
+
+    const signature = await this.setProtocolUtils.signMessage(orderHash, makerAddress);
     return Object.assign({}, order, { signature });
   }
 
@@ -759,6 +763,7 @@ export class CoreAPI {
       coreAPIErrors.EXPIRATION_PASSED(),
     );
 
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const txHash = await coreInstance.fillOrder.sendTransactionAsync(
       [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
       [quantity, makerTokenAmount, expiration, relayerTokenAmount, salt],
@@ -850,6 +855,7 @@ export class CoreAPI {
       coreAPIErrors.EXPIRATION_PASSED(),
     );
 
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const txHash = await coreInstance.cancelOrder.sendTransactionAsync(
       [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
       [quantity, makerTokenAmount, expiration, relayerTokenAmount, salt],

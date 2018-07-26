@@ -323,12 +323,14 @@ describe('Core API', () => {
         tokenAddress,
       );
       expect(Number(userBalance)).to.equal(0);
-      await coreAPI.deposit(
+      const txHash = await coreAPI.deposit(
         ACCOUNTS[0].address,
         tokenAddress,
         new BigNumber(100),
         txDefaults,
       );
+      await web3Utils.getTransactionReceiptAsync(txHash);
+
       userBalance = await vaultWrapper.getOwnerBalance.callAsync(ACCOUNTS[0].address, tokenAddress);
       expect(Number(userBalance)).to.equal(100);
     });
@@ -344,12 +346,14 @@ describe('Core API', () => {
           expect(Number(userBalance)).to.equal(0);
         }),
       );
-      await coreAPI.batchDeposit(
+      const txHash = await coreAPI.batchDeposit(
         ACCOUNTS[0].address,
         tokenAddresses,
         quantities,
         txDefaults,
       );
+      await web3Utils.getTransactionReceiptAsync(txHash);
+
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
@@ -437,12 +441,14 @@ describe('Core API', () => {
           expect(Number(userBalance)).to.equal(100);
         }),
       );
-      await coreAPI.batchWithdraw(
+      const txHash = await coreAPI.batchWithdraw(
         ACCOUNTS[0].address,
         tokenAddresses,
         quantities,
         txDefaults,
       );
+      await web3Utils.getTransactionReceiptAsync(txHash);
+
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
@@ -497,7 +503,7 @@ describe('Core API', () => {
         setAddress: setTokenAddress,
         quantity: new BigNumber(123),
         requiredComponents: componentAddresses,
-        requiredComponentAmounts: componentAddresses.map(component => 1),
+        requiredComponentAmounts: componentAddresses.map(component => new BigNumber(1)),
         makerAddress: ACCOUNTS[0].address,
         makerToken: componentAddresses[0],
         makerTokenAmount: new BigNumber(4),
@@ -524,10 +530,11 @@ describe('Core API', () => {
       const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });
 
       const signature = await setProtocolUtils.signMessage(
-        Utils.hashOrderHex(orderWithSalt, order.makerAddress)
+        Utils.hashOrderHex(orderWithSalt),
+        order.makerAddress,
       );
 
-      expect(signature).to.equal(signedIssuanceOrder.signature);
+      expect(signature).to.deep.equal(signedIssuanceOrder.signature);
     });
   });
 
@@ -569,7 +576,7 @@ describe('Core API', () => {
         setAddress: setTokenAddress,
         quantity: new BigNumber(123),
         requiredComponents: componentAddresses,
-        requiredComponentAmounts: componentAddresses.map(component => 1),
+        requiredComponentAmounts: componentAddresses.map(component => new BigNumber(1)),
         makerAddress: ACCOUNTS[0].address,
         makerToken: componentAddresses[0],
         makerTokenAmount: new BigNumber(4),
@@ -610,11 +617,12 @@ describe('Core API', () => {
       } = signedIssuanceOrder;
 
       await approveForFill(
+        web3,
         makerAddress,
         makerToken,
         relayerAddress,
         relayerToken,
-        takerAddress,
+        ACCOUNTS[2].address,
         coreAPI.transferProxyAddress,
       );
 
@@ -669,12 +677,12 @@ describe('Core API', () => {
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
     });
 
-    test('fills an issuance order with valid parameters', async () => {
-      const order = {
+    test('cancels an issuance order with valid parameters', async () => {
+      const order: IssuanceOrder = {
         setAddress: setTokenAddress,
         quantity: new BigNumber(123),
         requiredComponents: componentAddresses,
-        requiredComponentAmounts: componentAddresses.map(component => 1),
+        requiredComponentAmounts: componentAddresses.map(component => new BigNumber(1)),
         makerAddress: ACCOUNTS[0].address,
         makerToken: componentAddresses[0],
         makerTokenAmount: new BigNumber(4),
@@ -714,10 +722,7 @@ describe('Core API', () => {
       } = signedIssuanceOrder;
 
       const txHash = await coreAPI.cancelIssuanceOrder(
-        [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
-        [quantity, makerTokenAmount, expiration, relayerTokenAmount, salt],
-        requiredComponents,
-        requiredComponentAmounts,
+        order,
         new BigNumber(10),
       );
 

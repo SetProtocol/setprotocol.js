@@ -23,6 +23,7 @@ import {
   VaultContract,
 } from '../../src/contracts';
 import { CoreAPI } from '../../src/api';
+import { BigNumber } from '../../src/util';
 
 const contract = require('truffle-contract');
 
@@ -111,6 +112,7 @@ export const deployTokensForSetWithApproval = async (
 };
 
 export const approveForFill = async (
+  web3: Web3,
   makerAddress: Address,
   makerToken: Address,
   relayerAddress: Address,
@@ -124,13 +126,22 @@ export const approveForFill = async (
     gas: DEFAULT_GAS_LIMIT,
   };
   const makerTokenWrapper = await StandardTokenMockContract.at(
-    standardTokenMockInstance.address,
+    makerToken,
     web3,
     txOpts,
   );
   const relayerTokenWrapper = await StandardTokenMockContract.at(
-    standardTokenMockInstance.address,
+    relayerToken,
     web3,
+    txOpts,
+  );
+
+  // Give the taker some tokens since all tokens initially
+  // deployed with the makerAddress (ACCOUNTS[0])
+  await relayerTokenWrapper.transferFrom.sendTransactionAsync(
+    makerAddress,
+    takerAddress,
+    new BigNumber(10000),
     txOpts,
   );
 
