@@ -573,6 +573,8 @@ describe('Core API', () => {
     });
 
     test('fills an issuance order with valid parameters', async () => {
+      /* Enable this when we add exchange functionality
+
       // const order = {
       //   setAddress: setTokenAddress,
       //   quantity: new BigNumber(123),
