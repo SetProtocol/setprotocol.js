@@ -5479,9 +5479,9 @@ set-immediate-shim@^1.0.1:
     zeppelin-solidity "^1.10.0"
     zos-lib "^1.0.0"
 
-set-protocol-utils@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.1.0.tgz#003d706216b935ed8d9288ed3814a9100d8d03fd"
+set-protocol-utils@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.1.2.tgz#66147cc8c4c477c2435294aecc713a653cccc1a6"
   dependencies:
     "@types/node" "^8.0.53"
     bignumber.js "~4.1.0"
