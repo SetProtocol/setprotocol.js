@@ -94,6 +94,7 @@
       "/dist/",
       "/_versions/"
     ],
+    "testURL": "http://localhost/",
     "moduleFileExtensions": [
       "ts",
       "tsx",

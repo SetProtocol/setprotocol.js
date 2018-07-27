@@ -36,10 +36,11 @@ export class CoreAssertions {
     const { address } = coreInstance;
 
     try {
-      await coreInstance.vaultAddress.callAsync();
-      await coreInstance.transferProxyAddress.callAsync();
+      await coreInstance.vault.callAsync();
+      await coreInstance.transferProxy.callAsync();
       await coreInstance.owner.callAsync();
     } catch (error) {
+      console.log(error);
       throw new Error(coreAssertionErrors.MISSING_CORE_METHOD(address));
     }
   }

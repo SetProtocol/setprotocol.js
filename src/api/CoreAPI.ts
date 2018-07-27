@@ -908,7 +908,7 @@ export class CoreAPI {
    */
   public async getTransferProxyAddress(): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-    const transferProxyAddress = await coreInstance.transferProxyAddress.callAsync();
+    const transferProxyAddress = await coreInstance.transferProxy.callAsync();
     return transferProxyAddress;
   }
 
@@ -919,7 +919,7 @@ export class CoreAPI {
    */
   public async getVaultAddress(): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-    const vaultAddress = await coreInstance.vaultAddress.callAsync();
+    const vaultAddress = await coreInstance.vault.callAsync();
     return vaultAddress;
   }
 
