@@ -717,8 +717,9 @@ describe('Core API', () => {
 
       const orderCancelsAmount =
         await coreInstance.orderCancels.callAsync(SetProtocolUtils.hashOrderHex(orderWithSalt));
+
       expect(quantityToCancel.toNumber()).to.equal(orderCancelsAmount.toNumber());
-      // expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogCancel');
+      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogCancel');
     });
   });
 
