@@ -17,7 +17,7 @@
 'use strict';
 
 import * as _ from 'lodash';
-import { Utils } from 'set-protocol-utils';
+import { SetProtocolUtils } from 'set-protocol-utils';
 import { coreAssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 import { CoreContract } from '../contracts';
@@ -51,7 +51,7 @@ export class CoreAssertions {
   }
 
   public async isValidSignature(issuanceOrder: IssuanceOrder, signature: ECSig, errorMessage: string) {
-    const orderHash = Utils.hashOrderHex(issuanceOrder);
+    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
     const orderSignature = await setProtocolUtils.signMessage(orderHash, issuanceOrder.makerAddress);
 
     if (!_.isEqual(signature, orderSignature)) {

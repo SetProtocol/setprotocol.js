@@ -29,7 +29,7 @@ import * as ABIDecoder from 'abi-decoder';
 import { Core, Vault } from 'set-protocol-contracts';
 
 import {
-  Utils
+  SetProtocolUtils
 } from 'set-protocol-utils';
 
 import { ACCOUNTS } from '../accounts';
@@ -61,7 +61,7 @@ const { expect } = chai;
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
-const setProtocolUtils = new Utils(web3);
+const setProtocolUtils = new SetProtocolUtils(web3);
 
 const txDefaults = {
   from: ACCOUNTS[0].address,
@@ -507,7 +507,7 @@ describe('Core API', () => {
         makerAddress: ACCOUNTS[0].address,
         makerToken: componentAddresses[0],
         makerTokenAmount: new BigNumber(4),
-        expiration: Utils.generateTimestamp(60),
+        expiration: SetProtocolUtils.generateTimestamp(60),
         relayerAddress: ACCOUNTS[1].address,
         relayerToken: componentAddresses[0],
         relayerTokenAmount: new BigNumber(1),
@@ -530,7 +530,7 @@ describe('Core API', () => {
       const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });
 
       const signature = await setProtocolUtils.signMessage(
-        Utils.hashOrderHex(orderWithSalt),
+        SetProtocolUtils.hashOrderHex(orderWithSalt),
         order.makerAddress,
       );
 
@@ -583,7 +583,7 @@ describe('Core API', () => {
       //   makerAddress: ACCOUNTS[0].address,
       //   makerToken: componentAddresses[0],
       //   makerTokenAmount: new BigNumber(4),
-      //   expiration: Utils.generateTimestamp(60),
+      //   expiration: SetProtocolUtils.generateTimestamp(60),
       //   relayerAddress: ACCOUNTS[1].address,
       //   relayerToken: componentAddresses[0],
       //   relayerTokenAmount: new BigNumber(1),
@@ -681,7 +681,7 @@ describe('Core API', () => {
         makerAddress: ACCOUNTS[0].address,
         makerToken: componentAddresses[0],
         makerTokenAmount: new BigNumber(4),
-        expiration: Utils.generateTimestamp(60),
+        expiration: SetProtocolUtils.generateTimestamp(60),
         relayerAddress: ACCOUNTS[1].address,
         relayerToken: componentAddresses[0],
         relayerTokenAmount: new BigNumber(1),

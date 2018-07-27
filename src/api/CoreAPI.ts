@@ -18,7 +18,7 @@
 
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
-import { Utils } from 'set-protocol-utils';
+import { SetProtocolUtils } from 'set-protocol-utils';
 
 import { ContractsAPI } from '.';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
@@ -58,7 +58,7 @@ export class CoreAPI {
     this.assert.schema.isValidAddress('coreAddress', coreAddress);
     this.coreAddress = coreAddress;
 
-    this.setProtocolUtils = new Utils(this.web3);
+    this.setProtocolUtils = new SetProtocolUtils(this.web3);
 
     if (transferProxyAddress) {
       this.assert.schema.isValidAddress('transferProxyAddress', transferProxyAddress);
@@ -666,9 +666,9 @@ export class CoreAPI {
       relayerTokenAmount,
       requiredComponents,
       requiredComponentAmounts,
-      salt: Utils.generateSalt(),
+      salt: SetProtocolUtils.generateSalt(),
     };
-    const orderHash = Utils.hashOrderHex(order);
+    const orderHash = SetProtocolUtils.hashOrderHex(order);
 
     const signature = await this.setProtocolUtils.signMessage(orderHash, makerAddress);
     return Object.assign({}, order, { signature });
