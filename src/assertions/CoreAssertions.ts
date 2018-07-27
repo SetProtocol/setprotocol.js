@@ -23,7 +23,7 @@ import { BigNumber } from '../util';
 import { CoreContract } from '../contracts';
 import { ECSig, IssuanceOrder } from '../types/common';
 
-const setProtocolUtils = new Utils();
+const setProtocolUtils = new SetProtocolUtils();
 
 export class CoreAssertions {
   /**
