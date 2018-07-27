@@ -39,6 +39,7 @@ import { CoreAPI } from '../../src/api';
 import {
   DetailedERC20Contract,
   VaultContract,
+  CoreContract,
 } from '../../src/contracts';
 import {
   DEFAULT_GAS_PRICE,
@@ -703,14 +704,21 @@ describe('Core API', () => {
 
       const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });
 
+      const quantityToCancel = new BigNumber(10);
+
       const txHash = await coreAPI.cancelIssuanceOrder(
         orderWithSalt,
-        new BigNumber(10),
+        quantityToCancel,
       );
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      console.log(await web3.eth.getTransactionReceipt(txHash));
-      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogCancel');
+
+      const coreInstance = await CoreContract.at(coreAPI.coreAddress, web3, txDefaults);
+
+      const orderCancelsAmount =
+        await coreInstance.orderCancels.callAsync(SetProtocolUtils.hashOrderHex(orderWithSalt));
+      expect(quantityToCancel.toNumber()).to.equal(orderCancelsAmount.toNumber());
+      // expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogCancel');
     });
   });
 
