@@ -40,7 +40,6 @@ export class CoreAssertions {
       await coreInstance.transferProxy.callAsync();
       await coreInstance.owner.callAsync();
     } catch (error) {
-      console.log(error);
       throw new Error(coreAssertionErrors.MISSING_CORE_METHOD(address));
     }
   }
