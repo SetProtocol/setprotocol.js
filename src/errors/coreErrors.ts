@@ -19,7 +19,8 @@
 import { BigNumber } from '../util';
 
 export const coreAPIErrors = {
-  TOKENS_AND_UNITS_EQUAL_LENGTHS: () => 'The tokens and units arrays need to be equal lengths.',
+  ARRAYS_EQUAL_LENGTHS: (firstArray: string, secondArray: string) =>
+   `The ${firstArray} and ${secondArray} arrays need to be equal lengths.`,
   QUANTITY_NEEDS_TO_BE_POSITIVE: (quantity: BigNumber) =>
     `The quantity ${quantity.toString()} inputted needs to be greater than zero.`,
   STRING_CANNOT_BE_EMPTY: (variable: string) => `The string ${variable} cannot be empty.`,
@@ -27,6 +28,8 @@ export const coreAPIErrors = {
     'Natural unit must be larger than minimum unit allowed by components.',
   QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT: () =>
     'Quantity needs to be multiple of natural unit.',
+  SIGNATURE_MISMATCH: () => 'Signature does not match issuance order attributes.',
+  EXPIRATION_PASSED: () => 'Expiration date has already passed.',
 };
 
 export const coreAssertionErrors = {

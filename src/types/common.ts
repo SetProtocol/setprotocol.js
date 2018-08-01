@@ -11,27 +11,59 @@ export interface Component {
 }
 
 export interface SetComponent {
-  address: string;
+  address: Address;
   quantity: string;
   name: string;
   symbol: string;
 }
 
 export interface Token {
-  address: string;
+  address: Address;
   name: string;
   symbol: string;
   balance: BigNumber;
   decimals: BigNumber;
 }
 
-export interface TransactionOpts {
-  gas?: number;
-  gasPrice?: BigNumber;
+export interface ECSig {
+  v: UInt;
+  r: string;
+  s: string;
+}
+
+export interface IssuanceOrder {
+  setAddress: Address;
+  makerAddress: Address;
+  makerToken: Address;
+  relayerAddress: Address;
+  relayerToken: Address;
+  quantity: BigNumber;
+  makerTokenAmount: BigNumber;
+  expiration: BigNumber;
+  relayerTokenAmount: BigNumber;
+  salt: BigNumber;
+  requiredComponents: Address[];
+  requiredComponentAmounts: BigNumber[];
+}
+
+export interface SignedIssuanceOrder {
+  setAddress: Address;
+  makerAddress: Address;
+  makerToken: Address;
+  relayerAddress: Address;
+  relayerToken: Address;
+  quantity: BigNumber;
+  makerTokenAmount: BigNumber;
+  expiration: BigNumber;
+  relayerTokenAmount: BigNumber;
+  salt: BigNumber;
+  requiredComponents: Address[];
+  requiredComponentAmounts: BigNumber[];
+  signature: ECSig;
 }
 
 export interface TxData {
-  from?: string;
+  from?: Address;
   gas?: BigNumber;
   gasPrice?: BigNumber;
   nonce?: number;

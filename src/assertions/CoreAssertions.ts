@@ -16,9 +16,14 @@
 
 'use strict';
 
+import * as _ from 'lodash';
+import { SetProtocolUtils } from 'set-protocol-utils';
 import { coreAssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 import { CoreContract } from '../contracts';
+import { ECSig, IssuanceOrder } from '../types/common';
+
+const setProtocolUtils = new SetProtocolUtils();
 
 export class CoreAssertions {
   /**
@@ -31,8 +36,8 @@ export class CoreAssertions {
     const { address } = coreInstance;
 
     try {
-      await coreInstance.vaultAddress.callAsync();
-      await coreInstance.transferProxyAddress.callAsync();
+      await coreInstance.vault.callAsync();
+      await coreInstance.transferProxy.callAsync();
       await coreInstance.owner.callAsync();
     } catch (error) {
       throw new Error(coreAssertionErrors.MISSING_CORE_METHOD(address));
@@ -41,6 +46,15 @@ export class CoreAssertions {
 
   public validateNaturalUnit(naturalUnit: BigNumber, minDecimal: BigNumber, errorMessage: string) {
     if (naturalUnit.lt(10 ** (18 - minDecimal.toNumber()))) {
+      throw new Error(errorMessage);
+    }
+  }
+
+  public async isValidSignature(issuanceOrder: IssuanceOrder, signature: ECSig, errorMessage: string) {
+    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
+    const orderSignature = await setProtocolUtils.signMessage(orderHash, issuanceOrder.makerAddress);
+
+    if (!_.isEqual(signature, orderSignature)) {
       throw new Error(errorMessage);
     }
   }

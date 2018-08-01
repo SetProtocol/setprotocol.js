@@ -21,6 +21,7 @@ import * as Web3 from 'web3';
 import { ContractsAPI } from '.';
 import { Assertions } from '../assertions';
 import { Address } from '../types/common';
+import { BigNumber } from '../util';
 
 /**
  * @title  VaultAPI
@@ -33,6 +34,7 @@ export class VaultAPI {
   private web3: Web3;
   private assert: Assertions;
   private contracts: ContractsAPI;
+  private vaultAddress: Address;
 
   public constructor(web3: Web3, vaultAddress: Address) {
     this.web3 = web3;
@@ -48,7 +50,7 @@ export class VaultAPI {
    * @param  tokenAddress Address of the Set
    * @return              The balance of the user's Set
    */
-  public async getOwnerBalance(ownerAddress: Address, tokenAddress: Address): number {
+  public async getOwnerBalance(ownerAddress: Address, tokenAddress: Address): Promise<BigNumber> {
     this.assert.schema.isValidAddress('ownerAddress', ownerAddress);
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     const vaultInstance = await this.contracts.loadVaultAsync(this.vaultAddress);

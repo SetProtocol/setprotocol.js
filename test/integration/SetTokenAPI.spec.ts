@@ -34,8 +34,7 @@ import { ACCOUNTS } from '../accounts';
 import { testSets, TestSet } from '../testSets';
 import { CoreAPI, SetTokenAPI } from '../../src/api';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
-import { CoreContract, SetTokenFactoryContract } from '../../src/contracts';
-import { ReceiptLog } from '../../src/types/common';
+import { CoreContract, SetTokenFactoryContract, SetTokenContract } from '../../src/contracts';
 import { Web3Utils } from '../../src/util';
 
 const { expect } = chai;
@@ -101,8 +100,10 @@ describe('Set Token API', () => {
   describe('getters', async () => {
     let componentAddresses: string[];
     let setToCreate: TestSet;
+    let coreAPI: CoreAPI;
     let setTokenAPI: SetTokenAPI;
-    let setTokenInstance: setTokenContract;
+    let setTokenFactoryInstance: SetTokenFactoryContract;
+    let setTokenInstance: SetTokenContract;
 
     beforeEach(async () => {
       // Deploy Core
@@ -156,7 +157,7 @@ describe('Set Token API', () => {
         setToCreate.setSymbol,
       );
       const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
-      const logs: ReceiptLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));
+      const logs: ABIDecoder.DecodedLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));
       const setTokenContractAddress = logs[logs.length - 1].address;
       // Deploy Set Token
       setTokenInstance = await setTokenContract.new(

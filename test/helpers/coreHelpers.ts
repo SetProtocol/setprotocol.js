@@ -23,6 +23,7 @@ import {
   VaultContract,
 } from '../../src/contracts';
 import { CoreAPI } from '../../src/api';
+import { BigNumber } from '../../src/util';
 
 const contract = require('truffle-contract');
 
@@ -32,7 +33,7 @@ const txDefaults = {
   gas: DEFAULT_GAS_LIMIT,
 };
 
-export const deployCore = async (provider: Web3.Provider.HttpProvider) => {
+export const deployCore = async (provider: Web3.Provider) => {
   const coreContract = contract(Core);
   coreContract.setProvider(provider);
   coreContract.defaults(txDefaults);
@@ -83,7 +84,7 @@ export const deployTokensForSetWithApproval = async (
   standardTokenMockContract.defaults(txDefaults);
 
   // Deploy StandardTokenMocks to add to Set
-  const componentAddresses = [];
+  const componentAddresses: Address[] = [];
   await Promise.all(
     setToDeploy.components.map(async component => {
       const standardTokenMockInstance = await standardTokenMockContract.new(
@@ -108,6 +109,68 @@ export const deployTokensForSetWithApproval = async (
     }),
   );
   return componentAddresses;
+};
+
+export const approveForFill = async (
+  web3: Web3,
+  makerAddress: Address,
+  makerToken: Address,
+  relayerAddress: Address,
+  relayerToken: Address,
+  takerAddress: Address,
+  transferProxyAddress: Address,
+) => {
+  let txOpts = {
+    from: ACCOUNTS[0].address,
+    gasPrice: DEFAULT_GAS_PRICE,
+    gas: DEFAULT_GAS_LIMIT,
+  };
+  const makerTokenWrapper = await StandardTokenMockContract.at(
+    makerToken,
+    web3,
+    txOpts,
+  );
+  const relayerTokenWrapper = await StandardTokenMockContract.at(
+    relayerToken,
+    web3,
+    txOpts,
+  );
+
+  // Give the taker some tokens since all tokens initially
+  // deployed with the makerAddress (ACCOUNTS[0])
+  await relayerTokenWrapper.transferFrom.sendTransactionAsync(
+    makerAddress,
+    takerAddress,
+    new BigNumber(10000),
+    txOpts,
+  );
+
+  txOpts = {
+    from: makerAddress,
+    gasPrice: DEFAULT_GAS_PRICE,
+    gas: DEFAULT_GAS_LIMIT,
+  };
+  await makerTokenWrapper.approve.sendTransactionAsync(
+    transferProxyAddress,
+    UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+    txOpts,
+  );
+  await relayerTokenWrapper.approve.sendTransactionAsync(
+    transferProxyAddress,
+    UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+    txOpts,
+  );
+
+  txOpts = {
+    from: takerAddress,
+    gasPrice: DEFAULT_GAS_PRICE,
+    gas: DEFAULT_GAS_LIMIT,
+  };
+  await relayerTokenWrapper.approve.sendTransactionAsync(
+    transferProxyAddress,
+    UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+    txOpts,
+  );
 };
 
 export const deployTransferProxy = async (coreAddress: Address, provider: Web3.Provider) => {

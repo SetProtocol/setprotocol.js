@@ -35,6 +35,7 @@ export class Assertions {
   public erc20: ERC20Assertions;
   public schema: SchemaAssertions;
   public setToken: SetTokenAssertions;
+  public vault: VaultAssertions;
 
   public constructor(web3: Web3) {
     this.account = new AccountAssertions();

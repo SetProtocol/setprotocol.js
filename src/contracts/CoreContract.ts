@@ -278,11 +278,11 @@ export class CoreContract extends BaseContract {
       return result;
     },
   };
-  public vaultAddress = {
+  public vault = {
     async callAsync(defaultBlock?: any): Promise<string> {
       const self = this as CoreContract;
       const result = await promisify<string>(
-        self.web3ContractInstance.vaultAddress.call,
+        self.web3ContractInstance.vault.call,
         self.web3ContractInstance,
       )();
       return result;
@@ -697,11 +697,11 @@ export class CoreContract extends BaseContract {
       return result;
     },
   };
-  public transferProxyAddress = {
+  public transferProxy = {
     async callAsync(defaultBlock?: any): Promise<string> {
       const self = this as CoreContract;
       const result = await promisify<string>(
-        self.web3ContractInstance.transferProxyAddress.call,
+        self.web3ContractInstance.transferProxy.call,
         self.web3ContractInstance,
       )();
       return result;

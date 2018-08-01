@@ -18,14 +18,15 @@
 
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
+import { SetProtocolUtils } from 'set-protocol-utils';
 
 import { ContractsAPI } from '.';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { Address, TransactionOpts } from '../types/common';
+import { Address, TxData, IssuanceOrder, SignedIssuanceOrder } from '../types/common';
 import { BigNumber } from '../util';
-import { CoreContract, DetailedERC20Contract, SetTokenContract, VaultContract } from '../contracts';
+import { DetailedERC20Contract, SetTokenContract, VaultContract } from '../contracts';
 
 /**
  * @title CoreAPI
@@ -38,6 +39,7 @@ export class CoreAPI {
   private web3: Web3;
   private assert: Assertions;
   private contracts: ContractsAPI;
+  private setProtocolUtils: any;
 
   public coreAddress: Address;
   public transferProxyAddress: Address;
@@ -55,6 +57,8 @@ export class CoreAPI {
 
     this.assert.schema.isValidAddress('coreAddress', coreAddress);
     this.coreAddress = coreAddress;
+
+    this.setProtocolUtils = new SetProtocolUtils(this.web3);
 
     if (transferProxyAddress) {
       this.assert.schema.isValidAddress('transferProxyAddress', transferProxyAddress);
@@ -90,14 +94,14 @@ export class CoreAPI {
     naturalUnit: BigNumber,
     name: string,
     symbol: string,
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
     this.assert.schema.isValidAddress('userAddress', userAddress);
     this.assert.common.isEqualLength(
       components,
       units,
-      coreAPIErrors.TOKENS_AND_UNITS_EQUAL_LENGTHS(),
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('components', 'units'),
     );
     this.assert.common.greaterThanZero(
       naturalUnit,
@@ -174,7 +178,7 @@ export class CoreAPI {
     userAddress: Address,
     setAddress: Address,
     quantityInWei: BigNumber,
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('userAddress', userAddress);
@@ -226,7 +230,7 @@ export class CoreAPI {
     userAddress: Address,
     setAddress: Address,
     quantityInWei: BigNumber,
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('userAddress', userAddress);
@@ -286,7 +290,7 @@ export class CoreAPI {
     userAddress: Address,
     tokenAddress: Address,
     quantityInWei: BigNumber,
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     this.assert.schema.isValidAddress('userAddress', userAddress);
@@ -337,7 +341,7 @@ export class CoreAPI {
     userAddress: Address,
     tokenAddress: Address,
     quantityInWei: BigNumber,
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     this.assert.schema.isValidAddress('userAddress', userAddress);
@@ -349,7 +353,7 @@ export class CoreAPI {
     const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
 
     const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-    this.assert.erc20.implementsERC20(detailedERC20Contract);
+    await this.assert.erc20.implementsERC20(detailedERC20Contract);
 
     await this.assert.vault.hasSufficientTokenBalance(
       vaultContract,
@@ -394,7 +398,7 @@ export class CoreAPI {
     setAddress: Address,
     quantityInWei: BigNumber,
     tokensToWithdraw: Address[],
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.common.greaterThanZero(
@@ -406,7 +410,7 @@ export class CoreAPI {
     const components = await setTokenContract.getComponents.callAsync();
 
     let toWithdraw: BigNumber = ZERO;
-    const tokensToWithdrawMapping = {};
+    const tokensToWithdrawMapping: any = {};
     _.each(tokensToWithdraw, withdrawTokenAddress => {
       this.assert.schema.isValidAddress('withdrawTokenAddress', withdrawTokenAddress);
       tokensToWithdrawMapping[withdrawTokenAddress] = true;
@@ -446,13 +450,13 @@ export class CoreAPI {
     userAddress: Address,
     tokenAddresses: Address[],
     quantitiesInWei: BigNumber[],
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('userAddress', userAddress);
     this.assert.common.isEqualLength(
       tokenAddresses,
       quantitiesInWei,
-      coreAPIErrors.TOKENS_AND_UNITS_EQUAL_LENGTHS(),
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('tokenAddresses', 'quantitiesInWei'),
     );
     // Token assertions
     await Promise.all(
@@ -518,13 +522,13 @@ export class CoreAPI {
     userAddress: Address,
     tokenAddresses: Address[],
     quantitiesInWei: BigNumber[],
-    txOpts?: TransactionOpts,
+    txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('userAddress', userAddress);
     this.assert.common.isEqualLength(
       tokenAddresses,
       quantitiesInWei,
-      coreAPIErrors.TOKENS_AND_UNITS_EQUAL_LENGTHS(),
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('tokenAddresses', 'quantitiesInWei'),
     );
     // Token assertions
     await Promise.all(
@@ -538,7 +542,7 @@ export class CoreAPI {
         const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
 
         const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-        this.assert.erc20.implementsERC20(detailedERC20Contract);
+        await this.assert.erc20.implementsERC20(detailedERC20Contract);
 
         // Check balance
         await this.assert.vault.hasSufficientTokenBalance(
@@ -574,6 +578,315 @@ export class CoreAPI {
     return txHash;
   }
 
+  /*
+   * Creates a new Issuance Order including the signature
+   *
+   * @param  setAddress                Address of the Set token for issuance order
+   * @param  quantity                  Number of Set tokens to create as part of issuance order
+   * @param  requiredComponents        Addresses of required component tokens of Set
+   * @param  requiredComponentAmounts  Amounts of each required component needed
+   * @param  makerAddress              Address of person making the order
+   * @param  makerToken                Address of token the issuer is paying in
+   * @param  makerTokenAmount          Number of tokens being exchanged for aggregate order size
+   * @param  expiration                Unix timestamp of expiration (in seconds)
+   * @param  relayerAddress            Address of relayer of order
+   * @param  relayerToken              Address of token paid to relayer
+   * @param  relayerTokenAmount        Number of token paid to relayer
+   * @return                           A transaction hash
+   */
+  public async createSignedIssuanceOrder(
+    setAddress: Address,
+    quantity: BigNumber,
+    requiredComponents: Address[],
+    requiredComponentAmounts: BigNumber[],
+    makerAddress: Address,
+    makerToken: Address,
+    makerTokenAmount: BigNumber,
+    expiration: BigNumber,
+    relayerAddress: Address,
+    relayerToken: Address,
+    relayerTokenAmount: BigNumber,
+  ): Promise<SignedIssuanceOrder> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('makerAddress', makerAddress);
+    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
+    this.assert.schema.isValidAddress('relayerToken', relayerToken);
+    this.assert.common.greaterThanZero(
+      quantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+    );
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
+        );
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
+        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(detailedERC20Contract);
+
+        this.assert.common.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+    this.assert.common.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+    const makerTokenContract = await DetailedERC20Contract.at(makerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(makerTokenContract);
+    this.assert.common.greaterThanZero(
+      makerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
+    );
+    const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerTokenContract);
+    this.assert.common.greaterThanZero(
+      relayerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerTokenAmount),
+    );
+    this.assert.common.isValidExpiration(
+      expiration,
+      coreAPIErrors.EXPIRATION_PASSED(),
+    );
+
+    const order: IssuanceOrder = {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      relayerTokenAmount,
+      requiredComponents,
+      requiredComponentAmounts,
+      salt: SetProtocolUtils.generateSalt(),
+    };
+    const orderHash = SetProtocolUtils.hashOrderHex(order);
+
+    const signature = await this.setProtocolUtils.signMessage(orderHash, makerAddress);
+    return Object.assign({}, order, { signature });
+  }
+
+  /*
+   * Fills an Issuance Order
+   *
+   * @param  userAddress               Address of user doing the fill
+   * @param  issuanceOrder             Issuance order to fill
+   * @param  signature                 Signature of the order
+   * @param  quantityToFill            Number of Set to fill in this call
+   * @param  orderData                 Bytes representation of orders used to fill issuance order
+   * @param  txOpts                    The options for executing the transaction
+   * @return                           A transaction hash
+   */
+  public async fillIssuanceOrder(
+    userAddress: Address,
+    signedIssuanceOrder: SignedIssuanceOrder,
+    quantityToFill: BigNumber,
+    orderData: string,
+    txOpts?: TxData,
+  ): Promise<string> {
+    const {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      relayerTokenAmount,
+      requiredComponents,
+      requiredComponentAmounts,
+      salt,
+    } = signedIssuanceOrder;
+
+    const { signature, ...issuanceOrder } = signedIssuanceOrder;
+
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('makerAddress', makerAddress);
+    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
+    this.assert.schema.isValidAddress('relayerToken', relayerToken);
+    this.assert.common.greaterThanZero(
+      quantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+    );
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
+        );
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
+        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(detailedERC20Contract);
+
+        this.assert.common.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+    this.assert.common.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+    const makerTokenContract = await DetailedERC20Contract.at(makerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(makerTokenContract);
+    this.assert.common.greaterThanZero(
+      makerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
+    );
+    const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerTokenContract);
+    this.assert.common.greaterThanZero(
+      relayerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerTokenAmount),
+    );
+    this.assert.common.greaterThanZero(
+      quantityToFill,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill),
+    );
+    this.assert.common.isValidString(
+      orderData,
+      coreAPIErrors.STRING_CANNOT_BE_EMPTY('orderData'),
+    );
+    await this.assert.core.isValidSignature(
+      issuanceOrder,
+      signature,
+      coreAPIErrors.SIGNATURE_MISMATCH(),
+    );
+    this.assert.common.isValidExpiration(
+      expiration,
+      coreAPIErrors.EXPIRATION_PASSED(),
+    );
+
+    const txSettings = Object.assign(
+      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
+
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const txHash = await coreInstance.fillOrder.sendTransactionAsync(
+      [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
+      [quantity, makerTokenAmount, expiration, relayerTokenAmount, salt],
+      requiredComponents,
+      requiredComponentAmounts,
+      quantityToFill,
+      signature.v,
+      [signature.r, signature.s],
+      orderData,
+      txSettings,
+    );
+
+    return txHash;
+  }
+
+  /*
+   * Cancels an Issuance Order
+   *
+   * @param  issuanceOrder             Issuance order to fill
+   * @param  quantityToCancel          Number of Set to fill in this call
+   * @param  txOpts                    The options for executing the transaction
+   * @return                           A transaction hash
+   */
+  public async cancelIssuanceOrder(
+    issuanceOrder: IssuanceOrder,
+    quantityToCancel: BigNumber,
+    txOpts?: TxData,
+  ): Promise<string> {
+    const {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      relayerTokenAmount,
+      requiredComponents,
+      requiredComponentAmounts,
+      salt,
+    } = issuanceOrder;
+
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('makerAddress', makerAddress);
+    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
+    this.assert.schema.isValidAddress('relayerToken', relayerToken);
+    this.assert.common.greaterThanZero(
+      quantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+    );
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
+        );
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
+        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(detailedERC20Contract);
+
+        this.assert.common.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+    this.assert.common.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+    const makerTokenContract = await DetailedERC20Contract.at(makerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(makerTokenContract);
+    this.assert.common.greaterThanZero(
+      makerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
+    );
+    const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerTokenContract);
+    this.assert.common.greaterThanZero(
+      relayerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerTokenAmount),
+    );
+    this.assert.common.greaterThanZero(
+      quantityToCancel,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToCancel),
+    );
+    this.assert.common.isValidExpiration(
+      expiration,
+      coreAPIErrors.EXPIRATION_PASSED(),
+    );
+
+    const txSettings = Object.assign(
+      { from: makerAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
+      txOpts,
+    );
+
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const txHash = await coreInstance.cancelOrder.sendTransactionAsync(
+      [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
+      [quantity, makerTokenAmount, expiration, relayerTokenAmount, salt],
+      requiredComponents,
+      requiredComponentAmounts,
+      quantityToCancel,
+      txSettings,
+    );
+
+    return txHash;
+  }
+
   /* ============ Core State Getters ============ */
 
   /*
@@ -582,9 +895,9 @@ export class CoreAPI {
    * @param  exchangeId Enum id of the exchange
    * @return            An exchange address
    */
-  public async getExchangeAddress(exchangeId: number): Address {
+  public async getExchangeAddress(exchangeId: number): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-    const exchangeAddress = await coreInstance.exchanges(exchangeId);
+    const exchangeAddress = await coreInstance.exchanges.callAsync(exchangeId);
     return exchangeAddress;
   }
 
@@ -593,9 +906,9 @@ export class CoreAPI {
    *
    * @return Transfer proxy address
    */
-  public async getTransferProxyAddress(): Address {
+  public async getTransferProxyAddress(): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-    const transferProxyAddress = await coreInstance.transferProxyAddress.callAsync();
+    const transferProxyAddress = await coreInstance.transferProxy.callAsync();
     return transferProxyAddress;
   }
 
@@ -604,9 +917,9 @@ export class CoreAPI {
    *
    * @return Vault address
    */
-  public async getVaultAddress(): Address {
+  public async getVaultAddress(): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-    const vaultAddress = await coreInstance.vaultAddress.callAsync();
+    const vaultAddress = await coreInstance.vault.callAsync();
     return vaultAddress;
   }
 
@@ -616,7 +929,7 @@ export class CoreAPI {
    * @return Array of factory addresses
    */
 
-  public async getFactories(): Address[] {
+  public async getFactories(): Promise<Address[]> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const factoryAddresses = await coreInstance.factories.callAsync();
     return factoryAddresses;
@@ -628,7 +941,7 @@ export class CoreAPI {
    * @return Array of Set addresses
    */
 
-  public async getSetAddresses(): Address[] {
+  public async getSetAddresses(): Promise<Address[]> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const setAddresses = await coreInstance.setTokens.callAsync();
     return setAddresses;
@@ -640,7 +953,7 @@ export class CoreAPI {
    * @param  factoryAddress Address of the factory contract
    * @return                Boolean equalling if factory address is valid
    */
-  public async getIsValidFactory(factoryAddress: Address): boolean {
+  public async getIsValidFactory(factoryAddress: Address): Promise<boolean> {
     this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidFactoryAddress = await coreInstance.validFactories.callAsync(factoryAddress);
@@ -653,7 +966,7 @@ export class CoreAPI {
    * @param  setAddress Address of the Set contract
    * @return            Boolean equalling if Set address is valid
    */
-  public async getIsValidSet(setAddress: Address): boolean {
+  public async getIsValidSet(setAddress: Address): Promise<boolean> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidSetAddress = await coreInstance.validSets.callAsync(setAddress);

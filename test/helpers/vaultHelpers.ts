@@ -43,7 +43,7 @@ export const initializeVaultAPI = async (provider: Web3.Provider, vaultAddress: 
   const web3 = new Web3(provider);
 
   // Instantiate VaultAPI
-  vaultWrapper = await VaultContract.at(vaultAddress, web3, txDefaults);
+  const vaultWrapper = await VaultContract.at(vaultAddress, web3, txDefaults);
   const vaultAPI = new VaultAPI(web3, vaultWrapper.address);
   return vaultAPI;
 };
