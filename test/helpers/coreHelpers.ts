@@ -1,4 +1,5 @@
 import * as Web3 from 'web3';
+import * as _ from 'lodash';
 
 import {
   Core,
@@ -111,66 +112,139 @@ export const deployTokensForSetWithApproval = async (
   return componentAddresses;
 };
 
+export const deployTokensAsync = async (
+  tokenCount: number,
+  provider: Web3.Provider,
+) => {
+  const web3 = new Web3(provider);
+
+  const standardTokenMockContract = contract(StandardTokenMock);
+  standardTokenMockContract.setProvider(provider);
+  standardTokenMockContract.defaults(txDefaults);
+  const mockTokens: StandardTokenMockContract[] = [];
+
+  const mockTokenPromises = _.times(tokenCount, index => {
+    return standardTokenMockContract.new(
+      ACCOUNTS[0].address,
+      100000000,
+      `Component ${index}`,
+      index,
+      _.random(4, 18),
+      txDefaults,
+    );
+  });
+
+  await Promise.all(mockTokenPromises).then(tokenMock => {
+    _.each(tokenMock, standardToken => {
+      mockTokens.push(new StandardTokenMockContract(
+        web3.eth.contract(standardToken.abi).at(standardToken.address),
+        txDefaults,
+      ));
+    });
+  });
+
+  return mockTokens;
+};
+
+export const registerExchange = async (
+  web3: Web3,
+  coreAddress: Address,
+  exchangeId: number,
+  exchangeAddress: Address,
+) => {
+  const coreWrapper = await CoreContract.at(
+    coreAddress,
+    web3,
+    txDefaults,
+  );
+
+  await coreWrapper.registerExchange.sendTransactionAsync(
+    exchangeId,
+    exchangeAddress,
+    txDefaults,
+  );
+};
+
 export const approveForFill = async (
   web3: Web3,
+  componentTokens: Address[],
   makerAddress: Address,
-  makerToken: Address,
   relayerAddress: Address,
-  relayerToken: Address,
   takerAddress: Address,
   transferProxyAddress: Address,
 ) => {
-  let txOpts = {
+  const txOpts = {
     from: ACCOUNTS[0].address,
     gasPrice: DEFAULT_GAS_PRICE,
     gas: DEFAULT_GAS_LIMIT,
   };
-  const makerTokenWrapper = await StandardTokenMockContract.at(
-    makerToken,
-    web3,
-    txOpts,
-  );
-  const relayerTokenWrapper = await StandardTokenMockContract.at(
-    relayerToken,
-    web3,
-    txOpts,
-  );
 
-  // Give the taker some tokens since all tokens initially
-  // deployed with the makerAddress (ACCOUNTS[0])
-  await relayerTokenWrapper.transferFrom.sendTransactionAsync(
-    makerAddress,
-    takerAddress,
-    new BigNumber(10000),
-    txOpts,
+  const tokenWrapperPromises = _.map(componentTokens, async token =>
+    await StandardTokenMockContract.at(
+      token,
+      web3,
+      txOpts,
+    )
   );
+  const tokenWrappers = await Promise.all(tokenWrapperPromises);
 
-  txOpts = {
-    from: makerAddress,
-    gasPrice: DEFAULT_GAS_PRICE,
-    gas: DEFAULT_GAS_LIMIT,
-  };
-  await makerTokenWrapper.approve.sendTransactionAsync(
-    transferProxyAddress,
-    UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-    txOpts,
+  // Approve all tokens for TransferProxy
+  const makerApprovePromises = _.map(tokenWrappers, tokenWrapper =>
+    tokenWrapper.approve.sendTransactionAsync(
+      transferProxyAddress,
+      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+      { from: makerAddress },
+    ),
   );
-  await relayerTokenWrapper.approve.sendTransactionAsync(
-    transferProxyAddress,
-    UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-    txOpts,
-  );
+  await Promise.all(makerApprovePromises);
 
-  txOpts = {
-    from: takerAddress,
-    gasPrice: DEFAULT_GAS_PRICE,
-    gas: DEFAULT_GAS_LIMIT,
-  };
-  await relayerTokenWrapper.approve.sendTransactionAsync(
-    transferProxyAddress,
-    UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-    txOpts,
+  const takerApprovePromises = _.map(tokenWrappers, tokenWrapper =>
+    tokenWrapper.approve.sendTransactionAsync(
+      transferProxyAddress,
+      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+      { from: takerAddress },
+    ),
   );
+  await Promise.all(takerApprovePromises);
+
+  const relayerApprovePromises = _.map(tokenWrappers, tokenWrapper =>
+    tokenWrapper.approve.sendTransactionAsync(
+      transferProxyAddress,
+      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+      { from: relayerAddress },
+    ),
+  );
+  await Promise.all(relayerApprovePromises);
+
+  // Give some tokens to takerAddress
+  const takerTransferPromises = _.map(tokenWrappers, token =>
+    token.transfer.sendTransactionAsync(
+      takerAddress,
+      new BigNumber(100000),
+      txOpts,
+    ),
+  );
+  await Promise.all(takerTransferPromises);
+
+  // Give some tokens to makerAddress
+  const makerTransferPromises = _.map(tokenWrappers, token =>
+    token.transfer.sendTransactionAsync(
+      takerAddress,
+      new BigNumber(100000),
+      txOpts,
+    ),
+  );
+  await Promise.all(makerTransferPromises);
+
+  // Give some tokens to relayerAddress
+  const relayerTransferPromises = _.map(tokenWrappers, token =>
+    token.transfer.sendTransactionAsync(
+      takerAddress,
+      new BigNumber(100000),
+      txOpts,
+    ),
+  );
+  await Promise.all(relayerTransferPromises);
 };
 
 export const deployTransferProxy = async (coreAddress: Address, provider: Web3.Provider) => {

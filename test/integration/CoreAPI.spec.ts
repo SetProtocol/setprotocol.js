@@ -24,6 +24,7 @@ jest.setTimeout(30000);
 
 import * as chai from 'chai';
 import * as Web3 from 'web3';
+import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 
 import { Core, Vault } from 'set-protocol-contracts';
@@ -52,7 +53,12 @@ import {
   initializeCoreAPI,
   deploySetTokenFactory,
   deployTokensForSetWithApproval,
+  approveForFill,
+  registerExchange,
 } from '../helpers/coreHelpers';
+import {
+  deployTakerWalletExchangeWrapper,
+} from '../helpers/exchangeHelpers';
 import { Address } from '../../src/types/common';
 
 const contract = require('truffle-contract');
@@ -545,14 +551,16 @@ describe('Core API', () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setTokenAddress: Address;
+    let takerWalletWrapperAddress: Address;
     let setToCreate: TestSet;
     let componentAddresses: Address[];
 
     beforeEach(async () => {
       coreAPI = await initializeCoreAPI(provider);
       setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+      takerWalletWrapperAddress = await deployTakerWalletExchangeWrapper(coreAPI.transferProxyAddress, provider);
 
-      setToCreate = testSets[0];
+      setToCreate = testSets[1];
       componentAddresses = await deployTokensForSetWithApproval(
         setToCreate,
         coreAPI.transferProxyAddress,
@@ -574,68 +582,83 @@ describe('Core API', () => {
     });
 
     test('fills an issuance order with valid parameters', async () => {
-      // Enable this when we add exchange functionality
+      const order = {
+        setAddress: setTokenAddress,
+        quantity: new BigNumber(123),
+        requiredComponents: componentAddresses,
+        requiredComponentAmounts: componentAddresses.map(() => new BigNumber(1)),
+        makerAddress: ACCOUNTS[0].address,
+        makerToken: componentAddresses[0],
+        makerTokenAmount: new BigNumber(4),
+        expiration: SetProtocolUtils.generateTimestamp(60),
+        relayerAddress: ACCOUNTS[1].address,
+        relayerToken: componentAddresses[0],
+        relayerTokenAmount: new BigNumber(1),
+      };
+      const takerAddress = ACCOUNTS[2].address;
 
-      // const order = {
-      //   setAddress: setTokenAddress,
-      //   quantity: new BigNumber(123),
-      //   requiredComponents: componentAddresses,
-      //   requiredComponentAmounts: componentAddresses.map(() => new BigNumber(1)),
-      //   makerAddress: ACCOUNTS[0].address,
-      //   makerToken: componentAddresses[0],
-      //   makerTokenAmount: new BigNumber(4),
-      //   expiration: SetProtocolUtils.generateTimestamp(60),
-      //   relayerAddress: ACCOUNTS[1].address,
-      //   relayerToken: componentAddresses[0],
-      //   relayerTokenAmount: new BigNumber(1),
-      // };
-      // const takerAddress = ACCOUNTS[2].address;
+      const signedIssuanceOrder = await coreAPI.createSignedIssuanceOrder(
+        order.setAddress,
+        order.quantity,
+        order.requiredComponents,
+        order.requiredComponentAmounts,
+        order.makerAddress,
+        order.makerToken,
+        order.makerTokenAmount,
+        order.expiration,
+        order.relayerAddress,
+        order.relayerToken,
+        order.relayerTokenAmount,
+      );
 
-      // const signedIssuanceOrder = await coreAPI.createSignedIssuanceOrder(
-      //   order.setAddress,
-      //   order.quantity,
-      //   order.requiredComponents,
-      //   order.requiredComponentAmounts,
-      //   order.makerAddress,
-      //   order.makerToken,
-      //   order.makerTokenAmount,
-      //   order.expiration,
-      //   order.relayerAddress,
-      //   order.relayerToken,
-      //   order.relayerTokenAmount,
-      // );
+      const {
+        makerAddress,
+        makerToken,
+        makerTokenAmount,
+        relayerAddress,
+        relayerToken,
+      } = signedIssuanceOrder;
 
-      // const {
-      //   makerAddress,
-      //   makerToken,
-      //   relayerAddress,
-      //   relayerToken,
-      // } = signedIssuanceOrder;
+      await approveForFill(
+        web3,
+        componentAddresses,
+        makerAddress,
+        relayerAddress,
+        takerAddress,
+        coreAPI.transferProxyAddress,
+      );
 
-      // await approveForFill(
-      //   web3,
-      //   makerAddress,
-      //   makerToken,
-      //   relayerAddress,
-      //   relayerToken,
-      //   ACCOUNTS[2].address,
-      //   coreAPI.transferProxyAddress,
-      // );
+      await registerExchange(
+        web3,
+        coreAPI.coreAddress,
+        SetProtocolUtils.EXCHANGES.TAKER_WALLET,
+        takerWalletWrapperAddress
+      );
 
-      // TODO
-      // * Get Order Data from serialize and pass into fillIssuanceOrder
-      // * Register exchange being used in orderData
+      const takerWalletOrders = _.map(componentAddresses, componentAddress => (
+        {
+          exchange: SetProtocolUtils.EXCHANGES.TAKER_WALLET,
+          takerTokenAddress: componentAddress,
+          takerTokenAmount: new BigNumber(100),
+        }
+      ));
 
-      // const txHash = await coreAPI.fillIssuanceOrder(
-      //   takerAddress,
-      //   signedIssuanceOrder,
-      //   new BigNumber(10),
-      //   orderData,
-      // );
+      const orderData = setProtocolUtils.generateSerializedOrders(
+        makerToken,
+        makerTokenAmount,
+        takerWalletOrders,
+        web3,
+      );
 
-      // const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      // expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogFill');
-      expect(setTokenAddress);
+      const txHash = await coreAPI.fillIssuanceOrder(
+        takerAddress,
+        signedIssuanceOrder,
+        new BigNumber(10),
+        orderData,
+      );
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogFill');
     });
   });
 

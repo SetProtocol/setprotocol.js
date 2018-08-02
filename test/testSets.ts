@@ -63,13 +63,13 @@ export const testSets: TestSet[] = [
       {
         name: 'Airswap',
         symbol: 'AST',
-        decimals: 4,
+        decimals: 16,
         price: 0.54,
         supply: 500000000 * 10 ** 4,
       },
     ],
     units: [new BigNumber(505823196193389), new BigNumber(129066795398825), new BigNumber(1)],
-    naturalUnit: new BigNumber(10 ** 13),
+    naturalUnit: new BigNumber(10 ** 4),
   },
   {
     setName: 'EthereumX',
