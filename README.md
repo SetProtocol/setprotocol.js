@@ -1,40 +1,47 @@
+<p align="center"><img src="https://s3-us-west-1.amazonaws.com/set-protocol/img/assets/set-protocol-logo.png" width="64" /></p>
+
+<p align="center">
+  <a href="https://circleci.com/gh/SetProtocol/setProtocol.js/tree/master">
+    <img src="https://img.shields.io/circleci/project/github/SetProtocol/setProtocol.js/master.svg" />
+  </a>
+  <a href='https://github.com/SetProtocol/setProtocol.js/blob/master/LICENSE'>
+    <img src='https://img.shields.io/github/license/SetProtocol/setProtocol.js.svg' alt='License' />
+  </a>
+</p>
+
 # setProtocol.js
-{Set} Protocol Library for Interacting With Smart Contracts
+Library for Interacting With Set Protocol Smart Contracts
 
 Note: This is pre-alpha software. Things will constantly be changing and getting updated.
 
-Build the project by performing the following:
-```shell
-$ yarn run build
-```
-
 ## Installation
-Using npm:
+##### Using npm:
 ```shell
-$ npm i -g npm
-$ npm i --save setprotocol.js
+$ npm i --save setProtocol.js
 ```
-Using yarn:
+##### Using yarn:
 ```shell
-$ brew install yarn
-$ yarn add setprotocol.js
+$ yarn add setProtocol.js
 ```
 
-In Node.js:
+##### Setup
 ```js
 // Import
-import SetProtocol from 'setprotocol.js';
-
-// or
-const SetProtocol = require('setprotocol.js');
+import SetProtocol from 'setProtocol.js';
 
 // Like with web3, instantiate a new instance and pass in the provider
-const setProtocolInstance = new SetProtocol(currentProvider);
+const setProtocolInstance = new SetProtocol(
+  web3, // web3: A web3 instance you've instantiated from `new Web3(currentProvider)`
+  '0x...', // coreAddress: Address of the Set Protocol Core contract
+  '0x...', // transferProxyAddress: Address of the Set Protocol Transfer Proxy contract
+  '0x...', // vaultAddress: Address of the Set Protocol Vault contract
+);
 ```
 
-For now, you will have to look at the source code itself for documentation, but we will be working to provide a rich set of documentation for this.
+For now, you will have to look at the generated API docs below, but we're working to provide a rich set of documentation for this.
 
-## Testing
+## Contributing
+### Testing
 ##### Compile & Migrate Contracts
 
 Start `testrpc` and setup dependencies:
@@ -42,8 +49,7 @@ Start `testrpc` and setup dependencies:
 yarn chain
 ```
 Wait until the `dependency migration complete` message appears before interacting with the contracts.
-
-#### Testing
+In a new terminal window, run:
 ```
 yarn test:watch
 ```
@@ -82,7 +88,7 @@ Occasionally, you may need to run `yarn run chain --reset` or just re-run `yarn 
   * [getTotalSupply](documentation/classes/_settokenapi_.settokenapi.md#gettotalsupply)
   * [getUnits](documentation/classes/_settokenapi_.settokenapi.md#getunits)
 
-* [contracts](documentation/classes/_contracts_api_.contractsapi.md)
+* [contracts](documentation/classes/_contractsapi_.contractsapi.md)
   * [getCoreCacheKey](documentation/classes/_contractsapi_.contractsapi.md#getcorecachekey)
   * [getSetTokenCacheKey](documentation/classes/_contractsapi_.contractsapi.md#getsettokencachekey)
   * [getVaultCacheKey](documentation/classes/_contractsapi_.contractsapi.md#getvaultcachekey)
