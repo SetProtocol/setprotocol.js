@@ -10,11 +10,12 @@
 </p>
 
 # setProtocol.js
-Library for Interacting With Set Protocol Smart Contracts
+Welcome Settler of Tokan :wave: setProtocol.js is a library for interacting with Set Protocol smart contracts.
+This library enables you to create, issue, redeem, and create/fill orders for Sets.
 
 Note: This is pre-alpha software. Things will constantly be changing and getting updated.
 
-## Installation
+## :computer: Installation
 ##### Using npm:
 ```shell
 $ npm i --save setProtocol.js
@@ -29,9 +30,8 @@ $ yarn add setProtocol.js
 // Import
 import SetProtocol from 'setProtocol.js';
 
-// Like with web3, instantiate a new instance and pass in the provider
 const setProtocolInstance = new SetProtocol(
-  web3, // web3: A web3 instance you've instantiated from `new Web3(currentProvider)`
+  web3,    // web3: A web3 instance you've instantiated from `new Web3(currentProvider)`
   '0x...', // coreAddress: Address of the Set Protocol Core contract
   '0x...', // transferProxyAddress: Address of the Set Protocol Transfer Proxy contract
   '0x...', // vaultAddress: Address of the Set Protocol Vault contract
@@ -40,7 +40,7 @@ const setProtocolInstance = new SetProtocol(
 
 For now, you will have to look at the generated API docs below, but we're working to provide a rich set of documentation for this.
 
-## Contributing
+## :raising_hand: Contributing
 ### Testing
 ##### Compile & Migrate Contracts
 
