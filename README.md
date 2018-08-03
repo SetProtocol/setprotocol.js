@@ -38,30 +38,9 @@ const setProtocolInstance = new SetProtocol(
 );
 ```
 
-For now, you will have to look at the generated API docs below, but we're working to provide a rich set of documentation for this.
+We have API docs below. Stay tuned for a rich set of designed documentation that's currently being built.
 
-## :raising_hand: Contributing
-### Testing
-##### Compile & Migrate Contracts
-
-Start `testrpc` and setup dependencies:
-```
-yarn chain
-```
-Wait until the `dependency migration complete` message appears before interacting with the contracts.
-In a new terminal window, run:
-```
-yarn test:watch
-```
-
-## Troubleshooting
-Do not use Node version 10+ as it may have issues during `npm install` or `yarn install` with the `sha3` package.  Use `nvm install 9.11.1 && nvm use 9.11.1` for now.
-
-You also will need to be on `ganache-cli@6.0.3`.  Newer versions may work but some of the newer ones do not work so it is currently pegged to an earlier version.
-
-Occasionally, you may need to run `yarn run chain --reset` or just re-run `yarn chain` to make sure that you have up to date contracts after running `yarn install` with an update to the `set-protocol-contracts` package.
-
-## setProtocol.js API Reference
+## :rocket: setProtocol.js API Reference
 * [Core](documentation/classes/_coreapi_.coreapi.md)
   * [create](documentation/classes/_coreapi_.coreapi.md#create)
   * [issue](documentation/classes/_coreapi_.coreapi.md#issue)
@@ -99,3 +78,23 @@ Occasionally, you may need to run `yarn run chain --reset` or just re-run `yarn 
 * [vault](documentation/classes/_vaultapi_.vaultapi.md)
   * [getOwnerBalance](documentation/classes/_vaultapi_.vaultapi.md#getownerbalance)
 
+## :raising_hand: Contributing
+### Testing
+##### Compile & Migrate Contracts
+
+Start `testrpc` and setup dependencies:
+```
+yarn chain
+```
+Wait until the `dependency migration complete` message appears before interacting with the contracts.
+In a new terminal window, run:
+```
+yarn test:watch
+```
+
+## Troubleshooting
+Do not use Node version 10+ as it may have issues during `npm install` or `yarn install` with the `sha3` package.  Use `nvm install 9.11.1 && nvm use 9.11.1` for now.
+
+You also will need to be on `ganache-cli@6.0.3`.  Newer versions may work but some of the newer ones do not work so it is currently pegged to an earlier version.
+
+Occasionally, you may need to run `yarn run chain --reset` or just re-run `yarn chain` to make sure that you have up to date contracts after running `yarn install` with an update to the `set-protocol-contracts` package.
