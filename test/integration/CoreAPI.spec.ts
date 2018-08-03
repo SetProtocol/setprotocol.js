@@ -27,6 +27,7 @@ import * as Web3 from 'web3';
 import * as ABIDecoder from 'abi-decoder';
 
 import { Core, Vault } from 'set-protocol-contracts';
+import { SetProtocolUtils } from 'set-protocol-utils';
 
 import {
   SetProtocolUtils
@@ -75,6 +76,43 @@ coreContract.setProvider(provider);
 coreContract.defaults(txDefaults);
 
 let currentSnapshotId: number;
+
+/*
+  makerAddress: Address,
+  makerToken: Address,
+  takerToken: Address,
+  makerAssetAmount: BigNumber,
+  takerAssetAmount: BigNumber,
+*/
+const zeroExOrder = SetProtocolUtils.generateZeroExOrder(
+  ACCOUNTS[0].address,
+  ACCOUNTS[1].address,
+  ACCOUNTS[2].address,
+  new BigNumber(100),
+  new BigNumber(100),
+);
+console.log('zeroExOrder', zeroExOrder);
+const orders = [
+  {
+    takerTokenAddress: ACCOUNTS[0].address,
+    takerTokenAmount: new BigNumber(100),
+  },
+  {
+    takerTokenAddress: ACCOUNTS[0].address,
+    takerTokenAmount: new BigNumber(200),
+  },
+  zeroExOrder,
+];
+console.log('SetProtocolUtils', SetProtocolUtils);
+const setProtocolUtils = new SetProtocolUtils(web3);
+const exchangeOrders = setProtocolUtils.generateSerializedOrders(
+  ACCOUNTS[0].address,
+  new BigNumber(1000),
+  orders,
+  web3,
+);
+
+console.log('exchangeOrders', exchangeOrders);
 
 describe('Core API', () => {
   beforeAll(() => {
