@@ -44,7 +44,7 @@ The Set Token API handles all functions on the Set Token smart contract.
 
 ⊕ **new SetTokenAPI**(web3: *`Web3`*): [SetTokenAPI](_settokenapi_.settokenapi.md)
 
-*Defined in [SetTokenAPI.ts:34](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/SetTokenAPI.ts#L34)*
+*Defined in [SetTokenAPI.ts:36](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/SetTokenAPI.ts#L36)*
 
 **Parameters:**
 
@@ -64,7 +64,7 @@ ___
 
 **● assert**: *`Assertions`*
 
-*Defined in [SetTokenAPI.ts:33](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/SetTokenAPI.ts#L33)*
+*Defined in [SetTokenAPI.ts:35](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/SetTokenAPI.ts#L35)*
 
 ___
 <a id="contracts"></a>
@@ -73,7 +73,7 @@ ___
 
 **● contracts**: *[ContractsAPI](_contractsapi_.contractsapi.md)*
 
-*Defined in [SetTokenAPI.ts:34](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/SetTokenAPI.ts#L34)*
+*Defined in [SetTokenAPI.ts:36](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/SetTokenAPI.ts#L36)*
 
 ___
 <a id="web3"></a>
@@ -82,7 +82,7 @@ ___
 
 **● web3**: *`Web3`*
 
-*Defined in [SetTokenAPI.ts:32](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/SetTokenAPI.ts#L32)*
+*Defined in [SetTokenAPI.ts:34](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/SetTokenAPI.ts#L34)*
 
 ___
 
@@ -92,9 +92,9 @@ ___
 
 ###  getBalanceOf
 
-▸ **getBalanceOf**(setAddress: *`string`*, userAddress: *`string`*): `number`
+▸ **getBalanceOf**(setAddress: *`Address`*, userAddress: *`Address`*): `Promise`<`BigNumber`>
 
-*Defined in [SetTokenAPI.ts:49](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/SetTokenAPI.ts#L49)*
+*Defined in [SetTokenAPI.ts:51](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/SetTokenAPI.ts#L51)*
 
 Gets balance of a user's Sets
 
@@ -102,10 +102,10 @@ Gets balance of a user's Sets
 
 | Param | Type | Description |
 | ------ | ------ | ------ |
-| setAddress | `string` |  Address of the Set |
-| userAddress | `string` |  Address of the user |
+| setAddress | `Address` |  Address of the Set |
+| userAddress | `Address` |  Address of the user |
 
-**Returns:** `number`
+**Returns:** `Promise`<`BigNumber`>
 The balance of the user's Set
 
 ___
@@ -113,9 +113,9 @@ ___
 
 ###  getComponents
 
-▸ **getComponents**(setAddress: *`string`*): `string`[]
+▸ **getComponents**(setAddress: *`Address`*): `Promise`<`Address`[]>
 
-*Defined in [SetTokenAPI.ts:61](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/SetTokenAPI.ts#L61)*
+*Defined in [SetTokenAPI.ts:63](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/SetTokenAPI.ts#L63)*
 
 Gets component tokens that make up the Set
 
@@ -123,9 +123,9 @@ Gets component tokens that make up the Set
 
 | Param | Type | Description |
 | ------ | ------ | ------ |
-| setAddress | `string` |  Address of the Set |
+| setAddress | `Address` |  Address of the Set |
 
-**Returns:** `string`[]
+**Returns:** `Promise`<`Address`[]>
 An array of addresses
 
 ___
@@ -133,9 +133,9 @@ ___
 
 ###  getName
 
-▸ **getName**(setAddress: *`string`*): `string`
+▸ **getName**(setAddress: *`Address`*): `Promise`<`string`>
 
-*Defined in [SetTokenAPI.ts:72](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/SetTokenAPI.ts#L72)*
+*Defined in [SetTokenAPI.ts:74](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/SetTokenAPI.ts#L74)*
 
 Gets name of the Set
 
@@ -143,9 +143,9 @@ Gets name of the Set
 
 | Param | Type | Description |
 | ------ | ------ | ------ |
-| setAddress | `string` |  Address of the Set |
+| setAddress | `Address` |  Address of the Set |
 
-**Returns:** `string`
+**Returns:** `Promise`<`string`>
 A string of the Set's name
 
 ___
@@ -153,9 +153,9 @@ ___
 
 ###  getNaturalUnit
 
-▸ **getNaturalUnit**(setAddress: *`string`*): `number`
+▸ **getNaturalUnit**(setAddress: *`Address`*): `Promise`<`BigNumber`>
 
-*Defined in [SetTokenAPI.ts:83](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/SetTokenAPI.ts#L83)*
+*Defined in [SetTokenAPI.ts:85](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/SetTokenAPI.ts#L85)*
 
 Gets natural unit of the Set
 
@@ -163,9 +163,9 @@ Gets natural unit of the Set
 
 | Param | Type | Description |
 | ------ | ------ | ------ |
-| setAddress | `string` |  Address of the Set |
+| setAddress | `Address` |  Address of the Set |
 
-**Returns:** `number`
+**Returns:** `Promise`<`BigNumber`>
 The natural unit of the Set
 
 ___
@@ -173,9 +173,9 @@ ___
 
 ###  getSymbol
 
-▸ **getSymbol**(setAddress: *`string`*): `string`
+▸ **getSymbol**(setAddress: *`Address`*): `Promise`<`string`>
 
-*Defined in [SetTokenAPI.ts:94](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/SetTokenAPI.ts#L94)*
+*Defined in [SetTokenAPI.ts:96](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/SetTokenAPI.ts#L96)*
 
 Gets symbol of the Set
 
@@ -183,9 +183,9 @@ Gets symbol of the Set
 
 | Param | Type | Description |
 | ------ | ------ | ------ |
-| setAddress | `string` |  Address of the Set |
+| setAddress | `Address` |  Address of the Set |
 
-**Returns:** `string`
+**Returns:** `Promise`<`string`>
 A string of the Set's symbol
 
 ___
@@ -193,9 +193,9 @@ ___
 
 ###  getTotalSupply
 
-▸ **getTotalSupply**(setAddress: *`string`*): `number`
+▸ **getTotalSupply**(setAddress: *`Address`*): `Promise`<`BigNumber`>
 
-*Defined in [SetTokenAPI.ts:105](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/SetTokenAPI.ts#L105)*
+*Defined in [SetTokenAPI.ts:107](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/SetTokenAPI.ts#L107)*
 
 Gets total supply of the Set
 
@@ -203,9 +203,9 @@ Gets total supply of the Set
 
 | Param | Type | Description |
 | ------ | ------ | ------ |
-| setAddress | `string` |  Address of the Set |
+| setAddress | `Address` |  Address of the Set |
 
-**Returns:** `number`
+**Returns:** `Promise`<`BigNumber`>
 The total supply of the Set
 
 ___
@@ -213,9 +213,9 @@ ___
 
 ###  getUnits
 
-▸ **getUnits**(setAddress: *`string`*): `number`[]
+▸ **getUnits**(setAddress: *`Address`*): `Promise`<`BigNumber`[]>
 
-*Defined in [SetTokenAPI.ts:117](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/SetTokenAPI.ts#L117)*
+*Defined in [SetTokenAPI.ts:119](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/SetTokenAPI.ts#L119)*
 
 Gets units of each component token that make up the Set
 
@@ -223,9 +223,9 @@ Gets units of each component token that make up the Set
 
 | Param | Type | Description |
 | ------ | ------ | ------ |
-| setAddress | `string` |  Address of the Set |
+| setAddress | `Address` |  Address of the Set |
 
-**Returns:** `number`[]
+**Returns:** `Promise`<`BigNumber`[]>
 An array of units that make up the Set composition which
                    correspond to the component tokens in the Set
 

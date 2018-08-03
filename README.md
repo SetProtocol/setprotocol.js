@@ -38,6 +38,28 @@ const setProtocolInstance = new SetProtocol(
 );
 ```
 
+##### Usage
+The instantiated object from `new SetProtocol(...)` contains multiple child interfaces. Those interfaces are below:
+```js
+/* Core
+ * 
+ * Example of calling `create` method
+ */
+setProtocolInstance.core.create(...);
+
+/* Set Token
+ * 
+ * Example of calling `getBalanceOf` method
+ */
+setProtocolInstance.setToken.getBalanceOf(...);
+
+/* Vault
+ * 
+ * Example of calling `getOwnerBalance` method
+ */
+setProtocolInstance.vault.getOwnerBalance(...);
+```
+
 We have API docs below. Stay tuned for a rich set of designed documentation that's currently being built.
 
 ## :rocket: setProtocol.js API Reference
@@ -57,6 +79,9 @@ We have API docs below. Stay tuned for a rich set of designed documentation that
   * [getSetAddresses](documentation/classes/_coreapi_.coreapi.md#getsetaddresses)
   * [getTransferProxyAddress](documentation/classes/_coreapi_.coreapi.md#gettransferproxyaddress)
   * [getVaultAddress](documentation/classes/_coreapi_.coreapi.md#getvaultaddress)
+  * [createSignedIssuanceOrder](documentation/classes/_coreapi_.coreapi.md#createsignedissuanceorder)
+  * [fillIssuanceOrder](documentation/classes/_coreapi_.coreapi.md#fillissuanceorder)
+  * [cancelIssuanceOrder](documentation/classes/_coreapi_.coreapi.md#cancelissuanceorder)
 
 * [setToken](documentation/classes/_settokenapi_.settokenapi.md)
   * [getBalanceOf](documentation/classes/_settokenapi_.settokenapi.md#getbalanceof)

@@ -22,6 +22,7 @@ The Vault API handles all functions on the Vault smart contract.
 
 * [assert](_vaultapi_.vaultapi.md#assert)
 * [contracts](_vaultapi_.vaultapi.md#contracts)
+* [vaultAddress](_vaultapi_.vaultapi.md#vaultaddress)
 * [web3](_vaultapi_.vaultapi.md#web3)
 
 ### Methods
@@ -38,7 +39,7 @@ The Vault API handles all functions on the Vault smart contract.
 
 ⊕ **new VaultAPI**(web3: *`Web3`*, vaultAddress: *`Address`*): [VaultAPI](_vaultapi_.vaultapi.md)
 
-*Defined in [VaultAPI.ts:35](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/VaultAPI.ts#L35)*
+*Defined in [VaultAPI.ts:37](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/VaultAPI.ts#L37)*
 
 **Parameters:**
 
@@ -59,7 +60,7 @@ ___
 
 **● assert**: *`Assertions`*
 
-*Defined in [VaultAPI.ts:34](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/VaultAPI.ts#L34)*
+*Defined in [VaultAPI.ts:35](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/VaultAPI.ts#L35)*
 
 ___
 <a id="contracts"></a>
@@ -68,7 +69,16 @@ ___
 
 **● contracts**: *[ContractsAPI](_contractsapi_.contractsapi.md)*
 
-*Defined in [VaultAPI.ts:35](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/VaultAPI.ts#L35)*
+*Defined in [VaultAPI.ts:36](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/VaultAPI.ts#L36)*
+
+___
+<a id="vaultaddress"></a>
+
+### `<Private>` vaultAddress
+
+**● vaultAddress**: *`Address`*
+
+*Defined in [VaultAPI.ts:37](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/VaultAPI.ts#L37)*
 
 ___
 <a id="web3"></a>
@@ -77,7 +87,7 @@ ___
 
 **● web3**: *`Web3`*
 
-*Defined in [VaultAPI.ts:33](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/VaultAPI.ts#L33)*
+*Defined in [VaultAPI.ts:34](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/VaultAPI.ts#L34)*
 
 ___
 
@@ -87,9 +97,9 @@ ___
 
 ###  getOwnerBalance
 
-▸ **getOwnerBalance**(ownerAddress: *`Address`*, tokenAddress: *`Address`*): `number`
+▸ **getOwnerBalance**(ownerAddress: *`Address`*, tokenAddress: *`Address`*): `Promise`<`BigNumber`>
 
-*Defined in [VaultAPI.ts:51](https://github.com/SetProtocol/setProtocol.js/blob/db88e4d/src/api/VaultAPI.ts#L51)*
+*Defined in [VaultAPI.ts:53](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/VaultAPI.ts#L53)*
 
 Gets balance of user's tokens in the vault
 
@@ -100,7 +110,7 @@ Gets balance of user's tokens in the vault
 | ownerAddress | `Address` |  Address of the user |
 | tokenAddress | `Address` |  Address of the Set |
 
-**Returns:** `number`
+**Returns:** `Promise`<`BigNumber`>
 The balance of the user's Set
 
 ___
