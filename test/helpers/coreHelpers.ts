@@ -123,16 +123,16 @@ export const deployTokensAsync = async (
   standardTokenMockContract.defaults(txDefaults);
   const mockTokens: StandardTokenMockContract[] = [];
 
-  const mockTokenPromises = _.times(tokenCount, index => {
-    return standardTokenMockContract.new(
+  const mockTokenPromises = _.times(tokenCount, async index => (
+    await standardTokenMockContract.new(
       ACCOUNTS[0].address,
       100000000,
       `Component ${index}`,
       index,
       _.random(4, 18),
       txDefaults,
-    );
-  });
+    )
+  ));
 
   await Promise.all(mockTokenPromises).then(tokenMock => {
     _.each(tokenMock, standardToken => {

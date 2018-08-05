@@ -595,7 +595,7 @@ describe('Core API', () => {
         setAddress: setTokenAddress,
         quantity: new BigNumber(40),
         requiredComponents: componentAddresses,
-        requiredComponentAmounts: componentAddresses.map(() => new BigNumber(5)),
+        requiredComponentAmounts: componentAddresses.map(() => new BigNumber(20)),
         makerAddress: ACCOUNTS[0].address,
         makerToken: componentAddresses[0],
         makerTokenAmount: new BigNumber(5),
@@ -648,7 +648,7 @@ describe('Core API', () => {
         {
           exchange: SetProtocolUtils.EXCHANGES.TAKER_WALLET,
           takerTokenAddress: componentAddress,
-          takerTokenAmount: new BigNumber(5),
+          takerTokenAmount: new BigNumber(20),
         }
       ));
 
@@ -662,7 +662,7 @@ describe('Core API', () => {
       const txHash = await coreAPI.fillIssuanceOrder(
         takerAddress,
         signedIssuanceOrder,
-        new BigNumber(10),
+        new BigNumber(40),
         orderData,
       );
 
