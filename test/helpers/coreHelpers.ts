@@ -189,8 +189,8 @@ export const approveForFill = async (
   const tokenWrappers = await Promise.all(tokenWrapperPromises);
 
   // Approve all tokens for TransferProxy
-  const makerApprovePromises = _.map(tokenWrappers, tokenWrapper =>
-    tokenWrapper.approve.sendTransactionAsync(
+  const makerApprovePromises = _.map(tokenWrappers, async tokenWrapper =>
+    await tokenWrapper.approve.sendTransactionAsync(
       transferProxyAddress,
       UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
       { from: makerAddress },
@@ -198,8 +198,8 @@ export const approveForFill = async (
   );
   await Promise.all(makerApprovePromises);
 
-  const takerApprovePromises = _.map(tokenWrappers, tokenWrapper =>
-    tokenWrapper.approve.sendTransactionAsync(
+  const takerApprovePromises = _.map(tokenWrappers, async tokenWrapper =>
+    await tokenWrapper.approve.sendTransactionAsync(
       transferProxyAddress,
       UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
       { from: takerAddress },
@@ -207,8 +207,8 @@ export const approveForFill = async (
   );
   await Promise.all(takerApprovePromises);
 
-  const relayerApprovePromises = _.map(tokenWrappers, tokenWrapper =>
-    tokenWrapper.approve.sendTransactionAsync(
+  const relayerApprovePromises = _.map(tokenWrappers, async tokenWrapper =>
+    await tokenWrapper.approve.sendTransactionAsync(
       transferProxyAddress,
       UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
       { from: relayerAddress },
@@ -217,30 +217,30 @@ export const approveForFill = async (
   await Promise.all(relayerApprovePromises);
 
   // Give some tokens to takerAddress
-  const takerTransferPromises = _.map(tokenWrappers, token =>
-    token.transfer.sendTransactionAsync(
+  const takerTransferPromises = _.map(tokenWrappers, async token =>
+    await token.transfer.sendTransactionAsync(
       takerAddress,
-      new BigNumber(100000),
+      new BigNumber(1000),
       txOpts,
     ),
   );
   await Promise.all(takerTransferPromises);
 
   // Give some tokens to makerAddress
-  const makerTransferPromises = _.map(tokenWrappers, token =>
-    token.transfer.sendTransactionAsync(
-      takerAddress,
-      new BigNumber(100000),
+  const makerTransferPromises = _.map(tokenWrappers, async token =>
+    await token.transfer.sendTransactionAsync(
+      makerAddress,
+      new BigNumber(1000),
       txOpts,
     ),
   );
   await Promise.all(makerTransferPromises);
 
   // Give some tokens to relayerAddress
-  const relayerTransferPromises = _.map(tokenWrappers, token =>
-    token.transfer.sendTransactionAsync(
-      takerAddress,
-      new BigNumber(100000),
+  const relayerTransferPromises = _.map(tokenWrappers, async token =>
+    await token.transfer.sendTransactionAsync(
+      relayerAddress,
+      new BigNumber(1000),
       txOpts,
     ),
   );

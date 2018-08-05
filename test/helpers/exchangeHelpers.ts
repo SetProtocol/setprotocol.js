@@ -4,6 +4,10 @@ import * as _ from 'lodash';
 import {
   TakerWalletWrapper,
 } from 'set-protocol-contracts';
+import {
+  TakerWalletWrapperContract,
+  TransferProxyContract,
+} from '../../src/contracts';
 import { BigNumber } from '../../src/util';
 import { Address } from '../../src/types/common.js';
 import { ACCOUNTS } from '../accounts';
@@ -22,6 +26,7 @@ const txDefaults = {
 
 export const deployTakerWalletExchangeWrapper = async (
   transferProxyAddress: Address,
+  coreAddress: Address,
   provider: Web3.Provider,
 ) => {
   const web3 = new Web3(provider);
@@ -32,6 +37,26 @@ export const deployTakerWalletExchangeWrapper = async (
 
   const takerWalletWrapperInstance = await takerWalletWrapperContract.new(
     transferProxyAddress,
+    txDefaults,
+  );
+
+  const takerWalletWrapperContractWrapper = await TakerWalletWrapperContract.at(
+    takerWalletWrapperInstance.address,
+    web3,
+    txDefaults,
+  );
+  const transferProxyContractWrapper = await TransferProxyContract.at(
+    transferProxyAddress,
+    web3,
+    txDefaults,
+  );
+
+  takerWalletWrapperContractWrapper.addAuthorizedAddress.sendTransactionAsync(
+    coreAddress,
+    txDefaults,
+  );
+  transferProxyContractWrapper.addAuthorizedAddress.sendTransactionAsync(
+    takerWalletWrapperInstance.address,
     txDefaults,
   );
 

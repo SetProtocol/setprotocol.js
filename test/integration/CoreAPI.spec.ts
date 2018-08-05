@@ -453,7 +453,12 @@ describe('Core API', () => {
         quantities,
         txDefaults,
       );
-      await web3Utils.getTransactionReceiptAsync(txHash);
+      const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
+
+      if (!receipt) {
+        // This takes a little longer so add a wait if receipt not ready yet.
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
 
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
@@ -558,9 +563,13 @@ describe('Core API', () => {
     beforeEach(async () => {
       coreAPI = await initializeCoreAPI(provider);
       setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
-      takerWalletWrapperAddress = await deployTakerWalletExchangeWrapper(coreAPI.transferProxyAddress, provider);
+      takerWalletWrapperAddress = await deployTakerWalletExchangeWrapper(
+        coreAPI.transferProxyAddress,
+        coreAPI.coreAddress,
+        provider
+      );
 
-      setToCreate = testSets[1];
+      setToCreate = testSets[0];
       componentAddresses = await deployTokensForSetWithApproval(
         setToCreate,
         coreAPI.transferProxyAddress,
@@ -584,16 +593,16 @@ describe('Core API', () => {
     test('fills an issuance order with valid parameters', async () => {
       const order = {
         setAddress: setTokenAddress,
-        quantity: new BigNumber(123),
+        quantity: new BigNumber(40),
         requiredComponents: componentAddresses,
-        requiredComponentAmounts: componentAddresses.map(() => new BigNumber(1)),
+        requiredComponentAmounts: componentAddresses.map(() => new BigNumber(5)),
         makerAddress: ACCOUNTS[0].address,
         makerToken: componentAddresses[0],
-        makerTokenAmount: new BigNumber(4),
+        makerTokenAmount: new BigNumber(5),
         expiration: SetProtocolUtils.generateTimestamp(60),
         relayerAddress: ACCOUNTS[1].address,
         relayerToken: componentAddresses[0],
-        relayerTokenAmount: new BigNumber(1),
+        relayerTokenAmount: new BigNumber(5),
       };
       const takerAddress = ACCOUNTS[2].address;
 
@@ -639,7 +648,7 @@ describe('Core API', () => {
         {
           exchange: SetProtocolUtils.EXCHANGES.TAKER_WALLET,
           takerTokenAddress: componentAddress,
-          takerTokenAmount: new BigNumber(100),
+          takerTokenAmount: new BigNumber(5),
         }
       ));
 
