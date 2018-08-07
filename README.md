@@ -16,6 +16,7 @@ This library enables you to create, issue, redeem, and create/fill orders for Se
 <a href="https://join.slack.com/t/setprotocol/shared_invite/enQtMjYzNjk4MzI1NzgxLWRlYzhkY2JlNjQ4YmU4OTUwZWQ5NzdkZjM3ZDVlNzU1MTJmZWM1NTNmM2JlYmE5YzljZjFmZTBhNzkyN2M1MzQ" target="_blank" rel="noopener">
   Join us on Slack
 </a>
+
 Note: This is pre-alpha software. Things will constantly be changing and getting updated.
 ## :computer: Installation
 ##### Using npm:
