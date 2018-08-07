@@ -27,6 +27,7 @@ import * as Web3 from 'web3';
 import * as ABIDecoder from 'abi-decoder';
 
 import { Core, Vault } from 'set-protocol-contracts';
+import { SetProtocolUtils } from 'set-protocol-utils';
 
 import {
   SetProtocolUtils
