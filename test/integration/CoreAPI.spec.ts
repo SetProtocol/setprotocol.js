@@ -26,6 +26,7 @@ import * as chai from 'chai';
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
+import * as ethUtil from 'ethereumjs-util';
 
 import { Core, Vault } from 'set-protocol-contracts';
 
@@ -100,9 +101,8 @@ describe('Core API', () => {
   });
 
   test('CoreAPI can be instantiated', async () => {
-    // deploy Core
-    const coreInstance = await coreContract.new();
-    expect(new CoreAPI(web3, coreInstance.address));
+    const coreAPI = await initializeCoreAPI(provider);
+    expect(coreAPI.coreAddress);
   });
 
   /* ============ Create ============ */
@@ -456,8 +456,9 @@ describe('Core API', () => {
       const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
 
       if (!receipt) {
+        console.log('Slow transaction...waiting...');
         // This takes a little longer so add a wait if receipt not ready yet.
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
 
       await Promise.all(
@@ -566,7 +567,7 @@ describe('Core API', () => {
       takerWalletWrapperAddress = await deployTakerWalletExchangeWrapper(
         coreAPI.transferProxyAddress,
         coreAPI.coreAddress,
-        provider
+        provider,
       );
 
       setToCreate = testSets[0];
@@ -593,16 +594,16 @@ describe('Core API', () => {
     test('fills an issuance order with valid parameters', async () => {
       const order = {
         setAddress: setTokenAddress,
-        quantity: new BigNumber(40),
+        quantity: new BigNumber(80),
         requiredComponents: componentAddresses,
         requiredComponentAmounts: componentAddresses.map(() => new BigNumber(20)),
         makerAddress: ACCOUNTS[0].address,
         makerToken: componentAddresses[0],
-        makerTokenAmount: new BigNumber(5),
+        makerTokenAmount: new BigNumber(6),
         expiration: SetProtocolUtils.generateTimestamp(60),
         relayerAddress: ACCOUNTS[1].address,
         relayerToken: componentAddresses[0],
-        relayerTokenAmount: new BigNumber(5),
+        relayerTokenAmount: new BigNumber(6),
       };
       const takerAddress = ACCOUNTS[2].address;
 
@@ -646,25 +647,33 @@ describe('Core API', () => {
 
       const takerWalletOrders = _.map(componentAddresses, componentAddress => (
         {
-          exchange: SetProtocolUtils.EXCHANGES.TAKER_WALLET,
           takerTokenAddress: componentAddress,
           takerTokenAmount: new BigNumber(20),
         }
       ));
-
-      const orderData = setProtocolUtils.generateSerializedOrders(
-        makerToken,
-        makerTokenAmount,
-        takerWalletOrders,
-        web3,
+      const orderData = ethUtil.bufferToHex(
+        setProtocolUtils.generateTakerWalletOrdersBuffer(
+          makerToken,
+          takerWalletOrders,
+        )
       );
-
+      const quantityToFill = new BigNumber(40);
       const txHash = await coreAPI.fillIssuanceOrder(
         takerAddress,
         signedIssuanceOrder,
-        new BigNumber(40),
+        quantityToFill,
         orderData,
       );
+
+      const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
+
+      const coreInstance = await CoreContract.at(coreAPI.coreAddress, web3, txDefaults);
+
+      const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });
+      const orderFillsAmount =
+        await coreInstance.orderFills.callAsync(SetProtocolUtils.hashOrderHex(orderWithSalt));
+
+      expect(quantityToFill.toNumber()).to.equal(orderFillsAmount.toNumber());
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogFill');

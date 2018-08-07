@@ -3,6 +3,8 @@ import * as _ from 'lodash';
 
 import {
   Core,
+  ERC20Wrapper,
+  OrderLibrary,
   SetTokenFactory,
   StandardTokenMock,
   TransferProxy,
@@ -37,7 +39,14 @@ const txDefaults = {
 export const deployCore = async (provider: Web3.Provider) => {
   const coreContract = contract(Core);
   coreContract.setProvider(provider);
+  coreContract.setNetwork(12345);
   coreContract.defaults(txDefaults);
+  const orderLibraryContract = contract(OrderLibrary);
+  orderLibraryContract.setProvider(provider);
+  orderLibraryContract.defaults(txDefaults);
+
+  const orderLibrary = await orderLibraryContract.new();
+  await coreContract.link('OrderLibrary', orderLibrary.address);
 
   // Deploy Core
   const coreInstance = await coreContract.new();
@@ -247,12 +256,19 @@ export const approveForFill = async (
   await Promise.all(relayerTransferPromises);
 };
 
-export const deployTransferProxy = async (coreAddress: Address, provider: Web3.Provider) => {
+export const deployTransferProxy = async (
+  coreAddress: Address,
+  erc20WrapperAddress: Address,
+  provider: Web3.Provider,
+) => {
   const web3 = new Web3(provider);
 
   const transferProxyContract = contract(TransferProxy);
   transferProxyContract.setProvider(provider);
+  transferProxyContract.setNetwork(12345);
   transferProxyContract.defaults(txDefaults);
+
+  await transferProxyContract.link('ERC20Wrapper', erc20WrapperAddress);
 
   // Deploy TransferProxy
   const transferProxyInstance = await transferProxyContract.new();
@@ -267,12 +283,19 @@ export const deployTransferProxy = async (coreAddress: Address, provider: Web3.P
   return transferProxyInstance.address;
 };
 
-export const deployVault = async (coreAddress: Address, provider: Web3.Provider) => {
+export const deployVault = async (
+  coreAddress: Address,
+  erc20WrapperAddress: Address,
+  provider: Web3.Provider,
+) => {
   const web3 = new Web3(provider);
 
   const vaultContract = contract(Vault);
   vaultContract.setProvider(provider);
+  vaultContract.setNetwork(12345);
   vaultContract.defaults(txDefaults);
+
+  await vaultContract.link('ERC20Wrapper', erc20WrapperAddress);
 
   // Deploy Vault
   const vaultInstance = await vaultContract.new();
@@ -286,9 +309,15 @@ export const deployVault = async (coreAddress: Address, provider: Web3.Provider)
 export const initializeCoreAPI = async (provider: Web3.Provider) => {
   const web3 = new Web3(provider);
 
+  const erc20WrapperContract = contract(ERC20Wrapper);
+  erc20WrapperContract.setProvider(provider);
+  erc20WrapperContract.defaults(txDefaults);
+
+  const erc20Wrapper = await erc20WrapperContract.new();
+
   const coreAddress = await deployCore(provider);
-  const transferProxyAddress = await deployTransferProxy(coreAddress, provider);
-  const vaultAddress = await deployVault(coreAddress, provider);
+  const transferProxyAddress = await deployTransferProxy(coreAddress, erc20Wrapper.address, provider);
+  const vaultAddress = await deployVault(coreAddress, erc20Wrapper.address, provider);
 
   const coreWrapper = await CoreContract.at(coreAddress, web3, txDefaults);
   // Set Vault and TransferProxy on Core
