@@ -1,10 +1,10 @@
 <p align="center"><img src="https://s3-us-west-1.amazonaws.com/set-protocol/img/assets/set-protocol-logo.png" width="64" /></p>
 
 <p align="center">
-  <a href="https://circleci.com/gh/SetProtocol/setProtocol.js/tree/master">
+  <a href="https://circleci.com/gh/SetProtocol/setProtocol.js/tree/master" target="_blank" rel="noopener">
     <img src="https://img.shields.io/circleci/project/github/SetProtocol/setProtocol.js/master.svg" />
   </a>
-  <a href='https://github.com/SetProtocol/setProtocol.js/blob/master/LICENSE'>
+  <a href='https://github.com/SetProtocol/setProtocol.js/blob/master/LICENSE' target="_blank" rel="noopener">
     <img src='https://img.shields.io/github/license/SetProtocol/setProtocol.js.svg' alt='License' />
   </a>
 </p>
@@ -13,8 +13,10 @@
 Welcome Settler of Tokan :wave: setProtocol.js is a library for interacting with Set Protocol smart contracts.
 This library enables you to create, issue, redeem, and create/fill orders for Sets.
 
+<a href="https://join.slack.com/t/setprotocol/shared_invite/enQtMjYzNjk4MzI1NzgxLWRlYzhkY2JlNjQ4YmU4OTUwZWQ5NzdkZjM3ZDVlNzU1MTJmZWM1NTNmM2JlYmE5YzljZjFmZTBhNzkyN2M1MzQ" target="_blank" rel="noopener">
+  Join us on Slack
+</a>
 Note: This is pre-alpha software. Things will constantly be changing and getting updated.
-
 ## :computer: Installation
 ##### Using npm:
 ```shell
