@@ -36,6 +36,9 @@ import { CoreAPI, SetTokenAPI } from '../../src/api';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
 import { CoreContract, SetTokenFactoryContract, SetTokenContract } from '../../src/contracts';
 import { Web3Utils } from '../../src/util';
+import {
+  initializeCoreAPI,
+} from '../helpers/coreHelpers';
 
 const { expect } = chai;
 
@@ -100,16 +103,15 @@ describe('Set Token API', () => {
   describe('getters', async () => {
     let componentAddresses: string[];
     let setToCreate: TestSet;
-    let coreAPI: CoreAPI;
     let setTokenAPI: SetTokenAPI;
     let setTokenFactoryInstance: SetTokenFactoryContract;
     let setTokenInstance: SetTokenContract;
 
     beforeEach(async () => {
       // Deploy Core
-      const coreContractInstance = await coreContract.new();
-      const coreWrapper = await CoreContract.at(coreContractInstance.address, web3, txDefaults);
-      coreAPI = new CoreAPI(web3, coreContractInstance.address);
+      const coreAPI = await initializeCoreAPI(provider);
+      const coreWrapper = await CoreContract.at(coreAPI.coreAddress, web3, txDefaults);
+
       setTokenAPI = new SetTokenAPI(web3);
       // Deploy SetTokenFactory
       setTokenFactoryInstance = await setTokenFactoryContract.new();
@@ -120,7 +122,7 @@ describe('Set Token API', () => {
       );
       // Authorize Core
       await setTokenFactoryWrapper.addAuthorizedAddress.sendTransactionAsync(
-        coreContractInstance.address,
+        coreAPI.coreAddress,
         txDefaults,
       );
 

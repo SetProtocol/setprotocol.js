@@ -22,6 +22,7 @@ import { DetailedERC20Contract } from './DetailedERC20Contract';
 import { SetTokenContract } from './SetTokenContract';
 import { SetTokenFactoryContract } from './SetTokenFactoryContract';
 import { StandardTokenMockContract } from './StandardTokenMockContract';
+import { TakerWalletWrapperContract } from './TakerWalletWrapperContract';
 import { TransferProxyContract } from './TransferProxyContract';
 import { VaultContract } from './VaultContract';
 
@@ -33,6 +34,7 @@ export {
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
+  TakerWalletWrapperContract,
   TransferProxyContract,
   VaultContract,
 };

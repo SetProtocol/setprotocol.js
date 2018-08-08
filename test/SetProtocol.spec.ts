@@ -30,6 +30,9 @@ import { ACCOUNTS } from './accounts';
 import SetProtocol from '../src';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../src/constants';
 import { Web3Utils } from '../src/util/Web3Utils';
+import {
+  initializeCoreAPI,
+} from './helpers/coreHelpers';
 
 const { expect } = chai;
 
@@ -70,15 +73,13 @@ describe('SetProtocol', async () => {
 
   test('should instantiate a new setProtocolInstance', async () => {
     // Deploy Core
-    const coreContractInstance = await coreContract.new();
-    const transferProxyInstance = await transferProxyContract.new();
-    const vaultInstance = await vaultContract.new();
+    const coreAPI = await initializeCoreAPI(provider);
 
     const setProtocolInstance = new SetProtocol(
       web3,
-      coreContractInstance.address,
-      transferProxyInstance.address,
-      vaultInstance.address,
+      coreAPI.coreAddress,
+      coreAPI.transferProxyAddress,
+      coreAPI.vaultAddress,
     );
     expect(setProtocolInstance instanceof SetProtocol);
   });

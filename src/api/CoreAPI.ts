@@ -24,7 +24,7 @@ import { ContractsAPI } from '.';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { Address, TxData, IssuanceOrder, SignedIssuanceOrder } from '../types/common';
+import { Address, Bytes32, TxData, IssuanceOrder, SignedIssuanceOrder } from '../types/common';
 import { BigNumber } from '../util';
 import { DetailedERC20Contract, SetTokenContract, VaultContract } from '../contracts';
 
@@ -689,7 +689,7 @@ export class CoreAPI {
     userAddress: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orderData: string,
+    orderData: Bytes32,
     txOpts?: TxData,
   ): Promise<string> {
     const {
