@@ -47,6 +47,7 @@ import {
   DEFAULT_GAS_PRICE,
   DEFAULT_GAS_LIMIT,
   NULL_ADDRESS,
+  ZERO,
 } from '../../src/constants';
 import { Web3Utils } from '../../src/util/Web3Utils';
 import { BigNumber } from '../../src/util';
@@ -434,16 +435,18 @@ describe('Core API', () => {
 
     test('batch withdraws tokens from the vault with valid parameters', async () => {
       const quantities = tokenAddresses.map(() => new BigNumber(100));
-      const oldTokenBalances: BigNumber[] = [];
+      const oldTokenBalances: BigNumber[] = tokenAddresses.map(() => ZERO);
       await Promise.all(
-        tokenAddresses.map(async tokenAddress => {
+        tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
             ACCOUNTS[0].address,
             tokenAddress,
           );
 
           const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
-          oldTokenBalances.push(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address));
+          const balance = await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address);
+
+          oldTokenBalances[index] = balance;
           expect(Number(userBalance)).to.equal(100);
         }),
       );
@@ -455,12 +458,6 @@ describe('Core API', () => {
       );
       const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
 
-      if (!receipt) {
-        console.log('Slow transaction...waiting...');
-        // This takes a little longer so add a wait if receipt not ready yet.
-        await new Promise(resolve => setTimeout(resolve, 5000));
-      }
-
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
@@ -468,7 +465,10 @@ describe('Core API', () => {
             tokenAddress,
           );
           const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
-          expect(Number(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(
+
+          const balance = await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address);
+
+          expect(Number(balance)).to.equal(
             Number(oldTokenBalances[index].plus(100)),
           );
           expect(Number(userBalance)).to.equal(0);
@@ -664,8 +664,6 @@ describe('Core API', () => {
         quantityToFill,
         orderData,
       );
-
-      const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
 
       const coreInstance = await CoreContract.at(coreAPI.coreAddress, web3, txDefaults);
 
