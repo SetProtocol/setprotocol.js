@@ -5528,9 +5528,9 @@ set-immediate-shim@^1.0.1:
     zeppelin-solidity "^1.10.0"
     zos-lib "^1.0.0"
 
-set-protocol-utils@^0.3.2:
-  version "0.3.5"
-  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.5.tgz#0d23c2bd6f2635368e6e2c2ae37cc91d4fc51caa"
+set-protocol-utils@^0.3.10:
+  version "0.3.10"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.10.tgz#1cdc45cc47b273ba408b6d5deb922c1c85cb3db0"
   dependencies:
     "@0xproject/base-contract" "^1.0.4"
     "@0xproject/order-utils" "^1.0.1-rc.2"
@@ -5548,9 +5548,9 @@ set-protocol-utils@^0.3.2:
     tslint-eslint-rules "^5.3.1"
     web3 "0.20.0"
 
-set-protocol-utils@^0.3.8:
-  version "0.3.8"
-  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.8.tgz#c900a28918107a3e5e5d05edff51c718e687a0b3"
+set-protocol-utils@^0.3.2:
+  version "0.3.5"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.5.tgz#0d23c2bd6f2635368e6e2c2ae37cc91d4fc51caa"
   dependencies:
     "@0xproject/base-contract" "^1.0.4"
     "@0xproject/order-utils" "^1.0.1-rc.2"

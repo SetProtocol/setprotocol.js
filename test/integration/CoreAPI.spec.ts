@@ -724,7 +724,8 @@ describe('Core API', () => {
         expiration: SetProtocolUtils.generateTimestamp(60),
         relayerAddress: ACCOUNTS[1].address,
         relayerToken: componentAddresses[0],
-        relayerTokenAmount: new BigNumber(1),
+        makerRelayerFee: new BigNumber(1),
+        takerRelayerFee: new BigNumber(1),
       };
 
       const signedIssuanceOrder = await coreAPI.createSignedIssuanceOrder(
@@ -738,7 +739,8 @@ describe('Core API', () => {
         order.expiration,
         order.relayerAddress,
         order.relayerToken,
-        order.relayerTokenAmount,
+        order.makerRelayerFee,
+        order.takerRelayerFee,
       );
 
       const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });

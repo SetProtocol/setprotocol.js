@@ -23,13 +23,14 @@ import {
   Address,
   Bytes,
   IssuanceOrder,
+  SignedIssuanceOrder,
 } from 'set-protocol-utils';
 
 import { ContractsAPI } from '.';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { TxData, SignedIssuanceOrder } from '../types/common';
+import { TxData } from '../types/common';
 import { BigNumber } from '../util';
 import { DetailedERC20Contract, SetTokenContract, VaultContract } from '../contracts';
 
