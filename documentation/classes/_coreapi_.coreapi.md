@@ -59,7 +59,7 @@ The Core API handles all functions on the Core SetProtocol smart contract.
 
 ⊕ **new CoreAPI**(web3: *`Web3`*, coreAddress: *`Address`*, transferProxyAddress?: *`Address`*, vaultAddress?: *`Address`*): [CoreAPI](_coreapi_.coreapi.md)
 
-*Defined in [CoreAPI.ts:46](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L46)*
+*Defined in [CoreAPI.ts:51](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L51)*
 
 **Parameters:**
 
@@ -82,7 +82,7 @@ ___
 
 **● assert**: *`Assertions`*
 
-*Defined in [CoreAPI.ts:40](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L40)*
+*Defined in [CoreAPI.ts:45](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L45)*
 
 ___
 <a id="contracts"></a>
@@ -91,7 +91,7 @@ ___
 
 **● contracts**: *[ContractsAPI](_contractsapi_.contractsapi.md)*
 
-*Defined in [CoreAPI.ts:41](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L41)*
+*Defined in [CoreAPI.ts:46](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L46)*
 
 ___
 <a id="coreaddress"></a>
@@ -100,16 +100,16 @@ ___
 
 **● coreAddress**: *`Address`*
 
-*Defined in [CoreAPI.ts:44](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L44)*
+*Defined in [CoreAPI.ts:49](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L49)*
 
 ___
 <a id="setprotocolutils"></a>
 
 ### `<Private>` setProtocolUtils
 
-**● setProtocolUtils**: *`any`*
+**● setProtocolUtils**: *`SetProtocolUtils`*
 
-*Defined in [CoreAPI.ts:42](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L42)*
+*Defined in [CoreAPI.ts:47](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L47)*
 
 ___
 <a id="transferproxyaddress"></a>
@@ -118,7 +118,7 @@ ___
 
 **● transferProxyAddress**: *`Address`*
 
-*Defined in [CoreAPI.ts:45](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L45)*
+*Defined in [CoreAPI.ts:50](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L50)*
 
 ___
 <a id="vaultaddress"></a>
@@ -127,7 +127,7 @@ ___
 
 **● vaultAddress**: *`Address`*
 
-*Defined in [CoreAPI.ts:46](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L46)*
+*Defined in [CoreAPI.ts:51](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L51)*
 
 ___
 <a id="web3"></a>
@@ -136,7 +136,7 @@ ___
 
 **● web3**: *`Web3`*
 
-*Defined in [CoreAPI.ts:39](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L39)*
+*Defined in [CoreAPI.ts:44](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L44)*
 
 ___
 
@@ -148,7 +148,7 @@ ___
 
 ▸ **batchDeposit**(userAddress: *`Address`*, tokenAddresses: *`Address`[]*, quantitiesInWei: *`BigNumber`[]*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:449](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L449)*
+*Defined in [CoreAPI.ts:454](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L454)*
 
 **Parameters:**
 
@@ -168,7 +168,7 @@ ___
 
 ▸ **batchWithdraw**(userAddress: *`Address`*, tokenAddresses: *`Address`[]*, quantitiesInWei: *`BigNumber`[]*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:521](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L521)*
+*Defined in [CoreAPI.ts:526](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L526)*
 
 **Parameters:**
 
@@ -188,7 +188,7 @@ ___
 
 ▸ **cancelIssuanceOrder**(issuanceOrder: *`IssuanceOrder`*, quantityToCancel: *`BigNumber`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:801](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L801)*
+*Defined in [CoreAPI.ts:818](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L818)*
 
 **Parameters:**
 
@@ -207,7 +207,7 @@ ___
 
 ▸ **create**(userAddress: *`Address`*, factoryAddress: *`Address`*, components: *`Address`[]*, units: *`BigNumber`[]*, naturalUnit: *`BigNumber`*, name: *`string`*, symbol: *`string`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:89](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L89)*
+*Defined in [CoreAPI.ts:94](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L94)*
 
 Create a new Set, specifying the components, units, name, symbol to use.
 
@@ -232,9 +232,9 @@ ___
 
 ###  createSignedIssuanceOrder
 
-▸ **createSignedIssuanceOrder**(setAddress: *`Address`*, quantity: *`BigNumber`*, requiredComponents: *`Address`[]*, requiredComponentAmounts: *`BigNumber`[]*, makerAddress: *`Address`*, makerToken: *`Address`*, makerTokenAmount: *`BigNumber`*, expiration: *`BigNumber`*, relayerAddress: *`Address`*, relayerToken: *`Address`*, relayerTokenAmount: *`BigNumber`*): `Promise`<`SignedIssuanceOrder`>
+▸ **createSignedIssuanceOrder**(setAddress: *`Address`*, quantity: *`BigNumber`*, requiredComponents: *`Address`[]*, requiredComponentAmounts: *`BigNumber`[]*, makerAddress: *`Address`*, makerToken: *`Address`*, makerTokenAmount: *`BigNumber`*, expiration: *`BigNumber`*, relayerAddress: *`Address`*, relayerToken: *`Address`*, makerRelayerFee: *`BigNumber`*, takerRelayerFee: *`BigNumber`*): `Promise`<`SignedIssuanceOrder`>
 
-*Defined in [CoreAPI.ts:597](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L597)*
+*Defined in [CoreAPI.ts:603](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L603)*
 
 **Parameters:**
 
@@ -250,7 +250,8 @@ ___
 | expiration | `BigNumber` |
 | relayerAddress | `Address` |
 | relayerToken | `Address` |
-| relayerTokenAmount | `BigNumber` |
+| makerRelayerFee | `BigNumber` |
+| takerRelayerFee | `BigNumber` |
 
 **Returns:** `Promise`<`SignedIssuanceOrder`>
 
@@ -261,7 +262,7 @@ ___
 
 ▸ **deposit**(userAddress: *`Address`*, tokenAddress: *`Address`*, quantityInWei: *`BigNumber`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:289](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L289)*
+*Defined in [CoreAPI.ts:294](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L294)*
 
 Asynchronously deposits tokens to the vault
 
@@ -282,9 +283,9 @@ ___
 
 ###  fillIssuanceOrder
 
-▸ **fillIssuanceOrder**(userAddress: *`Address`*, signedIssuanceOrder: *`SignedIssuanceOrder`*, quantityToFill: *`BigNumber`*, orderData: *`string`*, txOpts?: *`TxData`*): `Promise`<`string`>
+▸ **fillIssuanceOrder**(userAddress: *`Address`*, signedIssuanceOrder: *`SignedIssuanceOrder`*, quantityToFill: *`BigNumber`*, orderData: *`Bytes`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:688](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L688)*
+*Defined in [CoreAPI.ts:700](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L700)*
 
 **Parameters:**
 
@@ -293,7 +294,7 @@ ___
 | userAddress | `Address` |
 | signedIssuanceOrder | `SignedIssuanceOrder` |
 | quantityToFill | `BigNumber` |
-| orderData | `string` |
+| orderData | `Bytes` |
 | `Optional` txOpts | `TxData` |
 
 **Returns:** `Promise`<`string`>
@@ -305,7 +306,7 @@ ___
 
 ▸ **getExchangeAddress**(exchangeId: *`number`*): `Promise`<`Address`>
 
-*Defined in [CoreAPI.ts:898](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L898)*
+*Defined in [CoreAPI.ts:920](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L920)*
 
 **Parameters:**
 
@@ -322,7 +323,7 @@ ___
 
 ▸ **getFactories**(): `Promise`<`Address`[]>
 
-*Defined in [CoreAPI.ts:932](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L932)*
+*Defined in [CoreAPI.ts:954](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L954)*
 
 **Returns:** `Promise`<`Address`[]>
 
@@ -333,7 +334,7 @@ ___
 
 ▸ **getIsValidFactory**(factoryAddress: *`Address`*): `Promise`<`boolean`>
 
-*Defined in [CoreAPI.ts:956](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L956)*
+*Defined in [CoreAPI.ts:978](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L978)*
 
 **Parameters:**
 
@@ -350,7 +351,7 @@ ___
 
 ▸ **getIsValidSet**(setAddress: *`Address`*): `Promise`<`boolean`>
 
-*Defined in [CoreAPI.ts:969](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L969)*
+*Defined in [CoreAPI.ts:991](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L991)*
 
 **Parameters:**
 
@@ -367,7 +368,7 @@ ___
 
 ▸ **getSetAddresses**(): `Promise`<`Address`[]>
 
-*Defined in [CoreAPI.ts:944](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L944)*
+*Defined in [CoreAPI.ts:966](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L966)*
 
 **Returns:** `Promise`<`Address`[]>
 
@@ -378,7 +379,7 @@ ___
 
 ▸ **getTransferProxyAddress**(): `Promise`<`Address`>
 
-*Defined in [CoreAPI.ts:909](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L909)*
+*Defined in [CoreAPI.ts:931](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L931)*
 
 **Returns:** `Promise`<`Address`>
 
@@ -389,7 +390,7 @@ ___
 
 ▸ **getVaultAddress**(): `Promise`<`Address`>
 
-*Defined in [CoreAPI.ts:920](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L920)*
+*Defined in [CoreAPI.ts:942](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L942)*
 
 **Returns:** `Promise`<`Address`>
 
@@ -400,7 +401,7 @@ ___
 
 ▸ **issue**(userAddress: *`Address`*, setAddress: *`Address`*, quantityInWei: *`BigNumber`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:177](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L177)*
+*Defined in [CoreAPI.ts:182](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L182)*
 
 Asynchronously issues a particular quantity of tokens from a particular Sets
 
@@ -423,7 +424,7 @@ ___
 
 ▸ **redeem**(userAddress: *`Address`*, setAddress: *`Address`*, quantityInWei: *`BigNumber`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:229](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L229)*
+*Defined in [CoreAPI.ts:234](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L234)*
 
 Asynchronously redeems a particular quantity of tokens from a particular Sets
 
@@ -446,7 +447,7 @@ ___
 
 ▸ **redeemAndWithdraw**(userAddress: *`Address`*, setAddress: *`Address`*, quantityInWei: *`BigNumber`*, tokensToWithdraw: *`Address`[]*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:396](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L396)*
+*Defined in [CoreAPI.ts:401](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L401)*
 
 Composite method to redeem and withdraw with a single transaction
 
@@ -472,7 +473,7 @@ ___
 
 ▸ **withdraw**(userAddress: *`Address`*, tokenAddress: *`Address`*, quantityInWei: *`BigNumber`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:340](https://github.com/SetProtocol/setProtocol.js/blob/dda8209/src/api/CoreAPI.ts#L340)*
+*Defined in [CoreAPI.ts:345](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/CoreAPI.ts#L345)*
 
 Asynchronously withdraw tokens from the vault
 
