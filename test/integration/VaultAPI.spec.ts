@@ -27,12 +27,12 @@ import * as chai from 'chai';
 import * as Web3 from 'web3';
 
 import { Core } from 'set-protocol-contracts';
+import { Address } from 'set-protocol-utils';
 
 import { ACCOUNTS } from '../accounts';
 import { testSets, TestSet } from '../testSets';
 import { CoreAPI, VaultAPI } from '../../src/api';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
-import { Address } from '../../src/types/common';
 import { BigNumber, Web3Utils } from '../../src/util';
 import { deployTokensForSetWithApproval, initializeCoreAPI, initializeVaultAPI } from '../helpers';
 

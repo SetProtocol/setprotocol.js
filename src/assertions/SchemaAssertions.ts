@@ -33,10 +33,6 @@ export class SchemaAssertions {
     this.assertConformsToSchema(variableName, value, schemas.addressSchema);
   }
 
-  public isValidBytes32(variableName: string, value: any) {
-    this.assertConformsToSchema(variableName, value, schemas.bytes32Schema);
-  }
-
   public isValidBytes(variableName: string, value: any) {
     this.assertConformsToSchema(variableName, value, schemas.bytesSchema);
   }

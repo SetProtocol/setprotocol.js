@@ -29,11 +29,7 @@ import * as ABIDecoder from 'abi-decoder';
 import * as ethUtil from 'ethereumjs-util';
 
 import { Core, Vault } from 'set-protocol-contracts';
-import { SetProtocolUtils } from 'set-protocol-utils';
-
-import {
-  SetProtocolUtils
-} from 'set-protocol-utils';
+import { SetProtocolUtils, Address } from 'set-protocol-utils';
 
 import { ACCOUNTS } from '../accounts';
 import { testSets, TestSet } from '../testSets';
@@ -62,7 +58,6 @@ import {
 import {
   deployTakerWalletExchangeWrapper,
 } from '../helpers/exchangeHelpers';
-import { Address } from '../../src/types/common';
 
 const contract = require('truffle-contract');
 
@@ -524,7 +519,8 @@ describe('Core API', () => {
         expiration: SetProtocolUtils.generateTimestamp(60),
         relayerAddress: ACCOUNTS[1].address,
         relayerToken: componentAddresses[0],
-        relayerTokenAmount: new BigNumber(1),
+        makerRelayerFee: new BigNumber(1),
+        takerRelayerFee: new BigNumber(1),
       };
 
       const signedIssuanceOrder = await coreAPI.createSignedIssuanceOrder(
@@ -538,7 +534,8 @@ describe('Core API', () => {
         order.expiration,
         order.relayerAddress,
         order.relayerToken,
-        order.relayerTokenAmount,
+        order.makerRelayerFee,
+        order.takerRelayerFee,
       );
 
       const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });
@@ -604,7 +601,8 @@ describe('Core API', () => {
         expiration: SetProtocolUtils.generateTimestamp(60),
         relayerAddress: ACCOUNTS[1].address,
         relayerToken: componentAddresses[0],
-        relayerTokenAmount: new BigNumber(6),
+        makerRelayerFee: new BigNumber(6),
+        takerRelayerFee: new BigNumber(6),
       };
       const takerAddress = ACCOUNTS[2].address;
 
@@ -619,7 +617,8 @@ describe('Core API', () => {
         order.expiration,
         order.relayerAddress,
         order.relayerToken,
-        order.relayerTokenAmount,
+        order.makerRelayerFee,
+        order.takerRelayerFee,
       );
 
       const {

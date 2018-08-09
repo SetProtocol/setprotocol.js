@@ -17,7 +17,7 @@
 'use strict';
 
 import { NULL_ADDRESS } from '../constants';
-import { Address } from '../types/common';
+import { Address } from 'set-protocol-utils';
 
 export class AccountAssertions {
   public notNull(account: Address, errorMessage: string) {

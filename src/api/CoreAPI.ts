@@ -18,13 +18,18 @@
 
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
-import { SetProtocolUtils } from 'set-protocol-utils';
+import {
+  SetProtocolUtils,
+  Address,
+  Bytes,
+  IssuanceOrder,
+} from 'set-protocol-utils';
 
 import { ContractsAPI } from '.';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { Address, Bytes32, TxData, IssuanceOrder, SignedIssuanceOrder } from '../types/common';
+import { TxData, SignedIssuanceOrder } from '../types/common';
 import { BigNumber } from '../util';
 import { DetailedERC20Contract, SetTokenContract, VaultContract } from '../contracts';
 
@@ -39,7 +44,7 @@ export class CoreAPI {
   private web3: Web3;
   private assert: Assertions;
   private contracts: ContractsAPI;
-  private setProtocolUtils: any;
+  private setProtocolUtils: SetProtocolUtils;
 
   public coreAddress: Address;
   public transferProxyAddress: Address;
@@ -591,7 +596,8 @@ export class CoreAPI {
    * @param  expiration                Unix timestamp of expiration (in seconds)
    * @param  relayerAddress            Address of relayer of order
    * @param  relayerToken              Address of token paid to relayer
-   * @param  relayerTokenAmount        Number of token paid to relayer
+   * @param  makerRelayerFee           Number of token paid to relayer by maker
+   * @param  takerRelayerFee           Number of token paid tp relayer by taker
    * @return                           A transaction hash
    */
   public async createSignedIssuanceOrder(
@@ -605,7 +611,8 @@ export class CoreAPI {
     expiration: BigNumber,
     relayerAddress: Address,
     relayerToken: Address,
-    relayerTokenAmount: BigNumber,
+    makerRelayerFee: BigNumber,
+    takerRelayerFee: BigNumber,
   ): Promise<SignedIssuanceOrder> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('makerAddress', makerAddress);
@@ -646,8 +653,12 @@ export class CoreAPI {
     const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
     await this.assert.erc20.implementsERC20(relayerTokenContract);
     this.assert.common.greaterThanZero(
-      relayerTokenAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerTokenAmount),
+      makerRelayerFee,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerRelayerFee),
+    );
+    this.assert.common.greaterThanZero(
+      takerRelayerFee,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerRelayerFee),
     );
     this.assert.common.isValidExpiration(
       expiration,
@@ -663,7 +674,8 @@ export class CoreAPI {
       quantity,
       makerTokenAmount,
       expiration,
-      relayerTokenAmount,
+      makerRelayerFee,
+      takerRelayerFee,
       requiredComponents,
       requiredComponentAmounts,
       salt: SetProtocolUtils.generateSalt(),
@@ -689,7 +701,7 @@ export class CoreAPI {
     userAddress: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orderData: Bytes32,
+    orderData: Bytes,
     txOpts?: TxData,
   ): Promise<string> {
     const {
@@ -701,7 +713,8 @@ export class CoreAPI {
       quantity,
       makerTokenAmount,
       expiration,
-      relayerTokenAmount,
+      makerRelayerFee,
+      takerRelayerFee,
       requiredComponents,
       requiredComponentAmounts,
       salt,
@@ -748,8 +761,12 @@ export class CoreAPI {
     const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
     await this.assert.erc20.implementsERC20(relayerTokenContract);
     this.assert.common.greaterThanZero(
-      relayerTokenAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerTokenAmount),
+      makerRelayerFee,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerRelayerFee),
+    );
+    this.assert.common.greaterThanZero(
+      takerRelayerFee,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerRelayerFee),
     );
     this.assert.common.greaterThanZero(
       quantityToFill,
@@ -777,7 +794,7 @@ export class CoreAPI {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const txHash = await coreInstance.fillOrder.sendTransactionAsync(
       [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
-      [quantity, makerTokenAmount, expiration, relayerTokenAmount, salt],
+      [quantity, makerTokenAmount, expiration, makerRelayerFee, takerRelayerFee, salt],
       requiredComponents,
       requiredComponentAmounts,
       quantityToFill,
@@ -812,7 +829,8 @@ export class CoreAPI {
       quantity,
       makerTokenAmount,
       expiration,
-      relayerTokenAmount,
+      makerRelayerFee,
+      takerRelayerFee,
       requiredComponents,
       requiredComponentAmounts,
       salt,
@@ -857,8 +875,12 @@ export class CoreAPI {
     const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
     await this.assert.erc20.implementsERC20(relayerTokenContract);
     this.assert.common.greaterThanZero(
-      relayerTokenAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(relayerTokenAmount),
+      makerRelayerFee,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerRelayerFee),
+    );
+    this.assert.common.greaterThanZero(
+      takerRelayerFee,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerRelayerFee),
     );
     this.assert.common.greaterThanZero(
       quantityToCancel,
@@ -877,7 +899,7 @@ export class CoreAPI {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const txHash = await coreInstance.cancelOrder.sendTransactionAsync(
       [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
-      [quantity, makerTokenAmount, expiration, relayerTokenAmount, salt],
+      [quantity, makerTokenAmount, expiration, makerRelayerFee, takerRelayerFee, salt],
       requiredComponents,
       requiredComponentAmounts,
       quantityToCancel,

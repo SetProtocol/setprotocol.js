@@ -64,7 +64,7 @@
     "lodash": "^4.17.4",
     "lodash.compact": "^3.0.1",
     "set-protocol-contracts": "git://github.com/SetProtocol/set-protocol-contracts.git",
-    "set-protocol-utils": "^0.3.5",
+    "set-protocol-utils": "^0.3.8",
     "tiny-promisify": "^1.0.0",
     "truffle-contract": "^3.0.1",
     "truffle-hdwallet-provider": "0.0.3",

@@ -25,7 +25,7 @@ import {
   SetTokenContract,
   VaultContract,
 } from '../contracts';
-import { Address } from '../types/common';
+import { Address } from 'set-protocol-utils';
 
 /**
  * @title ContractsAPI

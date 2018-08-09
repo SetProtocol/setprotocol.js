@@ -4,12 +4,12 @@ import * as _ from 'lodash';
 import {
   TakerWalletWrapper,
 } from 'set-protocol-contracts';
+import { Address } from 'set-protocol-utils';
 import {
   TakerWalletWrapperContract,
   TransferProxyContract,
 } from '../../src/contracts';
 import { BigNumber } from '../../src/util';
-import { Address } from '../../src/types/common.js';
 import { ACCOUNTS } from '../accounts';
 import {
   DEFAULT_GAS_PRICE,
