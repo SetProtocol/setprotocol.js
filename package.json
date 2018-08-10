@@ -50,11 +50,11 @@
     "tslint-eslint-rules": "^5.3.1",
     "typedoc": "^0.11.1",
     "typedoc-plugin-markdown": "^1.1.6",
-    "typescript": "^2.6.2"
+    "typescript": "^2.9.2"
   },
   "dependencies": {
     "@0xproject/typescript-typings": "^0.2.0",
-    "@0xproject/utils": "^0.5.2",
+    "@0xproject/utils": "^1.0.4",
     "@types/lodash": "^4.14.108",
     "@types/lodash.compact": "^3.0.3",
     "abi-decoder": "^1.1.0",
@@ -64,7 +64,7 @@
     "lodash": "^4.17.4",
     "lodash.compact": "^3.0.1",
     "set-protocol-contracts": "git://github.com/SetProtocol/set-protocol-contracts.git",
-    "set-protocol-utils": "^0.3.10",
+    "set-protocol-utils": "^0.3.11",
     "tiny-promisify": "^1.0.0",
     "truffle-contract": "^3.0.1",
     "truffle-hdwallet-provider": "0.0.3",
