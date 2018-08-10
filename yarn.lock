@@ -1105,13 +1105,13 @@ bignumber.js@^7.2.0:
   version "7.2.1"
   resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-7.2.1.tgz#80c048759d826800807c4bfd521e50edbba57a5f"
 
-"bignumber.js@git+https://github.com/debris/bignumber.js#master":
-  version "2.0.7"
-  resolved "git+https://github.com/debris/bignumber.js#c7a38de919ed75e6fb6ba38051986e294b328df9"
-
 "bignumber.js@git+https://github.com/debris/bignumber.js.git#94d7146671b9719e00a09c29b01a691bc85048c2":
   version "2.0.7"
   resolved "git+https://github.com/debris/bignumber.js.git#94d7146671b9719e00a09c29b01a691bc85048c2"
+
+"bignumber.js@git+https://github.com/debris/bignumber.js.git#master":
+  version "2.0.7"
+  resolved "git+https://github.com/debris/bignumber.js.git#c7a38de919ed75e6fb6ba38051986e294b328df9"
 
 "bignumber.js@git+https://github.com/frozeman/bignumber.js-nolookahead.git":
   version "2.0.7"
@@ -5582,14 +5582,14 @@ set-immediate-shim@^1.0.1:
 
 "set-protocol-contracts@git://github.com/SetProtocol/set-protocol-contracts.git":
   version "0.2.9"
-  resolved "git://github.com/SetProtocol/set-protocol-contracts.git#43e22fe338b1a50fe74d2c966d26cfb339f62f12"
+  resolved "git://github.com/SetProtocol/set-protocol-contracts.git#1f132f3ee106619b08586892bde0b5ae88c13f08"
   dependencies:
     eth-gas-reporter "^0.1.10"
     fs-extra "^5.0.0"
     husky "^0.14.3"
     lint-staged "^7.2.0"
     openzeppelin-zos "^1.9.1"
-    set-protocol-utils "^0.3.6"
+    set-protocol-utils "^0.3.11"
     sol-trace-set "^0.0.1"
     solium "^1.1.7"
     tiny-promisify "^1.0.0"
@@ -5601,26 +5601,6 @@ set-immediate-shim@^1.0.1:
 set-protocol-utils@^0.3.11:
   version "0.3.11"
   resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.11.tgz#1a41024f3960df754aea2c6c75b08de0713bd476"
-  dependencies:
-    "@0xproject/base-contract" "^1.0.4"
-    "@0xproject/order-utils" "^1.0.1-rc.2"
-    "@0xproject/web3-wrapper" "^1.1.2"
-    "@types/node" "^8.0.53"
-    abi-decoder "^1.0.9"
-    bignumber.js "~4.1.0"
-    ethereum-types "^1.0.0"
-    ethereumjs-util "^5.1.1"
-    ethers "3.0.22"
-    husky "^0.14.3"
-    js-sha3 "^0.7.0"
-    lint-staged "^7.2.0"
-    lodash "^4.17.4"
-    tslint-eslint-rules "^5.3.1"
-    web3 "0.20.0"
-
-set-protocol-utils@^0.3.6:
-  version "0.3.10"
-  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.10.tgz#1cdc45cc47b273ba408b6d5deb922c1c85cb3db0"
   dependencies:
     "@0xproject/base-contract" "^1.0.4"
     "@0xproject/order-utils" "^1.0.1-rc.2"
