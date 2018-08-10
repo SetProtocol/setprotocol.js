@@ -18,11 +18,11 @@
 
 import * as _ from 'lodash';
 import * as Web3 from 'web3';
+import { Address } from 'set-protocol-utils';
 
 import { ERC20Assertions } from './ERC20Assertions';
 import { DetailedERC20Contract, SetTokenContract } from '../contracts';
 import { setTokenAssertionsErrors } from '../errors';
-import { Address } from '../types/common';
 import { BigNumber } from '../util';
 import { ZERO } from '../constants';
 

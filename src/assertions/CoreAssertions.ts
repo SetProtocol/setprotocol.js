@@ -17,11 +17,10 @@
 'use strict';
 
 import * as _ from 'lodash';
-import { SetProtocolUtils } from 'set-protocol-utils';
+import { SetProtocolUtils, ECSig, IssuanceOrder } from 'set-protocol-utils';
 import { coreAssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 import { CoreContract } from '../contracts';
-import { ECSig, IssuanceOrder } from '../types/common';
 
 const setProtocolUtils = new SetProtocolUtils();
 

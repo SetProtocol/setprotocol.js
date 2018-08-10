@@ -18,7 +18,6 @@
 
 import {
   addressSchema,
-  bytes32Schema,
   bytesSchema,
   numberSchema,
   wholeNumberSchema,
@@ -27,7 +26,6 @@ import {
 export const schemas = {
   addressSchema,
   numberSchema,
-  bytes32Schema,
   bytesSchema,
   wholeNumberSchema,
 };

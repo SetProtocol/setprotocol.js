@@ -1,6 +1,6 @@
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
-
+import { Address } from 'set-protocol-utils';
 import {
   Core,
   ERC20Wrapper,
@@ -16,7 +16,6 @@ import {
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
 } from '../../src/constants';
 import { ACCOUNTS } from '../accounts';
-import { Address } from '../../src/types/common';
 import { TestSet } from '../testSets';
 import {
   CoreContract,

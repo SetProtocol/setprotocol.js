@@ -1,9 +1,6 @@
 
 import { BigNumber } from '../util';
-
-export type Address = string;
-export type Bytes32 = string;
-export type UInt = number | BigNumber;
+import { Address } from 'set-protocol-utils';
 
 export interface Component {
   address: Address;
@@ -25,43 +22,6 @@ export interface Token {
   decimals: BigNumber;
 }
 
-export interface ECSig {
-  v: UInt;
-  r: string;
-  s: string;
-}
-
-export interface IssuanceOrder {
-  setAddress: Address;
-  makerAddress: Address;
-  makerToken: Address;
-  relayerAddress: Address;
-  relayerToken: Address;
-  quantity: BigNumber;
-  makerTokenAmount: BigNumber;
-  expiration: BigNumber;
-  relayerTokenAmount: BigNumber;
-  salt: BigNumber;
-  requiredComponents: Address[];
-  requiredComponentAmounts: BigNumber[];
-}
-
-export interface SignedIssuanceOrder {
-  setAddress: Address;
-  makerAddress: Address;
-  makerToken: Address;
-  relayerAddress: Address;
-  relayerToken: Address;
-  quantity: BigNumber;
-  makerTokenAmount: BigNumber;
-  expiration: BigNumber;
-  relayerTokenAmount: BigNumber;
-  salt: BigNumber;
-  requiredComponents: Address[];
-  requiredComponentAmounts: BigNumber[];
-  signature: ECSig;
-}
-
 export interface TxData {
   from?: Address;
   gas?: BigNumber;
@@ -71,12 +31,6 @@ export interface TxData {
 
 export interface TxDataPayable extends TxData {
   value?: BigNumber;
-}
-
-export interface Log {
-  event: string;
-  address: Address;
-  args: any;
 }
 
 export interface CreateLogArgs {
