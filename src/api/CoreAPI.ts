@@ -444,7 +444,7 @@ export class CoreAPI {
     return txHash;
   }
 
-  /*
+  /**
    * Asynchronously batch deposits tokens to the vault
    *
    * @param  userAddress       Address of the user
@@ -516,7 +516,7 @@ export class CoreAPI {
     return txHash;
   }
 
-  /*
+  /**
    * Asynchronously batch withdraws tokens from the vault
    *
    * @param  userAddress       Address of the user
@@ -584,7 +584,7 @@ export class CoreAPI {
     return txHash;
   }
 
-  /*
+  /**
    * Creates a new Issuance Order including the signature
    *
    * @param  setAddress                Address of the Set token for issuance order
@@ -687,7 +687,7 @@ export class CoreAPI {
     return Object.assign({}, order, { signature });
   }
 
-  /*
+  /**
    * Fills an Issuance Order
    *
    * @param  userAddress               Address of user doing the fill
@@ -808,7 +808,7 @@ export class CoreAPI {
     return txHash;
   }
 
-  /*
+  /**
    * Cancels an Issuance Order
    *
    * @param  issuanceOrder             Issuance order to fill
@@ -912,7 +912,7 @@ export class CoreAPI {
 
   /* ============ Core State Getters ============ */
 
-  /*
+  /**
    * Asynchronously gets the exchange address for a given exhange id
    *
    * @param  exchangeId Enum id of the exchange
@@ -924,7 +924,7 @@ export class CoreAPI {
     return exchangeAddress;
   }
 
-  /*
+  /**
    * Asynchronously gets the transfer proxy address
    *
    * @return Transfer proxy address
@@ -935,7 +935,7 @@ export class CoreAPI {
     return transferProxyAddress;
   }
 
-  /*
+  /**
    * Asynchronously gets the vault address
    *
    * @return Vault address
@@ -946,31 +946,29 @@ export class CoreAPI {
     return vaultAddress;
   }
 
-  /*
+  /**
    * Asynchronously gets factory addresses
    *
    * @return Array of factory addresses
    */
-
   public async getFactories(): Promise<Address[]> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const factoryAddresses = await coreInstance.factories.callAsync();
     return factoryAddresses;
   }
 
-  /*
+  /**
    * Asynchronously gets Set addresses
    *
    * @return Array of Set addresses
    */
-
   public async getSetAddresses(): Promise<Address[]> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const setAddresses = await coreInstance.setTokens.callAsync();
     return setAddresses;
   }
 
-  /*
+  /**
    * Asynchronously validates if an address is a valid factory address
    *
    * @param  factoryAddress Address of the factory contract
@@ -983,7 +981,7 @@ export class CoreAPI {
     return isValidFactoryAddress;
   }
 
-  /*
+  /**
    * Asynchronously validates if an address is a valid Set address
    *
    * @param  setAddress Address of the Set contract
