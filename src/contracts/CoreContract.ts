@@ -763,6 +763,73 @@ export class CoreContract extends BaseContract {
       return result;
     },
   };
+  public redeemInVault = {
+    async sendTransactionAsync(
+      _set: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<string> {
+      const self = this as CoreContract;
+      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
+        txData,
+        self.redeemInVault.estimateGasAsync.bind(
+          self,
+          _set,
+          _quantity,
+        ),
+      );
+      const txHash = await promisify<string>(
+        self.web3ContractInstance.redeemInVault, self.web3ContractInstance,
+      )(
+        _set,
+        _quantity,
+        txDataWithDefaults,
+      );
+      return txHash;
+    },
+    async estimateGasAsync(
+      _set: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<number> {
+      const self = this as CoreContract;
+      const txDataWithDefaults = await self.applyDefaultsToTxDataAsync(
+        txData,
+      );
+      const gas = await promisify<number>(
+        self.web3ContractInstance.redeemInVault.estimateGas, self.web3ContractInstance,
+      )(
+        _set,
+        _quantity,
+        txDataWithDefaults,
+      );
+      return gas;
+    },
+    getABIEncodedTransactionData(
+      _set: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): string {
+      const self = this as CoreContract;
+      const abiEncodedTransactionData = self.web3ContractInstance.redeemInVault.getData();
+      return abiEncodedTransactionData;
+    },
+    async callAsync(
+      _set: string,
+      _quantity: BigNumber,
+      txData: TxData = {},
+    ): Promise<void> {
+      const self = this as CoreContract;
+      const result = await promisify<void>(
+        self.web3ContractInstance.redeemInVault.call,
+        self.web3ContractInstance,
+      )(
+        _set,
+        _quantity,
+      );
+      return result;
+    },
+  };
   public redeemAndWithdraw = {
     async sendTransactionAsync(
       _setAddress: string,
