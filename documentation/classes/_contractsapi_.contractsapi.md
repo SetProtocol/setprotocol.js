@@ -43,7 +43,7 @@ The Contracts API handles all functions that load contracts
 
 ⊕ **new ContractsAPI**(web3: *`Web3`*): [ContractsAPI](_contractsapi_.contractsapi.md)
 
-*Defined in [ContractsAPI.ts:40](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/ContractsAPI.ts#L40)*
+*Defined in [ContractsAPI.ts:40](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/ContractsAPI.ts#L40)*
 
 **Parameters:**
 
@@ -63,7 +63,7 @@ ___
 
 **● assert**: *`Assertions`*
 
-*Defined in [ContractsAPI.ts:39](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/ContractsAPI.ts#L39)*
+*Defined in [ContractsAPI.ts:39](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/ContractsAPI.ts#L39)*
 
 ___
 <a id="cache"></a>
@@ -72,7 +72,7 @@ ___
 
 **● cache**: *`object`*
 
-*Defined in [ContractsAPI.ts:40](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/ContractsAPI.ts#L40)*
+*Defined in [ContractsAPI.ts:40](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/ContractsAPI.ts#L40)*
 
 #### Type declaration
 
@@ -85,7 +85,7 @@ ___
 
 **● web3**: *`Web3`*
 
-*Defined in [ContractsAPI.ts:38](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/ContractsAPI.ts#L38)*
+*Defined in [ContractsAPI.ts:38](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/ContractsAPI.ts#L38)*
 
 ___
 
@@ -97,7 +97,7 @@ ___
 
 ▸ **getCoreCacheKey**(coreAddress: *`Address`*): `string`
 
-*Defined in [ContractsAPI.ts:129](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/ContractsAPI.ts#L129)*
+*Defined in [ContractsAPI.ts:129](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/ContractsAPI.ts#L129)*
 
 Creates a string used for accessing values in the core cache
 
@@ -117,7 +117,7 @@ ___
 
 ▸ **getSetTokenCacheKey**(setTokenAddress: *`Address`*): `string`
 
-*Defined in [ContractsAPI.ts:139](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/ContractsAPI.ts#L139)*
+*Defined in [ContractsAPI.ts:139](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/ContractsAPI.ts#L139)*
 
 Creates a string used for accessing values in the set token cache
 
@@ -137,7 +137,7 @@ ___
 
 ▸ **getVaultCacheKey**(vaultAddress: *`Address`*): `string`
 
-*Defined in [ContractsAPI.ts:149](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/ContractsAPI.ts#L149)*
+*Defined in [ContractsAPI.ts:149](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/ContractsAPI.ts#L149)*
 
 Creates a string used for accessing values in the vault cache
 
@@ -157,7 +157,7 @@ ___
 
 ▸ **loadCoreAsync**(coreAddress: *`Address`*, transactionOptions?: *`object`*): `Promise`<`CoreContract`>
 
-*Defined in [ContractsAPI.ts:55](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/ContractsAPI.ts#L55)*
+*Defined in [ContractsAPI.ts:55](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/ContractsAPI.ts#L55)*
 
 Load Core contract
 
@@ -178,7 +178,7 @@ ___
 
 ▸ **loadSetTokenAsync**(setTokenAddress: *`Address`*, transactionOptions?: *`object`*): `Promise`<`SetTokenContract`>
 
-*Defined in [ContractsAPI.ts:79](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/ContractsAPI.ts#L79)*
+*Defined in [ContractsAPI.ts:79](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/ContractsAPI.ts#L79)*
 
 Load Set Token contract
 
@@ -199,7 +199,7 @@ ___
 
 ▸ **loadVaultAsync**(vaultAddress: *`Address`*, transactionOptions?: *`object`*): `Promise`<`VaultContract`>
 
-*Defined in [ContractsAPI.ts:107](https://github.com/SetProtocol/setProtocol.js/blob/f8011ee/src/api/ContractsAPI.ts#L107)*
+*Defined in [ContractsAPI.ts:107](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/ContractsAPI.ts#L107)*
 
 Load Vault contract
 
