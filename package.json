@@ -59,6 +59,7 @@
     "@types/lodash.compact": "^3.0.3",
     "abi-decoder": "^1.1.0",
     "bignumber.js": "^5.0.0",
+    "chai-bignumber": "^2.0.2",
     "ethereumjs-util": "^5.2.0",
     "jsonschema": "^1.2.4",
     "lodash": "^4.17.4",
