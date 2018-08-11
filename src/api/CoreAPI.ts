@@ -388,14 +388,14 @@ export class CoreAPI {
    * Composite method to redeem and withdraw with a single transaction
    *
    * Normally, you should expect to be able to withdraw all of the tokens.
-   * However, some have central abilities to freeze transfers (e.g. EOS). _toWithdraw
-   * allows you to optionally specify which component tokens to transfer
-   * back to the user. The rest will remain in the vault under the users' addresses.
+   * However, some have central abilities to freeze transfers (e.g. EOS). _toExclude
+   * allows you to optionally specify which component tokens to remain under the user's
+   * address in the vault. The rest will be transferred to the user.
    *
    * @param  userAddress       The address of the user
    * @param  setAddress        The address of the Set token
    * @param  quantityInWei     The number of tokens to redeem
-   * @param  tokensToWithdraw  Array of token addresses to withdraw
+   * @param  tokensToExclude   Array of token addresses to exclude from withdrawal
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash to then later look up
    */
@@ -403,7 +403,7 @@ export class CoreAPI {
     userAddress: Address,
     setAddress: Address,
     quantityInWei: BigNumber,
-    tokensToWithdraw: Address[],
+    tokensToExclude: Address[],
     txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
@@ -415,15 +415,15 @@ export class CoreAPI {
     const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
     const components = await setTokenContract.getComponents.callAsync();
 
-    let toWithdraw: BigNumber = ZERO;
-    const tokensToWithdrawMapping: any = {};
-    _.each(tokensToWithdraw, withdrawTokenAddress => {
-      this.assert.schema.isValidAddress('withdrawTokenAddress', withdrawTokenAddress);
-      tokensToWithdrawMapping[withdrawTokenAddress] = true;
+    let toExclude: BigNumber = ZERO;
+    const tokensToExcludeMapping: any = {};
+    _.each(tokensToExclude, tokenAddress => {
+      this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+      tokensToExcludeMapping[tokenAddress] = true;
     });
     _.each(components, (component, componentIndex) => {
-      if (tokensToWithdrawMapping[component]) {
-        toWithdraw = toWithdraw.plus(new BigNumber(2).pow(componentIndex));
+      if (tokensToExcludeMapping[component]) {
+        toExclude = toExclude.plus(new BigNumber(2).pow(componentIndex));
       }
     });
 
@@ -437,7 +437,7 @@ export class CoreAPI {
     const txHash = await coreInstance.redeemAndWithdraw.sendTransactionAsync(
       setAddress,
       quantityInWei,
-      toWithdraw,
+      toExclude,
       txSettings,
     );
 

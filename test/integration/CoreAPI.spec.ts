@@ -61,6 +61,9 @@ import {
 
 const contract = require('truffle-contract');
 
+const chaiBigNumber = require('chai-bignumber');
+chai.use(chaiBigNumber(BigNumber));
+
 const { expect } = chai;
 
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
@@ -264,12 +267,20 @@ describe('Core API', () => {
     test('redeems a set with valid parameters', async () => {
       const setTokenWrapper = await DetailedERC20Contract.at(setTokenAddress, web3, txDefaults);
       const componentTokenWrapper = await DetailedERC20Contract.at(
+        componentAddresses[1],
+        web3,
+        txDefaults,
+      );
+      const excludedComponentTokenWrapper = await DetailedERC20Contract.at(
         componentAddresses[0],
         web3,
         txDefaults,
       );
 
       const oldComponentBalance = await componentTokenWrapper.balanceOf.callAsync(
+        ACCOUNTS[0].address,
+      );
+      const excludedOldComponentBalance = await excludedComponentTokenWrapper.balanceOf.callAsync(
         ACCOUNTS[0].address,
       );
       const quantity = new BigNumber(100);
@@ -279,17 +290,24 @@ describe('Core API', () => {
         ACCOUNTS[0].address,
         setTokenAddress,
         quantity,
-        [componentAddresses[0]],
+        [excludedComponentTokenWrapper.address],
       );
       const componentTransferValue = quantity
         .div(setToCreate.naturalUnit)
         .mul(setToCreate.units[0]);
+
       const newComponentBalance = await componentTokenWrapper.balanceOf.callAsync(
         ACCOUNTS[0].address,
       );
+      const excludedNewComponentBalance = await excludedComponentTokenWrapper.balanceOf.callAsync(
+        ACCOUNTS[0].address,
+      );
 
-      expect(Number(newComponentBalance)).to.equal(
-        Number(oldComponentBalance.plus(componentTransferValue)),
+      expect(newComponentBalance).to.bignumber.equal(
+        oldComponentBalance.plus(componentTransferValue),
+      );
+      expect(excludedNewComponentBalance).to.bignumber.equal(
+        excludedOldComponentBalance
       );
       expect(Number(await setTokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(0);
     });
