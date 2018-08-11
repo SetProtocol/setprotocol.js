@@ -59,7 +59,7 @@ The Core API handles all functions on the Core SetProtocol smart contract.
 
 ⊕ **new CoreAPI**(web3: *`Web3`*, coreAddress: *`Address`*, transferProxyAddress?: *`Address`*, vaultAddress?: *`Address`*): [CoreAPI](_coreapi_.coreapi.md)
 
-*Defined in [CoreAPI.ts:52](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L52)*
+*Defined in [CoreAPI.ts:52](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L52)*
 
 **Parameters:**
 
@@ -82,7 +82,7 @@ ___
 
 **● assert**: *`Assertions`*
 
-*Defined in [CoreAPI.ts:46](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L46)*
+*Defined in [CoreAPI.ts:46](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L46)*
 
 ___
 <a id="contracts"></a>
@@ -91,7 +91,7 @@ ___
 
 **● contracts**: *[ContractsAPI](_contractsapi_.contractsapi.md)*
 
-*Defined in [CoreAPI.ts:47](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L47)*
+*Defined in [CoreAPI.ts:47](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L47)*
 
 ___
 <a id="coreaddress"></a>
@@ -100,7 +100,7 @@ ___
 
 **● coreAddress**: *`Address`*
 
-*Defined in [CoreAPI.ts:50](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L50)*
+*Defined in [CoreAPI.ts:50](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L50)*
 
 ___
 <a id="setprotocolutils"></a>
@@ -109,7 +109,7 @@ ___
 
 **● setProtocolUtils**: *`SetProtocolUtils`*
 
-*Defined in [CoreAPI.ts:48](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L48)*
+*Defined in [CoreAPI.ts:48](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L48)*
 
 ___
 <a id="transferproxyaddress"></a>
@@ -118,7 +118,7 @@ ___
 
 **● transferProxyAddress**: *`Address`*
 
-*Defined in [CoreAPI.ts:51](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L51)*
+*Defined in [CoreAPI.ts:51](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L51)*
 
 ___
 <a id="vaultaddress"></a>
@@ -127,7 +127,7 @@ ___
 
 **● vaultAddress**: *`Address`*
 
-*Defined in [CoreAPI.ts:52](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L52)*
+*Defined in [CoreAPI.ts:52](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L52)*
 
 ___
 <a id="web3"></a>
@@ -136,7 +136,7 @@ ___
 
 **● web3**: *`Web3`*
 
-*Defined in [CoreAPI.ts:45](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L45)*
+*Defined in [CoreAPI.ts:45](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L45)*
 
 ___
 
@@ -148,7 +148,7 @@ ___
 
 ▸ **batchDeposit**(userAddress: *`Address`*, tokenAddresses: *`Address`[]*, quantitiesInWei: *`BigNumber`[]*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:455](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L455)*
+*Defined in [CoreAPI.ts:455](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L455)*
 
 Asynchronously batch deposits tokens to the vault
 
@@ -171,7 +171,7 @@ ___
 
 ▸ **batchWithdraw**(userAddress: *`Address`*, tokenAddresses: *`Address`[]*, quantitiesInWei: *`BigNumber`[]*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:527](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L527)*
+*Defined in [CoreAPI.ts:527](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L527)*
 
 Asynchronously batch withdraws tokens from the vault
 
@@ -194,7 +194,7 @@ ___
 
 ▸ **cancelIssuanceOrder**(issuanceOrder: *`IssuanceOrder`*, quantityToCancel: *`BigNumber`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:819](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L819)*
+*Defined in [CoreAPI.ts:819](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L819)*
 
 Cancels an Issuance Order
 
@@ -216,7 +216,7 @@ ___
 
 ▸ **create**(userAddress: *`Address`*, factoryAddress: *`Address`*, components: *`Address`[]*, units: *`BigNumber`[]*, naturalUnit: *`BigNumber`*, name: *`string`*, symbol: *`string`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:95](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L95)*
+*Defined in [CoreAPI.ts:95](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L95)*
 
 Create a new Set, specifying the components, units, name, symbol to use.
 
@@ -243,7 +243,7 @@ ___
 
 ▸ **createSignedIssuanceOrder**(setAddress: *`Address`*, quantity: *`BigNumber`*, requiredComponents: *`Address`[]*, requiredComponentAmounts: *`BigNumber`[]*, makerAddress: *`Address`*, makerToken: *`Address`*, makerTokenAmount: *`BigNumber`*, expiration: *`BigNumber`*, relayerAddress: *`Address`*, relayerToken: *`Address`*, makerRelayerFee: *`BigNumber`*, takerRelayerFee: *`BigNumber`*): `Promise`<`SignedIssuanceOrder`>
 
-*Defined in [CoreAPI.ts:604](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L604)*
+*Defined in [CoreAPI.ts:604](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L604)*
 
 Creates a new Issuance Order including the signature
 
@@ -274,7 +274,7 @@ ___
 
 ▸ **deposit**(userAddress: *`Address`*, tokenAddress: *`Address`*, quantityInWei: *`BigNumber`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:295](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L295)*
+*Defined in [CoreAPI.ts:295](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L295)*
 
 Asynchronously deposits tokens to the vault
 
@@ -297,7 +297,7 @@ ___
 
 ▸ **fillIssuanceOrder**(userAddress: *`Address`*, signedIssuanceOrder: *`SignedIssuanceOrder`*, quantityToFill: *`BigNumber`*, orderData: *`Bytes`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:701](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L701)*
+*Defined in [CoreAPI.ts:701](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L701)*
 
 Fills an Issuance Order
 
@@ -321,7 +321,7 @@ ___
 
 ▸ **getExchangeAddress**(exchangeId: *`number`*): `Promise`<`Address`>
 
-*Defined in [CoreAPI.ts:921](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L921)*
+*Defined in [CoreAPI.ts:921](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L921)*
 
 Asynchronously gets the exchange address for a given exhange id
 
@@ -341,7 +341,7 @@ ___
 
 ▸ **getFactories**(): `Promise`<`Address`[]>
 
-*Defined in [CoreAPI.ts:954](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L954)*
+*Defined in [CoreAPI.ts:954](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L954)*
 
 Asynchronously gets factory addresses
 
@@ -355,7 +355,7 @@ ___
 
 ▸ **getIsValidFactory**(factoryAddress: *`Address`*): `Promise`<`boolean`>
 
-*Defined in [CoreAPI.ts:977](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L977)*
+*Defined in [CoreAPI.ts:977](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L977)*
 
 Asynchronously validates if an address is a valid factory address
 
@@ -375,7 +375,7 @@ ___
 
 ▸ **getIsValidSet**(setAddress: *`Address`*): `Promise`<`boolean`>
 
-*Defined in [CoreAPI.ts:990](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L990)*
+*Defined in [CoreAPI.ts:990](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L990)*
 
 Asynchronously validates if an address is a valid Set address
 
@@ -395,7 +395,7 @@ ___
 
 ▸ **getSetAddresses**(): `Promise`<`Address`[]>
 
-*Defined in [CoreAPI.ts:965](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L965)*
+*Defined in [CoreAPI.ts:965](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L965)*
 
 Asynchronously gets Set addresses
 
@@ -409,7 +409,7 @@ ___
 
 ▸ **getTransferProxyAddress**(): `Promise`<`Address`>
 
-*Defined in [CoreAPI.ts:932](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L932)*
+*Defined in [CoreAPI.ts:932](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L932)*
 
 Asynchronously gets the transfer proxy address
 
@@ -423,7 +423,7 @@ ___
 
 ▸ **getVaultAddress**(): `Promise`<`Address`>
 
-*Defined in [CoreAPI.ts:943](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L943)*
+*Defined in [CoreAPI.ts:943](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L943)*
 
 Asynchronously gets the vault address
 
@@ -437,7 +437,7 @@ ___
 
 ▸ **issue**(userAddress: *`Address`*, setAddress: *`Address`*, quantityInWei: *`BigNumber`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:183](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L183)*
+*Defined in [CoreAPI.ts:183](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L183)*
 
 Asynchronously issues a particular quantity of tokens from a particular Sets
 
@@ -460,7 +460,7 @@ ___
 
 ▸ **redeem**(userAddress: *`Address`*, setAddress: *`Address`*, quantityInWei: *`BigNumber`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:235](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L235)*
+*Defined in [CoreAPI.ts:235](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L235)*
 
 Asynchronously redeems a particular quantity of tokens from a particular Sets
 
@@ -481,13 +481,13 @@ ___
 
 ###  redeemAndWithdraw
 
-▸ **redeemAndWithdraw**(userAddress: *`Address`*, setAddress: *`Address`*, quantityInWei: *`BigNumber`*, tokensToWithdraw: *`Address`[]*, txOpts?: *`TxData`*): `Promise`<`string`>
+▸ **redeemAndWithdraw**(userAddress: *`Address`*, setAddress: *`Address`*, quantityInWei: *`BigNumber`*, tokensToExclude: *`Address`[]*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:402](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L402)*
+*Defined in [CoreAPI.ts:402](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L402)*
 
 Composite method to redeem and withdraw with a single transaction
 
-Normally, you should expect to be able to withdraw all of the tokens. However, some have central abilities to freeze transfers (e.g. EOS). _toWithdraw allows you to optionally specify which component tokens to transfer back to the user. The rest will remain in the vault under the users' addresses.
+Normally, you should expect to be able to withdraw all of the tokens. However, some have central abilities to freeze transfers (e.g. EOS). _toExclude allows you to optionally specify which component tokens to remain under the user's address in the vault. The rest will be transferred to the user.
 
 **Parameters:**
 
@@ -496,7 +496,7 @@ Normally, you should expect to be able to withdraw all of the tokens. However, s
 | userAddress | `Address` |  The address of the user |
 | setAddress | `Address` |  The address of the Set token |
 | quantityInWei | `BigNumber` |  The number of tokens to redeem |
-| tokensToWithdraw | `Address`[] |  Array of token addresses to withdraw |
+| tokensToExclude | `Address`[] |  Array of token addresses to exclude from withdrawal |
 | `Optional` txOpts | `TxData` |  The options for executing the transaction |
 
 **Returns:** `Promise`<`string`>
@@ -509,7 +509,7 @@ ___
 
 ▸ **withdraw**(userAddress: *`Address`*, tokenAddress: *`Address`*, quantityInWei: *`BigNumber`*, txOpts?: *`TxData`*): `Promise`<`string`>
 
-*Defined in [CoreAPI.ts:346](https://github.com/SetProtocol/setProtocol.js/blob/6cd5c7d/src/api/CoreAPI.ts#L346)*
+*Defined in [CoreAPI.ts:346](https://github.com/SetProtocol/setProtocol.js/blob/43f5628/src/api/CoreAPI.ts#L346)*
 
 Asynchronously withdraw tokens from the vault
 
