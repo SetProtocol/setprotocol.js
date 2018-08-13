@@ -42,7 +42,6 @@ const setProtocol = new SetProtocol(
 ```
 
 #### Kovan Testnet
-* Migrations: 0x26e61450509c4b9d4938cf25e9902ef2cd742e5f
 * ERC20Wrapper: 0xe4c24cfb8db141caf381e997d8e481349b61bbd2
 * Vault: 0x8956044921a7c4b16d0993a39c66cc4ee6ad2aac
 * Core: 0xc375d365eaa16d75b61b4de09e1c3b2a4e5f53bc
@@ -52,13 +51,13 @@ const setProtocol = new SetProtocol(
 * ZeroExExchangeWrapper: 0x777d7950468fe50563ee7603b70a0bf9a02bbe8d
 
 #### Ropsten Testnet (0x Exchange unavailable)
-* Migrations: 0xbb570b0bce4b9396f6d3add348594d739468f12c
 * ERC20Wrapper: 0xc4d32a6ceccb24bc729013ec391c18df30f83af1
 * Core: 0xfff8d0c92169c53ead06119fb0aeb3bccfbbbd4a
 * Vault: 0x1e43c2b36b22b8c8bf1dc0812c65e35fdb6d4dd0
 * TransferProxy: 0xdfdcd62311941fed657acae446525bafee85d80d
 * SetTokenFactory: 0xeebaba65769084d176d1ff6fd6e6be3f8e9a63b7
 * TakerWalletWrapper: 0x1e7c93a85c42fcddc538390875b22e4ffb3ee4f7
+* ZeroExExchangeWrapper: N/A on Ropsten
 
 ##### Usage
 The instantiated object from `new SetProtocol(...)` contains multiple child interfaces. Those interfaces are below:
