@@ -11,7 +11,7 @@
     "ERC20"
   ],
   "main": "dist/src/index.js",
-  "typings": "dist/types/index.d.ts",
+  "typings": "dist/types/src/index.d.ts",
   "scripts": {
     "prod": "yarn run build",
     "chain": "bash scripts/init_chain.sh",
