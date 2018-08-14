@@ -36,9 +36,6 @@
     "node": ">=6.0.0"
   },
   "devDependencies": {
-    "@types/chai": "^4.1.4",
-    "@types/jest": "^22.0.1",
-    "@types/node": "^10.0.3",
     "chai": "^4.1.2",
     "ganache-cli": "6.1.6",
     "gh-pages": "^1.1.0",
@@ -57,6 +54,9 @@
     "@0xproject/utils": "^1.0.4",
     "@types/lodash": "^4.14.108",
     "@types/lodash.compact": "^3.0.3",
+    "@types/chai": "^4.1.4",
+    "@types/jest": "^22.0.1",
+    "@types/node": "^10.0.3",
     "abi-decoder": "^1.1.0",
     "bignumber.js": "^5.0.0",
     "chai-bignumber": "^2.0.2",
@@ -70,7 +70,7 @@
     "truffle-contract": "^3.0.1",
     "truffle-hdwallet-provider": "0.0.3",
     "web3-typescript-typings": "0xProject/web3-typescript-typings",
-    "web3-utils": "1.0.0-beta.29"
+    "web3-utils": "1.0.0-beta.35"
   },
   "husky": {
     "hooks": {
