@@ -11,6 +11,7 @@
     "ERC20"
   ],
   "main": "dist/src/index.js",
+  "typings": "dist/types/index.d.ts",
   "scripts": {
     "prod": "yarn run build",
     "chain": "bash scripts/init_chain.sh",
@@ -24,7 +25,8 @@
     "precommit": "lint-staged",
     "clean-docs": "rm -rf documentation/interfaces; rm -rf documentation/modules; rm -rf documentation/README.md",
     "docs": "rm -rf documentation/classes; typedoc --theme markdown --excludeExternals  --externalPattern \"**/node_modules/**\" --ignoreCompilerErrors --out documentation/ src/api; yarn run clean-docs",
-    "deploy-docs": "gh-pages -d docs"
+    "deploy-docs": "gh-pages -d docs",
+    "prepublishOnly": "yarn build"
   },
   "config": {},
   "repository": {
