@@ -66,7 +66,7 @@
     "jsonschema": "^1.2.4",
     "lodash": "^4.17.4",
     "lodash.compact": "^3.0.1",
-    "set-protocol-contracts": "git://github.com/SetProtocol/set-protocol-contracts.git",
+    "set-protocol-contracts": "0.3.1",
     "set-protocol-utils": "^0.3.11",
     "tiny-promisify": "^1.0.0",
     "truffle-contract": "^3.0.1",
