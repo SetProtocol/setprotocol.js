@@ -5039,7 +5039,7 @@ set-protocol-contracts@0.3.1:
     zeppelin-solidity "^1.10.0"
     zos-lib "^1.0.0"
 
-set-protocol-utils@^0.3.11:
+set-protocol-utils@^0.3.11, set-protocol-utils@^0.3.14:
   version "0.3.15"
   resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.15.tgz#7dc0961ac998276c788af58b98462ae417257ed6"
   dependencies:
