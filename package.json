@@ -72,7 +72,6 @@
     "tiny-promisify": "^1.0.0",
     "truffle-contract": "^3.0.1",
     "truffle-hdwallet-provider": "0.0.3",
-    "web3-typescript-typings": "0xProject/web3-typescript-typings",
     "web3-utils": "1.0.0-beta.35"
   },
   "husky": {

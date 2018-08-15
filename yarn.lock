@@ -95,13 +95,6 @@
     "@0xproject/typescript-typings" "^1.0.4"
     lodash "^4.17.5"
 
-"@0xproject/types@^0.6.1":
-  version "0.6.3"
-  resolved "https://registry.yarnpkg.com/@0xproject/types/-/types-0.6.3.tgz#0bc066967aad4151011b6e478bb707b1afb8504b"
-  dependencies:
-    "@types/node" "^8.0.53"
-    bignumber.js "~4.1.0"
-
 "@0xproject/types@^1.0.1-rc.3", "@0xproject/types@^1.0.1-rc.4":
   version "1.0.1-rc.4"
   resolved "https://registry.yarnpkg.com/@0xproject/types/-/types-1.0.1-rc.4.tgz#b34422918aec7743dc703329ec69229703af3f60"
@@ -109,13 +102,6 @@
     "@types/node" "^8.0.53"
     bignumber.js "~4.1.0"
     ethereum-types "^1.0.4"
-
-"@0xproject/typescript-typings@^0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@0xproject/typescript-typings/-/typescript-typings-0.2.0.tgz#53590e6866fde0f0bd3584b83e1211dabe9cd530"
-  dependencies:
-    "@0xproject/types" "^0.6.1"
-    bignumber.js "~4.1.0"
 
 "@0xproject/typescript-typings@^1.0.3", "@0xproject/typescript-typings@^1.0.4":
   version "1.0.4"
@@ -851,10 +837,6 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
-bignumber.js@^4.0.2, bignumber.js@~4.1.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-4.1.0.tgz#db6f14067c140bd46624815a7916c92d9b6c24b1"
-
 bignumber.js@^5.0.0:
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-5.0.0.tgz#fbce63f09776b3000a83185badcde525daf34833"
@@ -874,6 +856,10 @@ bignumber.js@^7.2.0:
 "bignumber.js@git+https://github.com/frozeman/bignumber.js-nolookahead.git":
   version "2.0.7"
   resolved "git+https://github.com/frozeman/bignumber.js-nolookahead.git#57692b3ecfc98bbdd6b3a516cb2353652ea49934"
+
+bignumber.js@~4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-4.1.0.tgz#db6f14067c140bd46624815a7916c92d9b6c24b1"
 
 binary-extensions@^1.0.0:
   version "1.11.0"
@@ -5039,7 +5025,7 @@ set-protocol-contracts@0.3.1:
     zeppelin-solidity "^1.10.0"
     zos-lib "^1.0.0"
 
-set-protocol-utils@^0.3.11, set-protocol-utils@^0.3.14:
+set-protocol-utils@^0.3.11, set-protocol-utils@^0.3.15:
   version "0.3.15"
   resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.15.tgz#7dc0961ac998276c788af58b98462ae417257ed6"
   dependencies:
@@ -6059,12 +6045,6 @@ web3-provider-engine@^8.4.0:
     web3 "^0.16.0"
     xhr "^2.2.0"
     xtend "^4.0.1"
-
-web3-typescript-typings@0xProject/web3-typescript-typings:
-  version "0.9.0"
-  resolved "https://codeload.github.com/0xProject/web3-typescript-typings/tar.gz/eed781384688aa7ebb26f5c302407dcea931e59f"
-  dependencies:
-    bignumber.js "^4.0.2"
 
 web3-utils@1.0.0-beta.35, web3-utils@^1.1.0:
   version "1.0.0-beta.35"
