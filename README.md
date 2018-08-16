@@ -9,8 +9,8 @@
   </a>
 </p>
 
-# setProtocol.js
-Welcome Settler of Tokan :wave: setProtocol.js is a library for interacting with Set Protocol smart contracts.
+# setprotocol.js
+Welcome Settler of Tokan :wave: setprotocol.js is a library for interacting with Set Protocol smart contracts.
 This library enables you to create, issue, redeem, and create/fill orders for Sets.
 
 <a href="https://join.slack.com/t/setprotocol/shared_invite/enQtMjYzNjk4MzI1NzgxLWRlYzhkY2JlNjQ4YmU4OTUwZWQ5NzdkZjM3ZDVlNzU1MTJmZWM1NTNmM2JlYmE5YzljZjFmZTBhNzkyN2M1MzQ" target="_blank" rel="noopener">
@@ -19,21 +19,21 @@ This library enables you to create, issue, redeem, and create/fill orders for Se
 
 Note: This is pre-alpha software. Things will constantly be changing and getting updated.
 ## :computer: Installation
-##### Using npm:
-```shell
-$ npm i --save setProtocol.js
-```
 ##### Using yarn:
 ```shell
-$ yarn add setProtocol.js
+$ yarn add setprotocol.js@^1.0.0-alpha.1
+```
+##### Using npm:
+```shell
+$ npm i --save setprotocol.js@^1.0.0-alpha.1
 ```
 
 ##### Setup
 ```js
 // Import
-import SetProtocol from 'setProtocol.js';
+import SetProtocol from 'setprotocol.js';
 
-const setProtocolInstance = new SetProtocol(
+const setProtocol = new SetProtocol(
   web3,    // web3: A web3 instance you've instantiated from `new Web3(currentProvider)`
   '0x...', // coreAddress: Address of the Set Protocol Core contract
   '0x...', // transferProxyAddress: Address of the Set Protocol Transfer Proxy contract
@@ -48,19 +48,19 @@ The instantiated object from `new SetProtocol(...)` contains multiple child inte
  * 
  * Example of calling `create` method
  */
-setProtocolInstance.core.create(...);
+setProtocol.core.create(...);
 
 /* Set Token
  * 
  * Example of calling `getBalanceOf` method
  */
-setProtocolInstance.setToken.getBalanceOf(...);
+setProtocol.setToken.getBalanceOf(...);
 
 /* Vault
  * 
  * Example of calling `getOwnerBalance` method
  */
-setProtocolInstance.vault.getOwnerBalance(...);
+setProtocol.vault.getOwnerBalance(...);
 ```
 
 We have API docs below. Stay tuned for a rich set of designed documentation that's currently being built.

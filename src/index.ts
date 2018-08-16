@@ -18,7 +18,7 @@
 
 import * as Web3 from 'web3';
 
-import { CoreAPI } from './api';
+import { CoreAPI, SetTokenAPI, VaultAPI } from './api';
 import { Address } from 'set-protocol-utils';
 
 /**
@@ -31,7 +31,9 @@ import { Address } from 'set-protocol-utils';
  */
 export default class SetProtocol {
   private web3: Web3;
-  public setCore: CoreAPI;
+  public core: CoreAPI;
+  public setToken: SetTokenAPI;
+  public vault: VaultAPI;
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
@@ -45,6 +47,8 @@ export default class SetProtocol {
     vaultAddress: Address = undefined,
   ) {
     this.web3 = web3;
-    this.setCore = new CoreAPI(this.web3, coreAddress, transferProxyAddress, vaultAddress);
+    this.core = new CoreAPI(this.web3, coreAddress, transferProxyAddress, vaultAddress);
+    this.setToken = new SetTokenAPI(this.web3);
+    this.vault = new VaultAPI(this.web3, vaultAddress);
   }
 }
