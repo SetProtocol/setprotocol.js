@@ -16,6 +16,7 @@
 
 'use strict';
 
+import { JSONRPCResponsePayload, TransactionReceipt } from 'ethereum-types';
 import * as promisify from 'tiny-promisify';
 import * as Web3 from 'web3';
 
@@ -52,7 +53,7 @@ export class Web3Utils {
     return !codeIsEmpty;
   }
 
-  public async getTransactionReceiptAsync(txHash: string): Promise<Web3.TransactionReceipt> {
+  public async getTransactionReceiptAsync(txHash: string): Promise<TransactionReceipt> {
     return promisify(this.web3.eth.getTransactionReceipt)(txHash);
   }
 
@@ -85,10 +86,10 @@ export class Web3Utils {
    * @returns {Promise<boolean>}
    */
   public async increaseTime(seconds: number): Promise<boolean> {
-    const increaseTimeResponse = await this.sendJsonRpcRequestAsync('evm_increaseTime', [seconds]);
+    const increaseTimeResponse: any = await this.sendJsonRpcRequestAsync('evm_increaseTime', [seconds]);
 
     // A new block must be mined to make this effective.
-    const blockMineResponse = await this.mineBlock();
+    const blockMineResponse: any = await this.mineBlock();
 
     return !increaseTimeResponse['error'] && !blockMineResponse['error'];
   }
@@ -96,16 +97,16 @@ export class Web3Utils {
   /**
    * Mines a single block.
    *
-   * @returns {Promise<"web3".Web3.JSONRPCResponsePayload>}
+   * @returns {Promise<"web3".JSONRPCResponsePayload>}
    */
-  public async mineBlock(): Promise<Web3.JSONRPCResponsePayload> {
+  public async mineBlock(): Promise<JSONRPCResponsePayload> {
     return this.sendJsonRpcRequestAsync('evm_mine', []);
   }
 
   private async sendJsonRpcRequestAsync(
     method: string,
     params: any[],
-  ): Promise<Web3.JSONRPCResponsePayload> {
+  ): Promise<JSONRPCResponsePayload> {
     return promisify(this.web3.currentProvider.sendAsync, {
       context: this.web3.currentProvider,
     })({

@@ -24,6 +24,7 @@
 
 import { promisify } from '@0xproject/utils';
 import { Core as ContractArtifacts } from 'set-protocol-contracts';
+import { UInt } from 'set-protocol-utils';
 import * as Web3 from 'web3';
 
 import { BaseContract, CONTRACT_WRAPPER_ERRORS } from './BaseContract';
@@ -228,7 +229,7 @@ export class CoreContract extends BaseContract {
   };
   public registerExchange = {
     async sendTransactionAsync(
-      _exchangeId: number | BigNumber,
+      _exchangeId: UInt,
       _exchange: string,
       txData: TxData = {},
     ): Promise<string> {
@@ -244,7 +245,7 @@ export class CoreContract extends BaseContract {
       return txHash;
     },
     async estimateGasAsync(
-      _exchangeId: number | BigNumber,
+      _exchangeId: UInt,
       _exchange: string,
       txData: TxData = {},
     ): Promise<number> {
@@ -257,7 +258,7 @@ export class CoreContract extends BaseContract {
       return gas;
     },
     getABIEncodedTransactionData(
-      _exchangeId: number | BigNumber,
+      _exchangeId: UInt,
       _exchange: string,
       txData: TxData = {},
     ): string {
@@ -266,7 +267,7 @@ export class CoreContract extends BaseContract {
       return abiEncodedTransactionData;
     },
     async callAsync(
-      _exchangeId: number | BigNumber,
+      _exchangeId: UInt,
       _exchange: string,
       txData: TxData = {},
     ): Promise<void> {
@@ -433,7 +434,7 @@ export class CoreContract extends BaseContract {
       _requiredComponents: string[],
       _requiredComponentAmounts: BigNumber[],
       _fillQuantity: BigNumber,
-      _v: number | BigNumber,
+      _v: UInt,
       sigBytes: string[],
       _orderData: string,
       txData: TxData = {},
@@ -475,7 +476,7 @@ export class CoreContract extends BaseContract {
       _requiredComponents: string[],
       _requiredComponentAmounts: BigNumber[],
       _fillQuantity: BigNumber,
-      _v: number | BigNumber,
+      _v: UInt,
       sigBytes: string[],
       _orderData: string,
       txData: TxData = {},
@@ -504,7 +505,7 @@ export class CoreContract extends BaseContract {
       _requiredComponents: string[],
       _requiredComponentAmounts: BigNumber[],
       _fillQuantity: BigNumber,
-      _v: number | BigNumber,
+      _v: UInt,
       sigBytes: string[],
       _orderData: string,
       txData: TxData = {},
@@ -519,7 +520,7 @@ export class CoreContract extends BaseContract {
       _requiredComponents: string[],
       _requiredComponentAmounts: BigNumber[],
       _fillQuantity: BigNumber,
-      _v: number | BigNumber,
+      _v: UInt,
       sigBytes: string[],
       _orderData: string,
       txData: TxData = {},
@@ -754,7 +755,7 @@ export class CoreContract extends BaseContract {
     },
   };
   public exchanges = {
-    async callAsync(_exchangeId: number | BigNumber, defaultBlock?: any): Promise<string> {
+    async callAsync(_exchangeId: UInt, defaultBlock?: any): Promise<string> {
       const self = this as CoreContract;
       const result = await promisify<string>(
         self.web3ContractInstance.exchanges.call,

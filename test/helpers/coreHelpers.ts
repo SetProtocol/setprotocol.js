@@ -1,5 +1,6 @@
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
+import { Provider } from 'ethereum-types';
 import { Address } from 'set-protocol-utils';
 import {
   Core,
@@ -35,7 +36,7 @@ const txDefaults = {
   gas: DEFAULT_GAS_LIMIT,
 };
 
-export const deployCore = async (provider: Web3.Provider) => {
+export const deployCore = async (provider: Provider) => {
   const coreContract = contract(Core);
   coreContract.setProvider(provider);
   coreContract.setNetwork(12345);
@@ -53,7 +54,7 @@ export const deployCore = async (provider: Web3.Provider) => {
   return coreInstance.address;
 };
 
-export const deploySetTokenFactory = async (coreAddress: Address, provider: Web3.Provider) => {
+export const deploySetTokenFactory = async (coreAddress: Address, provider: Provider) => {
   const web3 = new Web3(provider);
 
   const setTokenFactoryContract = contract(SetTokenFactory);
@@ -84,7 +85,7 @@ export const deploySetTokenFactory = async (coreAddress: Address, provider: Web3
 export const deployTokensForSetWithApproval = async (
   setToDeploy: TestSet,
   transferProxyAddress: Address,
-  provider: Web3.Provider,
+  provider: Provider,
 ) => {
   const web3 = new Web3(provider);
 
@@ -122,7 +123,7 @@ export const deployTokensForSetWithApproval = async (
 
 export const deployTokensAsync = async (
   tokenCount: number,
-  provider: Web3.Provider,
+  provider: Provider,
 ) => {
   const web3 = new Web3(provider);
 
@@ -258,7 +259,7 @@ export const approveForFill = async (
 export const deployTransferProxy = async (
   coreAddress: Address,
   erc20WrapperAddress: Address,
-  provider: Web3.Provider,
+  provider: Provider,
 ) => {
   const web3 = new Web3(provider);
 
@@ -285,7 +286,7 @@ export const deployTransferProxy = async (
 export const deployVault = async (
   coreAddress: Address,
   erc20WrapperAddress: Address,
-  provider: Web3.Provider,
+  provider: Provider,
 ) => {
   const web3 = new Web3(provider);
 
@@ -305,7 +306,7 @@ export const deployVault = async (
   return vaultInstance.address;
 };
 
-export const initializeCoreAPI = async (provider: Web3.Provider) => {
+export const initializeCoreAPI = async (provider: Provider) => {
   const web3 = new Web3(provider);
 
   const erc20WrapperContract = contract(ERC20Wrapper);

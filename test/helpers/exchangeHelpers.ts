@@ -1,6 +1,7 @@
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
 
+import { Provider } from 'ethereum-types';
 import {
   TakerWalletWrapper,
 } from 'set-protocol-contracts';
@@ -27,7 +28,7 @@ const txDefaults = {
 export const deployTakerWalletExchangeWrapper = async (
   transferProxyAddress: Address,
   coreAddress: Address,
-  provider: Web3.Provider,
+  provider: Provider,
 ) => {
   const web3 = new Web3(provider);
 

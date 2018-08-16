@@ -18,6 +18,7 @@
 
 import * as Web3 from 'web3';
 
+import { Provider } from 'ethereum-types';
 import { Vault } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 import { ACCOUNTS } from '../accounts';
@@ -33,7 +34,7 @@ const txDefaults = {
   gas: DEFAULT_GAS_LIMIT,
 };
 
-export const initializeVaultAPI = async (provider: Web3.Provider, vaultAddress: Address) => {
+export const initializeVaultAPI = async (provider: Provider, vaultAddress: Address) => {
   const vaultContract = contract(Vault);
   vaultContract.setProvider(provider);
   vaultContract.defaults(txDefaults);
