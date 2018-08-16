@@ -102,54 +102,16 @@ export class CoreAPI {
     symbol: string,
     txOpts?: TxData,
   ): Promise<string> {
-    this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.isEqualLength(
+
+    await this.doCreateAssertions(
+      userAddress,
+      factoryAddress,
       components,
       units,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('components', 'units'),
-    );
-    this.assert.common.greaterThanZero(
       naturalUnit,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(naturalUnit),
+      name,
+      symbol
     );
-    this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY('name'));
-    this.assert.common.isValidString(symbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY('symbol'));
-
-    let minDecimals = new BigNumber(18);
-    let tokenDecimals;
-    await Promise.all(
-      components.map(async componentAddress => {
-        this.assert.common.isValidString(
-          componentAddress,
-          coreAPIErrors.STRING_CANNOT_BE_EMPTY('component'),
-        );
-        this.assert.schema.isValidAddress('componentAddress', componentAddress);
-
-        const tokenContract = await DetailedERC20Contract.at(componentAddress, this.web3, {});
-
-        try {
-          tokenDecimals = await tokenContract.decimals.callAsync();
-          if (tokenDecimals.lt(minDecimals)) {
-            minDecimals = tokenDecimals;
-          }
-        } catch (err) {
-          minDecimals = ZERO;
-        }
-
-        await this.assert.erc20.implementsERC20(tokenContract);
-      }),
-    );
-
-    this.assert.core.validateNaturalUnit(
-      naturalUnit,
-      minDecimals,
-      coreAPIErrors.INVALID_NATURAL_UNIT(),
-    );
-
-    _.each(units, unit => {
-      this.assert.common.greaterThanZero(unit, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(unit));
-    });
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -186,25 +148,9 @@ export class CoreAPI {
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.greaterThanZero(
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
-    );
-
-    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
-    await this.assert.setToken.isMultipleOfNaturalUnit(
-      setTokenContract,
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
-    );
-
-    await this.assert.setToken.hasSufficientBalances(setTokenContract, userAddress, quantityInWei);
-    await this.assert.setToken.hasSufficientAllowances(
-      setTokenContract,
+    await await this.doIssueAssertions(
       userAddress,
-      this.transferProxyAddress,
+      setAddress,
       quantityInWei,
     );
 
@@ -238,35 +184,10 @@ export class CoreAPI {
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.greaterThanZero(
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
-    );
-
-    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
-    await this.assert.setToken.isMultipleOfNaturalUnit(
-      setTokenContract,
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
-    );
-
-    // SetToken is also a DetailedERC20 token.
-    // Check balances of token in token balance as well as Vault balance (should be same)
-    const detailedERC20Contract = await DetailedERC20Contract.at(setAddress, this.web3, {});
-    await this.assert.erc20.hasSufficientBalance(
-      detailedERC20Contract,
+    await this.doRedeemAssertions(
       userAddress,
+      setAddress,
       quantityInWei,
-      erc20AssertionErrors.INSUFFICIENT_BALANCE(),
-    );
-    const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
-    await this.assert.vault.hasSufficientSetTokensBalances(
-      vaultContract,
-      setTokenContract,
-      quantityInWei,
-      vaultAssertionErrors.INSUFFICIENT_SET_TOKENS_BALANCE(),
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
@@ -298,26 +219,10 @@ export class CoreAPI {
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.greaterThanZero(
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
-    );
-
-    const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-    await this.assert.erc20.hasSufficientBalance(
-      detailedERC20Contract,
+    await this.doDepositAssertions(
       userAddress,
+      tokenAddress,
       quantityInWei,
-      erc20AssertionErrors.INSUFFICIENT_BALANCE(),
-    );
-    await this.assert.erc20.hasSufficientAllowance(
-      detailedERC20Contract,
-      userAddress,
-      this.transferProxyAddress,
-      quantityInWei,
-      erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
@@ -349,24 +254,10 @@ export class CoreAPI {
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.greaterThanZero(
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
-    );
-
-    const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
-
-    const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-    await this.assert.erc20.implementsERC20(detailedERC20Contract);
-
-    await this.assert.vault.hasSufficientTokenBalance(
-      vaultContract,
-      tokenAddress,
+    await this.doWithdrawAssertions(
       userAddress,
+      tokenAddress,
       quantityInWei,
-      vaultAssertionErrors.INSUFFICIENT_TOKEN_BALANCE(),
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
@@ -458,47 +349,11 @@ export class CoreAPI {
     quantitiesInWei: BigNumber[],
     txOpts?: TxData,
   ): Promise<string> {
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.isEqualLength(
+    this.doBatchDepositAssertions(
+      userAddress,
       tokenAddresses,
       quantitiesInWei,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('tokenAddresses', 'quantitiesInWei'),
     );
-    // Token assertions
-    await Promise.all(
-      tokenAddresses.map(async (tokenAddress, i) => {
-        this.assert.common.isValidString(
-          tokenAddress,
-          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
-        );
-        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-        const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-        await this.assert.erc20.implementsERC20(tokenContract);
-
-        // Check balance
-        await this.assert.erc20.hasSufficientBalance(
-          tokenContract,
-          userAddress,
-          quantitiesInWei[i],
-          erc20AssertionErrors.INSUFFICIENT_BALANCE(),
-        );
-        // Check allowance
-        await this.assert.erc20.hasSufficientAllowance(
-          tokenContract,
-          userAddress,
-          this.transferProxyAddress,
-          quantitiesInWei[i],
-          erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
-        );
-      }),
-    );
-    // Quantity assertions
-    quantitiesInWei.map(quantity => {
-      this.assert.common.greaterThanZero(
-        quantity,
-        coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
-      );
-    });
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -530,43 +385,11 @@ export class CoreAPI {
     quantitiesInWei: BigNumber[],
     txOpts?: TxData,
   ): Promise<string> {
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.isEqualLength(
+    await this.doBatchWithdrawAssertions(
+      userAddress,
       tokenAddresses,
       quantitiesInWei,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('tokenAddresses', 'quantitiesInWei'),
     );
-    // Token assertions
-    await Promise.all(
-      tokenAddresses.map(async (tokenAddress, i) => {
-        this.assert.common.isValidString(
-          tokenAddress,
-          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
-        );
-        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-
-        const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
-
-        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-        await this.assert.erc20.implementsERC20(detailedERC20Contract);
-
-        // Check balance
-        await this.assert.vault.hasSufficientTokenBalance(
-          vaultContract,
-          tokenAddress,
-          userAddress,
-          quantitiesInWei[i],
-          vaultAssertionErrors.INSUFFICIENT_TOKEN_BALANCE(),
-        );
-      }),
-    );
-    // Quantity assertions
-    _.each(quantitiesInWei, quantity => {
-      this.assert.common.greaterThanZero(
-        quantity,
-        coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
-      );
-    });
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -615,55 +438,19 @@ export class CoreAPI {
     makerRelayerFee: BigNumber,
     takerRelayerFee: BigNumber,
   ): Promise<SignedIssuanceOrder> {
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.schema.isValidAddress('makerAddress', makerAddress);
-    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
-    this.assert.schema.isValidAddress('relayerToken', relayerToken);
-    this.assert.common.greaterThanZero(
+    await this.doCreateSignedIssuanceOrderAssertions(
+      setAddress,
       quantity,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
-    );
-    await Promise.all(
-      requiredComponents.map(async (tokenAddress, i) => {
-        this.assert.common.isValidString(
-          tokenAddress,
-          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
-        );
-        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-
-        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-        await this.assert.erc20.implementsERC20(detailedERC20Contract);
-
-        this.assert.common.greaterThanZero(
-          requiredComponentAmounts[i],
-          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
-        );
-      }),
-    );
-    this.assert.common.isEqualLength(
       requiredComponents,
       requiredComponentAmounts,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
-    );
-    const makerTokenContract = await DetailedERC20Contract.at(makerToken, this.web3, {});
-    await this.assert.erc20.implementsERC20(makerTokenContract);
-    this.assert.common.greaterThanZero(
+      makerAddress,
+      makerToken,
       makerTokenAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
-    );
-    const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
-    await this.assert.erc20.implementsERC20(relayerTokenContract);
-    this.assert.common.greaterThanZero(
-      makerRelayerFee,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerRelayerFee),
-    );
-    this.assert.common.greaterThanZero(
-      takerRelayerFee,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerRelayerFee),
-    );
-    this.assert.common.isValidExpiration(
       expiration,
-      coreAPIErrors.EXPIRATION_PASSED(),
+      relayerAddress,
+      relayerToken,
+      makerRelayerFee,
+      takerRelayerFee,
     );
 
     const order: IssuanceOrder = {
@@ -723,68 +510,11 @@ export class CoreAPI {
 
     const { signature, ...issuanceOrder } = signedIssuanceOrder;
 
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.schema.isValidAddress('makerAddress', makerAddress);
-    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
-    this.assert.schema.isValidAddress('relayerToken', relayerToken);
-    this.assert.common.greaterThanZero(
-      quantity,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
-    );
-    await Promise.all(
-      requiredComponents.map(async (tokenAddress, i) => {
-        this.assert.common.isValidString(
-          tokenAddress,
-          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
-        );
-        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-
-        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-        await this.assert.erc20.implementsERC20(detailedERC20Contract);
-
-        this.assert.common.greaterThanZero(
-          requiredComponentAmounts[i],
-          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
-        );
-      }),
-    );
-    this.assert.common.isEqualLength(
-      requiredComponents,
-      requiredComponentAmounts,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
-    );
-    const makerTokenContract = await DetailedERC20Contract.at(makerToken, this.web3, {});
-    await this.assert.erc20.implementsERC20(makerTokenContract);
-    this.assert.common.greaterThanZero(
-      makerTokenAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
-    );
-    const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
-    await this.assert.erc20.implementsERC20(relayerTokenContract);
-    this.assert.common.greaterThanZero(
-      makerRelayerFee,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerRelayerFee),
-    );
-    this.assert.common.greaterThanZero(
-      takerRelayerFee,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerRelayerFee),
-    );
-    this.assert.common.greaterThanZero(
+    await this.doFillIssuanceOrderAssertions(
+      userAddress,
+      signedIssuanceOrder,
       quantityToFill,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill),
-    );
-    this.assert.common.isValidString(
       orderData,
-      coreAPIErrors.STRING_CANNOT_BE_EMPTY('orderData'),
-    );
-    await this.assert.core.isValidSignature(
-      issuanceOrder,
-      signature,
-      coreAPIErrors.SIGNATURE_MISMATCH(),
-    );
-    this.assert.common.isValidExpiration(
-      expiration,
-      coreAPIErrors.EXPIRATION_PASSED(),
     );
 
     const txSettings = Object.assign(
@@ -836,61 +566,6 @@ export class CoreAPI {
       requiredComponentAmounts,
       salt,
     } = issuanceOrder;
-
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.schema.isValidAddress('makerAddress', makerAddress);
-    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
-    this.assert.schema.isValidAddress('relayerToken', relayerToken);
-    this.assert.common.greaterThanZero(
-      quantity,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
-    );
-    await Promise.all(
-      requiredComponents.map(async (tokenAddress, i) => {
-        this.assert.common.isValidString(
-          tokenAddress,
-          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
-        );
-        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-
-        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-        await this.assert.erc20.implementsERC20(detailedERC20Contract);
-
-        this.assert.common.greaterThanZero(
-          requiredComponentAmounts[i],
-          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
-        );
-      }),
-    );
-    this.assert.common.isEqualLength(
-      requiredComponents,
-      requiredComponentAmounts,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
-    );
-    const makerTokenContract = await DetailedERC20Contract.at(makerToken, this.web3, {});
-    await this.assert.erc20.implementsERC20(makerTokenContract);
-    this.assert.common.greaterThanZero(
-      makerTokenAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
-    );
-    const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
-    await this.assert.erc20.implementsERC20(relayerTokenContract);
-    this.assert.common.greaterThanZero(
-      makerRelayerFee,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerRelayerFee),
-    );
-    this.assert.common.greaterThanZero(
-      takerRelayerFee,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerRelayerFee),
-    );
-    this.assert.common.greaterThanZero(
-      quantityToCancel,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToCancel),
-    );
-    this.assert.common.isValidExpiration(
-      expiration,
-      coreAPIErrors.EXPIRATION_PASSED(),
-    );
 
     const txSettings = Object.assign(
       { from: makerAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
@@ -992,5 +667,507 @@ export class CoreAPI {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidSetAddress = await coreInstance.validSets.callAsync(setAddress);
     return isValidSetAddress;
+  }
+
+  /* ============ Private Assertions ============ */
+  private async doCreateAssertions(
+    userAddress: Address,
+    factoryAddress: Address,
+    components: Address[],
+    units: BigNumber[],
+    naturalUnit: BigNumber,
+    name: string,
+    symbol: string,
+  ) {
+    this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.common.isEqualLength(
+      components,
+      units,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('components', 'units'),
+    );
+    this.assert.common.greaterThanZero(
+      naturalUnit,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(naturalUnit),
+    );
+    this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY('name'));
+    this.assert.common.isValidString(symbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY('symbol'));
+
+    let minDecimals = new BigNumber(18);
+    let tokenDecimals;
+    await Promise.all(
+      components.map(async componentAddress => {
+        this.assert.common.isValidString(
+          componentAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('component'),
+        );
+        this.assert.schema.isValidAddress('componentAddress', componentAddress);
+
+        const tokenContract = await DetailedERC20Contract.at(componentAddress, this.web3, {});
+
+        try {
+          tokenDecimals = await tokenContract.decimals.callAsync();
+          if (tokenDecimals.lt(minDecimals)) {
+            minDecimals = tokenDecimals;
+          }
+        } catch (err) {
+          minDecimals = ZERO;
+        }
+
+        await this.assert.erc20.implementsERC20(tokenContract);
+      }),
+    );
+
+    this.assert.core.validateNaturalUnit(
+      naturalUnit,
+      minDecimals,
+      coreAPIErrors.INVALID_NATURAL_UNIT(),
+    );
+
+    _.each(units, unit => {
+      this.assert.common.greaterThanZero(unit, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(unit));
+    });
+  }
+
+  private async doIssueAssertions(
+    userAddress: Address,
+    setAddress: Address,
+    quantityInWei: BigNumber,
+  ) {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.common.greaterThanZero(
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
+    );
+
+    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
+    await this.assert.setToken.isMultipleOfNaturalUnit(
+      setTokenContract,
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
+    );
+
+    await this.assert.setToken.hasSufficientBalances(setTokenContract, userAddress, quantityInWei);
+    await this.assert.setToken.hasSufficientAllowances(
+      setTokenContract,
+      userAddress,
+      this.transferProxyAddress,
+      quantityInWei,
+    );
+  }
+
+  private async doRedeemAssertions(
+    userAddress: Address,
+    setAddress: Address,
+    quantityInWei: BigNumber,
+  ) {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.common.greaterThanZero(
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
+    );
+
+    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
+    await this.assert.setToken.isMultipleOfNaturalUnit(
+      setTokenContract,
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
+    );
+
+    // SetToken is also a DetailedERC20 token.
+    // Check balances of token in token balance as well as Vault balance (should be same)
+    const detailedERC20Contract = await DetailedERC20Contract.at(setAddress, this.web3, {});
+    await this.assert.erc20.hasSufficientBalance(
+      detailedERC20Contract,
+      userAddress,
+      quantityInWei,
+      erc20AssertionErrors.INSUFFICIENT_BALANCE(),
+    );
+    const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
+    await this.assert.vault.hasSufficientSetTokensBalances(
+      vaultContract,
+      setTokenContract,
+      quantityInWei,
+      vaultAssertionErrors.INSUFFICIENT_SET_TOKENS_BALANCE(),
+    );
+  }
+
+  private async doDepositAssertions(
+    userAddress: Address,
+    tokenAddress: Address,
+    quantityInWei: BigNumber,
+  ) {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.common.greaterThanZero(
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
+    );
+
+    const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+    await this.assert.erc20.hasSufficientBalance(
+      detailedERC20Contract,
+      userAddress,
+      quantityInWei,
+      erc20AssertionErrors.INSUFFICIENT_BALANCE(),
+    );
+    await this.assert.erc20.hasSufficientAllowance(
+      detailedERC20Contract,
+      userAddress,
+      this.transferProxyAddress,
+      quantityInWei,
+      erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
+    );
+  }
+
+  private async doWithdrawAssertions(
+    userAddress: Address,
+    tokenAddress: Address,
+    quantityInWei: BigNumber,
+  ) {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.common.greaterThanZero(
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
+    );
+
+    const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
+
+    const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+    await this.assert.erc20.implementsERC20(detailedERC20Contract);
+
+    await this.assert.vault.hasSufficientTokenBalance(
+      vaultContract,
+      tokenAddress,
+      userAddress,
+      quantityInWei,
+      vaultAssertionErrors.INSUFFICIENT_TOKEN_BALANCE(),
+    );
+  }
+
+  private async doBatchDepositAssertions(
+    userAddress: Address,
+    tokenAddresses: Address[],
+    quantitiesInWei: BigNumber[],
+  ) {
+    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.common.isEqualLength(
+      tokenAddresses,
+      quantitiesInWei,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('tokenAddresses', 'quantitiesInWei'),
+    );
+    // Token assertions
+    await Promise.all(
+      tokenAddresses.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
+        );
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+        const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(tokenContract);
+
+        // Check balance
+        await this.assert.erc20.hasSufficientBalance(
+          tokenContract,
+          userAddress,
+          quantitiesInWei[i],
+          erc20AssertionErrors.INSUFFICIENT_BALANCE(),
+        );
+        // Check allowance
+        await this.assert.erc20.hasSufficientAllowance(
+          tokenContract,
+          userAddress,
+          this.transferProxyAddress,
+          quantitiesInWei[i],
+          erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
+        );
+      }),
+    );
+    // Quantity assertions
+    quantitiesInWei.map(quantity => {
+      this.assert.common.greaterThanZero(
+        quantity,
+        coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+      );
+    });
+  }
+
+  private async doBatchWithdrawAssertions(
+    userAddress: Address,
+    tokenAddresses: Address[],
+    quantitiesInWei: BigNumber[],
+  ) {
+    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.common.isEqualLength(
+      tokenAddresses,
+      quantitiesInWei,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('tokenAddresses', 'quantitiesInWei'),
+    );
+    // Token assertions
+    await Promise.all(
+      tokenAddresses.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
+        );
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
+        const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
+
+        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(detailedERC20Contract);
+
+        // Check balance
+        await this.assert.vault.hasSufficientTokenBalance(
+          vaultContract,
+          tokenAddress,
+          userAddress,
+          quantitiesInWei[i],
+          vaultAssertionErrors.INSUFFICIENT_TOKEN_BALANCE(),
+        );
+      }),
+    );
+    // Quantity assertions
+    _.each(quantitiesInWei, quantity => {
+      this.assert.common.greaterThanZero(
+        quantity,
+        coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+      );
+    });
+  }
+
+  private async doCreateSignedIssuanceOrderAssertions(
+    setAddress: Address,
+    quantity: BigNumber,
+    requiredComponents: Address[],
+    requiredComponentAmounts: BigNumber[],
+    makerAddress: Address,
+    makerToken: Address,
+    makerTokenAmount: BigNumber,
+    expiration: BigNumber,
+    relayerAddress: Address,
+    relayerToken: Address,
+    makerRelayerFee: BigNumber,
+    takerRelayerFee: BigNumber,
+  ) {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('makerAddress', makerAddress);
+    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
+    this.assert.schema.isValidAddress('relayerToken', relayerToken);
+    this.assert.common.greaterThanZero(
+      quantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+    );
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
+        );
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
+        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(detailedERC20Contract);
+
+        this.assert.common.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+    this.assert.common.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+    const makerTokenContract = await DetailedERC20Contract.at(makerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(makerTokenContract);
+    this.assert.common.greaterThanZero(
+      makerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
+    );
+    const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerTokenContract);
+    this.assert.common.greaterThanZero(
+      makerRelayerFee,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerRelayerFee),
+    );
+    this.assert.common.greaterThanZero(
+      takerRelayerFee,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerRelayerFee),
+    );
+    this.assert.common.isValidExpiration(
+      expiration,
+      coreAPIErrors.EXPIRATION_PASSED(),
+    );
+  }
+
+  private async doFillIssuanceOrderAssertions(
+    userAddress: Address,
+    signedIssuanceOrder: SignedIssuanceOrder,
+    quantityToFill: BigNumber,
+    orderData: Bytes,
+  ) {
+    const {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      makerRelayerFee,
+      takerRelayerFee,
+      requiredComponents,
+      requiredComponentAmounts,
+      salt,
+    } = signedIssuanceOrder;
+
+    const { signature, ...issuanceOrder } = signedIssuanceOrder;
+
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('makerAddress', makerAddress);
+    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
+    this.assert.schema.isValidAddress('relayerToken', relayerToken);
+    this.assert.common.greaterThanZero(
+      quantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+    );
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
+        );
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
+        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(detailedERC20Contract);
+
+        this.assert.common.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+    this.assert.common.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+    const makerTokenContract = await DetailedERC20Contract.at(makerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(makerTokenContract);
+    this.assert.common.greaterThanZero(
+      makerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
+    );
+    const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerTokenContract);
+    this.assert.common.greaterThanZero(
+      makerRelayerFee,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerRelayerFee),
+    );
+    this.assert.common.greaterThanZero(
+      takerRelayerFee,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerRelayerFee),
+    );
+    this.assert.common.greaterThanZero(
+      quantityToFill,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill),
+    );
+    this.assert.common.isValidString(
+      orderData,
+      coreAPIErrors.STRING_CANNOT_BE_EMPTY('orderData'),
+    );
+    await this.assert.core.isValidSignature(
+      issuanceOrder,
+      signature,
+      coreAPIErrors.SIGNATURE_MISMATCH(),
+    );
+    this.assert.common.isValidExpiration(
+      expiration,
+      coreAPIErrors.EXPIRATION_PASSED(),
+    );
+  }
+
+  private async doCancelIssuanceOrderAssertions(
+    issuanceOrder: IssuanceOrder,
+    quantityToCancel: BigNumber,
+  ) {
+    const {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      makerRelayerFee,
+      takerRelayerFee,
+      requiredComponents,
+      requiredComponentAmounts,
+      salt,
+    } = issuanceOrder;
+
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('makerAddress', makerAddress);
+    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
+    this.assert.schema.isValidAddress('relayerToken', relayerToken);
+    this.assert.common.greaterThanZero(
+      quantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
+    );
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(
+          tokenAddress,
+          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
+        );
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
+        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(detailedERC20Contract);
+
+        this.assert.common.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+    this.assert.common.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+    const makerTokenContract = await DetailedERC20Contract.at(makerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(makerTokenContract);
+    this.assert.common.greaterThanZero(
+      makerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount),
+    );
+    const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerTokenContract);
+    this.assert.common.greaterThanZero(
+      makerRelayerFee,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerRelayerFee),
+    );
+    this.assert.common.greaterThanZero(
+      takerRelayerFee,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerRelayerFee),
+    );
+    this.assert.common.greaterThanZero(
+      quantityToCancel,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToCancel),
+    );
+    this.assert.common.isValidExpiration(
+      expiration,
+      coreAPIErrors.EXPIRATION_PASSED(),
+    );
   }
 }
