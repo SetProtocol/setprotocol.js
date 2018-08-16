@@ -31,7 +31,9 @@ import { Address } from 'set-protocol-utils';
  */
 export default class SetProtocol {
   private web3: Web3;
-  public setCore: CoreAPI;
+  public core: CoreAPI;
+  public setToken: SetTokenAPI;
+  public vault: VaultAPI;
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
