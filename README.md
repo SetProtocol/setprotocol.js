@@ -9,8 +9,8 @@
   </a>
 </p>
 
-# setProtocol.js
-Welcome Settler of Tokan :wave: setProtocol.js is a library for interacting with Set Protocol smart contracts.
+# setprotocol.js
+Welcome Settler of Tokan :wave: setprotocol.js is a library for interacting with Set Protocol smart contracts.
 This library enables you to create, issue, redeem, and create/fill orders for Sets.
 
 <a href="https://join.slack.com/t/setprotocol/shared_invite/enQtMjYzNjk4MzI1NzgxLWRlYzhkY2JlNjQ4YmU4OTUwZWQ5NzdkZjM3ZDVlNzU1MTJmZWM1NTNmM2JlYmE5YzljZjFmZTBhNzkyN2M1MzQ" target="_blank" rel="noopener">
@@ -21,11 +21,11 @@ Note: This is pre-alpha software. Things will constantly be changing and getting
 ## :computer: Installation
 ##### Using yarn:
 ```shell
-$ yarn add setprotocol.js
+$ yarn add setprotocol.js@^1.0.0-alpha.1
 ```
 ##### Using npm:
 ```shell
-$ npm i --save setprotocol.js
+$ npm i --save setprotocol.js@^1.0.0-alpha.1
 ```
 
 ##### Setup
