@@ -21,6 +21,17 @@ import * as Web3 from 'web3';
 import { CoreAPI, SetTokenAPI, VaultAPI } from './api';
 import { Address } from 'set-protocol-utils';
 
+interface SetProtocol {
+  createSet(): void;
+  issueSet(): void;
+  redeemSet(): void;
+  deposit(): void;
+  withdraw(): void;
+  createOrder(): void;
+  fillOrder(): void;
+  cancelOrder(): void;
+}
+
 /**
  * @title SetProtocol
  * @author Set Protocol
@@ -29,7 +40,7 @@ import { Address } from 'set-protocol-utils';
  * Methods that require interaction with the Ethereum blockchain are exposed after instantiating a new instance
  * of SetProtocol with the web3 provider argument
  */
-export default class SetProtocol {
+class SetProtocol {
   private web3: Web3;
   public core: CoreAPI;
   public setToken: SetTokenAPI;
@@ -52,3 +63,37 @@ export default class SetProtocol {
     this.vault = new VaultAPI(this.web3, vaultAddress);
   }
 }
+
+SetProtocol.prototype.createSet = function() {
+
+};
+
+SetProtocol.prototype.issueSet = function() {
+
+};
+
+SetProtocol.prototype.redeemSet = function() {
+
+};
+
+SetProtocol.prototype.withdraw = function() {
+
+};
+
+SetProtocol.prototype.deposit = function() {
+
+};
+
+SetProtocol.prototype.createOrder = function() {
+
+};
+
+SetProtocol.prototype.fillOrder = function() {
+
+};
+
+SetProtocol.prototype.cancelOrder = function() {
+
+};
+
+export default SetProtocol;
