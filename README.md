@@ -19,21 +19,21 @@ This library enables you to create, issue, redeem, and create/fill orders for Se
 
 Note: This is pre-alpha software. Things will constantly be changing and getting updated.
 ## :computer: Installation
-##### Using npm:
-```shell
-$ npm i --save setProtocol.js
-```
 ##### Using yarn:
 ```shell
-$ yarn add setProtocol.js
+$ yarn add setprotocol.js
+```
+##### Using npm:
+```shell
+$ npm i --save setprotocol.js
 ```
 
 ##### Setup
 ```js
 // Import
-import SetProtocol from 'setProtocol.js';
+import SetProtocol from 'setprotocol.js';
 
-const setProtocolInstance = new SetProtocol(
+const setProtocol = new SetProtocol(
   web3,    // web3: A web3 instance you've instantiated from `new Web3(currentProvider)`
   '0x...', // coreAddress: Address of the Set Protocol Core contract
   '0x...', // transferProxyAddress: Address of the Set Protocol Transfer Proxy contract
@@ -48,19 +48,19 @@ The instantiated object from `new SetProtocol(...)` contains multiple child inte
  * 
  * Example of calling `create` method
  */
-setProtocolInstance.core.create(...);
+setProtocol.core.create(...);
 
 /* Set Token
  * 
  * Example of calling `getBalanceOf` method
  */
-setProtocolInstance.setToken.getBalanceOf(...);
+setProtocol.setToken.getBalanceOf(...);
 
 /* Vault
  * 
  * Example of calling `getOwnerBalance` method
  */
-setProtocolInstance.vault.getOwnerBalance(...);
+setProtocol.vault.getOwnerBalance(...);
 ```
 
 We have API docs below. Stay tuned for a rich set of designed documentation that's currently being built.
