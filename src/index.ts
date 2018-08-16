@@ -48,8 +48,11 @@ class SetProtocol {
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
-   * @param web3 The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
-   *             the Ethereum network.
+   * @param web3                  The Web3.js Provider instance you would like the SetProtocol.js library
+   *                              to use for interacting with the Ethereum network.
+   * @param coreAddress           The address of the Set Core contract
+   * @param transferProxyAddress  The address of the Set TransferProxy contract
+   * @param vaultAddress          The address of the Set Vault contract
    */
   constructor(
     web3: Web3 = undefined,
