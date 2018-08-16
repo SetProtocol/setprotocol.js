@@ -102,8 +102,7 @@ export class CoreAPI {
     symbol: string,
     txOpts?: TxData,
   ): Promise<string> {
-
-    await this.doCreateAssertions(
+    await this.assertCreate(
       userAddress,
       factoryAddress,
       components,
@@ -114,12 +113,10 @@ export class CoreAPI {
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-
     const txSettings = Object.assign(
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
     );
-
     const txHash = await coreInstance.create.sendTransactionAsync(
       factoryAddress,
       components,
@@ -148,14 +145,13 @@ export class CoreAPI {
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    await await this.doIssueAssertions(
+    await this.assertIssue(
       userAddress,
       setAddress,
       quantityInWei,
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-
     const txSettings = Object.assign(
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
@@ -184,14 +180,13 @@ export class CoreAPI {
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    await this.doRedeemAssertions(
+    await this.assertRedeem(
       userAddress,
       setAddress,
       quantityInWei,
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-
     const txSettings = Object.assign(
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
@@ -219,14 +214,13 @@ export class CoreAPI {
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    await this.doDepositAssertions(
+    await this.assertDeposit(
       userAddress,
       tokenAddress,
       quantityInWei,
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-
     const txSettings = Object.assign(
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
@@ -254,14 +248,13 @@ export class CoreAPI {
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    await this.doWithdrawAssertions(
+    await this.assertWithdraw(
       userAddress,
       tokenAddress,
       quantityInWei,
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-
     const txSettings = Object.assign(
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
@@ -297,15 +290,10 @@ export class CoreAPI {
     tokensToExclude: Address[],
     txOpts?: TxData,
   ): Promise<string> {
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.common.greaterThanZero(
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
-    );
+    this.assertRedeemAndWithdraw(setAddress, quantityInWei);
 
     const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
     const components = await setTokenContract.getComponents.callAsync();
-
     let toExclude: BigNumber = ZERO;
     const tokensToExcludeMapping: any = {};
     _.each(tokensToExclude, tokenAddress => {
@@ -317,14 +305,11 @@ export class CoreAPI {
         toExclude = toExclude.plus(new BigNumber(2).pow(componentIndex));
       }
     });
-
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-
     const txSettings = Object.assign(
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
     );
-
     const txHash = await coreInstance.redeemAndWithdraw.sendTransactionAsync(
       setAddress,
       quantityInWei,
@@ -349,19 +334,17 @@ export class CoreAPI {
     quantitiesInWei: BigNumber[],
     txOpts?: TxData,
   ): Promise<string> {
-    this.doBatchDepositAssertions(
+    this.assertBatchDeposit(
       userAddress,
       tokenAddresses,
       quantitiesInWei,
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-
     const txSettings = Object.assign(
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
     );
-
     const txHash = await coreInstance.batchDeposit.sendTransactionAsync(
       tokenAddresses,
       quantitiesInWei,
@@ -385,19 +368,17 @@ export class CoreAPI {
     quantitiesInWei: BigNumber[],
     txOpts?: TxData,
   ): Promise<string> {
-    await this.doBatchWithdrawAssertions(
+    await this.assertBatchWithdraw(
       userAddress,
       tokenAddresses,
       quantitiesInWei,
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-
     const txSettings = Object.assign(
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
     );
-
     const txHash = await coreInstance.batchWithdraw.sendTransactionAsync(
       tokenAddresses,
       quantitiesInWei,
@@ -438,7 +419,7 @@ export class CoreAPI {
     makerRelayerFee: BigNumber,
     takerRelayerFee: BigNumber,
   ): Promise<SignedIssuanceOrder> {
-    await this.doCreateSignedIssuanceOrderAssertions(
+    await this.assertCreateSignedIssuanceOrder(
       setAddress,
       quantity,
       requiredComponents,
@@ -469,8 +450,8 @@ export class CoreAPI {
       salt: SetProtocolUtils.generateSalt(),
     };
     const orderHash = SetProtocolUtils.hashOrderHex(order);
-
     const signature = await this.setProtocolUtils.signMessage(orderHash, makerAddress);
+
     return Object.assign({}, order, { signature });
   }
 
@@ -492,6 +473,13 @@ export class CoreAPI {
     orderData: Bytes,
     txOpts?: TxData,
   ): Promise<string> {
+    await this.assertFillIssuanceOrder(
+      userAddress,
+      signedIssuanceOrder,
+      quantityToFill,
+      orderData,
+    );
+
     const {
       setAddress,
       makerAddress,
@@ -506,22 +494,12 @@ export class CoreAPI {
       requiredComponents,
       requiredComponentAmounts,
       salt,
+      signature,
     } = signedIssuanceOrder;
-
-    const { signature, ...issuanceOrder } = signedIssuanceOrder;
-
-    await this.doFillIssuanceOrderAssertions(
-      userAddress,
-      signedIssuanceOrder,
-      quantityToFill,
-      orderData,
-    );
-
     const txSettings = Object.assign(
       { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
     );
-
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const txHash = await coreInstance.fillOrder.sendTransactionAsync(
       [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
@@ -551,6 +529,11 @@ export class CoreAPI {
     quantityToCancel: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
+    this.assertCancelIssuanceOrder(
+      issuanceOrder,
+      quantityToCancel,
+    );
+
     const {
       setAddress,
       makerAddress,
@@ -566,12 +549,10 @@ export class CoreAPI {
       requiredComponentAmounts,
       salt,
     } = issuanceOrder;
-
     const txSettings = Object.assign(
       { from: makerAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
       txOpts,
     );
-
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const txHash = await coreInstance.cancelOrder.sendTransactionAsync(
       [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
@@ -670,7 +651,7 @@ export class CoreAPI {
   }
 
   /* ============ Private Assertions ============ */
-  private async doCreateAssertions(
+  private async assertCreate(
     userAddress: Address,
     factoryAddress: Address,
     components: Address[],
@@ -729,7 +710,7 @@ export class CoreAPI {
     });
   }
 
-  private async doIssueAssertions(
+  private async assertIssue(
     userAddress: Address,
     setAddress: Address,
     quantityInWei: BigNumber,
@@ -757,7 +738,7 @@ export class CoreAPI {
     );
   }
 
-  private async doRedeemAssertions(
+  private async assertRedeem(
     userAddress: Address,
     setAddress: Address,
     quantityInWei: BigNumber,
@@ -794,7 +775,15 @@ export class CoreAPI {
     );
   }
 
-  private async doDepositAssertions(
+  private assertRedeemAndWithdraw(setAddress, quantityInWei) {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.common.greaterThanZero(
+      quantityInWei,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
+    );
+  }
+
+  private async assertDeposit(
     userAddress: Address,
     tokenAddress: Address,
     quantityInWei: BigNumber,
@@ -822,7 +811,7 @@ export class CoreAPI {
     );
   }
 
-  private async doWithdrawAssertions(
+  private async assertWithdraw(
     userAddress: Address,
     tokenAddress: Address,
     quantityInWei: BigNumber,
@@ -848,7 +837,7 @@ export class CoreAPI {
     );
   }
 
-  private async doBatchDepositAssertions(
+  private async assertBatchDeposit(
     userAddress: Address,
     tokenAddresses: Address[],
     quantitiesInWei: BigNumber[],
@@ -896,7 +885,7 @@ export class CoreAPI {
     });
   }
 
-  private async doBatchWithdrawAssertions(
+  private async assertBatchWithdraw(
     userAddress: Address,
     tokenAddresses: Address[],
     quantitiesInWei: BigNumber[],
@@ -940,7 +929,7 @@ export class CoreAPI {
     });
   }
 
-  private async doCreateSignedIssuanceOrderAssertions(
+  private async assertCreateSignedIssuanceOrder(
     setAddress: Address,
     quantity: BigNumber,
     requiredComponents: Address[],
@@ -1006,7 +995,7 @@ export class CoreAPI {
     );
   }
 
-  private async doFillIssuanceOrderAssertions(
+  private async assertFillIssuanceOrder(
     userAddress: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
@@ -1095,7 +1084,7 @@ export class CoreAPI {
     );
   }
 
-  private async doCancelIssuanceOrderAssertions(
+  private async assertCancelIssuanceOrder(
     issuanceOrder: IssuanceOrder,
     quantityToCancel: BigNumber,
   ) {
