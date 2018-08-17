@@ -141,23 +141,53 @@ class SetProtocol {
   }
 }
 
-SetProtocol.prototype.createSet = function(...args) { return this.core.create(...args); };
-SetProtocol.prototype.issueSet = function(...args) { return this.core.issue(...args); };
-SetProtocol.prototype.redeemSet = function(...args) { return this.core.doRedeem(...args); };
-SetProtocol.prototype.withdraw = function(...args) { return this.core.doWithdraw(...args); };
-SetProtocol.prototype.deposit = function(...args) { return this.core.doDeposit(...args); };
-SetProtocol.prototype.createOrder = function(...args) { return this.core.createOrder(...args); };
-SetProtocol.prototype.fillOrder = function(...args) { return this.core.doFillOrder(...args); };
-SetProtocol.prototype.cancelOrder = function(...args) { return this.core.cancelOrder(...args); };
-SetProtocol.prototype.getExchangeAddress = function(...args) { return this.core.getExchangeAddress(...args); };
-SetProtocol.prototype.getTransferProxyAddress = function(...args) {
-  return this.core.getTransferProxyAddress(...args);
+SetProtocol.prototype.createSet = async function(...args: any[]) {
+  return await this.core.create(...args);
 };
-SetProtocol.prototype.getVaultAddress = function(...args) { return this.core.getVaultAddress(...args); };
-SetProtocol.prototype.getFactories = function(...args) { return this.core.getFactories(...args); };
-SetProtocol.prototype.getSetAddresses = function(...args) { return this.core.getSetAddresses(...args); };
-SetProtocol.prototype.getIsValidFactory = function(...args) { return this.core.getIsValidFactory(...args); };
-SetProtocol.prototype.getIsValidSet = function(...args) { return this.core.getIsValidSet(...args); };
-SetProtocol.prototype.getVaultBalance = function(...args) { return this.vault.getOwnerBalance(...args); };
+SetProtocol.prototype.issueSet = async function(...args: any[]) {
+  return await this.core.issue(...args);
+};
+SetProtocol.prototype.redeemSet = async function(...args: any[]) {
+  return await this.core.doRedeem(...args);
+};
+SetProtocol.prototype.withdraw = async function(...args: any[]) {
+  return await this.core.doWithdraw(...args);
+};
+SetProtocol.prototype.deposit = async function(...args: any[]) {
+  return await this.core.doDeposit(...args);
+};
+SetProtocol.prototype.createOrder = async function(...args: any[]) {
+  return await this.core.createOrder(...args);
+};
+SetProtocol.prototype.fillOrder = async function(...args: any[]) {
+  return await this.core.doFillOrder(...args);
+};
+SetProtocol.prototype.cancelOrder = async function(...args: any[]) {
+  return await this.core.cancelOrder(...args);
+};
+SetProtocol.prototype.getExchangeAddress = async function(...args: any[]) {
+  return await this.core.getExchangeAddress(...args);
+};
+SetProtocol.prototype.getTransferProxyAddress = async function(...args: any[]) {
+  return await this.core.getTransferProxyAddress(...args);
+};
+SetProtocol.prototype.getVaultAddress = async function(...args: any[]) {
+  return await this.core.getVaultAddress(...args);
+};
+SetProtocol.prototype.getFactories = async function(...args: any[]) {
+  return await this.core.getFactories(...args);
+};
+SetProtocol.prototype.getSetAddresses = async function(...args: any[]) {
+  return await this.core.getSetAddresses(...args);
+};
+SetProtocol.prototype.getIsValidFactory = async function(...args: any[]) {
+  return await this.core.getIsValidFactory(...args);
+};
+SetProtocol.prototype.getIsValidSet = async function(...args: any[]) {
+  return await this.core.getIsValidSet(...args);
+};
+SetProtocol.prototype.getVaultBalance = async function(...args: any[]) {
+  return await this.vault.getOwnerBalance(...args);
+};
 
 export default SetProtocol;
