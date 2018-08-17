@@ -654,12 +654,12 @@ export class CoreAPI {
     txOpts?: TxData,
   ) {
     const {
-      makerAddress,
+      makerToken,
       makerTokenAmount,
     } = signedIssuanceOrder;
 
     const orderData = await this.setProtocolUtils.generateSerializedOrders(
-      makerAddress,
+      makerToken,
       makerTokenAmount,
       orders,
     );
