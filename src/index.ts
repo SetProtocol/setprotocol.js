@@ -17,19 +17,78 @@
 'use strict';
 
 import * as Web3 from 'web3';
+import {
+  Address,
+  SignedIssuanceOrder,
+  IssuanceOrder,
+  TakerWalletOrder,
+  SetProtocolUtils,
+} from 'set-protocol-utils';
+import { Order as ZeroExOrder } from '@0xproject/types';
 
 import { CoreAPI, SetTokenAPI, VaultAPI } from './api';
-import { Address } from 'set-protocol-utils';
+import { BigNumber } from './util';
+import { TxData } from './types/common';
 
 interface SetProtocol {
-  createSet(): void;
-  issueSet(): void;
-  redeemSet(): void;
-  deposit(): void;
-  withdraw(): void;
-  createOrder(): void;
-  fillOrder(): void;
-  cancelOrder(): void;
+  createSet(
+    factoryAddress: Address,
+    components: Address[],
+    units: BigNumber[],
+    naturalUnit: BigNumber,
+    name: string,
+    symbol: string,
+    txOpts?: TxData,
+  ): Promise<string>;
+  issueSet(
+    setAddress: Address,
+    quantityInWei: BigNumber,
+    txOpts?: TxData,
+  ): Promise<string>;
+  redeemSet(
+    setAddress: Address,
+    quantityInWei: BigNumber,
+    withdraw: boolean,
+    tokensToExclude: Address[],
+    txOpts?: TxData,
+  ): Promise<string>;
+  deposit(
+    tokenAddresses: Address[],
+    quantitiesInWei: BigNumber[],
+    txOpts?: TxData,
+  ): Promise<string>;
+  withdraw(
+    tokenAddresses: Address[],
+    quantitiesInWei: BigNumber[],
+    txOpts?: TxData,
+  ): Promise<string>;
+  createOrder(
+    setAddress: Address,
+    quantity: BigNumber,
+    requiredComponents: Address[],
+    requiredComponentAmounts: BigNumber[],
+    makerAddress: Address,
+    makerToken: Address,
+    makerTokenAmount: BigNumber,
+    expiration: BigNumber,
+    relayerAddress: Address,
+    relayerToken: Address,
+    makerRelayerFee: BigNumber,
+    takerRelayerFee: BigNumber,
+  ): Promise<SignedIssuanceOrder>;
+  fillOrder(
+    signedIssuanceOrder: SignedIssuanceOrder,
+    quantityToFill: BigNumber,
+    orders: (ZeroExOrder | TakerWalletOrder)[],
+    makerTokenAddress: Address,
+    makerTokenAmount: BigNumber,
+    txOpts?: TxData,
+  ): Promise<string>;
+  cancelOrder(
+    issuanceOrder: IssuanceOrder,
+    quantityToCancel: BigNumber,
+    txOpts?: TxData,
+  ): Promise<string>;
 }
 
 /**
@@ -45,6 +104,7 @@ class SetProtocol {
   public core: CoreAPI;
   public setToken: SetTokenAPI;
   public vault: VaultAPI;
+  public setProtocolUtils: SetProtocolUtils;
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
@@ -64,39 +124,101 @@ class SetProtocol {
     this.core = new CoreAPI(this.web3, coreAddress, transferProxyAddress, vaultAddress);
     this.setToken = new SetTokenAPI(this.web3);
     this.vault = new VaultAPI(this.web3, vaultAddress);
+    this.setProtocolUtils = new SetProtocolUtils(this.web3);
   }
 }
 
-SetProtocol.prototype.createSet = function() {
+SetProtocol.prototype.createSet = this.core.create;
 
+SetProtocol.prototype.issueSet = this.core.issue;
+
+SetProtocol.prototype.redeemSet = async function(
+  setAddress: Address,
+  quantityInWei: BigNumber,
+  withdraw: boolean,
+  tokensToExclude?: Address[],
+  txOpts?: TxData
+) {
+ if (withdraw && tokensToExclude) {
+   return await this.core.redeemAndWithdraw(
+     setAddress,
+     quantityInWei,
+     tokensToExclude,
+     txOpts,
+   );
+ } else {
+   return await this.core.redeem(
+     setAddress,
+     quantityInWei,
+     txOpts,
+   );
+ }
 };
 
-SetProtocol.prototype.issueSet = function() {
-
+SetProtocol.prototype.withdraw = async function(
+  tokenAddresses: Address[],
+  quantitiesInWei: BigNumber[],
+  txOpts?: TxData,
+) {
+  if (tokenAddresses.length === 1) {
+    return await this.core.withdraw(
+      tokenAddresses[0],
+      quantitiesInWei[0],
+      txOpts,
+    );
+  } else {
+    return await this.core.batchWithdraw(
+      tokenAddresses,
+      quantitiesInWei,
+      txOpts,
+    );
+  }
 };
 
-SetProtocol.prototype.redeemSet = function() {
-
+SetProtocol.prototype.deposit = async function(
+  tokenAddresses: Address[],
+  quantitiesInWei: BigNumber[],
+  txOpts?: TxData,
+) {
+  if (tokenAddresses.length === 1) {
+    return await this.core.deposit(
+      tokenAddresses[0],
+      quantitiesInWei[0],
+      txOpts,
+    );
+  } else {
+    return await this.core.batchDeposit(
+      tokenAddresses,
+      quantitiesInWei,
+      txOpts,
+    );
+  }
 };
 
-SetProtocol.prototype.withdraw = function() {
+SetProtocol.prototype.createOrder = this.core.createOrder;
 
+SetProtocol.prototype.fillOrder = async function(
+  signedIssuanceOrder: SignedIssuanceOrder,
+  quantityToFill: BigNumber,
+  orders: (ZeroExOrder | TakerWalletOrder)[],
+  makerTokenAddress: Address,
+  makerTokenAmount: BigNumber,
+  txOpts?: TxData,
+) {
+  const orderData = await this.setProtocolUtils.generateSerializedOrders(
+    makerTokenAddress,
+    makerTokenAmount,
+    orders,
+  );
+
+  return await this.core.fillOrder(
+    signedIssuanceOrder,
+    quantityToFill,
+    orderData,
+    txOpts,
+  );
 };
 
-SetProtocol.prototype.deposit = function() {
-
-};
-
-SetProtocol.prototype.createOrder = function() {
-
-};
-
-SetProtocol.prototype.fillOrder = function() {
-
-};
-
-SetProtocol.prototype.cancelOrder = function() {
-
-};
+SetProtocol.prototype.cancelOrder = this.core.cancelOrder;
 
 export default SetProtocol;

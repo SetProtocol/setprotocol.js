@@ -1,6 +1,6 @@
 
 import { BigNumber } from '../util';
-import { Address } from 'set-protocol-utils';
+import { Address, UInt } from 'set-protocol-utils';
 
 export interface Component {
   address: Address;
@@ -24,8 +24,8 @@ export interface Token {
 
 export interface TxData {
   from?: Address;
-  gas?: BigNumber;
-  gasPrice?: BigNumber;
+  gas?: UInt;
+  gasPrice?: UInt;
   nonce?: number;
 }
 

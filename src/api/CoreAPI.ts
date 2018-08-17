@@ -27,11 +27,11 @@ import {
 } from 'set-protocol-utils';
 
 import { ContractsAPI } from '.';
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, ZERO } from '../constants';
+import { ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { TxData } from '../types/common';
-import { BigNumber } from '../util';
+import { BigNumber, generateTxOpts } from '../util';
 import { DetailedERC20Contract, SetTokenContract, VaultContract } from '../contracts';
 
 /**
@@ -82,7 +82,6 @@ export class CoreAPI {
   /**
    * Create a new Set, specifying the components, units, name, symbol to use.
    *
-   * @param  userAddress    Address of the user
    * @param  factoryAddress Set Token factory address of the token being created
    * @param  components     Component token addresses
    * @param  units          Units of corresponding token components
@@ -93,7 +92,6 @@ export class CoreAPI {
    * @return                A transaction hash to then later look up for the Set address
    */
   public async create(
-    userAddress: Address,
     factoryAddress: Address,
     components: Address[],
     units: BigNumber[],
@@ -102,8 +100,10 @@ export class CoreAPI {
     symbol: string,
     txOpts?: TxData,
   ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+
     await this.assertCreate(
-      userAddress,
+      txSettings.from,
       factoryAddress,
       components,
       units,
@@ -113,11 +113,6 @@ export class CoreAPI {
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-
-    const txSettings = Object.assign(
-      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
-      txOpts,
-    );
 
     const txHash = await coreInstance.create.sendTransactionAsync(
       factoryAddress,
@@ -135,30 +130,26 @@ export class CoreAPI {
   /**
    * Asynchronously issues a particular quantity of tokens from a particular Sets
    *
-   * @param  userAddress    Address of the user
    * @param  setAddress     Set token address of Set being issued
    * @param  quantityInWei  Number of Sets a user wants to issue in Wei
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up
    */
   public async issue(
-    userAddress: Address,
     setAddress: Address,
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+
     await this.assertIssue(
-      userAddress,
+      txSettings.from,
       setAddress,
       quantityInWei,
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    const txSettings = Object.assign(
-      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
-      txOpts,
-    );
     const txHash = await coreInstance.issue.sendTransactionAsync(
       setAddress,
       quantityInWei,
@@ -171,30 +162,26 @@ export class CoreAPI {
   /**
    * Asynchronously redeems a particular quantity of tokens from a particular Sets
    *
-   * @param  userAddress    Address of the user
    * @param  setAddress     Set token address of Set being issued
    * @param  quantityInWei  Number of Sets a user wants to redeem in Wei
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up
    */
   public async redeem(
-    userAddress: Address,
     setAddress: Address,
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+
     await this.assertRedeem(
-      userAddress,
+      txSettings.from,
       setAddress,
       quantityInWei,
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    const txSettings = Object.assign(
-      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
-      txOpts,
-    );
     const txHash = await coreInstance.redeem.sendTransactionAsync(
       setAddress,
       quantityInWei,
@@ -207,29 +194,26 @@ export class CoreAPI {
   /**
    * Asynchronously deposits tokens to the vault
    *
-   * @param  userAddress   Address of the user
    * @param  tokenAddress  Address of the ERC20 token
    * @param  quantityInWei Number of tokens a user wants to deposit into the vault
+   * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
   public async deposit(
-    userAddress: Address,
     tokenAddress: Address,
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+
     await this.assertDeposit(
-      userAddress,
+      txSettings.from,
       tokenAddress,
       quantityInWei,
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    const txSettings = Object.assign(
-      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
-      txOpts,
-    );
     const txHash = await coreInstance.deposit.sendTransactionAsync(
       tokenAddress,
       quantityInWei,
@@ -242,29 +226,26 @@ export class CoreAPI {
   /**
    * Asynchronously withdraw tokens from the vault
    *
-   * @param  userAddress   Address of the user
    * @param  tokenAddress  Address of the ERC20 token
    * @param  quantityInWei Number of tokens a user wants to withdraw from the vault
+   * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
   public async withdraw(
-    userAddress: Address,
     tokenAddress: Address,
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+
     await this.assertWithdraw(
-      userAddress,
+      txSettings.from,
       tokenAddress,
       quantityInWei,
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    const txSettings = Object.assign(
-      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
-      txOpts,
-    );
     const txHash = await coreInstance.withdraw.sendTransactionAsync(
       tokenAddress,
       quantityInWei,
@@ -282,7 +263,6 @@ export class CoreAPI {
    * allows you to optionally specify which component tokens to remain under the user's
    * address in the vault. The rest will be transferred to the user.
    *
-   * @param  userAddress       The address of the user
    * @param  setAddress        The address of the Set token
    * @param  quantityInWei     The number of tokens to redeem
    * @param  tokensToExclude   Array of token addresses to exclude from withdrawal
@@ -290,12 +270,13 @@ export class CoreAPI {
    * @return                   A transaction hash to then later look up
    */
   public async redeemAndWithdraw(
-    userAddress: Address,
     setAddress: Address,
     quantityInWei: BigNumber,
     tokensToExclude: Address[],
     txOpts?: TxData,
   ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+
     this.assertRedeemAndWithdraw(setAddress, quantityInWei);
 
     const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
@@ -315,11 +296,6 @@ export class CoreAPI {
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    const txSettings = Object.assign(
-      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
-      txOpts,
-    );
-
     const txHash = await coreInstance.redeemAndWithdraw.sendTransactionAsync(
       setAddress,
       quantityInWei,
@@ -333,29 +309,25 @@ export class CoreAPI {
   /**
    * Asynchronously batch deposits tokens to the vault
    *
-   * @param  userAddress       Address of the user
    * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to deposit into the vault
    * @param  quantitiesInWei[] Numbers of tokens a user wants to deposit into the vault
+   * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
   public async batchDeposit(
-    userAddress: Address,
     tokenAddresses: Address[],
     quantitiesInWei: BigNumber[],
     txOpts?: TxData,
   ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+
     this.assertBatchDeposit(
-      userAddress,
+      txSettings.from,
       tokenAddresses,
       quantitiesInWei,
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-
-    const txSettings = Object.assign(
-      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
-      txOpts,
-    );
 
     const txHash = await coreInstance.batchDeposit.sendTransactionAsync(
       tokenAddresses,
@@ -369,29 +341,25 @@ export class CoreAPI {
   /**
    * Asynchronously batch withdraws tokens from the vault
    *
-   * @param  userAddress       Address of the user
    * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to withdraw from the vault
    * @param  quantitiesInWei[] Numbers of tokens a user wants to withdraw from the vault
+   * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
   public async batchWithdraw(
-    userAddress: Address,
     tokenAddresses: Address[],
     quantitiesInWei: BigNumber[],
     txOpts?: TxData,
   ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+
     await this.assertBatchWithdraw(
-      userAddress,
+      txSettings.from,
       tokenAddresses,
       quantitiesInWei,
     );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-
-    const txSettings = Object.assign(
-      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
-      txOpts,
-    );
 
     const txHash = await coreInstance.batchWithdraw.sendTransactionAsync(
       tokenAddresses,
@@ -419,7 +387,7 @@ export class CoreAPI {
    * @param  takerRelayerFee           Number of token paid tp relayer by taker
    * @return                           A transaction hash
    */
-  public async createSignedIssuanceOrder(
+  public async createOrder(
     setAddress: Address,
     quantity: BigNumber,
     requiredComponents: Address[],
@@ -472,7 +440,6 @@ export class CoreAPI {
   /**
    * Fills an Issuance Order
    *
-   * @param  userAddress               Address of user doing the fill
    * @param  issuanceOrder             Issuance order to fill
    * @param  signature                 Signature of the order
    * @param  quantityToFill            Number of Set to fill in this call
@@ -480,15 +447,16 @@ export class CoreAPI {
    * @param  txOpts                    The options for executing the transaction
    * @return                           A transaction hash
    */
-  public async fillIssuanceOrder(
-    userAddress: Address,
+  public async fillOrder(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orderData: Bytes,
     txOpts?: TxData,
   ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+
     await this.assertFillIssuanceOrder(
-      userAddress,
+      txSettings.from,
       signedIssuanceOrder,
       quantityToFill,
       orderData,
@@ -510,11 +478,6 @@ export class CoreAPI {
       salt,
       signature,
     } = signedIssuanceOrder;
-
-    const txSettings = Object.assign(
-      { from: userAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
-      txOpts,
-    );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const txHash = await coreInstance.fillOrder.sendTransactionAsync(
@@ -540,11 +503,13 @@ export class CoreAPI {
    * @param  txOpts                    The options for executing the transaction
    * @return                           A transaction hash
    */
-  public async cancelIssuanceOrder(
+  public async cancelOrder(
     issuanceOrder: IssuanceOrder,
     quantityToCancel: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+
     await this.assertCancelIssuanceOrder(
       issuanceOrder,
       quantityToCancel,
@@ -565,10 +530,7 @@ export class CoreAPI {
       requiredComponentAmounts,
       salt,
     } = issuanceOrder;
-    const txSettings = Object.assign(
-      { from: makerAddress, gas: DEFAULT_GAS_LIMIT, gasPrice: DEFAULT_GAS_PRICE },
-      txOpts,
-    );
+
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const txHash = await coreInstance.cancelOrder.sendTransactionAsync(
       [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
@@ -667,6 +629,7 @@ export class CoreAPI {
   }
 
   /* ============ Private Assertions ============ */
+
   private async assertCreate(
     userAddress: Address,
     factoryAddress: Address,

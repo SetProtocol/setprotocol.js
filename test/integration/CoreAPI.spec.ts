@@ -127,13 +127,13 @@ describe('Core API', () => {
 
     test('creates a new set with valid parameters', async () => {
       const txHash = await coreAPI.create(
-        ACCOUNTS[0].address,
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        { from: ACCOUNTS[0].address },
       );
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
@@ -163,20 +163,20 @@ describe('Core API', () => {
 
       // Create a Set
       const txHash = await coreAPI.create(
-        ACCOUNTS[0].address,
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        { from: ACCOUNTS[0].address },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
     });
 
     test('issues a new set with valid parameters', async () => {
-      const txHash = await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
+      const txHash = await coreAPI.issue(setTokenAddress, new BigNumber(100), { from: ACCOUNTS[0].address });
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal('IssuanceComponentDeposited');
     });
@@ -204,25 +204,25 @@ describe('Core API', () => {
 
       // Create a Set
       const txHash = await coreAPI.create(
-        ACCOUNTS[0].address,
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        { from: ACCOUNTS[0].address },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
 
       // Issue a Set to user
-      await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
+      await coreAPI.issue(setTokenAddress, new BigNumber(100), { from: ACCOUNTS[0].address });
     });
 
     test('redeems a set with valid parameters', async () => {
       const tokenWrapper = await DetailedERC20Contract.at(setTokenAddress, web3, txDefaults);
       expect(Number(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(100);
-      await coreAPI.redeem(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
+      await coreAPI.redeem(setTokenAddress, new BigNumber(100), { from: ACCOUNTS[0].address });
       expect(Number(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(0);
     });
   });
@@ -249,19 +249,19 @@ describe('Core API', () => {
 
       // Create a Set
       const txHash = await coreAPI.create(
-        ACCOUNTS[0].address,
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        { from: ACCOUNTS[0].address },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
 
       // Issue a Set to user
-      await coreAPI.issue(ACCOUNTS[0].address, setTokenAddress, new BigNumber(100));
+      await coreAPI.issue(setTokenAddress, new BigNumber(100), { from: ACCOUNTS[0].address });
     });
 
     test('redeems a set with valid parameters', async () => {
@@ -287,10 +287,10 @@ describe('Core API', () => {
 
       expect(Number(await setTokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(100);
       await coreAPI.redeemAndWithdraw(
-        ACCOUNTS[0].address,
         setTokenAddress,
         quantity,
         [excludedComponentTokenWrapper.address],
+        { from: ACCOUNTS[0].address },
       );
       const componentTransferValue = quantity
         .div(setToCreate.naturalUnit)
@@ -345,10 +345,9 @@ describe('Core API', () => {
       );
       expect(Number(userBalance)).to.equal(0);
       const txHash = await coreAPI.deposit(
-        ACCOUNTS[0].address,
         tokenAddress,
         new BigNumber(100),
-        txDefaults,
+        { from: ACCOUNTS[0].address },
       );
       await web3Utils.getTransactionReceiptAsync(txHash);
 
@@ -368,10 +367,9 @@ describe('Core API', () => {
         }),
       );
       const txHash = await coreAPI.batchDeposit(
-        ACCOUNTS[0].address,
         tokenAddresses,
         quantities,
-        txDefaults,
+        { from: ACCOUNTS[0].address },
       );
       await web3Utils.getTransactionReceiptAsync(txHash);
 
@@ -412,10 +410,9 @@ describe('Core API', () => {
       // Batch deposits all the tokens
       const quantities = tokenAddresses.map(() => new BigNumber(100));
       await coreAPI.batchDeposit(
-        ACCOUNTS[0].address,
         tokenAddresses,
         quantities,
-        txDefaults,
+        { from: ACCOUNTS[0].address },
       );
     });
 
@@ -431,10 +428,9 @@ describe('Core API', () => {
       const oldUserTokenBalance = await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address);
 
       await coreAPI.withdraw(
-        ACCOUNTS[0].address,
         tokenAddress,
         new BigNumber(100),
-        txDefaults,
+        { from: ACCOUNTS[0].address },
       );
 
       const newUserTokenBalance = await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address);
@@ -465,10 +461,9 @@ describe('Core API', () => {
         }),
       );
       const txHash = await coreAPI.batchWithdraw(
-        ACCOUNTS[0].address,
         tokenAddresses,
         quantities,
-        txDefaults,
+        { from: ACCOUNTS[0].address },
       );
       const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
 
@@ -493,7 +488,7 @@ describe('Core API', () => {
 
   /* ============ Create Issuance Order ============ */
 
-  describe('createSignedIssuanceOrder', async () => {
+  describe('createOrder', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setTokenAddress: Address;
@@ -513,13 +508,13 @@ describe('Core API', () => {
 
       // Create a Set
       const txHash = await coreAPI.create(
-        ACCOUNTS[0].address,
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        { from: ACCOUNTS[0].address },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
@@ -541,7 +536,7 @@ describe('Core API', () => {
         takerRelayerFee: new BigNumber(1),
       };
 
-      const signedIssuanceOrder = await coreAPI.createSignedIssuanceOrder(
+      const signedIssuanceOrder = await coreAPI.createOrder(
         order.setAddress,
         order.quantity,
         order.requiredComponents,
@@ -569,7 +564,7 @@ describe('Core API', () => {
 
   /* ============ Fill Issuance Order ============ */
 
-  describe('fillIssuanceOrder', async () => {
+  describe('fillOrder', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setTokenAddress: Address;
@@ -595,13 +590,13 @@ describe('Core API', () => {
 
       // Create a Set
       const txHash = await coreAPI.create(
-        ACCOUNTS[0].address,
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        { from: ACCOUNTS[0].address },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
@@ -624,7 +619,7 @@ describe('Core API', () => {
       };
       const takerAddress = ACCOUNTS[2].address;
 
-      const signedIssuanceOrder = await coreAPI.createSignedIssuanceOrder(
+      const signedIssuanceOrder = await coreAPI.createOrder(
         order.setAddress,
         order.quantity,
         order.requiredComponents,
@@ -676,11 +671,11 @@ describe('Core API', () => {
         )
       );
       const quantityToFill = new BigNumber(40);
-      const txHash = await coreAPI.fillIssuanceOrder(
-        takerAddress,
+      const txHash = await coreAPI.fillOrder(
         signedIssuanceOrder,
         quantityToFill,
         orderData,
+        { from: takerAddress },
       );
 
       const coreInstance = await CoreContract.at(coreAPI.coreAddress, web3, txDefaults);
@@ -698,7 +693,7 @@ describe('Core API', () => {
 
   /* ============ Cancel Issuance Order ============ */
 
-  describe('cancelIssuanceOrder', async () => {
+  describe('cancelOrder', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
@@ -718,13 +713,13 @@ describe('Core API', () => {
 
       // Create a Set
       const txHash = await coreAPI.create(
-        ACCOUNTS[0].address,
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        { from: ACCOUNTS[0].address },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
@@ -746,7 +741,7 @@ describe('Core API', () => {
         takerRelayerFee: new BigNumber(1),
       };
 
-      const signedIssuanceOrder = await coreAPI.createSignedIssuanceOrder(
+      const signedIssuanceOrder = await coreAPI.createOrder(
         order.setAddress,
         order.quantity,
         order.requiredComponents,
@@ -765,9 +760,10 @@ describe('Core API', () => {
 
       const quantityToCancel = new BigNumber(10);
 
-      const txHash = await coreAPI.cancelIssuanceOrder(
+      const txHash = await coreAPI.cancelOrder(
         orderWithSalt,
         quantityToCancel,
+        { from: ACCOUNTS[0].address },
       );
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
@@ -803,13 +799,13 @@ describe('Core API', () => {
 
       // Create a Set
       const txHash = await coreAPI.create(
-        ACCOUNTS[0].address,
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        { from: ACCOUNTS[0].address },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
