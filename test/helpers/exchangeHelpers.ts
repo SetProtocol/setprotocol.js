@@ -11,7 +11,7 @@ import {
   TransferProxyContract,
 } from '../../src/contracts';
 import { BigNumber } from '../../src/util';
-import { ACCOUNTS } from '../accounts';
+import { DEFAULT_ACCOUNT } from '../accounts';
 import {
   DEFAULT_GAS_PRICE,
   DEFAULT_GAS_LIMIT,
@@ -20,7 +20,7 @@ import {
 const contract = require('truffle-contract');
 
 const txDefaults = {
-  from: ACCOUNTS[0].address,
+  from: DEFAULT_ACCOUNT,
   gasPrice: DEFAULT_GAS_PRICE,
   gas: DEFAULT_GAS_LIMIT,
 };

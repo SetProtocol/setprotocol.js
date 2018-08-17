@@ -31,7 +31,7 @@ import * as ethUtil from 'ethereumjs-util';
 import { Core, Vault } from 'set-protocol-contracts';
 import { SetProtocolUtils, Address } from 'set-protocol-utils';
 
-import { ACCOUNTS } from '../accounts';
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '../accounts';
 import { testSets, TestSet } from '../testSets';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../logs';
 import { CoreAPI } from '../../src/api';
@@ -72,7 +72,7 @@ const web3Utils = new Web3Utils(web3);
 const setProtocolUtils = new SetProtocolUtils(web3);
 
 const txDefaults = {
-  from: ACCOUNTS[0].address,
+  from: DEFAULT_ACCOUNT,
   gasPrice: DEFAULT_GAS_PRICE,
   gas: DEFAULT_GAS_LIMIT,
 };
@@ -133,7 +133,7 @@ describe('Core API', () => {
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
@@ -169,14 +169,14 @@ describe('Core API', () => {
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
     });
 
     test('issues a new set with valid parameters', async () => {
-      const txHash = await coreAPI.issue(setTokenAddress, new BigNumber(100), { from: ACCOUNTS[0].address });
+      const txHash = await coreAPI.issue(setTokenAddress, new BigNumber(100), { from: DEFAULT_ACCOUNT });
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal('IssuanceComponentDeposited');
     });
@@ -210,20 +210,20 @@ describe('Core API', () => {
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
 
       // Issue a Set to user
-      await coreAPI.issue(setTokenAddress, new BigNumber(100), { from: ACCOUNTS[0].address });
+      await coreAPI.issue(setTokenAddress, new BigNumber(100), { from: DEFAULT_ACCOUNT });
     });
 
     test('redeems a set with valid parameters', async () => {
       const tokenWrapper = await DetailedERC20Contract.at(setTokenAddress, web3, txDefaults);
-      expect(Number(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(100);
-      await coreAPI.redeem(setTokenAddress, new BigNumber(100), { from: ACCOUNTS[0].address });
-      expect(Number(await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(0);
+      expect(Number(await tokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(100);
+      await coreAPI.redeem(setTokenAddress, new BigNumber(100), { from: DEFAULT_ACCOUNT });
+      expect(Number(await tokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(0);
     });
   });
 
@@ -255,13 +255,13 @@ describe('Core API', () => {
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
 
       // Issue a Set to user
-      await coreAPI.issue(setTokenAddress, new BigNumber(100), { from: ACCOUNTS[0].address });
+      await coreAPI.issue(setTokenAddress, new BigNumber(100), { from: DEFAULT_ACCOUNT });
     });
 
     test('redeems a set with valid parameters', async () => {
@@ -278,29 +278,29 @@ describe('Core API', () => {
       );
 
       const oldComponentBalance = await componentTokenWrapper.balanceOf.callAsync(
-        ACCOUNTS[0].address,
+        DEFAULT_ACCOUNT,
       );
       const excludedOldComponentBalance = await excludedComponentTokenWrapper.balanceOf.callAsync(
-        ACCOUNTS[0].address,
+        DEFAULT_ACCOUNT,
       );
       const quantity = new BigNumber(100);
 
-      expect(Number(await setTokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(100);
+      expect(Number(await setTokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(100);
       await coreAPI.redeemAndWithdraw(
         setTokenAddress,
         quantity,
         [excludedComponentTokenWrapper.address],
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
       const componentTransferValue = quantity
         .div(setToCreate.naturalUnit)
         .mul(setToCreate.units[0]);
 
       const newComponentBalance = await componentTokenWrapper.balanceOf.callAsync(
-        ACCOUNTS[0].address,
+        DEFAULT_ACCOUNT,
       );
       const excludedNewComponentBalance = await excludedComponentTokenWrapper.balanceOf.callAsync(
-        ACCOUNTS[0].address,
+        DEFAULT_ACCOUNT,
       );
 
       expect(newComponentBalance).to.bignumber.equal(
@@ -309,7 +309,7 @@ describe('Core API', () => {
       expect(excludedNewComponentBalance).to.bignumber.equal(
         excludedOldComponentBalance
       );
-      expect(Number(await setTokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address))).to.equal(0);
+      expect(Number(await setTokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(0);
     });
   });
 
@@ -340,18 +340,18 @@ describe('Core API', () => {
     test('deposits a token into the vault with valid parameters', async () => {
       const tokenAddress = tokenAddresses[0];
       let userBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        ACCOUNTS[0].address,
+        DEFAULT_ACCOUNT,
         tokenAddress,
       );
       expect(Number(userBalance)).to.equal(0);
       const txHash = await coreAPI.deposit(
         tokenAddress,
         new BigNumber(100),
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
       await web3Utils.getTransactionReceiptAsync(txHash);
 
-      userBalance = await vaultWrapper.getOwnerBalance.callAsync(ACCOUNTS[0].address, tokenAddress);
+      userBalance = await vaultWrapper.getOwnerBalance.callAsync(DEFAULT_ACCOUNT, tokenAddress);
       expect(Number(userBalance)).to.equal(100);
     });
 
@@ -360,7 +360,7 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            ACCOUNTS[0].address,
+            DEFAULT_ACCOUNT,
             tokenAddress,
           );
           expect(Number(userBalance)).to.equal(0);
@@ -369,14 +369,14 @@ describe('Core API', () => {
       const txHash = await coreAPI.batchDeposit(
         tokenAddresses,
         quantities,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
       await web3Utils.getTransactionReceiptAsync(txHash);
 
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            ACCOUNTS[0].address,
+            DEFAULT_ACCOUNT,
             tokenAddress,
           );
           expect(Number(userBalance)).to.equal(100);
@@ -412,32 +412,32 @@ describe('Core API', () => {
       await coreAPI.batchDeposit(
         tokenAddresses,
         quantities,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
     });
 
     test('withdraws a token from the vault with valid parameters', async () => {
       const tokenAddress = tokenAddresses[0];
       let userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        ACCOUNTS[0].address,
+        DEFAULT_ACCOUNT,
         tokenAddress,
       );
       expect(Number(userVaultBalance)).to.equal(100);
 
       const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
-      const oldUserTokenBalance = await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address);
+      const oldUserTokenBalance = await tokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT);
 
       await coreAPI.withdraw(
         tokenAddress,
         new BigNumber(100),
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
 
-      const newUserTokenBalance = await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address);
+      const newUserTokenBalance = await tokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT);
       expect(Number(oldUserTokenBalance)).to.equal(Number(newUserTokenBalance.plus(100)));
 
       userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        ACCOUNTS[0].address,
+        DEFAULT_ACCOUNT,
         tokenAddress,
       );
       expect(Number(userVaultBalance)).to.equal(0);
@@ -449,12 +449,12 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            ACCOUNTS[0].address,
+            DEFAULT_ACCOUNT,
             tokenAddress,
           );
 
           const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
-          const balance = await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address);
+          const balance = await tokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT);
 
           oldTokenBalances[index] = balance;
           expect(Number(userBalance)).to.equal(100);
@@ -463,19 +463,19 @@ describe('Core API', () => {
       const txHash = await coreAPI.batchWithdraw(
         tokenAddresses,
         quantities,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
       const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
 
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            ACCOUNTS[0].address,
+            DEFAULT_ACCOUNT,
             tokenAddress,
           );
           const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
 
-          const balance = await tokenWrapper.balanceOf.callAsync(ACCOUNTS[0].address);
+          const balance = await tokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT);
 
           expect(Number(balance)).to.equal(
             Number(oldTokenBalances[index].plus(100)),
@@ -514,7 +514,7 @@ describe('Core API', () => {
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
@@ -526,7 +526,7 @@ describe('Core API', () => {
         quantity: new BigNumber(123),
         requiredComponents: componentAddresses,
         requiredComponentAmounts: componentAddresses.map(() => new BigNumber(1)),
-        makerAddress: ACCOUNTS[0].address,
+        makerAddress: DEFAULT_ACCOUNT,
         makerToken: componentAddresses[0],
         makerTokenAmount: new BigNumber(4),
         expiration: SetProtocolUtils.generateTimestamp(60),
@@ -596,7 +596,7 @@ describe('Core API', () => {
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
@@ -608,7 +608,7 @@ describe('Core API', () => {
         quantity: new BigNumber(80),
         requiredComponents: componentAddresses,
         requiredComponentAmounts: componentAddresses.map(() => new BigNumber(20)),
-        makerAddress: ACCOUNTS[0].address,
+        makerAddress: DEFAULT_ACCOUNT,
         makerToken: componentAddresses[0],
         makerTokenAmount: new BigNumber(6),
         expiration: SetProtocolUtils.generateTimestamp(60),
@@ -719,7 +719,7 @@ describe('Core API', () => {
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
@@ -731,7 +731,7 @@ describe('Core API', () => {
         quantity: new BigNumber(100),
         requiredComponents: componentAddresses,
         requiredComponentAmounts: componentAddresses.map(() => new BigNumber(1)),
-        makerAddress: ACCOUNTS[0].address,
+        makerAddress: DEFAULT_ACCOUNT,
         makerToken: componentAddresses[0],
         makerTokenAmount: new BigNumber(4),
         expiration: SetProtocolUtils.generateTimestamp(60),
@@ -763,7 +763,7 @@ describe('Core API', () => {
       const txHash = await coreAPI.cancelOrder(
         orderWithSalt,
         quantityToCancel,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
@@ -805,7 +805,7 @@ describe('Core API', () => {
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);

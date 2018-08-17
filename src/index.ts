@@ -139,21 +139,23 @@ class SetProtocol {
   }
 }
 
-SetProtocol.prototype.createSet = this.core.create;
-SetProtocol.prototype.issueSet = this.core.issue;
-SetProtocol.prototype.redeemSet = this.core.doRedeem;
-SetProtocol.prototype.withdraw = this.core.doWithdraw;
-SetProtocol.prototype.deposit = this.core.doDeposit;
-SetProtocol.prototype.createOrder = this.core.createOrder;
-SetProtocol.prototype.fillOrder = this.core.doFillOrder;
-SetProtocol.prototype.cancelOrder = this.core.cancelOrder;
-SetProtocol.prototype.getExchangeAddress = this.core.getExchangeAddress;
-SetProtocol.prototype.getTransferProxyAddress = this.core.getTransferProxyAddress;
-SetProtocol.prototype.getVaultAddress = this.core.getVaultAddress;
-SetProtocol.prototype.getFactories = this.core.getFactories;
-SetProtocol.prototype.getSetAddresses = this.core.getSetAddresses;
-SetProtocol.prototype.getIsValidFactory = this.core.getIsValidFactory;
-SetProtocol.prototype.getIsValidSet = this.core.getIsValidSet;
-SetProtocol.prototype.getVaultBalance = this.vault.getOwnerBalance;
+SetProtocol.prototype.createSet = function(...args) { return this.core.create(...args); };
+SetProtocol.prototype.issueSet = function(...args) { return this.core.issue(...args); };
+SetProtocol.prototype.redeemSet = function(...args) { return this.core.doRedeem(...args); };
+SetProtocol.prototype.withdraw = function(...args) { return this.core.doWithdraw(...args); };
+SetProtocol.prototype.deposit = function(...args) { return this.core.doDeposit(...args); };
+SetProtocol.prototype.createOrder = function(...args) { return this.core.createOrder(...args); };
+SetProtocol.prototype.fillOrder = function(...args) { return this.core.doFillOrder(...args); };
+SetProtocol.prototype.cancelOrder = function(...args) { return this.core.cancelOrder(...args); };
+SetProtocol.prototype.getExchangeAddress = function(...args) { return this.core.getExchangeAddress(...args); };
+SetProtocol.prototype.getTransferProxyAddress = function(...args) {
+  return this.core.getTransferProxyAddress(...args);
+};
+SetProtocol.prototype.getVaultAddress = function(...args) { return this.core.getVaultAddress(...args); };
+SetProtocol.prototype.getFactories = function(...args) { return this.core.getFactories(...args); };
+SetProtocol.prototype.getSetAddresses = function(...args) { return this.core.getSetAddresses(...args); };
+SetProtocol.prototype.getIsValidFactory = function(...args) { return this.core.getIsValidFactory(...args); };
+SetProtocol.prototype.getIsValidSet = function(...args) { return this.core.getIsValidSet(...args); };
+SetProtocol.prototype.getVaultBalance = function(...args) { return this.vault.getOwnerBalance(...args); };
 
 export default SetProtocol;

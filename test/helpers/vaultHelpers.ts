@@ -21,7 +21,7 @@ import * as Web3 from 'web3';
 import { Provider } from 'ethereum-types';
 import { Vault } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
-import { ACCOUNTS } from '../accounts';
+import { DEFAULT_ACCOUNT } from '../accounts';
 import { VaultAPI } from '../../src/api';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
 import { VaultContract } from '../../src/contracts';
@@ -29,7 +29,7 @@ import { VaultContract } from '../../src/contracts';
 const contract = require('truffle-contract');
 
 const txDefaults = {
-  from: ACCOUNTS[0].address,
+  from: DEFAULT_ACCOUNT,
   gasPrice: DEFAULT_GAS_PRICE,
   gas: DEFAULT_GAS_LIMIT,
 };

@@ -29,7 +29,7 @@ import * as Web3 from 'web3';
 import { Core } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
-import { ACCOUNTS } from '../accounts';
+import { DEFAULT_ACCOUNT } from '../accounts';
 import { testSets, TestSet } from '../testSets';
 import { CoreAPI, VaultAPI } from '../../src/api';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
@@ -45,7 +45,7 @@ const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
 const txDefaults = {
-  from: ACCOUNTS[0].address,
+  from: DEFAULT_ACCOUNT,
   gasPrice: DEFAULT_GAS_PRICE,
   gas: DEFAULT_GAS_LIMIT,
 };
@@ -102,7 +102,7 @@ describe('Vault API', () => {
 
     test('gets owner balance', async () => {
       let balance: BigNumber;
-      const account = ACCOUNTS[0].address;
+      const account = DEFAULT_ACCOUNT;
       const token = tokenAddresses[0];
       balance = await vaultAPI.getOwnerBalance(account, token);
       expect(balance.toNumber()).to.equal(0);

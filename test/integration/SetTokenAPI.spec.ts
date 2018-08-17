@@ -30,7 +30,7 @@ import compact = require('lodash.compact');
 
 import { Core, SetToken, SetTokenFactory, StandardTokenMock } from 'set-protocol-contracts';
 
-import { ACCOUNTS } from '../accounts';
+import { DEFAULT_ACCOUNT } from '../accounts';
 import { testSets, TestSet } from '../testSets';
 import { CoreAPI, SetTokenAPI } from '../../src/api';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
@@ -49,7 +49,7 @@ const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
 const txDefaults = {
-  from: ACCOUNTS[0].address,
+  from: DEFAULT_ACCOUNT,
   gasPrice: DEFAULT_GAS_PRICE,
   gas: DEFAULT_GAS_LIMIT,
 };
@@ -138,7 +138,7 @@ describe('Set Token API', () => {
       await Promise.all(
         setToCreate.components.map(async component => {
           const standardTokenMockInstance = await standardTokenMockContract.new(
-            ACCOUNTS[0].address,
+            DEFAULT_ACCOUNT,
             component.supply,
             component.name,
             component.symbol,
@@ -156,7 +156,7 @@ describe('Set Token API', () => {
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
-        { from: ACCOUNTS[0].address },
+        { from: DEFAULT_ACCOUNT },
       );
       const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
       const logs: ABIDecoder.DecodedLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));
@@ -198,7 +198,7 @@ describe('Set Token API', () => {
     });
 
     test("get balance of user's Set tokens", async () => {
-      const balance = await setTokenAPI.getBalanceOf(setTokenInstance.address, ACCOUNTS[0].address);
+      const balance = await setTokenAPI.getBalanceOf(setTokenInstance.address, DEFAULT_ACCOUNT);
       expect(balance.toNumber()).to.equal(0);
     });
   });
