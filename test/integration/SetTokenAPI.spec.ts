@@ -150,13 +150,13 @@ describe('Set Token API', () => {
 
       // Create Set Token
       const txHash = await coreAPI.create(
-        ACCOUNTS[0].address,
         setTokenFactoryInstance.address,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        { from: ACCOUNTS[0].address },
       );
       const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
       const logs: ABIDecoder.DecodedLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));

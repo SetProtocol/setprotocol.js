@@ -24,7 +24,9 @@ import {
   Bytes,
   IssuanceOrder,
   SignedIssuanceOrder,
+  TakerWalletOrder,
 } from 'set-protocol-utils';
+import { Order as ZeroExOrder } from '@0xproject/types';
 
 import { ContractsAPI } from '.';
 import { ZERO } from '../constants';
@@ -256,7 +258,7 @@ export class CoreAPI {
   }
 
   /**
-   * Composite method to redeem and withdraw with a single transaction
+   * Redeem and withdraw with a single transaction
    *
    * Normally, you should expect to be able to withdraw all of the tokens.
    * However, some have central abilities to freeze transfers (e.g. EOS). _toExclude
@@ -440,7 +442,7 @@ export class CoreAPI {
   /**
    * Fills an Issuance Order
    *
-   * @param  issuanceOrder             Issuance order to fill
+   * @param  signedIssuanceOrder       Signed issuance order to fill
    * @param  signature                 Signature of the order
    * @param  quantityToFill            Number of Set to fill in this call
    * @param  orderData                 Bytes representation of orders used to fill issuance order
@@ -498,8 +500,8 @@ export class CoreAPI {
   /**
    * Cancels an Issuance Order
    *
-   * @param  issuanceOrder             Issuance order to fill
-   * @param  quantityToCancel          Number of Set to fill in this call
+   * @param  issuanceOrder             Issuance order to cancel
+   * @param  quantityToCancel          Number of Set to cancel in this call
    * @param  txOpts                    The options for executing the transaction
    * @return                           A transaction hash
    */
@@ -542,6 +544,132 @@ export class CoreAPI {
     );
 
     return txHash;
+  }
+
+  /* ============ Composite Implementation Functions ============ */
+
+  /**
+   * Composite method to redeem and optionally withdraw tokens
+   *
+   * @param  setAddress        The address of the Set token
+   * @param  quantityInWei     The number of tokens to redeem
+   * @param  withdraw          Boolean determining whether or not to withdraw
+   * @param  tokensToExclude   Array of token addresses to exclude from withdrawal
+   * @param  txOpts            The options for executing the transaction
+   * @return                   A transaction hash to then later look up
+   */
+  public async doRedeem(
+    setAddress: Address,
+    quantityInWei: BigNumber,
+    withdraw: boolean,
+    tokensToExclude?: Address[],
+    txOpts?: TxData
+  ) {
+   if (withdraw && tokensToExclude) {
+     return await this.redeemAndWithdraw(
+       setAddress,
+       quantityInWei,
+       tokensToExclude,
+       txOpts,
+     );
+   } else {
+     return await this.redeem(
+       setAddress,
+       quantityInWei,
+       txOpts,
+     );
+   }
+  }
+
+  /**
+   * Withdraws tokens either using single token type withdraw or batch withdraw
+   *
+   * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to withdraw from the vault
+   * @param  quantitiesInWei[] Numbers of tokens a user wants to withdraw from the vault
+   * @param  txOpts            The options for executing the transaction
+   * @return                   A transaction hash
+   */
+  public async doWithdraw(
+    tokenAddresses: Address[],
+    quantitiesInWei: BigNumber[],
+    txOpts?: TxData,
+  ) {
+    if (tokenAddresses.length === 1) {
+      return await this.withdraw(
+        tokenAddresses[0],
+        quantitiesInWei[0],
+        txOpts,
+      );
+    } else {
+      return await this.batchWithdraw(
+        tokenAddresses,
+        quantitiesInWei,
+        txOpts,
+      );
+    }
+  }
+
+  /**
+   * Deposits token either using single token type deposit or batch deposit
+   *
+   * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to deposit into the vault
+   * @param  quantitiesInWei[] Numbers of tokens a user wants to deposit into the vault
+   * @param  txOpts            The options for executing the transaction
+   * @return                   A transaction hash
+   */
+  public async doDeposit(
+    tokenAddresses: Address[],
+    quantitiesInWei: BigNumber[],
+    txOpts?: TxData,
+  ) {
+    if (tokenAddresses.length === 1) {
+      return await this.deposit(
+        tokenAddresses[0],
+        quantitiesInWei[0],
+        txOpts,
+      );
+    } else {
+      return await this.batchDeposit(
+        tokenAddresses,
+        quantitiesInWei,
+        txOpts,
+      );
+    }
+  }
+
+  /**
+   * Serializes array of orders and fills an Issuance Order
+   *
+   * @param  signedIssuanceOrder       Signed issuance order to fill
+   * @param  signature                 Signature of the order
+   * @param  quantityToFill            Number of Set to fill in this call
+   * @param  orders                    Array of orders (i.e. TakerWalletOrders and/or ZeroExOrders)
+   * @param  txOpts                    The options for executing the transaction
+   * @return                           A transaction hash
+   */
+  public async doFillOrder(
+    signedIssuanceOrder: SignedIssuanceOrder,
+    quantityToFill: BigNumber,
+    orders: (ZeroExOrder | TakerWalletOrder)[],
+    txOpts?: TxData,
+  ) {
+    const {
+      makerAddress,
+      makerTokenAmount,
+    } = signedIssuanceOrder;
+
+    const orderData = await this.setProtocolUtils.generateSerializedOrders(
+      makerAddress,
+      makerTokenAmount,
+      orders,
+    );
+
+    return await this.fillOrder(
+      signedIssuanceOrder,
+      quantityToFill,
+      orderData,
+      txOpts,
+    );
   }
 
   /* ============ Core State Getters ============ */

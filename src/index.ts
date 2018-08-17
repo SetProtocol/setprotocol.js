@@ -89,6 +89,17 @@ interface SetProtocol {
     quantityToCancel: BigNumber,
     txOpts?: TxData,
   ): Promise<string>;
+  getVaultBalance(
+    ownerAddress: Address,
+    tokenAddress: Address,
+  ): Promise<BigNumber>;
+  getExchangeAddress(exchangeId: number): Promise<Address>;
+  getTransferProxyAddress(): Promise<Address>;
+  getVaultAddress(): Promise<Address>;
+  getFactories(): Promise<Address[]>;
+  getSetAddresses(): Promise<Address[]>;
+  getIsValidFactory(factoryAddress: Address): Promise<boolean>;
+  getIsValidSet(setAddress: Address): Promise<boolean>;
 }
 
 /**
@@ -129,96 +140,20 @@ class SetProtocol {
 }
 
 SetProtocol.prototype.createSet = this.core.create;
-
 SetProtocol.prototype.issueSet = this.core.issue;
-
-SetProtocol.prototype.redeemSet = async function(
-  setAddress: Address,
-  quantityInWei: BigNumber,
-  withdraw: boolean,
-  tokensToExclude?: Address[],
-  txOpts?: TxData
-) {
- if (withdraw && tokensToExclude) {
-   return await this.core.redeemAndWithdraw(
-     setAddress,
-     quantityInWei,
-     tokensToExclude,
-     txOpts,
-   );
- } else {
-   return await this.core.redeem(
-     setAddress,
-     quantityInWei,
-     txOpts,
-   );
- }
-};
-
-SetProtocol.prototype.withdraw = async function(
-  tokenAddresses: Address[],
-  quantitiesInWei: BigNumber[],
-  txOpts?: TxData,
-) {
-  if (tokenAddresses.length === 1) {
-    return await this.core.withdraw(
-      tokenAddresses[0],
-      quantitiesInWei[0],
-      txOpts,
-    );
-  } else {
-    return await this.core.batchWithdraw(
-      tokenAddresses,
-      quantitiesInWei,
-      txOpts,
-    );
-  }
-};
-
-SetProtocol.prototype.deposit = async function(
-  tokenAddresses: Address[],
-  quantitiesInWei: BigNumber[],
-  txOpts?: TxData,
-) {
-  if (tokenAddresses.length === 1) {
-    return await this.core.deposit(
-      tokenAddresses[0],
-      quantitiesInWei[0],
-      txOpts,
-    );
-  } else {
-    return await this.core.batchDeposit(
-      tokenAddresses,
-      quantitiesInWei,
-      txOpts,
-    );
-  }
-};
-
+SetProtocol.prototype.redeemSet = this.core.doRedeem;
+SetProtocol.prototype.withdraw = this.core.doWithdraw;
+SetProtocol.prototype.deposit = this.core.doDeposit;
 SetProtocol.prototype.createOrder = this.core.createOrder;
-
-SetProtocol.prototype.fillOrder = async function(
-  signedIssuanceOrder: SignedIssuanceOrder,
-  quantityToFill: BigNumber,
-  orders: (ZeroExOrder | TakerWalletOrder)[],
-  makerTokenAddress: Address,
-  makerTokenAmount: BigNumber,
-  txOpts?: TxData,
-) {
-  const orderData = await this.setProtocolUtils.generateSerializedOrders(
-    makerTokenAddress,
-    makerTokenAmount,
-    orders,
-  );
-
-  return await this.core.fillOrder(
-    signedIssuanceOrder,
-    quantityToFill,
-    orderData,
-    txOpts,
-  );
-};
-
+SetProtocol.prototype.fillOrder = this.core.doFillOrder;
 SetProtocol.prototype.cancelOrder = this.core.cancelOrder;
+SetProtocol.prototype.getExchangeAddress = this.core.getExchangeAddress;
+SetProtocol.prototype.getTransferProxyAddress = this.core.getTransferProxyAddress;
+SetProtocol.prototype.getVaultAddress = this.core.getVaultAddress;
+SetProtocol.prototype.getFactories = this.core.getFactories;
+SetProtocol.prototype.getSetAddresses = this.core.getSetAddresses;
+SetProtocol.prototype.getIsValidFactory = this.core.getIsValidFactory;
+SetProtocol.prototype.getIsValidSet = this.core.getIsValidSet;
+SetProtocol.prototype.getVaultBalance = this.vault.getOwnerBalance;
 
 export default SetProtocol;
