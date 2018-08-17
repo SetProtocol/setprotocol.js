@@ -80,32 +80,32 @@ The instantiated object from `new SetProtocol(...)` contains multiple child inte
  * 
  * Example of calling `create` method
  */
-const createTxHash = await setProtocol.core.create(
-  '0xf62ff63768819731092a4ad392519c7e3f14666c', // User address
+const createTxHash = await setProtocol.createSet(
   '0xeebaba65769084d176d1ff6fd6e6be3f8e9a63b7', // Factory address
   ['0x32cf71b0fc074385da15f8405b7622d14e3690dd', '0x4b34bb7e210f5a462e8cd2d92555d1bd18d03bf2'], // Component addresses
   [new BigNumber(500000000000000000), new BigNumber(500000000000000000)], // Units in natural units
   new BigNumber(500000000000000000), // The natural unit, aka lowest number all component units can be divided by
   'FooSet', // Set name
   'FOO', // Set symbol
-  // txOptions, optional
+  { from: '0xf62ff63768819731092a4ad392519c7e3f14666c' /* User's address */ }, // txOptions
 );
 
 /* Set Token
  * 
- * Example of calling `getBalanceOf` method
+ * Example of calling setToken's `getBalanceOf` method
  */
- const totalSupplyTxHash = await setProtocol.setToken.getTotalSupply(
+ const balanceOfTxHash = await setProtocol.setToken.getBalanceOf(
   '0x5eb32b0099eF21cA70fee8AF561D39e952D8089A', // Set Address
+  '0xf62ff63768819731092a4ad392519c7e3f14666c', // User Address
 );
 
 /* Vault
  * 
- * Example of calling `getOwnerBalance` method
+ * Example of calling `getVaultBalance` method
  */
- const ownerBalanaceTxHash = await setProtocol.vault.getOwnerBalance(
-  '0xf62ff63768819731092a4ad392519c7e3f14666c', // User address
-  '0x5eb32b0099eF21cA70fee8AF561D39e952D8089A', // Set Address
+ const ownerBalanceTxHash = await setProtocol.getVaultBalance(
+  '0x5eb32b0099eF21cA70fee8AF561D39e952D8089A', // Token Address
+  '0xf62ff63768819731092a4ad392519c7e3f14666c', // User Address
 );
 ```
 
