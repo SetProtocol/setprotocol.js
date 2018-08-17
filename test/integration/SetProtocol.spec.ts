@@ -20,18 +20,19 @@
 // smart contracts artifacts package to pull the most recently
 // deployed contracts on the current network.
 jest.unmock('set-protocol-contracts');
+jest.setTimeout(30000);
 
 import * as chai from 'chai';
 import * as Web3 from 'web3';
 import * as ABIDecoder from 'abi-decoder';
 
 import { Core, TransferProxy, Vault } from 'set-protocol-contracts';
-import { Address } from 'set-protocol-utils';
+import { Address, SetProtocolUtils } from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT } from '../accounts';
 import SetProtocol from '../../src';
 import { testSets, TestSet } from '../testSets';
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS } from '../../src/constants';
 import { Web3Utils } from '../../src/util/Web3Utils';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../logs';
 import { CoreAPI } from '../../src/api';
@@ -42,6 +43,9 @@ import {
   approveForFill,
   registerExchange,
 } from '../helpers/coreHelpers';
+import {
+  deployTakerWalletExchangeWrapper,
+} from '../helpers/exchangeHelpers';
 
 const { expect } = chai;
 
@@ -144,6 +148,104 @@ describe('SetProtocol', async () => {
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal('SetTokenCreated');
+    });
+  });
+
+  /* ============ Core State Getters ============ */
+  describe('Core State Getters', async () => {
+    let coreAPI: CoreAPI;
+    let setTokenFactoryAddress: Address;
+    let setTokenAddress: Address;
+    let setToCreate: TestSet;
+    let componentAddresses: Address[];
+    let setProtocolInstance: SetProtocol;
+
+    beforeEach(async () => {
+      coreAPI = await initializeCoreAPI(provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+
+      setToCreate = testSets[0];
+      componentAddresses = await deployTokensForSetWithApproval(
+        setToCreate,
+        coreAPI.transferProxyAddress,
+        provider,
+      );
+
+      setProtocolInstance = new SetProtocol(
+        web3,
+        coreAPI.coreAddress,
+        coreAPI.transferProxyAddress,
+        coreAPI.vaultAddress,
+      );
+
+      // Create a Set
+      const txHash = await coreAPI.create(
+        setTokenFactoryAddress,
+        componentAddresses,
+        setToCreate.units,
+        setToCreate.naturalUnit,
+        setToCreate.setName,
+        setToCreate.setSymbol,
+        { from: DEFAULT_ACCOUNT },
+      );
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+    });
+
+    test('gets exchange address', async () => {
+      const takerWalletWrapperAddress = await deployTakerWalletExchangeWrapper(
+        coreAPI.transferProxyAddress,
+        coreAPI.coreAddress,
+        provider,
+      );
+
+      await registerExchange(
+        web3,
+        coreAPI.coreAddress,
+        SetProtocolUtils.EXCHANGES.TAKER_WALLET,
+        takerWalletWrapperAddress
+      );
+
+      const exchangeAddress = await setProtocolInstance.getExchangeAddress(
+        SetProtocolUtils.EXCHANGES.TAKER_WALLET,
+      );
+      expect(exchangeAddress).to.equal(takerWalletWrapperAddress);
+    });
+
+    test('gets transfer proxy address', async () => {
+      const transferProxyAddress = await setProtocolInstance.getTransferProxyAddress();
+      expect(coreAPI.transferProxyAddress).to.equal(transferProxyAddress);
+    });
+
+    test('gets vault address', async () => {
+      const vaultAddress = await setProtocolInstance.getVaultAddress();
+      expect(coreAPI.vaultAddress).to.equal(vaultAddress);
+    });
+
+    test('gets factory addresses', async () => {
+      const factoryAddresses = await setProtocolInstance.getFactories();
+      expect(factoryAddresses.length).to.equal(1);
+      expect(factoryAddresses[0]).to.equal(setTokenFactoryAddress);
+    });
+
+    test('gets Set addresses', async () => {
+      const setAddresses = await setProtocolInstance.getSetAddresses();
+      expect(setAddresses.length).to.equal(1);
+      expect(setAddresses[0]).to.equal(setTokenAddress);
+    });
+
+    test('gets is valid factory address', async () => {
+      let isValidVaultAddress = await setProtocolInstance.getIsValidFactory(setTokenFactoryAddress);
+      expect(isValidVaultAddress).to.equal(true);
+      isValidVaultAddress = await setProtocolInstance.getIsValidFactory(NULL_ADDRESS);
+      expect(isValidVaultAddress).to.equal(false);
+    });
+
+    test('gets is valid Set address', async () => {
+      let isValidSetAddress = await setProtocolInstance.getIsValidSet(setTokenAddress);
+      expect(isValidSetAddress).to.equal(true);
+      isValidSetAddress = await setProtocolInstance.getIsValidSet(NULL_ADDRESS);
+      expect(isValidSetAddress).to.equal(false);
     });
   });
 });

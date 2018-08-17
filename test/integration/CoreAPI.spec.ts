@@ -1229,15 +1229,26 @@ describe('Core API', () => {
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
     });
 
-    /* Enable this when we add exchange functionality
-     *
-    test("gets exchange address", async () => {
-      const exchangeId = 0;
-      const exchangeAddress = await coreAPI.getExchangeAddress(exchangeId);
-      // TODO: Fill the `equal` with an exchange address when we get exchange functionality working
-      expect(exchangeAddress).to.equal();
-    };
-    */
+    test('gets exchange address', async () => {
+      const takerWalletWrapperAddress = await deployTakerWalletExchangeWrapper(
+        coreAPI.transferProxyAddress,
+        coreAPI.coreAddress,
+        provider,
+      );
+
+      await registerExchange(
+        web3,
+        coreAPI.coreAddress,
+        SetProtocolUtils.EXCHANGES.TAKER_WALLET,
+        takerWalletWrapperAddress
+      );
+
+      const exchangeAddress = await coreAPI.getExchangeAddress(
+        SetProtocolUtils.EXCHANGES.TAKER_WALLET,
+      );
+      expect(exchangeAddress).to.equal(takerWalletWrapperAddress);
+    });
+
 
     test('gets transfer proxy address', async () => {
       const transferProxyAddress = await coreAPI.getTransferProxyAddress();

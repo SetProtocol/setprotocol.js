@@ -132,9 +132,11 @@ class SetProtocol {
     vaultAddress: Address = undefined,
   ) {
     this.web3 = web3;
+
     this.core = new CoreAPI(this.web3, coreAddress, transferProxyAddress, vaultAddress);
     this.setToken = new SetTokenAPI(this.web3);
     this.vault = new VaultAPI(this.web3, vaultAddress);
+
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
   }
 }
