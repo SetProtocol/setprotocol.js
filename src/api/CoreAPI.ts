@@ -562,10 +562,10 @@ export class CoreAPI {
     setAddress: Address,
     quantityInWei: BigNumber,
     withdraw: boolean,
-    tokensToExclude?: Address[],
+    tokensToExclude: Address[],
     txOpts?: TxData
   ) {
-   if (withdraw && tokensToExclude) {
+   if (withdraw) {
      return await this.redeemAndWithdraw(
        setAddress,
        quantityInWei,
