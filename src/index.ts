@@ -90,8 +90,8 @@ interface SetProtocol {
     txOpts?: TxData,
   ): Promise<string>;
   getVaultBalance(
-    ownerAddress: Address,
     tokenAddress: Address,
+    ownerAddress: Address,
   ): Promise<BigNumber>;
   getExchangeAddress(exchangeId: number): Promise<Address>;
   getTransferProxyAddress(): Promise<Address>;
