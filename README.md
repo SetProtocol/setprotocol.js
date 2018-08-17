@@ -19,6 +19,7 @@ This library enables you to create, issue, redeem, and create/fill orders for Se
 
 Note: This is pre-alpha software. Things will constantly be changing and getting updated.
 ## :computer: Installation
+### setprotocol.js
 ##### Using yarn:
 ```shell
 $ yarn add setprotocol.js@^1.0.0-alpha.1
@@ -28,6 +29,7 @@ $ yarn add setprotocol.js@^1.0.0-alpha.1
 $ npm i --save setprotocol.js@^1.0.0-alpha.1
 ```
 
+### web3 & bignumber
 We also need `web3@0.20.6` and `bignumber.js@^4.1.0`.
 
 `web3 ^1.0.0` and `bignumber.js@^5.0.0` introduce breaking changes that don’t work with the current version of setprotocol.js at the moment. You can install the dependencies like this:
@@ -39,6 +41,7 @@ yarn add bignumber.js@^4.1.0
 ##### Setup
 Let’s initialize our `setProtocol` instance. We need to first import our library and instantiate the SetProtocol instance with a web3 instance([learn how to set that up here](https://github.com/ethereum/web3.js/)), and 3 addresses of the Set smart contracts that’ll be provided below:
 
+### Instantiation
 ```js
 // Import
 import SetProtocol from 'setprotocol.js';
@@ -51,7 +54,7 @@ const setProtocol = new SetProtocol(
 );
 ```
 
-##### Kovan Testnet
+##### Kovan TestNet
 * **ERC20Wrapper** - 0xe4c24cfb8db141caf381e997d8e481349b61bbd2
 * **Vault** - 0x8956044921a7c4b16d0993a39c66cc4ee6ad2aac
 * **Core** - 0xc375d365eaa16d75b61b4de09e1c3b2a4e5f53bc
@@ -60,7 +63,7 @@ const setProtocol = new SetProtocol(
 * **TakerWalletWrapper** - 0x389b8cf1fbe295a2ad99550199efba55ae064e52
 * **ZeroExExchangeWrapper** - 0x777d7950468fe50563ee7603b70a0bf9a02bbe8d
 
-##### Ropsten Testnet (0x Exchange unavailable)
+##### Ropsten TestNet (0x Exchange unavailable)
 * **ERC20Wrapper** - 0xc4d32a6ceccb24bc729013ec391c18df30f83af1
 * **Core** - 0xfff8d0c92169c53ead06119fb0aeb3bccfbbbd4a
 * **Vault** - 0x1e43c2b36b22b8c8bf1dc0812c65e35fdb6d4dd0
@@ -71,6 +74,7 @@ const setProtocol = new SetProtocol(
 
 ##### Usage
 The instantiated object from `new SetProtocol(...)` contains multiple child interfaces. Those interfaces are below:
+### Example Calls
 ```js
 /* Core
  * 
