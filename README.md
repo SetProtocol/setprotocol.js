@@ -28,7 +28,17 @@ $ yarn add setprotocol.js@^1.0.0-alpha.1
 $ npm i --save setprotocol.js@^1.0.0-alpha.1
 ```
 
+We also need `web3@0.20.6` and `bignumber.js@^4.1.0`.
+
+`web3 ^1.0.0` and `bignumber.js@^5.0.0` introduce breaking changes that don’t work with the current version of setprotocol.js at the moment. You can install the dependencies like this:
+```shell
+yarn add web3@0.20.6
+yarn add bignumber.js@^4.1.0
+```
+
 ##### Setup
+Let’s initialize our `setProtocol` instance. We need to first import our library and instantiate the SetProtocol instance with a web3 instance([learn how to set that up here](https://github.com/ethereum/web3.js/)), and 3 addresses of the Set smart contracts that’ll be provided below:
+
 ```js
 // Import
 import SetProtocol from 'setprotocol.js';
@@ -66,19 +76,33 @@ The instantiated object from `new SetProtocol(...)` contains multiple child inte
  * 
  * Example of calling `create` method
  */
-setProtocol.core.create(...);
+const createTxHash = await setProtocol.core.create(
+  '0xf62ff63768819731092a4ad392519c7e3f14666c', // User address
+  '0xeebaba65769084d176d1ff6fd6e6be3f8e9a63b7', // Factory address
+  ['0x32cf71b0fc074385da15f8405b7622d14e3690dd', '0x4b34bb7e210f5a462e8cd2d92555d1bd18d03bf2'], // Component addresses
+  [new BigNumber(500000000000000000), new BigNumber(500000000000000000)], // Units in natural units
+  new BigNumber(500000000000000000), // The natural unit, aka lowest number all component units can be divided by
+  'FooSet', // Set name
+  'FOO', // Set symbol
+  // txOptions, optional
+);
 
 /* Set Token
  * 
  * Example of calling `getBalanceOf` method
  */
-setProtocol.setToken.getBalanceOf(...);
+ const totalSupplyTxHash = await setProtocol.setToken.getTotalSupply(
+  '0x5eb32b0099eF21cA70fee8AF561D39e952D8089A', // Set Address
+);
 
 /* Vault
  * 
  * Example of calling `getOwnerBalance` method
  */
-setProtocol.vault.getOwnerBalance(...);
+ const ownerBalanaceTxHash = await setProtocol.vault.getOwnerBalance(
+  '0xf62ff63768819731092a4ad392519c7e3f14666c', // User address
+  '0x5eb32b0099eF21cA70fee8AF561D39e952D8089A', // Set Address
+);
 ```
 
 We have API docs below. Stay tuned for a rich set of designed documentation that's currently being built.
