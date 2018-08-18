@@ -46,13 +46,13 @@ export class VaultAPI {
   /**
    * Gets balance of user's tokens in the vault
    *
-   * @param  ownerAddress Address of the user
    * @param  tokenAddress Address of the Set
+   * @param  ownerAddress Address of the user
    * @return              The balance of the user's Set
    */
-  public async getOwnerBalance(ownerAddress: Address, tokenAddress: Address): Promise<BigNumber> {
-    this.assert.schema.isValidAddress('ownerAddress', ownerAddress);
+  public async getBalanceInVault(tokenAddress: Address, ownerAddress: Address): Promise<BigNumber> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    this.assert.schema.isValidAddress('ownerAddress', ownerAddress);
     const vaultInstance = await this.contracts.loadVaultAsync(this.vaultAddress);
     return await vaultInstance.getOwnerBalance.callAsync(ownerAddress, tokenAddress);
   }

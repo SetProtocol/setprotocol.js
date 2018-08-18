@@ -29,7 +29,7 @@ import * as Web3 from 'web3';
 import { Core } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
-import { ACCOUNTS } from '../accounts';
+import { DEFAULT_ACCOUNT } from '../accounts';
 import { testSets, TestSet } from '../testSets';
 import { CoreAPI, VaultAPI } from '../../src/api';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
@@ -45,7 +45,7 @@ const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
 const txDefaults = {
-  from: ACCOUNTS[0].address,
+  from: DEFAULT_ACCOUNT,
   gasPrice: DEFAULT_GAS_PRICE,
   gas: DEFAULT_GAS_LIMIT,
 };
@@ -79,10 +79,10 @@ describe('Vault API', () => {
   test('VaultAPI can be instantiated', async () => {
     coreAPI = await initializeCoreAPI(provider);
     vaultAPI = await initializeVaultAPI(provider, coreAPI.vaultAddress);
-    expect(vaultAPI.getOwnerBalance);
+    expect(vaultAPI.getBalanceInVault);
   });
 
-  describe('getOwnerBalance', async () => {
+  describe('getBalanceInVault', async () => {
     let coreAPI: CoreAPI;
     let vaultAPI: VaultAPI;
     let setToCreate: TestSet;
@@ -102,12 +102,12 @@ describe('Vault API', () => {
 
     test('gets owner balance', async () => {
       let balance: BigNumber;
-      const account = ACCOUNTS[0].address;
+      const account = DEFAULT_ACCOUNT;
       const token = tokenAddresses[0];
-      balance = await vaultAPI.getOwnerBalance(account, token);
+      balance = await vaultAPI.getBalanceInVault(token, account);
       expect(balance.toNumber()).to.equal(0);
-      await coreAPI.deposit(account, token, new BigNumber(100));
-      balance = await vaultAPI.getOwnerBalance(account, token);
+      await coreAPI.singleDeposit(token, new BigNumber(100), { from: account });
+      balance = await vaultAPI.getBalanceInVault(token, account);
       expect(balance.toNumber()).to.equal(100);
     });
   });

@@ -16,7 +16,7 @@ import {
   DEFAULT_GAS_LIMIT,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
 } from '../../src/constants';
-import { ACCOUNTS } from '../accounts';
+import { DEFAULT_ACCOUNT } from '../accounts';
 import { TestSet } from '../testSets';
 import {
   CoreContract,
@@ -31,7 +31,7 @@ import { BigNumber } from '../../src/util';
 const contract = require('truffle-contract');
 
 const txDefaults = {
-  from: ACCOUNTS[0].address,
+  from: DEFAULT_ACCOUNT,
   gasPrice: DEFAULT_GAS_PRICE,
   gas: DEFAULT_GAS_LIMIT,
 };
@@ -98,7 +98,7 @@ export const deployTokensForSetWithApproval = async (
   await Promise.all(
     setToDeploy.components.map(async component => {
       const standardTokenMockInstance = await standardTokenMockContract.new(
-        ACCOUNTS[0].address,
+        DEFAULT_ACCOUNT,
         component.supply,
         component.name,
         component.symbol,
@@ -134,7 +134,7 @@ export const deployTokensAsync = async (
 
   const mockTokenPromises = _.times(tokenCount, async index => (
     await standardTokenMockContract.new(
-      ACCOUNTS[0].address,
+      DEFAULT_ACCOUNT,
       100000000,
       `Component ${index}`,
       index,
@@ -183,7 +183,7 @@ export const approveForFill = async (
   transferProxyAddress: Address,
 ) => {
   const txOpts = {
-    from: ACCOUNTS[0].address,
+    from: DEFAULT_ACCOUNT,
     gasPrice: DEFAULT_GAS_PRICE,
     gas: DEFAULT_GAS_LIMIT,
   };

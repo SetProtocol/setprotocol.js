@@ -50,4 +50,6 @@ const ACCOUNTS: Account[] = [
   },
 ];
 
-export { ACCOUNTS, NULL_ADDRESS };
+const DEFAULT_ACCOUNT = ACCOUNTS[0].address;
+
+export { ACCOUNTS, DEFAULT_ACCOUNT, NULL_ADDRESS };
