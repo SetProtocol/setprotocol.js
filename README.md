@@ -2,10 +2,10 @@
 
 <p align="center">
   <a href="https://circleci.com/gh/SetProtocol/setProtocol.js/tree/master" target="_blank" rel="noopener">
-    <img src="https://img.shields.io/circleci/project/github/SetProtocol/setProtocol.js/master.svg" />
+    <img src="https://circleci.com/gh/SetProtocol/setProtocol.js.svg?style=shield&circle-token=cee06055215dbcea96800cb7d493a0b3faea9854" />
   </a>
   <a href='https://github.com/SetProtocol/setProtocol.js/blob/master/LICENSE' target="_blank" rel="noopener">
-    <img src='https://img.shields.io/github/license/SetProtocol/setProtocol.js.svg' alt='License' />
+    <img src='https://img.shields.io/badge/License-Apache%202.0-blue.svg' alt='License' />
   </a>
 </p>
 
