@@ -40,12 +40,12 @@ interface SetProtocol {
     symbol: string,
     txOpts?: TxData,
   ): Promise<string>;
-  issueSet(
+  issue(
     setAddress: Address,
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string>;
-  redeemSet(
+  redeem(
     setAddress: Address,
     quantityInWei: BigNumber,
     withdraw: boolean,
@@ -89,7 +89,7 @@ interface SetProtocol {
     quantityToCancel: BigNumber,
     txOpts?: TxData,
   ): Promise<string>;
-  getVaultBalance(
+  getBalanceInVault(
     tokenAddress: Address,
     ownerAddress: Address,
   ): Promise<BigNumber>;
@@ -144,11 +144,11 @@ class SetProtocol {
 SetProtocol.prototype.createSet = async function(...args: any[]) {
   return await this.core.createSet(...args);
 };
-SetProtocol.prototype.issueSet = async function(...args: any[]) {
-  return await this.core.issueSet(...args);
+SetProtocol.prototype.issue = async function(...args: any[]) {
+  return await this.core.issue(...args);
 };
-SetProtocol.prototype.redeemSet = async function(...args: any[]) {
-  return await this.core.redeemSet(...args);
+SetProtocol.prototype.redeem = async function(...args: any[]) {
+  return await this.core.redeem(...args);
 };
 SetProtocol.prototype.withdraw = async function(...args: any[]) {
   return await this.core.withdraw(...args);
