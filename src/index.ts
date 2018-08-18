@@ -148,19 +148,19 @@ SetProtocol.prototype.issueSet = async function(...args: any[]) {
   return await this.core.issue(...args);
 };
 SetProtocol.prototype.redeemSet = async function(...args: any[]) {
-  return await this.core.doRedeem(...args);
+  return await this.core.redeem(...args);
 };
 SetProtocol.prototype.withdraw = async function(...args: any[]) {
-  return await this.core.doWithdraw(...args);
+  return await this.core.withdraw(...args);
 };
 SetProtocol.prototype.deposit = async function(...args: any[]) {
-  return await this.core.doDeposit(...args);
+  return await this.core.deposit(...args);
 };
 SetProtocol.prototype.createOrder = async function(...args: any[]) {
   return await this.core.createOrder(...args);
 };
 SetProtocol.prototype.fillOrder = async function(...args: any[]) {
-  return await this.core.doFillOrder(...args);
+  return await this.core.fillOrder(...args);
 };
 SetProtocol.prototype.cancelOrder = async function(...args: any[]) {
   return await this.core.cancelOrder(...args);
@@ -168,17 +168,17 @@ SetProtocol.prototype.cancelOrder = async function(...args: any[]) {
 SetProtocol.prototype.getExchangeAddress = async function(...args: any[]) {
   return await this.core.getExchangeAddress(...args);
 };
-SetProtocol.prototype.getTransferProxyAddress = async function(...args: any[]) {
-  return await this.core.getTransferProxyAddress(...args);
+SetProtocol.prototype.getTransferProxyAddress = async function() {
+  return await this.core.getTransferProxyAddress();
 };
-SetProtocol.prototype.getVaultAddress = async function(...args: any[]) {
-  return await this.core.getVaultAddress(...args);
+SetProtocol.prototype.getVaultAddress = async function() {
+  return await this.core.getVaultAddress();
 };
-SetProtocol.prototype.getFactories = async function(...args: any[]) {
-  return await this.core.getFactories(...args);
+SetProtocol.prototype.getFactories = async function() {
+  return await this.core.getFactories();
 };
-SetProtocol.prototype.getSetAddresses = async function(...args: any[]) {
-  return await this.core.getSetAddresses(...args);
+SetProtocol.prototype.getSetAddresses = async function() {
+  return await this.core.getSetAddresses();
 };
 SetProtocol.prototype.getIsValidFactory = async function(...args: any[]) {
   return await this.core.getIsValidFactory(...args);
