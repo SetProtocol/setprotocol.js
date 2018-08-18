@@ -169,7 +169,7 @@ export class CoreAPI {
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up
    */
-  public async redeem(
+  public async redeemToVault(
     setAddress: Address,
     quantityInWei: BigNumber,
     txOpts?: TxData,
@@ -201,7 +201,7 @@ export class CoreAPI {
    * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
-  public async deposit(
+  public async singleDeposit(
     tokenAddress: Address,
     quantityInWei: BigNumber,
     txOpts?: TxData,
@@ -233,7 +233,7 @@ export class CoreAPI {
    * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
-  public async withdraw(
+  public async singleWithdraw(
     tokenAddress: Address,
     quantityInWei: BigNumber,
     txOpts?: TxData,
@@ -452,17 +452,10 @@ export class CoreAPI {
   public async fillOrder(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orderData: Bytes,
+    orders: (ZeroExOrder | TakerWalletOrder)[],
     txOpts?: TxData,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-
-    await this.assertFillIssuanceOrder(
-      txSettings.from,
-      signedIssuanceOrder,
-      quantityToFill,
-      orderData,
-    );
 
     const {
       setAddress,
@@ -480,6 +473,19 @@ export class CoreAPI {
       salt,
       signature,
     } = signedIssuanceOrder;
+
+    const orderData = await this.setProtocolUtils.generateSerializedOrders(
+      makerToken,
+      makerTokenAmount,
+      orders,
+    );
+
+    await this.assertFillIssuanceOrder(
+      txSettings.from,
+      signedIssuanceOrder,
+      quantityToFill,
+      orderData,
+    );
 
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const txHash = await coreInstance.fillOrder.sendTransactionAsync(
@@ -558,10 +564,10 @@ export class CoreAPI {
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash to then later look up
    */
-  public async doRedeem(
+  public async redeem(
     setAddress: Address,
     quantityInWei: BigNumber,
-    withdraw: boolean,
+    withdraw: boolean = true,
     tokensToExclude: Address[],
     txOpts?: TxData
   ) {
@@ -573,7 +579,7 @@ export class CoreAPI {
        txOpts,
      );
    } else {
-     return await this.redeem(
+     return await this.redeemToVault(
        setAddress,
        quantityInWei,
        txOpts,
@@ -589,13 +595,13 @@ export class CoreAPI {
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
-  public async doWithdraw(
+  public async withdraw(
     tokenAddresses: Address[],
     quantitiesInWei: BigNumber[],
     txOpts?: TxData,
   ) {
     if (tokenAddresses.length === 1) {
-      return await this.withdraw(
+      return await this.singleWithdraw(
         tokenAddresses[0],
         quantitiesInWei[0],
         txOpts,
@@ -617,13 +623,13 @@ export class CoreAPI {
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
-  public async doDeposit(
+  public async deposit(
     tokenAddresses: Address[],
     quantitiesInWei: BigNumber[],
     txOpts?: TxData,
   ) {
     if (tokenAddresses.length === 1) {
-      return await this.deposit(
+      return await this.singleDeposit(
         tokenAddresses[0],
         quantitiesInWei[0],
         txOpts,
@@ -635,41 +641,6 @@ export class CoreAPI {
         txOpts,
       );
     }
-  }
-
-  /**
-   * Serializes array of orders and fills an Issuance Order
-   *
-   * @param  signedIssuanceOrder       Signed issuance order to fill
-   * @param  signature                 Signature of the order
-   * @param  quantityToFill            Number of Set to fill in this call
-   * @param  orders                    Array of orders (i.e. TakerWalletOrders and/or ZeroExOrders)
-   * @param  txOpts                    The options for executing the transaction
-   * @return                           A transaction hash
-   */
-  public async doFillOrder(
-    signedIssuanceOrder: SignedIssuanceOrder,
-    quantityToFill: BigNumber,
-    orders: (ZeroExOrder | TakerWalletOrder)[],
-    txOpts?: TxData,
-  ) {
-    const {
-      makerToken,
-      makerTokenAmount,
-    } = signedIssuanceOrder;
-
-    const orderData = await this.setProtocolUtils.generateSerializedOrders(
-      makerToken,
-      makerTokenAmount,
-      orders,
-    );
-
-    return await this.fillOrder(
-      signedIssuanceOrder,
-      quantityToFill,
-      orderData,
-      txOpts,
-    );
   }
 
   /* ============ Core State Getters ============ */

@@ -222,7 +222,7 @@ describe('Core API', () => {
     test('redeems a set with valid parameters', async () => {
       const tokenWrapper = await DetailedERC20Contract.at(setTokenAddress, web3, txDefaults);
       expect(Number(await tokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(100);
-      await coreAPI.redeem(setTokenAddress, new BigNumber(100), { from: DEFAULT_ACCOUNT });
+      await coreAPI.redeemToVault(setTokenAddress, new BigNumber(100), { from: DEFAULT_ACCOUNT });
       expect(Number(await tokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(0);
     });
   });
@@ -315,7 +315,7 @@ describe('Core API', () => {
 
   /* ============ Full Redeem functionality ============ */
 
-  describe('doRedeem', async () => {
+  describe('redeem', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
@@ -372,7 +372,7 @@ describe('Core API', () => {
       const quantity = new BigNumber(100);
 
       expect(Number(await setTokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(100);
-      await coreAPI.doRedeem(
+      await coreAPI.redeem(
         setTokenAddress,
         quantity,
         true,
@@ -412,7 +412,7 @@ describe('Core API', () => {
       const quantity = new BigNumber(100);
 
       expect(Number(await setTokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(100);
-      await coreAPI.doRedeem(
+      await coreAPI.redeem(
         setTokenAddress,
         quantity,
         false,
@@ -462,7 +462,7 @@ describe('Core API', () => {
         tokenAddress,
       );
       expect(Number(userBalance)).to.equal(0);
-      const txHash = await coreAPI.deposit(
+      const txHash = await coreAPI.singleDeposit(
         tokenAddress,
         new BigNumber(100),
         { from: DEFAULT_ACCOUNT },
@@ -505,7 +505,7 @@ describe('Core API', () => {
 
   /* ============ Full Deposit functioanlity ============ */
 
-  describe('doDeposit', async () => {
+  describe('deposit', async () => {
     let coreAPI: CoreAPI;
     let tokenAddresses: Address[];
     let vaultWrapper: VaultContract;
@@ -534,7 +534,7 @@ describe('Core API', () => {
         tokenAddress,
       );
       expect(Number(userBalance)).to.equal(0);
-      const txHash = await coreAPI.doDeposit(
+      const txHash = await coreAPI.deposit(
         [tokenAddress],
         [new BigNumber(100)],
         { from: DEFAULT_ACCOUNT },
@@ -556,7 +556,7 @@ describe('Core API', () => {
           expect(Number(userBalance)).to.equal(0);
         }),
       );
-      const txHash = await coreAPI.doDeposit(
+      const txHash = await coreAPI.deposit(
         tokenAddresses,
         quantities,
         { from: DEFAULT_ACCOUNT },
@@ -577,7 +577,7 @@ describe('Core API', () => {
 
   /* ============ Withdraw ============ */
 
-  describe('withdraw', async () => {
+  describe('singleWithdraw', async () => {
     let coreAPI: CoreAPI;
     let setToCreate: TestSet;
     let tokenAddresses: Address[];
@@ -619,7 +619,7 @@ describe('Core API', () => {
       const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
       const oldUserTokenBalance = await tokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT);
 
-      await coreAPI.withdraw(
+      await coreAPI.singleWithdraw(
         tokenAddress,
         new BigNumber(100),
         { from: DEFAULT_ACCOUNT },
@@ -680,7 +680,7 @@ describe('Core API', () => {
 
   /* ============ Full Withdraw functionality ============ */
 
-  describe('doWithdraw', async () => {
+  describe('withdraw', async () => {
     let coreAPI: CoreAPI;
     let setToCreate: TestSet;
     let tokenAddresses: Address[];
@@ -722,7 +722,7 @@ describe('Core API', () => {
       const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
       const oldUserTokenBalance = await tokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT);
 
-      await coreAPI.doWithdraw(
+      await coreAPI.withdraw(
         [tokenAddress],
         [new BigNumber(100)],
         { from: DEFAULT_ACCOUNT },
@@ -755,7 +755,7 @@ describe('Core API', () => {
           expect(Number(userBalance)).to.equal(100);
         }),
       );
-      const txHash = await coreAPI.doWithdraw(
+      const txHash = await coreAPI.withdraw(
         tokenAddresses,
         quantities,
         { from: DEFAULT_ACCOUNT },
@@ -959,17 +959,11 @@ describe('Core API', () => {
           takerTokenAmount: new BigNumber(20),
         }
       ));
-      const orderData = ethUtil.bufferToHex(
-        setProtocolUtils.generateTakerWalletOrdersBuffer(
-          makerToken,
-          takerWalletOrders,
-        )
-      );
       const quantityToFill = new BigNumber(40);
       const txHash = await coreAPI.fillOrder(
         signedIssuanceOrder,
         quantityToFill,
-        orderData,
+        takerWalletOrders,
         { from: takerAddress },
       );
 
@@ -988,7 +982,7 @@ describe('Core API', () => {
 
   /* ============ Full Fill Issuance Order functionality ============ */
 
-  describe('doFillOrder', async () => {
+  describe('fillOrder', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setTokenAddress: Address;
@@ -1089,7 +1083,7 @@ describe('Core API', () => {
         }
       ));
       const quantityToFill = new BigNumber(40);
-      const txHash = await coreAPI.doFillOrder(
+      const txHash = await coreAPI.fillOrder(
         signedIssuanceOrder,
         quantityToFill,
         takerWalletOrders,

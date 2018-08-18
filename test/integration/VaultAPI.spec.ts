@@ -106,7 +106,7 @@ describe('Vault API', () => {
       const token = tokenAddresses[0];
       balance = await vaultAPI.getOwnerBalance(token, account);
       expect(balance.toNumber()).to.equal(0);
-      await coreAPI.deposit(token, new BigNumber(100), { from: account });
+      await coreAPI.singleDeposit(token, new BigNumber(100), { from: account });
       balance = await vaultAPI.getOwnerBalance(token, account);
       expect(balance.toNumber()).to.equal(100);
     });
