@@ -79,10 +79,10 @@ describe('Vault API', () => {
   test('VaultAPI can be instantiated', async () => {
     coreAPI = await initializeCoreAPI(provider);
     vaultAPI = await initializeVaultAPI(provider, coreAPI.vaultAddress);
-    expect(vaultAPI.getOwnerBalance);
+    expect(vaultAPI.getBalanceInVault);
   });
 
-  describe('getOwnerBalance', async () => {
+  describe('getBalanceInVault', async () => {
     let coreAPI: CoreAPI;
     let vaultAPI: VaultAPI;
     let setToCreate: TestSet;
@@ -104,10 +104,10 @@ describe('Vault API', () => {
       let balance: BigNumber;
       const account = DEFAULT_ACCOUNT;
       const token = tokenAddresses[0];
-      balance = await vaultAPI.getOwnerBalance(token, account);
+      balance = await vaultAPI.getBalanceInVault(token, account);
       expect(balance.toNumber()).to.equal(0);
       await coreAPI.singleDeposit(token, new BigNumber(100), { from: account });
-      balance = await vaultAPI.getOwnerBalance(token, account);
+      balance = await vaultAPI.getBalanceInVault(token, account);
       expect(balance.toNumber()).to.equal(100);
     });
   });

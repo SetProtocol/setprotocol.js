@@ -142,13 +142,13 @@ class SetProtocol {
 }
 
 SetProtocol.prototype.createSet = async function(...args: any[]) {
-  return await this.core.create(...args);
+  return await this.core.createSet(...args);
 };
 SetProtocol.prototype.issueSet = async function(...args: any[]) {
-  return await this.core.issue(...args);
+  return await this.core.issueSet(...args);
 };
 SetProtocol.prototype.redeemSet = async function(...args: any[]) {
-  return await this.core.redeem(...args);
+  return await this.core.redeemSet(...args);
 };
 SetProtocol.prototype.withdraw = async function(...args: any[]) {
   return await this.core.withdraw(...args);
@@ -186,8 +186,8 @@ SetProtocol.prototype.getIsValidFactory = async function(...args: any[]) {
 SetProtocol.prototype.getIsValidSet = async function(...args: any[]) {
   return await this.core.getIsValidSet(...args);
 };
-SetProtocol.prototype.getVaultBalance = async function(...args: any[]) {
-  return await this.vault.getOwnerBalance(...args);
+SetProtocol.prototype.getBalanceInVault = async function(...args: any[]) {
+  return await this.vault.getBalanceInVault(...args);
 };
 
 export default SetProtocol;

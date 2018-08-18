@@ -50,7 +50,7 @@ export class VaultAPI {
    * @param  ownerAddress Address of the user
    * @return              The balance of the user's Set
    */
-  public async getOwnerBalance(tokenAddress: Address, ownerAddress: Address): Promise<BigNumber> {
+  public async getBalanceInVault(tokenAddress: Address, ownerAddress: Address): Promise<BigNumber> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     this.assert.schema.isValidAddress('ownerAddress', ownerAddress);
     const vaultInstance = await this.contracts.loadVaultAsync(this.vaultAddress);

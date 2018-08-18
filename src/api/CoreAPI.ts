@@ -93,7 +93,7 @@ export class CoreAPI {
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up for the Set address
    */
-  public async create(
+  public async createSet(
     factoryAddress: Address,
     components: Address[],
     units: BigNumber[],
@@ -104,7 +104,7 @@ export class CoreAPI {
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
 
-    await this.assertCreate(
+    await this.assertCreateSet(
       txSettings.from,
       factoryAddress,
       components,
@@ -729,7 +729,7 @@ export class CoreAPI {
 
   /* ============ Private Assertions ============ */
 
-  private async assertCreate(
+  private async assertCreateSet(
     userAddress: Address,
     factoryAddress: Address,
     components: Address[],

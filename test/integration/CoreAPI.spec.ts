@@ -107,7 +107,7 @@ describe('Core API', () => {
 
   /* ============ Create ============ */
 
-  describe('create', async () => {
+  describe('createSet', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
@@ -126,7 +126,7 @@ describe('Core API', () => {
     });
 
     test('creates a new set with valid parameters', async () => {
-      const txHash = await coreAPI.create(
+      const txHash = await coreAPI.createSet(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
@@ -162,7 +162,7 @@ describe('Core API', () => {
       );
 
       // Create a Set
-      const txHash = await coreAPI.create(
+      const txHash = await coreAPI.createSet(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
@@ -203,7 +203,7 @@ describe('Core API', () => {
       );
 
       // Create a Set
-      const txHash = await coreAPI.create(
+      const txHash = await coreAPI.createSet(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
@@ -248,7 +248,7 @@ describe('Core API', () => {
       );
 
       // Create a Set
-      const txHash = await coreAPI.create(
+      const txHash = await coreAPI.createSet(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
@@ -334,7 +334,7 @@ describe('Core API', () => {
       );
 
       // Create a Set
-      const txHash = await coreAPI.create(
+      const txHash = await coreAPI.createSet(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
@@ -802,7 +802,7 @@ describe('Core API', () => {
       );
 
       // Create a Set
-      const txHash = await coreAPI.create(
+      const txHash = await coreAPI.createSet(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
@@ -884,7 +884,7 @@ describe('Core API', () => {
       );
 
       // Create a Set
-      const txHash = await coreAPI.create(
+      const txHash = await coreAPI.createSet(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
@@ -1007,7 +1007,7 @@ describe('Core API', () => {
       );
 
       // Create a Set
-      const txHash = await coreAPI.create(
+      const txHash = await coreAPI.createSet(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
@@ -1124,7 +1124,7 @@ describe('Core API', () => {
       );
 
       // Create a Set
-      const txHash = await coreAPI.create(
+      const txHash = await coreAPI.createSet(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
@@ -1210,7 +1210,7 @@ describe('Core API', () => {
       );
 
       // Create a Set
-      const txHash = await coreAPI.create(
+      const txHash = await coreAPI.createSet(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,

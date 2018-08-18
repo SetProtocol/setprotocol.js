@@ -149,7 +149,7 @@ describe('Set Token API', () => {
       );
 
       // Create Set Token
-      const txHash = await coreAPI.create(
+      const txHash = await coreAPI.createSet(
         setTokenFactoryInstance.address,
         componentAddresses,
         setToCreate.units,

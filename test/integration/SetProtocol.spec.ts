@@ -179,7 +179,7 @@ describe('SetProtocol', async () => {
       );
 
       // Create a Set
-      const txHash = await coreAPI.create(
+      const txHash = await coreAPI.createSet(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
