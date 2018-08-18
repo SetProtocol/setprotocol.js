@@ -113,14 +113,24 @@ We have API docs below. Stay tuned for a rich set of designed documentation that
 
 ## :rocket: setprotocol.js API Reference
 * [Core](documentation/classes/_coreapi_.coreapi.md)
-  * [create](documentation/classes/_coreapi_.coreapi.md#create)
-  * [issue](documentation/classes/_coreapi_.coreapi.md#issue)
-  * [redeem](documentation/classes/_coreapi_.coreapi.md#redeem)
-  * [redeemAndWithdraw](documentation/classes/_coreapi_.coreapi.md#redeemandwithdraw)
-  * [deposit](documentation/classes/_coreapi_.coreapi.md#deposit)
+  * [assertBatchDeposit](documentation/classes/_coreapi_.coreapi.md#assertbatchdeposit)
+  * [assertBatchWithdraw](documentation/classes/_coreapi_.coreapi.md#assertbatchwithdraw)
+  * [assertCancelIssuanceOrder](documentation/classes/_coreapi_.coreapi.md#assertcancelissuanceorder)
+  * [assertCreateSet](documentation/classes/_coreapi_.coreapi.md#assertcreateset)
+  * [assertCreateSignedIssuanceOrder](documentation/classes/_coreapi_.coreapi.md#assertcreatesignedissuanceorder)
+  * [assertDeposit](documentation/classes/_coreapi_.coreapi.md#assertdeposit)
+  * [assertFillIssuanceOrder](documentation/classes/_coreapi_.coreapi.md#assertfillissuanceorder)
+  * [assertIssue](documentation/classes/_coreapi_.coreapi.md#assertissue)
+  * [assertRedeem](documentation/classes/_coreapi_.coreapi.md#assertredeem)
+  * [assertRedeemAndWithdraw](documentation/classes/_coreapi_.coreapi.md#assertredeemandwithdraw)
+  * [assertWithdraw](documentation/classes/_coreapi_.coreapi.md#assertwithdraw)
   * [batchDeposit](documentation/classes/_coreapi_.coreapi.md#batchdeposit)
-  * [withdraw](documentation/classes/_coreapi_.coreapi.md#withdraw)
   * [batchWithdraw](documentation/classes/_coreapi_.coreapi.md#batchwithdraw)
+  * [cancelOrder](documentation/classes/_coreapi_.coreapi.md#cancelorder)
+  * [createOrder](documentation/classes/_coreapi_.coreapi.md#createorder)
+  * [createSet](documentation/classes/_coreapi_.coreapi.md#createset)
+  * [deposit](documentation/classes/_coreapi_.coreapi.md#deposit)
+  * [fillOrder](documentation/classes/_coreapi_.coreapi.md#fillorder)
   * [getExchangeAddress](documentation/classes/_coreapi_.coreapi.md#getexchangeaddress)
   * [getFactories](documentation/classes/_coreapi_.coreapi.md#getfactories)
   * [getIsValidFactory](documentation/classes/_coreapi_.coreapi.md#getisvalidfactory)
@@ -128,9 +138,13 @@ We have API docs below. Stay tuned for a rich set of designed documentation that
   * [getSetAddresses](documentation/classes/_coreapi_.coreapi.md#getsetaddresses)
   * [getTransferProxyAddress](documentation/classes/_coreapi_.coreapi.md#gettransferproxyaddress)
   * [getVaultAddress](documentation/classes/_coreapi_.coreapi.md#getvaultaddress)
-  * [createSignedIssuanceOrder](documentation/classes/_coreapi_.coreapi.md#createsignedissuanceorder)
-  * [fillIssuanceOrder](documentation/classes/_coreapi_.coreapi.md#fillissuanceorder)
-  * [cancelIssuanceOrder](documentation/classes/_coreapi_.coreapi.md#cancelissuanceorder)
+  * [issue](documentation/classes/_coreapi_.coreapi.md#issue)
+  * [redeem](documentation/classes/_coreapi_.coreapi.md#redeem)
+  * [redeemAndWithdraw](documentation/classes/_coreapi_.coreapi.md#redeemandwithdraw)
+  * [redeemToVault](documentation/classes/_coreapi_.coreapi.md#redeemtovault)
+  * [singleDeposit](documentation/classes/_coreapi_.coreapi.md#singledeposit)
+  * [singleWithdraw](documentation/classes/_coreapi_.coreapi.md#singlewithdraw)
+  * [withdraw](documentation/classes/_coreapi_.coreapi.md#withdraw)
 
 * [setToken](documentation/classes/_settokenapi_.settokenapi.md)
   * [getBalanceOf](documentation/classes/_settokenapi_.settokenapi.md#getbalanceof)
@@ -150,7 +164,7 @@ We have API docs below. Stay tuned for a rich set of designed documentation that
   * [loadVaultAsync](documentation/classes/_contractsapi_.contractsapi.md#loadvaultasync)
 
 * [vault](documentation/classes/_vaultapi_.vaultapi.md)
-  * [getOwnerBalance](documentation/classes/_vaultapi_.vaultapi.md#getownerbalance)
+  * [getBalanceInVault](documentation/classes/_vaultapi_.vaultapi.md#getbalanceinvault)
 
 ## :raising_hand: Contributing
 ### Testing
@@ -168,7 +182,5 @@ yarn test:watch
 
 ## Troubleshooting
 Do not use Node version 10+ as it may have issues during `npm install` or `yarn install` with the `sha3` package.  Use `nvm install 9.11.1 && nvm use 9.11.1` for now.
-
-You also will need to be on `ganache-cli@6.0.3`.  Newer versions may work but some of the newer ones do not work so it is currently pegged to an earlier version.
 
 Occasionally, you may need to run `yarn run chain --reset` or just re-run `yarn chain` to make sure that you have up to date contracts after running `yarn install` with an update to the `set-protocol-contracts` package.
