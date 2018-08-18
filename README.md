@@ -77,7 +77,7 @@ The instantiated object from `new SetProtocol(...)` contains multiple child inte
 ### Example Calls
 ```js
 /* Core
- * 
+ *
  * Example of calling `create` method
  */
 const createTxHash = await setProtocol.createSet(
@@ -91,7 +91,7 @@ const createTxHash = await setProtocol.createSet(
 );
 
 /* Set Token
- * 
+ *
  * Example of calling setToken's `getBalanceOf` method
  */
  const balanceOfTxHash = await setProtocol.setToken.getBalanceOf(
@@ -100,10 +100,10 @@ const createTxHash = await setProtocol.createSet(
 );
 
 /* Vault
- * 
- * Example of calling `getVaultBalance` method
+ *
+ * Example of calling `getBalanceInVault` method
  */
- const ownerBalanceTxHash = await setProtocol.getVaultBalance(
+ const ownerBalanceTxHash = await setProtocol.getBalanceInVault(
   '0x5eb32b0099eF21cA70fee8AF561D39e952D8089A', // Token Address
   '0xf62ff63768819731092a4ad392519c7e3f14666c', // User Address
 );
