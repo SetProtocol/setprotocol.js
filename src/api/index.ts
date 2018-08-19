@@ -16,6 +16,8 @@
 
 'use strict';
 
+// Staged change.
+
 import { ContractsAPI } from './ContractsAPI';
 import { CoreAPI } from './CoreAPI';
 import { SetTokenAPI } from './SetTokenAPI';
