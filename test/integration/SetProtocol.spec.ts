@@ -92,8 +92,8 @@ describe('SetProtocol', async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
   });
 
-  afterEach(() => {
-    web3Utils.revertToSnapshot(currentSnapshotId);
+  afterEach(async () => {
+    await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
   test('should instantiate a new setProtocolInstance', async () => {
