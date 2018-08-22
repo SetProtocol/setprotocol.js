@@ -9,3 +9,6 @@ logs/
 /src/artifacts/json/*.json
 
 yarn-error.log
+
+# Snapshot
+blockchain/

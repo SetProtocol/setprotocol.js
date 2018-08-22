@@ -53,7 +53,7 @@ export const deployCore = async (
   await coreContract.link('OrderLibrary', orderLibrary.address);
 
   // Deploy Core
-  const coreInstance = await coreContract.new();
+  const coreInstance = await coreContract.new(transferProxyAddress, vaultAddress);
 
   return coreInstance.address;
 };

@@ -110,7 +110,7 @@ describe('Core API', () => {
 
   /* ============ Create ============ */
 
-  describe.only('createSet', async () => {
+  describe('createSet', async () => {
     let coreAPI: CoreAPI;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
@@ -461,8 +461,8 @@ describe('Core API', () => {
     test('deposits a token into the vault with valid parameters', async () => {
       const tokenAddress = tokenAddresses[0];
       let userBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        DEFAULT_ACCOUNT,
         tokenAddress,
+        DEFAULT_ACCOUNT,
       );
       expect(Number(userBalance)).to.equal(0);
       const txHash = await coreAPI.singleDeposit(
@@ -472,7 +472,7 @@ describe('Core API', () => {
       );
       await web3Utils.getTransactionReceiptAsync(txHash);
 
-      userBalance = await vaultWrapper.getOwnerBalance.callAsync(DEFAULT_ACCOUNT, tokenAddress);
+      userBalance = await vaultWrapper.getOwnerBalance.callAsync(tokenAddress, DEFAULT_ACCOUNT);
       expect(Number(userBalance)).to.equal(100);
     });
 
@@ -481,8 +481,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
           expect(Number(userBalance)).to.equal(0);
         }),
@@ -497,8 +497,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
           expect(Number(userBalance)).to.equal(100);
         }),
@@ -533,8 +533,8 @@ describe('Core API', () => {
     test('deposits a token into the vault with valid parameters', async () => {
       const tokenAddress = tokenAddresses[0];
       let userBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        DEFAULT_ACCOUNT,
         tokenAddress,
+        DEFAULT_ACCOUNT,
       );
       expect(Number(userBalance)).to.equal(0);
       const txHash = await coreAPI.deposit(
@@ -544,7 +544,7 @@ describe('Core API', () => {
       );
       await web3Utils.getTransactionReceiptAsync(txHash);
 
-      userBalance = await vaultWrapper.getOwnerBalance.callAsync(DEFAULT_ACCOUNT, tokenAddress);
+      userBalance = await vaultWrapper.getOwnerBalance.callAsync(tokenAddress, DEFAULT_ACCOUNT);
       expect(Number(userBalance)).to.equal(100);
     });
 
@@ -553,8 +553,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
           expect(Number(userBalance)).to.equal(0);
         }),
@@ -569,8 +569,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
           expect(Number(userBalance)).to.equal(100);
         }),
@@ -614,8 +614,8 @@ describe('Core API', () => {
     test('withdraws a token from the vault with valid parameters', async () => {
       const tokenAddress = tokenAddresses[0];
       let userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        DEFAULT_ACCOUNT,
         tokenAddress,
+        DEFAULT_ACCOUNT,
       );
       expect(Number(userVaultBalance)).to.equal(100);
 
@@ -632,8 +632,8 @@ describe('Core API', () => {
       expect(Number(oldUserTokenBalance)).to.equal(Number(newUserTokenBalance.plus(100)));
 
       userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        DEFAULT_ACCOUNT,
         tokenAddress,
+        DEFAULT_ACCOUNT,
       );
       expect(Number(userVaultBalance)).to.equal(0);
     });
@@ -644,8 +644,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
 
           const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
@@ -665,8 +665,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
           const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
 
@@ -717,8 +717,8 @@ describe('Core API', () => {
     test('withdraws a token from the vault with valid parameters', async () => {
       const tokenAddress = tokenAddresses[0];
       let userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        DEFAULT_ACCOUNT,
         tokenAddress,
+        DEFAULT_ACCOUNT,
       );
       expect(Number(userVaultBalance)).to.equal(100);
 
@@ -735,8 +735,8 @@ describe('Core API', () => {
       expect(Number(oldUserTokenBalance)).to.equal(Number(newUserTokenBalance.plus(100)));
 
       userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        DEFAULT_ACCOUNT,
         tokenAddress,
+        DEFAULT_ACCOUNT,
       );
       expect(Number(userVaultBalance)).to.equal(0);
     });
@@ -747,8 +747,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
 
           const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
@@ -768,8 +768,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
           const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
 

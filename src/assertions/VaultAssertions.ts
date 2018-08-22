@@ -47,7 +47,7 @@ export class VaultAssertions {
     errorMessage: string,
   ): Promise<void> {
     // Assert that user has sufficient balance of Set
-    const ownerBalance = await vaultInstance.getOwnerBalance.callAsync(ownerAddress, tokenAddress);
+    const ownerBalance = await vaultInstance.getOwnerBalance.callAsync(tokenAddress, ownerAddress);
 
     if (ownerBalance.lt(quantityInWei)) {
       throw new Error(errorMessage);
@@ -88,8 +88,8 @@ export class VaultAssertions {
       async (componentInstance, index) => {
         const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
         const ownerBalance = await vaultInstance.getOwnerBalance.callAsync(
-          setTokenAddress,
           components[index],
+          setTokenAddress,
         );
         if (ownerBalance.lt(requiredBalance)) {
           throw new Error(errorMessage);
