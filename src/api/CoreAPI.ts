@@ -121,8 +121,9 @@ export class CoreAPI {
       components,
       units,
       naturalUnit,
-      name,
-      symbol,
+      SetProtocolUtils.stringToBytes(name),
+      SetProtocolUtils.stringToBytes(symbol),
+      '',
       txSettings,
     );
 

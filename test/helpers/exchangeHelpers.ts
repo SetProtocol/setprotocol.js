@@ -4,10 +4,12 @@ import * as _ from 'lodash';
 import { Provider } from 'ethereum-types';
 import {
   TakerWalletWrapper,
+  ZeroExExchangeWrapper,
 } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 import {
   TakerWalletWrapperContract,
+  ZeroExExchangeWrapperContract,
   TransferProxyContract,
 } from '../../src/contracts';
 import { BigNumber } from '../../src/util';
@@ -62,4 +64,26 @@ export const deployTakerWalletExchangeWrapper = async (
   );
 
   return takerWalletWrapperInstance.address;
+};
+
+export const deployZeroExExchangeWrapper = async (
+  zeroExExchangeAddress: Address,
+  zeroExProxyAddress: Address,
+  transferProxyAddress: Address,
+  provider: Provider,
+) => {
+  const web3 = new Web3(provider);
+
+  const zeroExExchangeWrapperContract = contract(ZeroExExchangeWrapper);
+  zeroExExchangeWrapperContract.setProvider(provider);
+  zeroExExchangeWrapperContract.defaults(txDefaults);
+
+  const zeroExExchangeWrapperInstance = await zeroExExchangeWrapperContract.new(
+    zeroExExchangeAddress,
+    zeroExProxyAddress,
+    transferProxyAddress,
+    txDefaults,
+  );
+
+  return zeroExExchangeWrapperInstance.address;
 };

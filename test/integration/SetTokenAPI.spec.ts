@@ -114,17 +114,7 @@ describe('Set Token API', () => {
 
       setTokenAPI = new SetTokenAPI(web3);
       // Deploy SetTokenFactory
-      setTokenFactoryInstance = await setTokenFactoryContract.new();
-      const setTokenFactoryWrapper = await SetTokenFactoryContract.at(
-        setTokenFactoryInstance.address,
-        web3,
-        txDefaults,
-      );
-      // Authorize Core
-      await setTokenFactoryWrapper.addAuthorizedAddress.sendTransactionAsync(
-        coreAPI.coreAddress,
-        txDefaults,
-      );
+      setTokenFactoryInstance = await setTokenFactoryContract.new(coreAPI.coreAddress);
 
       // Enable Factory
       await coreWrapper.enableFactory.sendTransactionAsync(

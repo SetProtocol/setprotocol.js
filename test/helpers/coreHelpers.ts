@@ -36,7 +36,11 @@ const txDefaults = {
   gas: DEFAULT_GAS_LIMIT,
 };
 
-export const deployCore = async (provider: Provider) => {
+export const deployCore = async (
+  provider: Provider,
+  transferProxyAddress: Address,
+  vaultAddress: Address,
+) => {
   const coreContract = contract(Core);
   coreContract.setProvider(provider);
   coreContract.setNetwork(12345);
@@ -45,7 +49,7 @@ export const deployCore = async (provider: Provider) => {
   orderLibraryContract.setProvider(provider);
   orderLibraryContract.defaults(txDefaults);
 
-  const orderLibrary = await orderLibraryContract.new();
+  const orderLibrary = await orderLibraryContract.new(transferProxyAddress, vaultAddress);
   await coreContract.link('OrderLibrary', orderLibrary.address);
 
   // Deploy Core
@@ -62,18 +66,12 @@ export const deploySetTokenFactory = async (coreAddress: Address, provider: Prov
   setTokenFactoryContract.defaults(txDefaults);
 
   // Deploy SetTokenFactory
-  const setTokenFactoryInstance = await setTokenFactoryContract.new();
+  const setTokenFactoryInstance = await setTokenFactoryContract.new(coreAddress);
   const setTokenFactoryWrapper = await SetTokenFactoryContract.at(
     setTokenFactoryInstance.address,
     web3,
     txDefaults,
   );
-
-  // Set Core Address
-  await setTokenFactoryWrapper.setCoreAddress.sendTransactionAsync(coreAddress, txDefaults);
-
-  // Authorize Core
-  await setTokenFactoryWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, txDefaults);
 
   // Enable Factory
   const coreWrapper = await CoreContract.at(coreAddress, web3, txDefaults);
@@ -257,7 +255,6 @@ export const approveForFill = async (
 };
 
 export const deployTransferProxy = async (
-  coreAddress: Address,
   erc20WrapperAddress: Address,
   provider: Provider,
 ) => {
@@ -272,19 +269,10 @@ export const deployTransferProxy = async (
 
   // Deploy TransferProxy
   const transferProxyInstance = await transferProxyContract.new();
-  const transferProxyWrapper = await TransferProxyContract.at(
-    transferProxyInstance.address,
-    web3,
-    txDefaults,
-  );
-
-  await transferProxyWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, txDefaults);
-
   return transferProxyInstance.address;
 };
 
 export const deployVault = async (
-  coreAddress: Address,
   erc20WrapperAddress: Address,
   provider: Provider,
 ) => {
@@ -299,10 +287,6 @@ export const deployVault = async (
 
   // Deploy Vault
   const vaultInstance = await vaultContract.new();
-  const vaultWrapper = await VaultContract.at(vaultInstance.address, web3, txDefaults);
-
-  await vaultWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, txDefaults);
-
   return vaultInstance.address;
 };
 
@@ -315,14 +299,20 @@ export const initializeCoreAPI = async (provider: Provider) => {
 
   const erc20Wrapper = await erc20WrapperContract.new();
 
-  const coreAddress = await deployCore(provider);
-  const transferProxyAddress = await deployTransferProxy(coreAddress, erc20Wrapper.address, provider);
-  const vaultAddress = await deployVault(coreAddress, erc20Wrapper.address, provider);
+  const transferProxyAddress = await deployTransferProxy(erc20Wrapper.address, provider);
+  const vaultAddress = await deployVault(erc20Wrapper.address, provider);
 
-  const coreWrapper = await CoreContract.at(coreAddress, web3, txDefaults);
-  // Set Vault and TransferProxy on Core
-  await coreWrapper.setVaultAddress.sendTransactionAsync(vaultAddress, txDefaults);
-  await coreWrapper.setTransferProxyAddress.sendTransactionAsync(transferProxyAddress, txDefaults);
+  const coreAddress = await deployCore(provider, transferProxyAddress, vaultAddress);
+
+  const transferProxyWrapper = await TransferProxyContract.at(
+    transferProxyAddress,
+    web3,
+    txDefaults,
+  );
+  await transferProxyWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, txDefaults);
+
+  const vaultWrapper = await VaultContract.at(vaultAddress, web3, txDefaults);
+  await vaultWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, txDefaults);
 
   return new CoreAPI(web3, coreAddress, transferProxyAddress, vaultAddress);
 };
