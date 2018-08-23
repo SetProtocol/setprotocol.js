@@ -26,7 +26,7 @@ import {
   SignedIssuanceOrder,
   TakerWalletOrder,
 } from 'set-protocol-utils';
-import { Order as ZeroExOrder } from '@0xproject/types';
+import { SignedOrder as ZeroExOrder } from '@0xproject/types';
 
 import { ContractsAPI } from '.';
 import { ZERO } from '../constants';
@@ -474,6 +474,8 @@ export class CoreAPI {
       salt,
       signature,
     } = signedIssuanceOrder;
+
+    console.log(orders);
 
     const orderData = await this.setProtocolUtils.generateSerializedOrders(
       makerToken,

@@ -1,7 +1,7 @@
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
 import { Provider } from 'ethereum-types';
-import { Address } from 'set-protocol-utils';
+import { Address, SetProtocolTestUtils } from 'set-protocol-utils';
 import {
   Core,
   ERC20Wrapper,
@@ -170,6 +170,66 @@ export const registerExchange = async (
     exchangeAddress,
     txDefaults,
   );
+};
+
+export const approveForZeroEx = async (
+  web3: Web3,
+  componentTokens: Address[],
+  zeroExMakerAddress: Address,
+  takerAddress: Address,
+) => {
+  const txOpts = {
+    from: DEFAULT_ACCOUNT,
+    gasPrice: DEFAULT_GAS_PRICE,
+    gas: DEFAULT_GAS_LIMIT,
+  };
+
+  const tokenWrapperPromises = _.map(componentTokens, async token =>
+    await StandardTokenMockContract.at(
+      token,
+      web3,
+      txOpts,
+    )
+  );
+  const tokenWrappers = await Promise.all(tokenWrapperPromises);
+
+  // Give some tokens to zeroExMakerAddress
+  const zeroExMakerTransferPromises = _.map(tokenWrappers, async token =>
+    await token.transfer.sendTransactionAsync(
+      zeroExMakerAddress,
+      new BigNumber(1000),
+      txOpts,
+    ),
+  );
+  await Promise.all(zeroExMakerTransferPromises);
+
+  const zeroExMakerApprovePromises = _.map(tokenWrappers, async tokenWrapper =>
+    await tokenWrapper.approve.sendTransactionAsync(
+      SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+      { from: zeroExMakerAddress },
+    ),
+  );
+  await Promise.all(zeroExMakerApprovePromises);
+
+  // Give some tokens to takerAddress
+  const takerTransferPromises = _.map(tokenWrappers, async token =>
+    await token.transfer.sendTransactionAsync(
+      zeroExMakerAddress,
+      new BigNumber(1000),
+      txOpts,
+    ),
+  );
+  await Promise.all(takerTransferPromises);
+
+  const takerApprovePromises = _.map(tokenWrappers, async tokenWrapper =>
+    await tokenWrapper.approve.sendTransactionAsync(
+      SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+      { from: takerAddress },
+    ),
+  );
+  await Promise.all(takerApprovePromises);
 };
 
 export const approveForFill = async (
