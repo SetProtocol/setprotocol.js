@@ -25,8 +25,8 @@ import {
   IssuanceOrder,
   SignedIssuanceOrder,
   TakerWalletOrder,
+  ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
-import { SignedOrder as ZeroExOrder } from '@0xproject/types';
 
 import { ContractsAPI } from '.';
 import { ZERO } from '../constants';
@@ -123,7 +123,7 @@ export class CoreAPI {
       naturalUnit,
       SetProtocolUtils.stringToBytes(name),
       SetProtocolUtils.stringToBytes(symbol),
-      '',
+      undefined,
       txSettings,
     );
 
@@ -453,7 +453,7 @@ export class CoreAPI {
   public async fillOrder(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orders: (ZeroExOrder | TakerWalletOrder)[],
+    orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
     txOpts?: TxData,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);

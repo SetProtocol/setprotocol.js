@@ -27,10 +27,15 @@ import * as Web3 from 'web3';
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as ethUtil from 'ethereumjs-util';
-import { Order as ZeroExOrder } from '@0xproject/types';
 
 import { Core, Vault } from 'set-protocol-contracts';
-import { SetProtocolUtils, SetProtocolTestUtils, Address, Bytes } from 'set-protocol-utils';
+import {
+  SetProtocolUtils,
+  SetProtocolTestUtils,
+  Address,
+  Bytes,
+  ZeroExSignedFillOrder,
+} from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../accounts';
 import { testSets, TestSet } from '../testSets';
@@ -987,7 +992,7 @@ describe('Core API', () => {
       );
 
       const defaultZeroExOrderTakerTokenAmount = new BigNumber(10);
-      const zeroExOrder: ZeroExOrder = SetProtocolUtils.generateZeroExOrder(
+      const zeroExOrder: ZeroExSignedFillOrder = await setProtocolUtils.generateZeroExSignedFillOrder(
         NULL_ADDRESS,                       // senderAddress
         zeroExMakerAddress,                 // makerAddress
         NULL_ADDRESS,                       // takerAddress
@@ -1000,13 +1005,13 @@ describe('Core API', () => {
         SetProtocolUtils.generateSalt(),               // salt
         SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS, // exchangeAddress
         NULL_ADDRESS,                       // feeRecipientAddress
-        SetProtocolUtils.generateTimestamp(10)         // expirationTimeSeconds
+        SetProtocolUtils.generateTimestamp(10),         // expirationTimeSeconds
+        defaultZeroExOrderTakerTokenAmount,  // fillAmount
       );
-      const zeroExOrderSignature = await setProtocolUtils.signZeroExOrderAsync(zeroExOrder);
 
       // Second 0x order
       const secondZeroExOrderTakerTokenAmount = new BigNumber(10);
-      const secondZeroExOrder: ZeroExOrder = SetProtocolUtils.generateZeroExOrder(
+      const secondZeroExOrder: ZeroExSignedFillOrder = await setProtocolUtils.generateZeroExSignedFillOrder(
         NULL_ADDRESS,                       // senderAddress
         zeroExMakerAddress,                 // makerAddress
         NULL_ADDRESS,                       // takerAddress
@@ -1019,21 +1024,12 @@ describe('Core API', () => {
         SetProtocolUtils.generateSalt(),               // salt
         SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS, // exchangeAddress
         NULL_ADDRESS,                       // feeRecipientAddress
-        SetProtocolUtils.generateTimestamp(10)         // expirationTimeSeconds
+        SetProtocolUtils.generateTimestamp(10),         // expirationTimeSeconds
+        secondZeroExOrderTakerTokenAmount,  // fillAmount
       );
-      const secondZeroExOrderSignature = await setProtocolUtils.signZeroExOrderAsync(secondZeroExOrder);
-
       const zeroExExchangeOrders = [
-        {
-          ...zeroExOrder,
-          signature: zeroExOrderSignature,
-          fillAmount: defaultZeroExOrderTakerTokenAmount,
-        },
-        {
-          ...secondZeroExOrder,
-          signature: secondZeroExOrderSignature,
-          fillAmount: secondZeroExOrderTakerTokenAmount,
-        },
+        zeroExOrder,
+        secondZeroExOrder,
       ];
 
       const quantityToFill = new BigNumber(20);
