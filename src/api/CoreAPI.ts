@@ -123,7 +123,7 @@ export class CoreAPI {
       naturalUnit,
       SetProtocolUtils.stringToBytes(name),
       SetProtocolUtils.stringToBytes(symbol),
-      undefined,
+      '',
       txSettings,
     );
 
