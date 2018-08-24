@@ -25,6 +25,7 @@ import { StandardTokenMockContract } from './StandardTokenMockContract';
 import { TakerWalletWrapperContract } from './TakerWalletWrapperContract';
 import { TransferProxyContract } from './TransferProxyContract';
 import { VaultContract } from './VaultContract';
+import { ZeroExExchangeWrapperContract } from './ZeroExExchangeWrapperContract';
 
 export type ContractWrapper = BaseContract;
 export {
@@ -37,4 +38,5 @@ export {
   TakerWalletWrapperContract,
   TransferProxyContract,
   VaultContract,
+  ZeroExExchangeWrapperContract,
 };

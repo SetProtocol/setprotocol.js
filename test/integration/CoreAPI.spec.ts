@@ -29,7 +29,13 @@ import * as ABIDecoder from 'abi-decoder';
 import * as ethUtil from 'ethereumjs-util';
 
 import { Core, Vault } from 'set-protocol-contracts';
-import { SetProtocolUtils, Address } from 'set-protocol-utils';
+import {
+  SetProtocolUtils,
+  SetProtocolTestUtils,
+  Address,
+  Bytes,
+  ZeroExSignedFillOrder,
+} from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../accounts';
 import { testSets, TestSet } from '../testSets';
@@ -39,6 +45,7 @@ import {
   DetailedERC20Contract,
   VaultContract,
   CoreContract,
+  ZeroExExchangeWrapperContract,
 } from '../../src/contracts';
 import {
   DEFAULT_GAS_PRICE,
@@ -53,10 +60,12 @@ import {
   deploySetTokenFactory,
   deployTokensForSetWithApproval,
   approveForFill,
+  approveForZeroEx,
   registerExchange,
 } from '../helpers/coreHelpers';
 import {
   deployTakerWalletExchangeWrapper,
+  deployZeroExExchangeWrapper,
 } from '../helpers/exchangeHelpers';
 
 const contract = require('truffle-contract');
@@ -70,6 +79,7 @@ const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 const setProtocolUtils = new SetProtocolUtils(web3);
+const setProtocolTestUTils = new SetProtocolTestUtils(web3);
 
 const txDefaults = {
   from: DEFAULT_ACCOUNT,
@@ -458,8 +468,8 @@ describe('Core API', () => {
     test('deposits a token into the vault with valid parameters', async () => {
       const tokenAddress = tokenAddresses[0];
       let userBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        DEFAULT_ACCOUNT,
         tokenAddress,
+        DEFAULT_ACCOUNT,
       );
       expect(Number(userBalance)).to.equal(0);
       const txHash = await coreAPI.singleDeposit(
@@ -469,7 +479,7 @@ describe('Core API', () => {
       );
       await web3Utils.getTransactionReceiptAsync(txHash);
 
-      userBalance = await vaultWrapper.getOwnerBalance.callAsync(DEFAULT_ACCOUNT, tokenAddress);
+      userBalance = await vaultWrapper.getOwnerBalance.callAsync(tokenAddress, DEFAULT_ACCOUNT);
       expect(Number(userBalance)).to.equal(100);
     });
 
@@ -478,8 +488,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
           expect(Number(userBalance)).to.equal(0);
         }),
@@ -494,8 +504,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
           expect(Number(userBalance)).to.equal(100);
         }),
@@ -530,8 +540,8 @@ describe('Core API', () => {
     test('deposits a token into the vault with valid parameters', async () => {
       const tokenAddress = tokenAddresses[0];
       let userBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        DEFAULT_ACCOUNT,
         tokenAddress,
+        DEFAULT_ACCOUNT,
       );
       expect(Number(userBalance)).to.equal(0);
       const txHash = await coreAPI.deposit(
@@ -541,7 +551,7 @@ describe('Core API', () => {
       );
       await web3Utils.getTransactionReceiptAsync(txHash);
 
-      userBalance = await vaultWrapper.getOwnerBalance.callAsync(DEFAULT_ACCOUNT, tokenAddress);
+      userBalance = await vaultWrapper.getOwnerBalance.callAsync(tokenAddress, DEFAULT_ACCOUNT);
       expect(Number(userBalance)).to.equal(100);
     });
 
@@ -550,8 +560,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
           expect(Number(userBalance)).to.equal(0);
         }),
@@ -566,8 +576,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async tokenAddress => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
           expect(Number(userBalance)).to.equal(100);
         }),
@@ -611,8 +621,8 @@ describe('Core API', () => {
     test('withdraws a token from the vault with valid parameters', async () => {
       const tokenAddress = tokenAddresses[0];
       let userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        DEFAULT_ACCOUNT,
         tokenAddress,
+        DEFAULT_ACCOUNT,
       );
       expect(Number(userVaultBalance)).to.equal(100);
 
@@ -629,8 +639,8 @@ describe('Core API', () => {
       expect(Number(oldUserTokenBalance)).to.equal(Number(newUserTokenBalance.plus(100)));
 
       userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        DEFAULT_ACCOUNT,
         tokenAddress,
+        DEFAULT_ACCOUNT,
       );
       expect(Number(userVaultBalance)).to.equal(0);
     });
@@ -641,8 +651,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
 
           const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
@@ -662,8 +672,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
           const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
 
@@ -714,8 +724,8 @@ describe('Core API', () => {
     test('withdraws a token from the vault with valid parameters', async () => {
       const tokenAddress = tokenAddresses[0];
       let userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        DEFAULT_ACCOUNT,
         tokenAddress,
+        DEFAULT_ACCOUNT,
       );
       expect(Number(userVaultBalance)).to.equal(100);
 
@@ -732,8 +742,8 @@ describe('Core API', () => {
       expect(Number(oldUserTokenBalance)).to.equal(Number(newUserTokenBalance.plus(100)));
 
       userVaultBalance = await vaultWrapper.getOwnerBalance.callAsync(
-        DEFAULT_ACCOUNT,
         tokenAddress,
+        DEFAULT_ACCOUNT,
       );
       expect(Number(userVaultBalance)).to.equal(0);
     });
@@ -744,8 +754,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
 
           const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
@@ -765,8 +775,8 @@ describe('Core API', () => {
       await Promise.all(
         tokenAddresses.map(async (tokenAddress, index) => {
           const userBalance: BigNumber = await vaultWrapper.getOwnerBalance.callAsync(
-            DEFAULT_ACCOUNT,
             tokenAddress,
+            DEFAULT_ACCOUNT,
           );
           const tokenWrapper = await DetailedERC20Contract.at(tokenAddress, web3, txDefaults);
 
@@ -897,15 +907,15 @@ describe('Core API', () => {
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
     });
 
-    test('fills an issuance order with valid parameters', async () => {
+    test('fills an issuance order with valid parameters with 0x orders', async () => {
       const order = {
         setAddress: setTokenAddress,
-        quantity: new BigNumber(80),
+        quantity: new BigNumber(20),
         requiredComponents: componentAddresses,
         requiredComponentAmounts: componentAddresses.map(() => new BigNumber(20)),
         makerAddress: DEFAULT_ACCOUNT,
         makerToken: componentAddresses[0],
-        makerTokenAmount: new BigNumber(6),
+        makerTokenAmount: new BigNumber(20),
         expiration: SetProtocolUtils.generateTimestamp(60),
         relayerAddress: ACCOUNTS[1].address,
         relayerToken: componentAddresses[0],
@@ -913,6 +923,7 @@ describe('Core API', () => {
         takerRelayerFee: new BigNumber(6),
       };
       const takerAddress = ACCOUNTS[2].address;
+      const zeroExMakerAddress = ACCOUNTS[3].address;
 
       const signedIssuanceOrder = await coreAPI.createOrder(
         order.setAddress,
@@ -927,6 +938,33 @@ describe('Core API', () => {
         order.relayerToken,
         order.makerRelayerFee,
         order.takerRelayerFee,
+      );
+
+      // Deploy and register 0x wrapper
+      const zeroExExchangeWrapperAddress = await deployZeroExExchangeWrapper(
+        SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
+        SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        coreAPI.transferProxyAddress,
+        provider,
+      );
+
+      await registerExchange(
+        web3,
+        coreAPI.coreAddress,
+        SetProtocolUtils.EXCHANGES.ZERO_EX,
+        zeroExExchangeWrapperAddress,
+      );
+
+      const coreInstance = await CoreContract.at(coreAPI.coreAddress, web3, txDefaults);
+      const zeroExExchangeWrapperInstance = await ZeroExExchangeWrapperContract.at(
+        zeroExExchangeWrapperAddress,
+        web3,
+        txDefaults,
+      );
+
+      await zeroExExchangeWrapperInstance.addAuthorizedAddress.sendTransactionAsync(
+        coreAPI.coreAddress,
+        txDefaults,
       );
 
       const {
@@ -946,28 +984,61 @@ describe('Core API', () => {
         coreAPI.transferProxyAddress,
       );
 
-      await registerExchange(
+      await approveForZeroEx(
         web3,
-        coreAPI.coreAddress,
-        SetProtocolUtils.EXCHANGES.TAKER_WALLET,
-        takerWalletWrapperAddress
+        componentAddresses,
+        zeroExMakerAddress,
+        takerAddress,
       );
 
-      const takerWalletOrders = _.map(componentAddresses, componentAddress => (
-        {
-          takerTokenAddress: componentAddress,
-          takerTokenAmount: new BigNumber(20),
-        }
-      ));
-      const quantityToFill = new BigNumber(40);
+      const defaultZeroExOrderTakerTokenAmount = new BigNumber(10);
+      const zeroExOrder: ZeroExSignedFillOrder = await setProtocolUtils.generateZeroExSignedFillOrder(
+        NULL_ADDRESS,                       // senderAddress
+        zeroExMakerAddress,                 // makerAddress
+        NULL_ADDRESS,                       // takerAddress
+        ZERO,                               // makerFee
+        ZERO,                               // takerFee
+        order.requiredComponentAmounts[0],  // makerAssetAmount, full amount of first component needed for issuance
+        defaultZeroExOrderTakerTokenAmount, // takerAssetAmount
+        componentAddresses[0],              // makerAssetAddress
+        makerToken,                         // takerAssetAddress
+        SetProtocolUtils.generateSalt(),               // salt
+        SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS, // exchangeAddress
+        NULL_ADDRESS,                       // feeRecipientAddress
+        SetProtocolUtils.generateTimestamp(10),         // expirationTimeSeconds
+        defaultZeroExOrderTakerTokenAmount,  // fillAmount
+      );
+
+      // Second 0x order
+      const secondZeroExOrderTakerTokenAmount = new BigNumber(10);
+      const secondZeroExOrder: ZeroExSignedFillOrder = await setProtocolUtils.generateZeroExSignedFillOrder(
+        NULL_ADDRESS,                       // senderAddress
+        zeroExMakerAddress,                 // makerAddress
+        NULL_ADDRESS,                       // takerAddress
+        ZERO,                               // makerFee
+        ZERO,                               // takerFee
+        order.requiredComponentAmounts[1],  // makerAssetAmount, full amount of second component needed for issuance
+        secondZeroExOrderTakerTokenAmount,  // takerAssetAmount
+        componentAddresses[1],              // makerAssetAddress
+        makerToken,                         // takerAssetAddress
+        SetProtocolUtils.generateSalt(),               // salt
+        SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS, // exchangeAddress
+        NULL_ADDRESS,                       // feeRecipientAddress
+        SetProtocolUtils.generateTimestamp(10),         // expirationTimeSeconds
+        secondZeroExOrderTakerTokenAmount,  // fillAmount
+      );
+      const zeroExExchangeOrders = [
+        zeroExOrder,
+        secondZeroExOrder,
+      ];
+
+      const quantityToFill = new BigNumber(20);
       const txHash = await coreAPI.fillOrder(
         signedIssuanceOrder,
         quantityToFill,
-        takerWalletOrders,
+        zeroExExchangeOrders,
         { from: takerAddress },
       );
-
-      const coreInstance = await CoreContract.at(coreAPI.coreAddress, web3, txDefaults);
 
       const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });
       const orderFillsAmount =
@@ -978,49 +1049,8 @@ describe('Core API', () => {
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogFill');
     });
-  });
 
-  /* ============ Full Fill Issuance Order functionality ============ */
-
-  describe('fillOrder', async () => {
-    let coreAPI: CoreAPI;
-    let setTokenFactoryAddress: Address;
-    let setTokenAddress: Address;
-    let takerWalletWrapperAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
-
-    beforeEach(async () => {
-      coreAPI = await initializeCoreAPI(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
-      takerWalletWrapperAddress = await deployTakerWalletExchangeWrapper(
-        coreAPI.transferProxyAddress,
-        coreAPI.coreAddress,
-        provider,
-      );
-
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreAPI.transferProxyAddress,
-        provider,
-      );
-
-      // Create a Set
-      const txHash = await coreAPI.createSet(
-        setTokenFactoryAddress,
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        { from: DEFAULT_ACCOUNT },
-      );
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
-    });
-
-    test('fills an issuance order with valid parameters', async () => {
+    test('fills an issuance order with valid parameters with taker wallet orders', async () => {
       const order = {
         setAddress: setTokenAddress,
         quantity: new BigNumber(80),

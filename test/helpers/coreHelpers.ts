@@ -1,7 +1,7 @@
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
 import { Provider } from 'ethereum-types';
-import { Address } from 'set-protocol-utils';
+import { Address, SetProtocolTestUtils } from 'set-protocol-utils';
 import {
   Core,
   ERC20Wrapper,
@@ -36,7 +36,11 @@ const txDefaults = {
   gas: DEFAULT_GAS_LIMIT,
 };
 
-export const deployCore = async (provider: Provider) => {
+export const deployCore = async (
+  provider: Provider,
+  transferProxyAddress: Address,
+  vaultAddress: Address,
+) => {
   const coreContract = contract(Core);
   coreContract.setProvider(provider);
   coreContract.setNetwork(12345);
@@ -45,11 +49,11 @@ export const deployCore = async (provider: Provider) => {
   orderLibraryContract.setProvider(provider);
   orderLibraryContract.defaults(txDefaults);
 
-  const orderLibrary = await orderLibraryContract.new();
+  const orderLibrary = await orderLibraryContract.new(transferProxyAddress, vaultAddress);
   await coreContract.link('OrderLibrary', orderLibrary.address);
 
   // Deploy Core
-  const coreInstance = await coreContract.new();
+  const coreInstance = await coreContract.new(transferProxyAddress, vaultAddress);
 
   return coreInstance.address;
 };
@@ -62,18 +66,12 @@ export const deploySetTokenFactory = async (coreAddress: Address, provider: Prov
   setTokenFactoryContract.defaults(txDefaults);
 
   // Deploy SetTokenFactory
-  const setTokenFactoryInstance = await setTokenFactoryContract.new();
+  const setTokenFactoryInstance = await setTokenFactoryContract.new(coreAddress);
   const setTokenFactoryWrapper = await SetTokenFactoryContract.at(
     setTokenFactoryInstance.address,
     web3,
     txDefaults,
   );
-
-  // Set Core Address
-  await setTokenFactoryWrapper.setCoreAddress.sendTransactionAsync(coreAddress, txDefaults);
-
-  // Authorize Core
-  await setTokenFactoryWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, txDefaults);
 
   // Enable Factory
   const coreWrapper = await CoreContract.at(coreAddress, web3, txDefaults);
@@ -174,6 +172,66 @@ export const registerExchange = async (
   );
 };
 
+export const approveForZeroEx = async (
+  web3: Web3,
+  componentTokens: Address[],
+  zeroExMakerAddress: Address,
+  takerAddress: Address,
+) => {
+  const txOpts = {
+    from: DEFAULT_ACCOUNT,
+    gasPrice: DEFAULT_GAS_PRICE,
+    gas: DEFAULT_GAS_LIMIT,
+  };
+
+  const tokenWrapperPromises = _.map(componentTokens, async token =>
+    await StandardTokenMockContract.at(
+      token,
+      web3,
+      txOpts,
+    )
+  );
+  const tokenWrappers = await Promise.all(tokenWrapperPromises);
+
+  // Give some tokens to zeroExMakerAddress
+  const zeroExMakerTransferPromises = _.map(tokenWrappers, async token =>
+    await token.transfer.sendTransactionAsync(
+      zeroExMakerAddress,
+      new BigNumber(1000),
+      txOpts,
+    ),
+  );
+  await Promise.all(zeroExMakerTransferPromises);
+
+  const zeroExMakerApprovePromises = _.map(tokenWrappers, async tokenWrapper =>
+    await tokenWrapper.approve.sendTransactionAsync(
+      SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+      { from: zeroExMakerAddress },
+    ),
+  );
+  await Promise.all(zeroExMakerApprovePromises);
+
+  // Give some tokens to takerAddress
+  const takerTransferPromises = _.map(tokenWrappers, async token =>
+    await token.transfer.sendTransactionAsync(
+      zeroExMakerAddress,
+      new BigNumber(1000),
+      txOpts,
+    ),
+  );
+  await Promise.all(takerTransferPromises);
+
+  const takerApprovePromises = _.map(tokenWrappers, async tokenWrapper =>
+    await tokenWrapper.approve.sendTransactionAsync(
+      SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+      { from: takerAddress },
+    ),
+  );
+  await Promise.all(takerApprovePromises);
+};
+
 export const approveForFill = async (
   web3: Web3,
   componentTokens: Address[],
@@ -257,7 +315,6 @@ export const approveForFill = async (
 };
 
 export const deployTransferProxy = async (
-  coreAddress: Address,
   erc20WrapperAddress: Address,
   provider: Provider,
 ) => {
@@ -272,19 +329,10 @@ export const deployTransferProxy = async (
 
   // Deploy TransferProxy
   const transferProxyInstance = await transferProxyContract.new();
-  const transferProxyWrapper = await TransferProxyContract.at(
-    transferProxyInstance.address,
-    web3,
-    txDefaults,
-  );
-
-  await transferProxyWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, txDefaults);
-
   return transferProxyInstance.address;
 };
 
 export const deployVault = async (
-  coreAddress: Address,
   erc20WrapperAddress: Address,
   provider: Provider,
 ) => {
@@ -299,10 +347,6 @@ export const deployVault = async (
 
   // Deploy Vault
   const vaultInstance = await vaultContract.new();
-  const vaultWrapper = await VaultContract.at(vaultInstance.address, web3, txDefaults);
-
-  await vaultWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, txDefaults);
-
   return vaultInstance.address;
 };
 
@@ -315,14 +359,20 @@ export const initializeCoreAPI = async (provider: Provider) => {
 
   const erc20Wrapper = await erc20WrapperContract.new();
 
-  const coreAddress = await deployCore(provider);
-  const transferProxyAddress = await deployTransferProxy(coreAddress, erc20Wrapper.address, provider);
-  const vaultAddress = await deployVault(coreAddress, erc20Wrapper.address, provider);
+  const transferProxyAddress = await deployTransferProxy(erc20Wrapper.address, provider);
+  const vaultAddress = await deployVault(erc20Wrapper.address, provider);
 
-  const coreWrapper = await CoreContract.at(coreAddress, web3, txDefaults);
-  // Set Vault and TransferProxy on Core
-  await coreWrapper.setVaultAddress.sendTransactionAsync(vaultAddress, txDefaults);
-  await coreWrapper.setTransferProxyAddress.sendTransactionAsync(transferProxyAddress, txDefaults);
+  const coreAddress = await deployCore(provider, transferProxyAddress, vaultAddress);
+
+  const transferProxyWrapper = await TransferProxyContract.at(
+    transferProxyAddress,
+    web3,
+    txDefaults,
+  );
+  await transferProxyWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, txDefaults);
+
+  const vaultWrapper = await VaultContract.at(vaultAddress, web3, txDefaults);
+  await vaultWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, txDefaults);
 
   return new CoreAPI(web3, coreAddress, transferProxyAddress, vaultAddress);
 };

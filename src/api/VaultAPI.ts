@@ -54,6 +54,6 @@ export class VaultAPI {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     this.assert.schema.isValidAddress('ownerAddress', ownerAddress);
     const vaultInstance = await this.contracts.loadVaultAsync(this.vaultAddress);
-    return await vaultInstance.getOwnerBalance.callAsync(ownerAddress, tokenAddress);
+    return await vaultInstance.getOwnerBalance.callAsync(tokenAddress, ownerAddress);
   }
 }

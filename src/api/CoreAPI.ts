@@ -25,8 +25,8 @@ import {
   IssuanceOrder,
   SignedIssuanceOrder,
   TakerWalletOrder,
+  ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
-import { Order as ZeroExOrder } from '@0xproject/types';
 
 import { ContractsAPI } from '.';
 import { ZERO } from '../constants';
@@ -121,8 +121,9 @@ export class CoreAPI {
       components,
       units,
       naturalUnit,
-      name,
-      symbol,
+      SetProtocolUtils.stringToBytes(name),
+      SetProtocolUtils.stringToBytes(symbol),
+      '',
       txSettings,
     );
 
@@ -452,7 +453,7 @@ export class CoreAPI {
   public async fillOrder(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orders: (ZeroExOrder | TakerWalletOrder)[],
+    orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
     txOpts?: TxData,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
@@ -477,7 +478,6 @@ export class CoreAPI {
     const orderData = await this.setProtocolUtils.generateSerializedOrders(
       makerToken,
       makerTokenAmount,
-      quantityToFill,
       orders,
     );
 
