@@ -243,16 +243,16 @@
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.104.tgz#53ee2357fa2e6e68379341d92eb2ecea4b11bb80"
 
 "@types/marked@^0.4.0":
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/@types/marked/-/marked-0.4.0.tgz#057a6165703e7419217f8ffc6887747f980b6315"
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@types/marked/-/marked-0.4.1.tgz#6595701c4d0dfde9d04894d3be04b8a97a49e0d7"
 
 "@types/minimatch@*", "@types/minimatch@3.0.3":
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.3.tgz#3dca0e3f33b200fc7d1139c0cd96c1268cadfd9d"
 
 "@types/node@*", "@types/node@^10.0.3":
-  version "10.7.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.7.1.tgz#b704d7c259aa40ee052eec678758a68d07132a2e"
+  version "10.9.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.9.0.tgz#d2824d342b1d733e22ef169708bd254924db16bd"
 
 "@types/node@9.6.0":
   version "9.6.0"
@@ -756,13 +756,13 @@ bignumber.js@^5.0.0:
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-5.0.0.tgz#fbce63f09776b3000a83185badcde525daf34833"
 
-"bignumber.js@git+https://github.com/debris/bignumber.js#master":
-  version "2.0.7"
-  resolved "git+https://github.com/debris/bignumber.js#c7a38de919ed75e6fb6ba38051986e294b328df9"
-
 "bignumber.js@git+https://github.com/debris/bignumber.js.git#94d7146671b9719e00a09c29b01a691bc85048c2":
   version "2.0.7"
   resolved "git+https://github.com/debris/bignumber.js.git#94d7146671b9719e00a09c29b01a691bc85048c2"
+
+"bignumber.js@git+https://github.com/debris/bignumber.js.git#master":
+  version "2.0.7"
+  resolved "git+https://github.com/debris/bignumber.js.git#c7a38de919ed75e6fb6ba38051986e294b328df9"
 
 "bignumber.js@git+https://github.com/frozeman/bignumber.js-nolookahead.git":
   version "2.0.7"
@@ -4790,30 +4790,7 @@ set-protocol-contracts@0.3.2:
     tslint-eslint-rules "^5.3.1"
     zeppelin-solidity "^1.10.0"
 
-set-protocol-utils@^0.3.11:
-  version "0.3.19"
-  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.19.tgz#86d07b272ece93cff2245b2f8d6d2936cba048da"
-  dependencies:
-    "@0xproject/base-contract" "^1.0.4"
-    "@0xproject/order-utils" "^1.0.1-rc.2"
-    "@0xproject/types" "^1.0.1-rc.3"
-    "@0xproject/typescript-typings" "^1.0.4"
-    "@0xproject/web3-wrapper" "^1.1.2"
-    "@types/lodash" "4.14.104"
-    "@types/node" "^8.0.53"
-    abi-decoder "^1.0.9"
-    bignumber.js "~4.1.0"
-    ethereum-types "^1.0.0"
-    ethereumjs-util "^5.1.1"
-    ethers "3.0.22"
-    husky "^0.14.3"
-    js-sha3 "^0.7.0"
-    lint-staged "^7.2.0"
-    lodash "^4.17.4"
-    tslint-eslint-rules "^5.3.1"
-    web3 "0.20.0"
-
-set-protocol-utils@^0.3.20:
+set-protocol-utils@^0.3.11, set-protocol-utils@^0.3.20:
   version "0.3.20"
   resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.20.tgz#a7c2d00990b220d4ee26f987a9a3018ae92050c4"
   dependencies:
@@ -5571,8 +5548,8 @@ typedoc-default-themes@^0.5.0:
   resolved "https://registry.yarnpkg.com/typedoc-default-themes/-/typedoc-default-themes-0.5.0.tgz#6dc2433e78ed8bea8e887a3acde2f31785bd6227"
 
 typedoc-plugin-markdown@^1.1.6:
-  version "1.1.13"
-  resolved "https://registry.yarnpkg.com/typedoc-plugin-markdown/-/typedoc-plugin-markdown-1.1.13.tgz#434ae963156cefaba9dfe3330ce6abf1406ee08d"
+  version "1.1.14"
+  resolved "https://registry.yarnpkg.com/typedoc-plugin-markdown/-/typedoc-plugin-markdown-1.1.14.tgz#cba9e063775575582941371ebbc0bd0fd68f04e0"
   dependencies:
     "@forked/turndown" "^4.0.4"
 

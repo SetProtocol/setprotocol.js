@@ -475,8 +475,6 @@ export class CoreAPI {
       signature,
     } = signedIssuanceOrder;
 
-    console.log(orders);
-
     const orderData = await this.setProtocolUtils.generateSerializedOrders(
       makerToken,
       makerTokenAmount,

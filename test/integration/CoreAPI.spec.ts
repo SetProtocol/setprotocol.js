@@ -905,12 +905,12 @@ describe('Core API', () => {
     test('fills an issuance order with valid parameters with 0x orders', async () => {
       const order = {
         setAddress: setTokenAddress,
-        quantity: new BigNumber(80),
+        quantity: new BigNumber(20),
         requiredComponents: componentAddresses,
         requiredComponentAmounts: componentAddresses.map(() => new BigNumber(20)),
         makerAddress: DEFAULT_ACCOUNT,
         makerToken: componentAddresses[0],
-        makerTokenAmount: new BigNumber(6),
+        makerTokenAmount: new BigNumber(20),
         expiration: SetProtocolUtils.generateTimestamp(60),
         relayerAddress: ACCOUNTS[1].address,
         relayerToken: componentAddresses[0],
