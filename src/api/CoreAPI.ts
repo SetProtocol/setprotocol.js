@@ -480,7 +480,6 @@ export class CoreAPI {
     const orderData = await this.setProtocolUtils.generateSerializedOrders(
       makerToken,
       makerTokenAmount,
-      quantityToFill,
       orders,
     );
 

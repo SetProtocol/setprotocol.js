@@ -902,7 +902,7 @@ describe('Core API', () => {
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
     });
 
-    test.only('fills an issuance order with valid parameters with 0x orders', async () => {
+    test('fills an issuance order with valid parameters with 0x orders', async () => {
       const order = {
         setAddress: setTokenAddress,
         quantity: new BigNumber(80),
@@ -986,7 +986,7 @@ describe('Core API', () => {
         takerAddress,
       );
 
-      const defaultZeroExOrderTakerTokenAmount = new BigNumber(40);
+      const defaultZeroExOrderTakerTokenAmount = new BigNumber(10);
       const zeroExOrder: ZeroExOrder = SetProtocolUtils.generateZeroExOrder(
         NULL_ADDRESS,                       // senderAddress
         zeroExMakerAddress,                 // makerAddress
@@ -1005,7 +1005,7 @@ describe('Core API', () => {
       const zeroExOrderSignature = await setProtocolUtils.signZeroExOrderAsync(zeroExOrder);
 
       // Second 0x order
-      const secondZeroExOrderTakerTokenAmount = new BigNumber(40);
+      const secondZeroExOrderTakerTokenAmount = new BigNumber(10);
       const secondZeroExOrder: ZeroExOrder = SetProtocolUtils.generateZeroExOrder(
         NULL_ADDRESS,                       // senderAddress
         zeroExMakerAddress,                 // makerAddress
@@ -1024,11 +1024,19 @@ describe('Core API', () => {
       const secondZeroExOrderSignature = await setProtocolUtils.signZeroExOrderAsync(secondZeroExOrder);
 
       const zeroExExchangeOrders = [
-        { ...zeroExOrder, signature: zeroExOrderSignature },
-        { ...secondZeroExOrder, signature: secondZeroExOrderSignature },
+        {
+          ...zeroExOrder,
+          signature: zeroExOrderSignature,
+          fillAmount: defaultZeroExOrderTakerTokenAmount,
+        },
+        {
+          ...secondZeroExOrder,
+          signature: secondZeroExOrderSignature,
+          fillAmount: secondZeroExOrderTakerTokenAmount,
+        },
       ];
 
-      const quantityToFill = new BigNumber(40);
+      const quantityToFill = new BigNumber(20);
       const txHash = await coreAPI.fillOrder(
         signedIssuanceOrder,
         quantityToFill,

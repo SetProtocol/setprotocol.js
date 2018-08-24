@@ -4790,9 +4790,32 @@ set-protocol-contracts@0.3.2:
     tslint-eslint-rules "^5.3.1"
     zeppelin-solidity "^1.10.0"
 
-set-protocol-utils@^0.3.11, set-protocol-utils@^0.3.18:
+set-protocol-utils@^0.3.11:
   version "0.3.19"
   resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.19.tgz#86d07b272ece93cff2245b2f8d6d2936cba048da"
+  dependencies:
+    "@0xproject/base-contract" "^1.0.4"
+    "@0xproject/order-utils" "^1.0.1-rc.2"
+    "@0xproject/types" "^1.0.1-rc.3"
+    "@0xproject/typescript-typings" "^1.0.4"
+    "@0xproject/web3-wrapper" "^1.1.2"
+    "@types/lodash" "4.14.104"
+    "@types/node" "^8.0.53"
+    abi-decoder "^1.0.9"
+    bignumber.js "~4.1.0"
+    ethereum-types "^1.0.0"
+    ethereumjs-util "^5.1.1"
+    ethers "3.0.22"
+    husky "^0.14.3"
+    js-sha3 "^0.7.0"
+    lint-staged "^7.2.0"
+    lodash "^4.17.4"
+    tslint-eslint-rules "^5.3.1"
+    web3 "0.20.0"
+
+set-protocol-utils@^0.3.20:
+  version "0.3.20"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.20.tgz#a7c2d00990b220d4ee26f987a9a3018ae92050c4"
   dependencies:
     "@0xproject/base-contract" "^1.0.4"
     "@0xproject/order-utils" "^1.0.1-rc.2"
