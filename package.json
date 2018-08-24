@@ -25,7 +25,7 @@
     "playground": "yarn run build-ts; node dist/playground",
     "precommit": "lint-staged",
     "clean-docs": "rm -rf documentation/interfaces; rm -rf documentation/modules; rm -rf documentation/README.md",
-    "docs": "rm -rf documentation/classes; typedoc --theme markdown --excludeExternals  --externalPattern \"**/node_modules/**\" --ignoreCompilerErrors --out documentation/ src/api; yarn run clean-docs",
+    "docs": "rm -rf documentation/classes; typedoc --theme markdown --excludeExternals  --externalPattern \"**/node_modules/**\" --ignoreCompilerErrors --out documentation/ src/index.ts; yarn run clean-docs",
     "deploy-docs": "gh-pages -d docs",
     "prepublishOnly": "yarn build"
   },
