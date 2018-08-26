@@ -21,7 +21,7 @@ import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
 import { ERC20Assertions } from './ERC20Assertions';
-import { DetailedERC20Contract, SetTokenContract } from '../contracts';
+import { DetailedERC20Contract } from 'set-protocol-contracts';
 import { setTokenAssertionsErrors } from '../errors';
 import { BigNumber } from '../util';
 import { ZERO } from '../constants';
@@ -41,7 +41,7 @@ export class SetTokenAssertions {
    * @param  setTokenInstance An instance of the Set Token contract
    * @return                  Void Promise
    */
-  public async implementsSetToken(setTokenInstance: SetTokenContract): Promise<void> {
+  public async implementsSetToken(setTokenInstance: Web3.ContractInstance): Promise<void> {
     const { address } = setTokenInstance;
 
     try {
@@ -66,7 +66,7 @@ export class SetTokenAssertions {
    * @return                  Void Promise
    */
   public async hasSufficientBalances(
-    setTokenInstance: SetTokenContract,
+    setTokenInstance: Web3.ContractInstance,
     ownerAddress: Address,
     quantityInWei: BigNumber,
   ): Promise<void> {
@@ -107,7 +107,7 @@ export class SetTokenAssertions {
    * @return                  Void Promise
    */
   public async hasSufficientAllowances(
-    setTokenInstance: SetTokenContract,
+    setTokenInstance: Web3.ContractInstance,
     ownerAddress: Address,
     spenderAddress: Address,
     quantityInWei: BigNumber,
@@ -142,7 +142,7 @@ export class SetTokenAssertions {
   }
 
   public async isMultipleOfNaturalUnit(
-    setTokenInstance: SetTokenContract,
+    setTokenInstance: Web3.ContractInstance,
     quantityInWei: BigNumber,
     errorMessage: string,
   ): Promise<void> {

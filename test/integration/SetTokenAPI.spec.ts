@@ -28,13 +28,20 @@ import * as _ from 'lodash';
 import * as Web3 from 'web3';
 import compact = require('lodash.compact');
 
-import { Core, SetToken, SetTokenFactory, StandardTokenMock } from 'set-protocol-contracts';
+import {
+  Core,
+  SetToken,
+  SetTokenFactory,
+  StandardTokenMock,
+  CoreContract,
+  SetTokenFactoryContract,
+  SetTokenContract,
+} from 'set-protocol-contracts';
 
 import { DEFAULT_ACCOUNT } from '../accounts';
 import { testSets, TestSet } from '../testSets';
 import { CoreAPI, SetTokenAPI } from '../../src/api';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
-import { CoreContract, SetTokenFactoryContract, SetTokenContract } from '../../src/contracts';
 import { Web3Utils } from '../../src/util';
 import {
   initializeCoreAPI,

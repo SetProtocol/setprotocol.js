@@ -21,7 +21,7 @@ import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
 import { BigNumber } from '../util';
-import { VaultContract, SetTokenContract, DetailedERC20Contract } from '../contracts';
+import { DetailedERC20Contract } from 'set-protocol-contracts';
 
 export class VaultAssertions {
   private web3: Web3;
@@ -40,7 +40,7 @@ export class VaultAssertions {
    * @return                  Void Promise
    */
   public async hasSufficientTokenBalance(
-    vaultInstance: VaultContract,
+    vaultInstance: Web3.ContractInstance,
     tokenAddress: Address,
     ownerAddress: Address,
     quantityInWei: BigNumber,
@@ -63,8 +63,8 @@ export class VaultAssertions {
    * @return                  Void Promise
    */
   public async hasSufficientSetTokensBalances(
-    vaultInstance: VaultContract,
-    setTokenInstance: SetTokenContract,
+    vaultInstance: Web3.ContractInstance,
+    setTokenInstance: Web3.ContractInstance,
     quantityInWei: BigNumber,
     errorMessage: string,
   ): Promise<void> {
