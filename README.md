@@ -55,21 +55,23 @@ const setProtocol = new SetProtocol(
 ```
 
 ##### Kovan TestNet
-* **ERC20Wrapper** - 0xe4c24cfb8db141caf381e997d8e481349b61bbd2
-* **Vault** - 0x8956044921a7c4b16d0993a39c66cc4ee6ad2aac
-* **Core** - 0xc375d365eaa16d75b61b4de09e1c3b2a4e5f53bc
-* **TransferProxy** - 0x592ec19bd3d2faffb18d91b46ffa54252804af4c
-* **SetTokenFactory** - 0xbd28d534213a4b8af537464d5f99cd3e9712d8cd
-* **TakerWalletWrapper** - 0x389b8cf1fbe295a2ad99550199efba55ae064e52
-* **ZeroExExchangeWrapper** - 0x777d7950468fe50563ee7603b70a0bf9a02bbe8d
+* **ERC20Wrapper** - 0xa821885e297642707f6138d878a6423746c71dc6
+* **Vault** - 0x014e9b34486cfa13e9a2d87028d38cd98f996c8c
+* **Core** - 0x29f13822ece62b7a436a45903ce6d5c97d6e4cc9
+* **TransferProxy** - 0xd50ddfed470cc13572c5246e71d4cfb4aba73def
+* **SetTokenFactory** - 0x6c51d8dad8404dbd91e8ab063d21e85ddec9f626
+* **RebalancingSetTokenFactory** - 0x756e082ab6ae4f57646b7a04f125e10d01ac1ba7
+* **TakerWalletWrapper** - 0xafe3eee28d01c97688ca9fd207bd88258e71117f
+* **ZeroExExchangeWrapper** - 0x54f83c35a11fe2389633808feb0284139049d878
 
 ##### Ropsten TestNet (0x Exchange unavailable)
-* **ERC20Wrapper** - 0xc4d32a6ceccb24bc729013ec391c18df30f83af1
-* **Core** - 0xfff8d0c92169c53ead06119fb0aeb3bccfbbbd4a
-* **Vault** - 0x1e43c2b36b22b8c8bf1dc0812c65e35fdb6d4dd0
-* **TransferProxy** - 0xdfdcd62311941fed657acae446525bafee85d80d
-* **SetTokenFactory** - 0xeebaba65769084d176d1ff6fd6e6be3f8e9a63b7
-* **TakerWalletWrapper** - 0x1e7c93a85c42fcddc538390875b22e4ffb3ee4f7
+* **ERC20Wrapper** - 0x114746cdc7481e07849d34cc0fe0db6e84a0cb0b
+* **Core** - 0xcdb56f7d7ca4c53b507af0499abd683df283256a
+* **Vault** - 0x6b6a3941b05dd1c2fd70e6c204d04cf8d5241d26
+* **TransferProxy** - 0x85754cb8b4820c3b4cdae4f0ed804f33dd55b238
+* **SetTokenFactory** - 0xa41e3f8179622054058486946dc97c46b7c6241f
+* **RebalancingSetTokenFactory** - 0x1be5ba38bb74ed973a40732c1ee2d92b7b720a5c
+* **TakerWalletWrapper** - 0x4f97502c7f161aa507f7cce50b94f17357e072de
 * **ZeroExExchangeWrapper** - N/A on Ropsten
 
 ##### Usage
