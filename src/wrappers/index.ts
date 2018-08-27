@@ -18,7 +18,8 @@
 
 import { ContractWrapper } from './ContractWrapper';
 import { CoreWrapper } from './CoreWrapper';
+import { Erc20Wrapper } from './Erc20Wrapper';
 import { SetTokenWrapper } from './SetTokenWrapper';
 import { VaultWrapper } from './VaultWrapper';
 
-export { ContractWrapper, CoreWrapper, SetTokenWrapper, VaultWrapper };
+export { ContractWrapper, CoreWrapper, Erc20Wrapper, SetTokenWrapper, VaultWrapper };

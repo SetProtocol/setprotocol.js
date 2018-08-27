@@ -19,7 +19,7 @@
 import * as Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import { OrderAPI } from './api';
-import { CoreWrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
+import { CoreWrapper, Erc20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
 import { BigNumber } from './util';
 import { TxData } from './types/common';
 
@@ -49,6 +49,11 @@ class SetProtocol {
   public orders: OrderAPI;
 
   /**
+   * An instance of the OrderAPI class containing methods for relaying IssuanceOrders
+   */
+  public erc20: Erc20Wrapper;
+
+  /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
    * @param web3                  The Web3.js Provider instance you would like the SetProtocol.js library
    *                              to use for interacting with the Ethereum network.
@@ -69,6 +74,7 @@ class SetProtocol {
     this.vault = new VaultWrapper(this.web3, vaultAddress);
 
     this.orders = new OrderAPI(this.web3, this.core);
+    this.erc20 = new Erc20Wrapper(this.web3);
   }
 
   /**

@@ -19,7 +19,7 @@
 import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
-import { ContractsAPI } from '.';
+import { ContractWrapper } from '.';
 import { erc20AssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { TxData } from '../types/common';
@@ -32,15 +32,15 @@ import { BigNumber, generateTxOpts } from '../util';
  * The Vault API handles all functions on the Vault smart contract.
  *
  */
-export class Erc20API {
+export class Erc20Wrapper {
   private web3: Web3;
   private assert: Assertions;
-  private contracts: ContractsAPI;
+  private contracts: ContractWrapper;
 
   public constructor(web3: Web3) {
     this.web3 = web3;
     this.assert = new Assertions(this.web3);
-    this.contracts = new ContractsAPI(this.web3);
+    this.contracts = new ContractWrapper(this.web3);
   }
 
   /**
