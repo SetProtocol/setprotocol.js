@@ -61,7 +61,6 @@ export class Erc20API {
    * Gets name of the ERC20 token
    *
    * @param  tokenAddress  Address of the ERC20 token
-   * @param  userAddress Address of the user
    * @return             The name of the ERC20 token
    */
   public async getNameAsync(tokenAddress: Address): Promise<string> {
@@ -74,13 +73,24 @@ export class Erc20API {
    * Gets balance of the ERC20 token
    *
    * @param  tokenAddress  Address of the ERC20 token
-   * @param  userAddress Address of the user
    * @return             The symbol of the ERC20 token
    */
   public async getSymbolAsync(tokenAddress: Address): Promise<string> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
     return await tokenInstance.symbol.callAsync(tokenAddress);
+  }
+
+  /**
+   * Gets the total supply of the ERC20 token
+   *
+   * @param  tokenAddress  Address of the ERC20 token
+   * @return             The symbol of the ERC20 token
+   */
+  public async getTotalSupplyAsync(tokenAddress: Address): Promise<string> {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+    return await tokenInstance.totalSupply.callAsync(tokenAddress);
   }
 
   /**
@@ -195,6 +205,35 @@ export class Erc20API {
     );
 
     const txHash = tokenInstance.transferFrom.sendTransactionAsync(from, to, value, txOptions);
+
+    return txHash;
+  }
+
+  /**
+   * Asynchronously approves the value amount of the spender from the owner
+   *
+   * @param  tokenAddress         the address of the token being used.
+   * @param  ownerAddress         from whom are the funds being transferred.
+   * @param  spenderAddress       to whom are the funds being transferred.
+   * @param  value                the amount to be transferred.
+   * @param  txOpts               any parameters necessary to modify the transaction.
+   * @return                      the hash of the resulting transaction.
+   */
+  public async approveAsync(
+    tokenAddress: Address,
+    ownerAddress: Address,
+    spenderAddress: Address,
+    value: BigNumber,
+    txOpts?: TxData,
+  ): Promise<string> {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    this.assert.schema.isValidAddress('ownerAddress', ownerAddress);
+    this.assert.schema.isValidAddress('spenderAddress', spenderAddress);
+
+    const txOptions = await generateTxOpts(this.web3, txOpts);
+
+    const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+    const txHash = tokenInstance.approve.sendTransactionAsync(ownerAddress, spenderAddress, value, txOptions);
 
     return txHash;
   }
