@@ -204,7 +204,7 @@ export class Erc20API {
         erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
     );
 
-    const txHash = tokenInstance.transferFrom.sendTransactionAsync(from, to, value, txOptions);
+    const txHash = await tokenInstance.transferFrom.sendTransactionAsync(from, to, value, txOptions);
 
     return txHash;
   }
@@ -213,27 +213,24 @@ export class Erc20API {
    * Asynchronously approves the value amount of the spender from the owner
    *
    * @param  tokenAddress         the address of the token being used.
-   * @param  ownerAddress         from whom are the funds being transferred.
-   * @param  spenderAddress       to whom are the funds being transferred.
-   * @param  value                the amount to be transferred.
+   * @param  spenderAddress       the spender.
+   * @param  value                the amount to be approved.
    * @param  txOpts               any parameters necessary to modify the transaction.
    * @return                      the hash of the resulting transaction.
    */
   public async approveAsync(
     tokenAddress: Address,
-    ownerAddress: Address,
     spenderAddress: Address,
     value: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-    this.assert.schema.isValidAddress('ownerAddress', ownerAddress);
     this.assert.schema.isValidAddress('spenderAddress', spenderAddress);
 
     const txOptions = await generateTxOpts(this.web3, txOpts);
 
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
-    const txHash = tokenInstance.approve.sendTransactionAsync(ownerAddress, spenderAddress, value, txOptions);
+    const txHash = await tokenInstance.approve.sendTransactionAsync(spenderAddress, value, txOptions);
 
     return txHash;
   }

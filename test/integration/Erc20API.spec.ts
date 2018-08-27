@@ -76,6 +76,7 @@ let currentSnapshotId: number;
 describe('ERC20 API', () => {
   let erc20API: Erc20API;
   let standardTokenMock: StandardTokenMock;
+  let subjectCaller: Address;
   const subjectSupply: BigNumber = STANDARD_SUPPLY;
   const subjectName: string = 'ERC20 Token';
   const subjectSymbol: string = 'ERC';
@@ -156,10 +157,50 @@ describe('ERC20 API', () => {
     });
   });
 
+  describe('#approveAsync', async () => {
+    let subjectSpender: Address;
+    let subjectValue: BigNumber;
+
+    beforeEach(async () => {
+      erc20API = new Erc20API(web3);
+
+      standardTokenMock = await standardTokenMockContract.new(
+        DEFAULT_ACCOUNT,
+        subjectSupply,
+        subjectName,
+        subjectSymbol,
+        subjectDecimals,
+      );
+
+      subjectCaller = DEFAULT_ACCOUNT;
+      subjectValue = STANDARD_TRANSFER_VALUE;
+      subjectSpender = OTHER_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await erc20API.approveAsync(
+        standardTokenMock.address,
+        subjectSpender,
+        subjectValue,
+        { from: subjectCaller },
+      );
+    }
+
+    test('should increment the spenders balance', async () => {
+      await subject();
+
+      const spenderBalance = await standardTokenMock.allowance(
+        DEFAULT_ACCOUNT,
+        subjectSpender,
+      );
+
+      expect(spenderBalance).to.bignumber.equal(subjectValue);
+    });
+  });
+
   describe('#transferAsync', async () => {
     let subjectTo: Address;
     let subjectValue: BigNumber;
-    let subjectCaller: Address;
 
     beforeEach(async () => {
       erc20API = new Erc20API(web3);
@@ -195,7 +236,6 @@ describe('ERC20 API', () => {
 
       const postUserBalance = await standardTokenMock.balanceOf(subjectCaller);
       expect(postUserBalance).to.bignumber.equal(expectedBalance);
-
     });
 
     test("should increment the recipient's balance", async () => {
@@ -213,9 +253,4 @@ describe('ERC20 API', () => {
   describe('#transferFromAsync', async () => {
 
   });
-
-  describe('#approveAsync', async () => {
-
-  });
-
 });
