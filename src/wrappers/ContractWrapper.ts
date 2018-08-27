@@ -22,6 +22,7 @@ import { Assertions } from '../assertions';
 import {
   BaseContract,
   CoreContract,
+  DetailedERC20Contract,
   SetTokenContract,
   VaultContract,
 } from 'set-protocol-contracts';
@@ -98,6 +99,34 @@ export class ContractWrapper {
   }
 
   /**
+   * Load ERC20 Token contract
+   *
+   * @param  tokenAddress    Address of the ERC20 Token contract
+   * @param  transactionOptions Options sent into the contract deployed method
+   * @return                    The ERC20 Token Contract
+   */
+  public async loadERC20TokenAsync(
+    tokenAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<DetailedERC20Contract> {
+    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    const cacheKey = this.getERC20TokenCacheKey(tokenAddress);
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as DetailedERC20Contract;
+    } else {
+      const erc20TokenContract = await DetailedERC20Contract.at(
+        tokenAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = erc20TokenContract;
+      await this.assert.erc20.implementsERC20(erc20TokenContract);
+      return erc20TokenContract;
+    }
+  }
+
+  /**
    * Load Vault contract
    *
    * @param  vaultAddress       Address of the Vault contract
@@ -138,6 +167,16 @@ export class ContractWrapper {
    */
   private getSetTokenCacheKey(setTokenAddress: Address): string {
     return `SetToken_${setTokenAddress}`;
+  }
+
+  /**
+   * Creates a string used for accessing values in the ERC20 token cache
+   *
+   * @param  tokenAddress Address of the ERC20 Token contract to use
+   * @return                 The cache key
+   */
+  private getERC20TokenCacheKey(tokenAddress: Address): string {
+    return `ERC20Token_${tokenAddress}`;
   }
 
   /**
