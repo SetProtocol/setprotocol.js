@@ -4774,9 +4774,9 @@ set-immediate-shim@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/set-immediate-shim/-/set-immediate-shim-1.0.1.tgz#4b2b1b27eb808a9f8dcc481a58e5e56f599f3f61"
 
-set-protocol-contracts@0.3.3:
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-0.3.3.tgz#72ec890d3fbe673211bdebe80307ade0ee62f39d"
+set-protocol-contracts@0.3.4:
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-0.3.4.tgz#24692c03f1ff174676eebae796e142ec24e16938"
   dependencies:
     eth-gas-reporter "^0.1.10"
     fs-extra "^5.0.0"
