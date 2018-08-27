@@ -46,7 +46,7 @@ import {
   VaultContract,
   CoreContract,
   ZeroExExchangeWrapperContract,
-} from '../../src/contracts';
+} from 'set-protocol-contracts';
 import {
   DEFAULT_GAS_PRICE,
   DEFAULT_GAS_LIMIT,

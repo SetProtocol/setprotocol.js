@@ -20,11 +20,11 @@ import * as Web3 from 'web3';
 
 import { Assertions } from '../assertions';
 import {
-  ContractWrapper,
+  BaseContract,
   CoreContract,
   SetTokenContract,
   VaultContract,
-} from '../contracts';
+} from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
 /**

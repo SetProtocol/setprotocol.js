@@ -756,13 +756,13 @@ bignumber.js@^5.0.0:
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-5.0.0.tgz#fbce63f09776b3000a83185badcde525daf34833"
 
+"bignumber.js@git+https://github.com/debris/bignumber.js#master":
+  version "2.0.7"
+  resolved "git+https://github.com/debris/bignumber.js#c7a38de919ed75e6fb6ba38051986e294b328df9"
+
 "bignumber.js@git+https://github.com/debris/bignumber.js.git#94d7146671b9719e00a09c29b01a691bc85048c2":
   version "2.0.7"
   resolved "git+https://github.com/debris/bignumber.js.git#94d7146671b9719e00a09c29b01a691bc85048c2"
-
-"bignumber.js@git+https://github.com/debris/bignumber.js.git#master":
-  version "2.0.7"
-  resolved "git+https://github.com/debris/bignumber.js.git#c7a38de919ed75e6fb6ba38051986e294b328df9"
 
 "bignumber.js@git+https://github.com/frozeman/bignumber.js-nolookahead.git":
   version "2.0.7"
@@ -4774,23 +4774,24 @@ set-immediate-shim@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/set-immediate-shim/-/set-immediate-shim-1.0.1.tgz#4b2b1b27eb808a9f8dcc481a58e5e56f599f3f61"
 
-set-protocol-contracts@0.3.2:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-0.3.2.tgz#ac15c6272531680dee12062708ea76902bcbd0a4"
+set-protocol-contracts@0.3.3:
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-0.3.3.tgz#72ec890d3fbe673211bdebe80307ade0ee62f39d"
   dependencies:
     eth-gas-reporter "^0.1.10"
     fs-extra "^5.0.0"
     husky "^0.14.3"
     lint-staged "^7.2.0"
-    set-protocol-utils "^0.3.11"
+    set-protocol-utils "^0.3.20"
     sol-trace-set "^0.0.1"
     solium "^1.1.7"
     tiny-promisify "^1.0.0"
     truffle-hdwallet-provider "^0.0.3"
     tslint-eslint-rules "^5.3.1"
+    web3-utils "1.0.0-beta.35"
     zeppelin-solidity "^1.10.0"
 
-set-protocol-utils@^0.3.11, set-protocol-utils@^0.3.20:
+set-protocol-utils@^0.3.20:
   version "0.3.20"
   resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.20.tgz#a7c2d00990b220d4ee26f987a9a3018ae92050c4"
   dependencies:

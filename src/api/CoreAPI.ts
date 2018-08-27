@@ -34,7 +34,7 @@ import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../er
 import { Assertions } from '../assertions';
 import { TxData } from '../types/common';
 import { BigNumber, generateTxOpts } from '../util';
-import { DetailedERC20Contract, SetTokenContract, VaultContract } from '../contracts';
+import { DetailedERC20Contract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
 /**
  * @title CoreAPI

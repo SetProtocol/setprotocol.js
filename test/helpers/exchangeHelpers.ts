@@ -5,13 +5,11 @@ import { Provider } from 'ethereum-types';
 import {
   TakerWalletWrapper,
   ZeroExExchangeWrapper,
-} from 'set-protocol-contracts';
-import { Address } from 'set-protocol-utils';
-import {
   TakerWalletWrapperContract,
   ZeroExExchangeWrapperContract,
   TransferProxyContract,
-} from '../../src/contracts';
+} from 'set-protocol-contracts';
+import { Address } from 'set-protocol-utils';
 import { BigNumber } from '../../src/util';
 import { DEFAULT_ACCOUNT } from '../accounts';
 import {

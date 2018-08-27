@@ -19,12 +19,11 @@
 import * as Web3 from 'web3';
 
 import { Provider } from 'ethereum-types';
-import { Vault } from 'set-protocol-contracts';
+import { Vault, VaultContract } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 import { DEFAULT_ACCOUNT } from '../accounts';
 import { VaultAPI } from '../../src/api';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
-import { VaultContract } from '../../src/contracts';
 
 const contract = require('truffle-contract');
 

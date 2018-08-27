@@ -20,7 +20,7 @@ import * as _ from 'lodash';
 import { SetProtocolUtils, ECSig, IssuanceOrder } from 'set-protocol-utils';
 import { coreAssertionErrors } from '../errors';
 import { BigNumber } from '../util';
-import { CoreContract } from '../contracts';
+import * as Web3 from 'web3';
 
 const setProtocolUtils = new SetProtocolUtils();
 
@@ -31,7 +31,7 @@ export class CoreAssertions {
    * @param  coreInstance An instance of the core contract
    * @return              Void Promise
    */
-  public async implementsCore(coreInstance: CoreContract): Promise<void> {
+  public async implementsCore(coreInstance: Web3.ContractInstance): Promise<void> {
     const { address } = coreInstance;
 
     try {

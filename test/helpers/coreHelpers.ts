@@ -10,6 +10,11 @@ import {
   StandardTokenMock,
   TransferProxy,
   Vault,
+  CoreContract,
+  SetTokenFactoryContract,
+  StandardTokenMockContract,
+  TransferProxyContract,
+  VaultContract,
 } from 'set-protocol-contracts';
 import {
   DEFAULT_GAS_PRICE,
@@ -18,13 +23,6 @@ import {
 } from '../../src/constants';
 import { DEFAULT_ACCOUNT } from '../accounts';
 import { TestSet } from '../testSets';
-import {
-  CoreContract,
-  SetTokenFactoryContract,
-  StandardTokenMockContract,
-  TransferProxyContract,
-  VaultContract,
-} from '../../src/contracts';
 import { CoreAPI } from '../../src/api';
 import { BigNumber } from '../../src/util';
 

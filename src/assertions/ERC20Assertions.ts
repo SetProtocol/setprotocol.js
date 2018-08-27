@@ -19,11 +19,11 @@
 import { Address } from 'set-protocol-utils';
 import { erc20AssertionErrors } from '../errors';
 import { BigNumber } from '../util';
-import { DetailedERC20Contract as ERC20 } from '../contracts/DetailedERC20Contract';
+import * as Web3 from 'web3';
 
 export class ERC20Assertions {
   // Throws if the given candidateContract does not respond to some methods from the ERC20 interface.
-  public async implementsERC20(tokenInstance: ERC20): Promise<void> {
+  public async implementsERC20(tokenInstance: Web3.ContractInstance): Promise<void> {
     const { address } = tokenInstance;
 
     try {
@@ -36,7 +36,7 @@ export class ERC20Assertions {
   }
 
   public async hasSufficientBalance(
-    token: ERC20,
+    token: Web3.ContractInstance,
     payer: Address,
     balanceRequired: BigNumber,
     errorMessage: string,
@@ -49,7 +49,7 @@ export class ERC20Assertions {
   }
 
   public async hasSufficientAllowance(
-    token: ERC20,
+    token: Web3.ContractInstance,
     owner: string,
     spender: string,
     allowanceRequired: BigNumber,
