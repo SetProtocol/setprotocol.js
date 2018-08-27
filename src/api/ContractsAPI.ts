@@ -37,7 +37,7 @@ import { Address } from 'set-protocol-utils';
 export class ContractsAPI {
   private web3: Web3;
   private assert: Assertions;
-  private cache: { [contractName: string]: ContractWrapper };
+  private cache: { [contractName: string]: BaseContract };
 
   public constructor(web3: Web3) {
     this.web3 = web3;
