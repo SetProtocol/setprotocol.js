@@ -35,17 +35,15 @@ import { testSets, TestSet } from '../testSets';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS } from '../../src/constants';
 import { Web3Utils } from '../../src/util/Web3Utils';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../logs';
-import { CoreAPI } from '../../src/api';
+import { CoreWrapper } from '../../src/wrappers';
 import {
-  initializeCoreAPI,
+  approveForFill,
   deploySetTokenFactory,
   deployTokensForSetWithApproval,
-  approveForFill,
+  initializeCoreWrapper,
   registerExchange,
 } from '../helpers/coreHelpers';
-import {
-  deployTakerWalletExchangeWrapper,
-} from '../helpers/exchangeHelpers';
+import { deployTakerWalletExchangeWrapper } from '../helpers/exchangeHelpers';
 
 const { expect } = chai;
 
@@ -98,45 +96,45 @@ describe('SetProtocol', async () => {
 
   test('should instantiate a new setProtocolInstance', async () => {
     // Deploy Core
-    const coreAPI = await initializeCoreAPI(provider);
+    const coreWrapper = await initializeCoreWrapper(provider);
 
     const setProtocolInstance = new SetProtocol(
       web3,
-      coreAPI.coreAddress,
-      coreAPI.transferProxyAddress,
-      coreAPI.vaultAddress,
+      coreWrapper.coreAddress,
+      coreWrapper.transferProxyAddress,
+      coreWrapper.vaultAddress,
     );
     expect(setProtocolInstance instanceof SetProtocol);
   });
 
   describe('createSet', async () => {
-    let coreAPI: CoreAPI;
+    let coreWrapper: CoreWrapper;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
     let componentAddresses: Address[];
     let setProtocolInstance: SetProtocol;
 
     beforeEach(async () => {
-      coreAPI = await initializeCoreAPI(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+      coreWrapper = await initializeCoreWrapper(provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
 
       setToCreate = testSets[0];
       componentAddresses = await deployTokensForSetWithApproval(
         setToCreate,
-        coreAPI.transferProxyAddress,
+        coreWrapper.transferProxyAddress,
         provider,
       );
 
       setProtocolInstance = new SetProtocol(
         web3,
-        coreAPI.coreAddress,
-        coreAPI.transferProxyAddress,
-        coreAPI.vaultAddress,
+        coreWrapper.coreAddress,
+        coreWrapper.transferProxyAddress,
+        coreWrapper.vaultAddress,
       );
     });
 
     test('creates a new set with valid parameters', async () => {
-      const txHash = await setProtocolInstance.createSet(
+      const txHash = await setProtocolInstance.createSetAsync(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
@@ -152,8 +150,9 @@ describe('SetProtocol', async () => {
   });
 
   /* ============ Core State Getters ============ */
+
   describe('Core State Getters', async () => {
-    let coreAPI: CoreAPI;
+    let coreWrapper: CoreWrapper;
     let setTokenFactoryAddress: Address;
     let setTokenAddress: Address;
     let setToCreate: TestSet;
@@ -161,25 +160,25 @@ describe('SetProtocol', async () => {
     let setProtocolInstance: SetProtocol;
 
     beforeEach(async () => {
-      coreAPI = await initializeCoreAPI(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreAPI.coreAddress, provider);
+      coreWrapper = await initializeCoreWrapper(provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
 
       setToCreate = testSets[0];
       componentAddresses = await deployTokensForSetWithApproval(
         setToCreate,
-        coreAPI.transferProxyAddress,
+        coreWrapper.transferProxyAddress,
         provider,
       );
 
       setProtocolInstance = new SetProtocol(
         web3,
-        coreAPI.coreAddress,
-        coreAPI.transferProxyAddress,
-        coreAPI.vaultAddress,
+        coreWrapper.coreAddress,
+        coreWrapper.transferProxyAddress,
+        coreWrapper.vaultAddress,
       );
 
       // Create a Set
-      const txHash = await coreAPI.createSet(
+      const txHash = await coreWrapper.createSet(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
@@ -190,42 +189,6 @@ describe('SetProtocol', async () => {
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
-    });
-
-    test('gets exchange address', async () => {
-      const takerWalletWrapperAddress = await deployTakerWalletExchangeWrapper(
-        coreAPI.transferProxyAddress,
-        coreAPI.coreAddress,
-        provider,
-      );
-
-      await registerExchange(
-        web3,
-        coreAPI.coreAddress,
-        SetProtocolUtils.EXCHANGES.TAKER_WALLET,
-        takerWalletWrapperAddress
-      );
-
-      const exchangeAddress = await setProtocolInstance.getExchangeAddress(
-        SetProtocolUtils.EXCHANGES.TAKER_WALLET,
-      );
-      expect(exchangeAddress).to.equal(takerWalletWrapperAddress);
-    });
-
-    test('gets transfer proxy address', async () => {
-      const transferProxyAddress = await setProtocolInstance.getTransferProxyAddress();
-      expect(coreAPI.transferProxyAddress).to.equal(transferProxyAddress);
-    });
-
-    test('gets vault address', async () => {
-      const vaultAddress = await setProtocolInstance.getVaultAddress();
-      expect(coreAPI.vaultAddress).to.equal(vaultAddress);
-    });
-
-    test('gets factory addresses', async () => {
-      const factoryAddresses = await setProtocolInstance.getFactories();
-      expect(factoryAddresses.length).to.equal(1);
-      expect(factoryAddresses[0]).to.equal(setTokenFactoryAddress);
     });
 
     test('gets Set addresses', async () => {
@@ -239,13 +202,6 @@ describe('SetProtocol', async () => {
       expect(isValidVaultAddress).to.equal(true);
       isValidVaultAddress = await setProtocolInstance.getIsValidFactory(NULL_ADDRESS);
       expect(isValidVaultAddress).to.equal(false);
-    });
-
-    test('gets is valid Set address', async () => {
-      let isValidSetAddress = await setProtocolInstance.getIsValidSet(setTokenAddress);
-      expect(isValidSetAddress).to.equal(true);
-      isValidSetAddress = await setProtocolInstance.getIsValidSet(NULL_ADDRESS);
-      expect(isValidSetAddress).to.equal(false);
     });
   });
 });

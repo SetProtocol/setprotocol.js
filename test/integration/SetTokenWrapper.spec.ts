@@ -40,12 +40,10 @@ import {
 
 import { DEFAULT_ACCOUNT } from '../accounts';
 import { testSets, TestSet } from '../testSets';
-import { CoreAPI, SetTokenAPI } from '../../src/api';
+import { CoreWrapper, SetTokenWrapper } from '../../src/wrappers';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
 import { Web3Utils } from '../../src/util';
-import {
-  initializeCoreAPI,
-} from '../helpers/coreHelpers';
+import { initializeCoreWrapper } from '../helpers/coreHelpers';
 
 const { expect } = chai;
 
@@ -96,30 +94,30 @@ describe('Set Token API', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test('SetTokenAPI can be instantiated', async () => {
-    const setTokenAPI = new SetTokenAPI(web3);
-    expect(setTokenAPI);
-    expect(setTokenAPI.getSymbol);
-    expect(setTokenAPI.getName);
-    expect(setTokenAPI.getComponents);
-    expect(setTokenAPI.getUnits);
-    expect(setTokenAPI.getTotalSupply);
-    expect(setTokenAPI.getBalanceOf);
+  test('SetTokenWrapper can be instantiated', async () => {
+    const setTokenWrapper = new SetTokenWrapper(web3);
+    expect(setTokenWrapper);
+    expect(setTokenWrapper.getSymbol);
+    expect(setTokenWrapper.getName);
+    expect(setTokenWrapper.getComponents);
+    expect(setTokenWrapper.getUnits);
+    expect(setTokenWrapper.getTotalSupply);
+    expect(setTokenWrapper.getBalanceOf);
   });
 
   describe('getters', async () => {
     let componentAddresses: string[];
     let setToCreate: TestSet;
-    let setTokenAPI: SetTokenAPI;
+    let setTokenWrapper: SetTokenWrapper;
     let setTokenFactoryInstance: SetTokenFactoryContract;
     let setTokenInstance: SetTokenContract;
 
     beforeEach(async () => {
       // Deploy Core
-      const coreAPI = await initializeCoreAPI(provider);
+      const coreAPI = await initializeCoreWrapper(provider);
       const coreWrapper = await CoreContract.at(coreAPI.coreAddress, web3, txDefaults);
 
-      setTokenAPI = new SetTokenAPI(web3);
+      setTokenWrapper = new SetTokenWrapper(web3);
       // Deploy SetTokenFactory
       setTokenFactoryInstance = await setTokenFactoryContract.new(coreAPI.coreAddress);
 
@@ -170,32 +168,32 @@ describe('Set Token API', () => {
     });
 
     test('gets Set token symbol', async () => {
-      const symbol = await setTokenAPI.getSymbol(setTokenInstance.address);
+      const symbol = await setTokenWrapper.getSymbol(setTokenInstance.address);
       expect(symbol).to.equal(setToCreate.setSymbol);
     });
 
     test('gets Set token name', async () => {
-      const name = await setTokenAPI.getName(setTokenInstance.address);
+      const name = await setTokenWrapper.getName(setTokenInstance.address);
       expect(name).to.equal(setToCreate.setName);
     });
 
     test('get Set token natural units', async () => {
-      const naturalUnit = await setTokenAPI.getNaturalUnit(setTokenInstance.address);
+      const naturalUnit = await setTokenWrapper.getNaturalUnit(setTokenInstance.address);
       expect(naturalUnit.toNumber()).to.equal(setToCreate.naturalUnit.toNumber());
     });
 
     test('get Set token units', async () => {
-      const units = await setTokenAPI.getUnits(setTokenInstance.address);
+      const units = await setTokenWrapper.getUnits(setTokenInstance.address);
       _.forEach(units, (unit, i) => unit.toNumber() === setToCreate.units[i].toNumber());
     });
 
     test('get total supply of Set tokens', async () => {
-      const totalSupply = await setTokenAPI.getTotalSupply(setTokenInstance.address);
+      const totalSupply = await setTokenWrapper.getTotalSupply(setTokenInstance.address);
       expect(totalSupply.toNumber()).to.equal(0);
     });
 
     test("get balance of user's Set tokens", async () => {
-      const balance = await setTokenAPI.getBalanceOf(setTokenInstance.address, DEFAULT_ACCOUNT);
+      const balance = await setTokenWrapper.getBalanceOf(setTokenInstance.address, DEFAULT_ACCOUNT);
       expect(balance.toNumber()).to.equal(0);
     });
   });

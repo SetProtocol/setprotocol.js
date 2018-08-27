@@ -17,16 +17,9 @@
 'use strict';
 
 import * as Web3 from 'web3';
-import {
-  Address,
-  SignedIssuanceOrder,
-  IssuanceOrder,
-  TakerWalletOrder,
-  SetProtocolUtils,
-  ZeroExSignedFillOrder,
-} from 'set-protocol-utils';
-
-import { CoreAPI, SetTokenAPI, VaultAPI } from './api';
+import { Address, SetProtocolUtils } from 'set-protocol-utils';
+import { OrderAPI } from './api';
+import { CoreWrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
 import { BigNumber } from './util';
 import { TxData } from './types/common';
 
@@ -40,10 +33,20 @@ import { TxData } from './types/common';
  */
 class SetProtocol {
   private web3: Web3;
-  public core: CoreAPI;
-  public setToken: SetTokenAPI;
-  public vault: VaultAPI;
-  public setProtocolUtils: SetProtocolUtils;
+  public core: CoreWrapper;
+  public setToken: SetTokenWrapper;
+  public vault: VaultWrapper;
+
+  /**
+   * When creating an issuance order without a relayer token for a fee, you must use Solidity
+   * address null type (as opposed to Javascripts `null`, `undefined` or empty string).
+   */
+  public static NULL_ADDRESS = SetProtocolUtils.CONSTANTS.NULL_ADDRESS;
+
+  /**
+   * An instance of the OrderAPI class containing methods for relaying IssuanceOrders
+   */
+  public orders: OrderAPI;
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
@@ -61,11 +64,11 @@ class SetProtocol {
   ) {
     this.web3 = web3;
 
-    this.core = new CoreAPI(this.web3, coreAddress, transferProxyAddress, vaultAddress);
-    this.setToken = new SetTokenAPI(this.web3);
-    this.vault = new VaultAPI(this.web3, vaultAddress);
+    this.core = new CoreWrapper(this.web3, coreAddress, transferProxyAddress, vaultAddress);
+    this.setToken = new SetTokenWrapper(this.web3);
+    this.vault = new VaultWrapper(this.web3, vaultAddress);
 
-    this.setProtocolUtils = new SetProtocolUtils(this.web3);
+    this.orders = new OrderAPI(this.web3, this.core);
   }
 
   /**
@@ -80,7 +83,7 @@ class SetProtocol {
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up for the Set address
    */
-  public async createSet(
+  public async createSetAsync(
     factoryAddress: Address,
     components: Address[],
     units: BigNumber[],
@@ -100,7 +103,7 @@ class SetProtocol {
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up
    */
-  public async issue(
+  public async issueAsync(
     setAddress: Address,
     quantityInWei: BigNumber,
     txOpts?: TxData,
@@ -118,7 +121,7 @@ class SetProtocol {
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash to then later look up
    */
-  public async redeem(
+  public async redeemAsync(
     setAddress: Address,
     quantityInWei: BigNumber,
     withdraw: boolean,
@@ -136,7 +139,7 @@ class SetProtocol {
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
-  public async deposit(
+  public async depositAsync(
     tokenAddresses: Address[],
     quantitiesInWei: BigNumber[],
     txOpts?: TxData,
@@ -152,94 +155,12 @@ class SetProtocol {
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
-  public async withdraw(
+  public async withdrawAsync(
     tokenAddresses: Address[],
     quantitiesInWei: BigNumber[],
     txOpts?: TxData,
   ): Promise<string> {
     return await this.core.withdraw(tokenAddresses, quantitiesInWei, txOpts);
-  }
-
-  /**
-   * Creates a new Issuance Order including the signature
-   *
-   * @param  setAddress                Address of the Set token for issuance order
-   * @param  quantity                  Number of Set tokens to create as part of issuance order
-   * @param  requiredComponents        Addresses of required component tokens of Set
-   * @param  requiredComponentAmounts  Amounts of each required component needed
-   * @param  makerAddress              Address of person making the order
-   * @param  makerToken                Address of token the issuer is paying in
-   * @param  makerTokenAmount          Number of tokens being exchanged for aggregate order size
-   * @param  expiration                Unix timestamp of expiration (in seconds)
-   * @param  relayerAddress            Address of relayer of order
-   * @param  relayerToken              Address of token paid to relayer
-   * @param  makerRelayerFee           Number of token paid to relayer by maker
-   * @param  takerRelayerFee           Number of token paid tp relayer by taker
-   * @return                           A transaction hash
-   */
-  public async createOrder(
-    setAddress: Address,
-    quantity: BigNumber,
-    requiredComponents: Address[],
-    requiredComponentAmounts: BigNumber[],
-    makerAddress: Address,
-    makerToken: Address,
-    makerTokenAmount: BigNumber,
-    expiration: BigNumber,
-    relayerAddress: Address,
-    relayerToken: Address,
-    makerRelayerFee: BigNumber,
-    takerRelayerFee: BigNumber,
-  ): Promise<SignedIssuanceOrder> {
-    return await this.core.createOrder(
-      setAddress,
-      quantity,
-      requiredComponents,
-      requiredComponentAmounts,
-      makerAddress,
-      makerToken,
-      makerTokenAmount,
-      expiration,
-      relayerAddress,
-      relayerToken,
-      makerRelayerFee,
-      takerRelayerFee
-    );
-  }
-
-  /**
-   * Fills an Issuance Order
-   *
-   * @param  signedIssuanceOrder       Signed issuance order to fill
-   * @param  signature                 Signature of the order
-   * @param  quantityToFill            Number of Set to fill in this call
-   * @param  orderData                 Bytes representation of orders used to fill issuance order
-   * @param  txOpts                    The options for executing the transaction
-   * @return                           A transaction hash
-   */
-  public async fillOrder(
-    signedIssuanceOrder: SignedIssuanceOrder,
-    quantityToFill: BigNumber,
-    orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
-    txOpts?: TxData,
-  ): Promise<string> {
-    return await this.core.fillOrder(signedIssuanceOrder, quantityToFill, orders, txOpts);
-  }
-
-  /**
-   * Cancels an Issuance Order
-   *
-   * @param  issuanceOrder             Issuance order to cancel
-   * @param  quantityToCancel          Number of Set to cancel in this call
-   * @param  txOpts                    The options for executing the transaction
-   * @return                           A transaction hash
-   */
-  public async cancelOrder(
-    issuanceOrder: IssuanceOrder,
-    quantityToCancel: BigNumber,
-    txOpts?: TxData,
-  ): Promise<string> {
-    return await this.core.cancelOrder(issuanceOrder, quantityToCancel, txOpts);
   }
 
   /**
@@ -249,48 +170,11 @@ class SetProtocol {
    * @param  ownerAddress Address of the user
    * @return              The balance of the user's Set
    */
-  public async getBalanceInVault(
+  public async getBalanceInVaultAsync(
     tokenAddress: Address,
     ownerAddress: Address,
   ): Promise<BigNumber> {
     return await this.vault.getBalanceInVault(tokenAddress, ownerAddress);
-  }
-
-  /**
-   * Asynchronously gets the exchange address for a given exhange id
-   *
-   * @param  exchangeId Enum id of the exchange
-   * @return            An exchange address
-   */
-  public async getExchangeAddress(exchangeId: number): Promise<Address> {
-    return await this.core.getExchangeAddress(exchangeId);
-  }
-
-  /**
-   * Asynchronously gets the transfer proxy address
-   *
-   * @return Transfer proxy address
-   */
-  public async getTransferProxyAddress(): Promise<Address> {
-    return await this.core.getTransferProxyAddress();
-  }
-
-  /**
-   * Asynchronously gets the vault address
-   *
-   * @return Vault address
-   */
-  public async getVaultAddress(): Promise<Address> {
-    return await this.core.getVaultAddress();
-  }
-
-  /**
-   * Asynchronously gets factory addresses
-   *
-   * @return Array of factory addresses
-   */
-  public async getFactories(): Promise<Address[]> {
-    return await this.core.getFactories();
   }
 
   /**
@@ -318,7 +202,7 @@ class SetProtocol {
    * @param  setAddress Address of the Set contract
    * @return            Boolean equalling if Set address is valid
    */
-  public async getIsValidSet(setAddress: Address): Promise<boolean> {
+  public async validateSet(setAddress: Address): Promise<boolean> {
     return await this.core.getIsValidSet(setAddress);
   }
 }

@@ -28,7 +28,7 @@ import {
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 
-import { ContractsAPI } from '.';
+import { ContractWrapper } from '.';
 import { ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
@@ -37,16 +37,16 @@ import { BigNumber, generateTxOpts } from '../util';
 import { DetailedERC20Contract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
 /**
- * @title CoreAPI
+ * @title CoreWrapper
  * @author Set Protocol
  *
  * The Core API handles all functions on the Core SetProtocol smart contract.
  *
  */
-export class CoreAPI {
+export class CoreWrapper {
   private web3: Web3;
   private assert: Assertions;
-  private contracts: ContractsAPI;
+  private contracts: ContractWrapper;
   private setProtocolUtils: SetProtocolUtils;
 
   public coreAddress: Address;
@@ -60,7 +60,7 @@ export class CoreAPI {
     vaultAddress: Address = undefined,
   ) {
     this.web3 = web3;
-    this.contracts = new ContractsAPI(this.web3);
+    this.contracts = new ContractWrapper(this.web3);
     this.assert = new Assertions(this.web3);
 
     this.assert.schema.isValidAddress('coreAddress', coreAddress);

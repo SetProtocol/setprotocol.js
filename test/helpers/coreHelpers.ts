@@ -23,7 +23,7 @@ import {
 } from '../../src/constants';
 import { DEFAULT_ACCOUNT } from '../accounts';
 import { TestSet } from '../testSets';
-import { CoreAPI } from '../../src/api';
+import { CoreWrapper } from '../../src/wrappers';
 import { BigNumber } from '../../src/util';
 
 const contract = require('truffle-contract');
@@ -348,7 +348,7 @@ export const deployVault = async (
   return vaultInstance.address;
 };
 
-export const initializeCoreAPI = async (provider: Provider) => {
+export const initializeCoreWrapper = async (provider: Provider) => {
   const web3 = new Web3(provider);
 
   const erc20WrapperContract = contract(ERC20Wrapper);
@@ -372,5 +372,5 @@ export const initializeCoreAPI = async (provider: Provider) => {
   const vaultWrapper = await VaultContract.at(vaultAddress, web3, txDefaults);
   await vaultWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, txDefaults);
 
-  return new CoreAPI(web3, coreAddress, transferProxyAddress, vaultAddress);
+  return new CoreWrapper(web3, coreAddress, transferProxyAddress, vaultAddress);
 };
