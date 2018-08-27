@@ -251,6 +251,57 @@ describe('ERC20 API', () => {
   });
 
   describe('#transferFromAsync', async () => {
+    let subjectSpender: Address;
+    let subjectValue: BigNumber;
+    let subjectOwner: Address;
+
+    beforeEach(async () => {
+      erc20API = new Erc20API(web3);
+      subjectOwner = OTHER_ACCOUNT;
+
+      standardTokenMock = await standardTokenMockContract.new(
+        subjectOwner,
+        subjectSupply,
+        subjectName,
+        subjectSymbol,
+        subjectDecimals,
+      );
+
+      subjectValue = STANDARD_TRANSFER_VALUE;
+      subjectSpender = DEFAULT_ACCOUNT;
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await erc20API.transferFromAsync(
+        standardTokenMock.address,
+        subjectOwner,
+        subjectSpender,
+        subjectValue,
+        { from: subjectCaller },
+      );
+    }
+
+    describe('when approvals have been set', async () => {
+      beforeEach(async () => {
+        await erc20API.approveAsync(
+          standardTokenMock.address,
+          subjectSpender,
+          subjectValue,
+          { from: subjectOwner },
+        );
+      });
+
+      test('should increment the recipients balance', async () => {
+        const preRecipientBalance = await standardTokenMock.balanceOf(subjectCaller);
+
+        await subject();
+        const expectedBalance = preRecipientBalance.plus(subjectValue);
+
+        const postRecipientBalance = await standardTokenMock.balanceOf(subjectCaller);
+        expect(postRecipientBalance).to.bignumber.equal(expectedBalance);
+      });
+    });
 
   });
 });
