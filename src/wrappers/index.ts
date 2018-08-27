@@ -16,6 +16,9 @@
 
 'use strict';
 
-import { OrderAPI } from './orders';
+import { ContractWrapper } from './ContractWrapper';
+import { CoreWrapper } from './CoreWrapper';
+import { SetTokenWrapper } from './SetTokenWrapper';
+import { VaultWrapper } from './VaultWrapper';
 
-export { OrderAPI };
+export { ContractWrapper, CoreWrapper, SetTokenWrapper, VaultWrapper };

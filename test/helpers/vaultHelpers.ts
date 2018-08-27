@@ -22,7 +22,7 @@ import { Provider } from 'ethereum-types';
 import { Vault, VaultContract } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 import { DEFAULT_ACCOUNT } from '../accounts';
-import { VaultAPI } from '../../src/api';
+import { VaultWrapper } from '../../src/wrappers';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
 
 const contract = require('truffle-contract');
@@ -33,7 +33,7 @@ const txDefaults = {
   gas: DEFAULT_GAS_LIMIT,
 };
 
-export const initializeVaultAPI = async (provider: Provider, vaultAddress: Address) => {
+export const initializeVaultWrapper = async (provider: Provider, vaultAddress: Address) => {
   const vaultContract = contract(Vault);
   vaultContract.setProvider(provider);
   vaultContract.defaults(txDefaults);
@@ -41,8 +41,8 @@ export const initializeVaultAPI = async (provider: Provider, vaultAddress: Addre
   // Instantiate web3
   const web3 = new Web3(provider);
 
-  // Instantiate VaultAPI
+  // Instantiate VaultWrapper
   const vaultWrapper = await VaultContract.at(vaultAddress, web3, txDefaults);
-  const vaultAPI = new VaultAPI(web3, vaultWrapper.address);
+  const vaultAPI = new VaultWrapper(web3, vaultWrapper.address);
   return vaultAPI;
 };

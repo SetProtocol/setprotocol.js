@@ -4,6 +4,6 @@ export {
   deployTokensForSetWithApproval,
   deployTransferProxy,
   deployVault,
-  initializeCoreAPI,
+  initializeCoreWrapper,
 } from './coreHelpers';
-export { initializeVaultAPI } from './vaultHelpers';
+export { initializeVaultWrapper } from './vaultHelpers';

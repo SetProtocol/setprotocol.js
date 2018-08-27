@@ -19,28 +19,28 @@
 import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
-import { ContractsAPI } from '.';
+import { ContractWrapper } from '.';
 import { Assertions } from '../assertions';
 import { BigNumber } from '../util';
 
 /**
- * @title  VaultAPI
+ * @title  VaultWrapper
  * @author Set Protocol
  *
  * The Vault API handles all functions on the Vault smart contract.
  *
  */
-export class VaultAPI {
+export class VaultWrapper {
   private web3: Web3;
   private assert: Assertions;
-  private contracts: ContractsAPI;
+  private contracts: ContractWrapper;
   private vaultAddress: Address;
 
   public constructor(web3: Web3, vaultAddress: Address) {
     this.web3 = web3;
     this.vaultAddress = vaultAddress;
     this.assert = new Assertions(this.web3);
-    this.contracts = new ContractsAPI(this.web3);
+    this.contracts = new ContractWrapper(this.web3);
   }
 
   /**

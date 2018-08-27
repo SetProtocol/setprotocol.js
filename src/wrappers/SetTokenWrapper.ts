@@ -19,26 +19,26 @@
 import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
-import { ContractsAPI } from '.';
+import { ContractWrapper } from '.';
 import { Assertions } from '../assertions';
 import { BigNumber } from '../util';
 
 /**
- * @title  SetTokenAPI
+ * @title  SetTokenWrapper
  * @author Set Protocol
  *
  * The Set Token API handles all functions on the Set Token smart contract.
  *
  */
-export class SetTokenAPI {
+export class SetTokenWrapper {
   private web3: Web3;
   private assert: Assertions;
-  private contracts: ContractsAPI;
+  private contracts: ContractWrapper;
 
   public constructor(web3: Web3) {
     this.web3 = web3;
     this.assert = new Assertions(this.web3);
-    this.contracts = new ContractsAPI(this.web3);
+    this.contracts = new ContractWrapper(this.web3);
   }
 
   /**

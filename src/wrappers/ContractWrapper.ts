@@ -28,13 +28,13 @@ import {
 import { Address } from 'set-protocol-utils';
 
 /**
- * @title ContractsAPI
+ * @title ContractWrapper
  * @author Set Protocol
  *
  * The Contracts API handles all functions that load contracts
  *
  */
-export class ContractsAPI {
+export class ContractWrapper {
   private web3: Web3;
   private assert: Assertions;
   private cache: { [contractName: string]: BaseContract };

@@ -17,90 +17,11 @@
 'use strict';
 
 import * as Web3 from 'web3';
-import {
-  Address,
-  SignedIssuanceOrder,
-  IssuanceOrder,
-  TakerWalletOrder,
-  SetProtocolUtils,
-} from 'set-protocol-utils';
-import { Order as ZeroExOrder } from '@0xproject/types';
-
-import { CoreAPI, SetTokenAPI, VaultAPI } from './api';
+import { Address, SetProtocolUtils } from 'set-protocol-utils';
+import { OrderAPI } from './api';
+import { CoreWrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
 import { BigNumber } from './util';
 import { TxData } from './types/common';
-
-interface SetProtocol {
-  createSet(
-    factoryAddress: Address,
-    components: Address[],
-    units: BigNumber[],
-    naturalUnit: BigNumber,
-    name: string,
-    symbol: string,
-    txOpts?: TxData,
-  ): Promise<string>;
-  issue(
-    setAddress: Address,
-    quantityInWei: BigNumber,
-    txOpts?: TxData,
-  ): Promise<string>;
-  redeem(
-    setAddress: Address,
-    quantityInWei: BigNumber,
-    withdraw: boolean,
-    tokensToExclude: Address[],
-    txOpts?: TxData,
-  ): Promise<string>;
-  deposit(
-    tokenAddresses: Address[],
-    quantitiesInWei: BigNumber[],
-    txOpts?: TxData,
-  ): Promise<string>;
-  withdraw(
-    tokenAddresses: Address[],
-    quantitiesInWei: BigNumber[],
-    txOpts?: TxData,
-  ): Promise<string>;
-  createOrder(
-    setAddress: Address,
-    quantity: BigNumber,
-    requiredComponents: Address[],
-    requiredComponentAmounts: BigNumber[],
-    makerAddress: Address,
-    makerToken: Address,
-    makerTokenAmount: BigNumber,
-    expiration: BigNumber,
-    relayerAddress: Address,
-    relayerToken: Address,
-    makerRelayerFee: BigNumber,
-    takerRelayerFee: BigNumber,
-  ): Promise<SignedIssuanceOrder>;
-  fillOrder(
-    signedIssuanceOrder: SignedIssuanceOrder,
-    quantityToFill: BigNumber,
-    orders: (ZeroExOrder | TakerWalletOrder)[],
-    makerTokenAddress: Address,
-    makerTokenAmount: BigNumber,
-    txOpts?: TxData,
-  ): Promise<string>;
-  cancelOrder(
-    issuanceOrder: IssuanceOrder,
-    quantityToCancel: BigNumber,
-    txOpts?: TxData,
-  ): Promise<string>;
-  getBalanceInVault(
-    tokenAddress: Address,
-    ownerAddress: Address,
-  ): Promise<BigNumber>;
-  getExchangeAddress(exchangeId: number): Promise<Address>;
-  getTransferProxyAddress(): Promise<Address>;
-  getVaultAddress(): Promise<Address>;
-  getFactories(): Promise<Address[]>;
-  getSetAddresses(): Promise<Address[]>;
-  getIsValidFactory(factoryAddress: Address): Promise<boolean>;
-  getIsValidSet(setAddress: Address): Promise<boolean>;
-}
 
 /**
  * @title SetProtocol
@@ -112,10 +33,20 @@ interface SetProtocol {
  */
 class SetProtocol {
   private web3: Web3;
-  public core: CoreAPI;
-  public setToken: SetTokenAPI;
-  public vault: VaultAPI;
-  public setProtocolUtils: SetProtocolUtils;
+  public core: CoreWrapper;
+  public setToken: SetTokenWrapper;
+  public vault: VaultWrapper;
+
+  /**
+   * When creating an issuance order without a relayer token for a fee, you must use Solidity
+   * address null type (as opposed to Javascripts `null`, `undefined` or empty string).
+   */
+  public static NULL_ADDRESS = SetProtocolUtils.CONSTANTS.NULL_ADDRESS;
+
+  /**
+   * An instance of the OrderAPI class containing methods for relaying IssuanceOrders
+   */
+  public orders: OrderAPI;
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
@@ -133,61 +64,147 @@ class SetProtocol {
   ) {
     this.web3 = web3;
 
-    this.core = new CoreAPI(this.web3, coreAddress, transferProxyAddress, vaultAddress);
-    this.setToken = new SetTokenAPI(this.web3);
-    this.vault = new VaultAPI(this.web3, vaultAddress);
+    this.core = new CoreWrapper(this.web3, coreAddress, transferProxyAddress, vaultAddress);
+    this.setToken = new SetTokenWrapper(this.web3);
+    this.vault = new VaultWrapper(this.web3, vaultAddress);
 
-    this.setProtocolUtils = new SetProtocolUtils(this.web3);
+    this.orders = new OrderAPI(this.web3, this.core);
+  }
+
+  /**
+   * Create a new Set, specifying the components, units, name, symbol to use.
+   *
+   * @param  factoryAddress Set Token factory address of the token being created
+   * @param  components     Component token addresses
+   * @param  units          Units of corresponding token components
+   * @param  naturalUnit    Supplied as the lowest common denominator for the Set
+   * @param  name           User-supplied name for Set (i.e. "DEX Set")
+   * @param  symbol         User-supplied symbol for Set (i.e. "DEX")
+   * @param  txOpts         The options for executing the transaction
+   * @return                A transaction hash to then later look up for the Set address
+   */
+  public async createSetAsync(
+    factoryAddress: Address,
+    components: Address[],
+    units: BigNumber[],
+    naturalUnit: BigNumber,
+    name: string,
+    symbol: string,
+    txOpts?: TxData,
+  ): Promise<string> {
+    return await this.core.createSet(factoryAddress, components, units, naturalUnit, name, symbol, txOpts);
+  }
+
+  /**
+   * Asynchronously issues a particular quantity of tokens from a particular Sets
+   *
+   * @param  setAddress     Set token address of Set being issued
+   * @param  quantityInWei  Number of Sets a user wants to issue in Wei
+   * @param  txOpts         The options for executing the transaction
+   * @return                A transaction hash to then later look up
+   */
+  public async issueAsync(
+    setAddress: Address,
+    quantityInWei: BigNumber,
+    txOpts?: TxData,
+  ): Promise<string> {
+    return await this.core.issue(setAddress, quantityInWei, txOpts);
+  }
+
+  /**
+   * Composite method to redeem and optionally withdraw tokens
+   *
+   * @param  setAddress        The address of the Set token
+   * @param  quantityInWei     The number of tokens to redeem
+   * @param  withdraw          Boolean determining whether or not to withdraw
+   * @param  tokensToExclude   Array of token addresses to exclude from withdrawal
+   * @param  txOpts            The options for executing the transaction
+   * @return                   A transaction hash to then later look up
+   */
+  public async redeemAsync(
+    setAddress: Address,
+    quantityInWei: BigNumber,
+    withdraw: boolean,
+    tokensToExclude: Address[],
+    txOpts?: TxData,
+  ): Promise<string> {
+    return await this.core.redeem(setAddress, quantityInWei, withdraw, tokensToExclude, txOpts);
+  }
+
+  /**
+   * Deposits token either using single token type deposit or batch deposit
+   *
+   * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to deposit into the vault
+   * @param  quantitiesInWei[] Numbers of tokens a user wants to deposit into the vault
+   * @param  txOpts            The options for executing the transaction
+   * @return                   A transaction hash
+   */
+  public async depositAsync(
+    tokenAddresses: Address[],
+    quantitiesInWei: BigNumber[],
+    txOpts?: TxData,
+  ): Promise<string> {
+    return await this.core.deposit(tokenAddresses, quantitiesInWei, txOpts);
+  }
+
+  /**
+   * Withdraws tokens either using single token type withdraw or batch withdraw
+   *
+   * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to withdraw from the vault
+   * @param  quantitiesInWei[] Numbers of tokens a user wants to withdraw from the vault
+   * @param  txOpts            The options for executing the transaction
+   * @return                   A transaction hash
+   */
+  public async withdrawAsync(
+    tokenAddresses: Address[],
+    quantitiesInWei: BigNumber[],
+    txOpts?: TxData,
+  ): Promise<string> {
+    return await this.core.withdraw(tokenAddresses, quantitiesInWei, txOpts);
+  }
+
+  /**
+   * Gets balance of user's tokens in the vault
+   *
+   * @param  tokenAddress Address of the Set
+   * @param  ownerAddress Address of the user
+   * @return              The balance of the user's Set
+   */
+  public async getBalanceInVaultAsync(
+    tokenAddress: Address,
+    ownerAddress: Address,
+  ): Promise<BigNumber> {
+    return await this.vault.getBalanceInVault(tokenAddress, ownerAddress);
+  }
+
+  /**
+   * Asynchronously gets Set addresses
+   *
+   * @return Array of Set addresses
+   */
+  public async getSetAddressesAsync(): Promise<Address[]> {
+    return await this.core.getSetAddresses();
+  }
+
+  /**
+   * Asynchronously validates if an address is a valid factory address
+   *
+   * @param  factoryAddress Address of the factory contract
+   * @return                Boolean equalling if factory address is valid
+   */
+  public async validateFactoryAsync(factoryAddress: Address): Promise<boolean> {
+    return await this.core.getIsValidFactory(factoryAddress);
+  }
+
+  /**
+   * Asynchronously validates if an address is a valid Set address
+   *
+   * @param  setAddress Address of the Set contract
+   * @return            Boolean equalling if Set address is valid
+   */
+  public async validateSetAsync(setAddress: Address): Promise<boolean> {
+    return await this.core.getIsValidSet(setAddress);
   }
 }
-
-SetProtocol.prototype.createSet = async function(...args: any[]) {
-  return await this.core.createSet(...args);
-};
-SetProtocol.prototype.issue = async function(...args: any[]) {
-  return await this.core.issue(...args);
-};
-SetProtocol.prototype.redeem = async function(...args: any[]) {
-  return await this.core.redeem(...args);
-};
-SetProtocol.prototype.withdraw = async function(...args: any[]) {
-  return await this.core.withdraw(...args);
-};
-SetProtocol.prototype.deposit = async function(...args: any[]) {
-  return await this.core.deposit(...args);
-};
-SetProtocol.prototype.createOrder = async function(...args: any[]) {
-  return await this.core.createOrder(...args);
-};
-SetProtocol.prototype.fillOrder = async function(...args: any[]) {
-  return await this.core.fillOrder(...args);
-};
-SetProtocol.prototype.cancelOrder = async function(...args: any[]) {
-  return await this.core.cancelOrder(...args);
-};
-SetProtocol.prototype.getExchangeAddress = async function(...args: any[]) {
-  return await this.core.getExchangeAddress(...args);
-};
-SetProtocol.prototype.getTransferProxyAddress = async function() {
-  return await this.core.getTransferProxyAddress();
-};
-SetProtocol.prototype.getVaultAddress = async function() {
-  return await this.core.getVaultAddress();
-};
-SetProtocol.prototype.getFactories = async function() {
-  return await this.core.getFactories();
-};
-SetProtocol.prototype.getSetAddresses = async function() {
-  return await this.core.getSetAddresses();
-};
-SetProtocol.prototype.getIsValidFactory = async function(...args: any[]) {
-  return await this.core.getIsValidFactory(...args);
-};
-SetProtocol.prototype.getIsValidSet = async function(...args: any[]) {
-  return await this.core.getIsValidSet(...args);
-};
-SetProtocol.prototype.getBalanceInVault = async function(...args: any[]) {
-  return await this.vault.getBalanceInVault(...args);
-};
 
 export default SetProtocol;

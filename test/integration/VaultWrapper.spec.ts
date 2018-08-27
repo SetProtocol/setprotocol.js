@@ -31,10 +31,10 @@ import { Address } from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT } from '../accounts';
 import { testSets, TestSet } from '../testSets';
-import { CoreAPI, VaultAPI } from '../../src/api';
+import { CoreWrapper, VaultWrapper } from '../../src/wrappers';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
 import { BigNumber, Web3Utils } from '../../src/util';
-import { deployTokensForSetWithApproval, initializeCoreAPI, initializeVaultAPI } from '../helpers';
+import { deployTokensForSetWithApproval, initializeCoreWrapper, initializeVaultWrapper } from '../helpers';
 
 const { expect } = chai;
 
@@ -57,8 +57,8 @@ coreContract.defaults(txDefaults);
 let currentSnapshotId: number;
 
 describe('Vault API', () => {
-  let coreAPI: CoreAPI;
-  let vaultAPI: VaultAPI;
+  let coreWrapper: CoreWrapper;
+  let vaultWrapper: VaultWrapper;
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -76,26 +76,26 @@ describe('Vault API', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test('VaultAPI can be instantiated', async () => {
-    coreAPI = await initializeCoreAPI(provider);
-    vaultAPI = await initializeVaultAPI(provider, coreAPI.vaultAddress);
-    expect(vaultAPI.getBalanceInVault);
+  test('vaultWrapper can be instantiated', async () => {
+    coreWrapper = await initializeCoreWrapper(provider);
+    vaultWrapper = await initializeVaultWrapper(provider, coreWrapper.vaultAddress);
+    expect(vaultWrapper.getBalanceInVault);
   });
 
   describe('getBalanceInVault', async () => {
-    let coreAPI: CoreAPI;
-    let vaultAPI: VaultAPI;
+    let coreWrapper: CoreWrapper;
+    let vaultWrapper: VaultWrapper;
     let setToCreate: TestSet;
     let tokenAddresses: Address[];
 
     beforeEach(async () => {
-      coreAPI = await initializeCoreAPI(provider);
-      vaultAPI = await initializeVaultAPI(provider, coreAPI.vaultAddress);
+      coreWrapper = await initializeCoreWrapper(provider);
+      vaultWrapper = await initializeVaultWrapper(provider, coreWrapper.vaultAddress);
 
       setToCreate = testSets[0];
       tokenAddresses = await deployTokensForSetWithApproval(
         setToCreate,
-        coreAPI.transferProxyAddress,
+        coreWrapper.transferProxyAddress,
         provider,
       );
     });
@@ -104,10 +104,10 @@ describe('Vault API', () => {
       let balance: BigNumber;
       const account = DEFAULT_ACCOUNT;
       const token = tokenAddresses[0];
-      balance = await vaultAPI.getBalanceInVault(token, account);
+      balance = await vaultWrapper.getBalanceInVault(token, account);
       expect(balance.toNumber()).to.equal(0);
-      await coreAPI.singleDeposit(token, new BigNumber(100), { from: account });
-      balance = await vaultAPI.getBalanceInVault(token, account);
+      await coreWrapper.singleDeposit(token, new BigNumber(100), { from: account });
+      balance = await vaultWrapper.getBalanceInVault(token, account);
       expect(balance.toNumber()).to.equal(100);
     });
   });
