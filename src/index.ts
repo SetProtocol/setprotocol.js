@@ -92,7 +92,7 @@ class SetProtocol {
     symbol: string,
     txOpts?: TxData,
   ): Promise<string> {
-    return this.core.createSet(factoryAddress, components, units, naturalUnit, name, symbol, txOpts);
+    return await this.core.createSet(factoryAddress, components, units, naturalUnit, name, symbol, txOpts);
   }
 
   /**
@@ -108,7 +108,7 @@ class SetProtocol {
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    return this.core.issue(setAddress, quantityInWei, txOpts);
+    return await this.core.issue(setAddress, quantityInWei, txOpts);
   }
 
   /**
@@ -182,7 +182,7 @@ class SetProtocol {
    *
    * @return Array of Set addresses
    */
-  public async getSetAddresses(): Promise<Address[]> {
+  public async getSetAddressesAsync(): Promise<Address[]> {
     return await this.core.getSetAddresses();
   }
 
@@ -192,7 +192,7 @@ class SetProtocol {
    * @param  factoryAddress Address of the factory contract
    * @return                Boolean equalling if factory address is valid
    */
-  public async getIsValidFactory(factoryAddress: Address): Promise<boolean> {
+  public async validateFactoryAsync(factoryAddress: Address): Promise<boolean> {
     return await this.core.getIsValidFactory(factoryAddress);
   }
 
