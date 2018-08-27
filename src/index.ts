@@ -202,7 +202,7 @@ class SetProtocol {
    * @param  setAddress Address of the Set contract
    * @return            Boolean equalling if Set address is valid
    */
-  public async validateSet(setAddress: Address): Promise<boolean> {
+  public async validateSetAsync(setAddress: Address): Promise<boolean> {
     return await this.core.getIsValidSet(setAddress);
   }
 }

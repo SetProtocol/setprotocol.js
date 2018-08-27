@@ -192,15 +192,15 @@ describe('SetProtocol', async () => {
     });
 
     test('gets Set addresses', async () => {
-      const setAddresses = await setProtocolInstance.getSetAddresses();
+      const setAddresses = await setProtocolInstance.getSetAddressesAsync();
       expect(setAddresses.length).to.equal(1);
       expect(setAddresses[0]).to.equal(setTokenAddress);
     });
 
     test('gets is valid factory address', async () => {
-      let isValidVaultAddress = await setProtocolInstance.getIsValidFactory(setTokenFactoryAddress);
+      let isValidVaultAddress = await setProtocolInstance.validateFactoryAsync(setTokenFactoryAddress);
       expect(isValidVaultAddress).to.equal(true);
-      isValidVaultAddress = await setProtocolInstance.getIsValidFactory(NULL_ADDRESS);
+      isValidVaultAddress = await setProtocolInstance.validateSetAsync(NULL_ADDRESS);
       expect(isValidVaultAddress).to.equal(false);
     });
   });
