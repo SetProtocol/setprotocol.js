@@ -44,9 +44,10 @@ export class VaultWrapper {
   }
 
   /**
-   * Gets balance of user's tokens in the vault
+   * Fetch the balance of the provided contract address inside the vault specified
+   * in SetProtocolConfig
    *
-   * @param  tokenAddress Address of the Set
+   * @param  tokenAddress Address of the contract (typically SetToken or ERC20)
    * @param  ownerAddress Address of the user
    * @return              The balance of the user's Set
    */

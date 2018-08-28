@@ -1297,16 +1297,16 @@ describe('CoreWrapper', () => {
     });
 
     test('gets is valid factory address', async () => {
-      let isValidVaultAddress = await coreWrapper.getIsValidFactory(setTokenFactoryAddress);
+      let isValidVaultAddress = await coreWrapper.isValidFactoryAsync(setTokenFactoryAddress);
       expect(isValidVaultAddress).to.equal(true);
-      isValidVaultAddress = await coreWrapper.getIsValidFactory(NULL_ADDRESS);
+      isValidVaultAddress = await coreWrapper.isValidFactoryAsync(NULL_ADDRESS);
       expect(isValidVaultAddress).to.equal(false);
     });
 
     test('gets is valid Set address', async () => {
-      let isValidSetAddress = await coreWrapper.getIsValidSet(setTokenAddress);
+      let isValidSetAddress = await coreWrapper.isValidSetAsync(setTokenAddress);
       expect(isValidSetAddress).to.equal(true);
-      isValidSetAddress = await coreWrapper.getIsValidSet(NULL_ADDRESS);
+      isValidSetAddress = await coreWrapper.isValidSetAsync(NULL_ADDRESS);
       expect(isValidSetAddress).to.equal(false);
     });
   });
