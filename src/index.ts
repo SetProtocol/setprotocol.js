@@ -105,23 +105,19 @@ class SetProtocol {
    * Asynchronously issues a particular quantity of tokens from a particular Sets
    *
    * @param  setAddress     Set token address of Set being issued
-   * @param  quantityInWei  Number of Sets a user wants to issue in Wei
+   * @param  quantity       Number of Sets a user wants to issue in Wei
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up
    */
-  public async issueAsync(
-    setAddress: Address,
-    quantityInWei: BigNumber,
-    txOpts?: TxData,
-  ): Promise<string> {
-    return await this.core.issue(setAddress, quantityInWei, txOpts);
+  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
+    return await this.core.issue(setAddress, quantity, txOpts);
   }
 
   /**
    * Composite method to redeem and optionally withdraw tokens
    *
    * @param  setAddress        The address of the Set token
-   * @param  quantityInWei     The number of tokens to redeem
+   * @param  quantity          The number of tokens to redeem
    * @param  withdraw          Boolean determining whether or not to withdraw
    * @param  tokensToExclude   Array of token addresses to exclude from withdrawal
    * @param  txOpts            The options for executing the transaction
@@ -129,87 +125,79 @@ class SetProtocol {
    */
   public async redeemAsync(
     setAddress: Address,
-    quantityInWei: BigNumber,
+    quantity: BigNumber,
     withdraw: boolean,
     tokensToExclude: Address[],
     txOpts?: TxData,
   ): Promise<string> {
-    return await this.core.redeem(setAddress, quantityInWei, withdraw, tokensToExclude, txOpts);
+    return await this.core.redeem(setAddress, quantity, withdraw, tokensToExclude, txOpts);
   }
 
   /**
    * Deposits token either using single token type deposit or batch deposit
    *
    * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to deposit into the vault
-   * @param  quantitiesInWei[] Numbers of tokens a user wants to deposit into the vault
+   * @param  quantities[]      Numbers of tokens a user wants to deposit into the vault
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
-  public async depositAsync(
-    tokenAddresses: Address[],
-    quantitiesInWei: BigNumber[],
-    txOpts?: TxData,
-  ): Promise<string> {
-    return await this.core.deposit(tokenAddresses, quantitiesInWei, txOpts);
+  public async depositAsync(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
+    return await this.core.deposit(tokenAddresses, quantities, txOpts);
   }
 
   /**
    * Withdraws tokens either using single token type withdraw or batch withdraw
    *
    * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to withdraw from the vault
-   * @param  quantitiesInWei[] Numbers of tokens a user wants to withdraw from the vault
+   * @param  quantities[]      Numbers of tokens a user wants to withdraw from the vault
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
-  public async withdrawAsync(
-    tokenAddresses: Address[],
-    quantitiesInWei: BigNumber[],
-    txOpts?: TxData,
-  ): Promise<string> {
-    return await this.core.withdraw(tokenAddresses, quantitiesInWei, txOpts);
+  public async withdrawAsync(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
+    return await this.core.withdraw(tokenAddresses, quantities, txOpts);
   }
 
   /**
-   * Gets balance of user's tokens in the vault
+   * Fetch the balance of the provided contract address inside the vault specified
+   * in SetProtocolConfig
    *
-   * @param  tokenAddress Address of the Set
+   * @param  tokenAddress Address of the contract (typically SetToken or ERC20)
    * @param  ownerAddress Address of the user
    * @return              The balance of the user's Set
    */
-  public async getBalanceInVaultAsync(
-    tokenAddress: Address,
-    ownerAddress: Address,
-  ): Promise<BigNumber> {
+  public async getBalanceInVaultAsync(tokenAddress: Address, ownerAddress: Address): Promise<BigNumber> {
     return await this.vault.getBalanceInVault(tokenAddress, ownerAddress);
   }
 
   /**
-   * Asynchronously gets Set addresses
+   * Fetch the addresses of SetTokens and RebalancingSetTokens created by the system
+   * of contracts specified in SetProtcolConfig
    *
-   * @return Array of Set addresses
+   * @return Array of SetToken and RebalancingSetToken addresses
    */
   public async getSetAddressesAsync(): Promise<Address[]> {
     return await this.core.getSetAddresses();
   }
 
   /**
-   * Asynchronously validates if an address is a valid factory address
+   * Verifies that the provided SetToken factory is enabled for creating a new SetToken
    *
    * @param  factoryAddress Address of the factory contract
-   * @return                Boolean equalling if factory address is valid
+   * @return                Whether the factory contract is enabled
    */
   public async validateFactoryAsync(factoryAddress: Address): Promise<boolean> {
-    return await this.core.getIsValidFactory(factoryAddress);
+    return await this.core.validateFactory(factoryAddress);
   }
 
   /**
-   * Asynchronously validates if an address is a valid Set address
+   * Verifies that the provided SetToken or RebalancingSetToken address is enabled
+   * for issuance and redemption
    *
-   * @param  setAddress Address of the Set contract
-   * @return            Boolean equalling if Set address is valid
+   * @param  setAddress Address of the SetToken or RebalancingSetToken contract
+   * @return            Whether the set contract is enabled
    */
   public async validateSetAsync(setAddress: Address): Promise<boolean> {
-    return await this.core.getIsValidSet(setAddress);
+    return await this.core.validateSet(setAddress);
   }
 }
 

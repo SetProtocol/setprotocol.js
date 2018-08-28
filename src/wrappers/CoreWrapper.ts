@@ -692,9 +692,10 @@ export class CoreWrapper {
   }
 
   /**
-   * Asynchronously gets Set addresses
+   * Fetch the addresses of SetTokens and RebalancingSetTokens created by the system
+   * of contracts specified in SetProtcolConfig
    *
-   * @return Array of Set addresses
+   * @return Array of SetToken and RebalancingSetToken addresses
    */
   public async getSetAddresses(): Promise<Address[]> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
@@ -703,12 +704,12 @@ export class CoreWrapper {
   }
 
   /**
-   * Asynchronously validates if an address is a valid factory address
+   * Verifies that the provided SetToken factory is enabled for creating a new SetToken
    *
    * @param  factoryAddress Address of the factory contract
-   * @return                Boolean equalling if factory address is valid
+   * @return                Whether the factory contract is enabled
    */
-  public async getIsValidFactory(factoryAddress: Address): Promise<boolean> {
+  public async validateFactory(factoryAddress: Address): Promise<boolean> {
     this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidFactoryAddress = await coreInstance.validFactories.callAsync(factoryAddress);
@@ -716,12 +717,13 @@ export class CoreWrapper {
   }
 
   /**
-   * Asynchronously validates if an address is a valid Set address
+   * Verifies that the provided SetToken or RebalancingSetToken address is enabled
+   * for issuance and redemption
    *
-   * @param  setAddress Address of the Set contract
-   * @return            Boolean equalling if Set address is valid
+   * @param  setAddress Address of the SetToken or RebalancingSetToken contract
+   * @return            Whether the contract is enabled
    */
-  public async getIsValidSet(setAddress: Address): Promise<boolean> {
+  public async validateSet(setAddress: Address): Promise<boolean> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidSetAddress = await coreInstance.validSets.callAsync(setAddress);
