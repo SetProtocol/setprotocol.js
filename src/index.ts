@@ -19,7 +19,7 @@
 import * as Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import { OrderAPI } from './api';
-import { CoreWrapper, Erc20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
+import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
 import { BigNumber } from './util';
 import { TxData } from './types/common';
 
@@ -48,9 +48,9 @@ class SetProtocol {
   public orders: OrderAPI;
 
   /**
-   * An instance of the OrderAPI class containing methods for relaying IssuanceOrders
+   * An instance of the ERC20Wrapper class containing methods for interacting with ERC20 compliant contracts
    */
-  public erc20: Erc20Wrapper;
+  public erc20: ERC20Wrapper;
 
   /**
    * An instance of the OrderAPI class containing methods for relaying IssuanceOrders
@@ -78,7 +78,7 @@ class SetProtocol {
     this.vault = new VaultWrapper(this.web3, vaultAddress);
 
     this.orders = new OrderAPI(this.web3, this.core);
-    this.erc20 = new Erc20Wrapper(this.web3);
+    this.erc20 = new ERC20Wrapper(this.web3);
   }
 
   /**
@@ -111,7 +111,7 @@ class SetProtocol {
    * @param  setAddress     Set token address of Set being issued
    * @param  quantity       Number of Sets a user wants to issue in Wei
    * @param  txOpts         The options for executing the transaction
-   * @return                A transaction hash to then later look up
+   * @return                Transaction hash
    */
   public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
     return await this.core.issue(setAddress, quantity, txOpts);
@@ -125,7 +125,7 @@ class SetProtocol {
    * @param  withdraw          Boolean determining whether or not to withdraw
    * @param  tokensToExclude   Array of token addresses to exclude from withdrawal
    * @param  txOpts            The options for executing the transaction
-   * @return                   A transaction hash to then later look up
+   * @return                   Transaction hash
    */
   public async redeemAsync(
     setAddress: Address,
@@ -143,7 +143,7 @@ class SetProtocol {
    * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to deposit into the vault
    * @param  quantities[]      Numbers of tokens a user wants to deposit into the vault
    * @param  txOpts            The options for executing the transaction
-   * @return                   A transaction hash
+   * @return                   Transaction hash
    */
   public async depositAsync(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
     return await this.core.deposit(tokenAddresses, quantities, txOpts);
@@ -155,19 +155,57 @@ class SetProtocol {
    * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to withdraw from the vault
    * @param  quantities[]      Numbers of tokens a user wants to withdraw from the vault
    * @param  txOpts            The options for executing the transaction
-   * @return                   A transaction hash
+   * @return                   Transaction hash
    */
   public async withdrawAsync(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
     return await this.core.withdraw(tokenAddresses, quantities, txOpts);
   }
 
   /**
+   * Sets the Set TransferProxy contract's allowance to a specified quantity on behalf of the user. Allowance is
+   * required for issuing, redeeming, and filling issuance orders
+   *
+   * @param   tokenAddress        Address of contract to approve (typically SetToken or ERC20)
+   * @param   quantity            The allowance quantity
+   * @param   txOpts              The options for executing the transaction
+   * @return                      Transaction hash
+   */
+  public async setTransferProxyAllowanceAsync(
+      tokenAddress: string,
+      quantity: BigNumber,
+      txOpts?: TxData,
+  ): Promise<string> {
+      return await this.erc20.approveAsync(
+          tokenAddress,
+          this.core.transferProxyAddress,
+          quantity,
+          txOpts,
+      );
+  }
+
+  /**
+   * Sets the Set TransferProxy contract's allowance to a unlimited number on behalf of the user. Allowance is
+   * required for issuing, redeeming, and filling issuance orders
+   *
+   * @param  tokenAddress    Address of contract to approve (typically SetToken or ERC20)
+   * @param  txOpts          The options for executing the transaction
+   * @return                 Transaction hash
+   */
+  public async setUnlimitedTransferProxyAllowanceAsync(tokenAddress: string, txOpts?: TxData): Promise<string> {
+      return await this.setTransferProxyAllowanceAsync(
+          tokenAddress,
+          SetProtocolUtils.CONSTANTS.UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+          txOpts,
+      );
+  }
+
+  /**
    * Fetch the balance of the provided contract address inside the vault specified
    * in SetProtocolConfig
    *
-   * @param  tokenAddress Address of the contract (typically SetToken or ERC20)
-   * @param  ownerAddress Address of the user
-   * @return              The balance of the contract in the vault
+   * @param  tokenAddress    Address of the contract (typically SetToken or ERC20)
+   * @param  ownerAddress    Address of the user
+   * @return                 The balance of the contract in the vault
    */
   public async getBalanceInVaultAsync(tokenAddress: Address, ownerAddress: Address): Promise<BigNumber> {
     return await this.vault.getBalanceInVault(tokenAddress, ownerAddress);
@@ -186,8 +224,8 @@ class SetProtocol {
   /**
    * Verifies that the provided SetToken factory is enabled for creating a new SetToken
    *
-   * @param  factoryAddress Address of the factory contract
-   * @return                Whether the factory contract is enabled
+   * @param  factoryAddress    Address of the factory contract
+   * @return                   Whether the factory contract is enabled
    */
   public async isValidFactoryAsync(factoryAddress: Address): Promise<boolean> {
     return await this.core.isValidFactoryAsync(factoryAddress);
@@ -197,8 +235,8 @@ class SetProtocol {
    * Verifies that the provided SetToken or RebalancingSetToken address is enabled
    * for issuance and redemption
    *
-   * @param  setAddress Address of the SetToken or RebalancingSetToken contract
-   * @return            Whether the set contract is enabled
+   * @param  setAddress    Address of the SetToken or RebalancingSetToken contract
+   * @return               Whether the set contract is enabled
    */
   public async isValidSetAsync(setAddress: Address): Promise<boolean> {
     return await this.core.isValidSetAsync(setAddress);

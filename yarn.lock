@@ -4820,6 +4820,30 @@ set-protocol-utils@^0.3.20:
     tslint-eslint-rules "^5.3.1"
     web3 "0.20.0"
 
+set-protocol-utils@^0.3.23:
+  version "0.3.23"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.23.tgz#a83485688da7979621c1e06505927b1b516002c6"
+  dependencies:
+    "@0xproject/base-contract" "^1.0.4"
+    "@0xproject/order-utils" "^1.0.1-rc.2"
+    "@0xproject/types" "^1.0.1-rc.3"
+    "@0xproject/typescript-typings" "^1.0.4"
+    "@0xproject/web3-wrapper" "^1.1.2"
+    "@types/lodash" "4.14.104"
+    "@types/node" "^8.0.53"
+    abi-decoder "^1.0.9"
+    bignumber.js "~4.1.0"
+    chai "^4.1.2"
+    ethereum-types "^1.0.0"
+    ethereumjs-util "^5.1.1"
+    ethers "3.0.22"
+    husky "^0.14.3"
+    js-sha3 "^0.7.0"
+    lint-staged "^7.2.0"
+    lodash "^4.17.4"
+    tslint-eslint-rules "^5.3.1"
+    web3 "0.20.0"
+
 set-value@^0.4.3:
   version "0.4.3"
   resolved "https://registry.yarnpkg.com/set-value/-/set-value-0.4.3.tgz#7db08f9d3d22dc7f78e53af3c3bf4666ecdfccf1"

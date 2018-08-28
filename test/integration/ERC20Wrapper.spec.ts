@@ -31,12 +31,10 @@ import compact = require('lodash.compact');
 
 import { BigNumber } from '../../src/util';
 import ChaiSetup from '../helpers/chaiSetup';
-import {
-  StandardTokenMock,
-} from 'set-protocol-contracts';
+import { StandardTokenMock } from 'set-protocol-contracts';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../accounts';
-import { Erc20Wrapper } from '../../src/wrappers';
+import { ERC20Wrapper } from '../../src/wrappers';
 import {
   DEFAULT_GAS_PRICE,
   DEFAULT_GAS_LIMIT,
@@ -74,7 +72,7 @@ standardTokenMockContract.defaults(txDefaults);
 let currentSnapshotId: number;
 
 describe('ERC20 Wrapper', () => {
-  let erc20API: Erc20Wrapper;
+  let erc20API: ERC20Wrapper;
   let standardTokenMock: StandardTokenMock;
   let subjectCaller: Address;
   const subjectSupply: BigNumber = STANDARD_SUPPLY;
@@ -94,7 +92,7 @@ describe('ERC20 Wrapper', () => {
   });
 
   test('Erc20Wrapper can be instantiated', async () => {
-    erc20API = new Erc20Wrapper(web3);
+    erc20API = new ERC20Wrapper(web3);
     expect(erc20API);
 
     expect(erc20API.getBalanceOfAsync);
@@ -108,7 +106,7 @@ describe('ERC20 Wrapper', () => {
 
   describe('getters', async () => {
     beforeEach(async () => {
-      erc20API = new Erc20Wrapper(web3);
+      erc20API = new ERC20Wrapper(web3);
 
       subjectSpender = OTHER_ACCOUNT;
       subjectAllowance = ZERO;
@@ -162,7 +160,7 @@ describe('ERC20 Wrapper', () => {
     let subjectValue: BigNumber;
 
     beforeEach(async () => {
-      erc20API = new Erc20Wrapper(web3);
+      erc20API = new ERC20Wrapper(web3);
 
       standardTokenMock = await standardTokenMockContract.new(
         DEFAULT_ACCOUNT,
@@ -203,7 +201,7 @@ describe('ERC20 Wrapper', () => {
     let subjectValue: BigNumber;
 
     beforeEach(async () => {
-      erc20API = new Erc20Wrapper(web3);
+      erc20API = new ERC20Wrapper(web3);
 
       standardTokenMock = await standardTokenMockContract.new(
         DEFAULT_ACCOUNT,
@@ -256,7 +254,7 @@ describe('ERC20 Wrapper', () => {
     let subjectOwner: Address;
 
     beforeEach(async () => {
-      erc20API = new Erc20Wrapper(web3);
+      erc20API = new ERC20Wrapper(web3);
       subjectOwner = OTHER_ACCOUNT;
 
       standardTokenMock = await standardTokenMockContract.new(
