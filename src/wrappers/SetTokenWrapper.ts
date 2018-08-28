@@ -42,16 +42,14 @@ export class SetTokenWrapper {
   }
 
   /**
-   * Gets balance of a user's Sets
+   * Gets the Set's origin factory
    *
-   * @param  setAddress  Address of the Set
-   * @param  userAddress Address of the user
-   * @return             The balance of the user's Set
+   * @param  setAddress Address of the Set
+   * @return            The factory address
    */
-  public async getBalanceOf(setAddress: Address, userAddress: Address): Promise<BigNumber> {
-    this.assert.schema.isValidAddress('userAddress', userAddress);
+  public async getFactoryAsync(setAddress: Address): Promise<Address> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    return await setTokenInstance.balanceOf.callAsync(userAddress);
+    return await setTokenInstance.factory.callAsync();
   }
 
   /**
@@ -60,20 +58,9 @@ export class SetTokenWrapper {
    * @param  setAddress Address of the Set
    * @return            An array of addresses
    */
-  public async getComponents(setAddress: Address): Promise<Address[]> {
+  public async getComponentsAsync(setAddress: Address): Promise<Address[]> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     return await setTokenInstance.getComponents.callAsync();
-  }
-
-  /**
-   * Gets name of the Set
-   *
-   * @param  setAddress Address of the Set
-   * @return            A string of the Set's name
-   */
-  public async getName(setAddress: Address): Promise<string> {
-    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    return await setTokenInstance.name.callAsync();
   }
 
   /**
@@ -82,31 +69,9 @@ export class SetTokenWrapper {
    * @param  setAddress Address of the Set
    * @return            The natural unit of the Set
    */
-  public async getNaturalUnit(setAddress: Address): Promise<BigNumber> {
+  public async getNaturalUnitAsync(setAddress: Address): Promise<BigNumber> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     return await setTokenInstance.naturalUnit.callAsync();
-  }
-
-  /**
-   * Gets symbol of the Set
-   *
-   * @param  setAddress Address of the Set
-   * @return            A string of the Set's symbol
-   */
-  public async getSymbol(setAddress: Address): Promise<string> {
-    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    return await setTokenInstance.symbol.callAsync();
-  }
-
-  /**
-   * Gets total supply of the Set
-   *
-   * @param  setAddress Address of the Set
-   * @return            The total supply of the Set
-   */
-  public async getTotalSupply(setAddress: Address): Promise<BigNumber> {
-    const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    return await setTokenInstance.totalSupply.callAsync();
   }
 
   /**
@@ -116,7 +81,7 @@ export class SetTokenWrapper {
    * @return            An array of units that make up the Set composition which
    *                    correspond to the component tokens in the Set
    */
-  public async getUnits(setAddress: Address): Promise<BigNumber[]> {
+  public async getUnitsAsync(setAddress: Address): Promise<BigNumber[]> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     return await setTokenInstance.getUnits.callAsync();
   }
