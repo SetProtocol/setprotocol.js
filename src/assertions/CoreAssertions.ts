@@ -18,6 +18,8 @@
 
 import * as _ from 'lodash';
 import { SetProtocolUtils, ECSig, IssuanceOrder } from 'set-protocol-utils';
+import * as ethUtil from 'ethereumjs-util';
+import { SignatureUtils } from '../util/signatureUtils';
 import { coreAssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 import * as Web3 from 'web3';
@@ -51,9 +53,14 @@ export class CoreAssertions {
 
   public async isValidSignature(issuanceOrder: IssuanceOrder, signature: ECSig, errorMessage: string) {
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-    const orderSignature = await setProtocolUtils.signMessage(orderHash, issuanceOrder.makerAddress);
 
-    if (!_.isEqual(signature, orderSignature)) {
+    const isValid = SignatureUtils.isValidSignature(
+      orderHash,
+      signature,
+      issuanceOrder.makerAddress,
+    );
+
+    if (!isValid) {
       throw new Error(errorMessage);
     }
   }

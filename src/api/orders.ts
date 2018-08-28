@@ -19,12 +19,15 @@
 import * as Web3 from 'web3';
 import {
   Address,
+  ECSig,
   IssuanceOrder,
   SetProtocolUtils,
   SignedIssuanceOrder,
   TakerWalletOrder,
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
+import { Assertions } from '../assertions';
+import { coreAPIErrors } from '../errors';
 import { CoreWrapper } from '../wrappers';
 import { BigNumber } from '../util';
 import { TxData } from '../types/common';
@@ -44,19 +47,9 @@ export {
  */
 export class  OrderAPI {
   private web3: Web3;
+  private assert: Assertions;
   public core: CoreWrapper;
   public setProtocolUtils: SetProtocolUtils;
-
-  /**
-   * Generates a pseudo-random 256-bit salt.
-   * The salt can be included in a 0x order, ensuring that the order generates a unique orderHash
-   * and will not collide with other outstanding orders that are identical in all other parameters.
-   *
-   * @return  A pseudo-random 256-bit number that can be used as a salt.
-   */
-  public static generateSalt(): BigNumber {
-      return SetProtocolUtils.generateSalt();
-  }
 
   /**
    * Instantiates a new OrderAPI instance that contains methods for creating, filling, and cancelling issuance orders.
@@ -71,6 +64,64 @@ export class  OrderAPI {
   ) {
     this.core = core;
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
+    this.assert = new Assertions(this.web3);
+  }
+
+  /**
+   * Generates a pseudo-random 256-bit salt.
+   * The salt can be included in a 0x order, ensuring that the order generates a unique orderHash
+   * and will not collide with other outstanding orders that are identical in all other parameters.
+   *
+   * @return  A pseudo-random 256-bit number that can be used as a salt.
+   */
+  public generateSalt(): BigNumber {
+    return SetProtocolUtils.generateSalt();
+  }
+
+  /**
+   * Generates a timestamp represented as seconds since unix epoch.
+   * The timestamp is intended to be used to generate the expiration of an issuance order
+   *
+   * @param                           Seconds from the present time
+   *
+   * @return                          Unix timestamp (in seconds since unix epoch)
+   */
+  public generateExpirationTimestamp(seconds: number): BigNumber {
+    const timeToExpiration = seconds * 1000;
+
+    return new BigNumber(Math.floor((Date.now() + timeToExpiration) / 1000));
+  }
+
+  // public async validateOrderFillableAsync(
+  // ): Promise<boolean> {
+
+  // }
+
+  public async isValidSignatureOrThrowAsync(
+    issuanceOrder: IssuanceOrder,
+    signature: ECSig,
+  ): Promise<void> {
+    await this.assert.core.isValidSignature(
+      issuanceOrder,
+      signature,
+      coreAPIErrors.SIGNATURE_MISMATCH(),
+    );
+  }
+
+
+  /**
+   * Generates a ECSig
+   *
+   * @param                           Seconds from the present time
+   *
+   * @return                          Unix timestamp (in seconds since unix epoch)
+   */
+  public async signOrderAsync(
+    order: IssuanceOrder,
+  ): Promise<ECSig> {
+    const orderHash = SetProtocolUtils.hashOrderHex(order);
+    const signature = await this.setProtocolUtils.signMessage(orderHash, order.makerAddress);
+    return signature;
   }
 
   /**
