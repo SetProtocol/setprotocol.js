@@ -20,5 +20,6 @@ export { BigNumber } from './bignumber';
 export { classUtils } from './classUtils';
 export { estimateIssueRedeemGasCost } from './setTokenUtils';
 export { Web3Utils } from './Web3Utils';
+export { generateFutureTimestamp } from './timeStampUtils';
 export { generateTxOpts } from './transactionUtils';
 export { SignatureUtils } from './signatureUtils';

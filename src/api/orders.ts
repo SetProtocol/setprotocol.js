@@ -17,6 +17,7 @@
 'use strict';
 
 import * as Web3 from 'web3';
+import * as _ from 'lodash';
 import {
   Address,
   ECSig,
@@ -29,7 +30,7 @@ import {
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
 import { CoreWrapper } from '../wrappers';
-import { BigNumber } from '../util';
+import { BigNumber, generateFutureTimestamp } from '../util';
 import { TxData } from '../types/common';
 
 export {
@@ -83,20 +84,21 @@ export class  OrderAPI {
    * The timestamp is intended to be used to generate the expiration of an issuance order
    *
    * @param                           Seconds from the present time
-   *
    * @return                          Unix timestamp (in seconds since unix epoch)
    */
   public generateExpirationTimestamp(seconds: number): BigNumber {
-    const timeToExpiration = seconds * 1000;
-
-    return new BigNumber(Math.floor((Date.now() + timeToExpiration) / 1000));
+    return generateFutureTimestamp(seconds);
   }
 
-  // public async validateOrderFillableAsync(
-  // ): Promise<boolean> {
-
-  // }
-
+  /**
+   * Checks whether a particular issuance order and signature is valid
+   * A signature is valid only if the issuance order is signed by the maker
+   * The function throws upon receiving an invalid signature.
+   *
+   * @param  issuanceOrder                  The issuance order the signature was generated from
+   * @param  signature                      The EC Signature to check
+   * @return boolean
+   */
   public async isValidSignatureOrThrowAsync(
     issuanceOrder: IssuanceOrder,
     signature: ECSig,
@@ -108,25 +110,37 @@ export class  OrderAPI {
     );
   }
 
-
   /**
-   * Generates a ECSig from an issuance order
+   * Generates a ECSig from an issuance order. The function first generates an order hash.
+   * Then it signs it using the passed in transaction options. If none, it will assume
+   * the signer is the first account
    *
-   * @param                           Seconds from the present time
-   *
-   * @return                          Unix timestamp (in seconds since unix epoch)
+   * @param issuanceOrder               Issuance Order
+   * @return                            EC Signature
    */
   public async signOrderAsync(
-    order: IssuanceOrder,
+    issuanceOrder: IssuanceOrder,
     txOpts?: TxData,
   ): Promise<ECSig> {
-    const orderHash = SetProtocolUtils.hashOrderHex(order);
+    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
     const signature = await this.setProtocolUtils.signMessage(orderHash, txOpts.from);
     return signature;
   }
 
   /**
-   * Creates a new Issuance Order including the signature
+   * Given an issuance order, check that the signature is valid, order has not expired,
+   * and
+   *
+   * @param issuanceOrder               Issuance Order
+   */
+  public async validateOrderFillableOrThrowAsync(
+    signedIssuanceOrder: SignedIssuanceOrder,
+  ) {
+    await this.assert.order.isIssuanceOrderFillable(this.core, signedIssuanceOrder);
+  }
+
+  /**
+   * Creates a new signed Issuance Order including the signature
    *
    * @param  setAddress                Address of the Set token for issuance order
    * @param  quantity                  Number of Set tokens to create as part of issuance order
@@ -142,7 +156,7 @@ export class  OrderAPI {
    * @param  takerRelayerFee           Number of token paid tp relayer by taker
    * @return                           A transaction hash
    */
-  public async createOrderAsync(
+  public async createSignedOrderAsync(
     setAddress: Address,
     quantity: BigNumber,
     requiredComponents: Address[],

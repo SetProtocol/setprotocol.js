@@ -26,6 +26,7 @@ import {
   Address,
   ECSig,
   IssuanceOrder,
+  SignedIssuanceOrder,
   SetProtocolUtils,
 } from 'set-protocol-utils';
 import * as ABIDecoder from 'abi-decoder';
@@ -48,7 +49,7 @@ import {
   STANDARD_TRANSFER_VALUE,
   ZERO,
 } from '../../../src/constants';
-import { Web3Utils } from '../../../src/util';
+import { Web3Utils, generateFutureTimestamp } from '../../../src/util';
 import {
   initializeCoreWrapper,
 } from '../../helpers/coreHelpers';
@@ -88,7 +89,7 @@ describe('Orders API', () => {
     expect(ordersAPI.generateExpirationTimestamp);
     expect(ordersAPI.isValidSignatureOrThrowAsync);
     expect(ordersAPI.signOrderAsync);
-    expect(ordersAPI.createOrderAsync);
+    expect(ordersAPI.createSignedOrderAsync);
     expect(ordersAPI.fillOrderAsync);
     expect(ordersAPI.cancelOrderAsync);
   });
@@ -164,7 +165,9 @@ describe('Orders API', () => {
       test('should throw', async () => {
         try {
           await subject();
-          expect(false).to.equal(true); // This should throw
+
+          // The subject should throw, so it will not ruun this line
+          expect(false).to.equal(true);
         } catch (error) {
           expect(
             JSON.stringify(error)
@@ -225,6 +228,49 @@ describe('Orders API', () => {
         expect(isValid);
       });
     });
+  });
+
+  describe.only('#validateOrderFillableOrThrowAsync', async () => {
+    let signedIssuanceOrder: SignedIssuanceOrder;
+    let signer: Address;
+
+    beforeEach(async () => {
+      signer = DEFAULT_ACCOUNT;
+
+      const order: IssuanceOrder = {
+        setAddress: DEFAULT_ACCOUNT,
+        makerAddress: DEFAULT_ACCOUNT,
+        makerToken: DEFAULT_ACCOUNT,
+        relayerAddress: DEFAULT_ACCOUNT,
+        relayerToken: DEFAULT_ACCOUNT,
+        quantity: new BigNumber(100000),
+        makerTokenAmount: ZERO,
+        expiration: generateFutureTimestamp(10000),
+        makerRelayerFee: ZERO,
+        takerRelayerFee: ZERO,
+        requiredComponents: [],
+        requiredComponentAmounts: [],
+        salt: ZERO,
+      };
+
+      const orderHash = SetProtocolUtils.hashOrderHex(order);
+
+      const signature = await setProtocolUtils.signMessage(orderHash, signer);
+      signedIssuanceOrder = Object.assign({}, order, { signature });
+    });
+
+    async function subject(): Promise<void> {
+      return await ordersAPI.validateOrderFillableOrThrowAsync(
+        signedIssuanceOrder,
+      );
+    }
+
+    describe('with a valid signature, expiration time, and non-filled quantity', async () => {
+      it('should not revert', async () => {
+        await subject();
+      });
+    });
+
   });
 
 });
