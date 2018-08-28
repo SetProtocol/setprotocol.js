@@ -63,6 +63,7 @@
     "@types/node": "^10.0.3",
     "abi-decoder": "^1.1.0",
     "bignumber.js": "^5.0.0",
+    "chai-as-promised": "^7.1.1",
     "chai-bignumber": "^2.0.2",
     "ethereum-types": "^1.0.4",
     "ethereumjs-util": "^5.2.0",
