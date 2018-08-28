@@ -26,9 +26,14 @@ import * as chai from 'chai';
 import * as Web3 from 'web3';
 import * as ABIDecoder from 'abi-decoder';
 
-import { Core, StandardTokenMock, TransferProxy, Vault } from 'set-protocol-contracts';
+import {
+  Core,
+  StandardTokenMockContract,
+  TransferProxy,
+  Vault
+} from 'set-protocol-contracts';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
-
+import ChaiSetup from '../helpers/chaiSetup';
 import { DEFAULT_ACCOUNT } from '../accounts';
 import SetProtocol from '../../src';
 import { testSets, TestSet } from '../testSets';
@@ -47,6 +52,7 @@ import {
 } from '../helpers/coreHelpers';
 import { deployTakerWalletExchangeWrapper } from '../helpers/exchangeHelpers';
 
+ChaiSetup.configure();
 const { expect } = chai;
 const { UNLIMITED_ALLOWANCE_IN_BASE_UNITS } = SetProtocolUtils.CONSTANTS;
 
@@ -145,7 +151,7 @@ describe('SetProtocol', async () => {
   });
 
   describe('setTransferProxyAllowanceAsync', async () => {
-    let token: StandardTokenMock;
+    let token: StandardTokenMockContract;
     let subjectCaller: Address;
     let subjectQuantity: BigNumber;
 
@@ -166,18 +172,18 @@ describe('SetProtocol', async () => {
     }
 
     test('sets the allowance properly', async () => {
-      const existingSpenderAllowance = await token.allowance(subjectCaller, coreWrapper.transferProxyAddress);
+      const existingAllowance = await token.allowance.callAsync(subjectCaller, coreWrapper.transferProxyAddress);
 
       await subject();
 
-      const expectedNewSpenderAllowance = existingSpenderAllowance.add(subjectQuantity);
-      const newSpenderAllowance = await token.allowance(subjectCaller, coreWrapper.transferProxyAddress);
-      expect(newSpenderAllowance).to.bignumber.equal(expectedNewSpenderAllowance);
+      const expectedNewAllowance = existingAllowance.add(subjectQuantity);
+      const newAllowance = await token.allowance.callAsync(subjectCaller, coreWrapper.transferProxyAddress);
+      expect(newAllowance).to.bignumber.equal(expectedNewAllowance);
     });
   });
 
   describe('setUnlimitedTransferProxyAllowanceAsync', async () => {
-    let token: StandardTokenMock;
+    let token: StandardTokenMockContract;
     let subjectCaller: Address;
 
     beforeEach(async () => {
@@ -197,8 +203,8 @@ describe('SetProtocol', async () => {
     test('sets the allowance properly', async () => {
       await subject();
 
-      const newSpenderAllowance = await token.allowance(subjectCaller, coreWrapper.transferProxyAddress);
-      expect(newSpenderAllowance).to.bignumber.equal(UNLIMITED_ALLOWANCE_IN_BASE_UNITS);
+      const newAllowance = await token.allowance.callAsync(subjectCaller, coreWrapper.transferProxyAddress);
+      expect(newAllowance).to.bignumber.equal(UNLIMITED_ALLOWANCE_IN_BASE_UNITS);
     });
   });
 
