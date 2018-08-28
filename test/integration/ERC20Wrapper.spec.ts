@@ -31,9 +31,7 @@ import compact = require('lodash.compact');
 
 import { BigNumber } from '../../src/util';
 import ChaiSetup from '../helpers/chaiSetup';
-import {
-  StandardTokenMock,
-} from 'set-protocol-contracts';
+import { StandardTokenMock } from 'set-protocol-contracts';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../accounts';
 import { ERC20Wrapper } from '../../src/wrappers';

@@ -26,7 +26,7 @@ import * as chai from 'chai';
 import * as Web3 from 'web3';
 import * as ABIDecoder from 'abi-decoder';
 
-import { Core, TransferProxy, Vault } from 'set-protocol-contracts';
+import { Core, StandardTokenMock, TransferProxy, Vault } from 'set-protocol-contracts';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT } from '../accounts';
@@ -36,16 +36,19 @@ import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS } from '../../src/co
 import { Web3Utils } from '../../src/util/Web3Utils';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../logs';
 import { CoreWrapper } from '../../src/wrappers';
+import { BigNumber } from '../../src/util';
 import {
   approveForFill,
   deploySetTokenFactory,
   deployTokensForSetWithApproval,
+  deployTokensAsync,
   initializeCoreWrapper,
   registerExchange,
 } from '../helpers/coreHelpers';
 import { deployTakerWalletExchangeWrapper } from '../helpers/exchangeHelpers';
 
 const { expect } = chai;
+const { UNLIMITED_ALLOWANCE_IN_BASE_UNITS } = SetProtocolUtils.CONSTANTS;
 
 const contract = require('truffle-contract');
 
@@ -74,6 +77,9 @@ vaultContract.defaults(txDefaults);
 let currentSnapshotId: number;
 
 describe('SetProtocol', async () => {
+  let coreWrapper: CoreWrapper;
+  let setProtocolInstance: SetProtocol;
+
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
     ABIDecoder.addABI(transferProxyContract.abi);
@@ -88,6 +94,14 @@ describe('SetProtocol', async () => {
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
+
+    coreWrapper = await initializeCoreWrapper(provider);
+    setProtocolInstance = new SetProtocol(
+      web3,
+      coreWrapper.coreAddress,
+      coreWrapper.transferProxyAddress,
+      coreWrapper.vaultAddress,
+    );
   });
 
   afterEach(async () => {
@@ -95,27 +109,15 @@ describe('SetProtocol', async () => {
   });
 
   test('should instantiate a new setProtocolInstance', async () => {
-    // Deploy Core
-    const coreWrapper = await initializeCoreWrapper(provider);
-
-    const setProtocolInstance = new SetProtocol(
-      web3,
-      coreWrapper.coreAddress,
-      coreWrapper.transferProxyAddress,
-      coreWrapper.vaultAddress,
-    );
     expect(setProtocolInstance instanceof SetProtocol);
   });
 
   describe('createSet', async () => {
-    let coreWrapper: CoreWrapper;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
     let componentAddresses: Address[];
-    let setProtocolInstance: SetProtocol;
 
     beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
       setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
 
       setToCreate = testSets[0];
@@ -123,13 +125,6 @@ describe('SetProtocol', async () => {
         setToCreate,
         coreWrapper.transferProxyAddress,
         provider,
-      );
-
-      setProtocolInstance = new SetProtocol(
-        web3,
-        coreWrapper.coreAddress,
-        coreWrapper.transferProxyAddress,
-        coreWrapper.vaultAddress,
       );
     });
 
@@ -149,18 +144,73 @@ describe('SetProtocol', async () => {
     });
   });
 
+  describe('setTransferProxyAllowanceAsync', async () => {
+    let token: StandardTokenMock;
+    let subjectCaller: Address;
+    let subjectQuantity: BigNumber;
+
+    beforeEach(async () => {
+      const tokenContracts = await deployTokensAsync(1, provider);
+      token = tokenContracts[0];
+
+      subjectCaller = DEFAULT_ACCOUNT;
+      subjectQuantity = new BigNumber(1000);
+    });
+
+    async function subject(): Promise<string> {
+      return await setProtocolInstance.setTransferProxyAllowanceAsync(
+        token.address,
+        subjectQuantity,
+        { from: subjectCaller },
+      );
+    }
+
+    test('sets the allowance properly', async () => {
+      const existingSpenderAllowance = await token.allowance(subjectCaller, coreWrapper.transferProxyAddress);
+
+      await subject();
+
+      const expectedNewSpenderAllowance = existingSpenderAllowance.add(subjectQuantity);
+      const newSpenderAllowance = await token.allowance(subjectCaller, coreWrapper.transferProxyAddress);
+      expect(newSpenderAllowance).to.bignumber.equal(expectedNewSpenderAllowance);
+    });
+  });
+
+  describe('setUnlimitedTransferProxyAllowanceAsync', async () => {
+    let token: StandardTokenMock;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const tokenContracts = await deployTokensAsync(1, provider);
+      token = tokenContracts[0];
+
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await setProtocolInstance.setUnlimitedTransferProxyAllowanceAsync(
+        token.address,
+        { from: subjectCaller },
+      );
+    }
+
+    test('sets the allowance properly', async () => {
+      await subject();
+
+      const newSpenderAllowance = await token.allowance(subjectCaller, coreWrapper.transferProxyAddress);
+      expect(newSpenderAllowance).to.bignumber.equal(UNLIMITED_ALLOWANCE_IN_BASE_UNITS);
+    });
+  });
+
   /* ============ Core State Getters ============ */
 
   describe('Core State Getters', async () => {
-    let coreWrapper: CoreWrapper;
     let setTokenFactoryAddress: Address;
     let setTokenAddress: Address;
     let setToCreate: TestSet;
     let componentAddresses: Address[];
-    let setProtocolInstance: SetProtocol;
 
     beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
       setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
 
       setToCreate = testSets[0];
@@ -168,13 +218,6 @@ describe('SetProtocol', async () => {
         setToCreate,
         coreWrapper.transferProxyAddress,
         provider,
-      );
-
-      setProtocolInstance = new SetProtocol(
-        web3,
-        coreWrapper.coreAddress,
-        coreWrapper.transferProxyAddress,
-        coreWrapper.vaultAddress,
       );
 
       // Create a Set
