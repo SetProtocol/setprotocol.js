@@ -230,7 +230,7 @@ describe('Orders API', () => {
     });
   });
 
-  describe.only('#validateOrderFillableOrThrowAsync', async () => {
+  describe('#validateOrderFillableOrThrowAsync', async () => {
     let signedIssuanceOrder: SignedIssuanceOrder;
     let signer: Address;
 

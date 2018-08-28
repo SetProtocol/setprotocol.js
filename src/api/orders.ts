@@ -20,6 +20,7 @@ import * as Web3 from 'web3';
 import * as _ from 'lodash';
 import {
   Address,
+  Bytes,
   ECSig,
   IssuanceOrder,
   SetProtocolUtils,
@@ -46,7 +47,7 @@ export {
  * Methods that require interaction with the Ethereum blockchain are exposed after instantiating a new instance
  * of SetProtocol with the web3 provider argument
  */
-export class  OrderAPI {
+export class OrderAPI {
   private web3: Web3;
   private assert: Assertions;
   public core: CoreWrapper;
@@ -88,6 +89,17 @@ export class  OrderAPI {
    */
   public generateExpirationTimestamp(seconds: number): BigNumber {
     return generateFutureTimestamp(seconds);
+  }
+
+  /**
+   * Checks if the supplied hex encoded order hash is valid.
+   * Note: Valid means it has the expected format, not that an order
+   * with the orderHash exists.
+   *
+   * @param                           Hex encoded order hash
+   */
+  public isValidOrderHashOrThrow(orderHash: Bytes): void {
+    this.assert.schema.isValidBytes32(orderHash, coreAPIErrors.INVALID_ORDER_HASH_SCHEMA());
   }
 
   /**
