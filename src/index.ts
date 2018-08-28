@@ -163,7 +163,7 @@ class SetProtocol {
    *
    * @param  tokenAddress Address of the contract (typically SetToken or ERC20)
    * @param  ownerAddress Address of the user
-   * @return              The balance of the user's Set
+   * @return              The balance of the contract in the vault
    */
   public async getBalanceInVaultAsync(tokenAddress: Address, ownerAddress: Address): Promise<BigNumber> {
     return await this.vault.getBalanceInVault(tokenAddress, ownerAddress);
