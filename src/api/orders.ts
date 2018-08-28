@@ -100,8 +100,8 @@ export class  OrderAPI {
   public async isValidSignatureOrThrowAsync(
     issuanceOrder: IssuanceOrder,
     signature: ECSig,
-  ): Promise<void> {
-    await this.assert.core.isValidSignature(
+  ): Promise<boolean> {
+    return await this.assert.core.isValidSignature(
       issuanceOrder,
       signature,
       coreAPIErrors.SIGNATURE_MISMATCH(),
@@ -110,7 +110,7 @@ export class  OrderAPI {
 
 
   /**
-   * Generates a ECSig
+   * Generates a ECSig from an issuance order
    *
    * @param                           Seconds from the present time
    *
@@ -118,9 +118,10 @@ export class  OrderAPI {
    */
   public async signOrderAsync(
     order: IssuanceOrder,
+    txOpts?: TxData,
   ): Promise<ECSig> {
     const orderHash = SetProtocolUtils.hashOrderHex(order);
-    const signature = await this.setProtocolUtils.signMessage(orderHash, order.makerAddress);
+    const signature = await this.setProtocolUtils.signMessage(orderHash, txOpts.from);
     return signature;
   }
 

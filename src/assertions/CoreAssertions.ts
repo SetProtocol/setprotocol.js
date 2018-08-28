@@ -51,7 +51,11 @@ export class CoreAssertions {
     }
   }
 
-  public async isValidSignature(issuanceOrder: IssuanceOrder, signature: ECSig, errorMessage: string) {
+  public async isValidSignature(
+    issuanceOrder: IssuanceOrder,
+    signature: ECSig,
+    errorMessage: string
+  ): Promise<boolean> {
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
     const isValid = SignatureUtils.isValidSignature(
@@ -63,5 +67,7 @@ export class CoreAssertions {
     if (!isValid) {
       throw new Error(errorMessage);
     }
+
+    return true;
   }
 }

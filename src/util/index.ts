@@ -21,3 +21,4 @@ export { classUtils } from './classUtils';
 export { estimateIssueRedeemGasCost } from './setTokenUtils';
 export { Web3Utils } from './Web3Utils';
 export { generateTxOpts } from './transactionUtils';
+export { SignatureUtils } from './signatureUtils';
