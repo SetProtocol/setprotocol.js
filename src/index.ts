@@ -19,7 +19,7 @@
 import * as Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import { OrderAPI } from './api';
-import { CoreWrapper, Erc20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
+import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
 import { BigNumber } from './util';
 import { TxData } from './types/common';
 
@@ -48,9 +48,9 @@ class SetProtocol {
   public orders: OrderAPI;
 
   /**
-   * An instance of the OrderAPI class containing methods for relaying IssuanceOrders
+   * An instance of the ERC20Wrapper class containing methods for interacting with ERC20 compliant contracts
    */
-  public erc20: Erc20Wrapper;
+  public erc20: ERC20Wrapper;
 
   /**
    * An instance of the OrderAPI class containing methods for relaying IssuanceOrders
@@ -78,7 +78,7 @@ class SetProtocol {
     this.vault = new VaultWrapper(this.web3, vaultAddress);
 
     this.orders = new OrderAPI(this.web3, this.core);
-    this.erc20 = new Erc20Wrapper(this.web3);
+    this.erc20 = new ERC20Wrapper(this.web3);
   }
 
   /**

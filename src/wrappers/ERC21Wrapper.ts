@@ -32,7 +32,7 @@ import { BigNumber, generateTxOpts } from '../util';
  * The Vault API handles all functions on the Vault smart contract.
  *
  */
-export class Erc20Wrapper {
+export class ERC20Wrapper {
   private web3: Web3;
   private assert: Assertions;
   private contracts: ContractWrapper;
