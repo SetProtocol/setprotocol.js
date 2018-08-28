@@ -185,8 +185,8 @@ class SetProtocol {
    * @param  factoryAddress Address of the factory contract
    * @return                Whether the factory contract is enabled
    */
-  public async validateFactoryAsync(factoryAddress: Address): Promise<boolean> {
-    return await this.core.validateFactory(factoryAddress);
+  public async isValidFactoryAsync(factoryAddress: Address): Promise<boolean> {
+    return await this.core.isValidFactoryAsync(factoryAddress);
   }
 
   /**
@@ -196,8 +196,8 @@ class SetProtocol {
    * @param  setAddress Address of the SetToken or RebalancingSetToken contract
    * @return            Whether the set contract is enabled
    */
-  public async validateSetAsync(setAddress: Address): Promise<boolean> {
-    return await this.core.validateSet(setAddress);
+  public async isValidSetAsync(setAddress: Address): Promise<boolean> {
+    return await this.core.isValidSetAsync(setAddress);
   }
 }
 

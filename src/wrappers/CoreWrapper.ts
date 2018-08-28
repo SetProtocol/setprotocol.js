@@ -709,7 +709,7 @@ export class CoreWrapper {
    * @param  factoryAddress Address of the factory contract
    * @return                Whether the factory contract is enabled
    */
-  public async validateFactory(factoryAddress: Address): Promise<boolean> {
+  public async isValidFactoryAsync(factoryAddress: Address): Promise<boolean> {
     this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidFactoryAddress = await coreInstance.validFactories.callAsync(factoryAddress);
@@ -723,7 +723,7 @@ export class CoreWrapper {
    * @param  setAddress Address of the SetToken or RebalancingSetToken contract
    * @return            Whether the contract is enabled
    */
-  public async validateSet(setAddress: Address): Promise<boolean> {
+  public async isValidSetAsync(setAddress: Address): Promise<boolean> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidSetAddress = await coreInstance.validSets.callAsync(setAddress);
