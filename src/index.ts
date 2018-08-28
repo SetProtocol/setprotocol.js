@@ -165,7 +165,7 @@ class SetProtocol {
    * Sets the Set TransferProxy contract's allowance to a specified quantity on behalf of the user. Allowance is
    * required for issuing, redeeming, and filling issuance orders
    *
-   * @param   tokenAddress        (typically SetToken or ERC20)
+   * @param   tokenAddress        Address of contract to approve (typically SetToken or ERC20)
    * @param   quantity            The allowance quantity
    * @param   txOpts              The options for executing the transaction
    * @return                      Transaction hash
