@@ -97,12 +97,9 @@ describe('Set Token API', () => {
   test('SetTokenWrapper can be instantiated', async () => {
     const setTokenWrapper = new SetTokenWrapper(web3);
     expect(setTokenWrapper);
-    expect(setTokenWrapper.getSymbol);
-    expect(setTokenWrapper.getName);
-    expect(setTokenWrapper.getComponents);
-    expect(setTokenWrapper.getUnits);
-    expect(setTokenWrapper.getTotalSupply);
-    expect(setTokenWrapper.getBalanceOf);
+    expect(setTokenWrapper.getComponentsAsync);
+    expect(setTokenWrapper.getUnitsAsync);
+    expect(setTokenWrapper.getNaturalUnitAsync);
   });
 
   describe('getters', async () => {
@@ -167,34 +164,25 @@ describe('Set Token API', () => {
       );
     });
 
-    test('gets Set token symbol', async () => {
-      const symbol = await setTokenWrapper.getSymbol(setTokenInstance.address);
-      expect(symbol).to.equal(setToCreate.setSymbol);
+    test('get Set token factory', async () => {
+      const factoryAddress = await setTokenWrapper.getFactoryAsync(setTokenInstance.address);
+      console.log('Factory', factoryAddress);
+      expect(factoryAddress).to.equal(setTokenFactoryInstance.address);
     });
 
-    test('gets Set token name', async () => {
-      const name = await setTokenWrapper.getName(setTokenInstance.address);
-      expect(name).to.equal(setToCreate.setName);
+    test('get Set token components', async () => {
+      const components = await setTokenWrapper.getComponentsAsync(setTokenInstance.address);
+      expect(JSON.stringify(components)).to.equal(JSON.stringify(componentAddresses));
     });
 
     test('get Set token natural units', async () => {
-      const naturalUnit = await setTokenWrapper.getNaturalUnit(setTokenInstance.address);
-      expect(naturalUnit.toNumber()).to.equal(setToCreate.naturalUnit.toNumber());
+      const naturalUnit = await setTokenWrapper.getNaturalUnitAsync(setTokenInstance.address);
+      expect(naturalUnit).to.bignumber.equal(setToCreate.naturalUnit);
     });
 
     test('get Set token units', async () => {
-      const units = await setTokenWrapper.getUnits(setTokenInstance.address);
+      const units = await setTokenWrapper.getUnitsAsync(setTokenInstance.address);
       _.forEach(units, (unit, i) => unit.toNumber() === setToCreate.units[i].toNumber());
-    });
-
-    test('get total supply of Set tokens', async () => {
-      const totalSupply = await setTokenWrapper.getTotalSupply(setTokenInstance.address);
-      expect(totalSupply.toNumber()).to.equal(0);
-    });
-
-    test("get balance of user's Set tokens", async () => {
-      const balance = await setTokenWrapper.getBalanceOf(setTokenInstance.address, DEFAULT_ACCOUNT);
-      expect(balance.toNumber()).to.equal(0);
     });
   });
 });
