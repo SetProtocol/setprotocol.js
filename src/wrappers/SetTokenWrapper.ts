@@ -47,9 +47,9 @@ export class SetTokenWrapper {
    * @param  setAddress Address of the Set
    * @return            An array of addresses
    */
-  public async getFactoryAsync(setAddress: Address): Promise<Address[]> {
+  public async getFactoryAsync(setAddress: Address): Promise<Address> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
-    return await setTokenInstance.getComponents.callAsync();
+    return await setTokenInstance.factory.callAsync();
   }
 
   /**

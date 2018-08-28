@@ -33,9 +33,8 @@ import { TxData } from './types/common';
  */
 class SetProtocol {
   private web3: Web3;
-  public core: CoreWrapper;
-  public setToken: SetTokenWrapper;
-  public vault: VaultWrapper;
+  private core: CoreWrapper;
+  private vault: VaultWrapper;
 
   /**
    * When creating an issuance order without a relayer token for a fee, you must use Solidity
@@ -52,6 +51,11 @@ class SetProtocol {
    * An instance of the OrderAPI class containing methods for relaying IssuanceOrders
    */
   public erc20: Erc20Wrapper;
+
+  /**
+   * An instance of the OrderAPI class containing methods for relaying IssuanceOrders
+   */
+  public setToken: SetTokenWrapper;
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.

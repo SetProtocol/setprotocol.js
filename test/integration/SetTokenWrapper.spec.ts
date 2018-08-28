@@ -38,6 +38,7 @@ import {
   SetTokenContract,
 } from 'set-protocol-contracts';
 
+import ChaiSetup from '../helpers/chaiSetup';
 import { DEFAULT_ACCOUNT } from '../accounts';
 import { testSets, TestSet } from '../testSets';
 import { CoreWrapper, SetTokenWrapper } from '../../src/wrappers';
@@ -45,6 +46,7 @@ import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
 import { Web3Utils } from '../../src/util';
 import { initializeCoreWrapper } from '../helpers/coreHelpers';
 
+ChaiSetup.configure();
 const { expect } = chai;
 
 const contract = require('truffle-contract');
@@ -140,22 +142,9 @@ describe('Set Token API', () => {
         }),
       );
 
-      // Create Set Token
-      const txHash = await coreAPI.createSet(
-        setTokenFactoryInstance.address,
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        { from: DEFAULT_ACCOUNT },
-      );
-      const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
-      const logs: ABIDecoder.DecodedLog[] = compact(ABIDecoder.decodeLogs(receipt.logs));
-      const setTokenContractAddress = logs[logs.length - 1].address;
       // Deploy Set Token
       setTokenInstance = await setTokenContract.new(
-        setTokenContractAddress,
+        setTokenFactoryInstance.address,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
@@ -166,7 +155,6 @@ describe('Set Token API', () => {
 
     test('get Set token factory', async () => {
       const factoryAddress = await setTokenWrapper.getFactoryAsync(setTokenInstance.address);
-      console.log('Factory', factoryAddress);
       expect(factoryAddress).to.equal(setTokenFactoryInstance.address);
     });
 
