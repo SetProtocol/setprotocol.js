@@ -179,12 +179,16 @@ describe('CoreWrapper', () => {
       );
     });
 
+    async function subject(): Promise<string> {
+      return await coreWrapper.getSetAddressFromCreateTxHashAsync(subjectTxHash);
+    }
+
     test('retrieves the correct set address', async () => {
-      const resultAddress = await coreWrapper.getSetAddressFromCreateTxHashAsync(subjectTxHash);
+      const setAddress = await subject();
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, subjectTxHash);
-      const expectedAddress = formattedLogs[0].args._setTokenAddress;
-      expect(resultAddress).to.equal(expectedAddress);
+      const expectedSetAddress = formattedLogs[0].args._setTokenAddress;
+      expect(setAddress).to.equal(expectedSetAddress);
     });
   });
 
