@@ -42,6 +42,7 @@ import { Web3Utils } from '../../src/util/Web3Utils';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../logs';
 import { CoreWrapper } from '../../src/wrappers';
 import { BigNumber } from '../../src/util';
+import { SetProtocolConfig } from '../../src';
 import {
   approveForFill,
   deploySetTokenFactory,
@@ -102,11 +103,16 @@ describe('SetProtocol', async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
     coreWrapper = await initializeCoreWrapper(provider);
+
+    const config: SetProtocolConfig = {
+      coreAddress: coreWrapper.coreAddress,
+      transferProxyAddress: coreWrapper.transferProxyAddress,
+      vaultAddress: coreWrapper.vaultAddress,
+    };
+
     setProtocolInstance = new SetProtocol(
       web3,
-      coreWrapper.coreAddress,
-      coreWrapper.transferProxyAddress,
-      coreWrapper.vaultAddress,
+      config,
     );
   });
 

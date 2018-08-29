@@ -46,11 +46,15 @@ Let’s initialize our `setProtocol` instance. We need to first import our libra
 // Import
 import SetProtocol from 'setprotocol.js';
 
+const config = {
+  coreAddress: '0x...', // Address of the Set Protocol Core contract
+  transferProxyAddress: '0x...', // Address of the Set Protocol Transfer Proxy contract
+  vaultAddress: '0x...', // Address of the Set Protocol Vault contract
+};
+
 const setProtocol = new SetProtocol(
   web3,    // web3: A web3 instance you've instantiated from `new Web3(currentProvider)`
-  '0x...', // coreAddress: Address of the Set Protocol Core contract
-  '0x...', // transferProxyAddress: Address of the Set Protocol Transfer Proxy contract
-  '0x...', // vaultAddress: Address of the Set Protocol Vault contract
+  config,
 );
 ```
 
