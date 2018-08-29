@@ -24,6 +24,7 @@ jest.setTimeout(30000);
 
 import {
   Address,
+  Bytes,
   ECSig,
   IssuanceOrder,
   SignedIssuanceOrder,
@@ -110,6 +111,28 @@ describe('Orders API', () => {
       const currentTime = new BigNumber(Math.floor((Date.now()) / 1000));
 
       expect(generatedTimestamp).to.bignumber.greaterThan(currentTime);
+    });
+  });
+
+  describe('#isValidOrderHashOrThrow', async () => {
+    let subjectData: Bytes;
+
+    function subject(): void {
+      return ordersAPI.isValidOrderHashOrThrow(
+        subjectData,
+      );
+    }
+
+    test('should not throw', async () => {
+      subjectData = SetProtocolUtils.stringToBytes('hello');
+      subject();
+    });
+
+    describe('with malformed data', async () => {
+      test('should throw', async () => {
+        subjectData = '0x0000shouldnotwork';
+        expect(() => subject()).to.throw();
+      });
     });
   });
 

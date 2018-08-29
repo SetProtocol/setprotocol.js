@@ -99,7 +99,7 @@ export class OrderAPI {
    * @param                           Hex encoded order hash
    */
   public isValidOrderHashOrThrow(orderHash: Bytes): void {
-    this.assert.schema.isValidBytes32(orderHash, coreAPIErrors.INVALID_ORDER_HASH_SCHEMA());
+    this.assert.schema.isValidBytes32('orderHash', orderHash);
   }
 
   /**

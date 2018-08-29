@@ -22,6 +22,7 @@ export const coreAPIErrors = {
   ARRAYS_EQUAL_LENGTHS: (firstArray: string, secondArray: string) =>
    `The ${firstArray} and ${secondArray} arrays need to be equal lengths.`,
   FULLY_FILLED: () => 'The order has already been fully filled or cancelled.',
+  INVALID_ORDER_HASH_SCHEMA: () => `The order hash passed in is not in Bytes32 schema`,
   QUANTITY_NEEDS_TO_BE_POSITIVE: (quantity: BigNumber) =>
     `The quantity ${quantity.toString()} inputted needs to be greater than zero.`,
   STRING_CANNOT_BE_EMPTY: (variable: string) => `The string ${variable} cannot be empty.`,
