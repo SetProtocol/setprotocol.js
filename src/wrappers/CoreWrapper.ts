@@ -20,6 +20,7 @@ import * as Web3 from 'web3';
 import * as _ from 'lodash';
 import {
   SetProtocolUtils,
+  SetProtocolTestUtils,
   Address,
   Bytes,
   IssuanceOrder,
@@ -35,6 +36,7 @@ import { Assertions } from '../assertions';
 import { TxData } from '../types/common';
 import { BigNumber, generateTxOpts } from '../util';
 import { DetailedERC20Contract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
+import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../test/logs';
 
 /**
  * @title CoreWrapper
@@ -128,6 +130,19 @@ export class CoreWrapper {
     );
 
     return txHash;
+  }
+
+  /**
+   * Asynchronously retrieves a Set Token address from a createSet txHash
+   *
+   * @param  txHash     The transaction has to retrieve the set address from
+   * @return            The address of the newly created Set
+   */
+  public async getSetAddressFromCreateTxHashAsync(
+    txHash: Bytes,
+  ): Promise<Address> {
+    const logs = await getFormattedLogsFromTxHash(this.web3, txHash);
+    return extractNewSetTokenAddressFromLogs(logs);
   }
 
   /**

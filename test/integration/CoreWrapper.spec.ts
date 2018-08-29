@@ -148,6 +148,50 @@ describe('CoreWrapper', () => {
     });
   });
 
+  /* ============ getSetAddressFromCreateTxHashAsync ============ */
+
+  describe('getSetAddressFromCreateTxHashAsync', async () => {
+    let coreWrapper: CoreWrapper;
+    let setTokenFactoryAddress: Address;
+    let setToCreate: TestSet;
+    let componentAddresses: Address[];
+    let subjectTxHash: Bytes;
+
+    beforeEach(async () => {
+      coreWrapper = await initializeCoreWrapper(provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
+
+      setToCreate = testSets[0];
+      componentAddresses = await deployTokensForSetWithApproval(
+        setToCreate,
+        coreWrapper.transferProxyAddress,
+        provider,
+      );
+
+      subjectTxHash = await coreWrapper.createSet(
+        setTokenFactoryAddress,
+        componentAddresses,
+        setToCreate.units,
+        setToCreate.naturalUnit,
+        setToCreate.setName,
+        setToCreate.setSymbol,
+        { from: DEFAULT_ACCOUNT },
+      );
+    });
+
+    async function subject(): Promise<string> {
+      return await coreWrapper.getSetAddressFromCreateTxHashAsync(subjectTxHash);
+    }
+
+    test('retrieves the correct set address', async () => {
+      const setAddress = await subject();
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, subjectTxHash);
+      const expectedSetAddress = formattedLogs[0].args._setTokenAddress;
+      expect(setAddress).to.equal(expectedSetAddress);
+    });
+  });
+
   /* ============ Issue ============ */
 
   describe('issue', async () => {
