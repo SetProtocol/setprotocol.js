@@ -17,7 +17,7 @@
 'use strict';
 
 import * as Web3 from 'web3';
-import { Address, SetProtocolUtils } from 'set-protocol-utils';
+import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
 import { Provider } from '@0xproject/types';
 
 import { AccountingAPI, OrderAPI } from './api';
@@ -215,6 +215,16 @@ class SetProtocol {
    */
   public async getBalanceInVaultAsync(tokenAddress: Address, ownerAddress: Address): Promise<BigNumber> {
     return await this.vault.getBalanceInVault(tokenAddress, ownerAddress);
+  }
+
+  /**
+   * Asynchronously retrieves a Set Token address from a createSet txHash
+   *
+   * @param  txHash     The transaction has to retrieve the set address from
+   * @return            The address of the newly created Set
+   */
+  public async getSetAddressFromCreateTxHashAsync(txHash: Bytes): Promise<Address> {
+    return await this.core.getSetAddressFromCreateTxHash(txHash);
   }
 
   /**

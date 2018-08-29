@@ -138,9 +138,10 @@ export class CoreWrapper {
    * @param  txHash     The transaction has to retrieve the set address from
    * @return            The address of the newly created Set
    */
-  public async getSetAddressFromCreateTxHashAsync(
-    txHash: Bytes,
+  public async getSetAddressFromCreateTxHash(
+    txHash: string,
   ): Promise<Address> {
+    this.assert.schema.isValidBytes32('txHash', txHash);
     const logs = await getFormattedLogsFromTxHash(this.web3, txHash);
     return extractNewSetTokenAddressFromLogs(logs);
   }
