@@ -22,6 +22,8 @@ import { Address } from 'set-protocol-utils';
 import { ContractWrapper } from '.';
 import { Assertions } from '../assertions';
 import { BigNumber } from '../util';
+import { ZERO } from '../constants';
+import { coreAPIErrors } from '../errors';
 
 /**
  * @title  SetTokenWrapper
@@ -84,5 +86,24 @@ export class SetTokenWrapper {
   public async getUnitsAsync(setAddress: Address): Promise<BigNumber[]> {
     const setTokenInstance = await this.contracts.loadSetTokenAsync(setAddress);
     return await setTokenInstance.getUnits.callAsync();
+  }
+
+  /**
+   * Returns whether the quantity passed in is a multiple of a Set's natural unit
+   *
+   * @param  setAddress Address of the Set
+   * @param  quantity   Quantity to be checked
+   * @return boolean    A boolean representing whether the Set is a multiple of the natural Unit
+   *
+   */
+  public async isMultipleOfNaturalUnitAsync(
+    setAddress: Address,
+    quantity: BigNumber,
+  ): Promise<boolean> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
+
+    const naturalUnit = await this.getNaturalUnitAsync(setAddress);
+    return quantity.mod(naturalUnit).eq(ZERO);
   }
 }
