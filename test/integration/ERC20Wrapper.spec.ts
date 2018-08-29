@@ -22,16 +22,16 @@
 jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
-import { Address } from 'set-protocol-utils';
+import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
-import * as _ from 'lodash';
 import * as Web3 from 'web3';
 import compact = require('lodash.compact');
+import { Address } from 'set-protocol-utils';
+import { StandardTokenMock } from 'set-protocol-contracts';
 
 import { BigNumber } from '../../src/util';
 import ChaiSetup from '../helpers/chaiSetup';
-import { StandardTokenMock } from 'set-protocol-contracts';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../accounts';
 import { ERC20Wrapper } from '../../src/wrappers';
@@ -73,7 +73,7 @@ let currentSnapshotId: number;
 
 describe('ERC20 Wrapper', () => {
   let erc20API: ERC20Wrapper;
-  let standardTokenMock: StandardTokenMock;
+  let standardTokenMock: Web3.ContractInstance;
   let subjectCaller: Address;
   const subjectSupply: BigNumber = STANDARD_SUPPLY;
   const subjectName: string = 'ERC20 Token';

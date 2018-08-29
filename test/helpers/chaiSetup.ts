@@ -1,6 +1,5 @@
 import * as chai from 'chai';
 import ChaiAsPromised = require('chai-as-promised');
-import ChaiBigNumber = require('chai-bignumber');
 
 export class ChaiSetup {
     private isConfigured: boolean;
@@ -15,7 +14,7 @@ export class ChaiSetup {
         }
 
         chai.config.includeStack = true;
-        chai.use(ChaiBigNumber());
+        chai.use(require('chai-bignumber')());
         chai.use(ChaiAsPromised);
         this.isConfigured = true;
     }

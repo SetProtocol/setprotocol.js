@@ -87,7 +87,7 @@ export class ERC20Wrapper {
    * @param  tokenAddress  Address of the ERC20 token
    * @return             The symbol of the ERC20 token
    */
-  public async getTotalSupplyAsync(tokenAddress: Address): Promise<string> {
+  public async getTotalSupplyAsync(tokenAddress: Address): Promise<BigNumber> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
     return await tokenInstance.totalSupply.callAsync(tokenAddress);
