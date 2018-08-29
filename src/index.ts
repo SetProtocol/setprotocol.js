@@ -19,7 +19,8 @@
 import * as Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import { Provider } from '@0xproject/types';
-import { OrderAPI } from './api';
+
+import { AccountingAPI, OrderAPI } from './api';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
 import { BigNumber, instantiateWeb3 } from './util';
 import { TxData } from './types/common';
@@ -42,6 +43,7 @@ class SetProtocol {
   private web3: Web3;
   private core: CoreWrapper;
   private vault: VaultWrapper;
+  private accounting: AccountingAPI;
 
   /**
    * When creating an issuance order without a relayer token for a fee, you must use Solidity
@@ -77,11 +79,12 @@ class SetProtocol {
     this.web3 = instantiateWeb3(provider);
 
     this.core = new CoreWrapper(this.web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
+    this.erc20 = new ERC20Wrapper(this.web3);
     this.setToken = new SetTokenWrapper(this.web3);
     this.vault = new VaultWrapper(this.web3, config.vaultAddress);
 
+    this.accounting = new AccountingAPI(this.web3, this.core);
     this.orders = new OrderAPI(this.web3, this.core);
-    this.erc20 = new ERC20Wrapper(this.web3);
   }
 
   /**
@@ -111,10 +114,10 @@ class SetProtocol {
   /**
    * Asynchronously issues a particular quantity of tokens from a particular Sets
    *
-   * @param  setAddress     Set token address of Set being issued
-   * @param  quantity       Number of Sets a user wants to issue in Wei
-   * @param  txOpts         The options for executing the transaction
-   * @return                Transaction hash
+   * @param  setAddress    Set token address of Set being issued
+   * @param  quantity      Number of Sets a user wants to issue in Wei
+   * @param  txOpts        The options for executing the transaction
+   * @return               Transaction hash
    */
   public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
     return await this.core.issue(setAddress, quantity, txOpts);
@@ -123,12 +126,12 @@ class SetProtocol {
   /**
    * Composite method to redeem and optionally withdraw tokens
    *
-   * @param  setAddress        The address of the Set token
-   * @param  quantity          The number of tokens to redeem
-   * @param  withdraw          Boolean determining whether or not to withdraw
-   * @param  tokensToExclude   Array of token addresses to exclude from withdrawal
-   * @param  txOpts            The options for executing the transaction
-   * @return                   Transaction hash
+   * @param  setAddress         The address of the Set token
+   * @param  quantity           The number of tokens to redeem
+   * @param  withdraw           Boolean determining whether or not to withdraw
+   * @param  tokensToExclude    Array of token addresses to exclude from withdrawal
+   * @param  txOpts             The options for executing the transaction
+   * @return                    Transaction hash
    */
   public async redeemAsync(
     setAddress: Address,
@@ -143,25 +146,25 @@ class SetProtocol {
   /**
    * Deposits token either using single token type deposit or batch deposit
    *
-   * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to deposit into the vault
-   * @param  quantities[]      Numbers of tokens a user wants to deposit into the vault
-   * @param  txOpts            The options for executing the transaction
-   * @return                   Transaction hash
+   * @param  tokenAddresses[]    Addresses of ERC20 tokens user wants to deposit into the vault
+   * @param  quantities[]        Numbers of tokens a user wants to deposit into the vault
+   * @param  txOpts              The options for executing the transaction
+   * @return                     Transaction hash
    */
   public async depositAsync(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
-    return await this.core.deposit(tokenAddresses, quantities, txOpts);
+    return await this.accounting.depositAsync(tokenAddresses, quantities, txOpts);
   }
 
   /**
    * Withdraws tokens either using single token type withdraw or batch withdraw
    *
-   * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to withdraw from the vault
-   * @param  quantities[]      Numbers of tokens a user wants to withdraw from the vault
-   * @param  txOpts            The options for executing the transaction
-   * @return                   Transaction hash
+   * @param  tokenAddresses[]    Addresses of ERC20 tokens user wants to withdraw from the vault
+   * @param  quantities[]        Numbers of tokens a user wants to withdraw from the vault
+   * @param  txOpts              The options for executing the transaction
+   * @return                     Transaction hash
    */
   public async withdrawAsync(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
-    return await this.core.withdraw(tokenAddresses, quantities, txOpts);
+    return await this.accounting.withdrawAsync(tokenAddresses, quantities, txOpts);
   }
 
   /**
