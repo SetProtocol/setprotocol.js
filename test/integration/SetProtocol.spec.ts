@@ -111,7 +111,7 @@ describe('SetProtocol', async () => {
     };
 
     setProtocolInstance = new SetProtocol(
-      web3,
+      provider,
       config,
     );
   });

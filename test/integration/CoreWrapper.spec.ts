@@ -79,7 +79,7 @@ const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 const setProtocolUtils = new SetProtocolUtils(web3);
-const setProtocolTestUTils = new SetProtocolTestUtils(web3);
+const setProtocolTestUtils = new SetProtocolTestUtils(web3);
 
 const txDefaults = {
   from: DEFAULT_ACCOUNT,

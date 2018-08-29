@@ -53,7 +53,7 @@ const config = {
 };
 
 const setProtocol = new SetProtocol(
-  web3,    // web3: A web3 instance you've instantiated from `new Web3(currentProvider)`
+  provider,    // provider: A web3 provider instance to communicate with an ethereum node
   config,
 );
 ```
