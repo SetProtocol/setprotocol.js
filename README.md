@@ -47,9 +47,9 @@ Let’s initialize our `setProtocol` instance. We need to first import our libra
 import SetProtocol from 'setprotocol.js';
 
 const config = {
-  coreAddress: '0x...', // Address of the Set Protocol Core contract
-  transferProxyAddress: '0x...', // Address of the Set Protocol Transfer Proxy contract
-  vaultAddress: '0x...', // Address of the Set Protocol Vault contract
+  coreAddress: '0x...',             // Address of the Set Protocol Core contract
+  transferProxyAddress: '0x...',    // Address of the Set Protocol Transfer Proxy contract
+  vaultAddress: '0x...',            // Address of the Set Protocol Vault contract
 };
 
 const setProtocol = new SetProtocol(
