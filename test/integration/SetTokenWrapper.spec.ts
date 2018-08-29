@@ -38,13 +38,18 @@ import {
   SetTokenContract,
 } from 'set-protocol-contracts';
 
+import { BigNumber } from '../../src/util';
 import ChaiSetup from '../helpers/chaiSetup';
 import { DEFAULT_ACCOUNT } from '../accounts';
 import { testSets, TestSet } from '../testSets';
 import { CoreWrapper, SetTokenWrapper } from '../../src/wrappers';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
 import { Web3Utils } from '../../src/util';
-import { initializeCoreWrapper } from '../helpers/coreHelpers';
+import {
+  initializeCoreWrapper,
+  deployTokensForSetWithApproval,
+  deploySetTokenFactory,
+} from '../helpers/coreHelpers';
 
 ChaiSetup.configure();
 const { expect } = chai;
@@ -173,4 +178,68 @@ describe('Set Token API', () => {
       _.forEach(units, (unit, i) => unit.toNumber() === setToCreate.units[i].toNumber());
     });
   });
+
+  describe('#isMultipleOfNaturalUnitAsync', async () => {
+    const setToCreate: TestSet = testSets[0];
+
+    let quantity: BigNumber;
+    const naturalUnit: BigNumber = setToCreate.naturalUnit;
+
+
+    let coreWrapper: CoreWrapper;
+    let setTokenWrapper: SetTokenWrapper;
+    let setTokenInstance: SetTokenContract;
+
+    beforeEach(async () => {
+      setTokenWrapper = new SetTokenWrapper(web3);
+      coreWrapper = await initializeCoreWrapper(provider);
+
+      const components = await deployTokensForSetWithApproval(
+        setToCreate,
+        coreWrapper.transferProxyAddress,
+        provider
+      );
+      const factory = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
+
+      setTokenInstance = await setTokenContract.new(
+        factory,
+        components,
+        setToCreate.units,
+        naturalUnit,
+        setToCreate.setName,
+        setToCreate.setSymbol,
+      );
+    });
+
+    async function subject(): Promise<boolean> {
+      return await setTokenWrapper.isMultipleOfNaturalUnitAsync(
+        setTokenInstance.address,
+        quantity,
+      );
+    }
+
+    describe('when the quantity is a multiple of the natural unit', async () => {
+      beforeAll(async () => {
+        quantity = naturalUnit.times(2);
+      });
+
+      it('should return true', async () => {
+        const isMultiple = await subject();
+        expect(isMultiple).to.equal(true);
+      });
+    });
+
+    describe('when the quantity is not a multiple of the natural unit', async () => {
+      beforeAll(async () => {
+        quantity = naturalUnit.div(2);
+      });
+
+      it('should return false', async () => {
+        const isMultiple = await subject();
+        expect(isMultiple).to.equal(false);
+      });
+    });
+
+  });
+
 });

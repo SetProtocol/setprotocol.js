@@ -38,7 +38,7 @@ export const deployCore = async (
   provider: Provider,
   transferProxyAddress: Address,
   vaultAddress: Address,
-) => {
+): Promise<Address> => {
   const coreContract = contract(Core);
   coreContract.setProvider(provider);
   coreContract.setNetwork(12345);
@@ -56,7 +56,10 @@ export const deployCore = async (
   return coreInstance.address;
 };
 
-export const deploySetTokenFactory = async (coreAddress: Address, provider: Provider) => {
+export const deploySetTokenFactory = async (
+  coreAddress: Address,
+  provider: Provider
+): Promise<Address> => {
   const web3 = new Web3(provider);
 
   const setTokenFactoryContract = contract(SetTokenFactory);
@@ -82,7 +85,7 @@ export const deployTokensForSetWithApproval = async (
   setToDeploy: TestSet,
   transferProxyAddress: Address,
   provider: Provider,
-) => {
+): Promise<Address[]> => {
   const web3 = new Web3(provider);
 
   const standardTokenMockContract = contract(StandardTokenMock);
@@ -120,7 +123,7 @@ export const deployTokensForSetWithApproval = async (
 export const deployTokensAsync = async (
   tokenCount: number,
   provider: Provider,
-) => {
+): Promise<StandardTokenMockContract[]> => {
   const web3 = new Web3(provider);
 
   const standardTokenMockContract = contract(StandardTokenMock);
@@ -315,7 +318,7 @@ export const approveForFill = async (
 export const deployTransferProxy = async (
   erc20WrapperAddress: Address,
   provider: Provider,
-) => {
+): Promise<Address> => {
   const web3 = new Web3(provider);
 
   const transferProxyContract = contract(TransferProxy);
@@ -333,7 +336,7 @@ export const deployTransferProxy = async (
 export const deployVault = async (
   erc20WrapperAddress: Address,
   provider: Provider,
-) => {
+): Promise<Address> => {
   const web3 = new Web3(provider);
 
   const vaultContract = contract(Vault);
@@ -348,7 +351,7 @@ export const deployVault = async (
   return vaultInstance.address;
 };
 
-export const initializeCoreWrapper = async (provider: Provider) => {
+export const initializeCoreWrapper = async (provider: Provider): Promise<CoreWrapper> => {
   const web3 = new Web3(provider);
 
   const erc20WrapperContract = contract(ERC20Wrapper);
