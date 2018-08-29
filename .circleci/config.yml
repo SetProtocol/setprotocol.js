@@ -8,6 +8,7 @@ jobs:
         - checkout
         - run: yarn global add truffle
         - run: yarn
+        - run: yarn build
         - run:
             name: testrpc
             command: yarn chain
