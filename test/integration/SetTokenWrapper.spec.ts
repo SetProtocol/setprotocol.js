@@ -27,7 +27,6 @@ import * as chai from 'chai';
 import * as _ from 'lodash';
 import * as Web3 from 'web3';
 import compact = require('lodash.compact');
-
 import {
   Core,
   SetToken,
@@ -43,46 +42,35 @@ import ChaiSetup from '../helpers/chaiSetup';
 import { DEFAULT_ACCOUNT } from '../accounts';
 import { testSets, TestSet } from '../testSets';
 import { CoreWrapper, SetTokenWrapper } from '../../src/wrappers';
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, TX_DEFAULTS } from '../../src/constants';
 import { Web3Utils } from '../../src/util';
-import {
-  initializeCoreWrapper,
-  deployTokensForSetWithApproval,
-  deploySetTokenFactory,
-} from '../helpers/coreHelpers';
+import { initializeCoreWrapper, deployTokensForSetWithApproval, deploySetTokenFactory } from '../helpers/coreHelpers';
 
 ChaiSetup.configure();
 const { expect } = chai;
-
 const contract = require('truffle-contract');
-
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
-const txDefaults = {
-  from: DEFAULT_ACCOUNT,
-  gasPrice: DEFAULT_GAS_PRICE,
-  gas: DEFAULT_GAS_LIMIT,
-};
-
 const coreContract = contract(Core);
 coreContract.setProvider(provider);
-coreContract.defaults(txDefaults);
+coreContract.defaults(TX_DEFAULTS);
 
 const setTokenFactoryContract = contract(SetTokenFactory);
 setTokenFactoryContract.setProvider(provider);
-setTokenFactoryContract.defaults(txDefaults);
+setTokenFactoryContract.defaults(TX_DEFAULTS);
 
 const setTokenContract = contract(SetToken);
 setTokenContract.setProvider(provider);
-setTokenContract.defaults(txDefaults);
+setTokenContract.defaults(TX_DEFAULTS);
 
 const standardTokenMockContract = contract(StandardTokenMock);
 standardTokenMockContract.setProvider(provider);
-standardTokenMockContract.defaults(txDefaults);
+standardTokenMockContract.defaults(TX_DEFAULTS);
 
 let currentSnapshotId: number;
+
 
 describe('Set Token API', () => {
   beforeAll(() => {
@@ -119,7 +107,7 @@ describe('Set Token API', () => {
     beforeEach(async () => {
       // Deploy Core
       const coreAPI = await initializeCoreWrapper(provider);
-      const coreWrapper = await CoreContract.at(coreAPI.coreAddress, web3, txDefaults);
+      const coreWrapper = await CoreContract.at(coreAPI.coreAddress, web3, TX_DEFAULTS);
 
       setTokenWrapper = new SetTokenWrapper(web3);
       // Deploy SetTokenFactory
@@ -128,7 +116,7 @@ describe('Set Token API', () => {
       // Enable Factory
       await coreWrapper.enableFactory.sendTransactionAsync(
         setTokenFactoryInstance.address,
-        txDefaults,
+        TX_DEFAULTS,
       );
 
       setToCreate = testSets[0];
@@ -225,6 +213,7 @@ describe('Set Token API', () => {
 
       it('should return true', async () => {
         const isMultiple = await subject();
+
         expect(isMultiple).to.equal(true);
       });
     });
@@ -236,10 +225,9 @@ describe('Set Token API', () => {
 
       it('should return false', async () => {
         const isMultiple = await subject();
+
         expect(isMultiple).to.equal(false);
       });
     });
-
   });
-
 });
