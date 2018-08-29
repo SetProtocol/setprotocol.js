@@ -202,28 +202,19 @@ export class CoreWrapper {
    * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
-  public async singleDeposit(
+  public async deposit(
     tokenAddress: Address,
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-
-    await this.assertDeposit(
-      txSettings.from,
-      tokenAddress,
-      quantityInWei,
-    );
-
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    const txHash = await coreInstance.deposit.sendTransactionAsync(
+    return await coreInstance.deposit.sendTransactionAsync(
       tokenAddress,
       quantityInWei,
       txSettings,
     );
-
-    return txHash;
   }
 
   /**
@@ -234,28 +225,19 @@ export class CoreWrapper {
    * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
-  public async singleWithdraw(
+  public async withdraw(
     tokenAddress: Address,
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-
-    await this.assertWithdraw(
-      txSettings.from,
-      tokenAddress,
-      quantityInWei,
-    );
-
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    const txHash = await coreInstance.withdraw.sendTransactionAsync(
+    return await coreInstance.withdraw.sendTransactionAsync(
       tokenAddress,
       quantityInWei,
       txSettings,
     );
-
-    return txHash;
   }
 
   /**
@@ -323,22 +305,13 @@ export class CoreWrapper {
     txOpts?: TxData,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-
-    this.assertBatchDeposit(
-      txSettings.from,
-      tokenAddresses,
-      quantitiesInWei,
-    );
-
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    const txHash = await coreInstance.batchDeposit.sendTransactionAsync(
+    return await coreInstance.batchDeposit.sendTransactionAsync(
       tokenAddresses,
       quantitiesInWei,
       txSettings,
     );
-
-    return txHash;
   }
 
   /**
@@ -355,22 +328,13 @@ export class CoreWrapper {
     txOpts?: TxData,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-
-    await this.assertBatchWithdraw(
-      txSettings.from,
-      tokenAddresses,
-      quantitiesInWei,
-    );
-
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    const txHash = await coreInstance.batchWithdraw.sendTransactionAsync(
+    return await coreInstance.batchWithdraw.sendTransactionAsync(
       tokenAddresses,
       quantitiesInWei,
       txSettings,
     );
-
-    return txHash;
   }
 
   /**
@@ -573,72 +537,16 @@ export class CoreWrapper {
     txOpts?: TxData
   ) {
    if (withdraw) {
-     return await this.redeemAndWithdraw(
-       setAddress,
-       quantityInWei,
-       tokensToExclude,
-       txOpts,
-     );
-   } else {
-     return await this.redeemToVault(
-       setAddress,
-       quantityInWei,
-       txOpts,
-     );
-   }
-  }
-
-  /**
-   * Withdraws tokens either using single token type withdraw or batch withdraw
-   *
-   * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to withdraw from the vault
-   * @param  quantitiesInWei[] Numbers of tokens a user wants to withdraw from the vault
-   * @param  txOpts            The options for executing the transaction
-   * @return                   A transaction hash
-   */
-  public async withdraw(
-    tokenAddresses: Address[],
-    quantitiesInWei: BigNumber[],
-    txOpts?: TxData,
-  ) {
-    if (tokenAddresses.length === 1) {
-      return await this.singleWithdraw(
-        tokenAddresses[0],
-        quantitiesInWei[0],
+      return await this.redeemAndWithdraw(
+        setAddress,
+        quantityInWei,
+        tokensToExclude,
         txOpts,
       );
     } else {
-      return await this.batchWithdraw(
-        tokenAddresses,
-        quantitiesInWei,
-        txOpts,
-      );
-    }
-  }
-
-  /**
-   * Deposits token either using single token type deposit or batch deposit
-   *
-   * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to deposit into the vault
-   * @param  quantitiesInWei[] Numbers of tokens a user wants to deposit into the vault
-   * @param  txOpts            The options for executing the transaction
-   * @return                   A transaction hash
-   */
-  public async deposit(
-    tokenAddresses: Address[],
-    quantitiesInWei: BigNumber[],
-    txOpts?: TxData,
-  ) {
-    if (tokenAddresses.length === 1) {
-      return await this.singleDeposit(
-        tokenAddresses[0],
-        quantitiesInWei[0],
-        txOpts,
-      );
-    } else {
-      return await this.batchDeposit(
-        tokenAddresses,
-        quantitiesInWei,
+      return await this.redeemToVault(
+        setAddress,
+        quantityInWei,
         txOpts,
       );
     }
@@ -891,152 +799,6 @@ export class CoreWrapper {
       quantityInWei,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
     );
-  }
-
-  private async assertDeposit(
-    userAddress: Address,
-    tokenAddress: Address,
-    quantityInWei: BigNumber,
-  ) {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.greaterThanZero(
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
-    );
-
-    const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-    await this.assert.erc20.hasSufficientBalance(
-      detailedERC20Contract,
-      userAddress,
-      quantityInWei,
-      erc20AssertionErrors.INSUFFICIENT_BALANCE(),
-    );
-    await this.assert.erc20.hasSufficientAllowance(
-      detailedERC20Contract,
-      userAddress,
-      this.transferProxyAddress,
-      quantityInWei,
-      erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
-    );
-  }
-
-  private async assertWithdraw(
-    userAddress: Address,
-    tokenAddress: Address,
-    quantityInWei: BigNumber,
-  ) {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.greaterThanZero(
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
-    );
-
-    const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
-
-    const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-    await this.assert.erc20.implementsERC20(detailedERC20Contract);
-
-    await this.assert.vault.hasSufficientTokenBalance(
-      vaultContract,
-      tokenAddress,
-      userAddress,
-      quantityInWei,
-      vaultAssertionErrors.INSUFFICIENT_TOKEN_BALANCE(),
-    );
-  }
-
-  private async assertBatchDeposit(
-    userAddress: Address,
-    tokenAddresses: Address[],
-    quantitiesInWei: BigNumber[],
-  ) {
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.isEqualLength(
-      tokenAddresses,
-      quantitiesInWei,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('tokenAddresses', 'quantitiesInWei'),
-    );
-    // Token assertions
-    await Promise.all(
-      tokenAddresses.map(async (tokenAddress, i) => {
-        this.assert.common.isValidString(
-          tokenAddress,
-          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
-        );
-        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-        const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-        await this.assert.erc20.implementsERC20(tokenContract);
-
-        // Check balance
-        await this.assert.erc20.hasSufficientBalance(
-          tokenContract,
-          userAddress,
-          quantitiesInWei[i],
-          erc20AssertionErrors.INSUFFICIENT_BALANCE(),
-        );
-        // Check allowance
-        await this.assert.erc20.hasSufficientAllowance(
-          tokenContract,
-          userAddress,
-          this.transferProxyAddress,
-          quantitiesInWei[i],
-          erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
-        );
-      }),
-    );
-    // Quantity assertions
-    quantitiesInWei.map(quantity => {
-      this.assert.common.greaterThanZero(
-        quantity,
-        coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
-      );
-    });
-  }
-
-  private async assertBatchWithdraw(
-    userAddress: Address,
-    tokenAddresses: Address[],
-    quantitiesInWei: BigNumber[],
-  ) {
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.isEqualLength(
-      tokenAddresses,
-      quantitiesInWei,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('tokenAddresses', 'quantitiesInWei'),
-    );
-    // Token assertions
-    await Promise.all(
-      tokenAddresses.map(async (tokenAddress, i) => {
-        this.assert.common.isValidString(
-          tokenAddress,
-          coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'),
-        );
-        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-
-        const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
-
-        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-        await this.assert.erc20.implementsERC20(detailedERC20Contract);
-
-        // Check balance
-        await this.assert.vault.hasSufficientTokenBalance(
-          vaultContract,
-          tokenAddress,
-          userAddress,
-          quantitiesInWei[i],
-          vaultAssertionErrors.INSUFFICIENT_TOKEN_BALANCE(),
-        );
-      }),
-    );
-    // Quantity assertions
-    _.each(quantitiesInWei, quantity => {
-      this.assert.common.greaterThanZero(
-        quantity,
-        coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity),
-      );
-    });
   }
 
   private async assertCreateSignedIssuanceOrder(
