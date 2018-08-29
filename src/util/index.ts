@@ -21,4 +21,6 @@ export { classUtils } from './classUtils';
 export { instantiateWeb3 } from './provider';
 export { estimateIssueRedeemGasCost } from './setTokenUtils';
 export { Web3Utils } from './Web3Utils';
+export { generateFutureTimestamp } from './timeStampUtils';
 export { generateTxOpts } from './transactionUtils';
+export { SignatureUtils } from './signatureUtils';

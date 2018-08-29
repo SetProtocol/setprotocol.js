@@ -22,11 +22,11 @@ Note: This is pre-alpha software. Things will constantly be changing and getting
 ### setprotocol.js
 ##### Using yarn:
 ```shell
-$ yarn add setprotocol.js@^1.0.0-alpha.6
+$ yarn add setprotocol.js@^1.0.0-alpha.7
 ```
 ##### Using npm:
 ```shell
-$ npm i --save setprotocol.js@^1.0.0-alpha.6
+$ npm i --save setprotocol.js@^1.0.0-alpha.7
 ```
 
 ### web3 & bignumber
@@ -46,11 +46,15 @@ Let’s initialize our `setProtocol` instance. We need to first import our libra
 // Import
 import SetProtocol from 'setprotocol.js';
 
+const config = {
+  coreAddress: '0x...',             // Address of the Set Protocol Core contract
+  transferProxyAddress: '0x...',    // Address of the Set Protocol Transfer Proxy contract
+  vaultAddress: '0x...',            // Address of the Set Protocol Vault contract
+};
+
 const setProtocol = new SetProtocol(
   provider,    // provider: A web3 provider instance to communicate with an ethereum node
-  '0x...', // coreAddress: Address of the Set Protocol Core contract
-  '0x...', // transferProxyAddress: Address of the Set Protocol Transfer Proxy contract
-  '0x...', // vaultAddress: Address of the Set Protocol Vault contract
+  config,
 );
 ```
 
