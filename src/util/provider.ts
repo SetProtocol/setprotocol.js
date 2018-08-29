@@ -20,6 +20,6 @@ export const instantiateWeb3 = (provider: Provider = undefined): Web3 => {
     return new Web3((window as any).web3.currentProvider);
   } else {
     // Otherwise throw...
-    throw new Error('Pass in the address of your blockchain node.');
+    throw new Error('Please make sure to pass in a provider.');
   }
 };
