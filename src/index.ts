@@ -18,9 +18,10 @@
 
 import * as Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
+import { Provider } from '@0xproject/types';
 import { OrderAPI } from './api';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
-import { BigNumber } from './util';
+import { BigNumber, instantiateWeb3 } from './util';
 import { TxData } from './types/common';
 
 /**
@@ -59,19 +60,19 @@ class SetProtocol {
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
-   * @param web3                  The Web3.js Provider instance you would like the SetProtocol.js library
+   * @param provider              The provider instance you would like the SetProtocol.js library
    *                              to use for interacting with the Ethereum network.
    * @param coreAddress           The address of the Set Core contract
    * @param transferProxyAddress  The address of the Set TransferProxy contract
    * @param vaultAddress          The address of the Set Vault contract
    */
   constructor(
-    web3: Web3 = undefined,
+    provider: Provider = undefined,
     coreAddress: Address = undefined,
     transferProxyAddress: Address = undefined,
     vaultAddress: Address = undefined,
   ) {
-    this.web3 = web3;
+    this.web3 = instantiateWeb3(provider);
 
     this.core = new CoreWrapper(this.web3, coreAddress, transferProxyAddress, vaultAddress);
     this.setToken = new SetTokenWrapper(this.web3);

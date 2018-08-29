@@ -47,7 +47,7 @@ Let’s initialize our `setProtocol` instance. We need to first import our libra
 import SetProtocol from 'setprotocol.js';
 
 const setProtocol = new SetProtocol(
-  web3,    // web3: A web3 instance you've instantiated from `new Web3(currentProvider)`
+  provider,    // provider: A web3 provider instance to communicate with an ethereum node
   '0x...', // coreAddress: Address of the Set Protocol Core contract
   '0x...', // transferProxyAddress: Address of the Set Protocol Transfer Proxy contract
   '0x...', // vaultAddress: Address of the Set Protocol Vault contract

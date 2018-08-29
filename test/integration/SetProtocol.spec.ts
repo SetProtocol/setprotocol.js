@@ -103,7 +103,7 @@ describe('SetProtocol', async () => {
 
     coreWrapper = await initializeCoreWrapper(provider);
     setProtocolInstance = new SetProtocol(
-      web3,
+      provider,
       coreWrapper.coreAddress,
       coreWrapper.transferProxyAddress,
       coreWrapper.vaultAddress,
