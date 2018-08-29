@@ -730,6 +730,32 @@ export class CoreWrapper {
     return isValidSetAddress;
   }
 
+  /**
+   * Asynchronously gets the quantity of the Issuance Order filled
+   *
+   * @param  orderHash  Bytes32 hash
+   * @return            Quantity of Issuance Order filled
+   */
+  public async getOrderFills(orderHash: Bytes): Promise<BigNumber> {
+    this.assert.schema.isValidBytes32('orderHash', orderHash);
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const orderFills = await coreInstance.orderFills.callAsync(orderHash);
+    return orderFills;
+  }
+
+  /**
+   * Asynchronously gets the quantity of the Issuance Order cancelled
+   *
+   * @param  orderHash  Address of the Set contract
+   * @return            Quantity of Issuance Order cancelled
+   */
+  public async getOrderCancels(orderHash: Bytes): Promise<BigNumber> {
+    this.assert.schema.isValidBytes32('orderHash', orderHash);
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const orderCancels = await coreInstance.orderCancels.callAsync(orderHash);
+    return orderCancels;
+  }
+
   /* ============ Private Assertions ============ */
 
   private async assertCreateSet(
@@ -1065,14 +1091,6 @@ export class CoreWrapper {
     );
     const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
     await this.assert.erc20.implementsERC20(relayerTokenContract);
-    this.assert.common.greaterThanZero(
-      makerRelayerFee,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerRelayerFee),
-    );
-    this.assert.common.greaterThanZero(
-      takerRelayerFee,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerRelayerFee),
-    );
     this.assert.common.isValidExpiration(
       expiration,
       coreAPIErrors.EXPIRATION_PASSED(),
@@ -1141,14 +1159,6 @@ export class CoreWrapper {
     );
     const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
     await this.assert.erc20.implementsERC20(relayerTokenContract);
-    this.assert.common.greaterThanZero(
-      makerRelayerFee,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerRelayerFee),
-    );
-    this.assert.common.greaterThanZero(
-      takerRelayerFee,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerRelayerFee),
-    );
     this.assert.common.greaterThanZero(
       quantityToFill,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill),
@@ -1226,14 +1236,6 @@ export class CoreWrapper {
     );
     const relayerTokenContract = await DetailedERC20Contract.at(relayerToken, this.web3, {});
     await this.assert.erc20.implementsERC20(relayerTokenContract);
-    this.assert.common.greaterThanZero(
-      makerRelayerFee,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerRelayerFee),
-    );
-    this.assert.common.greaterThanZero(
-      takerRelayerFee,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerRelayerFee),
-    );
     this.assert.common.greaterThanZero(
       quantityToCancel,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToCancel),
