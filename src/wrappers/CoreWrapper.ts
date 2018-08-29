@@ -160,22 +160,13 @@ export class CoreWrapper {
     txOpts?: TxData,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-
-    await this.assertIssue(
-      txSettings.from,
-      setAddress,
-      quantityInWei,
-    );
-
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    const txHash = await coreInstance.issue.sendTransactionAsync(
+    return await coreInstance.issue.sendTransactionAsync(
       setAddress,
       quantityInWei,
       txSettings,
     );
-
-    return txHash;
   }
 
   /**
@@ -186,41 +177,63 @@ export class CoreWrapper {
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up
    */
-  public async redeemToVault(
+  public async redeem(
     setAddress: Address,
     quantityInWei: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-
-    await this.assertRedeem(
-      txSettings.from,
-      setAddress,
-      quantityInWei,
-    );
-
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    const txHash = await coreInstance.redeem.sendTransactionAsync(
+    return await coreInstance.redeem.sendTransactionAsync(
       setAddress,
       quantityInWei,
       txSettings,
     );
+  }
 
-    return txHash;
+  /**
+   * Redeem and withdraw with a single transaction
+   *
+   * Normally, you should expect to be able to withdraw all of the tokens.
+   * However, some have central abilities to freeze transfers (e.g. EOS). _toExclude
+   * allows you to optionally specify which component tokens to remain under the user's
+   * address in the vault. The rest will be transferred to the user.
+   *
+   * @param  setAddress        The address of the Set token
+   * @param  quantityInWei     The number of tokens to redeem
+   * @param  toExclude         Bitmask of component indexes to exclude from withdrawal
+   * @param  txOpts            The options for executing the transaction
+   * @return                   A transaction hash to then later look up
+   */
+  public async redeemAndWithdraw(
+    setAddress: Address,
+    quantityInWei: BigNumber,
+    toExclude: BigNumber,
+    txOpts?: TxData,
+  ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+
+    return await coreInstance.redeemAndWithdraw.sendTransactionAsync(
+      setAddress,
+      quantityInWei,
+      toExclude,
+      txSettings,
+    );
   }
 
   /**
    * Asynchronously deposits tokens to the vault
    *
    * @param  tokenAddress  Address of the ERC20 token
-   * @param  quantityInWei Number of tokens a user wants to deposit into the vault
+   * @param  quantity      Number of tokens a user wants to deposit into the vault
    * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
   public async deposit(
     tokenAddress: Address,
-    quantityInWei: BigNumber,
+    quantity: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
@@ -228,7 +241,7 @@ export class CoreWrapper {
 
     return await coreInstance.deposit.sendTransactionAsync(
       tokenAddress,
-      quantityInWei,
+      quantity,
       txSettings,
     );
   }
@@ -254,57 +267,6 @@ export class CoreWrapper {
       quantityInWei,
       txSettings,
     );
-  }
-
-  /**
-   * Redeem and withdraw with a single transaction
-   *
-   * Normally, you should expect to be able to withdraw all of the tokens.
-   * However, some have central abilities to freeze transfers (e.g. EOS). _toExclude
-   * allows you to optionally specify which component tokens to remain under the user's
-   * address in the vault. The rest will be transferred to the user.
-   *
-   * @param  setAddress        The address of the Set token
-   * @param  quantityInWei     The number of tokens to redeem
-   * @param  tokensToExclude   Array of token addresses to exclude from withdrawal
-   * @param  txOpts            The options for executing the transaction
-   * @return                   A transaction hash to then later look up
-   */
-  public async redeemAndWithdraw(
-    setAddress: Address,
-    quantityInWei: BigNumber,
-    tokensToExclude: Address[],
-    txOpts?: TxData,
-  ): Promise<string> {
-    const txSettings = await generateTxOpts(this.web3, txOpts);
-
-    this.assertRedeemAndWithdraw(setAddress, quantityInWei);
-
-    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
-    const components = await setTokenContract.getComponents.callAsync();
-
-    let toExclude: BigNumber = ZERO;
-    const tokensToExcludeMapping: any = {};
-    _.each(tokensToExclude, tokenAddress => {
-      this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-      tokensToExcludeMapping[tokenAddress] = true;
-    });
-    _.each(components, (component, componentIndex) => {
-      if (tokensToExcludeMapping[component]) {
-        toExclude = toExclude.plus(new BigNumber(2).pow(componentIndex));
-      }
-    });
-
-    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-
-    const txHash = await coreInstance.redeemAndWithdraw.sendTransactionAsync(
-      setAddress,
-      quantityInWei,
-      toExclude,
-      txSettings,
-    );
-
-    return txHash;
   }
 
   /**
@@ -533,41 +495,6 @@ export class CoreWrapper {
     return txHash;
   }
 
-  /* ============ Composite Implementation Functions ============ */
-
-  /**
-   * Composite method to redeem and optionally withdraw tokens
-   *
-   * @param  setAddress        The address of the Set token
-   * @param  quantityInWei     The number of tokens to redeem
-   * @param  withdraw          Boolean determining whether or not to withdraw
-   * @param  tokensToExclude   Array of token addresses to exclude from withdrawal
-   * @param  txOpts            The options for executing the transaction
-   * @return                   A transaction hash to then later look up
-   */
-  public async redeem(
-    setAddress: Address,
-    quantityInWei: BigNumber,
-    withdraw: boolean = true,
-    tokensToExclude: Address[],
-    txOpts?: TxData
-  ) {
-   if (withdraw) {
-      return await this.redeemAndWithdraw(
-        setAddress,
-        quantityInWei,
-        tokensToExclude,
-        txOpts,
-      );
-    } else {
-      return await this.redeemToVault(
-        setAddress,
-        quantityInWei,
-        txOpts,
-      );
-    }
-  }
-
   /* ============ Core State Getters ============ */
 
   /**
@@ -739,82 +666,6 @@ export class CoreWrapper {
     _.each(units, unit => {
       this.assert.common.greaterThanZero(unit, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(unit));
     });
-  }
-
-  private async assertIssue(
-    userAddress: Address,
-    setAddress: Address,
-    quantityInWei: BigNumber,
-  ) {
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.greaterThanZero(
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
-    );
-
-    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
-    await this.assert.setToken.isMultipleOfNaturalUnit(
-      setTokenContract,
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
-    );
-
-    await this.assert.setToken.hasSufficientBalances(setTokenContract, userAddress, quantityInWei);
-    await this.assert.setToken.hasSufficientAllowances(
-      setTokenContract,
-      userAddress,
-      this.transferProxyAddress,
-      quantityInWei,
-    );
-  }
-
-  private async assertRedeem(
-    userAddress: Address,
-    setAddress: Address,
-    quantityInWei: BigNumber,
-  ) {
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.greaterThanZero(
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
-    );
-
-    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
-    await this.assert.setToken.isMultipleOfNaturalUnit(
-      setTokenContract,
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
-    );
-
-    // SetToken is also a DetailedERC20 token.
-    // Check balances of token in token balance as well as Vault balance (should be same)
-    const detailedERC20Contract = await DetailedERC20Contract.at(setAddress, this.web3, {});
-    await this.assert.erc20.hasSufficientBalance(
-      detailedERC20Contract,
-      userAddress,
-      quantityInWei,
-      erc20AssertionErrors.INSUFFICIENT_BALANCE(),
-    );
-    const vaultContract = await VaultContract.at(this.vaultAddress, this.web3, {});
-    await this.assert.vault.hasSufficientSetTokensBalances(
-      vaultContract,
-      setTokenContract,
-      quantityInWei,
-      vaultAssertionErrors.INSUFFICIENT_SET_TOKENS_BALANCE(),
-    );
-  }
-
-  private assertRedeemAndWithdraw(
-    setAddress: Address,
-    quantityInWei: BigNumber,
-  ) {
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.common.greaterThanZero(
-      quantityInWei,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityInWei),
-    );
   }
 
   private async assertCreateSignedIssuanceOrder(

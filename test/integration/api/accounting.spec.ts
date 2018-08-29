@@ -32,7 +32,7 @@ import { Core, Vault } from 'set-protocol-contracts';
 import { CoreContract, DetailedERC20Contract, StandardTokenMockContract, VaultContract } from 'set-protocol-contracts';
 
 import ChaiSetup from '../../helpers/chaiSetup';
-import { AccountingAPI } from '../../../src/api/accounting';
+import { AccountingAPI } from '../../../src/api';
 import { BigNumber } from '../../../src/util';
 import { CoreWrapper } from '../../../src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
@@ -61,7 +61,7 @@ describe('CoreWrapper', () => {
   let setToCreate: TestSet;
   let tokenAddresses: Address[];
   let vault: VaultContract;
-  let accountinAPI: AccountingAPI;
+  let accountingAPI: AccountingAPI;
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -83,7 +83,7 @@ describe('CoreWrapper', () => {
     );
 
     vault = await deployVaultContract(provider, coreWrapper.vaultAddress);
-    accountinAPI = new AccountingAPI(web3, coreWrapper);
+    accountingAPI = new AccountingAPI(web3, coreWrapper);
   });
 
   afterEach(async () => {
@@ -105,7 +105,7 @@ describe('CoreWrapper', () => {
     });
 
     async function subject(): Promise<string> {
-      return await accountinAPI.depositAsync(
+      return await accountingAPI.depositAsync(
         subjectTokenAddressesToDeposit,
         subjectQuantitiesToDeposit,
         { from: subjectCaller },
@@ -148,7 +148,7 @@ describe('CoreWrapper', () => {
         subjectCaller = 'invalidAddress';
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
       `
         Expected userAddress to conform to schema /Address.
@@ -167,7 +167,7 @@ describe('CoreWrapper', () => {
         subjectQuantitiesToDeposit = [];
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           'The tokenAddresses and quantities arrays need to be equal lengths.'
         );
@@ -184,7 +184,7 @@ describe('CoreWrapper', () => {
         subjectQuantitiesToDeposit = [invalidQuantity];
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `The quantity ${invalidQuantity} inputted needs to be greater than zero.`
         );
@@ -197,7 +197,7 @@ describe('CoreWrapper', () => {
         subjectQuantitiesToDeposit = [depositQuantity];
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith('The string tokenAddress cannot be empty.');
       });
     });
@@ -212,7 +212,7 @@ describe('CoreWrapper', () => {
         subjectQuantitiesToDeposit = [depositQuantity];
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `Contract at ${nonERC20ContractAddress} does not implement ERC20 interface.`
         );
@@ -224,7 +224,7 @@ describe('CoreWrapper', () => {
         subjectCaller = ACCOUNTS[1].address;
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith('User does not have enough balance.');
       });
     });
@@ -240,7 +240,7 @@ describe('CoreWrapper', () => {
         );
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith('User not approved for enough allowance.');
       });
     });
@@ -256,7 +256,7 @@ describe('CoreWrapper', () => {
       withdrawQuantity = new BigNumber(100);
 
       const quantitiesToDeposit = tokenAddresses.map(() => withdrawQuantity);
-      await accountinAPI.depositAsync(
+      await accountingAPI.depositAsync(
         tokenAddresses,
         quantitiesToDeposit,
         { from: DEFAULT_ACCOUNT },
@@ -268,7 +268,7 @@ describe('CoreWrapper', () => {
     });
 
     async function subject(): Promise<string> {
-      return await accountinAPI.withdrawAsync(
+      return await accountingAPI.withdrawAsync(
         subjectTokenAddressesToWithdraw,
         subjectQuantitiesToWithdraw,
         { from: subjectCaller },
@@ -311,7 +311,7 @@ describe('CoreWrapper', () => {
         subjectCaller = 'invalidAddress';
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
       `
         Expected userAddress to conform to schema /Address.
@@ -330,7 +330,7 @@ describe('CoreWrapper', () => {
         subjectQuantitiesToWithdraw = [];
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           'The tokenAddresses and quantities arrays need to be equal lengths.'
         );
@@ -347,7 +347,7 @@ describe('CoreWrapper', () => {
         subjectQuantitiesToWithdraw = [invalidQuantity];
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `The quantity ${invalidQuantity} inputted needs to be greater than zero.`
         );
@@ -360,7 +360,7 @@ describe('CoreWrapper', () => {
         subjectQuantitiesToWithdraw = [withdrawQuantity];
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith('The string tokenAddress cannot be empty.');
       });
     });
@@ -375,7 +375,7 @@ describe('CoreWrapper', () => {
         subjectQuantitiesToWithdraw = [withdrawQuantity];
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `Contract at ${nonERC20ContractAddress} does not implement ERC20 interface.`
         );
@@ -387,14 +387,14 @@ describe('CoreWrapper', () => {
         const tokenToWithdrawFromOriginallyDepositedAmount = tokenAddresses[0];
         const quantityToWithdrawFromOringallyDepositedAmount = new BigNumber(1);
 
-        await accountinAPI.withdrawAsync(
+        await accountingAPI.withdrawAsync(
           [tokenToWithdrawFromOriginallyDepositedAmount],
           [quantityToWithdrawFromOringallyDepositedAmount],
           { from: subjectCaller },
         );
       });
 
-      it('throws', async () => {
+      test('throws', async () => {
         return expect(subject()).to.be.rejectedWith('User does not have enough balance of the token in vault.');
       });
     });

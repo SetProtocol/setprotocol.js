@@ -20,7 +20,7 @@ import * as Web3 from 'web3';
 import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
 import { Provider } from '@0xproject/types';
 
-import { AccountingAPI, OrderAPI } from './api';
+import { AccountingAPI, IssuanceAPI, OrderAPI } from './api';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
 import { BigNumber, instantiateWeb3 } from './util';
 import { TxData } from './types/common';
@@ -44,6 +44,7 @@ class SetProtocol {
   private core: CoreWrapper;
   private vault: VaultWrapper;
   private accounting: AccountingAPI;
+  private issuance: IssuanceAPI;
 
   /**
    * When creating an issuance order without a relayer token for a fee, you must use Solidity
@@ -72,10 +73,7 @@ class SetProtocol {
    *                              to use for interacting with the Ethereum network.
    * @param config                A configuration object with Set Protocol's contract addresses
    */
-  constructor(
-    provider: Provider = undefined,
-    config: SetProtocolConfig,
-  ) {
+  constructor(provider: Provider = undefined, config: SetProtocolConfig) {
     this.web3 = instantiateWeb3(provider);
 
     this.core = new CoreWrapper(this.web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
@@ -84,6 +82,7 @@ class SetProtocol {
     this.vault = new VaultWrapper(this.web3, config.vaultAddress);
 
     this.accounting = new AccountingAPI(this.web3, this.core);
+    this.issuance = new IssuanceAPI(this.web3, this.core);
     this.orders = new OrderAPI(this.web3, this.core);
   }
 
@@ -120,7 +119,7 @@ class SetProtocol {
    * @return               Transaction hash
    */
   public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
-    return await this.core.issue(setAddress, quantity, txOpts);
+    return await this.issuance.issueAsync(setAddress, quantity, txOpts);
   }
 
   /**
@@ -140,7 +139,7 @@ class SetProtocol {
     tokensToExclude: Address[],
     txOpts?: TxData,
   ): Promise<string> {
-    return await this.core.redeem(setAddress, quantity, withdraw, tokensToExclude, txOpts);
+    return await this.issuance.redeemAsync(setAddress, quantity, withdraw, tokensToExclude, txOpts);
   }
 
   /**

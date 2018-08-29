@@ -48,6 +48,7 @@ import {
   STANDARD_DECIMALS,
   STANDARD_SUPPLY,
   STANDARD_TRANSFER_VALUE,
+  TX_DEFAULTS,
   ZERO,
 } from '../../../src/constants';
 import { Web3Utils, generateFutureTimestamp } from '../../../src/util';
@@ -67,13 +68,8 @@ const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 const setProtocolUtils = new SetProtocolUtils(web3);
 
-const txDefaults = {
-  from: DEFAULT_ACCOUNT,
-  gasPrice: DEFAULT_GAS_PRICE,
-  gas: DEFAULT_GAS_LIMIT,
-};
 
-describe('Orders API', () => {
+describe('OrderAPI', () => {
   let coreWrapper: CoreWrapper;
   let ordersAPI: OrderAPI;
 
@@ -294,7 +290,5 @@ describe('Orders API', () => {
         await subject();
       });
     });
-
   });
-
 });
