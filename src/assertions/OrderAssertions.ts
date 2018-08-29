@@ -32,6 +32,7 @@ export class OrderAssertions {
   public async isIssuanceOrderFillable(
     core: CoreWrapper,
     signedIssuanceOrder: SignedIssuanceOrder,
+    fillQuantity: BigNumber = undefined,
   ): Promise<void> {
     const issuanceOrder: IssuanceOrder = _.omit(signedIssuanceOrder, 'signature');
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
@@ -63,5 +64,13 @@ export class OrderAssertions {
       quantityFillable,
       coreAPIErrors.FULLY_FILLED()
     );
+
+    if (fillQuantity) {
+      commonAssertions.isGreaterOrEqualThan(
+        fillQuantity,
+        quantityFillable,
+        coreAPIErrors.FULLY_FILLED()
+      );
+    }
   }
 }

@@ -253,6 +253,7 @@ describe('Orders API', () => {
     });
   });
 
+  // TODO: Add test to check non-fillable state
   describe('#validateOrderFillableOrThrowAsync', async () => {
     let signedIssuanceOrder: SignedIssuanceOrder;
     let signer: Address;

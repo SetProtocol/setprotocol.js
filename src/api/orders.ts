@@ -56,9 +56,9 @@ export class OrderAPI {
   /**
    * Instantiates a new OrderAPI instance that contains methods for creating, filling, and cancelling issuance orders.
    *
-   * @param web3                  The Web3.js Provider instance you would like the SetProtocol.js library
-   *                              to use for interacting with the Ethereum network.
-   * @param core                  The address of the Set Core contract
+   * @param web3    The Web3.js Provider instance you would like the SetProtocol.js library
+   *                to use for interacting with the Ethereum network.
+   * @param core    The address of the Set Core contract
    */
   constructor(
     web3: Web3 = undefined,
@@ -71,7 +71,7 @@ export class OrderAPI {
 
   /**
    * Generates a pseudo-random 256-bit salt.
-   * The salt can be included in a 0x order, ensuring that the order generates a unique orderHash
+   * The salt can be included in an order, ensuring that the order generates a unique orderHash
    * and will not collide with other outstanding orders that are identical in all other parameters.
    *
    * @return  A pseudo-random 256-bit number that can be used as a salt.
@@ -84,8 +84,8 @@ export class OrderAPI {
    * Generates a timestamp represented as seconds since unix epoch.
    * The timestamp is intended to be used to generate the expiration of an issuance order
    *
-   * @param                           Seconds from the present time
-   * @return                          Unix timestamp (in seconds since unix epoch)
+   * @param    Seconds from the present time
+   * @return   Unix timestamp (in seconds since unix epoch)
    */
   public generateExpirationTimestamp(seconds: number): BigNumber {
     return generateFutureTimestamp(seconds);
@@ -96,7 +96,7 @@ export class OrderAPI {
    * Note: Valid means it has the expected format, not that an order
    * with the orderHash exists.
    *
-   * @param                           Hex encoded order hash
+   * @param.   Hex encoded order hash
    */
   public isValidOrderHashOrThrow(orderHash: Bytes): void {
     this.assert.schema.isValidBytes32('orderHash', orderHash);
@@ -107,8 +107,8 @@ export class OrderAPI {
    * A signature is valid only if the issuance order is signed by the maker
    * The function throws upon receiving an invalid signature.
    *
-   * @param  issuanceOrder                  The issuance order the signature was generated from
-   * @param  signature                      The EC Signature to check
+   * @param  issuanceOrder    The issuance order the signature was generated from
+   * @param  signature        The EC Signature to check
    * @return boolean
    */
   public async isValidSignatureOrThrowAsync(
@@ -127,28 +127,33 @@ export class OrderAPI {
    * Then it signs it using the passed in transaction options. If none, it will assume
    * the signer is the first account
    *
-   * @param issuanceOrder               Issuance Order
-   * @return                            EC Signature
+   * @param issuanceOrder    Issuance Order
+   * @return                 EC Signature
    */
   public async signOrderAsync(
     issuanceOrder: IssuanceOrder,
     txOpts?: TxData,
   ): Promise<ECSig> {
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-    const signature = await this.setProtocolUtils.signMessage(orderHash, txOpts.from);
-    return signature;
+    return await this.setProtocolUtils.signMessage(orderHash, txOpts.from);
   }
 
   /**
    * Given an issuance order, check that the signature is valid, order has not expired,
    * and
    *
-   * @param issuanceOrder               Issuance Order
+   * @param issuanceOrder    Signed Issuance Order to be validated
+   * @param fillQuantity     (optional) a fill quantity to check if fillable
    */
   public async validateOrderFillableOrThrowAsync(
     signedIssuanceOrder: SignedIssuanceOrder,
+    fillQuantity?: BigNumber,
   ) {
-    await this.assert.order.isIssuanceOrderFillable(this.core, signedIssuanceOrder);
+    await this.assert.order.isIssuanceOrderFillable(
+      this.core,
+      signedIssuanceOrder,
+      fillQuantity
+    );
   }
 
   /**
