@@ -98,11 +98,11 @@ describe('IssuanceAPI', () => {
   let naturalUnit: BigNumber;
 
   beforeAll(() => {
-    ABIDecoder.addABI(coreContract);
+    ABIDecoder.addABI(coreContract.abi);
   });
 
   afterAll(() => {
-    ABIDecoder.removeABI(coreContract);
+    ABIDecoder.removeABI(coreContract.abi);
   });
 
   beforeEach(async () => {
