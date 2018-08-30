@@ -223,7 +223,7 @@ class SetProtocol {
    * @param  txHash     The transaction has to retrieve the set address from
    * @return            The address of the newly created Set
    */
-  public async getSetAddressFromCreateTxHashAsync(txHash: Bytes): Promise<Address> {
+  public async getSetAddressFromCreateTxHashAsync(txHash: string): Promise<Address> {
     return await this.core.getSetAddressFromCreateTxHash(txHash);
   }
 
