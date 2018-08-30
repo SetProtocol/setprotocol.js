@@ -116,7 +116,7 @@ class SetProtocol {
    * Proxy contract via setTransferProxyAllowanceAsync
    *
    * @param  setAddress    Address of Set to issue
-   * @param  quantity      Amount of Set to issue in Wei. Must be multiple of the natural unit of the Set
+   * @param  quantity      Amount of Set to issue. Must be multiple of the natural unit of the Set
    * @param  txOpts        The options for executing the transaction
    * @return               Transaction hash
    */
