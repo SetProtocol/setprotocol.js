@@ -81,7 +81,7 @@ export class IssuanceAPI {
   public async redeemAsync(
     setAddress: Address,
     quantity: BigNumber,
-    withdraw: boolean = true,
+    withdraw: boolean,
     tokensToExclude: Address[],
     txOpts?: TxData
   ) {

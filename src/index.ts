@@ -111,10 +111,12 @@ class SetProtocol {
   }
 
   /**
-   * Asynchronously issues a particular quantity of tokens from a particular Sets
+   * Issues a Set to the transaction signer. Must have component tokens in the correct quantites in either
+   * the vault or in the signer's wallet. Component tokens must be approved to the Transfer
+   * Proxy contract via setTransferProxyAllowanceAsync
    *
-   * @param  setAddress    Set token address of Set being issued
-   * @param  quantity      Number of Sets a user wants to issue in Wei
+   * @param  setAddress    Address of Set to issue
+   * @param  quantity      Amount of Set to issue in Wei. Must be multiple of the natural unit of the Set
    * @param  txOpts        The options for executing the transaction
    * @return               Transaction hash
    */
@@ -123,19 +125,21 @@ class SetProtocol {
   }
 
   /**
-   * Composite method to redeem and optionally withdraw tokens
+   * Redeems a Set to the transaction signer, returning the component tokens to the signer's wallet. Set withdraw
+   * to false to leave redeemed components in vault under the user's address to save gas if rebundling into another
+   * Set with similar components
    *
-   * @param  setAddress         The address of the Set token
-   * @param  quantity           The number of tokens to redeem
-   * @param  withdraw           Boolean determining whether or not to withdraw
-   * @param  tokensToExclude    Array of token addresses to exclude from withdrawal
+   * @param  setAddress         Address of Set to issue
+   * @param  quantity           Amount of Set to redeem. Must be multiple of the natural unit of the Set
+   * @param  withdraw           Boolean to withdraw back to signer's wallet or leave in vault. Defaults to true
+   * @param  tokensToExclude    Token addresses to exclude from withdrawal
    * @param  txOpts             The options for executing the transaction
    * @return                    Transaction hash
    */
   public async redeemAsync(
     setAddress: Address,
     quantity: BigNumber,
-    withdraw: boolean,
+    withdraw: boolean = true,
     tokensToExclude: Address[],
     txOpts?: TxData,
   ): Promise<string> {
