@@ -22,11 +22,11 @@ Note: This is pre-alpha software. Things will constantly be changing and getting
 ### setprotocol.js
 ##### Using yarn:
 ```shell
-$ yarn add setprotocol.js@^1.0.0-alpha.9
+$ yarn add setprotocol.js@^1.0.0-alpha.10
 ```
 ##### Using npm:
 ```shell
-$ npm i --save setprotocol.js@^1.0.0-alpha.9
+$ npm i --save setprotocol.js@^1.0.0-alpha.10
 ```
 
 ### web3 & bignumber
