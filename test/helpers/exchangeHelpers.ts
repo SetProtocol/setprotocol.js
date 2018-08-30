@@ -11,7 +11,7 @@ import {
 } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 import { BigNumber } from '../../src/util';
-import { DEFAULT_ACCOUNT } from '../accounts';
+import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
 import {
   DEFAULT_GAS_PRICE,
   DEFAULT_GAS_LIMIT,

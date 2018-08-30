@@ -34,12 +34,12 @@ import {
 } from 'set-protocol-contracts';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import ChaiSetup from '../helpers/chaiSetup';
-import { DEFAULT_ACCOUNT } from '../accounts';
+import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
 import SetProtocol from '../../src';
 import { testSets, TestSet } from '../testSets';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS } from '../../src/constants';
 import { Web3Utils } from '../../src/util/Web3Utils';
-import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../logs';
+import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util/logs';
 import { CoreWrapper } from '../../src/wrappers';
 import { BigNumber } from '../../src/util';
 import { SetProtocolConfig } from '../../src';

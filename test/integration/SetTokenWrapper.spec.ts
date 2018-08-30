@@ -39,7 +39,7 @@ import {
 
 import { BigNumber } from '../../src/util';
 import ChaiSetup from '../helpers/chaiSetup';
-import { DEFAULT_ACCOUNT } from '../accounts';
+import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
 import { testSets, TestSet } from '../testSets';
 import { CoreWrapper, SetTokenWrapper } from '../../src/wrappers';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, TX_DEFAULTS } from '../../src/constants';

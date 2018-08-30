@@ -17,7 +17,7 @@
 'use strict';
 
 import { BigNumber } from '../util';
-import { DEFAULT_ACCOUNT } from '../../test/accounts';
+import { DEFAULT_ACCOUNT } from './accounts';
 
 export const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 export const ZERO: BigNumber = new BigNumber(0);
