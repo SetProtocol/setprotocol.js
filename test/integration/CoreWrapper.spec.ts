@@ -37,9 +37,9 @@ import {
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '../accounts';
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../src/constants/accounts';
 import { testSets, TestSet } from '../testSets';
-import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../logs';
+import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util/logs';
 import { CoreWrapper } from '../../src/wrappers';
 import {
   DetailedERC20Contract,

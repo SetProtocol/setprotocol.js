@@ -33,7 +33,7 @@ import { StandardTokenMock } from 'set-protocol-contracts';
 import { BigNumber } from '../../src/util';
 import ChaiSetup from '../helpers/chaiSetup';
 
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '../accounts';
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../src/constants/accounts';
 import { ERC20Wrapper } from '../../src/wrappers';
 import {
   DEFAULT_GAS_PRICE,

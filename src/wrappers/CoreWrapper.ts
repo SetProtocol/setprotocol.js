@@ -36,7 +36,7 @@ import { Assertions } from '../assertions';
 import { TxData } from '../types/common';
 import { BigNumber, generateTxOpts } from '../util';
 import { DetailedERC20Contract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
-import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../test/logs';
+import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../util/logs';
 
 /**
  * @title CoreWrapper

@@ -29,7 +29,7 @@ import * as Web3 from 'web3';
 import { Core } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
-import { DEFAULT_ACCOUNT } from '../accounts';
+import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
 import { testSets, TestSet } from '../testSets';
 import { CoreWrapper, VaultWrapper } from '../../src/wrappers';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';

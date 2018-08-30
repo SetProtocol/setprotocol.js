@@ -40,7 +40,7 @@ import { BigNumber, SignatureUtils } from '../../../src/util';
 import ChaiSetup from '../../helpers/chaiSetup';
 
 import { CoreWrapper } from '../../../src/wrappers';
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../accounts';
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
 import { OrderAPI } from '../../../src/api/orders';
 import {
   DEFAULT_GAS_PRICE,

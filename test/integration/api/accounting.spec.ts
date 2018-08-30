@@ -35,7 +35,7 @@ import ChaiSetup from '../../helpers/chaiSetup';
 import { AccountingAPI } from '../../../src/api/accounting';
 import { BigNumber } from '../../../src/util';
 import { CoreWrapper } from '../../../src/wrappers';
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../accounts';
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS, TX_DEFAULTS, ZERO } from '../../../src/constants';
 import { deployTokensForSetWithApproval, initializeCoreWrapper } from '../../helpers/coreHelpers';
 import { deployVaultContract, getVaultBalances } from '../../helpers/vaultHelpers';

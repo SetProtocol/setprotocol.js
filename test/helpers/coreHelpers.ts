@@ -21,7 +21,7 @@ import {
   DEFAULT_GAS_LIMIT,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
 } from '../../src/constants';
-import { DEFAULT_ACCOUNT } from '../accounts';
+import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
 import { TestSet } from '../testSets';
 import { CoreWrapper } from '../../src/wrappers';
 import { BigNumber } from '../../src/util';
