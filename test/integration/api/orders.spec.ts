@@ -48,7 +48,6 @@ import {
   STANDARD_DECIMALS,
   STANDARD_SUPPLY,
   STANDARD_TRANSFER_VALUE,
-  TX_DEFAULTS,
   ZERO,
 } from '../../../src/constants';
 import { Web3Utils, generateFutureTimestamp } from '../../../src/util';
