@@ -62,24 +62,12 @@ export class AccountingAPI {
    * @return                     Transaction hash
    */
   public async depositAsync(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
-    await this.assertDeposit(
-      txOpts.from,
-      tokenAddresses,
-      quantities,
-    );
+    await this.assertDeposit(txOpts.from, tokenAddresses, quantities);
 
     if (tokenAddresses.length === 1) {
-      return await this.core.deposit(
-        tokenAddresses[0],
-        quantities[0],
-        txOpts,
-      );
+      return await this.core.deposit(tokenAddresses[0], quantities[0], txOpts);
     } else {
-      return await this.core.batchDeposit(
-        tokenAddresses,
-        quantities,
-        txOpts,
-      );
+      return await this.core.batchDeposit(tokenAddresses, quantities, txOpts);
     }
   }
 
@@ -92,24 +80,12 @@ export class AccountingAPI {
    * @return                     Transaction hash
    */
   public async withdrawAsync(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
-    await this.assertWithdraw(
-      txOpts.from,
-      tokenAddresses,
-      quantities,
-    );
+    await this.assertWithdraw(txOpts.from, tokenAddresses, quantities);
 
     if (tokenAddresses.length === 1) {
-      return await this.core.withdraw(
-        tokenAddresses[0],
-        quantities[0],
-        txOpts,
-      );
+      return await this.core.withdraw(tokenAddresses[0], quantities[0], txOpts);
     } else {
-      return await this.core.batchWithdraw(
-        tokenAddresses,
-        quantities,
-        txOpts,
-      );
+      return await this.core.batchWithdraw(tokenAddresses, quantities, txOpts);
     }
   }
 

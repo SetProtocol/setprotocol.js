@@ -96,10 +96,7 @@ export class SetTokenWrapper {
    * @return boolean    A boolean representing whether the Set is a multiple of the natural Unit
    *
    */
-  public async isMultipleOfNaturalUnitAsync(
-    setAddress: Address,
-    quantity: BigNumber,
-  ): Promise<boolean> {
+  public async isMultipleOfNaturalUnitAsync(setAddress: Address, quantity: BigNumber): Promise<boolean> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
 

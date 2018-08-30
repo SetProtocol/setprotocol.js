@@ -4,10 +4,17 @@ jobs:
   build:
     docker:
       - image: circleci/node:9.6.1
+    working_directory: ~/setProtocol.js
     steps:
         - checkout
+        - restore_cache:
+            key: module-cache-{{ checksum "yarn.lock" }}
         - run: yarn global add truffle
         - run: yarn
+        - save_cache:
+              key: module-cache-{{ checksum "yarn.lock" }}
+              paths:
+                - node_modules
         - run: yarn build
         - run:
             name: testrpc

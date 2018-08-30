@@ -17,16 +17,19 @@
 'use strict';
 
 import { BigNumber } from '../util';
-import { DEFAULT_ACCOUNT } from './accounts';
+import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
+import { ether } from '../../test/helpers/units';
 
-export const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
-export const ZERO: BigNumber = new BigNumber(0);
-export const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
+
 export const DEFAULT_GAS_LIMIT: BigNumber = new BigNumber(6712390); // default of 6.7 million gas
-export const UNLIMITED_ALLOWANCE_IN_BASE_UNITS: BigNumber = new BigNumber(2).pow(256).minus(1);
-export const STANDARD_TRANSFER_VALUE: BigNumber = new BigNumber(1000000000000000000); // 1 Ether
-export const STANDARD_SUPPLY: BigNumber = new BigNumber(100000000000000000000); // 100 Ether
+export const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
+export const DEPLOYED_TOKEN_QUANTITY: BigNumber = ether(100000000000);
+export const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 export const STANDARD_DECIMALS: BigNumber = new BigNumber(18); // ETH natural unit, wei
+export const STANDARD_SUPPLY: BigNumber = new BigNumber(100000000000000000000); // 100 Ether
+export const STANDARD_TRANSFER_VALUE: BigNumber = new BigNumber(1000000000000000000); // 1 Ether
+export const UNLIMITED_ALLOWANCE_IN_BASE_UNITS: BigNumber = new BigNumber(2).pow(256).minus(1);
+export const ZERO: BigNumber = new BigNumber(0);
 
 export const TX_DEFAULTS = {
   from: DEFAULT_ACCOUNT,

@@ -42,9 +42,13 @@ import { testSets, TestSet } from '../testSets';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util/logs';
 import { CoreWrapper } from '../../src/wrappers';
 import {
-  DetailedERC20Contract,
-  VaultContract,
   CoreContract,
+  DetailedERC20Contract,
+  SetTokenContract,
+  SetTokenFactoryContract,
+  StandardTokenMockContract,
+  TransferProxyContract,
+  VaultContract,
   ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
 import {
@@ -57,14 +61,24 @@ import {
 import { Web3Utils } from '../../src/util/Web3Utils';
 import { BigNumber } from '../../src/util';
 import {
+  addAuthorizationAsync,
   approveForFill,
+  approveForTransferAsync,
   approveForZeroEx,
+  deployCoreContract,
+  deploySetTokenAsync,
   deploySetTokenFactory,
+  deploySetTokenFactoryContract,
+  deployTokensAsync,
   deployTokensForSetWithApproval,
+  deployTransferProxyContract,
+  deployVaultContract,
+  getTokenBalances,
   initializeCoreWrapper,
   registerExchange,
 } from '../helpers/coreHelpers';
-import { deployVaultContract, getVaultBalances } from '../helpers/vaultHelpers';
+import { ether } from '../helpers/units';
+import { getVaultBalances } from '../helpers/vaultHelpers';
 import {
   deployTakerWalletExchangeWrapper,
   deployZeroExExchangeWrapper,
@@ -74,7 +88,6 @@ const contract = require('truffle-contract');
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
-
 const { expect } = chai;
 
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
@@ -91,6 +104,18 @@ let currentSnapshotId: number;
 
 
 describe('CoreWrapper', () => {
+  let transferProxy: TransferProxyContract;
+  let vault: VaultContract;
+  let core: CoreContract;
+  let setTokenFactory: SetTokenFactoryContract;
+
+  let componentTokens: StandardTokenMockContract[];
+  let setComponentUnit: BigNumber;
+  let setToken: SetTokenContract;
+  let naturalUnit: BigNumber;
+
+  let coreWrapper: CoreWrapper;
+
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
   });
@@ -101,6 +126,30 @@ describe('CoreWrapper', () => {
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
+
+    transferProxy = await deployTransferProxyContract(provider);
+    vault = await deployVaultContract(provider);
+    core = await deployCoreContract(provider, transferProxy.address, vault.address);
+    setTokenFactory = await deploySetTokenFactoryContract(provider, core);
+
+    await addAuthorizationAsync(vault, core.address);
+    await addAuthorizationAsync(transferProxy, core.address);
+
+    coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+
+    componentTokens = await deployTokensAsync(3, provider);
+    setComponentUnit = ether(4);
+    naturalUnit = ether(2);
+    setToken = await deploySetTokenAsync(
+      web3,
+      core,
+      setTokenFactory.address,
+      componentTokens.map(token => token.address),
+      componentTokens.map(token => setComponentUnit),
+      naturalUnit,
+    );
+
+    await approveForTransferAsync(componentTokens, transferProxy.address);
   });
 
   afterEach(async () => {
@@ -115,7 +164,6 @@ describe('CoreWrapper', () => {
   /* ============ Create ============ */
 
   describe('createSet', async () => {
-    let coreWrapper: CoreWrapper;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
     let componentAddresses: Address[];
@@ -151,7 +199,6 @@ describe('CoreWrapper', () => {
   /* ============ getSetAddressFromCreateTxHash ============ */
 
   describe('getSetAddressFromCreateTxHash', async () => {
-    let coreWrapper: CoreWrapper;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
     let componentAddresses: Address[];
@@ -192,301 +239,114 @@ describe('CoreWrapper', () => {
     });
   });
 
-  /* ============ Issue ============ */
-
   describe('issue', async () => {
-    let coreWrapper: CoreWrapper;
-    let setTokenFactoryAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
-    let setTokenAddress: Address;
+    let subjectSetToIssue: Address;
+    let subjectQuantitytoIssue: BigNumber;
+    let subjectCaller: Address;
 
     beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
-
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
-      );
-
-      // Create a Set
-      const txHash = await coreWrapper.createSet(
-        setTokenFactoryAddress,
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        { from: DEFAULT_ACCOUNT },
-      );
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+      subjectSetToIssue = setToken.address;
+      subjectQuantitytoIssue = ether(2);
+      subjectCaller = DEFAULT_ACCOUNT;
     });
 
-    test('issues a new set with valid parameters', async () => {
-      const txHash = await coreWrapper.issue(setTokenAddress, new BigNumber(100), { from: DEFAULT_ACCOUNT });
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('IssuanceComponentDeposited');
+    async function subject(): Promise<string> {
+      return await coreWrapper.issue(
+        subjectSetToIssue,
+        subjectQuantitytoIssue,
+        { from: subjectCaller }
+      );
+    }
+
+    test('updates the set balance of the user by the issue quantity', async () => {
+      const existingSetUserBalance = await setToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+
+      await subject();
+
+      const expectedSetUserBalance = existingSetUserBalance.add(subjectQuantitytoIssue);
+      const newSetUserBalance = await setToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+      expect(newSetUserBalance).to.eql(expectedSetUserBalance);
     });
   });
-
-  /* ============ Redeem ============ */
 
   describe('redeem', async () => {
-    let coreWrapper: CoreWrapper;
-    let setTokenFactoryAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
-    let setTokenAddress: Address;
+    let subjectSetToRedeem: Address;
+    let subjectQuantityToRedeem: BigNumber;
+    let subjectCaller: Address;
 
     beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
-
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
+      await core.issue.sendTransactionAsync(
+        setToken.address,
+        ether(2),
+        TX_DEFAULTS
       );
 
-      // Create a Set
-      const txHash = await coreWrapper.createSet(
-        setTokenFactoryAddress,
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        { from: DEFAULT_ACCOUNT },
-      );
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
-
-      // Issue a Set to user
-      await coreWrapper.issue(setTokenAddress, new BigNumber(100), { from: DEFAULT_ACCOUNT });
+      subjectSetToRedeem = setToken.address;
+      subjectQuantityToRedeem = ether(2);
+      subjectCaller = DEFAULT_ACCOUNT;
     });
 
-    test('redeems a set with valid parameters', async () => {
-      const tokenWrapper = await DetailedERC20Contract.at(setTokenAddress, web3, TX_DEFAULTS);
-      expect(Number(await tokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(100);
-      await coreWrapper.redeemToVault(setTokenAddress, new BigNumber(100), { from: DEFAULT_ACCOUNT });
-      expect(Number(await tokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(0);
+    async function subject(): Promise<string> {
+      return await coreWrapper.redeem(
+        subjectSetToRedeem,
+        subjectQuantityToRedeem,
+        { from: subjectCaller }
+      );
+    }
+
+    test('updates the set balance of the user by the redeem quantity', async () => {
+      const existingSetUserBalance = await setToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+
+      await subject();
+
+      const expectedSetUserBalance = existingSetUserBalance.sub(subjectQuantityToRedeem);
+      const newSetUserBalance = await setToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+      expect(newSetUserBalance).to.eql(expectedSetUserBalance);
     });
   });
-
-  /* ============ Redeem and Withdraw ============ */
 
   describe('redeemAndWithdraw', async () => {
-    let coreWrapper: CoreWrapper;
-    let setTokenFactoryAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
-    let setTokenAddress: Address;
+    let subjectSetToRedeem: Address;
+    let subjectQuantityToRedeem: BigNumber;
+    let subjectTokensToExcludeBitmask: BigNumber;
+    let subjectCaller: Address;
 
     beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
-
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
+      await core.issue.sendTransactionAsync(
+        setToken.address,
+        ether(2),
+        TX_DEFAULTS
       );
 
-      // Create a Set
-      const txHash = await coreWrapper.createSet(
-        setTokenFactoryAddress,
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        { from: DEFAULT_ACCOUNT },
-      );
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
-
-      // Issue a Set to user
-      await coreWrapper.issue(setTokenAddress, new BigNumber(100), { from: DEFAULT_ACCOUNT });
+      subjectSetToRedeem = setToken.address;
+      subjectQuantityToRedeem = ether(2);
+      subjectTokensToExcludeBitmask = ZERO;
+      subjectCaller = DEFAULT_ACCOUNT;
     });
 
-    test('redeems a set with valid parameters', async () => {
-      const setTokenWrapper = await DetailedERC20Contract.at(setTokenAddress, web3, TX_DEFAULTS);
-      const componentTokenWrapper = await DetailedERC20Contract.at(
-        componentAddresses[1],
-        web3,
-        TX_DEFAULTS,
+    async function subject(): Promise<string> {
+      return await coreWrapper.redeemAndWithdraw(
+        subjectSetToRedeem,
+        subjectQuantityToRedeem,
+        subjectTokensToExcludeBitmask,
+        { from: subjectCaller }
       );
-      const excludedComponentTokenWrapper = await DetailedERC20Contract.at(
-        componentAddresses[0],
-        web3,
-        TX_DEFAULTS,
-      );
+    }
 
-      const oldComponentBalance = await componentTokenWrapper.balanceOf.callAsync(
-        DEFAULT_ACCOUNT,
-      );
-      const excludedOldComponentBalance = await excludedComponentTokenWrapper.balanceOf.callAsync(
-        DEFAULT_ACCOUNT,
-      );
-      const quantity = new BigNumber(100);
+    test('updates the set balance of the user by the redeem quantity', async () => {
+      const existingSetUserBalance = await setToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
 
-      expect(Number(await setTokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(100);
-      await coreWrapper.redeemAndWithdraw(
-        setTokenAddress,
-        quantity,
-        [excludedComponentTokenWrapper.address],
-        { from: DEFAULT_ACCOUNT },
-      );
-      const componentTransferValue = quantity
-        .div(setToCreate.naturalUnit)
-        .mul(setToCreate.units[0]);
+      await subject();
 
-      const newComponentBalance = await componentTokenWrapper.balanceOf.callAsync(
-        DEFAULT_ACCOUNT,
-      );
-      const excludedNewComponentBalance = await excludedComponentTokenWrapper.balanceOf.callAsync(
-        DEFAULT_ACCOUNT,
-      );
-
-      expect(newComponentBalance).to.bignumber.equal(
-        oldComponentBalance.plus(componentTransferValue),
-      );
-      expect(excludedNewComponentBalance).to.bignumber.equal(
-        excludedOldComponentBalance
-      );
-      expect(Number(await setTokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(0);
-    });
-  });
-
-  /* ============ Full Redeem functionality ============ */
-
-  describe('redeem', async () => {
-    let coreWrapper: CoreWrapper;
-    let setTokenFactoryAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
-    let setTokenAddress: Address;
-
-    beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
-
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
-      );
-
-      // Create a Set
-      const txHash = await coreWrapper.createSet(
-        setTokenFactoryAddress,
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        { from: DEFAULT_ACCOUNT },
-      );
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
-
-      // Issue a Set to user
-      await coreWrapper.issue(setTokenAddress, new BigNumber(100), { from: DEFAULT_ACCOUNT });
-    });
-
-    test('redeems a set with valid parameters and withdraws when withdraw is true', async () => {
-      const setTokenWrapper = await DetailedERC20Contract.at(setTokenAddress, web3, TX_DEFAULTS);
-      const componentTokenWrapper = await DetailedERC20Contract.at(
-        componentAddresses[1],
-        web3,
-        TX_DEFAULTS,
-      );
-      const excludedComponentTokenWrapper = await DetailedERC20Contract.at(
-        componentAddresses[0],
-        web3,
-        TX_DEFAULTS,
-      );
-
-      const oldComponentBalance = await componentTokenWrapper.balanceOf.callAsync(
-        DEFAULT_ACCOUNT,
-      );
-      const excludedOldComponentBalance = await excludedComponentTokenWrapper.balanceOf.callAsync(
-        DEFAULT_ACCOUNT,
-      );
-      const quantity = new BigNumber(100);
-
-      expect(Number(await setTokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(100);
-      await coreWrapper.redeem(
-        setTokenAddress,
-        quantity,
-        true,
-        [excludedComponentTokenWrapper.address],
-        { from: DEFAULT_ACCOUNT },
-      );
-      const componentTransferValue = quantity
-        .div(setToCreate.naturalUnit)
-        .mul(setToCreate.units[0]);
-
-      const newComponentBalance = await componentTokenWrapper.balanceOf.callAsync(
-        DEFAULT_ACCOUNT,
-      );
-      const excludedNewComponentBalance = await excludedComponentTokenWrapper.balanceOf.callAsync(
-        DEFAULT_ACCOUNT,
-      );
-
-      expect(newComponentBalance).to.bignumber.equal(
-        oldComponentBalance.plus(componentTransferValue),
-      );
-      expect(excludedNewComponentBalance).to.bignumber.equal(
-        excludedOldComponentBalance
-      );
-      expect(Number(await setTokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(0);
-    });
-
-    test('redeems a set and does not withdraw when withdraw is false', async () => {
-      const setTokenWrapper = await DetailedERC20Contract.at(setTokenAddress, web3, TX_DEFAULTS);
-      const componentTokenWrapper = await DetailedERC20Contract.at(
-        componentAddresses[1],
-        web3,
-        TX_DEFAULTS,
-      );
-      const oldComponentBalance = await componentTokenWrapper.balanceOf.callAsync(
-        DEFAULT_ACCOUNT,
-      );
-      const quantity = new BigNumber(100);
-
-      expect(Number(await setTokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(100);
-      await coreWrapper.redeem(
-        setTokenAddress,
-        quantity,
-        false,
-        [],
-        { from: DEFAULT_ACCOUNT },
-      );
-      const componentTransferValue = quantity
-        .div(setToCreate.naturalUnit)
-        .mul(setToCreate.units[0]);
-
-      const newComponentBalance = await componentTokenWrapper.balanceOf.callAsync(
-        DEFAULT_ACCOUNT,
-      );
-      expect(newComponentBalance).to.bignumber.equal(oldComponentBalance);
-      expect(Number(await setTokenWrapper.balanceOf.callAsync(DEFAULT_ACCOUNT))).to.equal(0);
+      const expectedSetUserBalance = existingSetUserBalance.sub(subjectQuantityToRedeem);
+      const newSetUserBalance = await setToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+      expect(newSetUserBalance).to.eql(expectedSetUserBalance);
     });
   });
 
   /* ============ Deposit ============ */
 
   describe('deposit', async () => {
-    let coreWrapper: CoreWrapper;
-    let vault: VaultContract;
     let depositQuantity: BigNumber;
 
     let subjectTokenAddressToDeposit: Address;
@@ -494,9 +354,6 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      vault = await deployVaultContract(provider, coreWrapper.vaultAddress);
-
       const setToCreate = testSets[0];
       const tokenAddresses = await deployTokensForSetWithApproval(
         setToCreate,
@@ -537,8 +394,6 @@ describe('CoreWrapper', () => {
   });
 
   describe('batchDeposit', async () => {
-    let coreWrapper: CoreWrapper;
-    let vault: VaultContract;
     let depositQuantity: BigNumber;
 
     let subjectTokenAddressesToDeposit: Address[];
@@ -546,9 +401,6 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      vault = await deployVaultContract(provider, coreWrapper.vaultAddress);
-
       const setToCreate = testSets[0];
       const tokenAddresses = await deployTokensForSetWithApproval(
         setToCreate,
@@ -585,8 +437,6 @@ describe('CoreWrapper', () => {
   /* ============ Withdraw ============ */
 
   describe('withdraw', async () => {
-    let coreWrapper: CoreWrapper;
-    let vault: VaultContract;
     let withdrawQuantity: BigNumber;
 
     let subjectTokenAddressToWithdraw: Address;
@@ -594,9 +444,6 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      vault = await deployVaultContract(provider, coreWrapper.vaultAddress);
-
       const setToCreate = testSets[0];
       const tokenAddresses = await deployTokensForSetWithApproval(
         setToCreate,
@@ -643,8 +490,6 @@ describe('CoreWrapper', () => {
   });
 
   describe('batchWithdraw', async () => {
-    let coreWrapper: CoreWrapper;
-    let vault: VaultContract;
     let withdrawQuantity: BigNumber;
 
     let subjectTokenAddressesToWithdraw: Address[];
@@ -652,9 +497,6 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      vault = await deployVaultContract(provider, coreWrapper.vaultAddress);
-
       const setToCreate = testSets[0];
       const tokenAddresses = await deployTokensForSetWithApproval(
         setToCreate,
@@ -697,7 +539,6 @@ describe('CoreWrapper', () => {
   /* ============ Create Issuance Order ============ */
 
   describe('createOrder', async () => {
-    let coreWrapper: CoreWrapper;
     let setTokenFactoryAddress: Address;
     let setTokenAddress: Address;
     let setToCreate: TestSet;
@@ -773,7 +614,6 @@ describe('CoreWrapper', () => {
   /* ============ Fill Issuance Order ============ */
 
   describe('fillOrder', async () => {
-    let coreWrapper: CoreWrapper;
     let setTokenFactoryAddress: Address;
     let setTokenAddress: Address;
     let takerWalletWrapperAddress: Address;
@@ -1039,7 +879,6 @@ describe('CoreWrapper', () => {
   /* ============ Cancel Issuance Order ============ */
 
   describe('cancelOrder', async () => {
-    let coreWrapper: CoreWrapper;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
     let componentAddresses: Address[];
@@ -1124,8 +963,8 @@ describe('CoreWrapper', () => {
   });
 
   /* ============ Core State Getters ============ */
+
   describe('Core State Getters', async () => {
-    let coreWrapper: CoreWrapper;
     let setTokenFactoryAddress: Address;
     let setTokenAddress: Address;
     let setToCreate: TestSet;

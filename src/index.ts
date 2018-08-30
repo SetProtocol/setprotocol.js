@@ -20,7 +20,7 @@ import * as Web3 from 'web3';
 import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
 import { Provider } from '@0xproject/types';
 
-import { AccountingAPI, OrderAPI } from './api';
+import { AccountingAPI, IssuanceAPI, OrderAPI } from './api';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
 import { BigNumber, instantiateWeb3 } from './util';
 import { TxData } from './types/common';
@@ -44,6 +44,7 @@ class SetProtocol {
   private core: CoreWrapper;
   private vault: VaultWrapper;
   private accounting: AccountingAPI;
+  private issuance: IssuanceAPI;
 
   /**
    * When creating an issuance order without a relayer token for a fee, you must use Solidity
@@ -72,10 +73,7 @@ class SetProtocol {
    *                              to use for interacting with the Ethereum network.
    * @param config                A configuration object with Set Protocol's contract addresses
    */
-  constructor(
-    provider: Provider = undefined,
-    config: SetProtocolConfig,
-  ) {
+  constructor(provider: Provider = undefined, config: SetProtocolConfig) {
     this.web3 = instantiateWeb3(provider);
 
     this.core = new CoreWrapper(this.web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
@@ -84,6 +82,7 @@ class SetProtocol {
     this.vault = new VaultWrapper(this.web3, config.vaultAddress);
 
     this.accounting = new AccountingAPI(this.web3, this.core);
+    this.issuance = new IssuanceAPI(this.web3, this.core);
     this.orders = new OrderAPI(this.web3, this.core);
   }
 
@@ -112,35 +111,39 @@ class SetProtocol {
   }
 
   /**
-   * Asynchronously issues a particular quantity of tokens from a particular Sets
+   * Issues a Set to the transaction signer. Must have component tokens in the correct quantites in either
+   * the vault or in the signer's wallet. Component tokens must be approved to the Transfer
+   * Proxy contract via setTransferProxyAllowanceAsync
    *
-   * @param  setAddress    Set token address of Set being issued
-   * @param  quantity      Number of Sets a user wants to issue in Wei
+   * @param  setAddress    Address of Set to issue
+   * @param  quantity      Amount of Set to issue. Must be multiple of the natural unit of the Set
    * @param  txOpts        The options for executing the transaction
    * @return               Transaction hash
    */
   public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
-    return await this.core.issue(setAddress, quantity, txOpts);
+    return await this.issuance.issueAsync(setAddress, quantity, txOpts);
   }
 
   /**
-   * Composite method to redeem and optionally withdraw tokens
+   * Redeems a Set to the transaction signer, returning the component tokens to the signer's wallet. Set withdraw
+   * to false to leave redeemed components in vault under the user's address to save gas if rebundling into another
+   * Set with similar components
    *
-   * @param  setAddress         The address of the Set token
-   * @param  quantity           The number of tokens to redeem
-   * @param  withdraw           Boolean determining whether or not to withdraw
-   * @param  tokensToExclude    Array of token addresses to exclude from withdrawal
+   * @param  setAddress         Address of Set to issue
+   * @param  quantity           Amount of Set to redeem. Must be multiple of the natural unit of the Set
+   * @param  withdraw           Boolean to withdraw back to signer's wallet or leave in vault. Defaults to true
+   * @param  tokensToExclude    Token addresses to exclude from withdrawal
    * @param  txOpts             The options for executing the transaction
    * @return                    Transaction hash
    */
   public async redeemAsync(
     setAddress: Address,
     quantity: BigNumber,
-    withdraw: boolean,
+    withdraw: boolean = true,
     tokensToExclude: Address[],
     txOpts?: TxData,
   ): Promise<string> {
-    return await this.core.redeem(setAddress, quantity, withdraw, tokensToExclude, txOpts);
+    return await this.issuance.redeemAsync(setAddress, quantity, withdraw, tokensToExclude, txOpts);
   }
 
   /**
