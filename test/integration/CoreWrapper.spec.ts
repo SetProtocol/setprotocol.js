@@ -148,9 +148,9 @@ describe('CoreWrapper', () => {
     });
   });
 
-  /* ============ getSetAddressFromCreateTxHashAsync ============ */
+  /* ============ getSetAddressFromCreateTxHash ============ */
 
-  describe('getSetAddressFromCreateTxHashAsync', async () => {
+  describe('getSetAddressFromCreateTxHash', async () => {
     let coreWrapper: CoreWrapper;
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
@@ -180,7 +180,7 @@ describe('CoreWrapper', () => {
     });
 
     async function subject(): Promise<string> {
-      return await coreWrapper.getSetAddressFromCreateTxHashAsync(subjectTxHash);
+      return await coreWrapper.getSetAddressFromCreateTxHash(subjectTxHash);
     }
 
     test('retrieves the correct set address', async () => {

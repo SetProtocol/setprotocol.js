@@ -124,7 +124,7 @@ describe('SetProtocol', async () => {
     expect(setProtocolInstance instanceof SetProtocol);
   });
 
-  describe('createSet', async () => {
+  describe('createSetAsync', async () => {
     let setTokenFactoryAddress: Address;
     let setToCreate: TestSet;
     let componentAddresses: Address[];
