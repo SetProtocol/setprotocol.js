@@ -41,7 +41,7 @@ import ChaiSetup from '../../helpers/chaiSetup';
 
 import { CoreWrapper } from '../../../src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
-import { OrderAPI } from '../../../src/api/orders';
+import { OrderAPI } from '../../../src/api';
 import {
   DEFAULT_GAS_PRICE,
   DEFAULT_GAS_LIMIT,
