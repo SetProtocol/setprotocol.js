@@ -376,7 +376,7 @@ class TypedocParser {
           content += `\`${method.returnType}\` - ${method.returnComment}\n`  
         }
 
-        content += `---\n`
+        content += `\n\n---\n\n`
       });
 
       return content;
