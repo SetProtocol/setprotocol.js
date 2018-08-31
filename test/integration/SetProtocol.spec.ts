@@ -39,28 +39,22 @@ import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import ChaiSetup from '../helpers/chaiSetup';
 import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
 import SetProtocol from '../../src';
-import { testSets, TestSet } from '../testSets';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS, TX_DEFAULTS } from '../../src/constants';
 import { Web3Utils } from '../../src/util/Web3Utils';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util/logs';
-import { CoreWrapper } from '../../src/wrappers';
 import { BigNumber } from '../../src/util';
 import { SetProtocolConfig } from '../../src';
 import {
   addAuthorizationAsync,
-  approveForFill,
+  approveForTransferAsync,
   deployCoreContract,
-  deploySetTokenFactory,
+  deploySetTokenAsync,
   deploySetTokenFactoryContract,
   deployTokensAsync,
-  deployTokensForSetWithApproval,
   deployTransferProxyContract,
   deployVaultContract,
-  initializeCoreWrapper,
-  registerExchange,
 } from '../helpers/coreHelpers';
 import { ether } from '../helpers/units';
-import { deployTakerWalletExchangeWrapper } from '../helpers/exchangeHelpers';
 
 ChaiSetup.configure();
 const { expect } = chai;
@@ -235,42 +229,35 @@ describe('SetProtocol', async () => {
   /* ============ Core State Getters ============ */
 
   describe('Core State Getters', async () => {
-    let setTokenFactoryAddress: Address;
-    let setTokenAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
+    let componentTokens: StandardTokenMockContract[];
+    let setComponentUnit: BigNumber;
+    let setToken: SetTokenContract;
+    let naturalUnit: BigNumber;
 
     beforeEach(async () => {
-      setTokenFactoryAddress = await deploySetTokenFactory(core.address, provider);
-
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        transferProxy.address,
-        provider,
+      componentTokens = await deployTokensAsync(3, provider);
+      setComponentUnit = ether(4);
+      naturalUnit = ether(2);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentTokens.map(token => token.address),
+        componentTokens.map(token => setComponentUnit),
+        naturalUnit,
       );
 
-      // Create a Set
-      const txHash = await setProtocol.createSetAsync(
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        { from: DEFAULT_ACCOUNT },
-      );
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+      await approveForTransferAsync(componentTokens, transferProxy.address);
     });
 
     test('gets Set addresses', async () => {
       const setAddresses = await setProtocol.getSetAddressesAsync();
       expect(setAddresses.length).to.equal(1);
-      expect(setAddresses[0]).to.equal(setTokenAddress);
+      expect(setAddresses[0]).to.equal(setToken.address);
     });
 
     test('gets is valid factory address', async () => {
-      let isValidVaultAddress = await setProtocol.isValidFactoryAsync(setTokenFactoryAddress);
+      let isValidVaultAddress = await setProtocol.isValidFactoryAsync(setTokenFactory.address);
       expect(isValidVaultAddress).to.equal(true);
       isValidVaultAddress = await setProtocol.isValidSetAsync(NULL_ADDRESS);
       expect(isValidVaultAddress).to.equal(false);
