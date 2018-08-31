@@ -25,94 +25,92 @@ jest.setTimeout(30000);
 import * as chai from 'chai';
 import * as Web3 from 'web3';
 import * as ABIDecoder from 'abi-decoder';
-
+import { Core } from 'set-protocol-contracts';
 import {
-  Core,
+  CoreContract,
+  SetTokenContract,
+  SetTokenFactoryContract,
   StandardTokenMockContract,
-  TransferProxy,
-  Vault
+  TransferProxyContract,
+  VaultContract
 } from 'set-protocol-contracts';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
+
 import ChaiSetup from '../helpers/chaiSetup';
 import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
 import SetProtocol from '../../src';
 import { testSets, TestSet } from '../testSets';
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS } from '../../src/constants';
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS, TX_DEFAULTS } from '../../src/constants';
 import { Web3Utils } from '../../src/util/Web3Utils';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util/logs';
 import { CoreWrapper } from '../../src/wrappers';
 import { BigNumber } from '../../src/util';
 import { SetProtocolConfig } from '../../src';
 import {
+  addAuthorizationAsync,
   approveForFill,
+  deployCoreContract,
   deploySetTokenFactory,
-  deployTokensForSetWithApproval,
+  deploySetTokenFactoryContract,
   deployTokensAsync,
+  deployTokensForSetWithApproval,
+  deployTransferProxyContract,
+  deployVaultContract,
   initializeCoreWrapper,
   registerExchange,
 } from '../helpers/coreHelpers';
+import { ether } from '../helpers/units';
 import { deployTakerWalletExchangeWrapper } from '../helpers/exchangeHelpers';
 
 ChaiSetup.configure();
 const { expect } = chai;
 const { UNLIMITED_ALLOWANCE_IN_BASE_UNITS } = SetProtocolUtils.CONSTANTS;
-
 const contract = require('truffle-contract');
-
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
-const txDefaults = {
-  from: DEFAULT_ACCOUNT,
-  gasPrice: DEFAULT_GAS_PRICE,
-  gas: DEFAULT_GAS_LIMIT,
-};
-
 const coreContract = contract(Core);
 coreContract.setProvider(provider);
-coreContract.defaults(txDefaults);
-
-const transferProxyContract = contract(TransferProxy);
-transferProxyContract.setProvider(provider);
-transferProxyContract.defaults(txDefaults);
-
-const vaultContract = contract(Vault);
-vaultContract.setProvider(provider);
-vaultContract.defaults(txDefaults);
+coreContract.defaults(TX_DEFAULTS);
 
 let currentSnapshotId: number;
 
+
 describe('SetProtocol', async () => {
-  let coreWrapper: CoreWrapper;
-  let setProtocolInstance: SetProtocol;
+  let transferProxy: TransferProxyContract;
+  let vault: VaultContract;
+  let core: CoreContract;
+  let setTokenFactory: SetTokenFactoryContract;
+  let setProtocol: SetProtocol;
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
-    ABIDecoder.addABI(transferProxyContract.abi);
-    ABIDecoder.addABI(vaultContract.abi);
   });
 
   afterAll(() => {
     ABIDecoder.removeABI(coreContract.abi);
-    ABIDecoder.removeABI(transferProxyContract.abi);
-    ABIDecoder.removeABI(vaultContract.abi);
   });
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    coreWrapper = await initializeCoreWrapper(provider);
+    transferProxy = await deployTransferProxyContract(provider);
+    vault = await deployVaultContract(provider);
+    core = await deployCoreContract(provider, transferProxy.address, vault.address);
+    setTokenFactory = await deploySetTokenFactoryContract(provider, core);
 
-    const config: SetProtocolConfig = {
-      coreAddress: coreWrapper.coreAddress,
-      transferProxyAddress: coreWrapper.transferProxyAddress,
-      vaultAddress: coreWrapper.vaultAddress,
-    };
+    await addAuthorizationAsync(vault, core.address);
+    await addAuthorizationAsync(transferProxy, core.address);
 
-    setProtocolInstance = new SetProtocol(
+    setProtocol = new SetProtocol(
       provider,
-      config,
+      {
+        coreAddress: core.address,
+        transferProxyAddress: transferProxy.address,
+        vaultAddress: vault.address,
+        setTokenFactoryAddress: setTokenFactory.address,
+      } as SetProtocolConfig,
     );
   });
 
@@ -120,39 +118,59 @@ describe('SetProtocol', async () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test('should instantiate a new setProtocolInstance', async () => {
-    expect(setProtocolInstance instanceof SetProtocol);
-  });
-
   describe('createSetAsync', async () => {
-    let setTokenFactoryAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
+    let componentTokens: StandardTokenMockContract[];
+
+    let subjectComponents: Address[];
+    let subjectUnits: BigNumber[];
+    let subjectNaturalUnit: BigNumber;
+    let subjectName: string;
+    let subjectSymbol: string;
+    let subjectCaller: Address;
 
     beforeEach(async () => {
-      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
+      componentTokens = await deployTokensAsync(3, provider);
 
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
-      );
+      subjectComponents = componentTokens.map(component => component.address);
+      subjectUnits = subjectComponents.map(component => ether(4));
+      subjectNaturalUnit = ether(2);
+      subjectName = 'My Set';
+      subjectSymbol = 'SET';
+      subjectCaller = DEFAULT_ACCOUNT;
     });
 
-    test('creates a new set with valid parameters', async () => {
-      const txHash = await setProtocolInstance.createSetAsync(
-        setTokenFactoryAddress,
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        { from: DEFAULT_ACCOUNT },
+    async function subject(): Promise<string> {
+      return await setProtocol.createSetAsync(
+        subjectComponents,
+        subjectUnits,
+        subjectNaturalUnit,
+        subjectName,
+        subjectSymbol,
+        { from: subjectCaller }
       );
+    }
 
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('SetTokenCreated');
+    test('deploys a new SetToken contract', async () => {
+      const createSetTransactionHash = await subject();
+
+      const logs = await getFormattedLogsFromTxHash(web3, createSetTransactionHash);
+      const deployedSetTokenAddress = extractNewSetTokenAddressFromLogs(logs);
+      const setTokenContract = await SetTokenContract.at(deployedSetTokenAddress, web3, TX_DEFAULTS);
+
+      const componentAddresses = await setTokenContract.getComponents.callAsync();
+      expect(componentAddresses).to.eql(subjectComponents);
+
+      const componentUnits = await setTokenContract.getUnits.callAsync();
+      expect(JSON.stringify(componentUnits)).to.eql(JSON.stringify(subjectUnits));
+
+      const naturalUnit = await setTokenContract.naturalUnit.callAsync();
+      expect(naturalUnit).to.bignumber.equal(subjectNaturalUnit);
+
+      const name = await setTokenContract.name.callAsync();
+      expect(name).to.eql(subjectName);
+
+      const symbol = await setTokenContract.symbol.callAsync();
+      expect(symbol).to.eql(subjectSymbol);
     });
   });
 
@@ -170,7 +188,7 @@ describe('SetProtocol', async () => {
     });
 
     async function subject(): Promise<string> {
-      return await setProtocolInstance.setTransferProxyAllowanceAsync(
+      return await setProtocol.setTransferProxyAllowanceAsync(
         token.address,
         subjectQuantity,
         { from: subjectCaller },
@@ -178,12 +196,12 @@ describe('SetProtocol', async () => {
     }
 
     test('sets the allowance properly', async () => {
-      const existingAllowance = await token.allowance.callAsync(subjectCaller, coreWrapper.transferProxyAddress);
+      const existingAllowance = await token.allowance.callAsync(subjectCaller, transferProxy.address);
 
       await subject();
 
       const expectedNewAllowance = existingAllowance.add(subjectQuantity);
-      const newAllowance = await token.allowance.callAsync(subjectCaller, coreWrapper.transferProxyAddress);
+      const newAllowance = await token.allowance.callAsync(subjectCaller, transferProxy.address);
       expect(newAllowance).to.bignumber.equal(expectedNewAllowance);
     });
   });
@@ -200,7 +218,7 @@ describe('SetProtocol', async () => {
     });
 
     async function subject(): Promise<string> {
-      return await setProtocolInstance.setUnlimitedTransferProxyAllowanceAsync(
+      return await setProtocol.setUnlimitedTransferProxyAllowanceAsync(
         token.address,
         { from: subjectCaller },
       );
@@ -209,7 +227,7 @@ describe('SetProtocol', async () => {
     test('sets the allowance properly', async () => {
       await subject();
 
-      const newAllowance = await token.allowance.callAsync(subjectCaller, coreWrapper.transferProxyAddress);
+      const newAllowance = await token.allowance.callAsync(subjectCaller, transferProxy.address);
       expect(newAllowance).to.bignumber.equal(UNLIMITED_ALLOWANCE_IN_BASE_UNITS);
     });
   });
@@ -223,18 +241,17 @@ describe('SetProtocol', async () => {
     let componentAddresses: Address[];
 
     beforeEach(async () => {
-      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
+      setTokenFactoryAddress = await deploySetTokenFactory(core.address, provider);
 
       setToCreate = testSets[0];
       componentAddresses = await deployTokensForSetWithApproval(
         setToCreate,
-        coreWrapper.transferProxyAddress,
+        transferProxy.address,
         provider,
       );
 
       // Create a Set
-      const txHash = await coreWrapper.createSet(
-        setTokenFactoryAddress,
+      const txHash = await setProtocol.createSetAsync(
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
@@ -247,15 +264,15 @@ describe('SetProtocol', async () => {
     });
 
     test('gets Set addresses', async () => {
-      const setAddresses = await setProtocolInstance.getSetAddressesAsync();
+      const setAddresses = await setProtocol.getSetAddressesAsync();
       expect(setAddresses.length).to.equal(1);
       expect(setAddresses[0]).to.equal(setTokenAddress);
     });
 
     test('gets is valid factory address', async () => {
-      let isValidVaultAddress = await setProtocolInstance.isValidFactoryAsync(setTokenFactoryAddress);
+      let isValidVaultAddress = await setProtocol.isValidFactoryAsync(setTokenFactoryAddress);
       expect(isValidVaultAddress).to.equal(true);
-      isValidVaultAddress = await setProtocolInstance.isValidSetAsync(NULL_ADDRESS);
+      isValidVaultAddress = await setProtocol.isValidSetAsync(NULL_ADDRESS);
       expect(isValidVaultAddress).to.equal(false);
     });
   });

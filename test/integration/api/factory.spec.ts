@@ -279,7 +279,7 @@ describe('FactoryAPI', () => {
     });
 
     describe('when the component addresses contains an invalid address', async () => {
-      const invalidComponentAddress: Address;
+      let invalidComponentAddress: Address;
 
       beforeEach(async () => {
         const placeholderUnitForArrayLength = ether(1);
@@ -303,7 +303,7 @@ describe('FactoryAPI', () => {
     });
 
     describe('when the component addresses contains an address for a non ERC20 contract', async () => {
-      const nonERC20ContractAddress: Address;
+      let nonERC20ContractAddress: Address;
 
       beforeEach(async () => {
         const placeholderUnitForArrayLength = ether(1);

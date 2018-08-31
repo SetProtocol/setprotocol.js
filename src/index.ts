@@ -90,11 +90,11 @@ class SetProtocol {
   }
 
   /**
-   * Create a new SetToken by passing in parameters denoting component token addresses, quantities, natural
+   * Create a new Set by passing in parameters denoting component token addresses, quantities, natural
    * unit, and ERC20 properties
    *
-   * @param  components       Component token addresses
-   * @param  units            Units of corresponding token components
+   * @param  components       Component ERC20 token addresses
+   * @param  units            Units of each component in Set paired in index order
    * @param  naturalUnit      Supplied as the lowest common denominator for the Set
    * @param  name             Name for Set (i.e. "DEX Set"). Not unique
    * @param  symbol           Symbol for Set (i.e. "DEX"). Not unique
