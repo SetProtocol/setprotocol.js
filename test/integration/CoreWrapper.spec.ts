@@ -71,7 +71,7 @@ import {
   initializeCoreWrapper,
   registerExchange,
 } from '../helpers/coreHelpers';
-import { ether } from '../helpers/units';
+import { ether } from '../../src/util/units';
 import { getVaultBalances } from '../helpers/vaultHelpers';
 import { deployTakerWalletExchangeWrapper, deployZeroExExchangeWrapper } from '../helpers/exchangeHelpers';
 

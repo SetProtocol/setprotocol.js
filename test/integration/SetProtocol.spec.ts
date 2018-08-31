@@ -54,7 +54,7 @@ import {
   deployTransferProxyContract,
   deployVaultContract,
 } from '../helpers/coreHelpers';
-import { ether } from '../helpers/units';
+import { ether } from '../../src/util/units';
 
 ChaiSetup.configure();
 const { expect } = chai;

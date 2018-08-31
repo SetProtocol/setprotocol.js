@@ -53,7 +53,7 @@ import {
   deployVaultContract,
 } from '../../helpers/coreHelpers';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../../src/util/logs';
-import { ether } from '../../helpers/units';
+import { ether } from '../../../src/util/units';
 import { Web3Utils } from '../../../src/util/Web3Utils';
 
 ChaiSetup.configure();
