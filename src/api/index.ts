@@ -16,9 +16,9 @@
 
 'use strict';
 
-import { AccountingAPI } from './accountingAPI';
-import { FactoryAPI } from './factoryAPI';
-import { IssuanceAPI } from './issuanceAPI';
-import { OrderAPI } from './ordersAPI';
+import { AccountingAPI } from './AccountingAPI';
+import { FactoryAPI } from './FactoryAPI';
+import { IssuanceAPI } from './IssuanceAPI';
+import { OrderAPI } from './OrdersAPI';
 
 export { AccountingAPI, FactoryAPI, IssuanceAPI, OrderAPI };
