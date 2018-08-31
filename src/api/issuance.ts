@@ -29,10 +29,10 @@ import { BigNumber } from '../util';
 import { TxData } from '../types/common';
 
 /**
- * @title SetProtocol
+ * @title IssuanceAPI
  * @author Set Protocol
  *
- * UPDATE ME
+ * A library for issuing and redeeming Sets
  */
 export class IssuanceAPI {
   private web3: Web3;
