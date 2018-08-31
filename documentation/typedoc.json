@@ -16470,7 +16470,7 @@
 									"flags": {},
 									"comment": {
 										"shortText": "Redeem and withdraw with a single transaction",
-										"text": "Normally, you should expect to be able to withdraw all of the tokens.\nHowever, some have central abilities to freeze transfers (e.g. EOS). _toExclude\nallows you to optionally specify which component tokens to remain under the user's\naddress in the vault. The rest will be transferred to the user.\n",
+										"text": "Normally, you should expect to be able to withdraw all of the tokens.\nHowever, some have central abilities to freeze transfers (e.g. EOS). The parameter toExclude\nallows you to optionally specify which component tokens to remain under the user's\naddress in the vault. The rest will be transferred to the user.\n",
 										"returns": "A transaction hash to then later look up\n"
 									},
 									"parameters": [

@@ -4,6 +4,8 @@
 
 ####  depositAsync
 
+Deposits tokens into the vault
+
 [Source](api/accounting.ts#L64)
 
 ```javascript
@@ -14,14 +16,18 @@ depositAsync(
 ): Promise<string>
 ```
 
-Deposits tokens into the vault
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddresses | Address[] |  |
 | quantities | BigNumber[] |  |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - Transaction hash
+---
 ####  withdrawAsync
+
+Withdraws tokens from the vault
 
 [Source](api/accounting.ts#L82)
 
@@ -33,16 +39,20 @@ withdrawAsync(
 ): Promise<string>
 ```
 
-Withdraws tokens from the vault
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddresses | Address[] |  |
 | quantities | BigNumber[] |  |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - Transaction hash
+---
 ###  IssuanceAPI
 
 ####  issueAsync
+
+Asynchronously issues a particular quantity of tokens from a particular Sets
 
 [Source](api/issuance.ts#L65)
 
@@ -54,14 +64,18 @@ issueAsync(
 ): Promise<string>
 ```
 
-Asynchronously issues a particular quantity of tokens from a particular Sets
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | Set token address of Set being issued |
 | quantity | BigNumber | Number of Sets a user wants to issue in Wei |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash to then later look up
+---
 ####  redeemAsync
+
+Composite method to redeem and optionally withdraw tokens
 
 [Source](api/issuance.ts#L81)
 
@@ -75,8 +89,7 @@ redeemAsync(
 ): Promise<string>
 ```
 
-Composite method to redeem and optionally withdraw tokens
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | The address of the Set token |
@@ -84,9 +97,14 @@ Composite method to redeem and optionally withdraw tokens
 | withdraw | boolean | Boolean determining whether or not to withdraw |
 | tokensToExclude | Address[] | Array of token addresses to exclude from withdrawal |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash to then later look up
+---
 ###  OrderAPI
 
 ####  cancelOrderAsync
+
+Cancels an Issuance Order
 
 [Source](api/orders.ts#L233)
 
@@ -98,14 +116,18 @@ cancelOrderAsync(
 ): Promise<string>
 ```
 
-Cancels an Issuance Order
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | issuanceOrder | IssuanceOrder | Issuance order to cancel |
 | quantityToCancel | BigNumber | Number of Set to cancel in this call |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash
+---
 ####  createSignedOrderAsync
+
+Creates a new signed Issuance Order including the signature
 
 [Source](api/orders.ts#L176)
 
@@ -126,8 +148,7 @@ createSignedOrderAsync(
 ): Promise<SignedIssuanceOrder>
 ```
 
-Creates a new signed Issuance Order including the signature
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | Address of the Set token for issuance order |
@@ -142,7 +163,12 @@ Creates a new signed Issuance Order including the signature
 | relayerToken | Address | Address of token paid to relayer |
 | makerRelayerFee | BigNumber | Number of token paid to relayer by maker |
 | takerRelayerFee | BigNumber | Number of token paid tp relayer by taker |
+######  Returns
+`Promise<SignedIssuanceOrder>` - A transaction hash
+---
 ####  fillOrderAsync
+
+Fills an Issuance Order
 
 [Source](api/orders.ts#L216)
 
@@ -155,15 +181,20 @@ fillOrderAsync(
 ): Promise<string>
 ```
 
-Fills an Issuance Order
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | signedIssuanceOrder | SignedIssuanceOrder | Signed issuance order to fill |
 | quantityToFill | BigNumber | Number of Set to fill in this call |
 | orders | undefined[] |  |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash
+---
 ####  generateExpirationTimestamp
+
+Generates a timestamp represented as seconds since unix epoch.
+The timestamp is intended to be used to generate the expiration of an issuance order
 
 [Source](api/orders.ts#L90)
 
@@ -173,13 +204,18 @@ generateExpirationTimestamp(
 ): BigNumber
 ```
 
-Generates a timestamp represented as seconds since unix epoch.
-The timestamp is intended to be used to generate the expiration of an issuance order
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | seconds | number |  |
+######  Returns
+`BigNumber` - Unix timestamp (in seconds since unix epoch)
+---
 ####  generateSalt
+
+Generates a pseudo-random 256-bit salt.
+The salt can be included in an order, ensuring that the order generates a unique orderHash
+and will not collide with other outstanding orders that are identical in all other parameters.
 
 [Source](api/orders.ts#L79)
 
@@ -187,11 +223,14 @@ The timestamp is intended to be used to generate the expiration of an issuance o
 generateSalt(): BigNumber
 ```
 
-Generates a pseudo-random 256-bit salt.
-The salt can be included in an order, ensuring that the order generates a unique orderHash
-and will not collide with other outstanding orders that are identical in all other parameters.
-
+######  Returns
+`BigNumber` - A pseudo-random 256-bit number that can be used as a salt.
+---
 ####  isValidOrderHashOrThrow
+
+Checks if the supplied hex encoded order hash is valid.
+Note: Valid means it has the expected format, not that an order
+with the orderHash exists.
 
 [Source](api/orders.ts#L101)
 
@@ -201,14 +240,17 @@ isValidOrderHashOrThrow(
 ): void
 ```
 
-Checks if the supplied hex encoded order hash is valid.
-Note: Valid means it has the expected format, not that an order
-with the orderHash exists.
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | orderHash | Bytes |  |
+######  Returns
+`void` - ---
 ####  isValidSignatureOrThrowAsync
+
+Checks whether a particular issuance order and signature is valid
+A signature is valid only if the issuance order is signed by the maker
+The function throws upon receiving an invalid signature.
 
 [Source](api/orders.ts#L114)
 
@@ -219,15 +261,19 @@ isValidSignatureOrThrowAsync(
 ): Promise<boolean>
 ```
 
-Checks whether a particular issuance order and signature is valid
-A signature is valid only if the issuance order is signed by the maker
-The function throws upon receiving an invalid signature.
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | issuanceOrder | IssuanceOrder | The issuance order the signature was generated from |
 | signature | ECSig | The EC Signature to check |
+######  Returns
+`Promise<boolean>` - boolean
+---
 ####  signOrderAsync
+
+Generates a ECSig from an issuance order. The function first generates an order hash.
+Then it signs it using the passed in transaction options. If none, it will assume
+the signer is the first account
 
 [Source](api/orders.ts#L133)
 
@@ -238,15 +284,18 @@ signOrderAsync(
 ): Promise<ECSig>
 ```
 
-Generates a ECSig from an issuance order. The function first generates an order hash.
-Then it signs it using the passed in transaction options. If none, it will assume
-the signer is the first account
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | issuanceOrder | IssuanceOrder | Issuance Order |
 | txOpts | TxData |  |
+######  Returns
+`Promise<ECSig>` - EC Signature
+---
 ####  validateOrderFillableOrThrowAsync
+
+Given an issuance order, check that the signature is valid, order has not expired,
+and
 
 [Source](api/orders.ts#L148)
 
@@ -257,14 +306,14 @@ validateOrderFillableOrThrowAsync(
 ): Promise<void>
 ```
 
-Given an issuance order, check that the signature is valid, order has not expired,
-and
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | signedIssuanceOrder | SignedIssuanceOrder |  |
 | fillQuantity | BigNumber | (optional) a fill quantity to check if fillable
  |
+######  Returns
+`Promise<void>` - ---
 ##  assertions
 ###  AccountAssertions
 
@@ -279,10 +328,13 @@ notNull(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | account | Address |  |
 | errorMessage | string |  |
+######  Returns
+`void` - ---
 ###  CommonAssertions
 
 ####  greaterThanZero
@@ -296,10 +348,13 @@ greaterThanZero(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | quantity | BigNumber |  |
 | errorMessage | string |  |
+######  Returns
+`void` - ---
 ####  isEqualLength
 
 [Source](assertions/CommonAssertions.ts#L28)
@@ -312,11 +367,14 @@ isEqualLength(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | arr1 | any[] |  |
 | arr2 | any[] |  |
 | errorMessage | string |  |
+######  Returns
+`void` - ---
 ####  isGreaterOrEqualThan
 
 [Source](assertions/CommonAssertions.ts#L34)
@@ -329,11 +387,14 @@ isGreaterOrEqualThan(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | quantity1 | BigNumber |  |
 | quantity2 | BigNumber |  |
 | errorMessage | string |  |
+######  Returns
+`void` - ---
 ####  isValidExpiration
 
 [Source](assertions/CommonAssertions.ts#L46)
@@ -345,10 +406,13 @@ isValidExpiration(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | expiration | BigNumber |  |
 | errorMessage | string |  |
+######  Returns
+`void` - ---
 ####  isValidString
 
 [Source](assertions/CommonAssertions.ts#L40)
@@ -360,13 +424,18 @@ isValidString(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | value | string |  |
 | errorMessage | string |  |
+######  Returns
+`void` - ---
 ###  CoreAssertions
 
 ####  implementsCore
+
+Throws if the given candidateContract does not respond to some methods from the Core interface.
 
 [Source](assertions/CoreAssertions.ts#L36)
 
@@ -376,11 +445,13 @@ implementsCore(
 ): Promise<void>
 ```
 
-Throws if the given candidateContract does not respond to some methods from the Core interface.
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | coreInstance | ContractInstance | An instance of the core contract |
+######  Returns
+`Promise<void>` - Void Promise
+---
 ####  isValidSignature
 
 [Source](assertions/CoreAssertions.ts#L54)
@@ -393,11 +464,14 @@ isValidSignature(
 ): Promise<boolean>
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | issuanceOrder | IssuanceOrder |  |
 | signature | ECSig |  |
 | errorMessage | string |  |
+######  Returns
+`Promise<boolean>` - ---
 ####  validateNaturalUnit
 
 [Source](assertions/CoreAssertions.ts#L48)
@@ -410,11 +484,14 @@ validateNaturalUnit(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | naturalUnit | BigNumber |  |
 | minDecimal | BigNumber |  |
 | errorMessage | string |  |
+######  Returns
+`void` - ---
 ###  ERC20Assertions
 
 ####  hasSufficientAllowance
@@ -431,6 +508,7 @@ hasSufficientAllowance(
 ): Promise<void>
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | token | ContractInstance |  |
@@ -438,6 +516,8 @@ hasSufficientAllowance(
 | spender | string |  |
 | allowanceRequired | BigNumber |  |
 | errorMessage | string |  |
+######  Returns
+`Promise<void>` - ---
 ####  hasSufficientBalance
 
 [Source](assertions/ERC20Assertions.ts#L38)
@@ -451,12 +531,15 @@ hasSufficientBalance(
 ): Promise<void>
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | token | ContractInstance |  |
 | payer | Address |  |
 | balanceRequired | BigNumber |  |
 | errorMessage | string |  |
+######  Returns
+`Promise<void>` - ---
 ####  implementsERC20
 
 [Source](assertions/ERC20Assertions.ts#L26)
@@ -467,9 +550,12 @@ implementsERC20(
 ): Promise<void>
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenInstance | ContractInstance |  |
+######  Returns
+`Promise<void>` - ---
 ###  OrderAssertions
 
 ####  isIssuanceOrderFillable
@@ -484,11 +570,14 @@ isIssuanceOrderFillable(
 ): Promise<void>
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | core | CoreWrapper |  |
 | signedIssuanceOrder | SignedIssuanceOrder |  |
 | fillQuantity | BigNumber |  |
+######  Returns
+`Promise<void>` - ---
 ###  SchemaAssertions
 
 ####  IsValidWholeNumber
@@ -502,10 +591,13 @@ IsValidWholeNumber(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | variableName | string |  |
 | value | any |  |
+######  Returns
+`void` - ---
 ####  isValidAddress
 
 [Source](assertions/SchemaAssertions.ts#L32)
@@ -517,10 +609,13 @@ isValidAddress(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | variableName | string |  |
 | value | any |  |
+######  Returns
+`void` - ---
 ####  isValidBytes
 
 [Source](assertions/SchemaAssertions.ts#L40)
@@ -532,10 +627,13 @@ isValidBytes(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | variableName | string |  |
 | value | any |  |
+######  Returns
+`void` - ---
 ####  isValidBytes32
 
 [Source](assertions/SchemaAssertions.ts#L36)
@@ -547,10 +645,13 @@ isValidBytes32(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | variableName | string |  |
 | value | any |  |
+######  Returns
+`void` - ---
 ####  isValidNumber
 
 [Source](assertions/SchemaAssertions.ts#L44)
@@ -562,13 +663,18 @@ isValidNumber(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | variableName | string |  |
 | value | any |  |
+######  Returns
+`void` - ---
 ###  SetTokenAssertions
 
 ####  hasSufficientAllowances
+
+Throws if the given user doesn't have a sufficient allowance for a component token in a Set
 
 [Source](assertions/SetTokenAssertions.ts#L109)
 
@@ -581,15 +687,19 @@ hasSufficientAllowances(
 ): Promise<void>
 ```
 
-Throws if the given user doesn't have a sufficient allowance for a component token in a Set
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setTokenInstance | ContractInstance | An instance of the Set Token contract |
 | ownerAddress | Address | The address of the owner |
 | spenderAddress | Address |  |
 | quantityInWei | BigNumber | Amount of a Set in wei |
+######  Returns
+`Promise<void>` - Void Promise
+---
 ####  hasSufficientBalances
+
+Throws if the given user doesn't have a sufficient balance for a component token in a Set
 
 [Source](assertions/SetTokenAssertions.ts#L68)
 
@@ -601,14 +711,18 @@ hasSufficientBalances(
 ): Promise<void>
 ```
 
-Throws if the given user doesn't have a sufficient balance for a component token in a Set
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setTokenInstance | ContractInstance | An instance of the Set Token contract |
 | ownerAddress | Address | The address of the owner |
 | quantityInWei | BigNumber | Amount of a Set in wei |
+######  Returns
+`Promise<void>` - Void Promise
+---
 ####  implementsSetToken
+
+Throws if the given candidateContract does not respond to some methods from the Set Token interface.
 
 [Source](assertions/SetTokenAssertions.ts#L44)
 
@@ -618,11 +732,13 @@ implementsSetToken(
 ): Promise<void>
 ```
 
-Throws if the given candidateContract does not respond to some methods from the Set Token interface.
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setTokenInstance | ContractInstance | An instance of the Set Token contract |
+######  Returns
+`Promise<void>` - Void Promise
+---
 ####  isMultipleOfNaturalUnit
 
 [Source](assertions/SetTokenAssertions.ts#L144)
@@ -635,14 +751,19 @@ isMultipleOfNaturalUnit(
 ): Promise<void>
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setTokenInstance | ContractInstance |  |
 | quantityInWei | BigNumber |  |
 | errorMessage | string |  |
+######  Returns
+`Promise<void>` - ---
 ###  VaultAssertions
 
 ####  hasSufficientSetTokensBalances
+
+Throws if the Set doesn't have a sufficient balance for its tokens in the Vault
 
 [Source](assertions/VaultAssertions.ts#L65)
 
@@ -655,15 +776,19 @@ hasSufficientSetTokensBalances(
 ): Promise<void>
 ```
 
-Throws if the Set doesn't have a sufficient balance for its tokens in the Vault
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | vaultInstance | ContractInstance | An instance of the Vault contract |
 | setTokenInstance | ContractInstance | An instance of the Set token contract |
 | quantityInWei | BigNumber | Amount of a Set in wei |
 | errorMessage | string |  |
+######  Returns
+`Promise<void>` - Void Promise
+---
 ####  hasSufficientTokenBalance
+
+Throws if the Vault doesn't have enough of token
 
 [Source](assertions/VaultAssertions.ts#L42)
 
@@ -677,8 +802,7 @@ hasSufficientTokenBalance(
 ): Promise<void>
 ```
 
-Throws if the Vault doesn't have enough of token
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | vaultInstance | ContractInstance | An instance of the Vault contract |
@@ -686,6 +810,9 @@ Throws if the Vault doesn't have enough of token
 | ownerAddress | Address | Address of owner withdrawing from vault |
 | quantityInWei | BigNumber | Amount of a Set in wei |
 | errorMessage | string |  |
+######  Returns
+`Promise<void>` - Void Promise
+---
 ###  Assertions
 
 ##  schemas
@@ -699,6 +826,8 @@ Throws if the Vault doesn't have enough of token
 addCustomValidators(): void
 ```
 
+######  Returns
+`void` - ---
 ####  addSchema
 
 [Source](schemas/SchemaValidator.ts#L42)
@@ -709,9 +838,12 @@ addSchema(
 ): void
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | schema | Schema |  |
+######  Returns
+`void` - ---
 ####  isValid
 
 [Source](schemas/SchemaValidator.ts#L50)
@@ -723,10 +855,13 @@ isValid(
 ): boolean
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | instance | any |  |
 | schema | Schema |  |
+######  Returns
+`boolean` - ---
 ####  validate
 
 [Source](schemas/SchemaValidator.ts#L46)
@@ -738,10 +873,13 @@ validate(
 ): ValidatorResult
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | instance | any |  |
 | schema | Schema |  |
+######  Returns
+`ValidatorResult` - ---
 ##  util
 ###  Web3Utils
 
@@ -755,9 +893,12 @@ doesContractExistAtAddressAsync(
 ): Promise<boolean>
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | address | string |  |
+######  Returns
+`Promise<boolean>` - ---
 ####  getAvailableAddressesAsync
 
 [Source](util/Web3Utils.ts#L44)
@@ -766,7 +907,11 @@ doesContractExistAtAddressAsync(
 getAvailableAddressesAsync(): Promise<string[]>
 ```
 
+######  Returns
+`Promise<string[]>` - ---
 ####  getCurrentBlockTime
+
+Returns the current blocktime in seconds.
 
 [Source](util/Web3Utils.ts#L75)
 
@@ -774,8 +919,9 @@ getAvailableAddressesAsync(): Promise<string[]>
 getCurrentBlockTime(): Promise<number>
 ```
 
-Returns the current blocktime in seconds.
-
+######  Returns
+`Promise<number>` - 
+---
 ####  getNetworkIdAsync
 
 [Source](util/Web3Utils.ts#L40)
@@ -784,6 +930,8 @@ Returns the current blocktime in seconds.
 getNetworkIdAsync(): Promise<number>
 ```
 
+######  Returns
+`Promise<number>` - ---
 ####  getTransactionReceiptAsync
 
 [Source](util/Web3Utils.ts#L56)
@@ -794,10 +942,16 @@ getTransactionReceiptAsync(
 ): Promise<TransactionReceipt>
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | txHash | string |  |
+######  Returns
+`Promise<TransactionReceipt>` - ---
 ####  increaseTime
+
+Increases block time by the given number of seconds. Returns true
+if the next block was mined successfully after increasing time.
 
 [Source](util/Web3Utils.ts#L88)
 
@@ -807,13 +961,16 @@ increaseTime(
 ): Promise<boolean>
 ```
 
-Increases block time by the given number of seconds. Returns true
-if the next block was mined successfully after increasing time.
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | seconds | number |  |
+######  Returns
+`Promise<boolean>` - 
+---
 ####  mineBlock
+
+Mines a single block.
 
 [Source](util/Web3Utils.ts#L102)
 
@@ -821,8 +978,9 @@ if the next block was mined successfully after increasing time.
 mineBlock(): Promise<JSONRPCResponsePayload>
 ```
 
-Mines a single block.
-
+######  Returns
+`Promise<JSONRPCResponsePayload>` - 
+---
 ####  revertToSnapshot
 
 [Source](util/Web3Utils.ts#L65)
@@ -833,9 +991,12 @@ revertToSnapshot(
 ): Promise<boolean>
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | snapshotId | number |  |
+######  Returns
+`Promise<boolean>` - ---
 ####  saveTestSnapshot
 
 [Source](util/Web3Utils.ts#L60)
@@ -844,6 +1005,8 @@ revertToSnapshot(
 saveTestSnapshot(): Promise<number>
 ```
 
+######  Returns
+`Promise<number>` - ---
 ####  soliditySHA3
 
 [Source](util/Web3Utils.ts#L36)
@@ -854,20 +1017,15 @@ soliditySHA3(
 ): string
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | payload | any[] |  |
+######  Returns
+`string` - ---
 ###  SignatureUtils
 
 ####  addPersonalMessagePrefix
-
-[Source](util/signatureUtils.ts#L66)
-
-```javascript
-addPersonalMessagePrefix(
-  messageHashHex: string,
-): string
-```
 
 Applies an Ethereum-specific prefix to the message payload we intend on signing,
 as per the `eth_sign` specification in the JSON-RPC wiki:
@@ -879,9 +1037,22 @@ clients (e.g. Metamask) do not adhere to the `eth_sign` specification described
 above.
 
 
+[Source](util/signatureUtils.ts#L66)
+
+```javascript
+addPersonalMessagePrefix(
+  messageHashHex: string,
+): string
+```
+
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | messageHashHex | string | The raw hex message payload |
+######  Returns
+`string` - Message hashed as per how certain clients (i.e. Metamask)
+ expect to ingest messages in `eth_sign`
+---
 ####  convertToHexRSV
 
 [Source](util/signatureUtils.ts#L99)
@@ -892,9 +1063,12 @@ convertToHexRSV(
 ): string
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | signature | ECSig |  |
+######  Returns
+`string` - ---
 ####  convertToHexVRS
 
 [Source](util/signatureUtils.ts#L104)
@@ -905,10 +1079,16 @@ convertToHexVRS(
 ): string
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | signature | ECSig |  |
+######  Returns
+`string` - ---
 ####  isValidSignature
+
+Given a data payload, signature, and a signer's address, returns true
+if the given signature is valid.
 
 [Source](util/signatureUtils.ts#L24)
 
@@ -921,9 +1101,7 @@ isValidSignature(
 ): boolean
 ```
 
-Given a data payload, signature, and a signer's address, returns true
-if the given signature is valid.
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | data | string | Data payload |
@@ -933,6 +1111,9 @@ if the given signature is valid.
      API adds an Ethereum-specific prefix to message payloads.  This option
      specifies whether, in the `isValidSignature`, we want to add the
      Ethereum-specifc prefix to the message payload. |
+######  Returns
+`boolean` - Whether or not the signature is valid.
+---
 ####  parseSignatureHexAsRSV
 
 [Source](util/signatureUtils.ts#L89)
@@ -943,9 +1124,12 @@ parseSignatureHexAsRSV(
 ): ECSig
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | signatureHex | string |  |
+######  Returns
+`ECSig` - ---
 ####  parseSignatureHexAsVRS
 
 [Source](util/signatureUtils.ts#L73)
@@ -956,13 +1140,18 @@ parseSignatureHexAsVRS(
 ): ECSig
 ```
 
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | signatureHex | string |  |
+######  Returns
+`ECSig` - ---
 ##  wrappers
 ###  ContractWrapper
 
 ####  loadCoreAsync
+
+Load Core contract
 
 [Source](wrappers/ContractWrapper.ts#L56)
 
@@ -973,13 +1162,17 @@ loadCoreAsync(
 ): Promise<CoreContract>
 ```
 
-Load Core contract
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | coreAddress | Address | Address of the Core contract |
 | transactionOptions | object | Options sent into the contract deployed method |
+######  Returns
+`Promise<CoreContract>` - The Core Contract
+---
 ####  loadERC20TokenAsync
+
+Load ERC20 Token contract
 
 [Source](wrappers/ContractWrapper.ts#L108)
 
@@ -990,13 +1183,17 @@ loadERC20TokenAsync(
 ): Promise<DetailedERC20Contract>
 ```
 
-Load ERC20 Token contract
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | Address of the ERC20 Token contract |
 | transactionOptions | object | Options sent into the contract deployed method |
+######  Returns
+`Promise<DetailedERC20Contract>` - The ERC20 Token Contract
+---
 ####  loadSetTokenAsync
+
+Load Set Token contract
 
 [Source](wrappers/ContractWrapper.ts#L80)
 
@@ -1007,13 +1204,17 @@ loadSetTokenAsync(
 ): Promise<SetTokenContract>
 ```
 
-Load Set Token contract
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setTokenAddress | Address | Address of the Set Token contract |
 | transactionOptions | object | Options sent into the contract deployed method |
+######  Returns
+`Promise<SetTokenContract>` - The Set Token Contract
+---
 ####  loadVaultAsync
+
+Load Vault contract
 
 [Source](wrappers/ContractWrapper.ts#L136)
 
@@ -1024,15 +1225,19 @@ loadVaultAsync(
 ): Promise<VaultContract>
 ```
 
-Load Vault contract
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | vaultAddress | Address | Address of the Vault contract |
 | transactionOptions | object | Options sent into the contract deployed method |
+######  Returns
+`Promise<VaultContract>` - The Vault Contract
+---
 ###  CoreWrapper
 
 ####  batchDeposit
+
+Asynchronously batch deposits tokens to the vault
 
 [Source](wrappers/CoreWrapper.ts#L280)
 
@@ -1044,14 +1249,18 @@ batchDeposit(
 ): Promise<string>
 ```
 
-Asynchronously batch deposits tokens to the vault
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddresses | Address[] |  |
 | quantitiesInWei | BigNumber[] |  |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash
+---
 ####  batchWithdraw
+
+Asynchronously batch withdraws tokens from the vault
 
 [Source](wrappers/CoreWrapper.ts#L303)
 
@@ -1063,14 +1272,18 @@ batchWithdraw(
 ): Promise<string>
 ```
 
-Asynchronously batch withdraws tokens from the vault
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddresses | Address[] |  |
 | quantitiesInWei | BigNumber[] |  |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash
+---
 ####  cancelOrder
+
+Cancels an Issuance Order
 
 [Source](wrappers/CoreWrapper.ts#L457)
 
@@ -1082,14 +1295,18 @@ cancelOrder(
 ): Promise<string>
 ```
 
-Cancels an Issuance Order
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | issuanceOrder | IssuanceOrder | Issuance order to cancel |
 | quantityToCancel | BigNumber | Number of Set to cancel in this call |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash
+---
 ####  createOrder
+
+Creates a new Issuance Order including the signature
 
 [Source](wrappers/CoreWrapper.ts#L335)
 
@@ -1110,8 +1327,7 @@ createOrder(
 ): Promise<SignedIssuanceOrder>
 ```
 
-Creates a new Issuance Order including the signature
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | Address of the Set token for issuance order |
@@ -1126,7 +1342,12 @@ Creates a new Issuance Order including the signature
 | relayerToken | Address | Address of token paid to relayer |
 | makerRelayerFee | BigNumber | Number of token paid to relayer by maker |
 | takerRelayerFee | BigNumber | Number of token paid tp relayer by taker |
+######  Returns
+`Promise<SignedIssuanceOrder>` - A transaction hash
+---
 ####  createSet
+
+Create a new Set, specifying the components, units, name, symbol to use.
 
 [Source](wrappers/CoreWrapper.ts#L98)
 
@@ -1142,8 +1363,7 @@ createSet(
 ): Promise<string>
 ```
 
-Create a new Set, specifying the components, units, name, symbol to use.
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | factoryAddress | Address | Set Token factory address of the token being created |
@@ -1153,7 +1373,12 @@ Create a new Set, specifying the components, units, name, symbol to use.
 | name | string | User-supplied name for Set (i.e. "DEX Set") |
 | symbol | string | User-supplied symbol for Set (i.e. "DEX") |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash to then later look up for the Set address
+---
 ####  deposit
+
+Asynchronously deposits tokens to the vault
 
 [Source](wrappers/CoreWrapper.ts#L234)
 
@@ -1165,14 +1390,18 @@ deposit(
 ): Promise<string>
 ```
 
-Asynchronously deposits tokens to the vault
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | Address of the ERC20 token |
 | quantity | BigNumber | Number of tokens a user wants to deposit into the vault |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash
+---
 ####  fillOrder
+
+Fills an Issuance Order
 
 [Source](wrappers/CoreWrapper.ts#L395)
 
@@ -1185,15 +1414,19 @@ fillOrder(
 ): Promise<string>
 ```
 
-Fills an Issuance Order
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | signedIssuanceOrder | SignedIssuanceOrder | Signed issuance order to fill |
 | quantityToFill | BigNumber | Number of Set to fill in this call |
 | orders | undefined[] |  |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash
+---
 ####  getExchangeAddress
+
+Asynchronously gets the exchange address for a given exhange id
 
 [Source](wrappers/CoreWrapper.ts#L506)
 
@@ -1203,12 +1436,16 @@ getExchangeAddress(
 ): Promise<Address>
 ```
 
-Asynchronously gets the exchange address for a given exhange id
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | exchangeId | number | Enum id of the exchange |
+######  Returns
+`Promise<Address>` - An exchange address
+---
 ####  getFactories
+
+Asynchronously gets factory addresses
 
 [Source](wrappers/CoreWrapper.ts#L539)
 
@@ -1216,9 +1453,12 @@ Asynchronously gets the exchange address for a given exhange id
 getFactories(): Promise<Address[]>
 ```
 
-Asynchronously gets factory addresses
-
+######  Returns
+`Promise<Address[]>` - Array of factory addresses
+---
 ####  getOrderCancels
+
+Asynchronously gets the quantity of the Issuance Order cancelled
 
 [Source](wrappers/CoreWrapper.ts#L603)
 
@@ -1228,12 +1468,16 @@ getOrderCancels(
 ): Promise<BigNumber>
 ```
 
-Asynchronously gets the quantity of the Issuance Order cancelled
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | orderHash | Bytes | Address of the Set contract |
+######  Returns
+`Promise<BigNumber>` - Quantity of Issuance Order cancelled
+---
 ####  getOrderFills
+
+Asynchronously gets the quantity of the Issuance Order filled
 
 [Source](wrappers/CoreWrapper.ts#L590)
 
@@ -1243,12 +1487,16 @@ getOrderFills(
 ): Promise<BigNumber>
 ```
 
-Asynchronously gets the quantity of the Issuance Order filled
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | orderHash | Bytes | Bytes32 hash |
+######  Returns
+`Promise<BigNumber>` - Quantity of Issuance Order filled
+---
 ####  getSetAddressFromCreateTxHash
+
+Asynchronously retrieves a Set Token address from a createSet txHash
 
 [Source](wrappers/CoreWrapper.ts#L141)
 
@@ -1258,12 +1506,17 @@ getSetAddressFromCreateTxHash(
 ): Promise<Address>
 ```
 
-Asynchronously retrieves a Set Token address from a createSet txHash
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | txHash | string | The transaction has to retrieve the set address from |
+######  Returns
+`Promise<Address>` - The address of the newly created Set
+---
 ####  getSetAddresses
+
+Fetch the addresses of SetTokens and RebalancingSetTokens created by the system
+of contracts specified in SetProtcolConfig
 
 [Source](wrappers/CoreWrapper.ts#L551)
 
@@ -1271,10 +1524,12 @@ Asynchronously retrieves a Set Token address from a createSet txHash
 getSetAddresses(): Promise<Address[]>
 ```
 
-Fetch the addresses of SetTokens and RebalancingSetTokens created by the system
-of contracts specified in SetProtcolConfig
-
+######  Returns
+`Promise<Address[]>` - Array of SetToken and RebalancingSetToken addresses
+---
 ####  getTransferProxyAddress
+
+Asynchronously gets the transfer proxy address
 
 [Source](wrappers/CoreWrapper.ts#L517)
 
@@ -1282,9 +1537,12 @@ of contracts specified in SetProtcolConfig
 getTransferProxyAddress(): Promise<Address>
 ```
 
-Asynchronously gets the transfer proxy address
-
+######  Returns
+`Promise<Address>` - Transfer proxy address
+---
 ####  getVaultAddress
+
+Asynchronously gets the vault address
 
 [Source](wrappers/CoreWrapper.ts#L528)
 
@@ -1292,9 +1550,12 @@ Asynchronously gets the transfer proxy address
 getVaultAddress(): Promise<Address>
 ```
 
-Asynchronously gets the vault address
-
+######  Returns
+`Promise<Address>` - Vault address
+---
 ####  isValidFactoryAsync
+
+Verifies that the provided SetToken factory is enabled for creating a new SetToken
 
 [Source](wrappers/CoreWrapper.ts#L563)
 
@@ -1304,12 +1565,17 @@ isValidFactoryAsync(
 ): Promise<boolean>
 ```
 
-Verifies that the provided SetToken factory is enabled for creating a new SetToken
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | factoryAddress | Address | Address of the factory contract |
+######  Returns
+`Promise<boolean>` - Whether the factory contract is enabled
+---
 ####  isValidSetAsync
+
+Verifies that the provided SetToken or RebalancingSetToken address is enabled
+for issuance and redemption
 
 [Source](wrappers/CoreWrapper.ts#L577)
 
@@ -1319,13 +1585,16 @@ isValidSetAsync(
 ): Promise<boolean>
 ```
 
-Verifies that the provided SetToken or RebalancingSetToken address is enabled
-for issuance and redemption
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | Address of the SetToken or RebalancingSetToken contract |
+######  Returns
+`Promise<boolean>` - Whether the contract is enabled
+---
 ####  issue
+
+Asynchronously issues a particular quantity of tokens from a particular Sets
 
 [Source](wrappers/CoreWrapper.ts#L157)
 
@@ -1337,14 +1606,18 @@ issue(
 ): Promise<string>
 ```
 
-Asynchronously issues a particular quantity of tokens from a particular Sets
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | Set token address of Set being issued |
 | quantityInWei | BigNumber | Number of Sets a user wants to issue in Wei |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash to then later look up
+---
 ####  redeem
+
+Asynchronously redeems a particular quantity of tokens from a particular Sets
 
 [Source](wrappers/CoreWrapper.ts#L180)
 
@@ -1356,14 +1629,24 @@ redeem(
 ): Promise<string>
 ```
 
-Asynchronously redeems a particular quantity of tokens from a particular Sets
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | Set token address of Set being issued |
 | quantityInWei | BigNumber | Number of Sets a user wants to redeem in Wei |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash to then later look up
+---
 ####  redeemAndWithdraw
+
+Redeem and withdraw with a single transaction
+
+Normally, you should expect to be able to withdraw all of the tokens.
+However, some have central abilities to freeze transfers (e.g. EOS). The parameter toExclude
+allows you to optionally specify which component tokens to remain under the user's
+address in the vault. The rest will be transferred to the user.
+
 
 [Source](wrappers/CoreWrapper.ts#L209)
 
@@ -1376,21 +1659,19 @@ redeemAndWithdraw(
 ): Promise<string>
 ```
 
-Redeem and withdraw with a single transaction
-
-Normally, you should expect to be able to withdraw all of the tokens.
-However, some have central abilities to freeze transfers (e.g. EOS). _toExclude
-allows you to optionally specify which component tokens to remain under the user's
-address in the vault. The rest will be transferred to the user.
-
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | The address of the Set token |
 | quantityInWei | BigNumber | The number of tokens to redeem |
 | toExclude | BigNumber | Bitmask of component indexes to exclude from withdrawal |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash to then later look up
+---
 ####  withdraw
+
+Asynchronously withdraw tokens from the vault
 
 [Source](wrappers/CoreWrapper.ts#L257)
 
@@ -1402,16 +1683,20 @@ withdraw(
 ): Promise<string>
 ```
 
-Asynchronously withdraw tokens from the vault
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | Address of the ERC20 token |
 | quantityInWei | BigNumber | Number of tokens a user wants to withdraw from the vault |
 | txOpts | TxData | The options for executing the transaction |
+######  Returns
+`Promise<string>` - A transaction hash
+---
 ###  ERC20Wrapper
 
 ####  approveAsync
+
+Asynchronously approves the value amount of the spender from the owner
 
 [Source](wrappers/ERC20Wrapper.ts#L221)
 
@@ -1424,15 +1709,19 @@ approveAsync(
 ): Promise<string>
 ```
 
-Asynchronously approves the value amount of the spender from the owner
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | the address of the token being used. |
 | spenderAddress | Address | the spender. |
 | value | BigNumber | the amount to be approved. |
 | txOpts | TxData | any parameters necessary to modify the transaction. |
+######  Returns
+`Promise<string>` - the hash of the resulting transaction.
+---
 ####  getAllowanceAsync
+
+Gets the allowance of the spender by the owner account
 
 [Source](wrappers/ERC20Wrapper.ts#L117)
 
@@ -1444,14 +1733,18 @@ getAllowanceAsync(
 ): Promise<BigNumber>
 ```
 
-Gets the allowance of the spender by the owner account
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | Address of the token |
 | ownerAddress | Address | Address of the owner |
 | spenderAddress | Address |  |
+######  Returns
+`Promise<BigNumber>` - The allowance of the spender
+---
 ####  getBalanceOfAsync
+
+Gets balance of the ERC20 token
 
 [Source](wrappers/ERC20Wrapper.ts#L53)
 
@@ -1462,13 +1755,17 @@ getBalanceOfAsync(
 ): Promise<BigNumber>
 ```
 
-Gets balance of the ERC20 token
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | Address of the ERC20 token |
 | userAddress | Address | Address of the user |
+######  Returns
+`Promise<BigNumber>` - The balance of the ERC20 token
+---
 ####  getDecimalsAsync
+
+Gets decimals of the ERC20 token
 
 [Source](wrappers/ERC20Wrapper.ts#L103)
 
@@ -1478,12 +1775,16 @@ getDecimalsAsync(
 ): Promise<BigNumber>
 ```
 
-Gets decimals of the ERC20 token
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | Address of the ERC20 token |
+######  Returns
+`Promise<BigNumber>` - The decimals of the ERC20 token
+---
 ####  getNameAsync
+
+Gets name of the ERC20 token
 
 [Source](wrappers/ERC20Wrapper.ts#L66)
 
@@ -1493,12 +1794,16 @@ getNameAsync(
 ): Promise<string>
 ```
 
-Gets name of the ERC20 token
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | Address of the ERC20 token |
+######  Returns
+`Promise<string>` - The name of the ERC20 token
+---
 ####  getSymbolAsync
+
+Gets balance of the ERC20 token
 
 [Source](wrappers/ERC20Wrapper.ts#L78)
 
@@ -1508,12 +1813,16 @@ getSymbolAsync(
 ): Promise<string>
 ```
 
-Gets balance of the ERC20 token
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | Address of the ERC20 token |
+######  Returns
+`Promise<string>` - The symbol of the ERC20 token
+---
 ####  getTotalSupplyAsync
+
+Gets the total supply of the ERC20 token
 
 [Source](wrappers/ERC20Wrapper.ts#L90)
 
@@ -1523,12 +1832,17 @@ getTotalSupplyAsync(
 ): Promise<BigNumber>
 ```
 
-Gets the total supply of the ERC20 token
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | Address of the ERC20 token |
+######  Returns
+`Promise<BigNumber>` - The symbol of the ERC20 token
+---
 ####  transferAsync
+
+Asynchronously transfer value denominated in the specified ERC20 token to
+the address specified.
 
 [Source](wrappers/ERC20Wrapper.ts#L140)
 
@@ -1541,16 +1855,21 @@ transferAsync(
 ): Promise<string>
 ```
 
-Asynchronously transfer value denominated in the specified ERC20 token to
-the address specified.
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | the address of the token being used. |
 | to | Address | to whom the transfer is being made. |
 | value | BigNumber | the amount being transferred. |
 | txOpts | TxData | any parameters necessary to modify the transaction. |
+######  Returns
+`Promise<string>` - the hash of the resulting transaction.
+---
 ####  transferFromAsync
+
+Asynchronously transfer the value amount in the token specified so long
+as the sender of the message has received sufficient allowance on behalf
+of `from` to do so.
 
 [Source](wrappers/ERC20Wrapper.ts#L177)
 
@@ -1564,10 +1883,7 @@ transferFromAsync(
 ): Promise<string>
 ```
 
-Asynchronously transfer the value amount in the token specified so long
-as the sender of the message has received sufficient allowance on behalf
-of `from` to do so.
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | the address of the token being used. |
@@ -1575,9 +1891,14 @@ of `from` to do so.
 | to | Address | to whom are the funds being transferred. |
 | value | BigNumber | the amount to be transferred. |
 | txOpts | TxData | any parameters necessary to modify the transaction. |
+######  Returns
+`Promise<string>` - the hash of the resulting transaction.
+---
 ###  SetTokenWrapper
 
 ####  getComponentsAsync
+
+Gets component tokens that make up the Set
 
 [Source](wrappers/SetTokenWrapper.ts#L63)
 
@@ -1587,12 +1908,16 @@ getComponentsAsync(
 ): Promise<Address[]>
 ```
 
-Gets component tokens that make up the Set
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | Address of the Set |
+######  Returns
+`Promise<Address[]>` - An array of addresses
+---
 ####  getFactoryAsync
+
+Gets the Set's origin factory
 
 [Source](wrappers/SetTokenWrapper.ts#L52)
 
@@ -1602,12 +1927,16 @@ getFactoryAsync(
 ): Promise<Address>
 ```
 
-Gets the Set's origin factory
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | Address of the Set |
+######  Returns
+`Promise<Address>` - The factory address
+---
 ####  getNaturalUnitAsync
+
+Gets natural unit of the Set
 
 [Source](wrappers/SetTokenWrapper.ts#L74)
 
@@ -1617,12 +1946,16 @@ getNaturalUnitAsync(
 ): Promise<BigNumber>
 ```
 
-Gets natural unit of the Set
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | Address of the Set |
+######  Returns
+`Promise<BigNumber>` - The natural unit of the Set
+---
 ####  getUnitsAsync
+
+Gets units of each component token that make up the Set
 
 [Source](wrappers/SetTokenWrapper.ts#L86)
 
@@ -1632,12 +1965,17 @@ getUnitsAsync(
 ): Promise<BigNumber[]>
 ```
 
-Gets units of each component token that make up the Set
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | Address of the Set |
+######  Returns
+`Promise<BigNumber[]>` - An array of units that make up the Set composition which
+                   correspond to the component tokens in the Set
+---
 ####  isMultipleOfNaturalUnitAsync
+
+Returns whether the quantity passed in is a multiple of a Set's natural unit
 
 [Source](wrappers/SetTokenWrapper.ts#L99)
 
@@ -1648,15 +1986,21 @@ isMultipleOfNaturalUnitAsync(
 ): Promise<boolean>
 ```
 
-Returns whether the quantity passed in is a multiple of a Set's natural unit
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | setAddress | Address | Address of the Set |
 | quantity | BigNumber | Quantity to be checked |
+######  Returns
+`Promise<boolean>` - boolean    A boolean representing whether the Set is a multiple of the natural Unit
+
+---
 ###  VaultWrapper
 
 ####  getBalanceInVault
+
+Fetch the balance of the provided contract address inside the vault specified
+in SetProtocolConfig
 
 [Source](wrappers/VaultWrapper.ts#L54)
 
@@ -1667,10 +2011,11 @@ getBalanceInVault(
 ): Promise<BigNumber>
 ```
 
-Fetch the balance of the provided contract address inside the vault specified
-in SetProtocolConfig
-
+######  Parameters
 | Name | Type | Description |
 | ------ | ------ | ------ |
 | tokenAddress | Address | Address of the contract (typically SetToken or ERC20) |
 | ownerAddress | Address | Address of the user |
+######  Returns
+`Promise<BigNumber>` - The balance of the user's Set
+---

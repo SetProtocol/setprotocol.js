@@ -196,7 +196,7 @@ export class CoreWrapper {
    * Redeem and withdraw with a single transaction
    *
    * Normally, you should expect to be able to withdraw all of the tokens.
-   * However, some have central abilities to freeze transfers (e.g. EOS). _toExclude
+   * However, some have central abilities to freeze transfers (e.g. EOS). The parameter toExclude
    * allows you to optionally specify which component tokens to remain under the user's
    * address in the vault. The rest will be transferred to the user.
    *
