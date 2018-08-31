@@ -373,7 +373,7 @@ class TypedocParser {
 
         if (method.returnType) {
           content += `${HeaderTags.H6} Returns\n`
-          content += `\`${method.returnType}\` - ${method.returnComment}`  
+          content += `\`${method.returnType}\` - ${method.returnComment}\n`  
         }
 
         content += `---\n`
