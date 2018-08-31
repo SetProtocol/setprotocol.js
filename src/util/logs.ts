@@ -5,11 +5,14 @@ import { BigNumber } from 'bignumber.js';
 import { Address, Log } from 'set-protocol-utils';
 import { CreateLogArgs } from '../types/common';
 import { Web3Utils } from './Web3Utils';
+import { awaitTx } from './transactionUtils';
+import { Core } from 'set-protocol-contracts';
 
 export async function getFormattedLogsFromTxHash(web3: Web3, txHash: string): Promise<Log[]> {
+  const coreContract = ABIDecoder.addABI(Core.abi);
   const web3Utils = new Web3Utils(web3);
   // We need to use the promisified version of getTransactionReceiptAsync
-  const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
+  const receipt = await awaitTx(web3, txHash);
   const logs: ABIDecoder.DecodedLog[] = _.compact(ABIDecoder.decodeLogs(receipt.logs));
   return _.map(logs, log => formatLogEntry(log));
 }
