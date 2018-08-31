@@ -1,118 +1,50 @@
 #  setprotocol.js API Reference
-#  api
-##  AccountingAPI
+##  api
+###  AccountingAPI
 
-###  assertDeposit
-
-[Source](api/accounting.ts#L94)
-
-```javascript
-assertDeposit(
-  userAddress: Address,
-  tokenAddresses: Address,
-  quantities: BigNumber,
-): Promise<void>
-```
-
-userAddress: Address,
-  tokenAddresses: Address,
-  quantities: BigNumber
-
-###  assertWithdraw
-
-[Source](api/accounting.ts#L137)
-
-```javascript
-assertWithdraw(
-  userAddress: Address,
-  tokenAddresses: Address,
-  quantities: BigNumber,
-): Promise<void>
-```
-
-userAddress: Address,
-  tokenAddresses: Address,
-  quantities: BigNumber
-
-###  depositAsync
+####  depositAsync
 
 [Source](api/accounting.ts#L64)
 
-Deposits tokens into the vault
-
 ```javascript
 depositAsync(
-  tokenAddresses: Address,
-  quantities: BigNumber,
+  tokenAddresses: Address[],
+  quantities: BigNumber[],
   txOpts: TxData,
 ): Promise<string>
 ```
 
-tokenAddresses: Address,
-  quantities: BigNumber,
-  txOpts: TxData
+Deposits tokens into the vault
 
-###  withdrawAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddresses | Address[] |  |
+| quantities | BigNumber[] |  |
+| txOpts | TxData | The options for executing the transaction |
+####  withdrawAsync
 
 [Source](api/accounting.ts#L82)
 
-Withdraws tokens from the vault
-
 ```javascript
 withdrawAsync(
-  tokenAddresses: Address,
-  quantities: BigNumber,
+  tokenAddresses: Address[],
+  quantities: BigNumber[],
   txOpts: TxData,
 ): Promise<string>
 ```
 
-tokenAddresses: Address,
-  quantities: BigNumber,
-  txOpts: TxData
+Withdraws tokens from the vault
 
-##  IssuanceAPI
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddresses | Address[] |  |
+| quantities | BigNumber[] |  |
+| txOpts | TxData | The options for executing the transaction |
+###  IssuanceAPI
 
-###  assertIssue
-
-[Source](api/issuance.ts#L109)
-
-```javascript
-assertIssue(
-  userAddress: Address,
-  setAddress: Address,
-  quantity: BigNumber,
-): Promise<void>
-```
-
-userAddress: Address,
-  setAddress: Address,
-  quantity: BigNumber
-
-###  assertRedeem
-
-[Source](api/issuance.ts#L130)
-
-```javascript
-assertRedeem(
-  userAddress: Address,
-  setAddress: Address,
-  quantity: BigNumber,
-  withdraw: boolean,
-  tokensToExclude: Address,
-): Promise<void>
-```
-
-userAddress: Address,
-  setAddress: Address,
-  quantity: BigNumber,
-  withdraw: boolean,
-  tokensToExclude: Address
-
-###  issueAsync
+####  issueAsync
 
 [Source](api/issuance.ts#L65)
-
-Asynchronously issues a particular quantity of tokens from a particular Sets
 
 ```javascript
 issueAsync(
@@ -122,39 +54,41 @@ issueAsync(
 ): Promise<string>
 ```
 
-setAddress: Address,
-  quantity: BigNumber,
-  txOpts: TxData
+Asynchronously issues a particular quantity of tokens from a particular Sets
 
-###  redeemAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | Set token address of Set being issued |
+| quantity | BigNumber | Number of Sets a user wants to issue in Wei |
+| txOpts | TxData | The options for executing the transaction |
+####  redeemAsync
 
 [Source](api/issuance.ts#L81)
-
-Composite method to redeem and optionally withdraw tokens
 
 ```javascript
 redeemAsync(
   setAddress: Address,
   quantity: BigNumber,
   withdraw: boolean,
-  tokensToExclude: Address,
+  tokensToExclude: Address[],
   txOpts: TxData,
 ): Promise<string>
 ```
 
-setAddress: Address,
-  quantity: BigNumber,
-  withdraw: boolean,
-  tokensToExclude: Address,
-  txOpts: TxData
+Composite method to redeem and optionally withdraw tokens
 
-##  OrderAPI
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | The address of the Set token |
+| quantity | BigNumber | The number of tokens to redeem |
+| withdraw | boolean | Boolean determining whether or not to withdraw |
+| tokensToExclude | Address[] | Array of token addresses to exclude from withdrawal |
+| txOpts | TxData | The options for executing the transaction |
+###  OrderAPI
 
-###  cancelOrderAsync
+####  cancelOrderAsync
 
 [Source](api/orders.ts#L233)
-
-Cancels an Issuance Order
 
 ```javascript
 cancelOrderAsync(
@@ -164,22 +98,23 @@ cancelOrderAsync(
 ): Promise<string>
 ```
 
-issuanceOrder: IssuanceOrder,
-  quantityToCancel: BigNumber,
-  txOpts: TxData
+Cancels an Issuance Order
 
-###  createSignedOrderAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| issuanceOrder | IssuanceOrder | Issuance order to cancel |
+| quantityToCancel | BigNumber | Number of Set to cancel in this call |
+| txOpts | TxData | The options for executing the transaction |
+####  createSignedOrderAsync
 
 [Source](api/orders.ts#L176)
-
-Creates a new signed Issuance Order including the signature
 
 ```javascript
 createSignedOrderAsync(
   setAddress: Address,
   quantity: BigNumber,
-  requiredComponents: Address,
-  requiredComponentAmounts: BigNumber,
+  requiredComponents: Address[],
+  requiredComponentAmounts: BigNumber[],
   makerAddress: Address,
   makerToken: Address,
   makerTokenAmount: BigNumber,
@@ -191,45 +126,46 @@ createSignedOrderAsync(
 ): Promise<SignedIssuanceOrder>
 ```
 
-setAddress: Address,
-  quantity: BigNumber,
-  requiredComponents: Address,
-  requiredComponentAmounts: BigNumber,
-  makerAddress: Address,
-  makerToken: Address,
-  makerTokenAmount: BigNumber,
-  expiration: BigNumber,
-  relayerAddress: Address,
-  relayerToken: Address,
-  makerRelayerFee: BigNumber,
-  takerRelayerFee: BigNumber
+Creates a new signed Issuance Order including the signature
 
-###  fillOrderAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | Address of the Set token for issuance order |
+| quantity | BigNumber | Number of Set tokens to create as part of issuance order |
+| requiredComponents | Address[] | Addresses of required component tokens of Set |
+| requiredComponentAmounts | BigNumber[] | Amounts of each required component needed |
+| makerAddress | Address | Address of person making the order |
+| makerToken | Address | Address of token the issuer is paying in |
+| makerTokenAmount | BigNumber | Number of tokens being exchanged for aggregate order size |
+| expiration | BigNumber | Unix timestamp of expiration (in seconds) |
+| relayerAddress | Address | Address of relayer of order |
+| relayerToken | Address | Address of token paid to relayer |
+| makerRelayerFee | BigNumber | Number of token paid to relayer by maker |
+| takerRelayerFee | BigNumber | Number of token paid tp relayer by taker |
+####  fillOrderAsync
 
 [Source](api/orders.ts#L216)
-
-Fills an Issuance Order
 
 ```javascript
 fillOrderAsync(
   signedIssuanceOrder: SignedIssuanceOrder,
   quantityToFill: BigNumber,
-  orders: undefined,
+  orders: undefined[],
   txOpts: TxData,
 ): Promise<string>
 ```
 
-signedIssuanceOrder: SignedIssuanceOrder,
-  quantityToFill: BigNumber,
-  orders: undefined,
-  txOpts: TxData
+Fills an Issuance Order
 
-###  generateExpirationTimestamp
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| signedIssuanceOrder | SignedIssuanceOrder | Signed issuance order to fill |
+| quantityToFill | BigNumber | Number of Set to fill in this call |
+| orders | undefined[] |  |
+| txOpts | TxData | The options for executing the transaction |
+####  generateExpirationTimestamp
 
 [Source](api/orders.ts#L90)
-
-Generates a timestamp represented as seconds since unix epoch.
-The timestamp is intended to be used to generate the expiration of an issuance order
 
 ```javascript
 generateExpirationTimestamp(
@@ -237,29 +173,27 @@ generateExpirationTimestamp(
 ): BigNumber
 ```
 
-seconds: number
+Generates a timestamp represented as seconds since unix epoch.
+The timestamp is intended to be used to generate the expiration of an issuance order
 
-###  generateSalt
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| seconds | number |  |
+####  generateSalt
 
 [Source](api/orders.ts#L79)
-
-Generates a pseudo-random 256-bit salt.
-The salt can be included in an order, ensuring that the order generates a unique orderHash
-and will not collide with other outstanding orders that are identical in all other parameters.
 
 ```javascript
 generateSalt(): BigNumber
 ```
 
+Generates a pseudo-random 256-bit salt.
+The salt can be included in an order, ensuring that the order generates a unique orderHash
+and will not collide with other outstanding orders that are identical in all other parameters.
 
-
-###  isValidOrderHashOrThrow
+####  isValidOrderHashOrThrow
 
 [Source](api/orders.ts#L101)
-
-Checks if the supplied hex encoded order hash is valid.
-Note: Valid means it has the expected format, not that an order
-with the orderHash exists.
 
 ```javascript
 isValidOrderHashOrThrow(
@@ -267,15 +201,16 @@ isValidOrderHashOrThrow(
 ): void
 ```
 
-orderHash: Bytes
+Checks if the supplied hex encoded order hash is valid.
+Note: Valid means it has the expected format, not that an order
+with the orderHash exists.
 
-###  isValidSignatureOrThrowAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| orderHash | Bytes |  |
+####  isValidSignatureOrThrowAsync
 
 [Source](api/orders.ts#L114)
-
-Checks whether a particular issuance order and signature is valid
-A signature is valid only if the issuance order is signed by the maker
-The function throws upon receiving an invalid signature.
 
 ```javascript
 isValidSignatureOrThrowAsync(
@@ -284,16 +219,17 @@ isValidSignatureOrThrowAsync(
 ): Promise<boolean>
 ```
 
-issuanceOrder: IssuanceOrder,
-  signature: ECSig
+Checks whether a particular issuance order and signature is valid
+A signature is valid only if the issuance order is signed by the maker
+The function throws upon receiving an invalid signature.
 
-###  signOrderAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| issuanceOrder | IssuanceOrder | The issuance order the signature was generated from |
+| signature | ECSig | The EC Signature to check |
+####  signOrderAsync
 
 [Source](api/orders.ts#L133)
-
-Generates a ECSig from an issuance order. The function first generates an order hash.
-Then it signs it using the passed in transaction options. If none, it will assume
-the signer is the first account
 
 ```javascript
 signOrderAsync(
@@ -302,15 +238,17 @@ signOrderAsync(
 ): Promise<ECSig>
 ```
 
-issuanceOrder: IssuanceOrder,
-  txOpts: TxData
+Generates a ECSig from an issuance order. The function first generates an order hash.
+Then it signs it using the passed in transaction options. If none, it will assume
+the signer is the first account
 
-###  validateOrderFillableOrThrowAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| issuanceOrder | IssuanceOrder | Issuance Order |
+| txOpts | TxData |  |
+####  validateOrderFillableOrThrowAsync
 
 [Source](api/orders.ts#L148)
-
-Given an issuance order, check that the signature is valid, order has not expired,
-and
 
 ```javascript
 validateOrderFillableOrThrowAsync(
@@ -319,13 +257,18 @@ validateOrderFillableOrThrowAsync(
 ): Promise<void>
 ```
 
-signedIssuanceOrder: SignedIssuanceOrder,
-  fillQuantity: BigNumber
+Given an issuance order, check that the signature is valid, order has not expired,
+and
 
-#  assertions
-##  AccountAssertions
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| signedIssuanceOrder | SignedIssuanceOrder |  |
+| fillQuantity | BigNumber | (optional) a fill quantity to check if fillable
+ |
+##  assertions
+###  AccountAssertions
 
-###  notNull
+####  notNull
 
 [Source](assertions/AccountAssertions.ts#L23)
 
@@ -336,12 +279,13 @@ notNull(
 ): void
 ```
 
-account: Address,
-  errorMessage: string
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| account | Address |  |
+| errorMessage | string |  |
+###  CommonAssertions
 
-##  CommonAssertions
-
-###  greaterThanZero
+####  greaterThanZero
 
 [Source](assertions/CommonAssertions.ts#L23)
 
@@ -352,26 +296,28 @@ greaterThanZero(
 ): void
 ```
 
-quantity: BigNumber,
-  errorMessage: string
-
-###  isEqualLength
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| quantity | BigNumber |  |
+| errorMessage | string |  |
+####  isEqualLength
 
 [Source](assertions/CommonAssertions.ts#L28)
 
 ```javascript
 isEqualLength(
-  arr1: any,
-  arr2: any,
+  arr1: any[],
+  arr2: any[],
   errorMessage: string,
 ): void
 ```
 
-arr1: any,
-  arr2: any,
-  errorMessage: string
-
-###  isGreaterOrEqualThan
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| arr1 | any[] |  |
+| arr2 | any[] |  |
+| errorMessage | string |  |
+####  isGreaterOrEqualThan
 
 [Source](assertions/CommonAssertions.ts#L34)
 
@@ -383,11 +329,12 @@ isGreaterOrEqualThan(
 ): void
 ```
 
-quantity1: BigNumber,
-  quantity2: BigNumber,
-  errorMessage: string
-
-###  isValidExpiration
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| quantity1 | BigNumber |  |
+| quantity2 | BigNumber |  |
+| errorMessage | string |  |
+####  isValidExpiration
 
 [Source](assertions/CommonAssertions.ts#L46)
 
@@ -398,10 +345,11 @@ isValidExpiration(
 ): void
 ```
 
-expiration: BigNumber,
-  errorMessage: string
-
-###  isValidString
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| expiration | BigNumber |  |
+| errorMessage | string |  |
+####  isValidString
 
 [Source](assertions/CommonAssertions.ts#L40)
 
@@ -412,16 +360,15 @@ isValidString(
 ): void
 ```
 
-value: string,
-  errorMessage: string
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| value | string |  |
+| errorMessage | string |  |
+###  CoreAssertions
 
-##  CoreAssertions
-
-###  implementsCore
+####  implementsCore
 
 [Source](assertions/CoreAssertions.ts#L36)
-
-Throws if the given candidateContract does not respond to some methods from the Core interface.
 
 ```javascript
 implementsCore(
@@ -429,9 +376,12 @@ implementsCore(
 ): Promise<void>
 ```
 
-coreInstance: ContractInstance
+Throws if the given candidateContract does not respond to some methods from the Core interface.
 
-###  isValidSignature
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| coreInstance | ContractInstance | An instance of the core contract |
+####  isValidSignature
 
 [Source](assertions/CoreAssertions.ts#L54)
 
@@ -443,11 +393,12 @@ isValidSignature(
 ): Promise<boolean>
 ```
 
-issuanceOrder: IssuanceOrder,
-  signature: ECSig,
-  errorMessage: string
-
-###  validateNaturalUnit
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| issuanceOrder | IssuanceOrder |  |
+| signature | ECSig |  |
+| errorMessage | string |  |
+####  validateNaturalUnit
 
 [Source](assertions/CoreAssertions.ts#L48)
 
@@ -459,13 +410,14 @@ validateNaturalUnit(
 ): void
 ```
 
-naturalUnit: BigNumber,
-  minDecimal: BigNumber,
-  errorMessage: string
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| naturalUnit | BigNumber |  |
+| minDecimal | BigNumber |  |
+| errorMessage | string |  |
+###  ERC20Assertions
 
-##  ERC20Assertions
-
-###  hasSufficientAllowance
+####  hasSufficientAllowance
 
 [Source](assertions/ERC20Assertions.ts#L51)
 
@@ -479,13 +431,14 @@ hasSufficientAllowance(
 ): Promise<void>
 ```
 
-token: ContractInstance,
-  owner: string,
-  spender: string,
-  allowanceRequired: BigNumber,
-  errorMessage: string
-
-###  hasSufficientBalance
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| token | ContractInstance |  |
+| owner | string |  |
+| spender | string |  |
+| allowanceRequired | BigNumber |  |
+| errorMessage | string |  |
+####  hasSufficientBalance
 
 [Source](assertions/ERC20Assertions.ts#L38)
 
@@ -498,12 +451,13 @@ hasSufficientBalance(
 ): Promise<void>
 ```
 
-token: ContractInstance,
-  payer: Address,
-  balanceRequired: BigNumber,
-  errorMessage: string
-
-###  implementsERC20
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| token | ContractInstance |  |
+| payer | Address |  |
+| balanceRequired | BigNumber |  |
+| errorMessage | string |  |
+####  implementsERC20
 
 [Source](assertions/ERC20Assertions.ts#L26)
 
@@ -513,11 +467,12 @@ implementsERC20(
 ): Promise<void>
 ```
 
-tokenInstance: ContractInstance
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenInstance | ContractInstance |  |
+###  OrderAssertions
 
-##  OrderAssertions
-
-###  isIssuanceOrderFillable
+####  isIssuanceOrderFillable
 
 [Source](assertions/OrderAssertions.ts#L32)
 
@@ -529,13 +484,14 @@ isIssuanceOrderFillable(
 ): Promise<void>
 ```
 
-core: CoreWrapper,
-  signedIssuanceOrder: SignedIssuanceOrder,
-  fillQuantity: BigNumber
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| core | CoreWrapper |  |
+| signedIssuanceOrder | SignedIssuanceOrder |  |
+| fillQuantity | BigNumber |  |
+###  SchemaAssertions
 
-##  SchemaAssertions
-
-###  IsValidWholeNumber
+####  IsValidWholeNumber
 
 [Source](assertions/SchemaAssertions.ts#L48)
 
@@ -546,26 +502,11 @@ IsValidWholeNumber(
 ): void
 ```
 
-variableName: string,
-  value: any
-
-###  assertConformsToSchema
-
-[Source](assertions/SchemaAssertions.ts#L52)
-
-```javascript
-assertConformsToSchema(
-  variableName: string,
-  value: any,
-  schema: Schema,
-): void
-```
-
-variableName: string,
-  value: any,
-  schema: Schema
-
-###  isValidAddress
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| variableName | string |  |
+| value | any |  |
+####  isValidAddress
 
 [Source](assertions/SchemaAssertions.ts#L32)
 
@@ -576,10 +517,11 @@ isValidAddress(
 ): void
 ```
 
-variableName: string,
-  value: any
-
-###  isValidBytes
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| variableName | string |  |
+| value | any |  |
+####  isValidBytes
 
 [Source](assertions/SchemaAssertions.ts#L40)
 
@@ -590,10 +532,11 @@ isValidBytes(
 ): void
 ```
 
-variableName: string,
-  value: any
-
-###  isValidBytes32
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| variableName | string |  |
+| value | any |  |
+####  isValidBytes32
 
 [Source](assertions/SchemaAssertions.ts#L36)
 
@@ -604,10 +547,11 @@ isValidBytes32(
 ): void
 ```
 
-variableName: string,
-  value: any
-
-###  isValidNumber
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| variableName | string |  |
+| value | any |  |
+####  isValidNumber
 
 [Source](assertions/SchemaAssertions.ts#L44)
 
@@ -618,16 +562,15 @@ isValidNumber(
 ): void
 ```
 
-variableName: string,
-  value: any
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| variableName | string |  |
+| value | any |  |
+###  SetTokenAssertions
 
-##  SetTokenAssertions
-
-###  hasSufficientAllowances
+####  hasSufficientAllowances
 
 [Source](assertions/SetTokenAssertions.ts#L109)
-
-Throws if the given user doesn't have a sufficient allowance for a component token in a Set
 
 ```javascript
 hasSufficientAllowances(
@@ -638,16 +581,17 @@ hasSufficientAllowances(
 ): Promise<void>
 ```
 
-setTokenInstance: ContractInstance,
-  ownerAddress: Address,
-  spenderAddress: Address,
-  quantityInWei: BigNumber
+Throws if the given user doesn't have a sufficient allowance for a component token in a Set
 
-###  hasSufficientBalances
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setTokenInstance | ContractInstance | An instance of the Set Token contract |
+| ownerAddress | Address | The address of the owner |
+| spenderAddress | Address |  |
+| quantityInWei | BigNumber | Amount of a Set in wei |
+####  hasSufficientBalances
 
 [Source](assertions/SetTokenAssertions.ts#L68)
-
-Throws if the given user doesn't have a sufficient balance for a component token in a Set
 
 ```javascript
 hasSufficientBalances(
@@ -657,15 +601,16 @@ hasSufficientBalances(
 ): Promise<void>
 ```
 
-setTokenInstance: ContractInstance,
-  ownerAddress: Address,
-  quantityInWei: BigNumber
+Throws if the given user doesn't have a sufficient balance for a component token in a Set
 
-###  implementsSetToken
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setTokenInstance | ContractInstance | An instance of the Set Token contract |
+| ownerAddress | Address | The address of the owner |
+| quantityInWei | BigNumber | Amount of a Set in wei |
+####  implementsSetToken
 
 [Source](assertions/SetTokenAssertions.ts#L44)
-
-Throws if the given candidateContract does not respond to some methods from the Set Token interface.
 
 ```javascript
 implementsSetToken(
@@ -673,9 +618,12 @@ implementsSetToken(
 ): Promise<void>
 ```
 
-setTokenInstance: ContractInstance
+Throws if the given candidateContract does not respond to some methods from the Set Token interface.
 
-###  isMultipleOfNaturalUnit
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setTokenInstance | ContractInstance | An instance of the Set Token contract |
+####  isMultipleOfNaturalUnit
 
 [Source](assertions/SetTokenAssertions.ts#L144)
 
@@ -687,17 +635,16 @@ isMultipleOfNaturalUnit(
 ): Promise<void>
 ```
 
-setTokenInstance: ContractInstance,
-  quantityInWei: BigNumber,
-  errorMessage: string
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setTokenInstance | ContractInstance |  |
+| quantityInWei | BigNumber |  |
+| errorMessage | string |  |
+###  VaultAssertions
 
-##  VaultAssertions
-
-###  hasSufficientSetTokensBalances
+####  hasSufficientSetTokensBalances
 
 [Source](assertions/VaultAssertions.ts#L65)
-
-Throws if the Set doesn't have a sufficient balance for its tokens in the Vault
 
 ```javascript
 hasSufficientSetTokensBalances(
@@ -708,16 +655,17 @@ hasSufficientSetTokensBalances(
 ): Promise<void>
 ```
 
-vaultInstance: ContractInstance,
-  setTokenInstance: ContractInstance,
-  quantityInWei: BigNumber,
-  errorMessage: string
+Throws if the Set doesn't have a sufficient balance for its tokens in the Vault
 
-###  hasSufficientTokenBalance
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| vaultInstance | ContractInstance | An instance of the Vault contract |
+| setTokenInstance | ContractInstance | An instance of the Set token contract |
+| quantityInWei | BigNumber | Amount of a Set in wei |
+| errorMessage | string |  |
+####  hasSufficientTokenBalance
 
 [Source](assertions/VaultAssertions.ts#L42)
-
-Throws if the Vault doesn't have enough of token
 
 ```javascript
 hasSufficientTokenBalance(
@@ -729,18 +677,21 @@ hasSufficientTokenBalance(
 ): Promise<void>
 ```
 
-vaultInstance: ContractInstance,
-  tokenAddress: Address,
-  ownerAddress: Address,
-  quantityInWei: BigNumber,
-  errorMessage: string
+Throws if the Vault doesn't have enough of token
 
-##  Assertions
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| vaultInstance | ContractInstance | An instance of the Vault contract |
+| tokenAddress | Address | An instance of the Set token contract |
+| ownerAddress | Address | Address of owner withdrawing from vault |
+| quantityInWei | BigNumber | Amount of a Set in wei |
+| errorMessage | string |  |
+###  Assertions
 
-#  schemas
-##  SchemaValidator
+##  schemas
+###  SchemaValidator
 
-###  addCustomValidators
+####  addCustomValidators
 
 [Source](schemas/SchemaValidator.ts#L55)
 
@@ -748,9 +699,7 @@ vaultInstance: ContractInstance,
 addCustomValidators(): void
 ```
 
-
-
-###  addSchema
+####  addSchema
 
 [Source](schemas/SchemaValidator.ts#L42)
 
@@ -760,9 +709,10 @@ addSchema(
 ): void
 ```
 
-schema: Schema
-
-###  isValid
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| schema | Schema |  |
+####  isValid
 
 [Source](schemas/SchemaValidator.ts#L50)
 
@@ -773,10 +723,11 @@ isValid(
 ): boolean
 ```
 
-instance: any,
-  schema: Schema
-
-###  validate
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| instance | any |  |
+| schema | Schema |  |
+####  validate
 
 [Source](schemas/SchemaValidator.ts#L46)
 
@@ -787,13 +738,14 @@ validate(
 ): ValidatorResult
 ```
 
-instance: any,
-  schema: Schema
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| instance | any |  |
+| schema | Schema |  |
+##  util
+###  Web3Utils
 
-#  util
-##  Web3Utils
-
-###  doesContractExistAtAddressAsync
+####  doesContractExistAtAddressAsync
 
 [Source](util/Web3Utils.ts#L48)
 
@@ -803,9 +755,10 @@ doesContractExistAtAddressAsync(
 ): Promise<boolean>
 ```
 
-address: string
-
-###  getAvailableAddressesAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| address | string |  |
+####  getAvailableAddressesAsync
 
 [Source](util/Web3Utils.ts#L44)
 
@@ -813,21 +766,17 @@ address: string
 getAvailableAddressesAsync(): Promise<string[]>
 ```
 
-
-
-###  getCurrentBlockTime
+####  getCurrentBlockTime
 
 [Source](util/Web3Utils.ts#L75)
-
-Returns the current blocktime in seconds.
 
 ```javascript
 getCurrentBlockTime(): Promise<number>
 ```
 
+Returns the current blocktime in seconds.
 
-
-###  getNetworkIdAsync
+####  getNetworkIdAsync
 
 [Source](util/Web3Utils.ts#L40)
 
@@ -835,9 +784,7 @@ getCurrentBlockTime(): Promise<number>
 getNetworkIdAsync(): Promise<number>
 ```
 
-
-
-###  getTransactionReceiptAsync
+####  getTransactionReceiptAsync
 
 [Source](util/Web3Utils.ts#L56)
 
@@ -847,14 +794,12 @@ getTransactionReceiptAsync(
 ): Promise<TransactionReceipt>
 ```
 
-txHash: string
-
-###  increaseTime
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| txHash | string |  |
+####  increaseTime
 
 [Source](util/Web3Utils.ts#L88)
-
-Increases block time by the given number of seconds. Returns true
-if the next block was mined successfully after increasing time.
 
 ```javascript
 increaseTime(
@@ -862,21 +807,23 @@ increaseTime(
 ): Promise<boolean>
 ```
 
-seconds: number
+Increases block time by the given number of seconds. Returns true
+if the next block was mined successfully after increasing time.
 
-###  mineBlock
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| seconds | number |  |
+####  mineBlock
 
 [Source](util/Web3Utils.ts#L102)
-
-Mines a single block.
 
 ```javascript
 mineBlock(): Promise<JSONRPCResponsePayload>
 ```
 
+Mines a single block.
 
-
-###  revertToSnapshot
+####  revertToSnapshot
 
 [Source](util/Web3Utils.ts#L65)
 
@@ -886,9 +833,10 @@ revertToSnapshot(
 ): Promise<boolean>
 ```
 
-snapshotId: number
-
-###  saveTestSnapshot
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| snapshotId | number |  |
+####  saveTestSnapshot
 
 [Source](util/Web3Utils.ts#L60)
 
@@ -896,39 +844,30 @@ snapshotId: number
 saveTestSnapshot(): Promise<number>
 ```
 
-
-
-###  sendJsonRpcRequestAsync
-
-[Source](util/Web3Utils.ts#L106)
-
-```javascript
-sendJsonRpcRequestAsync(
-  method: string,
-  params: any,
-): Promise<JSONRPCResponsePayload>
-```
-
-method: string,
-  params: any
-
-###  soliditySHA3
+####  soliditySHA3
 
 [Source](util/Web3Utils.ts#L36)
 
 ```javascript
 soliditySHA3(
-  payload: any,
+  payload: any[],
 ): string
 ```
 
-payload: any
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| payload | any[] |  |
+###  SignatureUtils
 
-##  SignatureUtils
-
-###  addPersonalMessagePrefix
+####  addPersonalMessagePrefix
 
 [Source](util/signatureUtils.ts#L66)
+
+```javascript
+addPersonalMessagePrefix(
+  messageHashHex: string,
+): string
+```
 
 Applies an Ethereum-specific prefix to the message payload we intend on signing,
 as per the `eth_sign` specification in the JSON-RPC wiki:
@@ -940,15 +879,10 @@ clients (e.g. Metamask) do not adhere to the `eth_sign` specification described
 above.
 
 
-```javascript
-addPersonalMessagePrefix(
-  messageHashHex: string,
-): string
-```
-
-messageHashHex: string
-
-###  convertToHexRSV
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| messageHashHex | string | The raw hex message payload |
+####  convertToHexRSV
 
 [Source](util/signatureUtils.ts#L99)
 
@@ -958,9 +892,10 @@ convertToHexRSV(
 ): string
 ```
 
-signature: ECSig
-
-###  convertToHexVRS
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| signature | ECSig |  |
+####  convertToHexVRS
 
 [Source](util/signatureUtils.ts#L104)
 
@@ -970,14 +905,12 @@ convertToHexVRS(
 ): string
 ```
 
-signature: ECSig
-
-###  isValidSignature
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| signature | ECSig |  |
+####  isValidSignature
 
 [Source](util/signatureUtils.ts#L24)
-
-Given a data payload, signature, and a signer's address, returns true
-if the given signature is valid.
 
 ```javascript
 isValidSignature(
@@ -988,12 +921,19 @@ isValidSignature(
 ): boolean
 ```
 
-data: string,
-  signature: ECSig,
-  signerAddress: string,
-  addPersonalMessagePrefix: boolean
+Given a data payload, signature, and a signer's address, returns true
+if the given signature is valid.
 
-###  parseSignatureHexAsRSV
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| data | string | Data payload |
+| signature | ECSig | Signature |
+| signerAddress | string | The Signer's address |
+| addPersonalMessagePrefix | boolean | In certain circumstances, the `eth_sign`
+     API adds an Ethereum-specific prefix to message payloads.  This option
+     specifies whether, in the `isValidSignature`, we want to add the
+     Ethereum-specifc prefix to the message payload. |
+####  parseSignatureHexAsRSV
 
 [Source](util/signatureUtils.ts#L89)
 
@@ -1003,9 +943,10 @@ parseSignatureHexAsRSV(
 ): ECSig
 ```
 
-signatureHex: string
-
-###  parseSignatureHexAsVRS
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| signatureHex | string |  |
+####  parseSignatureHexAsVRS
 
 [Source](util/signatureUtils.ts#L73)
 
@@ -1015,72 +956,15 @@ parseSignatureHexAsVRS(
 ): ECSig
 ```
 
-signatureHex: string
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| signatureHex | string |  |
+##  wrappers
+###  ContractWrapper
 
-#  wrappers
-##  ContractWrapper
-
-###  getCoreCacheKey
-
-[Source](wrappers/ContractWrapper.ts#L158)
-
-Creates a string used for accessing values in the core cache
-
-```javascript
-getCoreCacheKey(
-  coreAddress: Address,
-): string
-```
-
-coreAddress: Address
-
-###  getERC20TokenCacheKey
-
-[Source](wrappers/ContractWrapper.ts#L178)
-
-Creates a string used for accessing values in the ERC20 token cache
-
-```javascript
-getERC20TokenCacheKey(
-  tokenAddress: Address,
-): string
-```
-
-tokenAddress: Address
-
-###  getSetTokenCacheKey
-
-[Source](wrappers/ContractWrapper.ts#L168)
-
-Creates a string used for accessing values in the set token cache
-
-```javascript
-getSetTokenCacheKey(
-  setTokenAddress: Address,
-): string
-```
-
-setTokenAddress: Address
-
-###  getVaultCacheKey
-
-[Source](wrappers/ContractWrapper.ts#L188)
-
-Creates a string used for accessing values in the vault cache
-
-```javascript
-getVaultCacheKey(
-  vaultAddress: Address,
-): string
-```
-
-vaultAddress: Address
-
-###  loadCoreAsync
+####  loadCoreAsync
 
 [Source](wrappers/ContractWrapper.ts#L56)
-
-Load Core contract
 
 ```javascript
 loadCoreAsync(
@@ -1089,14 +973,15 @@ loadCoreAsync(
 ): Promise<CoreContract>
 ```
 
-coreAddress: Address,
-  transactionOptions: object
+Load Core contract
 
-###  loadERC20TokenAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| coreAddress | Address | Address of the Core contract |
+| transactionOptions | object | Options sent into the contract deployed method |
+####  loadERC20TokenAsync
 
 [Source](wrappers/ContractWrapper.ts#L108)
-
-Load ERC20 Token contract
 
 ```javascript
 loadERC20TokenAsync(
@@ -1105,14 +990,15 @@ loadERC20TokenAsync(
 ): Promise<DetailedERC20Contract>
 ```
 
-tokenAddress: Address,
-  transactionOptions: object
+Load ERC20 Token contract
 
-###  loadSetTokenAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | Address of the ERC20 Token contract |
+| transactionOptions | object | Options sent into the contract deployed method |
+####  loadSetTokenAsync
 
 [Source](wrappers/ContractWrapper.ts#L80)
-
-Load Set Token contract
 
 ```javascript
 loadSetTokenAsync(
@@ -1121,14 +1007,15 @@ loadSetTokenAsync(
 ): Promise<SetTokenContract>
 ```
 
-setTokenAddress: Address,
-  transactionOptions: object
+Load Set Token contract
 
-###  loadVaultAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setTokenAddress | Address | Address of the Set Token contract |
+| transactionOptions | object | Options sent into the contract deployed method |
+####  loadVaultAsync
 
 [Source](wrappers/ContractWrapper.ts#L136)
-
-Load Vault contract
 
 ```javascript
 loadVaultAsync(
@@ -1137,142 +1024,55 @@ loadVaultAsync(
 ): Promise<VaultContract>
 ```
 
-vaultAddress: Address,
-  transactionOptions: object
+Load Vault contract
 
-##  CoreWrapper
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| vaultAddress | Address | Address of the Vault contract |
+| transactionOptions | object | Options sent into the contract deployed method |
+###  CoreWrapper
 
-###  assertCancelIssuanceOrder
-
-[Source](wrappers/CoreWrapper.ts#L810)
-
-```javascript
-assertCancelIssuanceOrder(
-  issuanceOrder: IssuanceOrder,
-  quantityToCancel: BigNumber,
-): Promise<void>
-```
-
-issuanceOrder: IssuanceOrder,
-  quantityToCancel: BigNumber
-
-###  assertCreateSet
-
-[Source](wrappers/CoreWrapper.ts#L612)
-
-```javascript
-assertCreateSet(
-  userAddress: Address,
-  factoryAddress: Address,
-  components: Address,
-  units: BigNumber,
-  naturalUnit: BigNumber,
-  name: string,
-  symbol: string,
-): Promise<void>
-```
-
-userAddress: Address,
-  factoryAddress: Address,
-  components: Address,
-  units: BigNumber,
-  naturalUnit: BigNumber,
-  name: string,
-  symbol: string
-
-###  assertCreateSignedIssuanceOrder
-
-[Source](wrappers/CoreWrapper.ts#L671)
-
-```javascript
-assertCreateSignedIssuanceOrder(
-  setAddress: Address,
-  quantity: BigNumber,
-  requiredComponents: Address,
-  requiredComponentAmounts: BigNumber,
-  makerAddress: Address,
-  makerToken: Address,
-  makerTokenAmount: BigNumber,
-  expiration: BigNumber,
-  relayerAddress: Address,
-  relayerToken: Address,
-  makerRelayerFee: BigNumber,
-  takerRelayerFee: BigNumber,
-): Promise<void>
-```
-
-setAddress: Address,
-  quantity: BigNumber,
-  requiredComponents: Address,
-  requiredComponentAmounts: BigNumber,
-  makerAddress: Address,
-  makerToken: Address,
-  makerTokenAmount: BigNumber,
-  expiration: BigNumber,
-  relayerAddress: Address,
-  relayerToken: Address,
-  makerRelayerFee: BigNumber,
-  takerRelayerFee: BigNumber
-
-###  assertFillIssuanceOrder
-
-[Source](wrappers/CoreWrapper.ts#L729)
-
-```javascript
-assertFillIssuanceOrder(
-  userAddress: Address,
-  signedIssuanceOrder: SignedIssuanceOrder,
-  quantityToFill: BigNumber,
-  orderData: Bytes,
-): Promise<void>
-```
-
-userAddress: Address,
-  signedIssuanceOrder: SignedIssuanceOrder,
-  quantityToFill: BigNumber,
-  orderData: Bytes
-
-###  batchDeposit
+####  batchDeposit
 
 [Source](wrappers/CoreWrapper.ts#L280)
 
-Asynchronously batch deposits tokens to the vault
-
 ```javascript
 batchDeposit(
-  tokenAddresses: Address,
-  quantitiesInWei: BigNumber,
+  tokenAddresses: Address[],
+  quantitiesInWei: BigNumber[],
   txOpts: TxData,
 ): Promise<string>
 ```
 
-tokenAddresses: Address,
-  quantitiesInWei: BigNumber,
-  txOpts: TxData
+Asynchronously batch deposits tokens to the vault
 
-###  batchWithdraw
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddresses | Address[] |  |
+| quantitiesInWei | BigNumber[] |  |
+| txOpts | TxData | The options for executing the transaction |
+####  batchWithdraw
 
 [Source](wrappers/CoreWrapper.ts#L303)
 
-Asynchronously batch withdraws tokens from the vault
-
 ```javascript
 batchWithdraw(
-  tokenAddresses: Address,
-  quantitiesInWei: BigNumber,
+  tokenAddresses: Address[],
+  quantitiesInWei: BigNumber[],
   txOpts: TxData,
 ): Promise<string>
 ```
 
-tokenAddresses: Address,
-  quantitiesInWei: BigNumber,
-  txOpts: TxData
+Asynchronously batch withdraws tokens from the vault
 
-###  cancelOrder
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddresses | Address[] |  |
+| quantitiesInWei | BigNumber[] |  |
+| txOpts | TxData | The options for executing the transaction |
+####  cancelOrder
 
 [Source](wrappers/CoreWrapper.ts#L457)
-
-Cancels an Issuance Order
 
 ```javascript
 cancelOrder(
@@ -1282,22 +1082,23 @@ cancelOrder(
 ): Promise<string>
 ```
 
-issuanceOrder: IssuanceOrder,
-  quantityToCancel: BigNumber,
-  txOpts: TxData
+Cancels an Issuance Order
 
-###  createOrder
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| issuanceOrder | IssuanceOrder | Issuance order to cancel |
+| quantityToCancel | BigNumber | Number of Set to cancel in this call |
+| txOpts | TxData | The options for executing the transaction |
+####  createOrder
 
 [Source](wrappers/CoreWrapper.ts#L335)
-
-Creates a new Issuance Order including the signature
 
 ```javascript
 createOrder(
   setAddress: Address,
   quantity: BigNumber,
-  requiredComponents: Address,
-  requiredComponentAmounts: BigNumber,
+  requiredComponents: Address[],
+  requiredComponentAmounts: BigNumber[],
   makerAddress: Address,
   makerToken: Address,
   makerTokenAmount: BigNumber,
@@ -1309,30 +1110,31 @@ createOrder(
 ): Promise<SignedIssuanceOrder>
 ```
 
-setAddress: Address,
-  quantity: BigNumber,
-  requiredComponents: Address,
-  requiredComponentAmounts: BigNumber,
-  makerAddress: Address,
-  makerToken: Address,
-  makerTokenAmount: BigNumber,
-  expiration: BigNumber,
-  relayerAddress: Address,
-  relayerToken: Address,
-  makerRelayerFee: BigNumber,
-  takerRelayerFee: BigNumber
+Creates a new Issuance Order including the signature
 
-###  createSet
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | Address of the Set token for issuance order |
+| quantity | BigNumber | Number of Set tokens to create as part of issuance order |
+| requiredComponents | Address[] | Addresses of required component tokens of Set |
+| requiredComponentAmounts | BigNumber[] | Amounts of each required component needed |
+| makerAddress | Address | Address of person making the order |
+| makerToken | Address | Address of token the issuer is paying in |
+| makerTokenAmount | BigNumber | Number of tokens being exchanged for aggregate order size |
+| expiration | BigNumber | Unix timestamp of expiration (in seconds) |
+| relayerAddress | Address | Address of relayer of order |
+| relayerToken | Address | Address of token paid to relayer |
+| makerRelayerFee | BigNumber | Number of token paid to relayer by maker |
+| takerRelayerFee | BigNumber | Number of token paid tp relayer by taker |
+####  createSet
 
 [Source](wrappers/CoreWrapper.ts#L98)
-
-Create a new Set, specifying the components, units, name, symbol to use.
 
 ```javascript
 createSet(
   factoryAddress: Address,
-  components: Address,
-  units: BigNumber,
+  components: Address[],
+  units: BigNumber[],
   naturalUnit: BigNumber,
   name: string,
   symbol: string,
@@ -1340,19 +1142,20 @@ createSet(
 ): Promise<string>
 ```
 
-factoryAddress: Address,
-  components: Address,
-  units: BigNumber,
-  naturalUnit: BigNumber,
-  name: string,
-  symbol: string,
-  txOpts: TxData
+Create a new Set, specifying the components, units, name, symbol to use.
 
-###  deposit
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| factoryAddress | Address | Set Token factory address of the token being created |
+| components | Address[] | Component token addresses |
+| units | BigNumber[] | Units of corresponding token components |
+| naturalUnit | BigNumber | Supplied as the lowest common denominator for the Set |
+| name | string | User-supplied name for Set (i.e. "DEX Set") |
+| symbol | string | User-supplied symbol for Set (i.e. "DEX") |
+| txOpts | TxData | The options for executing the transaction |
+####  deposit
 
 [Source](wrappers/CoreWrapper.ts#L234)
-
-Asynchronously deposits tokens to the vault
 
 ```javascript
 deposit(
@@ -1362,35 +1165,37 @@ deposit(
 ): Promise<string>
 ```
 
-tokenAddress: Address,
-  quantity: BigNumber,
-  txOpts: TxData
+Asynchronously deposits tokens to the vault
 
-###  fillOrder
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | Address of the ERC20 token |
+| quantity | BigNumber | Number of tokens a user wants to deposit into the vault |
+| txOpts | TxData | The options for executing the transaction |
+####  fillOrder
 
 [Source](wrappers/CoreWrapper.ts#L395)
-
-Fills an Issuance Order
 
 ```javascript
 fillOrder(
   signedIssuanceOrder: SignedIssuanceOrder,
   quantityToFill: BigNumber,
-  orders: undefined,
+  orders: undefined[],
   txOpts: TxData,
 ): Promise<string>
 ```
 
-signedIssuanceOrder: SignedIssuanceOrder,
-  quantityToFill: BigNumber,
-  orders: undefined,
-  txOpts: TxData
+Fills an Issuance Order
 
-###  getExchangeAddress
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| signedIssuanceOrder | SignedIssuanceOrder | Signed issuance order to fill |
+| quantityToFill | BigNumber | Number of Set to fill in this call |
+| orders | undefined[] |  |
+| txOpts | TxData | The options for executing the transaction |
+####  getExchangeAddress
 
 [Source](wrappers/CoreWrapper.ts#L506)
-
-Asynchronously gets the exchange address for a given exhange id
 
 ```javascript
 getExchangeAddress(
@@ -1398,25 +1203,24 @@ getExchangeAddress(
 ): Promise<Address>
 ```
 
-exchangeId: number
+Asynchronously gets the exchange address for a given exhange id
 
-###  getFactories
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| exchangeId | number | Enum id of the exchange |
+####  getFactories
 
 [Source](wrappers/CoreWrapper.ts#L539)
-
-Asynchronously gets factory addresses
 
 ```javascript
 getFactories(): Promise<Address[]>
 ```
 
+Asynchronously gets factory addresses
 
-
-###  getOrderCancels
+####  getOrderCancels
 
 [Source](wrappers/CoreWrapper.ts#L603)
-
-Asynchronously gets the quantity of the Issuance Order cancelled
 
 ```javascript
 getOrderCancels(
@@ -1424,13 +1228,14 @@ getOrderCancels(
 ): Promise<BigNumber>
 ```
 
-orderHash: Bytes
+Asynchronously gets the quantity of the Issuance Order cancelled
 
-###  getOrderFills
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| orderHash | Bytes | Address of the Set contract |
+####  getOrderFills
 
 [Source](wrappers/CoreWrapper.ts#L590)
-
-Asynchronously gets the quantity of the Issuance Order filled
 
 ```javascript
 getOrderFills(
@@ -1438,13 +1243,14 @@ getOrderFills(
 ): Promise<BigNumber>
 ```
 
-orderHash: Bytes
+Asynchronously gets the quantity of the Issuance Order filled
 
-###  getSetAddressFromCreateTxHash
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| orderHash | Bytes | Bytes32 hash |
+####  getSetAddressFromCreateTxHash
 
 [Source](wrappers/CoreWrapper.ts#L141)
-
-Asynchronously retrieves a Set Token address from a createSet txHash
 
 ```javascript
 getSetAddressFromCreateTxHash(
@@ -1452,50 +1258,45 @@ getSetAddressFromCreateTxHash(
 ): Promise<Address>
 ```
 
-txHash: string
+Asynchronously retrieves a Set Token address from a createSet txHash
 
-###  getSetAddresses
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| txHash | string | The transaction has to retrieve the set address from |
+####  getSetAddresses
 
 [Source](wrappers/CoreWrapper.ts#L551)
-
-Fetch the addresses of SetTokens and RebalancingSetTokens created by the system
-of contracts specified in SetProtcolConfig
 
 ```javascript
 getSetAddresses(): Promise<Address[]>
 ```
 
+Fetch the addresses of SetTokens and RebalancingSetTokens created by the system
+of contracts specified in SetProtcolConfig
 
-
-###  getTransferProxyAddress
+####  getTransferProxyAddress
 
 [Source](wrappers/CoreWrapper.ts#L517)
-
-Asynchronously gets the transfer proxy address
 
 ```javascript
 getTransferProxyAddress(): Promise<Address>
 ```
 
+Asynchronously gets the transfer proxy address
 
-
-###  getVaultAddress
+####  getVaultAddress
 
 [Source](wrappers/CoreWrapper.ts#L528)
-
-Asynchronously gets the vault address
 
 ```javascript
 getVaultAddress(): Promise<Address>
 ```
 
+Asynchronously gets the vault address
 
-
-###  isValidFactoryAsync
+####  isValidFactoryAsync
 
 [Source](wrappers/CoreWrapper.ts#L563)
-
-Verifies that the provided SetToken factory is enabled for creating a new SetToken
 
 ```javascript
 isValidFactoryAsync(
@@ -1503,14 +1304,14 @@ isValidFactoryAsync(
 ): Promise<boolean>
 ```
 
-factoryAddress: Address
+Verifies that the provided SetToken factory is enabled for creating a new SetToken
 
-###  isValidSetAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| factoryAddress | Address | Address of the factory contract |
+####  isValidSetAsync
 
 [Source](wrappers/CoreWrapper.ts#L577)
-
-Verifies that the provided SetToken or RebalancingSetToken address is enabled
-for issuance and redemption
 
 ```javascript
 isValidSetAsync(
@@ -1518,13 +1319,15 @@ isValidSetAsync(
 ): Promise<boolean>
 ```
 
-setAddress: Address
+Verifies that the provided SetToken or RebalancingSetToken address is enabled
+for issuance and redemption
 
-###  issue
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | Address of the SetToken or RebalancingSetToken contract |
+####  issue
 
 [Source](wrappers/CoreWrapper.ts#L157)
-
-Asynchronously issues a particular quantity of tokens from a particular Sets
 
 ```javascript
 issue(
@@ -1534,15 +1337,16 @@ issue(
 ): Promise<string>
 ```
 
-setAddress: Address,
-  quantityInWei: BigNumber,
-  txOpts: TxData
+Asynchronously issues a particular quantity of tokens from a particular Sets
 
-###  redeem
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | Set token address of Set being issued |
+| quantityInWei | BigNumber | Number of Sets a user wants to issue in Wei |
+| txOpts | TxData | The options for executing the transaction |
+####  redeem
 
 [Source](wrappers/CoreWrapper.ts#L180)
-
-Asynchronously redeems a particular quantity of tokens from a particular Sets
 
 ```javascript
 redeem(
@@ -1552,21 +1356,16 @@ redeem(
 ): Promise<string>
 ```
 
-setAddress: Address,
-  quantityInWei: BigNumber,
-  txOpts: TxData
+Asynchronously redeems a particular quantity of tokens from a particular Sets
 
-###  redeemAndWithdraw
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | Set token address of Set being issued |
+| quantityInWei | BigNumber | Number of Sets a user wants to redeem in Wei |
+| txOpts | TxData | The options for executing the transaction |
+####  redeemAndWithdraw
 
 [Source](wrappers/CoreWrapper.ts#L209)
-
-Redeem and withdraw with a single transaction
-
-Normally, you should expect to be able to withdraw all of the tokens.
-However, some have central abilities to freeze transfers (e.g. EOS). _toExclude
-allows you to optionally specify which component tokens to remain under the user's
-address in the vault. The rest will be transferred to the user.
-
 
 ```javascript
 redeemAndWithdraw(
@@ -1577,16 +1376,23 @@ redeemAndWithdraw(
 ): Promise<string>
 ```
 
-setAddress: Address,
-  quantityInWei: BigNumber,
-  toExclude: BigNumber,
-  txOpts: TxData
+Redeem and withdraw with a single transaction
 
-###  withdraw
+Normally, you should expect to be able to withdraw all of the tokens.
+However, some have central abilities to freeze transfers (e.g. EOS). _toExclude
+allows you to optionally specify which component tokens to remain under the user's
+address in the vault. The rest will be transferred to the user.
+
+
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | The address of the Set token |
+| quantityInWei | BigNumber | The number of tokens to redeem |
+| toExclude | BigNumber | Bitmask of component indexes to exclude from withdrawal |
+| txOpts | TxData | The options for executing the transaction |
+####  withdraw
 
 [Source](wrappers/CoreWrapper.ts#L257)
-
-Asynchronously withdraw tokens from the vault
 
 ```javascript
 withdraw(
@@ -1596,17 +1402,18 @@ withdraw(
 ): Promise<string>
 ```
 
-tokenAddress: Address,
-  quantityInWei: BigNumber,
-  txOpts: TxData
+Asynchronously withdraw tokens from the vault
 
-##  ERC20Wrapper
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | Address of the ERC20 token |
+| quantityInWei | BigNumber | Number of tokens a user wants to withdraw from the vault |
+| txOpts | TxData | The options for executing the transaction |
+###  ERC20Wrapper
 
-###  approveAsync
+####  approveAsync
 
 [Source](wrappers/ERC20Wrapper.ts#L221)
-
-Asynchronously approves the value amount of the spender from the owner
 
 ```javascript
 approveAsync(
@@ -1617,16 +1424,17 @@ approveAsync(
 ): Promise<string>
 ```
 
-tokenAddress: Address,
-  spenderAddress: Address,
-  value: BigNumber,
-  txOpts: TxData
+Asynchronously approves the value amount of the spender from the owner
 
-###  getAllowanceAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | the address of the token being used. |
+| spenderAddress | Address | the spender. |
+| value | BigNumber | the amount to be approved. |
+| txOpts | TxData | any parameters necessary to modify the transaction. |
+####  getAllowanceAsync
 
 [Source](wrappers/ERC20Wrapper.ts#L117)
-
-Gets the allowance of the spender by the owner account
 
 ```javascript
 getAllowanceAsync(
@@ -1636,15 +1444,16 @@ getAllowanceAsync(
 ): Promise<BigNumber>
 ```
 
-tokenAddress: Address,
-  ownerAddress: Address,
-  spenderAddress: Address
+Gets the allowance of the spender by the owner account
 
-###  getBalanceOfAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | Address of the token |
+| ownerAddress | Address | Address of the owner |
+| spenderAddress | Address |  |
+####  getBalanceOfAsync
 
 [Source](wrappers/ERC20Wrapper.ts#L53)
-
-Gets balance of the ERC20 token
 
 ```javascript
 getBalanceOfAsync(
@@ -1653,14 +1462,15 @@ getBalanceOfAsync(
 ): Promise<BigNumber>
 ```
 
-tokenAddress: Address,
-  userAddress: Address
+Gets balance of the ERC20 token
 
-###  getDecimalsAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | Address of the ERC20 token |
+| userAddress | Address | Address of the user |
+####  getDecimalsAsync
 
 [Source](wrappers/ERC20Wrapper.ts#L103)
-
-Gets decimals of the ERC20 token
 
 ```javascript
 getDecimalsAsync(
@@ -1668,13 +1478,14 @@ getDecimalsAsync(
 ): Promise<BigNumber>
 ```
 
-tokenAddress: Address
+Gets decimals of the ERC20 token
 
-###  getNameAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | Address of the ERC20 token |
+####  getNameAsync
 
 [Source](wrappers/ERC20Wrapper.ts#L66)
-
-Gets name of the ERC20 token
 
 ```javascript
 getNameAsync(
@@ -1682,13 +1493,14 @@ getNameAsync(
 ): Promise<string>
 ```
 
-tokenAddress: Address
+Gets name of the ERC20 token
 
-###  getSymbolAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | Address of the ERC20 token |
+####  getSymbolAsync
 
 [Source](wrappers/ERC20Wrapper.ts#L78)
-
-Gets balance of the ERC20 token
 
 ```javascript
 getSymbolAsync(
@@ -1696,13 +1508,14 @@ getSymbolAsync(
 ): Promise<string>
 ```
 
-tokenAddress: Address
+Gets balance of the ERC20 token
 
-###  getTotalSupplyAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | Address of the ERC20 token |
+####  getTotalSupplyAsync
 
 [Source](wrappers/ERC20Wrapper.ts#L90)
-
-Gets the total supply of the ERC20 token
 
 ```javascript
 getTotalSupplyAsync(
@@ -1710,14 +1523,14 @@ getTotalSupplyAsync(
 ): Promise<BigNumber>
 ```
 
-tokenAddress: Address
+Gets the total supply of the ERC20 token
 
-###  transferAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | Address of the ERC20 token |
+####  transferAsync
 
 [Source](wrappers/ERC20Wrapper.ts#L140)
-
-Asynchronously transfer value denominated in the specified ERC20 token to
-the address specified.
 
 ```javascript
 transferAsync(
@@ -1728,18 +1541,18 @@ transferAsync(
 ): Promise<string>
 ```
 
-tokenAddress: Address,
-  to: Address,
-  value: BigNumber,
-  txOpts: TxData
+Asynchronously transfer value denominated in the specified ERC20 token to
+the address specified.
 
-###  transferFromAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | the address of the token being used. |
+| to | Address | to whom the transfer is being made. |
+| value | BigNumber | the amount being transferred. |
+| txOpts | TxData | any parameters necessary to modify the transaction. |
+####  transferFromAsync
 
 [Source](wrappers/ERC20Wrapper.ts#L177)
-
-Asynchronously transfer the value amount in the token specified so long
-as the sender of the message has received sufficient allowance on behalf
-of `from` to do so.
 
 ```javascript
 transferFromAsync(
@@ -1751,19 +1564,22 @@ transferFromAsync(
 ): Promise<string>
 ```
 
-tokenAddress: Address,
-  from: Address,
-  to: Address,
-  value: BigNumber,
-  txOpts: TxData
+Asynchronously transfer the value amount in the token specified so long
+as the sender of the message has received sufficient allowance on behalf
+of `from` to do so.
 
-##  SetTokenWrapper
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | the address of the token being used. |
+| from | Address | from whom are the funds being transferred. |
+| to | Address | to whom are the funds being transferred. |
+| value | BigNumber | the amount to be transferred. |
+| txOpts | TxData | any parameters necessary to modify the transaction. |
+###  SetTokenWrapper
 
-###  getComponentsAsync
+####  getComponentsAsync
 
 [Source](wrappers/SetTokenWrapper.ts#L63)
-
-Gets component tokens that make up the Set
 
 ```javascript
 getComponentsAsync(
@@ -1771,13 +1587,14 @@ getComponentsAsync(
 ): Promise<Address[]>
 ```
 
-setAddress: Address
+Gets component tokens that make up the Set
 
-###  getFactoryAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | Address of the Set |
+####  getFactoryAsync
 
 [Source](wrappers/SetTokenWrapper.ts#L52)
-
-Gets the Set's origin factory
 
 ```javascript
 getFactoryAsync(
@@ -1785,13 +1602,14 @@ getFactoryAsync(
 ): Promise<Address>
 ```
 
-setAddress: Address
+Gets the Set's origin factory
 
-###  getNaturalUnitAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | Address of the Set |
+####  getNaturalUnitAsync
 
 [Source](wrappers/SetTokenWrapper.ts#L74)
-
-Gets natural unit of the Set
 
 ```javascript
 getNaturalUnitAsync(
@@ -1799,13 +1617,14 @@ getNaturalUnitAsync(
 ): Promise<BigNumber>
 ```
 
-setAddress: Address
+Gets natural unit of the Set
 
-###  getUnitsAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | Address of the Set |
+####  getUnitsAsync
 
 [Source](wrappers/SetTokenWrapper.ts#L86)
-
-Gets units of each component token that make up the Set
 
 ```javascript
 getUnitsAsync(
@@ -1813,13 +1632,14 @@ getUnitsAsync(
 ): Promise<BigNumber[]>
 ```
 
-setAddress: Address
+Gets units of each component token that make up the Set
 
-###  isMultipleOfNaturalUnitAsync
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | Address of the Set |
+####  isMultipleOfNaturalUnitAsync
 
 [Source](wrappers/SetTokenWrapper.ts#L99)
-
-Returns whether the quantity passed in is a multiple of a Set's natural unit
 
 ```javascript
 isMultipleOfNaturalUnitAsync(
@@ -1828,17 +1648,17 @@ isMultipleOfNaturalUnitAsync(
 ): Promise<boolean>
 ```
 
-setAddress: Address,
-  quantity: BigNumber
+Returns whether the quantity passed in is a multiple of a Set's natural unit
 
-##  VaultWrapper
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| setAddress | Address | Address of the Set |
+| quantity | BigNumber | Quantity to be checked |
+###  VaultWrapper
 
-###  getBalanceInVault
+####  getBalanceInVault
 
 [Source](wrappers/VaultWrapper.ts#L54)
-
-Fetch the balance of the provided contract address inside the vault specified
-in SetProtocolConfig
 
 ```javascript
 getBalanceInVault(
@@ -1847,6 +1667,10 @@ getBalanceInVault(
 ): Promise<BigNumber>
 ```
 
-tokenAddress: Address,
-  ownerAddress: Address
+Fetch the balance of the provided contract address inside the vault specified
+in SetProtocolConfig
 
+| Name | Type | Description |
+| ------ | ------ | ------ |
+| tokenAddress | Address | Address of the contract (typically SetToken or ERC20) |
+| ownerAddress | Address | Address of the user |
