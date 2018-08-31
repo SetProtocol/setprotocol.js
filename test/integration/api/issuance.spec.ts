@@ -28,7 +28,7 @@ import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
 import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
-import { Core, Vault } from 'set-protocol-contracts';
+import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
   SetTokenContract,
@@ -44,12 +44,8 @@ import { BigNumber } from '../../../src/util';
 import { CoreWrapper } from '../../../src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
 import {
-  DEFAULT_GAS_PRICE,
-  DEFAULT_GAS_LIMIT,
   DEPLOYED_TOKEN_QUANTITY,
-  NULL_ADDRESS,
   TX_DEFAULTS,
-  UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
   ZERO
 } from '../../../src/constants';
 import {
@@ -63,11 +59,8 @@ import {
   deployTransferProxyContract,
   deployVaultContract,
   getTokenBalances,
-  initializeCoreWrapper
 } from '../../helpers/coreHelpers';
 import { ether } from '../../helpers/units';
-import { getVaultBalances } from '../../helpers/vaultHelpers';
-import { testSets, TestSet } from '../../testSets';
 import { Web3Utils } from '../../../src/util/Web3Utils';
 
 ChaiSetup.configure();
@@ -138,7 +131,7 @@ describe('IssuanceAPI', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('issue', async () => {
+  describe('issueAsync', async () => {
     let subjectSetToIssue: Address;
     let subjectQuantitytoIssue: BigNumber;
     let subjectCaller: Address;
@@ -272,7 +265,7 @@ describe('IssuanceAPI', () => {
     });
   });
 
-  describe('redeem', async () => {
+  describe('redeemAsync', async () => {
     let subjectSetToRedeem: Address;
     let subjectQuantityToRedeem: BigNumber;
     let subjectShouldWithdraw: boolean;
