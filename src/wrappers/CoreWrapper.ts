@@ -92,58 +92,33 @@ export class CoreWrapper {
    * @param  naturalUnit    Supplied as the lowest common denominator for the Set
    * @param  name           User-supplied name for Set (i.e. "DEX Set")
    * @param  symbol         User-supplied symbol for Set (i.e. "DEX")
+   * @param  callData       Additional call data used to create different Sets
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up for the Set address
    */
-  public async createSet(
+  public async create(
     factoryAddress: Address,
     components: Address[],
     units: BigNumber[],
     naturalUnit: BigNumber,
     name: string,
     symbol: string,
+    callData: string,
     txOpts?: TxData,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-
-    await this.assertCreateSet(
-      txSettings.from,
-      factoryAddress,
-      components,
-      units,
-      naturalUnit,
-      name,
-      symbol
-    );
-
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    const txHash = await coreInstance.create.sendTransactionAsync(
+    return await coreInstance.create.sendTransactionAsync(
       factoryAddress,
       components,
       units,
       naturalUnit,
       SetProtocolUtils.stringToBytes(name),
       SetProtocolUtils.stringToBytes(symbol),
-      '',
+      callData,
       txSettings,
     );
-
-    return txHash;
-  }
-
-  /**
-   * Asynchronously retrieves a Set Token address from a createSet txHash
-   *
-   * @param  txHash     The transaction has to retrieve the set address from
-   * @return            The address of the newly created Set
-   */
-  public async getSetAddressFromCreateTxHash(
-    txHash: string,
-  ): Promise<Address> {
-    this.assert.schema.isValidBytes32('txHash', txHash);
-    const logs = await getFormattedLogsFromTxHash(this.web3, txHash);
-    return extractNewSetTokenAddressFromLogs(logs);
   }
 
   /**
@@ -495,6 +470,21 @@ export class CoreWrapper {
     return txHash;
   }
 
+  /**
+   * Asynchronously retrieves a Set Token address from a createSet txHash
+   *
+   * @param  txHash     The transaction has to retrieve the set address from
+   * @return            The address of the newly created Set
+   */
+  public async getSetAddressFromCreateTxHash(
+    txHash: string,
+  ): Promise<Address> {
+    this.assert.schema.isValidBytes32('txHash', txHash);
+    const logs = await getFormattedLogsFromTxHash(this.web3, txHash);
+
+    return extractNewSetTokenAddressFromLogs(logs);
+  }
+
   /* ============ Core State Getters ============ */
 
   /**
@@ -506,6 +496,7 @@ export class CoreWrapper {
   public async getExchangeAddress(exchangeId: number): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const exchangeAddress = await coreInstance.exchanges.callAsync(exchangeId);
+
     return exchangeAddress;
   }
 
@@ -517,6 +508,7 @@ export class CoreWrapper {
   public async getTransferProxyAddress(): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const transferProxyAddress = await coreInstance.transferProxy.callAsync();
+
     return transferProxyAddress;
   }
 
@@ -528,6 +520,7 @@ export class CoreWrapper {
   public async getVaultAddress(): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const vaultAddress = await coreInstance.vault.callAsync();
+
     return vaultAddress;
   }
 
@@ -539,6 +532,7 @@ export class CoreWrapper {
   public async getFactories(): Promise<Address[]> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const factoryAddresses = await coreInstance.factories.callAsync();
+
     return factoryAddresses;
   }
 
@@ -551,6 +545,7 @@ export class CoreWrapper {
   public async getSetAddresses(): Promise<Address[]> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const setAddresses = await coreInstance.setTokens.callAsync();
+
     return setAddresses;
   }
 
@@ -564,6 +559,7 @@ export class CoreWrapper {
     this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidFactoryAddress = await coreInstance.validFactories.callAsync(factoryAddress);
+
     return isValidFactoryAddress;
   }
 
@@ -578,6 +574,7 @@ export class CoreWrapper {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidSetAddress = await coreInstance.validSets.callAsync(setAddress);
+
     return isValidSetAddress;
   }
 
@@ -591,6 +588,7 @@ export class CoreWrapper {
     this.assert.schema.isValidBytes32('orderHash', orderHash);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const orderFills = await coreInstance.orderFills.callAsync(orderHash);
+
     return orderFills;
   }
 
@@ -604,69 +602,11 @@ export class CoreWrapper {
     this.assert.schema.isValidBytes32('orderHash', orderHash);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const orderCancels = await coreInstance.orderCancels.callAsync(orderHash);
+
     return orderCancels;
   }
 
   /* ============ Private Assertions ============ */
-
-  private async assertCreateSet(
-    userAddress: Address,
-    factoryAddress: Address,
-    components: Address[],
-    units: BigNumber[],
-    naturalUnit: BigNumber,
-    name: string,
-    symbol: string,
-  ) {
-    this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-    this.assert.common.isEqualLength(
-      components,
-      units,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('components', 'units'),
-    );
-    this.assert.common.greaterThanZero(
-      naturalUnit,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(naturalUnit),
-    );
-    this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY('name'));
-    this.assert.common.isValidString(symbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY('symbol'));
-
-    let minDecimals = new BigNumber(18);
-    let tokenDecimals;
-    await Promise.all(
-      components.map(async componentAddress => {
-        this.assert.common.isValidString(
-          componentAddress,
-          coreAPIErrors.STRING_CANNOT_BE_EMPTY('component'),
-        );
-        this.assert.schema.isValidAddress('componentAddress', componentAddress);
-
-        const tokenContract = await DetailedERC20Contract.at(componentAddress, this.web3, {});
-
-        try {
-          tokenDecimals = await tokenContract.decimals.callAsync();
-          if (tokenDecimals.lt(minDecimals)) {
-            minDecimals = tokenDecimals;
-          }
-        } catch (err) {
-          minDecimals = ZERO;
-        }
-
-        await this.assert.erc20.implementsERC20(tokenContract);
-      }),
-    );
-
-    this.assert.core.validateNaturalUnit(
-      naturalUnit,
-      minDecimals,
-      coreAPIErrors.INVALID_NATURAL_UNIT(),
-    );
-
-    _.each(units, unit => {
-      this.assert.common.greaterThanZero(unit, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(unit));
-    });
-  }
 
   private async assertCreateSignedIssuanceOrder(
     setAddress: Address,

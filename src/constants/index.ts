@@ -18,7 +18,7 @@
 
 import { BigNumber } from '../util';
 import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
-import { ether } from '../../test/helpers/units';
+import { ether } from '../../src/util/units';
 
 
 export const DEFAULT_GAS_LIMIT: BigNumber = new BigNumber(6712390); // default of 6.7 million gas

@@ -51,13 +51,7 @@ import {
   VaultContract,
   ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
-import {
-  DEFAULT_GAS_PRICE,
-  DEFAULT_GAS_LIMIT,
-  NULL_ADDRESS,
-  TX_DEFAULTS,
-  ZERO,
-} from '../../src/constants';
+import { NULL_ADDRESS, TX_DEFAULTS, ZERO } from '../../src/constants';
 import { Web3Utils } from '../../src/util/Web3Utils';
 import { BigNumber } from '../../src/util';
 import {
@@ -77,12 +71,9 @@ import {
   initializeCoreWrapper,
   registerExchange,
 } from '../helpers/coreHelpers';
-import { ether } from '../helpers/units';
+import { ether } from '../../src/util/units';
 import { getVaultBalances } from '../helpers/vaultHelpers';
-import {
-  deployTakerWalletExchangeWrapper,
-  deployZeroExExchangeWrapper,
-} from '../helpers/exchangeHelpers';
+import { deployTakerWalletExchangeWrapper, deployZeroExExchangeWrapper } from '../helpers/exchangeHelpers';
 
 const contract = require('truffle-contract');
 
@@ -156,43 +147,63 @@ describe('CoreWrapper', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test('CoreWrapper can be instantiated', async () => {
-    const coreWrapper = await initializeCoreWrapper(provider);
-    expect(coreWrapper.coreAddress);
-  });
+  describe('create', async () => {
+    let subjectFactoryAddress: Address;
+    let subjectComponents: Address[];
+    let subjectUnits: BigNumber[];
+    let subjectNaturalUnit: BigNumber;
+    let subjectName: string;
+    let subjectSymbol: string;
+    let subjectCallData: string;
+    let subjectCaller: Address;
 
-  /* ============ Create ============ */
-
-  describe('createSet', async () => {
-    let setTokenFactoryAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
-
-    beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
-
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
+    async function subject(): Promise<string> {
+      return await coreWrapper.create(
+        subjectFactoryAddress,
+        subjectComponents,
+        subjectUnits,
+        subjectNaturalUnit,
+        subjectName,
+        subjectSymbol,
+        subjectCallData,
+        { from: subjectCaller }
       );
-    });
+    }
 
-    test('creates a new set with valid parameters', async () => {
-      const txHash = await coreWrapper.createSet(
-        setTokenFactoryAddress,
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        { from: DEFAULT_ACCOUNT },
-      );
+    describe('when the factory address is for vanilla SetToken', async () => {
+      beforeEach(async () => {
+        subjectFactoryAddress = setTokenFactory.address;
+        subjectComponents = componentTokens.map(component => component.address);
+        subjectUnits = subjectComponents.map(component => ether(4));
+        subjectNaturalUnit = ether(2);
+        subjectName = 'My Set';
+        subjectSymbol = 'SET';
+        subjectCallData = '';
+        subjectCaller = DEFAULT_ACCOUNT;
+      });
 
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('SetTokenCreated');
+      test('creates a new SetToken contract', async () => {
+        const createSetTransactionHash = await subject();
+
+        const logs = await getFormattedLogsFromTxHash(web3, createSetTransactionHash);
+        const deployedSetTokenAddress = extractNewSetTokenAddressFromLogs(logs);
+        const setTokenContract = await SetTokenContract.at(deployedSetTokenAddress, web3, TX_DEFAULTS);
+
+        const componentAddresses = await setTokenContract.getComponents.callAsync();
+        expect(componentAddresses).to.eql(subjectComponents);
+
+        const componentUnits = await setTokenContract.getUnits.callAsync();
+        expect(JSON.stringify(componentUnits)).to.eql(JSON.stringify(subjectUnits));
+
+        const naturalUnit = await setTokenContract.naturalUnit.callAsync();
+        expect(naturalUnit).to.bignumber.equal(subjectNaturalUnit);
+
+        const name = await setTokenContract.name.callAsync();
+        expect(name).to.eql(subjectName);
+
+        const symbol = await setTokenContract.symbol.callAsync();
+        expect(symbol).to.eql(subjectSymbol);
+      });
     });
   });
 
@@ -215,13 +226,14 @@ describe('CoreWrapper', () => {
         provider,
       );
 
-      subjectTxHash = await coreWrapper.createSet(
+      subjectTxHash = await coreWrapper.create(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        '',
         { from: DEFAULT_ACCOUNT },
       );
     });
@@ -556,13 +568,14 @@ describe('CoreWrapper', () => {
       );
 
       // Create a Set
-      const txHash = await coreWrapper.createSet(
+      const txHash = await coreWrapper.create(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        '',
         { from: DEFAULT_ACCOUNT },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
@@ -637,13 +650,14 @@ describe('CoreWrapper', () => {
       );
 
       // Create a Set
-      const txHash = await coreWrapper.createSet(
+      const txHash = await coreWrapper.create(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        '',
         { from: DEFAULT_ACCOUNT },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
@@ -896,13 +910,14 @@ describe('CoreWrapper', () => {
       );
 
       // Create a Set
-      const txHash = await coreWrapper.createSet(
+      const txHash = await coreWrapper.create(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        '',
         { from: DEFAULT_ACCOUNT },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
@@ -982,13 +997,14 @@ describe('CoreWrapper', () => {
       );
 
       // Create a Set
-      const txHash = await coreWrapper.createSet(
+      const txHash = await coreWrapper.create(
         setTokenFactoryAddress,
         componentAddresses,
         setToCreate.units,
         setToCreate.naturalUnit,
         setToCreate.setName,
         setToCreate.setSymbol,
+        '',
         { from: DEFAULT_ACCOUNT },
       );
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);

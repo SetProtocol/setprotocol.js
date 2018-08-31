@@ -54,7 +54,7 @@ export class Web3Utils {
   }
 
   public async getTransactionReceiptAsync(txHash: string): Promise<TransactionReceipt> {
-    return promisify(this.web3.eth.getTransactionReceipt)(txHash);
+    return await promisify(this.web3.eth.getTransactionReceipt)(txHash);
   }
 
   public async saveTestSnapshot(): Promise<number> {

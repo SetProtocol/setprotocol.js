@@ -28,15 +28,15 @@ import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
 import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
-import { Core, Vault } from 'set-protocol-contracts';
-import { CoreContract, DetailedERC20Contract, StandardTokenMockContract, VaultContract } from 'set-protocol-contracts';
+import { Core } from 'set-protocol-contracts';
+import { CoreContract, StandardTokenMockContract, VaultContract } from 'set-protocol-contracts';
 
 import ChaiSetup from '../../helpers/chaiSetup';
 import { AccountingAPI } from '../../../src/api';
 import { BigNumber } from '../../../src/util';
 import { CoreWrapper } from '../../../src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS, TX_DEFAULTS, ZERO } from '../../../src/constants';
+import { TX_DEFAULTS, ZERO } from '../../../src/constants';
 import { deployTokensForSetWithApproval, initializeCoreWrapper } from '../../helpers/coreHelpers';
 import { deployVaultContract, getVaultBalances } from '../../helpers/vaultHelpers';
 import { testSets, TestSet } from '../../testSets';
@@ -90,7 +90,7 @@ describe('CoreWrapper', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('deposit', async () => {
+  describe('depositAsync', async () => {
     let subjectTokenAddressesToDeposit: Address[];
     let subjectQuantitiesToDeposit: BigNumber[];
     let subjectCaller: Address;
@@ -246,7 +246,7 @@ describe('CoreWrapper', () => {
     });
   });
 
-  describe('withdraw', async () => {
+  describe('withdrawAsync', async () => {
     let subjectTokenAddressesToWithdraw: Address[];
     let subjectQuantitiesToWithdraw: BigNumber[];
     let subjectCaller: Address;

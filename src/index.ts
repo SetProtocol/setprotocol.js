@@ -20,7 +20,7 @@ import * as Web3 from 'web3';
 import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
 import { Provider } from '@0xproject/types';
 
-import { AccountingAPI, IssuanceAPI, OrderAPI } from './api';
+import { AccountingAPI, FactoryAPI, IssuanceAPI, OrderAPI } from './api';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
 import { BigNumber, instantiateWeb3 } from './util';
 import { TxData } from './types/common';
@@ -29,6 +29,7 @@ export interface SetProtocolConfig {
   coreAddress: Address;
   transferProxyAddress: Address;
   vaultAddress: Address;
+  setTokenFactoryAddress: Address;
 }
 
 /**
@@ -44,6 +45,7 @@ class SetProtocol {
   private core: CoreWrapper;
   private vault: VaultWrapper;
   private accounting: AccountingAPI;
+  private factory: FactoryAPI;
   private issuance: IssuanceAPI;
 
   /**
@@ -82,24 +84,24 @@ class SetProtocol {
     this.vault = new VaultWrapper(this.web3, config.vaultAddress);
 
     this.accounting = new AccountingAPI(this.web3, this.core);
+    this.factory = new FactoryAPI(this.web3, this.core, config.setTokenFactoryAddress);
     this.issuance = new IssuanceAPI(this.web3, this.core);
     this.orders = new OrderAPI(this.web3, this.core);
   }
 
   /**
-   * Create a new Set, specifying the components, units, name, symbol to use.
+   * Create a new Set by passing in parameters denoting component token addresses, quantities, natural
+   * unit, and ERC20 properties
    *
-   * @param  factoryAddress Set Token factory address of the token being created
-   * @param  components     Component token addresses
-   * @param  units          Units of corresponding token components
-   * @param  naturalUnit    Supplied as the lowest common denominator for the Set
-   * @param  name           User-supplied name for Set (i.e. "DEX Set")
-   * @param  symbol         User-supplied symbol for Set (i.e. "DEX")
-   * @param  txOpts         The options for executing the transaction
-   * @return                A transaction hash to then later look up for the Set address
+   * @param  components       Component ERC20 token addresses
+   * @param  units            Units of each component in Set paired in index order
+   * @param  naturalUnit      Supplied as the lowest common denominator for the Set
+   * @param  name             Name for Set (i.e. "DEX Set"). Not unique
+   * @param  symbol           Symbol for Set (i.e. "DEX"). Not unique
+   * @param  txOpts           The options for executing the transaction
+   * @return                  A transaction hash to then later look up for the Set address
    */
   public async createSetAsync(
-    factoryAddress: Address,
     components: Address[],
     units: BigNumber[],
     naturalUnit: BigNumber,
@@ -107,7 +109,7 @@ class SetProtocol {
     symbol: string,
     txOpts?: TxData,
   ): Promise<string> {
-    return await this.core.createSet(factoryAddress, components, units, naturalUnit, name, symbol, txOpts);
+    return await this.factory.createSetAsync(components, units, naturalUnit, name, symbol, txOpts);
   }
 
   /**
