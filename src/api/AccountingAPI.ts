@@ -28,12 +28,10 @@ import { BigNumber } from '../util';
 import { TxData } from '../types/common';
 
 /**
- * @title SetProtocol
+ * @title AccountingAPI
  * @author Set Protocol
  *
- * The SetProtocol class that exposes all functionality for interacting with the SetProtocol smart contracts.
- * Methods that require interaction with the Ethereum blockchain are exposed after instantiating a new instance
- * of SetProtocol with the web3 provider argument
+ * A library for managing token and set balances throughout the SetProtocol system
  */
 export class AccountingAPI {
   private web3: Web3;

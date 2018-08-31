@@ -164,6 +164,8 @@ describe('Set Token API', () => {
     test('get Set token units', async () => {
       const units = await setTokenWrapper.getUnitsAsync(setTokenInstance.address);
       _.forEach(units, (unit, i) => unit.toNumber() === setToCreate.units[i].toNumber());
+
+
     });
   });
 
