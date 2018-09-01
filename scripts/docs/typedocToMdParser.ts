@@ -73,12 +73,18 @@ interface SignatureParameter {
     name: string;
     type: ParameterType;
     comment: any;
+    flags: any;
 }
 
 interface ParameterType {
     name: string;
     type: any;
     elementType: any;
+}
+
+interface ParameterTuple {
+    name: string;
+    type: string;
 }
 
 interface TypedocInput {
@@ -147,10 +153,25 @@ class TypedocParser {
 
     private static paramType(param: SignatureParameter) {
       const isArray = param.type && param.type.type === "array";
+      const isUnion = param.type && param.type.type === "union";
 
       if (isArray) {
+          if (param.type.elementType.type === 'union') {
+            let returnType = '';
+            _.each(param.type.elementType.types, (type, index) => {
+              if (index) {
+                returnType += ' | '
+              }
+              returnType += `${type.name}`;
+            });
+
+            return `(${returnType})[]`
+          }
+
           return `${param.type.elementType.name}[]`;
       }
+
+      // TODO - the case for a union type is not handled yet
 
       // Handle case of function param..
       const isReflection = param.type && param.type.type === "reflection";
@@ -173,9 +194,15 @@ class TypedocParser {
         }
 
         return _.map(params, (param) => {
+            const isOptional = param.flags && param.flags.isOptional;
+
+            // if (param.name === 'txOpts') {
+            //   console.log(param);
+            // }
+
             const paramType = TypedocParser.paramType(param);
 
-            return `${param.name}: ${paramType}`;
+            return `${param.name}${isOptional ? '?' : ''}: ${paramType}`;
         }).join(",\n  ");
     }
 
@@ -274,6 +301,18 @@ class TypedocParser {
         );
 
         return paramInterfaces || [];
+    }
+
+    private static getParameterTuple(signature: any): ParameterTuple {
+      let name;
+      let type;
+
+
+
+      return {
+        name,
+        type,
+      }
     }
 
     // The path to the Typedoc input JSON file.

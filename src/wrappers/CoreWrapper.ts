@@ -229,8 +229,8 @@ export class CoreWrapper {
   /**
    * Asynchronously batch deposits tokens to the vault
    *
-   * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to deposit into the vault
-   * @param  quantities[]      Numbers of tokens a user wants to deposit into the vault
+   * @param  tokenAddresses    Addresses of ERC20 tokens user wants to deposit into the vault
+   * @param  quantitiesInWei   Numbers of tokens a user wants to deposit into the vault
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
@@ -248,8 +248,8 @@ export class CoreWrapper {
   /**
    * Asynchronously batch withdraws tokens from the vault
    *
-   * @param  tokenAddresses[]  Addresses of ERC20 tokens user wants to withdraw from the vault
-   * @param  quantities[]      Numbers of tokens a user wants to withdraw from the vault
+   * @param  tokenAddresses    Addresses of ERC20 tokens user wants to withdraw from the vault
+   * @param  quantitiesInWei   Numbers of tokens a user wants to withdraw from the vault
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
