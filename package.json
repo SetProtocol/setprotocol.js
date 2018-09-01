@@ -18,7 +18,7 @@
   "scripts": {
     "prod": "yarn run build",
     "clean-chain": "rm -rf blockchain && cp -r snapshots/0x blockchain",
-    "chain": "yarn clean-chain && bash scripts/init_chain.sh",
+    "chain": "yarn clean-chain && bash scripts/init_chain_internal.sh",
     "build": "yarn run build-ts && yarn run tslint",
     "build-ts": "tsc",
     "test": "jest --runInBand",
