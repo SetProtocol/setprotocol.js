@@ -1,6 +1,13 @@
 #!/usr/bin/env node
-const exec = require('child_process').exec;
-const chainProcess = exec('yarn chain');
+var fs = require('fs');
+var path = require('path');
+
+var localInitChain = require.resolve(path.join(process.cwd(), "node_modules", "setprotocol.js", "scripts", "init_chain.sh"));
+
+fs.chmodSync(localInitChain, 0777);
+
+var exec = require('child_process').exec;
+var chainProcess = exec(localInitChain);
 
 chainProcess.stdout.pipe(process.stdout);
 chainProcess.stderr.pipe(process.stderr);
