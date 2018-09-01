@@ -7,12 +7,6 @@ import * as _ from "lodash";
 // External types
 import { Reflection } from "typedoc";
 
-/**
- * The final documentation JSON will contain an array of sections,
- * e.g. one for adapters, one for wrappers, etc. Each section will contain
- * documentation for classes that belong to that section.
- */
-
 enum HeaderTags {
   H1 ='# ',
   H2 ='## ',
@@ -107,7 +101,7 @@ interface Interface {
 /**
  * Given a file path to a Typedoc JSON output file, the
  * TypedocParser reads that file, generates a new more user-friendly
- * documentation JSON file.
+ * documentation markdown file.
  *
  * Example:
  *
@@ -156,7 +150,6 @@ class TypedocParser {
 
       if (isArray) {
           return `${param.type.elementType.name}[]`;
-          return `${param.name}: ${param.type.elementType.name}`;
       }
 
       // Handle case of function param..
@@ -234,6 +227,7 @@ class TypedocParser {
 
     private static returnType(signature) {
         const isArray = signature.type.type && signature.type.type === "array";
+        const isUnion = signature.type.type && signature.type.type === "union";
 
         // Deal with special case for arrays.
         if (isArray) {
@@ -321,6 +315,8 @@ class TypedocParser {
       let content = '';
       content += this.getHeaderMarkdown();
       content += this.getSectionsMarkdown();
+      content += this.getInterfacesHeader();
+      content += this.getInterfacesMarkdown();
 
       return content;
     }
@@ -378,6 +374,71 @@ class TypedocParser {
 
         content += `\n\n---\n\n`
       });
+
+      return content;
+    }
+
+    private getInterfacesHeader(): string {
+      return `${HeaderTags.H2} Interfaces\n`
+    }
+
+    private getInterfacesMarkdown(): string {
+      const tsTypes = this.getInterfaces();
+
+      let content = '';
+      _.each(tsTypes, tsType => {
+        content += this.getInterfaceMarkdown(tsType);
+      });
+
+      return content;
+    }
+
+    private getInterfaceMarkdown(tsType: any): string {
+      let content = '';
+      
+      content += `${HeaderTags.H4} ${tsType.name}\n`
+      content += TypedocParser.jsCodeBlock(
+        this.getInterfaceParametersMarkdown(tsType)
+      )
+
+      return content;
+    }
+
+    private getInterfaceParametersMarkdown(tsType: any): string {
+      let content = '';
+      content += `\{\n`
+      _.each(tsType.children, child => {
+        if (child.type) {
+          const isArray = child.type.type && child.type.type === "array";
+          const isUnion = child.type.type && child.type.type === "union";
+
+          // Deal with special case for arrays.
+          if (isArray) {
+              content += `  ${child.name}: ${child.type.elementType.name}[];\n`;
+              return;
+          }
+
+          // Deal with special case of unions
+          if (isUnion) {
+            content += `  ${child.name}: `
+
+            _.each(child.type.types, (type, index) => {
+              if (index) {
+                content += ' | '
+              }
+              content += `${type.name}`;
+            });
+            content += `;\n`
+            return;
+          }
+
+          content += `  ${child.name}: ${child.type.name};\n`;
+        } else {
+          content += `  ${child.name}: undefined;\n`;
+        }
+      });
+      
+      content += `\}`
 
       return content;
     }
