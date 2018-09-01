@@ -1,0 +1,6 @@
+#!/usr/bin/env node
+const exec = require('child_process').exec;
+const chainProcess = exec('yarn chain');
+
+chainProcess.stdout.pipe(process.stdout);
+chainProcess.stderr.pipe(process.stderr);
