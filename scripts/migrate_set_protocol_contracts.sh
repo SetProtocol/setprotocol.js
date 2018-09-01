@@ -1,14 +1,16 @@
 # #!/bin/bash
+
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
 NO_COLOR='\033[0m'
 
 mkdir -p logs
 
-SET_PROTOCOL_JS_REPO=`pwd`
-LOGS=$SET_PROTOCOL_JS_REPO/logs/set_protocol_contract_migration.txt
+CURRENT_DIR=`pwd`
+LOGS=$CURRENT_DIR/logs/set_protocol_contract_migration.txt
 
-SET_PROTOCOL_SMART_CONTRACTS=$SET_PROTOCOL_JS_REPO/node_modules/set-protocol-contracts
+SET_PROTOCOL_SMART_CONTRACTS=$CURRENT_DIR/node_modules/set-protocol-contracts
 
 cd $SET_PROTOCOL_SMART_CONTRACTS
 
@@ -27,6 +29,36 @@ truffle migrate --network development
 echo -e "\n"
 
 echo -e "${CYAN}Set Protocol Contracts migration complete!${NO_COLOR}"
+echo -e "\n"
+
+echo -e "${YELLOW} *     *             *     *        *${NO_COLOR}"
+echo -e "${YELLOW}           *       *                 ${NO_COLOR}"
+echo -e "${YELLOW}   *         * ▓▓▒▒▒▒▒░ *    *       ${NO_COLOR}"
+echo -e "${YELLOW}          *  ▓▓▓▒▒▒▒▒░░░░          * ${NO_COLOR}"
+echo -e "${YELLOW}*           ▓▓▓▓▒▒▒▒▒░░░░░*          ${NO_COLOR}"
+echo -e "${YELLOW}     *      ▓▓▓▓▓▓▒▒▒░░░░░           ${NO_COLOR}"
+echo -e "${YELLOW}             ▓▓▓▓▓▓▓▒▒░░░        *   ${NO_COLOR}"
+echo -e "${YELLOW}    *    *    ▓▓▓▓▓▓▓▓▓▓             ${NO_COLOR}"
+echo -e "${YELLOW}             ░░░▒▒▓▓▓▓▓▓▓   *        ${NO_COLOR}"
+echo -e "${YELLOW}*           ░░░░░▒▒▒▓▓▓▓▓▓           ${NO_COLOR}"
+echo -e "${YELLOW}      *     ░░░░░▒▒▒▒▒▓▓▓▓      *  * ${NO_COLOR}"
+echo -e "${YELLOW}            *░░░░▒▒▒▒▒▓▓▓            ${NO_COLOR}"
+echo -e "${YELLOW}               ░▒▒▒▒▒▓▓  *           ${NO_COLOR}"
+echo -e "${YELLOW} *          *        *  *   *      * ${NO_COLOR}"
+echo -e "${YELLOW}╔═══════════════════════════════════╗${NO_COLOR}"
+echo -e "${YELLOW}║                                   ║${NO_COLOR}"
+echo -e "${YELLOW}║   █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█   ║${NO_COLOR}"
+echo -e "${YELLOW}║   █                           █   ║${NO_COLOR}"
+echo -e "${YELLOW}║   █  Welcome to Set Protocol  █   ║${NO_COLOR}"
+echo -e "${YELLOW}║   █                           █   ║${NO_COLOR}"
+echo -e "${YELLOW}║   █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█   ║${NO_COLOR}"
+echo -e "${YELLOW}║                                   ║${NO_COLOR}"
+echo -e "${YELLOW}║      Your journey awaits you      ║${NO_COLOR}"
+echo -e "${YELLOW}║         Settler of Tokan          ║${NO_COLOR}"
+echo -e "${YELLOW}║                                   ║${NO_COLOR}"
+echo -e "${YELLOW}║         Vires in Numeris          ║${NO_COLOR}"
+echo -e "${YELLOW}║                                   ║${NO_COLOR}"
+echo -e "${YELLOW}╚═══════════════════════════════════╝${NO_COLOR}"
 echo -e "\n"
 
 echo -e "${GREEN}Dependency contract migrations complete, test chain is ready for use!${NO_COLOR}"
