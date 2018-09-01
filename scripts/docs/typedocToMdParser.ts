@@ -160,7 +160,7 @@ class TypedocParser {
             let returnType = '';
             _.each(param.type.elementType.types, (type, index) => {
               if (index) {
-                returnType += ' | '
+                returnType += ' \| '
               }
               returnType += `${type.name}`;
             });

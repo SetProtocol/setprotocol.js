@@ -126,8 +126,7 @@ export class OrderAPI {
   }
 
   /**
-   * Given an issuance order, check that the signature is valid, order has not expired,
-   * and
+   * Given an issuance order, check that the signature is valid, order has not expired.
    *
    * @param issuanceOrder    Signed Issuance Order to be validated
    * @param fillQuantity     Fill quantity to check if fillable
@@ -211,7 +210,7 @@ export class OrderAPI {
    * @param  signedIssuanceOrder       Signed issuance order to fill
    * @param  signature                 Signature of the order
    * @param  quantityToFill            Number of Set to fill in this call
-   * @param  orderData                 Bytes representation of orders used to fill issuance order
+   * @param  orders                    Bytes representation of orders used to fill issuance order
    * @param  txOpts                    The options for executing the transaction
    * @return                           A transaction hash
    */

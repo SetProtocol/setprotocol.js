@@ -109,9 +109,9 @@ export class ERC20Wrapper {
   /**
    * Gets the allowance of the spender by the owner account
    *
-   * @param  tokenAddress  Address of the token
-   * @param  ownerAddress  Address of the owner
-   * @param  spender       Address of the spender
+   * @param  tokenAddress      Address of the token
+   * @param  ownerAddress      Address of the owner
+   * @param  spenderAddress    Address of the spender
    * @return             The allowance of the spender
    */
   public async getAllowanceAsync(
