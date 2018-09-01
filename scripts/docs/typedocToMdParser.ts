@@ -196,10 +196,6 @@ class TypedocParser {
         return _.map(params, (param) => {
             const isOptional = param.flags && param.flags.isOptional;
 
-            // if (param.name === 'txOpts') {
-            //   console.log(param);
-            // }
-
             const paramType = TypedocParser.paramType(param);
 
             return `${param.name}${isOptional ? '?' : ''}: ${paramType}`;
