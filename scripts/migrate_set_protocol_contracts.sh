@@ -12,8 +12,6 @@ LOGS=$CURRENT_DIR/logs/set_protocol_contract_migration.txt
 
 SET_PROTOCOL_SMART_CONTRACTS=$CURRENT_DIR/node_modules/set-protocol-contracts
 
-BLOCKCHAIN=$CURRENT_DIR/node_modules/setprotocol.js/blockchain
-
 cd $SET_PROTOCOL_SMART_CONTRACTS
 
 sleep 3
