@@ -303,18 +303,6 @@ class TypedocParser {
         return paramInterfaces || [];
     }
 
-    private static getParameterTuple(signature: any): ParameterTuple {
-      let name;
-      let type;
-
-
-
-      return {
-        name,
-        type,
-      }
-    }
-
     // The path to the Typedoc input JSON file.
     private readonly filePath;
     // The typedoc JSON input, as read from the JSON file at `filePath`.
