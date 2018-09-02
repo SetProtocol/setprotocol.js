@@ -26,7 +26,7 @@ import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../er
 import { Assertions } from '../assertions';
 import { CoreWrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { TxData } from '../types/common';
+import { TxData, TxDataWithFrom } from '../types/common';
 
 /**
  * @title IssuanceAPI
@@ -60,7 +60,8 @@ export class IssuanceAPI {
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up
    */
-  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
+  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxDataWithFrom): Promise<string> {
+    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     await this.assertIssue(txOpts.from, setAddress, quantity);
 
     return await this.core.issue(setAddress, quantity, txOpts);
@@ -81,8 +82,9 @@ export class IssuanceAPI {
     quantity: BigNumber,
     withdraw: boolean,
     tokensToExclude: Address[],
-    txOpts?: TxData
+    txOpts: TxDataWithFrom
   ) {
+    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     await this.assertRedeem(txOpts.from, setAddress, quantity, withdraw, tokensToExclude);
 
    if (withdraw) {

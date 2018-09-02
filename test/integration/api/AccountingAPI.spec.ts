@@ -151,7 +151,7 @@ describe('CoreWrapper', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
       `
-        Expected userAddress to conform to schema /Address.
+        Expected txOpts.from to conform to schema /Address.
 
         Encountered: "invalidAddress"
 
@@ -314,7 +314,7 @@ describe('CoreWrapper', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
       `
-        Expected userAddress to conform to schema /Address.
+        Expected txOpts.from to conform to schema /Address.
 
         Encountered: "invalidAddress"
 

@@ -34,7 +34,7 @@ import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
 import { CoreWrapper } from '../wrappers';
 import { BigNumber, generateFutureTimestamp } from '../util';
-import { TxData } from '../types/common';
+import { TxData, TxDataWithFrom } from '../types/common';
 
 export {
   IssuanceOrder,
@@ -119,7 +119,8 @@ export class OrderAPI {
    * @param issuanceOrder    Issuance Order
    * @return                 EC Signature
    */
-  public async signOrderAsync(issuanceOrder: IssuanceOrder, txOpts?: TxData): Promise<ECSig> {
+  public async signOrderAsync(issuanceOrder: IssuanceOrder, txOpts: TxDataWithFrom): Promise<ECSig> {
+    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
     return await this.setProtocolUtils.signMessage(orderHash, txOpts.from);
@@ -218,8 +219,9 @@ export class OrderAPI {
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
-    txOpts?: TxData,
+    txOpts: TxDataWithFrom,
   ): Promise<string> {
+    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantityToFill, orders);
 
     const orderData = await this.setProtocolUtils.generateSerializedOrders(
