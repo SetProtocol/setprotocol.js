@@ -23,11 +23,31 @@ const inputFile = "./documentation/typedoc.json";
  */
 const outputFile = "./documentation/output.md";
 
+// Classes to include in our markdown file genreation
+const classes = [
+	{
+		name: 'SetProtocol',
+		apiPath: 'setProtocol',
+	},
+	{
+		name: 'OrderAPI',
+		apiPath: 'setProtocol.orders',
+	},
+	{
+		name: 'ERC20Wrapper',
+		apiPath: 'setProtocol.erc20',
+	},
+	{
+		name: 'SetTokenWrapper',
+		apiPath: 'setProtocol.setToken',
+	},
+]
+
 /**
  * An instance of a TypedocParser, which is capable of turning Typedoc JSON
  * into more human-friendly documentation instructions.
  */
-const parser = new Parser(inputFile);
+const parser = new Parser(inputFile, classes);
 
 console.log(`Parsing and Generating Markdown "${inputFile}"`);
 parser.parse();

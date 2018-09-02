@@ -16,6 +16,11 @@ enum HeaderTags {
   H6 ='###### ',
 }
 
+interface IncludedClass {
+    name: string;
+    apiPath: string;
+}
+
 interface Documentation {
     sections: SectionDocumentation[];
     interfaces: Interface[];
@@ -138,14 +143,19 @@ class TypedocParser {
         return firstChild.kindString === "Class" && typedocObj.name !== '"index"';
     }
 
-    private static methodSignature(methodName: string, signature: any, params: string) {
+    private static methodSignature(
+      methodName: string,
+      signature: any,
+      params: string,
+      apiPath: string,
+    ) {
         const returnType = TypedocParser.returnType(signature);
 
         if (params === "") {
-            return `${methodName}(): ${returnType}`;
+            return `${apiPath}.${methodName}(): ${returnType}`;
         }
 
-        return `${methodName}(
+        return `${apiPath}.${methodName}(
   ${params},
 ): ${returnType || "void"}`;
     }
@@ -232,14 +242,18 @@ class TypedocParser {
     }
 
     private static sectionName(classObj): string {
-        // E.g. "adapters" from Typedoc name "adapters/simple_interest_loan_adapter".
-        return classObj.name.split("/")[0].substr(1);
+        // Take the class name as the section name
+        return classObj.children[0].name;
     }
 
     private static getClassMethods(classObj) {
         return _.filter(classObj.children[0].children, (child) => {
             return child.kindString === "Method";
         });
+    }
+
+    private static getClassName(classObj) {
+        return classObj.children[0].name;
     }
 
     private static isPromise(signature): boolean {
@@ -305,9 +319,13 @@ class TypedocParser {
     private input: TypedocInput;
     // The documentation output, based on the Typedoc data.
     private output: string;
+    // HACK: Classes that we want to parse and the paths to be appended 
+    // in argument generation
+    private includedClasses: IncludedClass[];
 
-    constructor(filePath: string) {
+    constructor(filePath: string, includedClasses: IncludedClass[]) {
         this.filePath = filePath;
+        this.includedClasses = includedClasses;
     }
 
     public parse(): void {
@@ -365,7 +383,6 @@ class TypedocParser {
     private getClassMarkdown(classes: any) {
       let content = '';
       _.each(classes, classInfo => {
-        content += `${HeaderTags.H3} ${classInfo.name}\n\n`
         content += this.getMethodsMarkdown(classInfo.methods);
       });
 
@@ -489,14 +506,22 @@ class TypedocParser {
     }
 
     private classesPerSection(): SectionToTypedocClasses {
-        const allClasses = this.getClasses();
+        const allClasses = this.getIncludedClasses();
 
         return _.groupBy(allClasses, TypedocParser.sectionName);
     }
 
-    private getClasses(): object[] {
+    private getIncludedClasses(): object[] {
         // Return all of the typedoc objects that refer to classes.
-        return _.filter(this.input.children, TypedocParser.isClass.bind(this));
+        const allClasses: any[] = _.filter(this.input.children, TypedocParser.isClass.bind(this));
+
+        // Only include the classes that are in the classes passed into the constructor
+        const filteredClasses = _.filter(allClasses, _class => {
+          const currentClassName = _class.children[0].name;
+          return _.some(this.includedClasses, _includedClass => _includedClass.name === currentClassName);
+        });
+
+        return filteredClasses;
     }
 
     private getClassData(classes): ClassDocumentation[] {
@@ -513,6 +538,10 @@ class TypedocParser {
     private getMethodData(classObj): MethodDocumentation[] {
         const methods = TypedocParser.getClassMethods(classObj);
         const publicMethods = _.filter(methods, publicMethod => publicMethod.flags.isPublic);
+        const className = TypedocParser.getClassName(classObj);
+
+        const { apiPath } = _.find(this.includedClasses, _class => _class.name === className);
+
 
         return _.map(publicMethods, (method) => {
             const signature = method.signatures[0];
@@ -536,7 +565,7 @@ class TypedocParser {
                 returnType: TypedocParser.returnType(signature),
                 returnComment: TypedocParser.returnComment(signature),
                 source: `${method.sources[0].fileName}#L${method.sources[0].line}`,
-                signature: TypedocParser.methodSignature(method.name, signature, params),
+                signature: TypedocParser.methodSignature(method.name, signature, params, apiPath),
                 tableParams,
             };
         });
