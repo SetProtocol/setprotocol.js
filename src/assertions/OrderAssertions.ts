@@ -32,45 +32,25 @@ export class OrderAssertions {
   public async isIssuanceOrderFillable(
     core: CoreWrapper,
     signedIssuanceOrder: SignedIssuanceOrder,
-    fillQuantity: BigNumber = undefined,
+    fillQuantity: BigNumber,
   ): Promise<void> {
     const issuanceOrder: IssuanceOrder = _.omit(signedIssuanceOrder, 'signature');
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
-    // Checks that the signature is valid
     await coreAssertions.isValidSignature(
-      issuanceOrder,
+      orderHash,
+      issuanceOrder.makerAddress,
       signedIssuanceOrder.signature,
       coreAPIErrors.SIGNATURE_MISMATCH(),
     );
 
     // Checks the order has not expired
-    commonAssertions.isValidExpiration(
-      issuanceOrder.expiration,
-      coreAPIErrors.EXPIRATION_PASSED(),
-    );
+    commonAssertions.isValidExpiration(issuanceOrder.expiration, coreAPIErrors.EXPIRATION_PASSED());
 
     // Checks that it has not been fully filled already
-    const orderFills = await core.getOrderFills(orderHash);
-
-    // Check order cancels
-    const orderCancels = await core.getOrderCancels(orderHash);
-
-    // Add order fills and order hash. Ensure that its greater than 0
-    const quantityUnfillable = orderFills.plus(orderCancels);
-    const quantityFillable = issuanceOrder.quantity.minus(quantityUnfillable);
-
-    commonAssertions.greaterThanZero(
-      quantityFillable,
-      coreAPIErrors.FULLY_FILLED()
-    );
-
-    if (fillQuantity) {
-      commonAssertions.isGreaterOrEqualThan(
-        fillQuantity,
-        quantityFillable,
-        coreAPIErrors.FULLY_FILLED()
-      );
-    }
+    const filledAmount = await core.getOrderFills(orderHash);
+    const cancelledAmount = await core.getOrderCancels(orderHash);
+    const fillableQuantity = issuanceOrder.quantity.sub(filledAmount).sub(cancelledAmount);
+    commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FULLY_FILLED());
   }
 }

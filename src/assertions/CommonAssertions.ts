@@ -43,6 +43,12 @@ export class CommonAssertions {
     }
   }
 
+  public isNotEmptyArray(array: any[], errorMessage: string) {
+    if (array.length == 0) {
+      throw new Error(errorMessage);
+    }
+  }
+
   public isValidExpiration(expiration: BigNumber, errorMessage: string) {
     if (Date.now() > expiration.times(1000).toNumber()) {
       throw new Error(errorMessage);

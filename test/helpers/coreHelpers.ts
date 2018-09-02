@@ -290,9 +290,19 @@ export const deployTokensForSetWithApproval = async (
   return componentAddresses;
 };
 
+export const deployTokenAsync = async (
+  provider: Provider,
+  owner: Address = DEFAULT_ACCOUNT,
+): Promise<StandardTokenMockContract> => {
+  const tokens = await deployTokensAsync(1, provider, owner);
+
+  return _.first(tokens);
+};
+
 export const deployTokensAsync = async (
   tokenCount: number,
   provider: Provider,
+  owner: Address = DEFAULT_ACCOUNT,
 ): Promise<StandardTokenMockContract[]> => {
   const web3 = new Web3(provider);
 
@@ -303,7 +313,7 @@ export const deployTokensAsync = async (
 
   const mockTokenPromises = _.times(tokenCount, async index => (
     await standardTokenMockContract.new(
-      DEFAULT_ACCOUNT,
+      owner,
       DEPLOYED_TOKEN_QUANTITY,
       `Component ${index}`,
       index,
@@ -377,12 +387,13 @@ export const registerExchange = async (
 export const approveForTransferAsync = async (
   tokens: StandardTokenMockContract[],
   spender: Address,
+  from: Address = DEFAULT_ACCOUNT,
 ) => {
   const approvePromises = _.map(tokens, token =>
     token.approve.sendTransactionAsync(
       spender,
       UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-      TX_DEFAULTS,
+      { from },
     ),
   );
 

@@ -20,18 +20,17 @@ import { BigNumber } from '../util';
 
 export const coreAPIErrors = {
   ARRAYS_EQUAL_LENGTHS: (firstArray: string, secondArray: string) =>
-   `The ${firstArray} and ${secondArray} arrays need to be equal lengths.`,
+    `The ${firstArray} and ${secondArray} arrays need to be equal lengths.`,
+  EXPIRATION_PASSED: () => 'Expiration date has already passed.',
+  EMPTY_ARRAY: (variable: string) => `The array ${variable} cannot be empty.`,
   FULLY_FILLED: () => 'The order has already been fully filled or cancelled.',
+  INVALID_NATURAL_UNIT: () => 'Natural unit must be larger than minimum unit allowed by components.',
   INVALID_ORDER_HASH_SCHEMA: () => `The order hash passed in is not in Bytes32 schema`,
+  QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT: () => 'Quantity needs to be multiple of natural unit.',
   QUANTITY_NEEDS_TO_BE_POSITIVE: (quantity: BigNumber) =>
     `The quantity ${quantity.toString()} inputted needs to be greater than zero.`,
-  STRING_CANNOT_BE_EMPTY: (variable: string) => `The string ${variable} cannot be empty.`,
-  INVALID_NATURAL_UNIT: () =>
-    'Natural unit must be larger than minimum unit allowed by components.',
-  QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT: () =>
-    'Quantity needs to be multiple of natural unit.',
   SIGNATURE_MISMATCH: () => 'Signature does not match issuance order attributes.',
-  EXPIRATION_PASSED: () => 'Expiration date has already passed.',
+  STRING_CANNOT_BE_EMPTY: (variable: string) => `The string ${variable} cannot be empty.`,
 };
 
 export const coreAssertionErrors = {
