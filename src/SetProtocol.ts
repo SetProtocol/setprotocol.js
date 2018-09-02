@@ -17,12 +17,13 @@
 'use strict';
 
 import * as Web3 from 'web3';
+import { TransactionReceipt } from 'ethereum-types';
 import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
 import { Provider } from '@0xproject/types';
 
-import { AccountingAPI, FactoryAPI, IssuanceAPI, OrderAPI } from './api';
+import { AccountingAPI, BlockchainAPI, FactoryAPI, IssuanceAPI, OrderAPI } from './api';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
-import { BigNumber, instantiateWeb3 } from './util';
+import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
 import { TxData, TxDataWithFrom } from './types/common';
 
 export interface SetProtocolConfig {
@@ -47,6 +48,7 @@ class SetProtocol {
   private accounting: AccountingAPI;
   private factory: FactoryAPI;
   private issuance: IssuanceAPI;
+  private blockchain: BlockchainAPI;
 
   /**
    * When creating an issuance order without a relayer token for a fee, you must use Solidity
@@ -269,6 +271,29 @@ class SetProtocol {
    */
   public async isValidSetAsync(setAddress: Address): Promise<boolean> {
     return await this.core.isValidSetAsync(setAddress);
+  }
+
+  /**
+   * Polls the Ethereum blockchain until the specified
+   * transaction has been mined or the timeout limit is reached, whichever
+   * occurs first.
+   *
+   * @param  txHash                 the hash of the transaction
+   * @param  pollingIntervalMs      the interval at which the blockchain should be polled
+   * @param  timeoutMs              the number of milliseconds until this process times out. If
+   *                                no value is provided, a default value is used
+   * @return                        the transaction receipt resulting from the mining process
+   */
+  public async awaitTransactionMinedAsync(
+    txHash: string,
+    pollingIntervalMs ?: number,
+    timeoutMs ?: number,
+  ): Promise<TransactionReceipt> {
+    return await this.blockchain.awaitTransactionMinedAsync(
+      txHash,
+      pollingIntervalMs,
+      timeoutMs,
+    );
   }
 }
 

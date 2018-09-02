@@ -57,8 +57,7 @@ const { expect } = chai;
 
 let currentSnapshotId: number;
 
-
-describe('CoreWrapper', () => {
+describe('AccountingAPI', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
