@@ -17,8 +17,9 @@
 'use strict';
 
 import { AccountingAPI } from './AccountingAPI';
+import { BlockchainAPI } from './BlockchainAPI';
 import { FactoryAPI } from './FactoryAPI';
 import { IssuanceAPI } from './IssuanceAPI';
 import { OrderAPI } from './OrderAPI';
 
-export { AccountingAPI, FactoryAPI, IssuanceAPI, OrderAPI };
+export { AccountingAPI, BlockchainAPI, FactoryAPI, IssuanceAPI, OrderAPI };
