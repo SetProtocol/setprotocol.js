@@ -111,8 +111,6 @@ describe('BlockchainAPI', () => {
       const [approvalLog] = formattedLogs;
       const { owner, spender, value } = approvalLog.args;
 
-      expect(receipt);
-
       expect(approvalLog.address).to.equal(standardToken.address);
       expect(owner).to.equal(subjectCaller);
       expect(spender).to.equal(subjectSpender);
