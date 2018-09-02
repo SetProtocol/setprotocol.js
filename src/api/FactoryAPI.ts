@@ -97,9 +97,9 @@ export class FactoryAPI {
    */
   public async getSetAddressFromCreateTxHash(txHash: string): Promise<Address> {
     this.assert.schema.isValidBytes32('txHash', txHash);
-    const transactinLogs = await getFormattedLogsFromTxHash(this.web3, txHash);
+    const transactionLogs = await getFormattedLogsFromTxHash(this.web3, txHash);
 
-    return extractNewSetTokenAddressFromLogs(transactinLogs);
+    return extractNewSetTokenAddressFromLogs(transactionLogs);
   }
 
   /* ============ Private Assertions ============ */
