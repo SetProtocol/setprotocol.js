@@ -152,7 +152,7 @@ class TypedocParser {
         const returnType = TypedocParser.returnType(signature);
 
         if (params === "") {
-            return `${methodName}(): ${returnType}`;
+            return `${apiPath}.${methodName}(): ${returnType}`;
         }
 
         return `${apiPath}.${methodName}(
