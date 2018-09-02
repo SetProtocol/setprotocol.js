@@ -29,6 +29,13 @@ export interface TxData {
   nonce?: number;
 }
 
+export interface TxDataWithFrom {
+  from: Address;
+  gas?: UInt;
+  gasPrice?: UInt;
+  nonce?: number;
+}
+
 export interface TxDataPayable extends TxData {
   value?: BigNumber;
 }

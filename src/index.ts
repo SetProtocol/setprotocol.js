@@ -23,7 +23,7 @@ import { Provider } from '@0xproject/types';
 import { AccountingAPI, FactoryAPI, IssuanceAPI, OrderAPI } from './api';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
 import { BigNumber, instantiateWeb3 } from './util';
-import { TxData } from './types/common';
+import { TxData, TxDataWithFrom } from './types/common';
 
 export interface SetProtocolConfig {
   coreAddress: Address;
@@ -122,7 +122,7 @@ class SetProtocol {
    * @param  txOpts        The options for executing the transaction
    * @return               Transaction hash
    */
-  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
+  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxDataWithFrom): Promise<string> {
     return await this.issuance.issueAsync(setAddress, quantity, txOpts);
   }
 
@@ -143,7 +143,7 @@ class SetProtocol {
     quantity: BigNumber,
     withdraw: boolean = true,
     tokensToExclude: Address[],
-    txOpts?: TxData,
+    txOpts: TxDataWithFrom,
   ): Promise<string> {
     return await this.issuance.redeemAsync(setAddress, quantity, withdraw, tokensToExclude, txOpts);
   }
@@ -156,7 +156,11 @@ class SetProtocol {
    * @param  txOpts              The options for executing the transaction
    * @return                     Transaction hash
    */
-  public async depositAsync(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
+  public async depositAsync(
+    tokenAddresses: Address[],
+    quantities: BigNumber[],
+    txOpts: TxDataWithFrom
+  ): Promise<string> {
     return await this.accounting.depositAsync(tokenAddresses, quantities, txOpts);
   }
 
@@ -168,7 +172,11 @@ class SetProtocol {
    * @param  txOpts              The options for executing the transaction
    * @return                     Transaction hash
    */
-  public async withdrawAsync(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
+  public async withdrawAsync(
+    tokenAddresses: Address[],
+    quantities: BigNumber[],
+    txOpts: TxDataWithFrom
+  ): Promise<string> {
     return await this.accounting.withdrawAsync(tokenAddresses, quantities, txOpts);
   }
 

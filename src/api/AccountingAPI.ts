@@ -25,7 +25,7 @@ import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../er
 import { Assertions } from '../assertions';
 import { CoreWrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { TxData } from '../types/common';
+import { TxData, TxDataWithFrom } from '../types/common';
 
 /**
  * @title AccountingAPI
@@ -59,7 +59,12 @@ export class AccountingAPI {
    * @param  txOpts              The options for executing the transaction
    * @return                     Transaction hash
    */
-  public async depositAsync(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
+  public async depositAsync(
+    tokenAddresses: Address[],
+    quantities: BigNumber[],
+    txOpts: TxDataWithFrom
+  ): Promise<string> {
+    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     await this.assertDeposit(txOpts.from, tokenAddresses, quantities);
 
     if (tokenAddresses.length === 1) {
@@ -77,7 +82,12 @@ export class AccountingAPI {
    * @param  txOpts              The options for executing the transaction
    * @return                     Transaction hash
    */
-  public async withdrawAsync(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
+  public async withdrawAsync(
+    tokenAddresses: Address[],
+    quantities: BigNumber[],
+    txOpts: TxDataWithFrom
+  ): Promise<string> {
+    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     await this.assertWithdraw(txOpts.from, tokenAddresses, quantities);
 
     if (tokenAddresses.length === 1) {
