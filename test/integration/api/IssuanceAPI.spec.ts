@@ -86,6 +86,7 @@ describe('IssuanceAPI', () => {
 
   let componentTokens: StandardTokenMockContract[];
   let setComponentUnit: BigNumber;
+  let componentUnits: BigNumber[];
   let setToken: SetTokenContract;
   let naturalUnit: BigNumber;
 
@@ -113,13 +114,14 @@ describe('IssuanceAPI', () => {
 
     componentTokens = await deployTokensAsync(3, provider);
     setComponentUnit = ether(4);
+    componentUnits = componentTokens.map(token => setComponentUnit);
     naturalUnit = ether(2);
     setToken = await deploySetTokenAsync(
       web3,
       core,
       setTokenFactory.address,
       componentTokens.map(token => token.address),
-      componentTokens.map(token => setComponentUnit),
+      componentUnits,
       naturalUnit,
     );
 
@@ -229,6 +231,13 @@ describe('IssuanceAPI', () => {
       let componentWithInsufficientBalance: StandardTokenMockContract;
 
       beforeEach(async () => {
+        // Only the first component will have a large unit
+        componentUnits = _.map(componentTokens, (token, index) => {
+          if (index > 0) {
+            return new BigNumber(1);
+          }
+          return setComponentUnit;
+        });
         componentWithInsufficientBalance = _.first(componentTokens);
         const naturalUnit = ether(2);
         const componentUnit = ether(4);
