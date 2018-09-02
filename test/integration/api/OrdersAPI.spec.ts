@@ -55,7 +55,7 @@ import { CoreWrapper } from '../../../src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
 import { OrderAPI } from '../../../src/api';
 import { ZERO } from '../../../src/constants';
-import { Web3Utils, generateFutureTimestamp } from '../../../src/util';
+import { ether, Web3Utils, generateFutureTimestamp } from '../../../src/util';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -68,7 +68,6 @@ import {
   deployVaultContract,
 } from '../../helpers/coreHelpers';
 import { deployTakerWalletWrapperContract, deployZeroExExchangeWrapperContract } from '../../helpers/exchangeHelpers';
-import { ether } from '../../helpers/units';
 
 ChaiSetup.configure();
 const { expect } = chai;
