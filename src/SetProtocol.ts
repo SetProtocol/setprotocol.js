@@ -17,10 +17,11 @@
 'use strict';
 
 import * as Web3 from 'web3';
+import { TransactionReceipt } from 'ethereum-types';
 import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
 import { Provider } from '@0xproject/types';
 
-import { AccountingAPI, FactoryAPI, IssuanceAPI, OrderAPI } from './api';
+import { AccountingAPI, BlockchainAPI, FactoryAPI, IssuanceAPI, OrderAPI } from './api';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
 import { TxData, TxDataWithFrom } from './types/common';
@@ -47,6 +48,7 @@ class SetProtocol {
   private accounting: AccountingAPI;
   private factory: FactoryAPI;
   private issuance: IssuanceAPI;
+  private blockchain: BlockchainAPI;
 
   /**
    * When creating an issuance order without a relayer token for a fee, you must use Solidity
