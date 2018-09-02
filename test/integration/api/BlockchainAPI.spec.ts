@@ -37,8 +37,8 @@ import { BlockchainAPI } from '../../../src/api';
 import { BigNumber, getFormattedLogsFromReceipt } from '../../../src/util';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
 import { TX_DEFAULTS, ZERO } from '../../../src/constants';
-import { deployTokenAsync } from '../../helpers/coreHelpers';
-import { deployVaultContract, getVaultBalances } from '../../helpers/vaultHelpers';
+import { deployTokenAsync, deployVaultContract  } from '../../helpers/coreHelpers';
+import { getVaultBalances } from '../../helpers/vaultHelpers';
 import { testSets, TestSet } from '../../testSets';
 import { Web3Utils } from '../../../src/util/Web3Utils';
 
