@@ -54,8 +54,8 @@ export class AccountingAPI {
   /**
    * Deposits tokens into the vault
    *
-   * @param  tokenAddresses[]    Addresses of contracts to withdraw (typically SetToken or ERC20)
-   * @param  quantities[]        Quantities in units of the tokens to deposit into the vault
+   * @param  tokenAddresses      Addresses of contracts to withdraw (typically SetToken or ERC20)
+   * @param  quantities          Quantities in units of the tokens to deposit into the vault
    * @param  txOpts              The options for executing the transaction
    * @return                     Transaction hash
    */
@@ -72,8 +72,8 @@ export class AccountingAPI {
   /**
    * Withdraws tokens from the vault
    *
-   * @param  tokenAddresses[]    Addresses of contracts to withdraw (typically SetToken or ERC20)
-   * @param  quantities[]        Quantities in units of the tokens to withdraw from the vault
+   * @param  tokenAddresses      Addresses of contracts to withdraw (typically SetToken or ERC20)
+   * @param  quantities          Quantities in units of the tokens to withdraw from the vault
    * @param  txOpts              The options for executing the transaction
    * @return                     Transaction hash
    */

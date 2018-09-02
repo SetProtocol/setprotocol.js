@@ -7,12 +7,6 @@ import * as _ from "lodash";
 // External types
 import { Reflection } from "typedoc";
 
-/**
- * The final documentation JSON will contain an array of sections,
- * e.g. one for adapters, one for wrappers, etc. Each section will contain
- * documentation for classes that belong to that section.
- */
-
 enum HeaderTags {
   H1 ='# ',
   H2 ='## ',
@@ -79,12 +73,18 @@ interface SignatureParameter {
     name: string;
     type: ParameterType;
     comment: any;
+    flags: any;
 }
 
 interface ParameterType {
     name: string;
     type: any;
     elementType: any;
+}
+
+interface ParameterTuple {
+    name: string;
+    type: string;
 }
 
 interface TypedocInput {
@@ -107,7 +107,7 @@ interface Interface {
 /**
  * Given a file path to a Typedoc JSON output file, the
  * TypedocParser reads that file, generates a new more user-friendly
- * documentation JSON file.
+ * documentation markdown file.
  *
  * Example:
  *
@@ -153,11 +153,25 @@ class TypedocParser {
 
     private static paramType(param: SignatureParameter) {
       const isArray = param.type && param.type.type === "array";
+      const isUnion = param.type && param.type.type === "union";
 
       if (isArray) {
+          if (param.type.elementType.type === 'union') {
+            let returnType = '';
+            _.each(param.type.elementType.types, (type, index) => {
+              if (index) {
+                returnType += ' \| '
+              }
+              returnType += `${type.name}`;
+            });
+
+            return `(${returnType})[]`
+          }
+
           return `${param.type.elementType.name}[]`;
-          return `${param.name}: ${param.type.elementType.name}`;
       }
+
+      // TODO - the case for a union type is not handled yet
 
       // Handle case of function param..
       const isReflection = param.type && param.type.type === "reflection";
@@ -180,9 +194,11 @@ class TypedocParser {
         }
 
         return _.map(params, (param) => {
+            const isOptional = param.flags && param.flags.isOptional;
+
             const paramType = TypedocParser.paramType(param);
 
-            return `${param.name}: ${paramType}`;
+            return `${param.name}${isOptional ? '?' : ''}: ${paramType}`;
         }).join(",\n  ");
     }
 
@@ -234,6 +250,7 @@ class TypedocParser {
 
     private static returnType(signature) {
         const isArray = signature.type.type && signature.type.type === "array";
+        const isUnion = signature.type.type && signature.type.type === "union";
 
         // Deal with special case for arrays.
         if (isArray) {
@@ -321,6 +338,8 @@ class TypedocParser {
       let content = '';
       content += this.getHeaderMarkdown();
       content += this.getSectionsMarkdown();
+      content += this.getInterfacesHeader();
+      content += this.getInterfacesMarkdown();
 
       return content;
     }
@@ -378,6 +397,71 @@ class TypedocParser {
 
         content += `\n\n---\n\n`
       });
+
+      return content;
+    }
+
+    private getInterfacesHeader(): string {
+      return `${HeaderTags.H2} Interfaces\n`
+    }
+
+    private getInterfacesMarkdown(): string {
+      const tsTypes = this.getInterfaces();
+
+      let content = '';
+      _.each(tsTypes, tsType => {
+        content += this.getInterfaceMarkdown(tsType);
+      });
+
+      return content;
+    }
+
+    private getInterfaceMarkdown(tsType: any): string {
+      let content = '';
+      
+      content += `${HeaderTags.H4} ${tsType.name}\n`
+      content += TypedocParser.jsCodeBlock(
+        this.getInterfaceParametersMarkdown(tsType)
+      )
+
+      return content;
+    }
+
+    private getInterfaceParametersMarkdown(tsType: any): string {
+      let content = '';
+      content += `\{\n`
+      _.each(tsType.children, child => {
+        if (child.type) {
+          const isArray = child.type.type && child.type.type === "array";
+          const isUnion = child.type.type && child.type.type === "union";
+
+          // Deal with special case for arrays.
+          if (isArray) {
+              content += `  ${child.name}: ${child.type.elementType.name}[];\n`;
+              return;
+          }
+
+          // Deal with special case of unions
+          if (isUnion) {
+            content += `  ${child.name}: `
+
+            _.each(child.type.types, (type, index) => {
+              if (index) {
+                content += ' | '
+              }
+              content += `${type.name}`;
+            });
+            content += `;\n`
+            return;
+          }
+
+          content += `  ${child.name}: ${child.type.name};\n`;
+        } else {
+          content += `  ${child.name}: undefined;\n`;
+        }
+      });
+      
+      content += `\}`
 
       return content;
     }

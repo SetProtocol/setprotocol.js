@@ -6,7 +6,7 @@
  * node scripts/documentation/parse_typedoc.js
  */
 
-const Parser = require("./typedocToMdParser");
+const Parser = require("../../documentation/typedocToMdParser");
 
 /**
  * The location of a Typedoc generated JSON file, that contains documentation
