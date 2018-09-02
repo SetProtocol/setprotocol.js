@@ -3,85 +3,93 @@ import * as _ from 'lodash';
 
 import { Provider } from 'ethereum-types';
 import {
+  CoreContract,
+  ERC20Wrapper,
   TakerWalletWrapper,
-  ZeroExExchangeWrapper,
   TakerWalletWrapperContract,
-  ZeroExExchangeWrapperContract,
   TransferProxyContract,
+  ZeroExExchangeWrapper,
+  ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
-import { Address } from 'set-protocol-utils';
+import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import { BigNumber } from '../../src/util';
 import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
-import {
-  DEFAULT_GAS_PRICE,
-  DEFAULT_GAS_LIMIT,
-} from '../../src/constants';
+import { TX_DEFAULTS } from '../../src/constants';
 
 const contract = require('truffle-contract');
 
-const txDefaults = {
-  from: DEFAULT_ACCOUNT,
-  gasPrice: DEFAULT_GAS_PRICE,
-  gas: DEFAULT_GAS_LIMIT,
-};
 
-export const deployTakerWalletExchangeWrapper = async (
-  transferProxyAddress: Address,
-  coreAddress: Address,
+export const deployTakerWalletWrapperContract = async (
+  transferProxy: TransferProxyContract,
+  core: CoreContract,
   provider: Provider,
-) => {
+): Promise<TakerWalletWrapperContract> => {
   const web3 = new Web3(provider);
 
-  const takerWalletWrapperContract = contract(TakerWalletWrapper);
-  takerWalletWrapperContract.setProvider(provider);
-  takerWalletWrapperContract.defaults(txDefaults);
+  const truffleTakerWalletWrapperContract = contract(TakerWalletWrapper);
+  truffleTakerWalletWrapperContract.setProvider(provider);
+  truffleTakerWalletWrapperContract.setNetwork(50);
+  truffleTakerWalletWrapperContract.defaults(TX_DEFAULTS);
 
-  const takerWalletWrapperInstance = await takerWalletWrapperContract.new(
-    transferProxyAddress,
-    txDefaults,
-  );
+  const truffleERC20WrapperContract = contract(ERC20Wrapper);
+  truffleERC20WrapperContract.setProvider(provider);
+  truffleERC20WrapperContract.setNetwork(50);
+  truffleERC20WrapperContract.defaults(TX_DEFAULTS);
 
-  const takerWalletWrapperContractWrapper = await TakerWalletWrapperContract.at(
-    takerWalletWrapperInstance.address,
+  const deployedERC20Wrapper = await truffleERC20WrapperContract.new();
+  await truffleTakerWalletWrapperContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
+
+  const deployedTakerWalletWrapper = await truffleTakerWalletWrapperContract.new(transferProxy.address, TX_DEFAULTS);
+  const takerWalletWrapperContract = await TakerWalletWrapperContract.at(
+    deployedTakerWalletWrapper.address,
     web3,
-    txDefaults,
-  );
-  const transferProxyContractWrapper = await TransferProxyContract.at(
-    transferProxyAddress,
-    web3,
-    txDefaults,
+    TX_DEFAULTS,
   );
 
-  takerWalletWrapperContractWrapper.addAuthorizedAddress.sendTransactionAsync(
-    coreAddress,
-    txDefaults,
-  );
-  transferProxyContractWrapper.addAuthorizedAddress.sendTransactionAsync(
-    takerWalletWrapperInstance.address,
-    txDefaults,
+  await takerWalletWrapperContract.addAuthorizedAddress.sendTransactionAsync(core.address, TX_DEFAULTS);
+  await transferProxy.addAuthorizedAddress.sendTransactionAsync(deployedTakerWalletWrapper.address, TX_DEFAULTS);
+  await core.registerExchange.sendTransactionAsync(
+    SetProtocolUtils.EXCHANGES.TAKER_WALLET,
+    takerWalletWrapperContract.address,
+    TX_DEFAULTS
   );
 
-  return takerWalletWrapperInstance.address;
+  return takerWalletWrapperContract;
 };
 
-export const deployZeroExExchangeWrapper = async (
+export const deployZeroExExchangeWrapperContract = async (
   zeroExExchangeAddress: Address,
   zeroExProxyAddress: Address,
-  transferProxyAddress: Address,
+  transferProxy: TransferProxyContract,
+  core: CoreContract,
   provider: Provider,
-) => {
+): Promise<ZeroExExchangeWrapperContract> => {
   const web3 = new Web3(provider);
 
-  const zeroExExchangeWrapperContract = contract(ZeroExExchangeWrapper);
-  zeroExExchangeWrapperContract.setProvider(provider);
-  zeroExExchangeWrapperContract.defaults(txDefaults);
+  const truffleZeroExExchangeWrapperContract = contract(ZeroExExchangeWrapper);
+  truffleZeroExExchangeWrapperContract.setProvider(provider);
+  truffleZeroExExchangeWrapperContract.setNetwork(50);
+  truffleZeroExExchangeWrapperContract.defaults(TX_DEFAULTS);
 
-  const zeroExExchangeWrapperInstance = await zeroExExchangeWrapperContract.new(
+  const deployedZeroExExchangeWrapper = await truffleZeroExExchangeWrapperContract.new(
     zeroExExchangeAddress,
     zeroExProxyAddress,
-    transferProxyAddress,
-    txDefaults,
+    transferProxy.address,
+    TX_DEFAULTS,
   );
 
-  return zeroExExchangeWrapperInstance.address;
+  const zeroExExchangeWrapperContract = await ZeroExExchangeWrapperContract.at(
+    deployedZeroExExchangeWrapper.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  await zeroExExchangeWrapperContract.addAuthorizedAddress.sendTransactionAsync(core.address, TX_DEFAULTS);
+  await core.registerExchange.sendTransactionAsync(
+    SetProtocolUtils.EXCHANGES.ZERO_EX,
+    zeroExExchangeWrapperContract.address,
+    TX_DEFAULTS
+  );
+
+  return zeroExExchangeWrapperContract;
 };

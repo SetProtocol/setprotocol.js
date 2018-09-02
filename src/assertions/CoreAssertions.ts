@@ -17,14 +17,14 @@
 'use strict';
 
 import * as _ from 'lodash';
-import { SetProtocolUtils, ECSig, IssuanceOrder } from 'set-protocol-utils';
 import * as ethUtil from 'ethereumjs-util';
+import * as Web3 from 'web3';
+import { Address, ECSig, IssuanceOrder, SetProtocolUtils } from 'set-protocol-utils';
+
 import { SignatureUtils } from '../util/signatureUtils';
 import { coreAssertionErrors } from '../errors';
 import { BigNumber } from '../util';
-import * as Web3 from 'web3';
 
-const setProtocolUtils = new SetProtocolUtils();
 
 export class CoreAssertions {
   /**
@@ -51,23 +51,11 @@ export class CoreAssertions {
     }
   }
 
-  public async isValidSignature(
-    issuanceOrder: IssuanceOrder,
-    signature: ECSig,
-    errorMessage: string
-  ): Promise<boolean> {
-    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-
-    const isValid = SignatureUtils.isValidSignature(
-      orderHash,
-      signature,
-      issuanceOrder.makerAddress,
-    );
-
-    if (!isValid) {
+  public isValidSignature(data: string, signerAddress: Address, signature: ECSig, errorMessage: string): boolean {
+    if (!SignatureUtils.isValidSignature(data, signature, signerAddress)) {
       throw new Error(errorMessage);
+    } else {
+      return true;
     }
-
-    return true;
   }
 }

@@ -28,6 +28,8 @@ import {
   TakerWalletOrder,
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
+import { SetTokenContract, StandardTokenMockContract } from 'set-protocol-contracts';
+
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
 import { CoreWrapper } from '../wrappers';
@@ -35,6 +37,8 @@ import { BigNumber, generateFutureTimestamp } from '../util';
 import { TxData } from '../types/common';
 
 export {
+  IssuanceOrder,
+  SignedIssuanceOrder,
   TakerWalletOrder,
   ZeroExSignedFillOrder
 };
@@ -58,10 +62,8 @@ export class OrderAPI {
    *                to use for interacting with the Ethereum network.
    * @param core    The address of the Set Core contract
    */
-  constructor(
-    web3: Web3 = undefined,
-    core: CoreWrapper = undefined,
-  ) {
+  constructor(web3: Web3 = undefined, core: CoreWrapper = undefined) {
+    this.web3 = web3;
     this.core = core;
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
     this.assert = new Assertions(this.web3);
@@ -82,41 +84,30 @@ export class OrderAPI {
    * Generates a timestamp represented as seconds since unix epoch.
    * The timestamp is intended to be used to generate the expiration of an issuance order
    *
-   * @param    Seconds from the present time
-   * @return   Unix timestamp (in seconds since unix epoch)
+   * @param seconds   Seconds from the present time
+   * @return          Unix timestamp (in seconds since unix epoch)
    */
   public generateExpirationTimestamp(seconds: number): BigNumber {
     return generateFutureTimestamp(seconds);
   }
 
   /**
-   * Checks if the supplied hex encoded order hash is valid.
-   * Note: Valid means it has the expected format, not that an order
-   * with the orderHash exists.
-   *
-   * @param.   Hex encoded order hash
-   */
-  public isValidOrderHashOrThrow(orderHash: Bytes): void {
-    this.assert.schema.isValidBytes32('orderHash', orderHash);
-  }
-
-  /**
-   * Checks whether a particular issuance order and signature is valid
+   * Checks whether a signature produced for an issuance order is valid. The signer
    * A signature is valid only if the issuance order is signed by the maker
    * The function throws upon receiving an invalid signature.
    *
-   * @param  issuanceOrder    The issuance order the signature was generated from
+   * @param  issuanceOrder    An object conforming to the IssuanceOrder interface
    * @param  signature        The EC Signature to check
-   * @return boolean
+   * @return                  Whether the recovered signature matches the data hash
    */
-  public async isValidSignatureOrThrowAsync(
-    issuanceOrder: IssuanceOrder,
-    signature: ECSig,
-  ): Promise<boolean> {
+  public async isValidSignatureOrThrowAsync(issuanceOrder: IssuanceOrder, signature: ECSig): Promise<boolean> {
+    const orderData = SetProtocolUtils.hashOrderHex(issuanceOrder);
+
     return await this.assert.core.isValidSignature(
-      issuanceOrder,
+      orderData,
+      issuanceOrder.makerAddress,
       signature,
-      coreAPIErrors.SIGNATURE_MISMATCH(),
+      coreAPIErrors.SIGNATURE_MISMATCH()
     );
   }
 
@@ -128,11 +119,9 @@ export class OrderAPI {
    * @param issuanceOrder    Issuance Order
    * @return                 EC Signature
    */
-  public async signOrderAsync(
-    issuanceOrder: IssuanceOrder,
-    txOpts?: TxData,
-  ): Promise<ECSig> {
+  public async signOrderAsync(issuanceOrder: IssuanceOrder, txOpts?: TxData): Promise<ECSig> {
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
+
     return await this.setProtocolUtils.signMessage(orderHash, txOpts.from);
   }
 
@@ -141,17 +130,10 @@ export class OrderAPI {
    * and
    *
    * @param issuanceOrder    Signed Issuance Order to be validated
-   * @param fillQuantity     (optional) a fill quantity to check if fillable
+   * @param fillQuantity     Fill quantity to check if fillable
    */
-  public async validateOrderFillableOrThrowAsync(
-    signedIssuanceOrder: SignedIssuanceOrder,
-    fillQuantity?: BigNumber,
-  ) {
-    await this.assert.order.isIssuanceOrderFillable(
-      this.core,
-      signedIssuanceOrder,
-      fillQuantity
-    );
+  public async validateOrderFillableOrThrowAsync(signedIssuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber) {
+    await this.assert.order.isIssuanceOrderFillable(this.core, signedIssuanceOrder, fillQuantity);
   }
 
   /**
@@ -169,6 +151,7 @@ export class OrderAPI {
    * @param  relayerToken              Address of token paid to relayer
    * @param  makerRelayerFee           Number of token paid to relayer by maker
    * @param  takerRelayerFee           Number of token paid tp relayer by taker
+   * @param  salt                      Salt
    * @return                           A transaction hash
    */
   public async createSignedOrderAsync(
@@ -184,8 +167,9 @@ export class OrderAPI {
     relayerToken: Address,
     makerRelayerFee: BigNumber,
     takerRelayerFee: BigNumber,
+    salt: BigNumber = SetProtocolUtils.generateSalt(),
   ): Promise<SignedIssuanceOrder> {
-    return await this.core.createOrder(
+    await this.assertCreateOrder(
       setAddress,
       quantity,
       requiredComponents,
@@ -197,8 +181,28 @@ export class OrderAPI {
       relayerAddress,
       relayerToken,
       makerRelayerFee,
-      takerRelayerFee
+      takerRelayerFee,
     );
+
+    const order: IssuanceOrder = {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      makerRelayerFee,
+      takerRelayerFee,
+      requiredComponents,
+      requiredComponentAmounts,
+      salt,
+    };
+    const orderHash = SetProtocolUtils.hashOrderHex(order);
+
+    const signature = await this.setProtocolUtils.signMessage(orderHash, makerAddress);
+    return { ...order, signature } as SignedIssuanceOrder;
   }
 
   /**
@@ -217,7 +221,15 @@ export class OrderAPI {
     orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
     txOpts?: TxData,
   ): Promise<string> {
-    return await this.core.fillOrder(signedIssuanceOrder, quantityToFill, orders, txOpts);
+    await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantityToFill, orders);
+
+    const orderData = await this.setProtocolUtils.generateSerializedOrders(
+      signedIssuanceOrder.makerToken,
+      signedIssuanceOrder.makerTokenAmount,
+      orders
+    );
+
+    return await this.core.fillOrder(signedIssuanceOrder, quantityToFill, orderData, txOpts);
   }
 
   /**
@@ -233,6 +245,120 @@ export class OrderAPI {
     quantityToCancel: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
+    await this.assertCancelOrder(issuanceOrder, quantityToCancel);
+
     return await this.core.cancelOrder(issuanceOrder, quantityToCancel, txOpts);
+  }
+
+  /* ============ Private Assertions ============ */
+
+  private async assertCreateOrder(
+    setAddress: Address,
+    quantity: BigNumber,
+    requiredComponents: Address[],
+    requiredComponentAmounts: BigNumber[],
+    makerAddress: Address,
+    makerToken: Address,
+    makerTokenAmount: BigNumber,
+    expiration: BigNumber,
+    relayerAddress: Address,
+    relayerToken: Address,
+    makerRelayerFee: BigNumber,
+    takerRelayerFee: BigNumber,
+  ) {
+    const issuanceOrder = {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      makerRelayerFee,
+      takerRelayerFee,
+      requiredComponents,
+      requiredComponentAmounts,
+    } as IssuanceOrder;
+    await this.commonIssuanceOrderAssertions(issuanceOrder);
+  }
+
+  private async assertFillOrder(
+    userAddress: Address,
+    signedIssuanceOrder: SignedIssuanceOrder,
+    quantityToFill: BigNumber,
+    orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
+  ) {
+    const { signature, ...issuanceOrder } = signedIssuanceOrder;
+    await this.commonIssuanceOrderAssertions(issuanceOrder);
+
+    this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
+    this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
+
+    await this.assert.core.isValidSignature(
+      SetProtocolUtils.hashOrderHex(issuanceOrder),
+      issuanceOrder.makerAddress,
+      signature,
+      coreAPIErrors.SIGNATURE_MISMATCH()
+    );
+  }
+
+  private async assertCancelOrder(issuanceOrder: IssuanceOrder, quantityToCancel: BigNumber) {
+    await this.commonIssuanceOrderAssertions(issuanceOrder);
+
+    this.assert.common.greaterThanZero(quantityToCancel, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToCancel));
+  }
+
+  private async commonIssuanceOrderAssertions(issuanceOrder: IssuanceOrder) {
+    const {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      makerRelayerFee,
+      takerRelayerFee,
+      requiredComponents,
+      requiredComponentAmounts,
+      salt,
+    } = issuanceOrder;
+
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('makerAddress', makerAddress);
+    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
+    this.assert.schema.isValidAddress('relayerToken', relayerToken);
+    this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
+    this.assert.common.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.assert.common.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
+        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
+        const token = await StandardTokenMockContract.at(tokenAddress, this.web3, {});
+        await this.assert.erc20.implementsERC20(token);
+
+        this.assert.common.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+
+    const makerTokenContract = await StandardTokenMockContract.at(makerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(makerTokenContract);
+    this.assert.common.greaterThanZero(makerTokenAmount, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount));
+
+    const relayerTokenContract = await StandardTokenMockContract.at(relayerToken, this.web3, {});
+    await this.assert.erc20.implementsERC20(relayerTokenContract);
+
+    this.assert.common.isValidExpiration(expiration, coreAPIErrors.EXPIRATION_PASSED());
   }
 }

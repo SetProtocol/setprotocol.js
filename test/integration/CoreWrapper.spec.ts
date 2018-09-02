@@ -27,13 +27,14 @@ import * as Web3 from 'web3';
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as ethUtil from 'ethereumjs-util';
-
 import { Core, Vault } from 'set-protocol-contracts';
 import {
   Address,
   Bytes,
   SetProtocolTestUtils,
   SetProtocolUtils,
+  SignedIssuanceOrder,
+  TakerWalletOrder,
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 
@@ -41,6 +42,7 @@ import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../src/constants/accounts';
 import { testSets, TestSet } from '../testSets';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util/logs';
 import { CoreWrapper } from '../../src/wrappers';
+import { OrderAPI } from '../../src/api';
 import {
   CoreContract,
   DetailedERC20Contract,
@@ -53,7 +55,7 @@ import {
 } from 'set-protocol-contracts';
 import { NULL_ADDRESS, TX_DEFAULTS, ZERO } from '../../src/constants';
 import { Web3Utils } from '../../src/util/Web3Utils';
-import { BigNumber } from '../../src/util';
+import { BigNumber, generateFutureTimestamp } from '../../src/util';
 import {
   addAuthorizationAsync,
   approveForFill,
@@ -63,24 +65,21 @@ import {
   deploySetTokenAsync,
   deploySetTokenFactory,
   deploySetTokenFactoryContract,
+  deployTokenAsync,
   deployTokensAsync,
   deployTokensForSetWithApproval,
   deployTransferProxyContract,
   deployVaultContract,
-  getTokenBalances,
   initializeCoreWrapper,
-  registerExchange,
 } from '../helpers/coreHelpers';
 import { ether } from '../../src/util/units';
 import { getVaultBalances } from '../helpers/vaultHelpers';
-import { deployTakerWalletExchangeWrapper, deployZeroExExchangeWrapper } from '../helpers/exchangeHelpers';
+import { deployTakerWalletWrapperContract, deployZeroExExchangeWrapperContract } from '../helpers/exchangeHelpers';
 
 const contract = require('truffle-contract');
-
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
-
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
@@ -548,487 +547,219 @@ describe('CoreWrapper', () => {
     });
   });
 
-  /* ============ Create Issuance Order ============ */
-
-  describe('createOrder', async () => {
-    let setTokenFactoryAddress: Address;
-    let setTokenAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
-
-    beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
-
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
-      );
-
-      // Create a Set
-      const txHash = await coreWrapper.create(
-        setTokenFactoryAddress,
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        '',
-        { from: DEFAULT_ACCOUNT },
-      );
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
-    });
-
-    test('creates a new issuance order with valid parameters', async () => {
-      const order = {
-        setAddress: setTokenAddress,
-        quantity: new BigNumber(123),
-        requiredComponents: componentAddresses,
-        requiredComponentAmounts: componentAddresses.map(() => new BigNumber(1)),
-        makerAddress: DEFAULT_ACCOUNT,
-        makerToken: componentAddresses[0],
-        makerTokenAmount: new BigNumber(4),
-        expiration: SetProtocolUtils.generateTimestamp(60),
-        relayerAddress: ACCOUNTS[1].address,
-        relayerToken: componentAddresses[0],
-        makerRelayerFee: new BigNumber(1),
-        takerRelayerFee: new BigNumber(1),
-      };
-
-      const signedIssuanceOrder = await coreWrapper.createOrder(
-        order.setAddress,
-        order.quantity,
-        order.requiredComponents,
-        order.requiredComponentAmounts,
-        order.makerAddress,
-        order.makerToken,
-        order.makerTokenAmount,
-        order.expiration,
-        order.relayerAddress,
-        order.relayerToken,
-        order.makerRelayerFee,
-        order.takerRelayerFee,
-      );
-
-      const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });
-
-      const signature = await setProtocolUtils.signMessage(
-        SetProtocolUtils.hashOrderHex(orderWithSalt),
-        order.makerAddress,
-      );
-
-      expect(signature).to.deep.equal(signedIssuanceOrder.signature);
-    });
-  });
-
-  /* ============ Fill Issuance Order ============ */
-
   describe('fillOrder', async () => {
-    let setTokenFactoryAddress: Address;
-    let setTokenAddress: Address;
-    let takerWalletWrapperAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
+    let ordersAPI: OrderAPI;
+    let issuanceOrderMaker: Address;
+    let issuanceOrderQuantity: BigNumber;
+    let setToken: SetTokenContract;
+
+    let subjectSignedIssuanceOrder: SignedIssuanceOrder;
+    let subjectQuantityToFill: BigNumber;
+    let subjectOrdersData: string;
+    let subjectCaller: Address;
 
     beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
-      takerWalletWrapperAddress = await deployTakerWalletExchangeWrapper(
-        coreWrapper.transferProxyAddress,
-        coreWrapper.coreAddress,
-        provider,
-      );
+      ordersAPI = new OrderAPI(web3, coreWrapper);
 
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
-      );
-
-      // Create a Set
-      const txHash = await coreWrapper.create(
-        setTokenFactoryAddress,
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        '',
-        { from: DEFAULT_ACCOUNT },
-      );
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
-    });
-
-    test('fills an issuance order with valid parameters with 0x orders', async () => {
-      const order = {
-        setAddress: setTokenAddress,
-        quantity: new BigNumber(20),
-        requiredComponents: componentAddresses,
-        requiredComponentAmounts: componentAddresses.map(() => new BigNumber(20)),
-        makerAddress: DEFAULT_ACCOUNT,
-        makerToken: componentAddresses[0],
-        makerTokenAmount: new BigNumber(20),
-        expiration: SetProtocolUtils.generateTimestamp(60),
-        relayerAddress: ACCOUNTS[1].address,
-        relayerToken: componentAddresses[0],
-        makerRelayerFee: new BigNumber(6),
-        takerRelayerFee: new BigNumber(6),
-      };
-      const takerAddress = ACCOUNTS[2].address;
-      const zeroExMakerAddress = ACCOUNTS[3].address;
-
-      const signedIssuanceOrder = await coreWrapper.createOrder(
-        order.setAddress,
-        order.quantity,
-        order.requiredComponents,
-        order.requiredComponentAmounts,
-        order.makerAddress,
-        order.makerToken,
-        order.makerTokenAmount,
-        order.expiration,
-        order.relayerAddress,
-        order.relayerToken,
-        order.makerRelayerFee,
-        order.takerRelayerFee,
-      );
-
-      // Deploy and register 0x wrapper
-      const zeroExExchangeWrapperAddress = await deployZeroExExchangeWrapper(
+      await deployTakerWalletWrapperContract(transferProxy, core, provider);
+      await deployZeroExExchangeWrapperContract(
         SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
         SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
-        coreWrapper.transferProxyAddress,
+        transferProxy,
+        core,
         provider,
       );
 
-      await registerExchange(
+      const issuanceOrderTaker = ACCOUNTS[0].address;
+      issuanceOrderMaker = ACCOUNTS[1].address;
+      const relayerAddress = ACCOUNTS[2].address;
+      const zeroExOrderMaker = ACCOUNTS[3].address;
+
+      const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
+      const secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
+      const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+
+      const componentTokens = [firstComponent, secondComponent];
+      const setComponentUnit = ether(4);
+      const componentAddresses = componentTokens.map(token => token.address);
+      const componentUnits = componentTokens.map(token => setComponentUnit);
+      const naturalUnit = ether(2);
+      setToken = await deploySetTokenAsync(
         web3,
-        coreWrapper.coreAddress,
-        SetProtocolUtils.EXCHANGES.ZERO_EX,
-        zeroExExchangeWrapperAddress,
-      );
-
-      const coreInstance = await CoreContract.at(coreWrapper.coreAddress, web3, TX_DEFAULTS);
-      const zeroExExchangeWrapperInstance = await ZeroExExchangeWrapperContract.at(
-        zeroExExchangeWrapperAddress,
-        web3,
-        TX_DEFAULTS,
-      );
-
-      await zeroExExchangeWrapperInstance.addAuthorizedAddress.sendTransactionAsync(
-        coreWrapper.coreAddress,
-        TX_DEFAULTS,
-      );
-
-      const {
-        makerAddress,
-        makerToken,
-        makerTokenAmount,
-        relayerAddress,
-        relayerToken,
-      } = signedIssuanceOrder;
-
-      await approveForFill(
-        web3,
+        core,
+        setTokenFactory.address,
         componentAddresses,
-        makerAddress,
+        componentUnits,
+        naturalUnit,
+      );
+
+      await approveForTransferAsync([makerToken, relayerToken], transferProxy.address, issuanceOrderMaker);
+      await approveForTransferAsync([firstComponent, relayerToken], transferProxy.address, issuanceOrderTaker);
+      await approveForTransferAsync(
+        [secondComponent],
+        SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        zeroExOrderMaker
+      );
+
+      issuanceOrderQuantity = ether(4);
+      const issuanceOrderMakerTokenAmount = ether(10);
+      const issuanceOrderExpiration = generateFutureTimestamp(10000);
+      const requiredComponents = [firstComponent.address, secondComponent.address];
+      const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
+      const issuanceOrderMakerRelayerFee = ZERO;
+      const issuanceOrderTakerRelayerFee = ZERO;
+      subjectSignedIssuanceOrder = await ordersAPI.createSignedOrderAsync(
+        setToken.address,
+        issuanceOrderQuantity,
+        requiredComponents,
+        requredComponentAmounts,
+        issuanceOrderMaker,
+        makerToken.address,
+        issuanceOrderMakerTokenAmount,
+        issuanceOrderExpiration,
         relayerAddress,
-        takerAddress,
-        coreWrapper.transferProxyAddress,
+        relayerToken.address,
+        issuanceOrderMakerRelayerFee,
+        issuanceOrderTakerRelayerFee,
       );
 
-      await approveForZeroEx(
-        web3,
-        componentAddresses,
-        zeroExMakerAddress,
-        takerAddress,
-      );
+      const takerWalletOrder = {
+        takerTokenAddress: firstComponent.address,
+        takerTokenAmount: requredComponentAmounts[0],
+      } as TakerWalletOrder;
 
-      const defaultZeroExOrderTakerTokenAmount = new BigNumber(10);
       const zeroExOrder: ZeroExSignedFillOrder = await setProtocolUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                       // senderAddress
-        zeroExMakerAddress,                 // makerAddress
-        NULL_ADDRESS,                       // takerAddress
-        ZERO,                               // makerFee
-        ZERO,                               // takerFee
-        order.requiredComponentAmounts[0],  // makerAssetAmount, full amount of first component needed for issuance
-        defaultZeroExOrderTakerTokenAmount, // takerAssetAmount
-        componentAddresses[0],              // makerAssetAddress
-        makerToken,                         // takerAssetAddress
+        NULL_ADDRESS,                                  // senderAddress
+        zeroExOrderMaker,                              // makerAddress
+        NULL_ADDRESS,                                  // takerAddress
+        ZERO,                                          // makerFee
+        ZERO,                                          // takerFee
+        requredComponentAmounts[1],                    // makerAssetAmount
+        ether(10).div(2),                              // takerAssetAmount
+        secondComponent.address,                       // makerAssetAddress
+        makerToken.address,                            // takerAssetAddress
         SetProtocolUtils.generateSalt(),               // salt
         SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS, // exchangeAddress
-        NULL_ADDRESS,                       // feeRecipientAddress
-        SetProtocolUtils.generateTimestamp(10),         // expirationTimeSeconds
-        defaultZeroExOrderTakerTokenAmount,  // fillAmount
+        NULL_ADDRESS,                                  // feeRecipientAddress
+        generateFutureTimestamp(10000),                // expirationTimeSeconds
+        ether(10).div(2),                              // amount of zeroExOrder to fill
       );
 
-      // Second 0x order
-      const secondZeroExOrderTakerTokenAmount = new BigNumber(10);
-      const secondZeroExOrder: ZeroExSignedFillOrder = await setProtocolUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                       // senderAddress
-        zeroExMakerAddress,                 // makerAddress
-        NULL_ADDRESS,                       // takerAddress
-        ZERO,                               // makerFee
-        ZERO,                               // takerFee
-        order.requiredComponentAmounts[1],  // makerAssetAmount, full amount of second component needed for issuance
-        secondZeroExOrderTakerTokenAmount,  // takerAssetAmount
-        componentAddresses[1],              // makerAssetAddress
-        makerToken,                         // takerAssetAddress
-        SetProtocolUtils.generateSalt(),               // salt
-        SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS, // exchangeAddress
-        NULL_ADDRESS,                       // feeRecipientAddress
-        SetProtocolUtils.generateTimestamp(10),         // expirationTimeSeconds
-        secondZeroExOrderTakerTokenAmount,  // fillAmount
+      subjectOrdersData = await setProtocolUtils.generateSerializedOrders(
+        subjectSignedIssuanceOrder.makerToken,
+        subjectSignedIssuanceOrder.makerTokenAmount,
+        [takerWalletOrder, zeroExOrder]
       );
-      const zeroExExchangeOrders = [
-        zeroExOrder,
-        secondZeroExOrder,
-      ];
-
-      const quantityToFill = new BigNumber(20);
-      const txHash = await coreWrapper.fillOrder(
-        signedIssuanceOrder,
-        quantityToFill,
-        zeroExExchangeOrders,
-        { from: takerAddress },
-      );
-
-      const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });
-      const orderFillsAmount =
-        await coreInstance.orderFills.callAsync(SetProtocolUtils.hashOrderHex(orderWithSalt));
-
-      expect(quantityToFill.toNumber()).to.equal(orderFillsAmount.toNumber());
-
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogFill');
+      subjectQuantityToFill = issuanceOrderQuantity;
+      subjectCaller = issuanceOrderTaker;
     });
 
-    test('fills an issuance order with valid parameters with taker wallet orders', async () => {
-      const order = {
-        setAddress: setTokenAddress,
-        quantity: new BigNumber(80),
-        requiredComponents: componentAddresses,
-        requiredComponentAmounts: componentAddresses.map(() => new BigNumber(20)),
-        makerAddress: DEFAULT_ACCOUNT,
-        makerToken: componentAddresses[0],
-        makerTokenAmount: new BigNumber(6),
-        expiration: SetProtocolUtils.generateTimestamp(60),
-        relayerAddress: ACCOUNTS[1].address,
-        relayerToken: componentAddresses[0],
-        makerRelayerFee: new BigNumber(6),
-        takerRelayerFee: new BigNumber(6),
-      };
-      const takerAddress = ACCOUNTS[2].address;
-
-      const signedIssuanceOrder = await coreWrapper.createOrder(
-        order.setAddress,
-        order.quantity,
-        order.requiredComponents,
-        order.requiredComponentAmounts,
-        order.makerAddress,
-        order.makerToken,
-        order.makerTokenAmount,
-        order.expiration,
-        order.relayerAddress,
-        order.relayerToken,
-        order.makerRelayerFee,
-        order.takerRelayerFee,
+    async function subject(): Promise<string> {
+      return await coreWrapper.fillOrder(
+        subjectSignedIssuanceOrder,
+        subjectQuantityToFill,
+        subjectOrdersData,
+        { from: subjectCaller }
       );
+    }
 
-      const {
-        makerAddress,
-        makerToken,
-        makerTokenAmount,
-        relayerAddress,
-        relayerToken,
-      } = signedIssuanceOrder;
+    test('issues the set to the order maker', async () => {
+      const existingUserSetTokenBalance = await setToken.balanceOf.callAsync(issuanceOrderMaker);
 
-      await approveForFill(
-        web3,
-        componentAddresses,
-        makerAddress,
-        relayerAddress,
-        takerAddress,
-        coreWrapper.transferProxyAddress,
-      );
+      await subject();
 
-      await registerExchange(
-        web3,
-        coreWrapper.coreAddress,
-        SetProtocolUtils.EXCHANGES.TAKER_WALLET,
-        takerWalletWrapperAddress
-      );
-
-      const takerWalletOrders = _.map(componentAddresses, componentAddress => (
-        {
-          takerTokenAddress: componentAddress,
-          takerTokenAmount: new BigNumber(20),
-        }
-      ));
-      const quantityToFill = new BigNumber(40);
-      const txHash = await coreWrapper.fillOrder(
-        signedIssuanceOrder,
-        quantityToFill,
-        takerWalletOrders,
-        { from: takerAddress },
-      );
-
-      const coreInstance = await CoreContract.at(coreWrapper.coreAddress, web3, TX_DEFAULTS);
-
-      const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });
-      const orderFillsAmount =
-        await coreInstance.orderFills.callAsync(SetProtocolUtils.hashOrderHex(orderWithSalt));
-
-      expect(quantityToFill.toNumber()).to.equal(orderFillsAmount.toNumber());
-
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogFill');
+      const expectedUserSetTokenBalance = existingUserSetTokenBalance.add(issuanceOrderQuantity);
+      const newUserSetTokenBalance = await setToken.balanceOf.callAsync(issuanceOrderMaker);
+      expect(newUserSetTokenBalance).to.eql(expectedUserSetTokenBalance);
     });
   });
-
-  /* ============ Cancel Issuance Order ============ */
 
   describe('cancelOrder', async () => {
-    let setTokenFactoryAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
-    let setTokenAddress: Address;
+    let ordersAPI: OrderAPI;
+
+    let subjectSignedIssuanceOrder: SignedIssuanceOrder;
+    let subjectCancelQuantity: BigNumber;
+    let subjectCaller: Address;
 
     beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
+      ordersAPI = new OrderAPI(web3, coreWrapper);
 
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
-      );
+      const issuanceOrderTaker = ACCOUNTS[0].address;
+      const issuanceOrderMaker = ACCOUNTS[1].address;
+      const relayerAddress = ACCOUNTS[2].address;
+      const zeroExOrderMaker = ACCOUNTS[3].address;
 
-      // Create a Set
-      const txHash = await coreWrapper.create(
-        setTokenFactoryAddress,
+      const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
+      const secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
+      const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+
+      const componentTokens = [firstComponent, secondComponent];
+      const setComponentUnit = ether(4);
+      const componentAddresses = componentTokens.map(token => token.address);
+      const componentUnits = componentTokens.map(token => setComponentUnit);
+      const naturalUnit = ether(2);
+      const setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
         componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        '',
-        { from: DEFAULT_ACCOUNT },
+        componentUnits,
+        naturalUnit,
       );
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+
+      const issuanceOrderQuantity = ether(4);
+      const issuanceOrderMakerTokenAmount = ether(10);
+      const issuanceOrderExpiration = generateFutureTimestamp(10000);
+      const requiredComponents = [firstComponent.address, secondComponent.address];
+      const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
+      const issuanceOrderMakerRelayerFee = ZERO;
+      const issuanceOrderTakerRelayerFee = ZERO;
+      subjectSignedIssuanceOrder = await ordersAPI.createSignedOrderAsync(
+        setToken.address,
+        issuanceOrderQuantity,
+        requiredComponents,
+        requredComponentAmounts,
+        issuanceOrderMaker,
+        makerToken.address,
+        issuanceOrderMakerTokenAmount,
+        issuanceOrderExpiration,
+        relayerAddress,
+        relayerToken.address,
+        issuanceOrderMakerRelayerFee,
+        issuanceOrderTakerRelayerFee,
+      );
+      subjectCancelQuantity = issuanceOrderQuantity;
+      subjectCaller = issuanceOrderMaker;
     });
 
-    test('cancels an issuance order with valid parameters', async () => {
-      const order = {
-        setAddress: setTokenAddress,
-        quantity: new BigNumber(100),
-        requiredComponents: componentAddresses,
-        requiredComponentAmounts: componentAddresses.map(() => new BigNumber(1)),
-        makerAddress: DEFAULT_ACCOUNT,
-        makerToken: componentAddresses[0],
-        makerTokenAmount: new BigNumber(4),
-        expiration: SetProtocolUtils.generateTimestamp(60),
-        relayerAddress: ACCOUNTS[1].address,
-        relayerToken: componentAddresses[0],
-        makerRelayerFee: new BigNumber(1),
-        takerRelayerFee: new BigNumber(1),
-      };
-
-      const signedIssuanceOrder = await coreWrapper.createOrder(
-        order.setAddress,
-        order.quantity,
-        order.requiredComponents,
-        order.requiredComponentAmounts,
-        order.makerAddress,
-        order.makerToken,
-        order.makerTokenAmount,
-        order.expiration,
-        order.relayerAddress,
-        order.relayerToken,
-        order.makerRelayerFee,
-        order.takerRelayerFee,
+    async function subject(): Promise<string> {
+      return await coreWrapper.cancelOrder(
+        subjectSignedIssuanceOrder,
+        subjectCancelQuantity,
+        { from: subjectCaller }
       );
+    }
 
-      const orderWithSalt = Object.assign({}, order, { salt: signedIssuanceOrder.salt });
+    test('updates the cancel amount for the order', async () => {
+      const { signature, ...issuanceOrder } = subjectSignedIssuanceOrder;
+      const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
+      const existingCancelAmount = await core.orderCancels.callAsync(orderHash);
 
-      const quantityToCancel = new BigNumber(10);
+      await subject();
 
-      const txHash = await coreWrapper.cancelOrder(
-        orderWithSalt,
-        quantityToCancel,
-        { from: DEFAULT_ACCOUNT },
-      );
-
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-
-      const coreInstance = await CoreContract.at(coreWrapper.coreAddress, web3, TX_DEFAULTS);
-
-      const orderCancelsAmount =
-        await coreInstance.orderCancels.callAsync(SetProtocolUtils.hashOrderHex(orderWithSalt));
-
-      expect(quantityToCancel.toNumber()).to.equal(orderCancelsAmount.toNumber());
-      expect(formattedLogs[formattedLogs.length - 1].event).to.equal('LogCancel');
+      const expectedCancelAmounts = existingCancelAmount.add(subjectCancelQuantity);
+      const newCancelAmount = await core.orderCancels.callAsync(orderHash);
+      expect(newCancelAmount).to.bignumber.equal(expectedCancelAmounts);
     });
   });
 
-  /* ============ Core State Getters ============ */
-
   describe('Core State Getters', async () => {
-    let setTokenFactoryAddress: Address;
-    let setTokenAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
-
-    beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
-
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
-      );
-
-      // Create a Set
-      const txHash = await coreWrapper.create(
-        setTokenFactoryAddress,
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        '',
-        { from: DEFAULT_ACCOUNT },
-      );
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
-      setTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
-    });
-
     test('gets exchange address', async () => {
-      const takerWalletWrapperAddress = await deployTakerWalletExchangeWrapper(
-        coreWrapper.transferProxyAddress,
-        coreWrapper.coreAddress,
-        provider,
-      );
-
-      await registerExchange(
-        web3,
-        coreWrapper.coreAddress,
-        SetProtocolUtils.EXCHANGES.TAKER_WALLET,
-        takerWalletWrapperAddress
-      );
-
-      const exchangeAddress = await coreWrapper.getExchangeAddress(
-        SetProtocolUtils.EXCHANGES.TAKER_WALLET,
-      );
-      expect(exchangeAddress).to.equal(takerWalletWrapperAddress);
+      const takerWalletWrapper = await deployTakerWalletWrapperContract(transferProxy, core, provider);
+      const exchangeAddress = await coreWrapper.getExchangeAddress(SetProtocolUtils.EXCHANGES.TAKER_WALLET);
+      expect(exchangeAddress).to.equal(takerWalletWrapper.address);
     });
 
 
@@ -1045,24 +776,24 @@ describe('CoreWrapper', () => {
     test('gets factory addresses', async () => {
       const factoryAddresses = await coreWrapper.getFactories();
       expect(factoryAddresses.length).to.equal(1);
-      expect(factoryAddresses[0]).to.equal(setTokenFactoryAddress);
+      expect(factoryAddresses[0]).to.equal(setTokenFactory.address);
     });
 
     test('gets Set addresses', async () => {
       const setAddresses = await coreWrapper.getSetAddresses();
       expect(setAddresses.length).to.equal(1);
-      expect(setAddresses[0]).to.equal(setTokenAddress);
+      expect(setAddresses[0]).to.equal(setToken.address);
     });
 
     test('gets is valid factory address', async () => {
-      let isValidVaultAddress = await coreWrapper.isValidFactoryAsync(setTokenFactoryAddress);
+      let isValidVaultAddress = await coreWrapper.isValidFactoryAsync(setTokenFactory.address);
       expect(isValidVaultAddress).to.equal(true);
       isValidVaultAddress = await coreWrapper.isValidFactoryAsync(NULL_ADDRESS);
       expect(isValidVaultAddress).to.equal(false);
     });
 
     test('gets is valid Set address', async () => {
-      let isValidSetAddress = await coreWrapper.isValidSetAsync(setTokenAddress);
+      let isValidSetAddress = await coreWrapper.isValidSetAsync(setToken.address);
       expect(isValidSetAddress).to.equal(true);
       isValidSetAddress = await coreWrapper.isValidSetAsync(NULL_ADDRESS);
       expect(isValidSetAddress).to.equal(false);

@@ -24,3 +24,4 @@ export { Web3Utils } from './Web3Utils';
 export { generateFutureTimestamp } from './timeStampUtils';
 export { generateTxOpts } from './transactionUtils';
 export { SignatureUtils } from './signatureUtils';
+export { ether } from './units';
