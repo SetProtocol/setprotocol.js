@@ -60,6 +60,8 @@ export class SetTokenAPI {
    * @return            The factory address
    */
   public async getFactoryAsync(setAddress: Address): Promise<Address> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+
     return await this.setToken.factory(setAddress);
   }
 
@@ -70,6 +72,8 @@ export class SetTokenAPI {
    * @return            An array of addresses
    */
   public async getComponentsAsync(setAddress: Address): Promise<Address[]> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+
     return await this.setToken.getComponents(setAddress);
   }
 
@@ -80,6 +84,8 @@ export class SetTokenAPI {
    * @return            The natural unit of the Set
    */
   public async getNaturalUnitAsync(setAddress: Address): Promise<BigNumber> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+
     return await this.setToken.naturalUnit(setAddress);
   }
 
@@ -91,6 +97,8 @@ export class SetTokenAPI {
    *                    correspond to the component tokens in the Set
    */
   public async getUnitsAsync(setAddress: Address): Promise<BigNumber[]> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+
     return await this.setToken.getUnits(setAddress);
   }
 
