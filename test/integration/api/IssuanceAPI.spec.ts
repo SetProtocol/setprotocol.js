@@ -246,10 +246,6 @@ describe('IssuanceAPI', () => {
       });
 
       test('throws', async () => {
-        console.log(componentTokens.map(token => token.address));
-
-        console.log(componentWithInsufficientBalance.address);
-
         return expect(subject()).to.be.rejectedWith(
           `User does not have enough balance of token at address ${componentWithInsufficientBalance.address}`
         );
