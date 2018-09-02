@@ -34,9 +34,8 @@ import { ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { TxData } from '../types/common';
-import { BigNumber, generateTxOpts } from '../util';
 import { DetailedERC20Contract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
-import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../util/logs';
+import { BigNumber, extractNewSetTokenAddressFromLogs, generateTxOpts, getFormattedLogsFromTxHash } from '../util';
 
 /**
  * @title CoreWrapper
@@ -64,21 +63,11 @@ export class CoreWrapper {
     this.web3 = web3;
     this.contracts = new ContractWrapper(this.web3);
     this.assert = new Assertions(this.web3);
-
-    this.assert.schema.isValidAddress('coreAddress', coreAddress);
-    this.coreAddress = coreAddress;
-
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
 
-    if (transferProxyAddress) {
-      this.assert.schema.isValidAddress('transferProxyAddress', transferProxyAddress);
-      this.transferProxyAddress = transferProxyAddress;
-    }
-
-    if (vaultAddress) {
-      this.assert.schema.isValidAddress('vaultAddress', vaultAddress);
-      this.vaultAddress = vaultAddress;
-    }
+    this.coreAddress = coreAddress;
+    this.transferProxyAddress = transferProxyAddress;
+    this.vaultAddress = vaultAddress;
   }
 
   /**

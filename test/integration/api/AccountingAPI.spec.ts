@@ -23,13 +23,12 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as _ from 'lodash';
-import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
 import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 import { Core } from 'set-protocol-contracts';
-import { CoreContract, StandardTokenMockContract, VaultContract } from 'set-protocol-contracts';
+import { CoreContract, StandardTokenMockContract, TransferProxyContract, VaultContract } from 'set-protocol-contracts';
 
 import ChaiSetup from '../../helpers/chaiSetup';
 import { AccountingAPI } from '../../../src/api';
@@ -37,8 +36,15 @@ import { BigNumber } from '../../../src/util';
 import { CoreWrapper } from '../../../src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
 import { TX_DEFAULTS, ZERO } from '../../../src/constants';
-import { deployTokensForSetWithApproval, initializeCoreWrapper } from '../../helpers/coreHelpers';
-import { deployVaultContract, getVaultBalances } from '../../helpers/vaultHelpers';
+import {
+  addAuthorizationAsync,
+  approveForTransferAsync,
+  deployCoreContract,
+  deployTokensAsync,
+  deployTransferProxyContract,
+  deployVaultContract,
+  getVaultBalances
+} from '../../helpers';
 import { testSets, TestSet } from '../../testSets';
 import { Web3Utils } from '../../../src/util/Web3Utils';
 
@@ -49,41 +55,33 @@ const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 const { expect } = chai;
 
-const coreContract = contract(Core);
-coreContract.setProvider(provider);
-coreContract.defaults(TX_DEFAULTS);
-
 let currentSnapshotId: number;
 
 
 describe('CoreWrapper', () => {
-  let coreWrapper: CoreWrapper;
-  let setToCreate: TestSet;
-  let tokenAddresses: Address[];
+  let transferProxy: TransferProxyContract;
   let vault: VaultContract;
+  let core: CoreContract;
+  let coreWrapper: CoreWrapper;
   let accountingAPI: AccountingAPI;
 
-  beforeAll(() => {
-    ABIDecoder.addABI(coreContract.abi);
-  });
-
-  afterAll(() => {
-    ABIDecoder.removeABI(coreContract.abi);
-  });
+  let tokens: StandardTokenMockContract[];
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    coreWrapper = await initializeCoreWrapper(provider);
-    setToCreate = testSets[0];
-    tokenAddresses = await deployTokensForSetWithApproval(
-      setToCreate,
-      coreWrapper.transferProxyAddress,
-      provider,
-    );
+    transferProxy = await deployTransferProxyContract(provider);
+    vault = await deployVaultContract(provider);
+    core = await deployCoreContract(provider, transferProxy.address, vault.address);
 
-    vault = await deployVaultContract(provider, coreWrapper.vaultAddress);
+    await addAuthorizationAsync(vault, core.address);
+    await addAuthorizationAsync(transferProxy, core.address);
+
+    coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     accountingAPI = new AccountingAPI(web3, coreWrapper);
+
+    tokens = await deployTokensAsync(3, provider);
+    await approveForTransferAsync(tokens, transferProxy.address);
   });
 
   afterEach(async () => {
@@ -99,8 +97,8 @@ describe('CoreWrapper', () => {
     beforeEach(async () => {
       depositQuantity = new BigNumber(100);
 
-      subjectTokenAddressesToDeposit = tokenAddresses;
-      subjectQuantitiesToDeposit = tokenAddresses.map(() => depositQuantity);
+      subjectTokenAddressesToDeposit = tokens.map(token => token.address);
+      subjectQuantitiesToDeposit = tokens.map(() => depositQuantity);
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
@@ -113,12 +111,12 @@ describe('CoreWrapper', () => {
     }
 
     test('correctly updates the vault balances', async () => {
-      const existingVaultOwnerBalances = await getVaultBalances(vault, tokenAddresses, subjectCaller);
+      const existingVaultOwnerBalances = await getVaultBalances(vault, subjectTokenAddressesToDeposit, subjectCaller);
 
       await subject();
 
       const expectedVaultOwnerBalances = _.map(existingVaultOwnerBalances, balance => balance.add(depositQuantity));
-      const newOwnerVaultBalances = await getVaultBalances(vault, tokenAddresses, subjectCaller);
+      const newOwnerVaultBalances = await getVaultBalances(vault, subjectTokenAddressesToDeposit, subjectCaller);
       expect(newOwnerVaultBalances).to.eql(expectedVaultOwnerBalances);
     });
 
@@ -126,7 +124,7 @@ describe('CoreWrapper', () => {
       let tokenAddress: Address;
 
       beforeEach(async () => {
-        tokenAddress = tokenAddresses[0];
+        tokenAddress = subjectTokenAddressesToDeposit[0];
 
         subjectTokenAddressesToDeposit = [tokenAddress];
         subjectQuantitiesToDeposit = subjectTokenAddressesToDeposit.map(() => depositQuantity);
@@ -163,7 +161,7 @@ describe('CoreWrapper', () => {
 
     describe('when the token addresses and quantities are not the same length', async () => {
       beforeEach(async () => {
-        subjectTokenAddressesToDeposit = [_.first(tokenAddresses)];
+        subjectTokenAddressesToDeposit = [_.first(subjectTokenAddressesToDeposit)];
         subjectQuantitiesToDeposit = [];
       });
 
@@ -180,7 +178,7 @@ describe('CoreWrapper', () => {
       beforeEach(async () => {
         invalidQuantity = new BigNumber(-1);
 
-        subjectTokenAddressesToDeposit = [_.first(tokenAddresses)];
+        subjectTokenAddressesToDeposit = [_.first(subjectTokenAddressesToDeposit)];
         subjectQuantitiesToDeposit = [invalidQuantity];
       });
 
@@ -231,7 +229,7 @@ describe('CoreWrapper', () => {
 
     describe('when the caller has not granted enough allowance to the transfer proxy', async () => {
       beforeEach(async () => {
-        const tokenAddress = tokenAddresses[0];
+        const tokenAddress = subjectTokenAddressesToDeposit[0];
         const tokenWrapper = await StandardTokenMockContract.at(tokenAddress, web3, TX_DEFAULTS);
         await tokenWrapper.approve.sendTransactionAsync(
           coreWrapper.transferProxyAddress,
@@ -254,15 +252,15 @@ describe('CoreWrapper', () => {
 
     beforeEach(async () => {
       withdrawQuantity = new BigNumber(100);
+      subjectTokenAddressesToWithdraw = tokens.map(token => token.address);
 
-      const quantitiesToDeposit = tokenAddresses.map(() => withdrawQuantity);
+      const quantitiesToDeposit = subjectTokenAddressesToWithdraw.map(() => withdrawQuantity);
       await accountingAPI.depositAsync(
-        tokenAddresses,
+        subjectTokenAddressesToWithdraw,
         quantitiesToDeposit,
         { from: DEFAULT_ACCOUNT },
       );
 
-      subjectTokenAddressesToWithdraw = tokenAddresses;
       subjectQuantitiesToWithdraw = quantitiesToDeposit;
       subjectCaller = DEFAULT_ACCOUNT;
     });
@@ -276,12 +274,12 @@ describe('CoreWrapper', () => {
     }
 
     test('correctly updates the vault balances', async () => {
-      const existingVaultOwnerBalances = await getVaultBalances(vault, tokenAddresses, subjectCaller);
+      const existingVaultOwnerBalances = await getVaultBalances(vault, subjectTokenAddressesToWithdraw, subjectCaller);
 
       await subject();
 
       const expectedVaultOwnerBalances = _.map(existingVaultOwnerBalances, balance => balance.sub(withdrawQuantity));
-      const newOwnerVaultBalances = await getVaultBalances(vault, tokenAddresses, subjectCaller);
+      const newOwnerVaultBalances = await getVaultBalances(vault, subjectTokenAddressesToWithdraw, subjectCaller);
       expect(newOwnerVaultBalances).to.eql(expectedVaultOwnerBalances);
     });
 
@@ -289,7 +287,7 @@ describe('CoreWrapper', () => {
       let tokenAddress: Address;
 
       beforeEach(async () => {
-        tokenAddress = tokenAddresses[0];
+        tokenAddress = subjectTokenAddressesToWithdraw[0];
 
         subjectTokenAddressesToWithdraw = [tokenAddress];
         subjectQuantitiesToWithdraw = subjectTokenAddressesToWithdraw.map(() => withdrawQuantity);
@@ -326,7 +324,7 @@ describe('CoreWrapper', () => {
 
     describe('when the token addresses and quantities are not the same length', async () => {
       beforeEach(async () => {
-        subjectTokenAddressesToWithdraw = [_.first(tokenAddresses)];
+        subjectTokenAddressesToWithdraw = [_.first(subjectTokenAddressesToWithdraw)];
         subjectQuantitiesToWithdraw = [];
       });
 
@@ -343,7 +341,7 @@ describe('CoreWrapper', () => {
       beforeEach(async () => {
         invalidQuantity = new BigNumber(-1);
 
-        subjectTokenAddressesToWithdraw = [_.first(tokenAddresses)];
+        subjectTokenAddressesToWithdraw = [_.first(subjectTokenAddressesToWithdraw)];
         subjectQuantitiesToWithdraw = [invalidQuantity];
       });
 
@@ -384,7 +382,7 @@ describe('CoreWrapper', () => {
 
     describe('when the caller does not have enough balance to withdraw', async () => {
       beforeEach(async () => {
-        const tokenToWithdrawFromOriginallyDepositedAmount = tokenAddresses[0];
+        const tokenToWithdrawFromOriginallyDepositedAmount = subjectTokenAddressesToWithdraw[0];
         const quantityToWithdrawFromOringallyDepositedAmount = new BigNumber(1);
 
         await accountingAPI.withdrawAsync(

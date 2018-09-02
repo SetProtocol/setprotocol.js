@@ -29,24 +29,6 @@ import { BigNumber } from '../../src/util';
 
 const contract = require('truffle-contract');
 
-export const deployVaultContract = async (provider: Provider, vaultAddress: Address): Promise<VaultContract> => {
-  const vaultContract = contract(Vault);
-  vaultContract.setProvider(provider);
-  vaultContract.defaults(TX_DEFAULTS);
-
-  // Instantiate web3
-  const web3 = new Web3(provider);
-
-  // Instantiate VaultWrapper
-  return await VaultContract.at(vaultAddress, web3, TX_DEFAULTS);
-};
-
-export const initializeVaultWrapper = async (provider: Provider, vaultAddress: Address) => {
-  const vaultContract: VaultContract = await deployVaultContract(provider, vaultAddress);
-  const web3 = new Web3(provider);
-
-  return new VaultWrapper(web3, vaultContract.address);
-};
 
 export const getVaultBalances = async (
   vault: VaultContract,

@@ -30,7 +30,6 @@ import * as ethUtil from 'ethereumjs-util';
 import { Core, Vault } from 'set-protocol-contracts';
 import {
   Address,
-  Bytes,
   SetProtocolTestUtils,
   SetProtocolUtils,
   SignedIssuanceOrder,
@@ -39,13 +38,10 @@ import {
 } from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../src/constants/accounts';
-import { testSets, TestSet } from '../testSets';
-import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util/logs';
 import { CoreWrapper } from '../../src/wrappers';
 import { OrderAPI } from '../../src/api';
 import {
   CoreContract,
-  DetailedERC20Contract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -54,32 +50,33 @@ import {
   ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
 import { NULL_ADDRESS, TX_DEFAULTS, ZERO } from '../../src/constants';
-import { Web3Utils } from '../../src/util/Web3Utils';
-import { BigNumber, generateFutureTimestamp } from '../../src/util';
 import {
   addAuthorizationAsync,
-  approveForFill,
   approveForTransferAsync,
-  approveForZeroEx,
   deployCoreContract,
   deploySetTokenAsync,
-  deploySetTokenFactory,
   deploySetTokenFactoryContract,
   deployTokenAsync,
   deployTokensAsync,
-  deployTokensForSetWithApproval,
   deployTransferProxyContract,
   deployVaultContract,
-  initializeCoreWrapper,
-} from '../helpers/coreHelpers';
-import { ether } from '../../src/util/units';
-import { getVaultBalances } from '../helpers/vaultHelpers';
-import { deployTakerWalletWrapperContract, deployZeroExExchangeWrapperContract } from '../helpers/exchangeHelpers';
+  deployTakerWalletWrapperContract,
+  deployZeroExExchangeWrapperContract,
+  getVaultBalances,
+} from '../helpers';
+import {
+  BigNumber,
+  ether,
+  extractNewSetTokenAddressFromLogs,
+  generateFutureTimestamp,
+  getFormattedLogsFromTxHash,
+  Web3Utils
+} from '../../src/util';
 
-const contract = require('truffle-contract');
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
+const contract = require('truffle-contract');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
@@ -98,11 +95,6 @@ describe('CoreWrapper', () => {
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
-
-  let componentTokens: StandardTokenMockContract[];
-  let setComponentUnit: BigNumber;
-  let setToken: SetTokenContract;
-  let naturalUnit: BigNumber;
 
   let coreWrapper: CoreWrapper;
 
@@ -126,27 +118,48 @@ describe('CoreWrapper', () => {
     await addAuthorizationAsync(transferProxy, core.address);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
-
-    componentTokens = await deployTokensAsync(3, provider);
-    setComponentUnit = ether(4);
-    naturalUnit = ether(2);
-    setToken = await deploySetTokenAsync(
-      web3,
-      core,
-      setTokenFactory.address,
-      componentTokens.map(token => token.address),
-      componentTokens.map(token => setComponentUnit),
-      naturalUnit,
-    );
-
-    await approveForTransferAsync(componentTokens, transferProxy.address);
   });
 
   afterEach(async () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
+  describe('getSetAddressFromCreateTxHash', async () => {
+    let subjectTxHash: string;
+
+    beforeEach(async () => {
+      const componentTokens = await deployTokensAsync(3, provider);
+      const setComponentUnit = ether(4);
+      const naturalUnit = ether(2);
+
+      subjectTxHash = await core.create.sendTransactionAsync(
+        setTokenFactory.address,
+        componentTokens.map(token => token.address),
+        componentTokens.map(token => setComponentUnit),
+        naturalUnit,
+        'Set',
+        'SET',
+        '',
+        TX_DEFAULTS
+      );
+    });
+
+    async function subject(): Promise<string> {
+      return await coreWrapper.getSetAddressFromCreateTxHash(subjectTxHash);
+    }
+
+    test('retrieves the correct set address', async () => {
+      const setAddress = await subject();
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, subjectTxHash);
+      const expectedSetAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+      expect(setAddress).to.equal(expectedSetAddress);
+    });
+  });
+
   describe('create', async () => {
+    let componentTokens: StandardTokenMockContract[];
+
     let subjectFactoryAddress: Address;
     let subjectComponents: Address[];
     let subjectUnits: BigNumber[];
@@ -155,6 +168,18 @@ describe('CoreWrapper', () => {
     let subjectSymbol: string;
     let subjectCallData: string;
     let subjectCaller: Address;
+
+    beforeEach(async () => {
+      componentTokens = await deployTokensAsync(3, provider);
+
+      subjectComponents = componentTokens.map(component => component.address);
+      subjectUnits = subjectComponents.map(component => ether(4));
+      subjectNaturalUnit = ether(2);
+      subjectName = 'My Set';
+      subjectSymbol = 'SET';
+      subjectCallData = '';
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
 
     async function subject(): Promise<string> {
       return await coreWrapper.create(
@@ -172,20 +197,13 @@ describe('CoreWrapper', () => {
     describe('when the factory address is for vanilla SetToken', async () => {
       beforeEach(async () => {
         subjectFactoryAddress = setTokenFactory.address;
-        subjectComponents = componentTokens.map(component => component.address);
-        subjectUnits = subjectComponents.map(component => ether(4));
-        subjectNaturalUnit = ether(2);
-        subjectName = 'My Set';
-        subjectSymbol = 'SET';
-        subjectCallData = '';
-        subjectCaller = DEFAULT_ACCOUNT;
       });
 
       test('creates a new SetToken contract', async () => {
         const createSetTransactionHash = await subject();
 
-        const logs = await getFormattedLogsFromTxHash(web3, createSetTransactionHash);
-        const deployedSetTokenAddress = extractNewSetTokenAddressFromLogs(logs);
+        const formattedLogs = await getFormattedLogsFromTxHash(web3, createSetTransactionHash);
+        const deployedSetTokenAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
         const setTokenContract = await SetTokenContract.at(deployedSetTokenAddress, web3, TX_DEFAULTS);
 
         const componentAddresses = await setTokenContract.getComponents.callAsync();
@@ -206,56 +224,28 @@ describe('CoreWrapper', () => {
     });
   });
 
-  /* ============ getSetAddressFromCreateTxHash ============ */
-
-  describe('getSetAddressFromCreateTxHash', async () => {
-    let setTokenFactoryAddress: Address;
-    let setToCreate: TestSet;
-    let componentAddresses: Address[];
-    let subjectTxHash: Bytes;
-
-    beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      setTokenFactoryAddress = await deploySetTokenFactory(coreWrapper.coreAddress, provider);
-
-      setToCreate = testSets[0];
-      componentAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
-      );
-
-      subjectTxHash = await coreWrapper.create(
-        setTokenFactoryAddress,
-        componentAddresses,
-        setToCreate.units,
-        setToCreate.naturalUnit,
-        setToCreate.setName,
-        setToCreate.setSymbol,
-        '',
-        { from: DEFAULT_ACCOUNT },
-      );
-    });
-
-    async function subject(): Promise<string> {
-      return await coreWrapper.getSetAddressFromCreateTxHash(subjectTxHash);
-    }
-
-    test('retrieves the correct set address', async () => {
-      const setAddress = await subject();
-
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, subjectTxHash);
-      const expectedSetAddress = formattedLogs[0].args._setTokenAddress;
-      expect(setAddress).to.equal(expectedSetAddress);
-    });
-  });
-
   describe('issue', async () => {
+    let setToken: SetTokenContract;
+
     let subjectSetToIssue: Address;
     let subjectQuantitytoIssue: BigNumber;
     let subjectCaller: Address;
 
     beforeEach(async () => {
+      const componentTokens = await deployTokensAsync(3, provider);
+      const setComponentUnit = ether(4);
+      const naturalUnit = ether(2);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentTokens.map(token => token.address),
+        componentTokens.map(token => setComponentUnit),
+        naturalUnit,
+      );
+
+      await approveForTransferAsync(componentTokens, transferProxy.address);
+
       subjectSetToIssue = setToken.address;
       subjectQuantitytoIssue = ether(2);
       subjectCaller = DEFAULT_ACCOUNT;
@@ -281,11 +271,27 @@ describe('CoreWrapper', () => {
   });
 
   describe('redeem', async () => {
+    let setToken: SetTokenContract;
+
     let subjectSetToRedeem: Address;
     let subjectQuantityToRedeem: BigNumber;
     let subjectCaller: Address;
 
     beforeEach(async () => {
+      const componentTokens = await deployTokensAsync(3, provider);
+      const setComponentUnit = ether(4);
+      const naturalUnit = ether(2);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentTokens.map(token => token.address),
+        componentTokens.map(token => setComponentUnit),
+        naturalUnit,
+      );
+
+      await approveForTransferAsync(componentTokens, transferProxy.address);
+
       await core.issue.sendTransactionAsync(
         setToken.address,
         ether(2),
@@ -317,12 +323,28 @@ describe('CoreWrapper', () => {
   });
 
   describe('redeemAndWithdraw', async () => {
+    let setToken: SetTokenContract;
+
     let subjectSetToRedeem: Address;
     let subjectQuantityToRedeem: BigNumber;
     let subjectTokensToExcludeBitmask: BigNumber;
     let subjectCaller: Address;
 
     beforeEach(async () => {
+      const componentTokens = await deployTokensAsync(3, provider);
+      const setComponentUnit = ether(4);
+      const naturalUnit = ether(2);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentTokens.map(token => token.address),
+        componentTokens.map(token => setComponentUnit),
+        naturalUnit,
+      );
+
+      await approveForTransferAsync(componentTokens, transferProxy.address);
+
       await core.issue.sendTransactionAsync(
         setToken.address,
         ether(2),
@@ -355,9 +377,8 @@ describe('CoreWrapper', () => {
     });
   });
 
-  /* ============ Deposit ============ */
-
   describe('deposit', async () => {
+    let token: StandardTokenMockContract;
     let depositQuantity: BigNumber;
 
     let subjectTokenAddressToDeposit: Address;
@@ -365,17 +386,13 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const setToCreate = testSets[0];
-      const tokenAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
-      );
+      token = await deployTokenAsync(provider);
+      await approveForTransferAsync([token], transferProxy.address);
+      subjectTokenAddressToDeposit = token.address;
 
       depositQuantity = new BigNumber(100);
-
-      subjectTokenAddressToDeposit = _.first(tokenAddresses);
       subjectQuantityToDeposit = depositQuantity;
+
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
@@ -405,6 +422,7 @@ describe('CoreWrapper', () => {
   });
 
   describe('batchDeposit', async () => {
+    let tokens: StandardTokenMockContract[];
     let depositQuantity: BigNumber;
 
     let subjectTokenAddressesToDeposit: Address[];
@@ -412,17 +430,13 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const setToCreate = testSets[0];
-      const tokenAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
-      );
+      tokens = await deployTokensAsync(3, provider);
+      await approveForTransferAsync(tokens, transferProxy.address);
+      subjectTokenAddressesToDeposit = tokens.map(token => token.address);
 
       depositQuantity = new BigNumber(100);
+      subjectQuantitesToWithdraw = tokens.map(() => depositQuantity);
 
-      subjectTokenAddressesToDeposit = tokenAddresses;
-      subjectQuantitesToWithdraw = tokenAddresses.map(() => depositQuantity);
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
@@ -445,9 +459,8 @@ describe('CoreWrapper', () => {
     });
   });
 
-  /* ============ Withdraw ============ */
-
   describe('withdraw', async () => {
+    let token: StandardTokenMockContract;
     let withdrawQuantity: BigNumber;
 
     let subjectTokenAddressToWithdraw: Address;
@@ -455,23 +468,18 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const setToCreate = testSets[0];
-      const tokenAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
-      );
+      token = await deployTokenAsync(provider);
+      await approveForTransferAsync([token], transferProxy.address);
+      subjectTokenAddressToWithdraw = token.address;
 
       withdrawQuantity = new BigNumber(100);
-      const quantitesToDeposit = tokenAddresses.map(() => withdrawQuantity);
-      await coreWrapper.batchDeposit(
-        tokenAddresses,
-        quantitesToDeposit,
+      await coreWrapper.deposit(
+        token.address,
+        withdrawQuantity,
         { from: DEFAULT_ACCOUNT },
       );
 
-      subjectTokenAddressToWithdraw = _.first(tokenAddresses);
-      subjectQuantityToWithdraw = _.first(quantitesToDeposit);
+      subjectQuantityToWithdraw = withdrawQuantity;
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
@@ -501,6 +509,7 @@ describe('CoreWrapper', () => {
   });
 
   describe('batchWithdraw', async () => {
+    let tokens: StandardTokenMockContract[];
     let withdrawQuantity: BigNumber;
 
     let subjectTokenAddressesToWithdraw: Address[];
@@ -508,12 +517,9 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const setToCreate = testSets[0];
-      const tokenAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
-      );
+      tokens = await deployTokensAsync(3, provider);
+      await approveForTransferAsync(tokens, transferProxy.address);
+      const tokenAddresses = tokens.map(token => token.address);
 
       withdrawQuantity = new BigNumber(100);
       const quantitesToDeposit = tokenAddresses.map(() => withdrawQuantity);
@@ -756,6 +762,25 @@ describe('CoreWrapper', () => {
   });
 
   describe('Core State Getters', async () => {
+    let componentTokens: StandardTokenMockContract[];
+    let setComponentUnit: BigNumber;
+    let setToken: SetTokenContract;
+    let naturalUnit: BigNumber;
+
+    beforeEach(async () => {
+      componentTokens = await deployTokensAsync(3, provider);
+      setComponentUnit = ether(4);
+      naturalUnit = ether(2);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentTokens.map(token => token.address),
+        componentTokens.map(token => setComponentUnit),
+        naturalUnit,
+      );
+    });
+
     test('gets exchange address', async () => {
       const takerWalletWrapper = await deployTakerWalletWrapperContract(transferProxy, core, provider);
       const exchangeAddress = await coreWrapper.getExchangeAddress(SetProtocolUtils.EXCHANGES.TAKER_WALLET);

@@ -22,284 +22,271 @@
 jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
-import * as _ from 'lodash';
-import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as Web3 from 'web3';
-import compact = require('lodash.compact');
-import { Address } from 'set-protocol-utils';
 import { StandardTokenMock } from 'set-protocol-contracts';
+import { StandardTokenMockContract } from 'set-protocol-contracts';
+import { Address } from 'set-protocol-utils';
 
-import { BigNumber } from '../../src/util';
-import ChaiSetup from '../helpers/chaiSetup';
-
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../src/constants/accounts';
 import { ERC20Wrapper } from '../../src/wrappers';
-import {
-  DEFAULT_GAS_PRICE,
-  DEFAULT_GAS_LIMIT,
-  STANDARD_DECIMALS,
-  STANDARD_SUPPLY,
-  STANDARD_TRANSFER_VALUE,
-  ZERO,
-} from '../../src/constants';
-import { Web3Utils } from '../../src/util';
-import {
-  initializeCoreWrapper,
-} from '../helpers/coreHelpers';
+import { DEFAULT_ACCOUNT, DEPLOYED_TOKEN_QUANTITY, TX_DEFAULTS } from '../../src/constants';
+import { ACCOUNTS } from '../../src/constants/accounts';
+import { BigNumber, Web3Utils } from '../../src/util';
+import { ether } from '../../src/util/units';
+import { addAuthorizationAsync, deployTokenAsync } from '../helpers';
 
-const OTHER_ACCOUNT = ACCOUNTS[1].address;
-
-ChaiSetup.configure();
+const chaiBigNumber = require('chai-bignumber');
+chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
-
 const contract = require('truffle-contract');
-
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
-const txDefaults = {
-  from: DEFAULT_ACCOUNT,
-  gasPrice: DEFAULT_GAS_PRICE,
-  gas: DEFAULT_GAS_LIMIT,
-};
-
-const standardTokenMockContract = contract(StandardTokenMock);
-standardTokenMockContract.setProvider(provider);
-standardTokenMockContract.defaults(txDefaults);
-
 let currentSnapshotId: number;
 
-describe('ERC20 Wrapper', () => {
-  let erc20API: ERC20Wrapper;
-  let standardTokenMock: Web3.ContractInstance;
-  let subjectCaller: Address;
-  const subjectSupply: BigNumber = STANDARD_SUPPLY;
-  const subjectName: string = 'ERC20 Token';
-  const subjectSymbol: string = 'ERC';
-  const subjectDecimals: BigNumber = STANDARD_DECIMALS;
-  let subjectSpender: Address;
-  let subjectAllowance: BigNumber;
 
+describe('ERC20Wrapper', () => {
+  let erc20Wrapper: ERC20Wrapper;
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
+
+    erc20Wrapper = new ERC20Wrapper(web3);
   });
 
   afterEach(async () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test('Erc20Wrapper can be instantiated', async () => {
-    erc20API = new ERC20Wrapper(web3);
-    expect(erc20API);
+  describe('getNameAsync, getSymbolAsync, getTotalSupplyAsync, getDecimalsAsync', async () => {
+    let tokenSupply: BigNumber;
+    let tokenName: string;
+    let tokenSymbol: string;
+    let tokenDecimals: BigNumber;
 
-    expect(erc20API.getBalanceOfAsync);
-    expect(erc20API.getNameAsync);
-    expect(erc20API.getSymbolAsync);
-    expect(erc20API.getAllowanceAsync);
-    expect(erc20API.transferAsync);
-    expect(erc20API.transferFromAsync);
-    expect(erc20API.approveAsync);
-  });
+    let subjectTokenAddress: Address;
 
-  describe('getters', async () => {
     beforeEach(async () => {
-      erc20API = new ERC20Wrapper(web3);
+      const truffleStandardTokenMockContract = contract(StandardTokenMock);
+      truffleStandardTokenMockContract.setProvider(provider);
+      truffleStandardTokenMockContract.defaults(TX_DEFAULTS);
 
-      subjectSpender = OTHER_ACCOUNT;
-      subjectAllowance = ZERO;
-
-      standardTokenMock = await standardTokenMockContract.new(
+      tokenSupply = new BigNumber(100);
+      tokenName = 'My Token';
+      tokenSymbol = 'MYTOKEN';
+      tokenDecimals = new BigNumber(18);
+      const deployedToken = await truffleStandardTokenMockContract.new(
         DEFAULT_ACCOUNT,
-        subjectSupply,
-        subjectName,
-        subjectSymbol,
-        subjectDecimals,
+        tokenSupply,
+        tokenName,
+        tokenSymbol,
+        tokenDecimals,
       );
+
+      subjectTokenAddress = deployedToken.address;
     });
 
-    test('gets ERC20 token symbol', async () => {
-      const symbol = await erc20API.getSymbolAsync(standardTokenMock.address);
-      expect(symbol).to.equal(subjectSymbol);
-    });
+    async function subject(): Promise<any> {
+      const name = await erc20Wrapper.getNameAsync(subjectTokenAddress);
+      const symbol = await erc20Wrapper.getSymbolAsync(subjectTokenAddress);
+      const supply = await erc20Wrapper.getTotalSupplyAsync(subjectTokenAddress);
+      const decimals = await erc20Wrapper.getDecimalsAsync(subjectTokenAddress);
 
-    test('gets ERC20 token name', async () => {
-      const name = await erc20API.getNameAsync(standardTokenMock.address);
-      expect(name).to.equal(subjectName);
-    });
+      return { name, symbol, supply, decimals };
+    }
 
-    test('gets ERC20 decimals', async () => {
-      const decimals = await erc20API.getDecimalsAsync(standardTokenMock.address);
-      expect(decimals).to.bignumber.equal(subjectDecimals);
-    });
+    test('fetches the erc20 token properties correctly', async () => {
+      const { name, symbol, supply, decimals } = await subject();
 
-    test('get total supply of ERC20 tokens', async () => {
-      const totalSupply = await erc20API.getTotalSupplyAsync(standardTokenMock.address);
-      expect(totalSupply).to.bignumber.equal(subjectSupply);
-    });
-
-    test("get balance of user's ERC20 tokens", async () => {
-      const balance = await erc20API.getBalanceOfAsync(standardTokenMock.address, DEFAULT_ACCOUNT);
-      expect(balance).to.bignumber.equal(subjectSupply);
-    });
-
-    test('get allowance of the spender by the default account', async () => {
-      const allowance = await erc20API.getAllowanceAsync(
-        standardTokenMock.address,
-        DEFAULT_ACCOUNT,
-        subjectSpender,
-      );
-      expect(allowance).to.bignumber.equal(subjectAllowance);
+      expect(name).to.eql(tokenName);
+      expect(symbol).to.eql(tokenSymbol);
+      expect(supply).to.bignumber.equal(tokenSupply);
+      expect(decimals).to.bignumber.equal(tokenDecimals);
     });
   });
 
-  describe('#approveAsync', async () => {
-    let subjectSpender: Address;
-    let subjectValue: BigNumber;
+  describe('getBalanceOfAsync', async () => {
+    let token: StandardTokenMockContract;
+
+    let subjectTokenAddress: Address;
+    let subjectTokenOwner: Address;
 
     beforeEach(async () => {
-      erc20API = new ERC20Wrapper(web3);
+      token = await deployTokenAsync(provider);
 
-      standardTokenMock = await standardTokenMockContract.new(
-        DEFAULT_ACCOUNT,
-        subjectSupply,
-        subjectName,
-        subjectSymbol,
-        subjectDecimals,
-      );
-
-      subjectCaller = DEFAULT_ACCOUNT;
-      subjectValue = STANDARD_TRANSFER_VALUE;
-      subjectSpender = OTHER_ACCOUNT;
+      subjectTokenAddress = token.address;
+      subjectTokenOwner = DEFAULT_ACCOUNT;
     });
 
-    async function subject(): Promise<string> {
-      return await erc20API.approveAsync(
-        standardTokenMock.address,
-        subjectSpender,
-        subjectValue,
-        { from: subjectCaller },
+    async function subject(): Promise<BigNumber> {
+      return await erc20Wrapper.getBalanceOfAsync(
+        subjectTokenAddress,
+        subjectTokenOwner,
       );
     }
 
-    test('should increment the spenders balance', async () => {
-      await subject();
+    test('fetches the balance correctly', async () => {
+      const userTokenBalance = await subject();
 
-      const spenderBalance = await standardTokenMock.allowance(
-        DEFAULT_ACCOUNT,
-        subjectSpender,
-      );
-
-      expect(spenderBalance).to.bignumber.equal(subjectValue);
+      expect(userTokenBalance).to.bignumber.equal(DEPLOYED_TOKEN_QUANTITY);
     });
   });
 
-  describe('#transferAsync', async () => {
-    let subjectTo: Address;
-    let subjectValue: BigNumber;
+  describe('getAllowanceAsync', async () => {
+    let token: StandardTokenMockContract;
+    let approveAllowance: BigNumber;
+
+    let subjectTokenOwner: Address;
+    let subjectTokenAddress: Address;
+    let subjectSpenderAddress: Address;
 
     beforeEach(async () => {
-      erc20API = new ERC20Wrapper(web3);
+      approveAllowance = new BigNumber(1000);
+      token = await deployTokenAsync(provider);
 
-      standardTokenMock = await standardTokenMockContract.new(
-        DEFAULT_ACCOUNT,
-        subjectSupply,
-        subjectName,
-        subjectSymbol,
-        subjectDecimals,
+      subjectTokenOwner = DEFAULT_ACCOUNT;
+      subjectTokenAddress = token.address;
+      subjectSpenderAddress = ACCOUNTS[1].address;
+
+      await erc20Wrapper.approveAsync(
+        subjectTokenAddress,
+        subjectSpenderAddress,
+        approveAllowance,
+        { from: DEFAULT_ACCOUNT }
       );
-
-      subjectCaller = DEFAULT_ACCOUNT;
-      subjectValue = STANDARD_TRANSFER_VALUE;
-      subjectTo = OTHER_ACCOUNT;
     });
 
-    async function subject(): Promise<string> {
-      return await erc20API.transferAsync(
-        standardTokenMock.address,
-        subjectTo,
-        subjectValue,
-        { from: subjectCaller },
+    async function subject(): Promise<BigNumber> {
+      return await erc20Wrapper.getAllowanceAsync(
+        subjectTokenAddress,
+        subjectTokenOwner,
+        subjectSpenderAddress,
       );
     }
 
-    test('should decrement the users balance', async () => {
-      const preUserBalance = await standardTokenMock.balanceOf(subjectCaller);
+    test('fetches the spender balance correctly', async () => {
+      const spenderAllowance = await subject();
 
-      await subject();
-
-      const expectedBalance = preUserBalance.minus(subjectValue);
-
-      const postUserBalance = await standardTokenMock.balanceOf(subjectCaller);
-      expect(postUserBalance).to.bignumber.equal(expectedBalance);
-    });
-
-    test("should increment the recipient's balance", async () => {
-      const preRecipientBalance = await standardTokenMock.balanceOf(subjectTo);
-
-      await subject();
-
-      const expectedBalance = preRecipientBalance.plus(subjectValue);
-
-      const postRecipientBalance = await standardTokenMock.balanceOf(subjectTo);
-      expect(postRecipientBalance).to.bignumber.equal(expectedBalance);
+      expect(spenderAllowance).to.bignumber.equal(approveAllowance);
     });
   });
 
-  describe('#transferFromAsync', async () => {
-    let subjectSpender: Address;
-    let subjectValue: BigNumber;
-    let subjectOwner: Address;
+  describe('approveAsync', async () => {
+    let token: StandardTokenMockContract;
+
+    let subjectTokenAddress: Address;
+    let subjectSpenderAddress: Address;
+    let subjectApproveAllowance: BigNumber;
+    let subjectCaller: Address;
 
     beforeEach(async () => {
-      erc20API = new ERC20Wrapper(web3);
-      subjectOwner = OTHER_ACCOUNT;
+      token = await deployTokenAsync(provider);
 
-      standardTokenMock = await standardTokenMockContract.new(
-        subjectOwner,
-        subjectSupply,
-        subjectName,
-        subjectSymbol,
-        subjectDecimals,
-      );
-
-      subjectValue = STANDARD_TRANSFER_VALUE;
-      subjectSpender = DEFAULT_ACCOUNT;
+      subjectTokenAddress = token.address;
+      subjectSpenderAddress = ACCOUNTS[1].address;
+      subjectApproveAllowance = new BigNumber(100);
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
     async function subject(): Promise<string> {
-      return await erc20API.transferFromAsync(
-        standardTokenMock.address,
-        subjectOwner,
-        subjectSpender,
-        subjectValue,
-        { from: subjectCaller },
+      return await erc20Wrapper.approveAsync(
+        subjectTokenAddress,
+        subjectSpenderAddress,
+        subjectApproveAllowance,
+        { from: subjectCaller }
       );
     }
 
-    describe('when approvals have been set', async () => {
-      beforeEach(async () => {
-        await erc20API.approveAsync(
-          standardTokenMock.address,
-          subjectSpender,
-          subjectValue,
-          { from: subjectOwner },
-        );
-      });
+    test('updates the allowance correctly for the spender', async () => {
+      await subject();
 
-      test('should increment the recipients balance', async () => {
-        const preRecipientBalance = await standardTokenMock.balanceOf(subjectCaller);
+      const newSpenderAllowance = await token.allowance.callAsync(subjectCaller, subjectSpenderAddress);
+      expect(newSpenderAllowance).to.bignumber.equal(subjectApproveAllowance);
+    });
+  });
 
-        await subject();
-        const expectedBalance = preRecipientBalance.plus(subjectValue);
+  describe('transferFromAsync', async () => {
+    let token: StandardTokenMockContract;
+    let approveAllowance: BigNumber;
 
-        const postRecipientBalance = await standardTokenMock.balanceOf(subjectCaller);
-        expect(postRecipientBalance).to.bignumber.equal(expectedBalance);
-      });
+    let subjectTokenOwner: Address;
+    let subjectTokenAddress: Address;
+    let subjectSpenderAddress: Address;
+    let subjectTransferAmount: BigNumber;
+
+    beforeEach(async () => {
+      approveAllowance = new BigNumber(1000);
+      token = await deployTokenAsync(provider);
+
+      subjectTokenOwner = DEFAULT_ACCOUNT;
+      subjectTokenAddress = token.address;
+      subjectSpenderAddress = ACCOUNTS[1].address;
+      subjectTransferAmount = approveAllowance;
+
+      await erc20Wrapper.approveAsync(
+        subjectTokenAddress,
+        subjectSpenderAddress,
+        approveAllowance,
+        { from: DEFAULT_ACCOUNT }
+      );
     });
 
+    async function subject(): Promise<string> {
+      return await erc20Wrapper.transferFromAsync(
+        subjectTokenAddress,
+        subjectTokenOwner,
+        subjectSpenderAddress,
+        subjectTransferAmount,
+        { from: subjectSpenderAddress }
+      );
+    }
+
+    test('transfers the token from the owner', async () => {
+      const existingTokenBalance = await token.balanceOf.callAsync(subjectTokenOwner);
+
+      await subject();
+
+      const expectedTokenBalance = existingTokenBalance.sub(subjectTransferAmount);
+      const newTokenBalance = await token.balanceOf.callAsync(subjectTokenOwner);
+      expect(newTokenBalance).to.bignumber.equal(expectedTokenBalance);
+    });
+  });
+
+  describe('transferAsync', async () => {
+    let token: StandardTokenMockContract;
+
+    let subjectTokenOwner: Address;
+    let subjectTokenReceiver: Address;
+    let subjectTokenAddress: Address;
+    let subjectTransferAmount: BigNumber;
+
+    beforeEach(async () => {
+      token = await deployTokenAsync(provider);
+
+      subjectTokenOwner = DEFAULT_ACCOUNT;
+      subjectTokenReceiver = ACCOUNTS[1].address;
+      subjectTokenAddress = token.address;
+      subjectTransferAmount = new BigNumber(1000);
+    });
+
+    async function subject(): Promise<string> {
+      return await erc20Wrapper.transferAsync(
+        subjectTokenAddress,
+        subjectTokenReceiver,
+        subjectTransferAmount,
+        { from: subjectTokenOwner }
+      );
+    }
+
+    test('transfers the token to the receiver', async () => {
+      const existingTokenBalance = await token.balanceOf.callAsync(subjectTokenReceiver);
+
+      await subject();
+
+      const expectedTokenBalance = existingTokenBalance.add(subjectTransferAmount);
+      const newTokenBalance = await token.balanceOf.callAsync(subjectTokenReceiver);
+      expect(newTokenBalance).to.bignumber.equal(expectedTokenBalance);
+    });
   });
 });

@@ -53,7 +53,7 @@ import {
   deployTokensAsync,
   deployTransferProxyContract,
   deployVaultContract,
-} from '../helpers/coreHelpers';
+} from '../helpers';
 import { ether } from '../../src/util/units';
 
 ChaiSetup.configure();
@@ -229,15 +229,12 @@ describe('SetProtocol', async () => {
   /* ============ Core State Getters ============ */
 
   describe('Core State Getters', async () => {
-    let componentTokens: StandardTokenMockContract[];
-    let setComponentUnit: BigNumber;
     let setToken: SetTokenContract;
-    let naturalUnit: BigNumber;
 
     beforeEach(async () => {
-      componentTokens = await deployTokensAsync(3, provider);
-      setComponentUnit = ether(4);
-      naturalUnit = ether(2);
+      const componentTokens = await deployTokensAsync(3, provider);
+      const setComponentUnit = ether(4);
+      const naturalUnit = ether(2);
       setToken = await deploySetTokenAsync(
         web3,
         core,

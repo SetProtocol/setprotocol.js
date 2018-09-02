@@ -89,6 +89,8 @@ export class SetTokenWrapper {
   }
 
   /**
+   * // TODO: MOVE INTO API THAT CALLS WRAPPER
+   *
    * Returns whether the quantity passed in is a multiple of a Set's natural unit
    *
    * @param  setAddress Address of the Set

@@ -1,9 +1,15 @@
 export {
-  deployCore,
-  deploySetTokenFactory,
-  deployTokensForSetWithApproval,
-  deployTransferProxy,
-  deployVault,
-  initializeCoreWrapper,
+  deployTransferProxyContract,
+  deployVaultContract,
+  deployCoreContract,
+  deploySetTokenFactoryContract,
+  deployTokenAsync,
+  deployTokensAsync,
+  deploySetTokenAsync,
+  registerExchange,
+  approveForTransferAsync,
+  addAuthorizationAsync,
+  getTokenBalances,
 } from './coreHelpers';
-export { initializeVaultWrapper } from './vaultHelpers';
+export { deployTakerWalletWrapperContract, deployZeroExExchangeWrapperContract } from './exchangeHelpers';
+export { getVaultBalances } from './vaultHelpers';
