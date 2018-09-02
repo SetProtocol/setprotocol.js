@@ -1,6 +1,6 @@
 {
   "name": "setprotocol.js",
-  "version": "1.0.0-alpha.12",
+  "version": "1.0.0-alpha.15",
   "description": "A javascript library for interacting with the Set protocol",
   "keywords": [
     "setProtocol.js",
@@ -82,6 +82,9 @@
     "truffle-hdwallet-provider": "0.0.3",
     "web3-utils": "1.0.0-beta.35"
   },
+  "files": [
+    "dist"
+  ],
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
