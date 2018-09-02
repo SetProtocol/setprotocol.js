@@ -34,10 +34,9 @@ import {
 } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
-import { CoreWrapper, SetTokenWrapper } from '../../src/wrappers';
-import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '../../src/constants';
-import { BigNumber, Web3Utils } from '../../src/util';
-import { ether } from '../../src/util/units';
+import { SetTokenAPI } from '../../../src/api';
+import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '../../../src/constants';
+import { BigNumber, ether, Web3Utils } from '../../../src/util';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -47,7 +46,7 @@ import {
   deployVaultContract,
   deployTokensAsync,
   deployTransferProxyContract
-} from '../helpers';
+} from '../../helpers';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
@@ -60,14 +59,13 @@ const web3Utils = new Web3Utils(web3);
 let currentSnapshotId: number;
 
 
-describe('SetTokenWrapper', () => {
+describe('SetTokenAPI', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
 
-  let coreWrapper: CoreWrapper;
-  let setTokenWrapper: SetTokenWrapper;
+  let setTokenAPI: SetTokenAPI;
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
@@ -80,8 +78,7 @@ describe('SetTokenWrapper', () => {
     await addAuthorizationAsync(vault, core.address);
     await addAuthorizationAsync(transferProxy, core.address);
 
-    coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
-    setTokenWrapper = new SetTokenWrapper(web3);
+    setTokenAPI = new SetTokenAPI(web3);
   });
 
   afterEach(async () => {
@@ -115,10 +112,10 @@ describe('SetTokenWrapper', () => {
     });
 
     async function subject(): Promise<any> {
-      const factoryAddress = await setTokenWrapper.factory(subjectSetTokenAddress);
-      const components = await setTokenWrapper.getComponents(subjectSetTokenAddress);
-      const naturalUnit = await setTokenWrapper.naturalUnit(subjectSetTokenAddress);
-      const units = await setTokenWrapper.getUnits(subjectSetTokenAddress);
+      const factoryAddress = await setTokenAPI.getFactoryAsync(subjectSetTokenAddress);
+      const components = await setTokenAPI.getComponentsAsync(subjectSetTokenAddress);
+      const naturalUnit = await setTokenAPI.getNaturalUnitAsync(subjectSetTokenAddress);
+      const units = await setTokenAPI.getUnitsAsync(subjectSetTokenAddress);
 
       return { factoryAddress, components, naturalUnit, units };
     }
@@ -130,6 +127,51 @@ describe('SetTokenWrapper', () => {
       expect(components).to.eql(componentTokenAddresses);
       expect(naturalUnit).to.bignumber.equal(naturalUnit);
       expect(JSON.stringify(units)).to.eql(JSON.stringify(componentTokenUnits));
+    });
+  });
+
+  describe('isMultipleOfNaturalUnitAsync', async () => {
+    let subjectSetTokenAddress: Address;
+    let subjectQuantity: BigNumber;
+
+    beforeEach(async () => {
+      const componentTokens = await deployTokensAsync(3, provider);
+      const componentTokenAddresses = componentTokens.map(token => token.address);
+      const componentTokenUnits = componentTokens.map(token => ether(4));
+      const naturalUnit = ether(2);
+      const setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentTokenAddresses,
+        componentTokenUnits,
+        naturalUnit,
+      );
+
+      subjectSetTokenAddress = setToken.address;
+      subjectQuantity = ether(4);
+    });
+
+    async function subject(): Promise<boolean> {
+      return await setTokenAPI.isMultipleOfNaturalUnitAsync(subjectSetTokenAddress, subjectQuantity);
+    }
+
+    test('correctly assesses the validity of the quantity against the set token', async () => {
+      const isQuantityMultiple = await subject();
+
+      expect(isQuantityMultiple).to.be.true;
+    });
+
+    describe('when the quantity is not a multiple of the natural unit', async () => {
+      beforeEach(async () => {
+        subjectQuantity = ether(3);
+      });
+
+      test('correctly assesses the validity of the quantity against the set token', async () => {
+        const isQuantityMultiple = await subject();
+
+        expect(isQuantityMultiple).to.be.false;
+      });
     });
   });
 });

@@ -24,17 +24,13 @@ import {
 } from 'set-protocol-contracts';
 
 import {
-  DEFAULT_GAS_PRICE,
-  DEFAULT_GAS_LIMIT,
+  DEFAULT_ACCOUNT,
   DEPLOYED_TOKEN_QUANTITY,
   TX_DEFAULTS,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS
 } from '../../src/constants';
-import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
-import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util/logs';
-import { TestSet } from '../testSets';
+import { BigNumber, getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util';
 import { CoreWrapper } from '../../src/wrappers';
-import { BigNumber } from '../../src/util';
 
 const contract = require('truffle-contract');
 

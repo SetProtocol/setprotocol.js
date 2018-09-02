@@ -332,4 +332,55 @@ describe('FactoryAPI', () => {
       });
     });
   });
+
+  describe('getSetAddressFromCreateTxHash', async () => {
+    let subjectTxHash: string;
+
+    beforeEach(async () => {
+      const componentTokens = await deployTokensAsync(3, provider);
+      const setComponentUnit = ether(4);
+      const naturalUnit = ether(2);
+
+      subjectTxHash = await core.create.sendTransactionAsync(
+        setTokenFactory.address,
+        componentTokens.map(token => token.address),
+        componentTokens.map(token => setComponentUnit),
+        naturalUnit,
+        'Set',
+        'SET',
+        '',
+        TX_DEFAULTS
+      );
+    });
+
+    async function subject(): Promise<string> {
+      return await factoryAPI.getSetAddressFromCreateTxHash(subjectTxHash);
+    }
+
+    test('retrieves the correct set address', async () => {
+      const setAddress = await subject();
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, subjectTxHash);
+      const expectedSetAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+      expect(setAddress).to.equal(expectedSetAddress);
+    });
+
+    describe('when the transaction hash is invalid', async () => {
+      beforeEach(async () => {
+        subjectTxHash = 'invalidTransactionHash';
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        Expected txHash to conform to schema /Bytes32.
+
+        Encountered: "invalidTransactionHash"
+
+        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{64}$"
+      `
+        );
+      });
+    });
+  });
 });

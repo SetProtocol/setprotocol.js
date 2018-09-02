@@ -25,7 +25,7 @@ import { ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { CoreWrapper } from '../wrappers';
-import { BigNumber } from '../util';
+import { BigNumber, extractNewSetTokenAddressFromLogs, generateTxOpts, getFormattedLogsFromTxHash } from '../util';
 import { TxData } from '../types/common';
 
 /**
@@ -87,6 +87,19 @@ export class FactoryAPI {
       '',
       txOpts
     );
+  }
+
+  /**
+   * Asynchronously retrieves a Set Token address from a createSet txHash
+   *
+   * @param  txHash     The transaction has to retrieve the set address from
+   * @return            The address of the newly created Set
+   */
+  public async getSetAddressFromCreateTxHash(txHash: string): Promise<Address> {
+    this.assert.schema.isValidBytes32('txHash', txHash);
+    const transactinLogs = await getFormattedLogsFromTxHash(this.web3, txHash);
+
+    return extractNewSetTokenAddressFromLogs(transactinLogs);
   }
 
   /* ============ Private Assertions ============ */
