@@ -19,6 +19,6 @@
 import { AccountingAPI } from './AccountingAPI';
 import { FactoryAPI } from './FactoryAPI';
 import { IssuanceAPI } from './IssuanceAPI';
-import { OrderAPI } from './OrdersAPI';
+import { OrderAPI } from './OrderAPI';
 
 export { AccountingAPI, FactoryAPI, IssuanceAPI, OrderAPI };

@@ -38,12 +38,12 @@ import { Address, SetProtocolUtils } from 'set-protocol-utils';
 
 import ChaiSetup from '../helpers/chaiSetup';
 import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
-import SetProtocol from '../../src';
+import SetProtocol from '../../src/SetProtocol';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS, TX_DEFAULTS } from '../../src/constants';
 import { Web3Utils } from '../../src/util/Web3Utils';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util/logs';
 import { BigNumber } from '../../src/util';
-import { SetProtocolConfig } from '../../src';
+import { SetProtocolConfig } from '../../src/SetProtocol';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
