@@ -55,7 +55,6 @@ import {
   deploySetTokenAsync,
   deployTokensAsync,
   deploySetTokenFactoryContract,
-  deployTokensForSetWithApproval,
   deployTransferProxyContract,
   deployVaultContract,
   getTokenBalances,

@@ -22,93 +22,98 @@
 jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
-import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as Web3 from 'web3';
-
-import { Core } from 'set-protocol-contracts';
+import {
+  CoreContract,
+  StandardTokenMockContract,
+  TransferProxyContract,
+  VaultContract
+} from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
-import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
-import { testSets, TestSet } from '../testSets';
 import { CoreWrapper, VaultWrapper } from '../../src/wrappers';
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../../src/constants';
+import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '../../src/constants';
 import { BigNumber, Web3Utils } from '../../src/util';
-import { deployTokensForSetWithApproval, initializeCoreWrapper, initializeVaultWrapper } from '../helpers';
+import {
+  addAuthorizationAsync,
+  approveForTransferAsync,
+  deployCoreContract,
+  deployVaultContract,
+  deployTokenAsync,
+  deployTransferProxyContract
+} from '../helpers';
 
+const chaiBigNumber = require('chai-bignumber');
+chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
-
 const contract = require('truffle-contract');
-
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
 
-const txDefaults = {
-  from: DEFAULT_ACCOUNT,
-  gasPrice: DEFAULT_GAS_PRICE,
-  gas: DEFAULT_GAS_LIMIT,
-};
-
-const coreContract = contract(Core);
-coreContract.setProvider(provider);
-coreContract.defaults(txDefaults);
-
 let currentSnapshotId: number;
 
-describe('Vault API', () => {
+
+describe('VaultWrapper', () => {
+  let transferProxy: TransferProxyContract;
+  let vault: VaultContract;
+  let core: CoreContract;
+
   let coreWrapper: CoreWrapper;
   let vaultWrapper: VaultWrapper;
 
-  beforeAll(() => {
-    ABIDecoder.addABI(coreContract.abi);
-  });
-
-  afterAll(() => {
-    ABIDecoder.removeABI(coreContract.abi);
-  });
-
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
+
+    transferProxy = await deployTransferProxyContract(provider);
+    vault = await deployVaultContract(provider);
+    core = await deployCoreContract(provider, transferProxy.address, vault.address);
+
+    await addAuthorizationAsync(vault, core.address);
+    await addAuthorizationAsync(transferProxy, core.address);
+
+    coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+    vaultWrapper = new VaultWrapper(web3, vault.address);
   });
 
   afterEach(async () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  test('vaultWrapper can be instantiated', async () => {
-    coreWrapper = await initializeCoreWrapper(provider);
-    vaultWrapper = await initializeVaultWrapper(provider, coreWrapper.vaultAddress);
-    expect(vaultWrapper.getBalanceInVault);
-  });
-
   describe('getBalanceInVault', async () => {
-    let coreWrapper: CoreWrapper;
-    let vaultWrapper: VaultWrapper;
-    let setToCreate: TestSet;
-    let tokenAddresses: Address[];
+    let token: StandardTokenMockContract;
+    let vaultBalance: BigNumber;
+
+    let subjectTokenAddress: Address;
+    let subjectTokenOwner: Address;
 
     beforeEach(async () => {
-      coreWrapper = await initializeCoreWrapper(provider);
-      vaultWrapper = await initializeVaultWrapper(provider, coreWrapper.vaultAddress);
+      token = await deployTokenAsync(provider);
+      await approveForTransferAsync([token], transferProxy.address);
 
-      setToCreate = testSets[0];
-      tokenAddresses = await deployTokensForSetWithApproval(
-        setToCreate,
-        coreWrapper.transferProxyAddress,
-        provider,
+      vaultBalance = new BigNumber(100);
+      await coreWrapper.deposit(
+        token.address,
+        vaultBalance,
+        { from: DEFAULT_ACCOUNT }
       );
+
+      subjectTokenAddress = token.address;
+      subjectTokenOwner = DEFAULT_ACCOUNT;
     });
 
+    async function subject(): Promise<BigNumber> {
+      return await vaultWrapper.getBalanceInVault(
+        subjectTokenAddress,
+        subjectTokenOwner,
+      );
+    }
+
     test('gets owner balance', async () => {
-      let balance: BigNumber;
-      const account = DEFAULT_ACCOUNT;
-      const token = tokenAddresses[0];
-      balance = await vaultWrapper.getBalanceInVault(token, account);
-      expect(balance.toNumber()).to.equal(0);
-      await coreWrapper.deposit(token, new BigNumber(100), { from: account });
-      balance = await vaultWrapper.getBalanceInVault(token, account);
-      expect(balance.toNumber()).to.equal(100);
+      const vaultTokenBalance = await subject();
+
+      expect(vaultTokenBalance).to.bignumber.equal(vaultBalance);
     });
   });
 });

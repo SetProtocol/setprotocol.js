@@ -38,26 +38,6 @@ import { BigNumber } from '../../src/util';
 
 const contract = require('truffle-contract');
 
-/* ============ Transfer Proxy ============ */
-
-export const deployTransferProxy = async (
-  erc20WrapperAddress: Address,
-  provider: Provider,
-): Promise<Address> => {
-  const web3 = new Web3(provider);
-
-  const truffleTransferProxyContract = contract(TransferProxy);
-  truffleTransferProxyContract.setProvider(provider);
-  truffleTransferProxyContract.setNetwork(50);
-  truffleTransferProxyContract.defaults(TX_DEFAULTS);
-
-  await truffleTransferProxyContract.link('ERC20Wrapper', erc20WrapperAddress);
-
-  // Deploy TransferProxy
-  const transferProxyInstance = await truffleTransferProxyContract.new();
-  return transferProxyInstance.address;
-};
-
 export const deployTransferProxyContract = async (
   provider: Provider
 ): Promise<TransferProxyContract> => {
@@ -86,27 +66,6 @@ export const deployTransferProxyContract = async (
   );
 };
 
-/* ============ Vault ============ */
-
-export const deployVault = async (
-  erc20WrapperAddress: Address,
-  provider: Provider,
-): Promise<Address> => {
-  const web3 = new Web3(provider);
-
-  const truffleVaultContract = contract(Vault);
-  truffleVaultContract.setProvider(provider);
-  truffleVaultContract.setNetwork(50);
-  truffleVaultContract.defaults(TX_DEFAULTS);
-
-  await truffleVaultContract.link('ERC20Wrapper', erc20WrapperAddress);
-
-  // Deploy Vault
-  const vaultInstance = await truffleVaultContract.new();
-  return vaultInstance.address;
-};
-
-// TODO: COMBINE WITH THE ABOVE METHOD
 export const deployVaultContract = async (
   provider: Provider,
 ): Promise<VaultContract> => {
@@ -135,33 +94,6 @@ export const deployVaultContract = async (
   );
 };
 
-/* ============ Core ============ */
-
-export const deployCore = async (
-  provider: Provider,
-  transferProxyAddress: Address,
-  vaultAddress: Address,
-): Promise<Address> => {
-  const truffleCoreContract = contract(Core);
-  truffleCoreContract.setProvider(provider);
-  truffleCoreContract.setNetwork(50);
-  truffleCoreContract.defaults(TX_DEFAULTS);
-
-  const orderLibraryContract = contract(OrderLibrary);
-  orderLibraryContract.setProvider(provider);
-  orderLibraryContract.setNetwork(50);
-  orderLibraryContract.defaults(TX_DEFAULTS);
-
-  const orderLibrary = await orderLibraryContract.new(transferProxyAddress, vaultAddress);
-  await truffleCoreContract.link('OrderLibrary', orderLibrary.address);
-
-  // Deploy Core
-  const coreInstance = await truffleCoreContract.new(transferProxyAddress, vaultAddress);
-
-  return coreInstance.address;
-};
-
-// TODO: COMBINE WITH THE ABOVE METHOD
 export const deployCoreContract = async (
   provider: Provider,
   transferProxyAddress: Address,
@@ -193,34 +125,6 @@ export const deployCoreContract = async (
   );
 };
 
-/* ============ Set Token Factory ============ */
-
-export const deploySetTokenFactory = async (
-  coreAddress: Address,
-  provider: Provider
-): Promise<Address> => {
-  const web3 = new Web3(provider);
-
-  const setTokenFactoryContract = contract(SetTokenFactory);
-  setTokenFactoryContract.setProvider(provider);
-  setTokenFactoryContract.defaults(TX_DEFAULTS);
-
-  // Deploy SetTokenFactory
-  const setTokenFactoryInstance = await setTokenFactoryContract.new(coreAddress);
-  const setTokenFactoryWrapper = await SetTokenFactoryContract.at(
-    setTokenFactoryInstance.address,
-    web3,
-    TX_DEFAULTS,
-  );
-
-  // Enable Factory
-  const coreWrapper = await CoreContract.at(coreAddress, web3, TX_DEFAULTS);
-  await coreWrapper.enableFactory.sendTransactionAsync(setTokenFactoryInstance.address, TX_DEFAULTS);
-
-  return setTokenFactoryInstance.address;
-};
-
-// TODO: COMBINE WITH THE ABOVE METHOD
 export const deploySetTokenFactoryContract = async (
   provider: Provider,
   core: CoreContract
@@ -247,47 +151,6 @@ export const deploySetTokenFactoryContract = async (
   );
 
   return setTokenFactoryContract;
-};
-
-/* ============ StandardTokenMock ============ */
-
-export const deployTokensForSetWithApproval = async (
-  setToDeploy: TestSet,
-  transferProxyAddress: Address,
-  provider: Provider,
-): Promise<Address[]> => {
-  const web3 = new Web3(provider);
-
-  const standardTokenMockContract = contract(StandardTokenMock);
-  standardTokenMockContract.setProvider(provider);
-  standardTokenMockContract.defaults(TX_DEFAULTS);
-
-  // Deploy StandardTokenMocks to add to Set
-  const componentAddresses: Address[] = [];
-  await Promise.all(
-    setToDeploy.components.map(async component => {
-      const standardTokenMockInstance = await standardTokenMockContract.new(
-        DEFAULT_ACCOUNT,
-        component.supply,
-        component.name,
-        component.symbol,
-        component.decimals,
-      );
-      componentAddresses.push(standardTokenMockInstance.address);
-
-      const tokenWrapper = await StandardTokenMockContract.at(
-        standardTokenMockInstance.address,
-        web3,
-        TX_DEFAULTS,
-      );
-      await tokenWrapper.approve.sendTransactionAsync(
-        transferProxyAddress,
-        UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-        TX_DEFAULTS,
-      );
-    }),
-  );
-  return componentAddresses;
 };
 
 export const deployTokenAsync = async (
@@ -410,136 +273,6 @@ export const addAuthorizationAsync = async (
   );
 };
 
-export const approveForZeroEx = async (
-  web3: Web3,
-  componentTokens: Address[],
-  zeroExMakerAddress: Address,
-  takerAddress: Address,
-) => {
-  const tokenWrapperPromises = _.map(componentTokens, async token =>
-    await StandardTokenMockContract.at(
-      token,
-      web3,
-      TX_DEFAULTS,
-    )
-  );
-  const tokenWrappers = await Promise.all(tokenWrapperPromises);
-
-  // Give some tokens to zeroExMakerAddress
-  const zeroExMakerTransferPromises = _.map(tokenWrappers, async token =>
-    await token.transfer.sendTransactionAsync(
-      zeroExMakerAddress,
-      new BigNumber(1000),
-      TX_DEFAULTS,
-    ),
-  );
-  await Promise.all(zeroExMakerTransferPromises);
-
-  const zeroExMakerApprovePromises = _.map(tokenWrappers, async tokenWrapper =>
-    await tokenWrapper.approve.sendTransactionAsync(
-      SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
-      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-      { from: zeroExMakerAddress },
-    ),
-  );
-  await Promise.all(zeroExMakerApprovePromises);
-
-  // Give some tokens to takerAddress
-  const takerTransferPromises = _.map(tokenWrappers, async token =>
-    await token.transfer.sendTransactionAsync(
-      zeroExMakerAddress,
-      new BigNumber(1000),
-      TX_DEFAULTS,
-    ),
-  );
-  await Promise.all(takerTransferPromises);
-
-  const takerApprovePromises = _.map(tokenWrappers, async tokenWrapper =>
-    await tokenWrapper.approve.sendTransactionAsync(
-      SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
-      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-      { from: takerAddress },
-    ),
-  );
-  await Promise.all(takerApprovePromises);
-};
-
-export const approveForFill = async (
-  web3: Web3,
-  componentTokens: Address[],
-  makerAddress: Address,
-  relayerAddress: Address,
-  takerAddress: Address,
-  transferProxyAddress: Address,
-) => {
-  const tokenWrapperPromises = _.map(componentTokens, async token =>
-    await StandardTokenMockContract.at(
-      token,
-      web3,
-      TX_DEFAULTS,
-    )
-  );
-  const tokenWrappers = await Promise.all(tokenWrapperPromises);
-
-  // Approve all tokens for TransferProxy
-  const makerApprovePromises = _.map(tokenWrappers, async tokenWrapper =>
-    await tokenWrapper.approve.sendTransactionAsync(
-      transferProxyAddress,
-      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-      { from: makerAddress },
-    ),
-  );
-  await Promise.all(makerApprovePromises);
-
-  const takerApprovePromises = _.map(tokenWrappers, async tokenWrapper =>
-    await tokenWrapper.approve.sendTransactionAsync(
-      transferProxyAddress,
-      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-      { from: takerAddress },
-    ),
-  );
-  await Promise.all(takerApprovePromises);
-
-  const relayerApprovePromises = _.map(tokenWrappers, async tokenWrapper =>
-    await tokenWrapper.approve.sendTransactionAsync(
-      transferProxyAddress,
-      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-      { from: relayerAddress },
-    ),
-  );
-  await Promise.all(relayerApprovePromises);
-
-  // Give some tokens to takerAddress
-  const takerTransferPromises = _.map(tokenWrappers, async token =>
-    await token.transfer.sendTransactionAsync(
-      takerAddress,
-      new BigNumber(1000),
-      TX_DEFAULTS,
-    ),
-  );
-  await Promise.all(takerTransferPromises);
-
-  // Give some tokens to makerAddress
-  const makerTransferPromises = _.map(tokenWrappers, async token =>
-    await token.transfer.sendTransactionAsync(
-      makerAddress,
-      new BigNumber(1000),
-      TX_DEFAULTS,
-    ),
-  );
-  await Promise.all(makerTransferPromises);
-
-  // Give some tokens to relayerAddress
-  const relayerTransferPromises = _.map(tokenWrappers, async token =>
-    await token.transfer.sendTransactionAsync(
-      relayerAddress,
-      new BigNumber(1000),
-      TX_DEFAULTS,
-    ),
-  );
-  await Promise.all(relayerTransferPromises);
-};
-
 export const getTokenBalances = async (
   tokens: StandardTokenMockContract[],
   owner: Address
@@ -554,31 +287,4 @@ export const getTokenBalances = async (
   });
 
   return ownerBalances;
-};
-
-export const initializeCoreWrapper = async (provider: Provider): Promise<CoreWrapper> => {
-  const web3 = new Web3(provider);
-
-  const erc20WrapperContract = contract(ERC20Wrapper);
-  erc20WrapperContract.setProvider(provider);
-  erc20WrapperContract.defaults(TX_DEFAULTS);
-
-  const erc20Wrapper = await erc20WrapperContract.new();
-
-  const transferProxyAddress = await deployTransferProxy(erc20Wrapper.address, provider);
-  const vaultAddress = await deployVault(erc20Wrapper.address, provider);
-
-  const coreAddress = await deployCore(provider, transferProxyAddress, vaultAddress);
-
-  const transferProxyWrapper = await TransferProxyContract.at(
-    transferProxyAddress,
-    web3,
-    TX_DEFAULTS,
-  );
-  await transferProxyWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, TX_DEFAULTS);
-
-  const vaultWrapper = await VaultContract.at(vaultAddress, web3, TX_DEFAULTS);
-  await vaultWrapper.addAuthorizedAddress.sendTransactionAsync(coreAddress, TX_DEFAULTS);
-
-  return new CoreWrapper(web3, coreAddress, transferProxyAddress, vaultAddress);
 };

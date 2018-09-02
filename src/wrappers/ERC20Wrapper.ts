@@ -53,7 +53,9 @@ export class ERC20Wrapper {
   public async getBalanceOfAsync(tokenAddress: Address, userAddress: Address): Promise<BigNumber> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     this.assert.schema.isValidAddress('userAddress', userAddress);
+
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+
     return await tokenInstance.balanceOf.callAsync(userAddress);
   }
 
@@ -65,7 +67,9 @@ export class ERC20Wrapper {
    */
   public async getNameAsync(tokenAddress: Address): Promise<string> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+
     return await tokenInstance.name.callAsync(tokenAddress);
   }
 
@@ -77,7 +81,9 @@ export class ERC20Wrapper {
    */
   public async getSymbolAsync(tokenAddress: Address): Promise<string> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+
     return await tokenInstance.symbol.callAsync(tokenAddress);
   }
 
@@ -89,7 +95,9 @@ export class ERC20Wrapper {
    */
   public async getTotalSupplyAsync(tokenAddress: Address): Promise<BigNumber> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+
     return await tokenInstance.totalSupply.callAsync(tokenAddress);
   }
 
@@ -102,7 +110,9 @@ export class ERC20Wrapper {
    */
   public async getDecimalsAsync(tokenAddress: Address): Promise<BigNumber> {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+
     return await tokenInstance.decimals.callAsync(tokenAddress);
   }
 
@@ -124,6 +134,7 @@ export class ERC20Wrapper {
     this.assert.schema.isValidAddress('spenderAddress', spenderAddress);
 
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
+
     return await tokenInstance.allowance.callAsync(ownerAddress, spenderAddress);
   }
 
@@ -157,9 +168,7 @@ export class ERC20Wrapper {
         erc20AssertionErrors.INSUFFICIENT_BALANCE(),
     );
 
-    const txHash = await tokenInstance.transfer.sendTransactionAsync(to, value, txOptions);
-
-    return txHash;
+    return await tokenInstance.transfer.sendTransactionAsync(to, value, txOptions);
   }
 
   /**
@@ -184,9 +193,6 @@ export class ERC20Wrapper {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     this.assert.schema.isValidAddress('from', from);
     this.assert.schema.isValidAddress('to', to);
-
-    const txOptions = await generateTxOpts(this.web3, txOpts);
-
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
 
     await this.assert.erc20.hasSufficientBalance(
@@ -204,9 +210,9 @@ export class ERC20Wrapper {
         erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
     );
 
-    const txHash = await tokenInstance.transferFrom.sendTransactionAsync(from, to, value, txOptions);
+    const txOptions = await generateTxOpts(this.web3, txOpts);
 
-    return txHash;
+    return await tokenInstance.transferFrom.sendTransactionAsync(from, to, value, txOptions);
   }
 
   /**
@@ -228,10 +234,9 @@ export class ERC20Wrapper {
     this.assert.schema.isValidAddress('spenderAddress', spenderAddress);
 
     const txOptions = await generateTxOpts(this.web3, txOpts);
-
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
-    const txHash = await tokenInstance.approve.sendTransactionAsync(spenderAddress, value, txOptions);
 
-    return txHash;
+    return await tokenInstance.approve.sendTransactionAsync(spenderAddress, value, txOptions);
+
   }
 }

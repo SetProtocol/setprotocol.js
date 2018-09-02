@@ -17,10 +17,10 @@
 'use strict';
 
 import { BigNumber } from '../util';
-import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
+import { DEFAULT_ACCOUNT } from './accounts';
 import { ether } from '../../src/util/units';
 
-
+export { DEFAULT_ACCOUNT };
 export const DEFAULT_GAS_LIMIT: BigNumber = new BigNumber(6712390); // default of 6.7 million gas
 export const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
 export const DEPLOYED_TOKEN_QUANTITY: BigNumber = ether(100000000000);

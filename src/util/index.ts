@@ -18,10 +18,11 @@
 
 export { BigNumber } from './bignumber';
 export { classUtils } from './classUtils';
+export { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from './logs';
 export { instantiateWeb3 } from './provider';
 export { estimateIssueRedeemGasCost } from './setTokenUtils';
-export { Web3Utils } from './Web3Utils';
+export { SignatureUtils } from './signatureUtils';
 export { generateFutureTimestamp } from './timeStampUtils';
 export { generateTxOpts } from './transactionUtils';
-export { SignatureUtils } from './signatureUtils';
 export { ether } from './units';
+export { Web3Utils } from './Web3Utils';
