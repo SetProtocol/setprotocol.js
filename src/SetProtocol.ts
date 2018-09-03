@@ -21,8 +21,8 @@ import { TransactionReceipt } from 'ethereum-types';
 import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
 import { Provider } from '@0xproject/types';
 
-import { AccountingAPI, BlockchainAPI, FactoryAPI, IssuanceAPI, OrderAPI } from './api';
-import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from './wrappers';
+import { AccountingAPI, BlockchainAPI, FactoryAPI, IssuanceAPI, OrderAPI, SetTokenAPI } from './api';
+import { CoreWrapper, ERC20Wrapper, VaultWrapper } from './wrappers';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
 import { TxData, TxDataWithFrom } from './types/common';
 
@@ -67,9 +67,9 @@ class SetProtocol {
   public erc20: ERC20Wrapper;
 
   /**
-   * An instance of the OrderAPI class containing methods for relaying IssuanceOrders
+   * An instance of the SetTokenAPI class containing methods for interacting with SetToken contracts
    */
-  public setToken: SetTokenWrapper;
+  public setToken: SetTokenAPI;
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
@@ -82,13 +82,13 @@ class SetProtocol {
 
     this.core = new CoreWrapper(this.web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
     this.erc20 = new ERC20Wrapper(this.web3);
-    this.setToken = new SetTokenWrapper(this.web3);
     this.vault = new VaultWrapper(this.web3, config.vaultAddress);
 
     this.accounting = new AccountingAPI(this.web3, this.core);
     this.factory = new FactoryAPI(this.web3, this.core, config.setTokenFactoryAddress);
     this.issuance = new IssuanceAPI(this.web3, this.core);
     this.orders = new OrderAPI(this.web3, this.core);
+    this.setToken = new SetTokenAPI(this.web3);
   }
 
   /**
@@ -239,7 +239,7 @@ class SetProtocol {
    * @return            The address of the newly created Set
    */
   public async getSetAddressFromCreateTxHashAsync(txHash: string): Promise<Address> {
-    return await this.core.getSetAddressFromCreateTxHash(txHash);
+    return await this.factory.getSetAddressFromCreateTxHash(txHash);
   }
 
   /**

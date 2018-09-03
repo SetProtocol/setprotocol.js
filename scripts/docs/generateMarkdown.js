@@ -34,11 +34,11 @@ const classes = [
 		apiPath: 'setProtocol.orders',
 	},
 	{
-		name: 'ERC20Wrapper',
+		name: 'ERC20API',
 		apiPath: 'setProtocol.erc20',
 	},
 	{
-		name: 'SetTokenWrapper',
+		name: 'SetTokenAPI',
 		apiPath: 'setProtocol.setToken',
 	},
 ]

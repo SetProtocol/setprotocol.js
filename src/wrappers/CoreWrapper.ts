@@ -31,11 +31,9 @@ import {
 
 import { ContractWrapper } from '.';
 import { ZERO } from '../constants';
-import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
-import { Assertions } from '../assertions';
 import { TxData } from '../types/common';
 import { DetailedERC20Contract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
-import { BigNumber, extractNewSetTokenAddressFromLogs, generateTxOpts, getFormattedLogsFromTxHash } from '../util';
+import { BigNumber, generateTxOpts } from '../util';
 
 /**
  * @title CoreWrapper
@@ -46,7 +44,6 @@ import { BigNumber, extractNewSetTokenAddressFromLogs, generateTxOpts, getFormat
  */
 export class CoreWrapper {
   private web3: Web3;
-  private assert: Assertions;
   private contracts: ContractWrapper;
   private setProtocolUtils: SetProtocolUtils;
 
@@ -62,7 +59,6 @@ export class CoreWrapper {
   ) {
     this.web3 = web3;
     this.contracts = new ContractWrapper(this.web3);
-    this.assert = new Assertions(this.web3);
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
 
     this.coreAddress = coreAddress;
@@ -341,19 +337,6 @@ export class CoreWrapper {
   }
 
   /**
-   * Asynchronously retrieves a Set Token address from a createSet txHash
-   *
-   * @param  txHash     The transaction has to retrieve the set address from
-   * @return            The address of the newly created Set
-   */
-  public async getSetAddressFromCreateTxHash(txHash: string): Promise<Address> {
-    this.assert.schema.isValidBytes32('txHash', txHash);
-    const logs = await getFormattedLogsFromTxHash(this.web3, txHash);
-
-    return extractNewSetTokenAddressFromLogs(logs);
-  }
-
-  /**
    * Asynchronously gets the exchange address for a given exhange id
    *
    * @param  exchangeId Enum id of the exchange
@@ -422,7 +405,6 @@ export class CoreWrapper {
    * @return                Whether the factory contract is enabled
    */
   public async isValidFactoryAsync(factoryAddress: Address): Promise<boolean> {
-    this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidFactoryAddress = await coreInstance.validFactories.callAsync(factoryAddress);
 
@@ -437,7 +419,6 @@ export class CoreWrapper {
    * @return            Whether the contract is enabled
    */
   public async isValidSetAsync(setAddress: Address): Promise<boolean> {
-    this.assert.schema.isValidAddress('setAddress', setAddress);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidSetAddress = await coreInstance.validSets.callAsync(setAddress);
 
@@ -451,7 +432,6 @@ export class CoreWrapper {
    * @return            Quantity of Issuance Order filled
    */
   public async getOrderFills(orderHash: Bytes): Promise<BigNumber> {
-    this.assert.schema.isValidBytes32('orderHash', orderHash);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const orderFills = await coreInstance.orderFills.callAsync(orderHash);
 
@@ -465,7 +445,6 @@ export class CoreWrapper {
    * @return            Quantity of Issuance Order cancelled
    */
   public async getOrderCancels(orderHash: Bytes): Promise<BigNumber> {
-    this.assert.schema.isValidBytes32('orderHash', orderHash);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const orderCancels = await coreInstance.orderCancels.callAsync(orderHash);
 

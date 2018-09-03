@@ -21,5 +21,6 @@ import { BlockchainAPI } from './BlockchainAPI';
 import { FactoryAPI } from './FactoryAPI';
 import { IssuanceAPI } from './IssuanceAPI';
 import { OrderAPI } from './OrderAPI';
+import { SetTokenAPI } from './SetTokenAPI';
 
-export { AccountingAPI, BlockchainAPI, FactoryAPI, IssuanceAPI, OrderAPI };
+export { AccountingAPI, BlockchainAPI, FactoryAPI, IssuanceAPI, OrderAPI, SetTokenAPI };

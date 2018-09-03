@@ -124,39 +124,6 @@ describe('CoreWrapper', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('getSetAddressFromCreateTxHash', async () => {
-    let subjectTxHash: string;
-
-    beforeEach(async () => {
-      const componentTokens = await deployTokensAsync(3, provider);
-      const setComponentUnit = ether(4);
-      const naturalUnit = ether(2);
-
-      subjectTxHash = await core.create.sendTransactionAsync(
-        setTokenFactory.address,
-        componentTokens.map(token => token.address),
-        componentTokens.map(token => setComponentUnit),
-        naturalUnit,
-        'Set',
-        'SET',
-        '',
-        TX_DEFAULTS
-      );
-    });
-
-    async function subject(): Promise<string> {
-      return await coreWrapper.getSetAddressFromCreateTxHash(subjectTxHash);
-    }
-
-    test('retrieves the correct set address', async () => {
-      const setAddress = await subject();
-
-      const formattedLogs = await getFormattedLogsFromTxHash(web3, subjectTxHash);
-      const expectedSetAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
-      expect(setAddress).to.equal(expectedSetAddress);
-    });
-  });
-
   describe('create', async () => {
     let componentTokens: StandardTokenMockContract[];
 
