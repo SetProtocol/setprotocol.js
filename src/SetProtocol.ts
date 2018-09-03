@@ -19,12 +19,11 @@
 import * as Web3 from 'web3';
 import { TransactionReceipt } from 'ethereum-types';
 import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
-import { Provider } from '@0xproject/types';
 
 import { AccountingAPI, BlockchainAPI, ERC20API, FactoryAPI, IssuanceAPI, OrderAPI, SetTokenAPI } from './api';
 import { CoreWrapper, VaultWrapper } from './wrappers';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
-import { TxData, TxDataWithFrom } from './types/common';
+import { TxData, TxDataWithFrom, Provider } from './types/common';
 
 export interface SetProtocolConfig {
   coreAddress: Address;

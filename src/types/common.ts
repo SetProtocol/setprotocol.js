@@ -49,3 +49,29 @@ export interface CreateLogArgs {
   _name: string;
   _symbol: string;
 }
+
+/**
+ * Do not create your own provider. Use an existing provider from a Web3 or ProviderEngine library
+ * Read more about Providers in the 0x wiki.
+ */
+export interface Provider {
+    sendAsync(payload: JSONRPCRequestPayload, callback: JSONRPCErrorCallback): void;
+}
+
+export interface JSONRPCRequestPayload {
+    params: any[];
+    method: string;
+    id: number;
+    jsonrpc: string;
+}
+
+export interface JSONRPCResponsePayload {
+    result: any;
+    id: number;
+    jsonrpc: string;
+}
+
+export declare type JSONRPCErrorCallback = (err: Error | null, result?: JSONRPCResponsePayload) => void;
+
+
+
