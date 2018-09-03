@@ -33,7 +33,8 @@ import { SetTokenContract, StandardTokenMockContract } from 'set-protocol-contra
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
 import { CoreWrapper } from '../wrappers';
-import { BigNumber, generateFutureTimestamp } from '../util';
+import { NULL_ADDRESS } from '../constants';
+import { BigNumber, generateFutureTimestamp,  } from '../util';
 import { TxData, TxDataWithFrom } from '../types/common';
 
 export {
@@ -357,8 +358,10 @@ export class OrderAPI {
     await this.assert.erc20.implementsERC20(makerTokenContract);
     this.assert.common.greaterThanZero(makerTokenAmount, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount));
 
-    const relayerTokenContract = await StandardTokenMockContract.at(relayerToken, this.web3, {});
-    await this.assert.erc20.implementsERC20(relayerTokenContract);
+    if (relayerToken !== NULL_ADDRESS) {
+      const relayerTokenContract = await StandardTokenMockContract.at(relayerToken, this.web3, {});
+      await this.assert.erc20.implementsERC20(relayerTokenContract);
+    }
 
     this.assert.common.isValidExpiration(expiration, coreAPIErrors.EXPIRATION_PASSED());
   }
