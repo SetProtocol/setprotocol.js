@@ -1,7 +1,7 @@
 
 
 import * as Web3 from 'web3';
-import { Provider } from '@0xproject/types';
+import { Provider } from '../types/common';
 
 // This function has basically been copied vertabim from the amazing Dharma repo
 export const instantiateWeb3 = (provider: Provider = undefined): Web3 => {
