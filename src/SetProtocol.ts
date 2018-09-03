@@ -26,21 +26,6 @@ import { CoreWrapper, VaultWrapper } from './wrappers';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
 import { TxData, TxDataWithFrom } from './types/common';
 
-export {
-  Address,
-  Bytes,
-  UInt,
-  Constants,
-  ECSig,
-  Exchanges,
-  IssuanceOrder,
-  SignedIssuanceOrder,
-  Log,
-  SolidityTypes,
-  TakerWalletOrder,
-  ZeroExSignedFillOrder,
-} from 'set-protocol-utils';
-
 export interface SetProtocolConfig {
   coreAddress: Address;
   transferProxyAddress: Address;
