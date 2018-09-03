@@ -59,7 +59,7 @@ describe('ERC20Wrapper', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('getNameAsync, getSymbolAsync, getTotalSupplyAsync, getDecimalsAsync', async () => {
+  describe('name, symbol, totalSupply, decimals', async () => {
     let tokenSupply: BigNumber;
     let tokenName: string;
     let tokenSymbol: string;
@@ -88,10 +88,10 @@ describe('ERC20Wrapper', () => {
     });
 
     async function subject(): Promise<any> {
-      const name = await erc20Wrapper.getNameAsync(subjectTokenAddress);
-      const symbol = await erc20Wrapper.getSymbolAsync(subjectTokenAddress);
-      const supply = await erc20Wrapper.getTotalSupplyAsync(subjectTokenAddress);
-      const decimals = await erc20Wrapper.getDecimalsAsync(subjectTokenAddress);
+      const name = await erc20Wrapper.name(subjectTokenAddress);
+      const symbol = await erc20Wrapper.symbol(subjectTokenAddress);
+      const supply = await erc20Wrapper.totalSupply(subjectTokenAddress);
+      const decimals = await erc20Wrapper.decimals(subjectTokenAddress);
 
       return { name, symbol, supply, decimals };
     }
@@ -106,7 +106,7 @@ describe('ERC20Wrapper', () => {
     });
   });
 
-  describe('getBalanceOfAsync', async () => {
+  describe('balanceOf', async () => {
     let token: StandardTokenMockContract;
 
     let subjectTokenAddress: Address;
@@ -120,7 +120,7 @@ describe('ERC20Wrapper', () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await erc20Wrapper.getBalanceOfAsync(
+      return await erc20Wrapper.balanceOf(
         subjectTokenAddress,
         subjectTokenOwner,
       );
@@ -133,7 +133,7 @@ describe('ERC20Wrapper', () => {
     });
   });
 
-  describe('getAllowanceAsync', async () => {
+  describe('allowance', async () => {
     let token: StandardTokenMockContract;
     let approveAllowance: BigNumber;
 
@@ -149,7 +149,7 @@ describe('ERC20Wrapper', () => {
       subjectTokenAddress = token.address;
       subjectSpenderAddress = ACCOUNTS[1].address;
 
-      await erc20Wrapper.approveAsync(
+      await erc20Wrapper.approve(
         subjectTokenAddress,
         subjectSpenderAddress,
         approveAllowance,
@@ -158,7 +158,7 @@ describe('ERC20Wrapper', () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await erc20Wrapper.getAllowanceAsync(
+      return await erc20Wrapper.allowance(
         subjectTokenAddress,
         subjectTokenOwner,
         subjectSpenderAddress,
@@ -172,7 +172,7 @@ describe('ERC20Wrapper', () => {
     });
   });
 
-  describe('approveAsync', async () => {
+  describe('approve', async () => {
     let token: StandardTokenMockContract;
 
     let subjectTokenAddress: Address;
@@ -190,7 +190,7 @@ describe('ERC20Wrapper', () => {
     });
 
     async function subject(): Promise<string> {
-      return await erc20Wrapper.approveAsync(
+      return await erc20Wrapper.approve(
         subjectTokenAddress,
         subjectSpenderAddress,
         subjectApproveAllowance,
@@ -206,7 +206,7 @@ describe('ERC20Wrapper', () => {
     });
   });
 
-  describe('transferFromAsync', async () => {
+  describe('transferFrom', async () => {
     let token: StandardTokenMockContract;
     let approveAllowance: BigNumber;
 
@@ -224,7 +224,7 @@ describe('ERC20Wrapper', () => {
       subjectSpenderAddress = ACCOUNTS[1].address;
       subjectTransferAmount = approveAllowance;
 
-      await erc20Wrapper.approveAsync(
+      await erc20Wrapper.approve(
         subjectTokenAddress,
         subjectSpenderAddress,
         approveAllowance,
@@ -233,7 +233,7 @@ describe('ERC20Wrapper', () => {
     });
 
     async function subject(): Promise<string> {
-      return await erc20Wrapper.transferFromAsync(
+      return await erc20Wrapper.transferFrom(
         subjectTokenAddress,
         subjectTokenOwner,
         subjectSpenderAddress,
@@ -253,7 +253,7 @@ describe('ERC20Wrapper', () => {
     });
   });
 
-  describe('transferAsync', async () => {
+  describe('transfer', async () => {
     let token: StandardTokenMockContract;
 
     let subjectTokenOwner: Address;
@@ -271,7 +271,7 @@ describe('ERC20Wrapper', () => {
     });
 
     async function subject(): Promise<string> {
-      return await erc20Wrapper.transferAsync(
+      return await erc20Wrapper.transfer(
         subjectTokenAddress,
         subjectTokenReceiver,
         subjectTransferAmount,

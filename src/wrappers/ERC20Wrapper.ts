@@ -20,8 +20,6 @@ import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
 import { ContractWrapper } from '.';
-import { erc20AssertionErrors } from '../errors';
-import { Assertions } from '../assertions';
 import { TxData } from '../types/common';
 import { BigNumber, generateTxOpts } from '../util';
 
@@ -34,12 +32,10 @@ import { BigNumber, generateTxOpts } from '../util';
  */
 export class ERC20Wrapper {
   private web3: Web3;
-  private assert: Assertions;
   private contracts: ContractWrapper;
 
   public constructor(web3: Web3) {
     this.web3 = web3;
-    this.assert = new Assertions(this.web3);
     this.contracts = new ContractWrapper(this.web3);
   }
 
@@ -47,13 +43,10 @@ export class ERC20Wrapper {
    * Gets balance of the ERC20 token
    *
    * @param  tokenAddress  Address of the ERC20 token
-   * @param  userAddress Address of the user
-   * @return             The balance of the ERC20 token
+   * @param  userAddress   Address of the user
+   * @return               The balance of the ERC20 token
    */
-  public async getBalanceOfAsync(tokenAddress: Address, userAddress: Address): Promise<BigNumber> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-    this.assert.schema.isValidAddress('userAddress', userAddress);
-
+  public async balanceOf(tokenAddress: Address, userAddress: Address): Promise<BigNumber> {
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
 
     return await tokenInstance.balanceOf.callAsync(userAddress);
@@ -63,11 +56,9 @@ export class ERC20Wrapper {
    * Gets name of the ERC20 token
    *
    * @param  tokenAddress  Address of the ERC20 token
-   * @return             The name of the ERC20 token
+   * @return               The name of the ERC20 token
    */
-  public async getNameAsync(tokenAddress: Address): Promise<string> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-
+  public async name(tokenAddress: Address): Promise<string> {
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
 
     return await tokenInstance.name.callAsync(tokenAddress);
@@ -77,11 +68,9 @@ export class ERC20Wrapper {
    * Gets balance of the ERC20 token
    *
    * @param  tokenAddress  Address of the ERC20 token
-   * @return             The symbol of the ERC20 token
+   * @return               The symbol of the ERC20 token
    */
-  public async getSymbolAsync(tokenAddress: Address): Promise<string> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-
+  public async symbol(tokenAddress: Address): Promise<string> {
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
 
     return await tokenInstance.symbol.callAsync(tokenAddress);
@@ -91,11 +80,9 @@ export class ERC20Wrapper {
    * Gets the total supply of the ERC20 token
    *
    * @param  tokenAddress  Address of the ERC20 token
-   * @return             The symbol of the ERC20 token
+   * @return               The symbol of the ERC20 token
    */
-  public async getTotalSupplyAsync(tokenAddress: Address): Promise<BigNumber> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-
+  public async totalSupply(tokenAddress: Address): Promise<BigNumber> {
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
 
     return await tokenInstance.totalSupply.callAsync(tokenAddress);
@@ -105,12 +92,10 @@ export class ERC20Wrapper {
    * Gets decimals of the ERC20 token
    *
    * @param  tokenAddress  Address of the ERC20 token
-   * @param  userAddress Address of the user
-   * @return             The decimals of the ERC20 token
+   * @param  userAddress   Address of the user
+   * @return               The decimals of the ERC20 token
    */
-  public async getDecimalsAsync(tokenAddress: Address): Promise<BigNumber> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-
+  public async decimals(tokenAddress: Address): Promise<BigNumber> {
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
 
     return await tokenInstance.decimals.callAsync(tokenAddress);
@@ -122,17 +107,9 @@ export class ERC20Wrapper {
    * @param  tokenAddress      Address of the token
    * @param  ownerAddress      Address of the owner
    * @param  spenderAddress    Address of the spender
-   * @return             The allowance of the spender
+   * @return                   The allowance of the spender
    */
-  public async getAllowanceAsync(
-    tokenAddress: Address,
-    ownerAddress: Address,
-    spenderAddress: Address
-  ): Promise<BigNumber> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-    this.assert.schema.isValidAddress('ownerAddress', ownerAddress);
-    this.assert.schema.isValidAddress('spenderAddress', spenderAddress);
-
+  public async allowance(tokenAddress: Address, ownerAddress: Address, spenderAddress: Address): Promise<BigNumber> {
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
 
     return await tokenInstance.allowance.callAsync(ownerAddress, spenderAddress);
@@ -142,31 +119,15 @@ export class ERC20Wrapper {
    * Asynchronously transfer value denominated in the specified ERC20 token to
    * the address specified.
    *
-   * @param  tokenAddress the address of the token being used.
-   * @param  to           to whom the transfer is being made.
-   * @param  value        the amount being transferred.
-   * @param  txOpts      any parameters necessary to modify the transaction.
-   * @return              the hash of the resulting transaction.
+   * @param  tokenAddress   The address of the token being used.
+   * @param  to             To whom the transfer is being made.
+   * @param  value          The amount being transferred.
+   * @param  txOpts         Any parameters necessary to modify the transaction.
+   * @return                The hash of the resulting transaction.
    */
-  public async transferAsync(
-    tokenAddress: Address,
-    to: Address,
-    value: BigNumber,
-    txOpts?: TxData,
-  ): Promise<string> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-    this.assert.schema.isValidAddress('to', to);
-
+  public async transfer(tokenAddress: Address, to: Address, value: BigNumber, txOpts?: TxData): Promise<string> {
     const txOptions = await generateTxOpts(this.web3, txOpts);
-
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
-
-    await this.assert.erc20.hasSufficientBalance(
-        tokenInstance,
-        txOpts.from,
-        value,
-        erc20AssertionErrors.INSUFFICIENT_BALANCE(),
-    );
 
     return await tokenInstance.transfer.sendTransactionAsync(to, value, txOptions);
   }
@@ -176,40 +137,21 @@ export class ERC20Wrapper {
    * as the sender of the message has received sufficient allowance on behalf
    * of `from` to do so.
    *
-   * @param  tokenAddress the address of the token being used.
-   * @param  from         from whom are the funds being transferred.
-   * @param  to           to whom are the funds being transferred.
-   * @param  value        the amount to be transferred.
-   * @param  txOpts      any parameters necessary to modify the transaction.
-   * @return              the hash of the resulting transaction.
+   * @param  tokenAddress   The address of the token being used.
+   * @param  from           From whom are the funds being transferred.
+   * @param  to             To whom are the funds being transferred.
+   * @param  value          The amount to be transferred.
+   * @param  txOpts         Any parameters necessary to modify the transaction.
+   * @return                The hash of the resulting transaction.
    */
-  public async transferFromAsync(
+  public async transferFrom(
     tokenAddress: Address,
     from: Address,
     to: Address,
     value: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-    this.assert.schema.isValidAddress('from', from);
-    this.assert.schema.isValidAddress('to', to);
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
-
-    await this.assert.erc20.hasSufficientBalance(
-        tokenInstance,
-        from,
-        value,
-        erc20AssertionErrors.INSUFFICIENT_BALANCE(),
-    );
-
-    await this.assert.erc20.hasSufficientAllowance(
-        tokenInstance,
-        from,
-        txOpts.from,
-        value,
-        erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
-    );
-
     const txOptions = await generateTxOpts(this.web3, txOpts);
 
     return await tokenInstance.transferFrom.sendTransactionAsync(from, to, value, txOptions);
@@ -224,19 +166,15 @@ export class ERC20Wrapper {
    * @param  txOpts               any parameters necessary to modify the transaction.
    * @return                      the hash of the resulting transaction.
    */
-  public async approveAsync(
+  public async approve(
     tokenAddress: Address,
     spenderAddress: Address,
     value: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-    this.assert.schema.isValidAddress('spenderAddress', spenderAddress);
-
     const txOptions = await generateTxOpts(this.web3, txOpts);
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
 
     return await tokenInstance.approve.sendTransactionAsync(spenderAddress, value, txOptions);
-
   }
 }
