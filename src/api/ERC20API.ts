@@ -28,10 +28,10 @@ import { BigNumber } from '../util';
 import { TxData, TxDataWithFrom } from '../types/common';
 
 /**
- * @title SetTokenAPI
+ * @title ERC20API
  * @author Set Protocol
  *
- * A library for interacting with set tokens
+ * A library for interacting with ERC20 compliant token contracts
  */
 export class ERC20API {
   private web3: Web3;
