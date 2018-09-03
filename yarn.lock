@@ -4820,9 +4820,9 @@ set-protocol-utils@^0.3.20:
     tslint-eslint-rules "^5.3.1"
     web3 "0.20.0"
 
-set-protocol-utils@^0.3.23:
-  version "0.3.23"
-  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.23.tgz#a83485688da7979621c1e06505927b1b516002c6"
+set-protocol-utils@^0.3.24:
+  version "0.3.24"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.24.tgz#f2b17dc264263f3f0be95f1e7f6e99012e5cada5"
   dependencies:
     "@0xproject/base-contract" "^1.0.4"
     "@0xproject/order-utils" "^1.0.1-rc.2"
@@ -4841,6 +4841,7 @@ set-protocol-utils@^0.3.23:
     js-sha3 "^0.7.0"
     lint-staged "^7.2.0"
     lodash "^4.17.4"
+    tiny-promisify "^1.0.0"
     tslint-eslint-rules "^5.3.1"
     web3 "0.20.0"
 

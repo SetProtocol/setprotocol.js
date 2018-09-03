@@ -72,6 +72,3 @@ export interface JSONRPCResponsePayload {
 }
 
 export declare type JSONRPCErrorCallback = (err: Error | null, result?: JSONRPCResponsePayload) => void;
-
-
-
