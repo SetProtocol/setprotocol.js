@@ -10,8 +10,8 @@
     "basket",
     "ERC20"
   ],
-  "main": "dist/src/index.js",
-  "typings": "dist/types/src/index.d.ts",
+  "main": "dist/src/SetProtocol.js",
+  "typings": "dist/types/src/SetProtocol.d.ts",
   "bin": {
     "set-chain": "bin/chain"
   },
