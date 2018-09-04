@@ -880,4 +880,66 @@ describe('OrderAPI', () => {
       });
     });
   });
+
+  describe('getOrderFillsAsync, getOrderCancelledAsync', async () => {
+    let subjectOrderHash: string;
+    let subjectIssuanceOrder: IssuanceOrder;
+
+    beforeEach(async () => {
+      const setAddress = '0x8d98a5d27fe34cf7ca410e771a897ed0f14af34c';
+      const makerToken = '0x45af2bc687e136460eff84771c4303b90ee0035d';
+      const makerTokenAmount = new BigNumber(100000000);
+      const relayerAddress = '0x41fbe55863218606f4c6bff768fa70fdbff6e05b';
+      const relayerToken = '0x06b7b2996b1bd54805487b20cd97fda90cbffb3d';
+      const quantity = new BigNumber(100000);
+      const requiredComponents = ['0x48fbf47994d88099913272f91db13fc250a', '0x8421da994a050d01e5f6a09968c2a936a89cd'];
+      const requiredComponentAmounts = [new BigNumber(1000), new BigNumber(1000)];
+      subjectIssuanceOrder = {
+        setAddress,
+        makerAddress: DEFAULT_ACCOUNT,
+        makerToken,
+        makerTokenAmount,
+        relayerAddress,
+        relayerToken,
+        quantity,
+        expiration: ordersAPI.generateExpirationTimestamp(86400),
+        makerRelayerFee: ZERO,
+        takerRelayerFee: ZERO,
+        requiredComponents,
+        requiredComponentAmounts,
+        salt: ordersAPI.generateSalt(),
+      };
+      subjectOrderHash = SetProtocolUtils.hashOrderHex(subjectIssuanceOrder);
+    });
+
+    describe('getOrderFillsAsync', async () => {
+      async function subject(): Promise<BigNumber> {
+        return await ordersAPI.getOrderFillsAsync(
+          subjectOrderHash,
+        );
+      }
+
+      test('should return 0 with an unfilled order', async () => {
+        const orderFilledQuantity = await subject();
+
+        expect(orderFilledQuantity).to.bignumber.equal(ZERO);
+      });
+    });
+
+    describe('getOrderCancelledAsync', async () => {
+      async function subject(): Promise<BigNumber> {
+        return await ordersAPI.getOrderCancelledAsync(
+          subjectOrderHash,
+        );
+      }
+
+      test('should return 0 for orders cancelled', async () => {
+        const orderCancelledQuantity = await subject();
+
+        expect(orderCancelledQuantity).to.bignumber.equal(ZERO);
+      });
+    });
+
+
+  });
 });

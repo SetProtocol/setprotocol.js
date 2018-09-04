@@ -428,7 +428,7 @@ export class CoreWrapper {
   /**
    * Asynchronously gets the quantity of the Issuance Order filled
    *
-   * @param  orderHash  Bytes32 hash
+   * @param  orderHash  Bytes32 hash of the issuance order
    * @return            Quantity of Issuance Order filled
    */
   public async orderFills(orderHash: Bytes): Promise<BigNumber> {
@@ -441,7 +441,7 @@ export class CoreWrapper {
   /**
    * Asynchronously gets the quantity of the Issuance Order cancelled
    *
-   * @param  orderHash  Address of the Set contract
+   * @param  orderHash  Bytes32 hash of the Issuance ORder
    * @return            Quantity of Issuance Order cancelled
    */
   public async orderCancels(orderHash: Bytes): Promise<BigNumber> {
