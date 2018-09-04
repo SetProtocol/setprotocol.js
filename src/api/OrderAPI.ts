@@ -222,7 +222,6 @@ export class OrderAPI {
     orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
     txOpts: TxDataWithFrom,
   ): Promise<string> {
-    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantityToFill, orders);
 
     const orderData = await this.setProtocolUtils.generateSerializedOrders(
@@ -247,7 +246,7 @@ export class OrderAPI {
     quantityToCancel: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    await this.assertCancelOrder(issuanceOrder, quantityToCancel);
+    await this.assertCancelOrder(txOpts.from, issuanceOrder, quantityToCancel);
 
     return await this.core.cancelOrder(issuanceOrder, quantityToCancel, txOpts);
   }
@@ -286,7 +285,7 @@ export class OrderAPI {
   }
 
   private async assertFillOrder(
-    userAddress: Address,
+    transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
@@ -294,6 +293,7 @@ export class OrderAPI {
     const { signature, ...issuanceOrder } = signedIssuanceOrder;
     await this.commonIssuanceOrderAssertions(issuanceOrder);
 
+    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
     this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
@@ -305,9 +305,14 @@ export class OrderAPI {
     );
   }
 
-  private async assertCancelOrder(issuanceOrder: IssuanceOrder, quantityToCancel: BigNumber) {
+  private async assertCancelOrder(
+    transactionCaller: Address,
+    issuanceOrder: IssuanceOrder,
+    quantityToCancel: BigNumber
+  ) {
     await this.commonIssuanceOrderAssertions(issuanceOrder);
 
+    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
     this.assert.common.greaterThanZero(quantityToCancel, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToCancel));
   }
 

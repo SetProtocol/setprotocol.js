@@ -64,7 +64,6 @@ export class AccountingAPI {
     quantities: BigNumber[],
     txOpts: TxDataWithFrom
   ): Promise<string> {
-    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     await this.assertDeposit(txOpts.from, tokenAddresses, quantities);
 
     if (tokenAddresses.length === 1) {
@@ -87,7 +86,6 @@ export class AccountingAPI {
     quantities: BigNumber[],
     txOpts: TxDataWithFrom
   ): Promise<string> {
-    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     await this.assertWithdraw(txOpts.from, tokenAddresses, quantities);
 
     if (tokenAddresses.length === 1) {
@@ -99,9 +97,9 @@ export class AccountingAPI {
 
   /* ============ Private Assertions ============ */
 
-  private async assertDeposit(userAddress: Address, tokenAddresses: Address[], quantities: BigNumber[]) {
+  private async assertDeposit(transactionCaller: Address, tokenAddresses: Address[], quantities: BigNumber[]) {
     // Schema validations
-    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
     this.assert.common.isEqualLength(
       tokenAddresses,
       quantities,
@@ -125,7 +123,7 @@ export class AccountingAPI {
         // Check balance
         await this.assert.erc20.hasSufficientBalance(
           tokenContract,
-          userAddress,
+          transactionCaller,
           quantities[i],
           erc20AssertionErrors.INSUFFICIENT_BALANCE(),
         );
@@ -133,7 +131,7 @@ export class AccountingAPI {
         // Check allowance
         await this.assert.erc20.hasSufficientAllowance(
           tokenContract,
-          userAddress,
+          transactionCaller,
           this.core.transferProxyAddress,
           quantities[i],
           erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
@@ -142,8 +140,8 @@ export class AccountingAPI {
     );
   }
 
-  private async assertWithdraw(userAddress: Address, tokenAddresses: Address[], quantities: BigNumber[]) {
-    this.assert.schema.isValidAddress('userAddress', userAddress);
+  private async assertWithdraw(transactionCaller: Address, tokenAddresses: Address[], quantities: BigNumber[]) {
+    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
     this.assert.common.isEqualLength(
       tokenAddresses,
       quantities,
@@ -170,7 +168,7 @@ export class AccountingAPI {
         await this.assert.vault.hasSufficientTokenBalance(
           vaultContract,
           tokenAddress,
-          userAddress,
+          transactionCaller,
           quantities[i],
           vaultAssertionErrors.INSUFFICIENT_TOKEN_BALANCE(),
         );

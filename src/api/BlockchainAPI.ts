@@ -52,6 +52,7 @@ export class BlockchainAPI {
   private assert: Assertions;
   private intervalManager: IntervalManager;
   private web3Utils: Web3Utils;
+
   /**
    * Instantiates a new BlockchainAPI instance that contains methods for transferring balances in the vault.
    *
@@ -60,8 +61,9 @@ export class BlockchainAPI {
    */
   constructor(web3: Web3 = undefined) {
     this.web3 = web3;
-    this.intervalManager = new IntervalManager();
     this.assert = new Assertions(this.web3);
+
+    this.intervalManager = new IntervalManager();
     this.web3Utils = new Web3Utils(this.web3);
   }
 
@@ -81,18 +83,16 @@ export class BlockchainAPI {
     pollingIntervalMs = 1000,
     timeoutMs = DEFAULT_TIMEOUT_FOR_TX_MINED,
   ): Promise<TransactionReceipt> {
-    const intervalManager = this.intervalManager;
-    const web3Utils = this.web3Utils;
-
     this.assert.schema.isValidBytes32('txHash', txHash);
 
+    const intervalManager = this.intervalManager;
+    const web3Utils = this.web3Utils;
     return new Promise<TransactionReceipt>((resolve, reject) => {
       intervalManager.setInterval(
         txHash,
         async () => {
           try {
             const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
-
             if (receipt) {
               resolve(receipt);
               // Stop the interval.
