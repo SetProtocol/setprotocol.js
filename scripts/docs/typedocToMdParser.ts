@@ -354,7 +354,6 @@ class TypedocParser {
 
     private getMarkdown(): string {
       let content = '';
-      content += this.getHeaderMarkdown();
       content += this.getSectionsMarkdown();
       content += this.getInterfacesHeader();
       content += this.getInterfacesMarkdown();
@@ -363,10 +362,6 @@ class TypedocParser {
     }
 
     /** --------------- MARKDOWN --------------- **/
-
-    private getHeaderMarkdown(): string {
-      return `${HeaderTags.H1} setprotocol.js API Reference\n`;
-    }
 
     private getSectionsMarkdown(): string {
       const sections = this.getSections();
@@ -392,7 +387,7 @@ class TypedocParser {
     private getMethodsMarkdown(methods: MethodDocumentation[]) {
       let content = '';
       _.each(methods, method => {
-        content += `${HeaderTags.H4} ${method.name}\n\n`
+        content += `${HeaderTags.H3} ${method.name}\n\n`
 
         if (method.description.length) {
           content += `${method.description}\n\n`  
