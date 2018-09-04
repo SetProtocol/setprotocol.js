@@ -237,24 +237,26 @@ export class OrderAPI {
   }
 
   /**
-   * Given a Bytes32 hash, gets the quantity of the Issuance Order filled
+   * Given an Issuance Order, gets the quantity of the Issuance Order filled
    *
-   * @param  orderHash  Bytes32 hash
-   * @return            Quantity of Issuance Order filled
+   * @param  issuanceOrder  Issuance Order
+   * @return                Quantity of Issuance Order filled
    */
-  public async getOrderFillsAsync(orderHash: Bytes): Promise<BigNumber> {
-    this.assert.schema.isValidBytes32('orderHash', orderHash);
+  public async getOrderFillsAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
+    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
+
     return await this.core.getOrderFills(orderHash);
   }
 
   /**
-   * Given a Bytes32 hash, gets the quantity of the Issuance Order cancelled
+   * Given an Issuance Order, gets the quantity of the Issuance Order cancelled
    *
-   * @param  orderHash  Bytes32 hash
-   * @return            Quantity of Issuance Order cancelled
+   * @param  issuanceOrder  Issuance Order
+   * @return                Quantity of Issuance Order cancelled
    */
-  public async getOrderCancelledAsync(orderHash: Bytes): Promise<BigNumber> {
-    this.assert.schema.isValidBytes32('orderHash', orderHash);
+  public async getOrderCancelledAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
+    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
+
     return await this.core.getOrderCancels(orderHash);
   }
 

@@ -881,65 +881,183 @@ describe('OrderAPI', () => {
     });
   });
 
-  describe('getOrderFillsAsync, getOrderCancelledAsync', async () => {
-    let subjectOrderHash: string;
-    let subjectIssuanceOrder: IssuanceOrder;
+  describe('getOrderFillsAsync', async () => {
+    let issuanceOrderMaker: Address;
+    let issuanceOrderQuantity: BigNumber;
+    let setToken: SetTokenContract;
+
+    let subjectSignedIssuanceOrder: SignedIssuanceOrder;
+    let subjectQuantityToFill: BigNumber;
 
     beforeEach(async () => {
-      const setAddress = '0x8d98a5d27fe34cf7ca410e771a897ed0f14af34c';
-      const makerToken = '0x45af2bc687e136460eff84771c4303b90ee0035d';
-      const makerTokenAmount = new BigNumber(100000000);
-      const relayerAddress = '0x41fbe55863218606f4c6bff768fa70fdbff6e05b';
-      const relayerToken = '0x06b7b2996b1bd54805487b20cd97fda90cbffb3d';
-      const quantity = new BigNumber(100000);
-      const requiredComponents = ['0x48fbf47994d88099913272f91db13fc250a', '0x8421da994a050d01e5f6a09968c2a936a89cd'];
-      const requiredComponentAmounts = [new BigNumber(1000), new BigNumber(1000)];
-      subjectIssuanceOrder = {
-        setAddress,
-        makerAddress: DEFAULT_ACCOUNT,
-        makerToken,
-        makerTokenAmount,
-        relayerAddress,
-        relayerToken,
-        quantity,
-        expiration: ordersAPI.generateExpirationTimestamp(86400),
-        makerRelayerFee: ZERO,
-        takerRelayerFee: ZERO,
+
+      let orders: (ZeroExSignedFillOrder | TakerWalletOrder)[];
+      let caller: Address;
+
+      await deployTakerWalletWrapperContract(transferProxy, core, provider);
+      await deployZeroExExchangeWrapperContract(
+        SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
+        SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        transferProxy,
+        core,
+        provider,
+      );
+
+      const issuanceOrderTaker = ACCOUNTS[0].address;
+      issuanceOrderMaker = ACCOUNTS[1].address;
+      const relayerAddress = ACCOUNTS[2].address;
+
+      const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
+      const secondComponent = await deployTokenAsync(provider, issuanceOrderTaker);
+      const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+
+      const componentTokens = [firstComponent, secondComponent];
+      const setComponentUnit = ether(4);
+      const componentAddresses = componentTokens.map(token => token.address);
+      const componentUnits = componentTokens.map(token => setComponentUnit);
+      const naturalUnit = ether(2);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        componentUnits,
+        naturalUnit,
+      );
+
+      await approveForTransferAsync([makerToken, relayerToken], transferProxy.address, issuanceOrderMaker);
+      await approveForTransferAsync(
+        [firstComponent, secondComponent, relayerToken],
+        transferProxy.address,
+        issuanceOrderTaker
+      );
+
+      issuanceOrderQuantity = ether(4);
+      const issuanceOrderMakerTokenAmount = ether(10);
+      const issuanceOrderExpiration = generateFutureTimestamp(10000);
+      const requiredComponents = [firstComponent.address, secondComponent.address];
+      const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
+      const issuanceOrderMakerRelayerFee = ZERO;
+      const issuanceOrderTakerRelayerFee = ZERO;
+      subjectSignedIssuanceOrder = await ordersAPI.createSignedOrderAsync(
+        setToken.address,
+        issuanceOrderQuantity,
         requiredComponents,
-        requiredComponentAmounts,
-        salt: ordersAPI.generateSalt(),
-      };
-      subjectOrderHash = SetProtocolUtils.hashOrderHex(subjectIssuanceOrder);
+        requredComponentAmounts,
+        issuanceOrderMaker,
+        makerToken.address,
+        issuanceOrderMakerTokenAmount,
+        issuanceOrderExpiration,
+        relayerAddress,
+        relayerToken.address,
+        issuanceOrderMakerRelayerFee,
+        issuanceOrderTakerRelayerFee,
+      );
+
+      const takerWalletOrder1 = {
+        takerTokenAddress: firstComponent.address,
+        takerTokenAmount: requredComponentAmounts[0],
+      } as TakerWalletOrder;
+
+      const takerWalletOrder2 = {
+        takerTokenAddress: secondComponent.address,
+        takerTokenAmount: requredComponentAmounts[1],
+      } as TakerWalletOrder;
+
+      orders = [takerWalletOrder1, takerWalletOrder2];
+      subjectQuantityToFill = issuanceOrderQuantity;
+      caller = issuanceOrderTaker;
+
+      await ordersAPI.fillOrderAsync(
+        subjectSignedIssuanceOrder,
+        subjectQuantityToFill,
+        orders,
+        { from: caller }
+      );
     });
 
-    describe('getOrderFillsAsync', async () => {
-      async function subject(): Promise<BigNumber> {
-        return await ordersAPI.getOrderFillsAsync(
-          subjectOrderHash,
-        );
-      }
+    async function subject(): Promise<BigNumber> {
+      return await ordersAPI.getOrderFillsAsync(
+        subjectSignedIssuanceOrder,
+      );
+    }
 
-      test('should return 0 with an unfilled order', async () => {
-        const orderFilledQuantity = await subject();
+    test('should return with the correct filled quantity', async () => {
+      const orderFilledQuantity = await subject();
 
-        expect(orderFilledQuantity).to.bignumber.equal(ZERO);
-      });
+      expect(orderFilledQuantity).to.bignumber.equal(subjectQuantityToFill);
+    });
+  });
+
+  describe('getOrderCancelledAsync', async () => {
+    let subjectSignedIssuanceOrder: SignedIssuanceOrder;
+    let subjectCancelQuantity: BigNumber;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const issuanceOrderTaker = ACCOUNTS[0].address;
+      const issuanceOrderMaker = ACCOUNTS[1].address;
+      const relayerAddress = ACCOUNTS[2].address;
+
+      const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
+      const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+
+      const componentTokens = [firstComponent];
+      const setComponentUnit = ether(4);
+      const componentAddresses = componentTokens.map(token => token.address);
+      const componentUnits = componentTokens.map(token => setComponentUnit);
+      const naturalUnit = ether(2);
+      const setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        componentUnits,
+        naturalUnit,
+      );
+
+      const issuanceOrderQuantity = ether(4);
+      const issuanceOrderMakerTokenAmount = ether(10);
+      const issuanceOrderExpiration = generateFutureTimestamp(10000);
+      const requiredComponents = [firstComponent.address];
+      const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
+      const issuanceOrderMakerRelayerFee = ZERO;
+      const issuanceOrderTakerRelayerFee = ZERO;
+      subjectSignedIssuanceOrder = await ordersAPI.createSignedOrderAsync(
+        setToken.address,
+        issuanceOrderQuantity,
+        requiredComponents,
+        requredComponentAmounts,
+        issuanceOrderMaker,
+        makerToken.address,
+        issuanceOrderMakerTokenAmount,
+        issuanceOrderExpiration,
+        relayerAddress,
+        relayerToken.address,
+        issuanceOrderMakerRelayerFee,
+        issuanceOrderTakerRelayerFee,
+      );
+      subjectCancelQuantity = issuanceOrderQuantity;
+      subjectCaller = issuanceOrderMaker;
+
+      await ordersAPI.cancelOrderAsync(
+        subjectSignedIssuanceOrder,
+        subjectCancelQuantity,
+        { from: subjectCaller }
+      );
     });
 
-    describe('getOrderCancelledAsync', async () => {
-      async function subject(): Promise<BigNumber> {
-        return await ordersAPI.getOrderCancelledAsync(
-          subjectOrderHash,
-        );
-      }
+    async function subject(): Promise<string> {
+      return ordersAPI.getOrderCancelledAsync(
+        subjectSignedIssuanceOrder,
+      );
+    }
+    test('should return with the correct cancel quantity', async () => {
+      const orderFilledQuantity = await subject();
 
-      test('should return 0 for orders cancelled', async () => {
-        const orderCancelledQuantity = await subject();
-
-        expect(orderCancelledQuantity).to.bignumber.equal(ZERO);
-      });
+      expect(orderFilledQuantity).to.bignumber.equal(subjectCancelQuantity);
     });
-
-
   });
 });
