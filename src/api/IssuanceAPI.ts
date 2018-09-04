@@ -61,7 +61,6 @@ export class IssuanceAPI {
    * @return                A transaction hash to then later look up
    */
   public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxDataWithFrom): Promise<string> {
-    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     await this.assertIssue(txOpts.from, setAddress, quantity);
 
     return await this.core.issue(setAddress, quantity, txOpts);
@@ -84,7 +83,6 @@ export class IssuanceAPI {
     tokensToExclude: Address[],
     txOpts: TxDataWithFrom
   ) {
-    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     await this.assertRedeem(txOpts.from, setAddress, quantity, withdraw, tokensToExclude);
 
    if (withdraw) {
@@ -106,8 +104,8 @@ export class IssuanceAPI {
 
   /* ============ Private Assertions ============ */
 
-  private async assertIssue(userAddress: Address, setAddress: Address, quantity: BigNumber) {
-    this.assert.schema.isValidAddress('userAddress', userAddress);
+  private async assertIssue(transactionCaller: Address, setAddress: Address, quantity: BigNumber) {
+    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
 
@@ -118,23 +116,23 @@ export class IssuanceAPI {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
     );
 
-    await this.assert.setToken.hasSufficientBalances(setTokenContract, userAddress, quantity);
+    await this.assert.setToken.hasSufficientBalances(setTokenContract, transactionCaller, quantity);
     await this.assert.setToken.hasSufficientAllowances(
       setTokenContract,
-      userAddress,
+      transactionCaller,
       this.core.transferProxyAddress,
       quantity,
     );
   }
 
   private async assertRedeem(
-    userAddress: Address,
+    transactionCaller: Address,
     setAddress: Address,
     quantity: BigNumber,
     withdraw: boolean,
     tokensToExclude: Address[],
   ) {
-    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
 
@@ -150,7 +148,7 @@ export class IssuanceAPI {
     );
     await this.assert.erc20.hasSufficientBalance(
       setTokenContract,
-      userAddress,
+      transactionCaller,
       quantity,
       erc20AssertionErrors.INSUFFICIENT_BALANCE(),
     );

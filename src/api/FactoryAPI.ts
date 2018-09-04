@@ -113,7 +113,7 @@ export class FactoryAPI {
     name: string,
     symbol: string,
   ) {
-    this.assert.schema.isValidAddress('userAddress', userAddress);
+    this.assert.schema.isValidAddress('txOpts.from', userAddress);
     this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
     this.assert.common.isEqualLength(components, units, coreAPIErrors.ARRAYS_EQUAL_LENGTHS('components', 'units'));
     this.assert.common.greaterThanZero(naturalUnit, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(naturalUnit));
