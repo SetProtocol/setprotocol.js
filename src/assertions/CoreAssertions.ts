@@ -20,6 +20,7 @@ import * as _ from 'lodash';
 import * as ethUtil from 'ethereumjs-util';
 import * as Web3 from 'web3';
 import { Address, ECSig, IssuanceOrder, SetProtocolUtils } from 'set-protocol-utils';
+import { CoreContract } from 'set-protocol-contracts';
 
 import { SignatureUtils } from '../util/SignatureUtils';
 import { coreAssertionErrors } from '../errors';
@@ -27,19 +28,25 @@ import { BigNumber } from '../util';
 
 
 export class CoreAssertions {
+  private web3: Web3;
+
+  constructor(web3: Web3) {
+    this.web3 = web3;
+  }
+
   /**
    * Throws if the given candidateContract does not respond to some methods from the Core interface.
    *
-   * @param  coreInstance An instance of the core contract
+   * @param  coreAddress The address of the core contract
    * @return              Void Promise
    */
-  public async implementsCore(coreInstance: Web3.ContractInstance): Promise<void> {
-    const { address } = coreInstance;
+  public async implementsCore(coreAddress: Address): Promise<void> {
+    const coreContract = await CoreContract.at(coreAddress, this.web3, {});
 
     try {
-      await coreInstance.vault.callAsync();
-      await coreInstance.transferProxy.callAsync();
-      await coreInstance.owner.callAsync();
+      await coreContract.vault.callAsync();
+      await coreContract.transferProxy.callAsync();
+      await coreContract.owner.callAsync();
     } catch (error) {
       throw new Error(coreAssertionErrors.MISSING_CORE_METHOD(address));
     }

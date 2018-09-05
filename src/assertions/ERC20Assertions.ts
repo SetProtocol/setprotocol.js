@@ -17,31 +17,40 @@
 'use strict';
 
 import { Address } from 'set-protocol-utils';
+import { DetailedERC20Contract } from 'set-protocol-contracts';
 import { erc20AssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 import * as Web3 from 'web3';
 
 export class ERC20Assertions {
+  private web3: Web3;
+
+  constructor(web3: Web3) {
+    this.web3 = web3;
+  }
+
   // Throws if the given candidateContract does not respond to some methods from the ERC20 interface.
-  public async implementsERC20(tokenInstance: Web3.ContractInstance): Promise<void> {
-    const { address } = tokenInstance;
+  public async implementsERC20(tokenAddress: Address): Promise<void> {
+    const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
 
     try {
-      await tokenInstance.balanceOf.callAsync(address);
-      await tokenInstance.allowance.callAsync(address, address);
-      await tokenInstance.totalSupply.callAsync();
+      await tokenContract.balanceOf.callAsync(tokenAddress);
+      await tokenContract.allowance.callAsync(tokenAddress, tokenAddress);
+      await tokenContract.totalSupply.callAsync();
     } catch (error) {
-      throw new Error(erc20AssertionErrors.MISSING_ERC20_METHOD(address));
+      throw new Error(erc20AssertionErrors.MISSING_ERC20_METHOD(tokenAddress));
     }
   }
 
   public async hasSufficientBalance(
-    token: Web3.ContractInstance,
+    tokenAddress: Address,
     payer: Address,
     balanceRequired: BigNumber,
     errorMessage: string,
   ): Promise<void> {
-    const payerBalance = await token.balanceOf.callAsync(payer);
+    const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+
+    const payerBalance = await tokenContract.balanceOf.callAsync(payer);
 
     if (payerBalance.lt(balanceRequired)) {
       throw new Error(errorMessage);
@@ -49,13 +58,15 @@ export class ERC20Assertions {
   }
 
   public async hasSufficientAllowance(
-    token: Web3.ContractInstance,
+    tokenAddress: Address,
     owner: string,
     spender: string,
     allowanceRequired: BigNumber,
     errorMessage: string,
   ): Promise<void> {
-    const payerAllowance = await token.allowance.callAsync(owner, spender);
+    const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+
+    const payerAllowance = await tokenContract.allowance.callAsync(owner, spender);
 
     if (payerAllowance.lt(allowanceRequired)) {
       throw new Error(errorMessage);

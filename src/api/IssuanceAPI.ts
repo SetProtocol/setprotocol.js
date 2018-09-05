@@ -147,7 +147,7 @@ export class IssuanceAPI {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
     );
     await this.assert.erc20.hasSufficientBalance(
-      setTokenContract,
+      setAddress,
       transactionCaller,
       quantity,
       erc20AssertionErrors.INSUFFICIENT_BALANCE(),

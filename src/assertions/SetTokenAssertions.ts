@@ -21,18 +21,18 @@ import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
 import { ERC20Assertions } from './ERC20Assertions';
-import { DetailedERC20Contract } from 'set-protocol-contracts';
+import { SetTokenContract, DetailedERC20Contract } from 'set-protocol-contracts';
 import { setTokenAssertionsErrors } from '../errors';
 import { BigNumber } from '../util';
 import { ZERO } from '../constants';
 
-const erc20Assertions = new ERC20Assertions();
-
 export class SetTokenAssertions {
   private web3: Web3;
+  private erc20Assertions: ERC20Assertions;
 
   constructor(web3: Web3) {
     this.web3 = web3;
+    this.erc20Assertions = new ERC20Assertions(this.web3);
   }
 
   /**
@@ -87,8 +87,8 @@ export class SetTokenAssertions {
       componentInstances,
       async (componentInstance, index) => {
         const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
-        await erc20Assertions.hasSufficientBalance(
-          componentInstance,
+        await this.erc20Assertions.hasSufficientBalance(
+          componentInstance.address,
           ownerAddress,
           requiredBalance,
           `User does not have enough balance of token at address ${componentInstance.address}`,
@@ -129,8 +129,8 @@ export class SetTokenAssertions {
       componentInstances,
       async (componentInstance, index) => {
         const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
-        return await erc20Assertions.hasSufficientAllowance(
-          componentInstance,
+        return await this.erc20Assertions.hasSufficientAllowance(
+          componentInstance.address,
           ownerAddress,
           spenderAddress,
           requiredBalance,

@@ -19,7 +19,6 @@
 import * as _ from 'lodash';
 import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
-import { DetailedERC20Contract, VaultContract } from 'set-protocol-contracts';
 
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
@@ -117,12 +116,11 @@ export class AccountingAPI {
         this.assert.common.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
         this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
 
-        const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-        await this.assert.erc20.implementsERC20(tokenContract);
+        await this.assert.erc20.implementsERC20(tokenAddress);
 
         // Check balance
         await this.assert.erc20.hasSufficientBalance(
-          tokenContract,
+          tokenAddress,
           transactionCaller,
           quantities[i],
           erc20AssertionErrors.INSUFFICIENT_BALANCE(),
@@ -130,7 +128,7 @@ export class AccountingAPI {
 
         // Check allowance
         await this.assert.erc20.hasSufficientAllowance(
-          tokenContract,
+          tokenAddress,
           transactionCaller,
           this.core.transferProxyAddress,
           quantities[i],
@@ -153,20 +151,17 @@ export class AccountingAPI {
       this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
     });
 
-    const vaultContract = await VaultContract.at(this.core.vaultAddress, this.web3, {});
-
     // Token assertions
     await Promise.all(
       tokenAddresses.map(async (tokenAddress, i) => {
         this.assert.common.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
         this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
 
-        const detailedERC20Contract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
-        await this.assert.erc20.implementsERC20(detailedERC20Contract);
+        await this.assert.erc20.implementsERC20(tokenAddress);
 
         // Check balance
         await this.assert.vault.hasSufficientTokenBalance(
-          vaultContract,
+          this.core.vaultAddress,
           tokenAddress,
           transactionCaller,
           quantities[i],

@@ -343,7 +343,7 @@ describe('OrderAPI', () => {
       });
 
       test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith('The order has already been fully filled or cancelled.');
+        return expect(subject()).to.be.rejectedWith('The fill quantity supplied exceeds the amount available to fill.');
       });
     });
   });

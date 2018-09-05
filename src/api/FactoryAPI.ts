@@ -140,7 +140,7 @@ export class FactoryAPI {
           minDecimals = ZERO;
         }
 
-        await this.assert.erc20.implementsERC20(tokenContract);
+        await this.assert.erc20.implementsERC20(componentAddress);
       }),
     );
 

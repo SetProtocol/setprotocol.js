@@ -28,8 +28,6 @@ import {
   TakerWalletOrder,
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
-import { SetTokenContract, StandardTokenMockContract } from 'set-protocol-contracts';
-
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
 import { CoreWrapper } from '../wrappers';
@@ -134,7 +132,7 @@ export class OrderAPI {
    * @param fillQuantity     Fill quantity to check if fillable
    */
   public async validateOrderFillableOrThrowAsync(signedIssuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber) {
-    await this.assert.order.isIssuanceOrderFillable(this.core, signedIssuanceOrder, fillQuantity);
+    await this.assert.order.isIssuanceOrderFillable(this.core.coreAddress, signedIssuanceOrder, fillQuantity);
   }
 
   /**
@@ -170,21 +168,6 @@ export class OrderAPI {
     takerRelayerFee: BigNumber,
     salt: BigNumber = SetProtocolUtils.generateSalt(),
   ): Promise<SignedIssuanceOrder> {
-    await this.assertCreateOrder(
-      setAddress,
-      quantity,
-      requiredComponents,
-      requiredComponentAmounts,
-      makerAddress,
-      makerToken,
-      makerTokenAmount,
-      expiration,
-      relayerAddress,
-      relayerToken,
-      makerRelayerFee,
-      takerRelayerFee,
-    );
-
     const order: IssuanceOrder = {
       setAddress,
       makerAddress,
@@ -200,6 +183,8 @@ export class OrderAPI {
       requiredComponentAmounts,
       salt,
     };
+
+    await this.assert.order.isValidIssuanceOrder(order);
     const orderHash = SetProtocolUtils.hashOrderHex(order);
 
     const signature = await this.setProtocolUtils.signMessage(orderHash, makerAddress);
@@ -253,37 +238,6 @@ export class OrderAPI {
 
   /* ============ Private Assertions ============ */
 
-  private async assertCreateOrder(
-    setAddress: Address,
-    quantity: BigNumber,
-    requiredComponents: Address[],
-    requiredComponentAmounts: BigNumber[],
-    makerAddress: Address,
-    makerToken: Address,
-    makerTokenAmount: BigNumber,
-    expiration: BigNumber,
-    relayerAddress: Address,
-    relayerToken: Address,
-    makerRelayerFee: BigNumber,
-    takerRelayerFee: BigNumber,
-  ) {
-    const issuanceOrder = {
-      setAddress,
-      makerAddress,
-      makerToken,
-      relayerAddress,
-      relayerToken,
-      quantity,
-      makerTokenAmount,
-      expiration,
-      makerRelayerFee,
-      takerRelayerFee,
-      requiredComponents,
-      requiredComponentAmounts,
-    } as IssuanceOrder;
-    await this.commonIssuanceOrderAssertions(issuanceOrder);
-  }
-
   private async assertFillOrder(
     transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
@@ -291,17 +245,16 @@ export class OrderAPI {
     orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
   ) {
     const { signature, ...issuanceOrder } = signedIssuanceOrder;
-    await this.commonIssuanceOrderAssertions(issuanceOrder);
+    await this.assert.order.isValidIssuanceOrder(issuanceOrder);
 
     this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
     this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
-    await this.assert.core.isValidSignature(
-      SetProtocolUtils.hashOrderHex(issuanceOrder),
-      issuanceOrder.makerAddress,
-      signature,
-      coreAPIErrors.SIGNATURE_MISMATCH()
+    await this.assert.order.isIssuanceOrderFillable(
+      this.core.coreAddress,
+      signedIssuanceOrder,
+      quantityToFill,
     );
   }
 
@@ -310,64 +263,9 @@ export class OrderAPI {
     issuanceOrder: IssuanceOrder,
     quantityToCancel: BigNumber
   ) {
-    await this.commonIssuanceOrderAssertions(issuanceOrder);
+    await this.assert.order.isValidIssuanceOrder(issuanceOrder);
 
     this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
     this.assert.common.greaterThanZero(quantityToCancel, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToCancel));
-  }
-
-  private async commonIssuanceOrderAssertions(issuanceOrder: IssuanceOrder) {
-    const {
-      setAddress,
-      makerAddress,
-      makerToken,
-      relayerAddress,
-      relayerToken,
-      quantity,
-      makerTokenAmount,
-      expiration,
-      makerRelayerFee,
-      takerRelayerFee,
-      requiredComponents,
-      requiredComponentAmounts,
-      salt,
-    } = issuanceOrder;
-
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.schema.isValidAddress('makerAddress', makerAddress);
-    this.assert.schema.isValidAddress('relayerAddress', relayerAddress);
-    this.assert.schema.isValidAddress('relayerToken', relayerToken);
-    this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
-    this.assert.common.isEqualLength(
-      requiredComponents,
-      requiredComponentAmounts,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
-    );
-
-    await Promise.all(
-      requiredComponents.map(async (tokenAddress, i) => {
-        this.assert.common.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
-        this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-
-        const token = await StandardTokenMockContract.at(tokenAddress, this.web3, {});
-        await this.assert.erc20.implementsERC20(token);
-
-        this.assert.common.greaterThanZero(
-          requiredComponentAmounts[i],
-          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
-        );
-      }),
-    );
-
-    const makerTokenContract = await StandardTokenMockContract.at(makerToken, this.web3, {});
-    await this.assert.erc20.implementsERC20(makerTokenContract);
-    this.assert.common.greaterThanZero(makerTokenAmount, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount));
-
-    if (relayerToken !== NULL_ADDRESS) {
-      const relayerTokenContract = await StandardTokenMockContract.at(relayerToken, this.web3, {});
-      await this.assert.erc20.implementsERC20(relayerTokenContract);
-    }
-
-    this.assert.common.isValidExpiration(expiration, coreAPIErrors.EXPIRATION_PASSED());
   }
 }

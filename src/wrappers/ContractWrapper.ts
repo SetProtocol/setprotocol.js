@@ -63,8 +63,12 @@ export class ContractWrapper {
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as CoreContract;
     } else {
-      const coreContract = await CoreContract.at(coreAddress, this.web3, transactionOptions);
-      await this.assert.core.implementsCore(coreContract);
+      await this.assert.core.implementsCore(coreAddress);
+      const coreContract = await CoreContract.at(
+        coreAddress,
+        this.web3,
+        transactionOptions,
+      );
       this.cache[cacheKey] = coreContract;
       return coreContract;
     }
@@ -121,7 +125,7 @@ export class ContractWrapper {
         transactionOptions,
       );
       this.cache[cacheKey] = erc20TokenContract;
-      await this.assert.erc20.implementsERC20(erc20TokenContract);
+      await this.assert.erc20.implementsERC20(tokenAddress);
       return erc20TokenContract;
     }
   }
