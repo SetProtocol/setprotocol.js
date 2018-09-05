@@ -46,7 +46,7 @@ export {
  * @title OrderAPI
  * @author Set Protocol
  *
- * A library for handling IssuanceOrders for Sets
+ * A library for handling issuance orders for Sets
  */
 export class OrderAPI {
   private web3: Web3;
@@ -55,11 +55,11 @@ export class OrderAPI {
   public setProtocolUtils: SetProtocolUtils;
 
   /**
-   * Instantiates a new OrderAPI instance that contains methods for creating, filling, and cancelling issuance orders.
+   * Instantiates a new OrderAPI instance that contains methods for creating, filling, and cancelling issuance orders
    *
-   * @param web3    The Web3.js Provider instance you would like the SetProtocol.js library
-   *                to use for interacting with the Ethereum network.
-   * @param core    The address of the Set Core contract
+   * @param web3    Web3.js Provider instance you would like the SetProtocol.js library
+   *                  to use for interacting with the Ethereum network
+   * @param core    Address of the Set Core contract
    */
   constructor(web3: Web3 = undefined, core: CoreWrapper = undefined) {
     this.web3 = web3;
@@ -69,34 +69,32 @@ export class OrderAPI {
   }
 
   /**
-   * Generates a pseudo-random 256-bit salt.
-   * The salt can be included in an order, ensuring that the order generates a unique orderHash
-   * and will not collide with other outstanding orders that are identical in all other parameters.
+   * Generates a 256-bit salt that can be included in an order, to ensure that the order generates
+   * a unique orderHash and will not collide with other outstanding orders that are identical
    *
-   * @return  A pseudo-random 256-bit number that can be used as a salt.
+   * @return    256-bit number that can be used as a salt
    */
   public generateSalt(): BigNumber {
     return SetProtocolUtils.generateSalt();
   }
 
   /**
-   * Generates a timestamp represented as seconds since unix epoch.
-   * The timestamp is intended to be used to generate the expiration of an issuance order
+   * Generates a timestamp represented as seconds since unix epoch. The timestamp is intended to be
+   * used to generate the expiration of an issuance order
    *
-   * @param seconds   Seconds from the present time
-   * @return          Unix timestamp (in seconds since unix epoch)
+   * @param  seconds    Seconds from the present time
+   * @return            Unix timestamp (in seconds since unix epoch)
    */
   public generateExpirationTimestamp(seconds: number): BigNumber {
     return generateFutureTimestamp(seconds);
   }
 
   /**
-   * Checks whether a signature produced for an issuance order is valid. The signer
-   * A signature is valid only if the issuance order is signed by the maker
-   * The function throws upon receiving an invalid signature.
+   * Checks whether a signature produced for an issuance order is valid. A signature is valid only
+   * if the issuance order is signed by the maker. The function throws upon receiving an invalid signature
    *
-   * @param  issuanceOrder    An object conforming to the IssuanceOrder interface
-   * @param  signature        The EC Signature to check
+   * @param  issuanceOrder    Object conforming to the IssuanceOrder interface
+   * @param  signature        Object conforming to ECSignature containing elliptic curve signature components
    * @return                  Whether the recovered signature matches the data hash
    */
   public async isValidSignatureOrThrowAsync(issuanceOrder: IssuanceOrder, signature: ECSig): Promise<boolean> {
@@ -111,12 +109,11 @@ export class OrderAPI {
   }
 
   /**
-   * Generates a ECSig from an issuance order. The function first generates an order hash.
-   * Then it signs it using the passed in transaction options. If none, it will assume
-   * the signer is the first account
+   * Generates a ECSig from an IssuanceOrder objects. It signs the user using the signer in the transaction options.
+   * If none is provided, it will assume, it will grab the first account from the provider
    *
-   * @param issuanceOrder    Issuance Order
-   * @return                 EC Signature
+   * @param  issuanceOrder    Issuance Order
+   * @return                  Object conforming to ECSignature containing elliptic curve signature components
    */
   public async signOrderAsync(issuanceOrder: IssuanceOrder, txOpts: TxDataWithFrom): Promise<ECSig> {
     this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
@@ -126,32 +123,35 @@ export class OrderAPI {
   }
 
   /**
-   * Given an issuance order, check that the signature is valid, order has not expired.
+   * Validates an IssuanceOrder object's signature, expiration, and fill amount. Developers should call this method
+   * frequently to prune order books and ensure the order has not already been filled or cancelled
    *
-   * @param issuanceOrder    Signed Issuance Order to be validated
-   * @param fillQuantity     Fill quantity to check if fillable
+   * @param  issuanceOrder    Object conforming to SignedIssuanceOrder interface to be validated
+   * @param  fillQuantity     Fill quantity to check if fillable
    */
   public async validateOrderFillableOrThrowAsync(signedIssuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber) {
     await this.assert.order.isIssuanceOrderFillable(this.core.coreAddress, signedIssuanceOrder, fillQuantity);
   }
 
   /**
-   * Creates a new signed Issuance Order including the signature
+   * Creates a new issuance order with a valid signature denoting the user's intent to exchange some maker token for
+   * a Set token. Suggest using a popular trading pair as the maker token such as WETH or Dai in order to take
+   * advantage of external liquidity sources
    *
-   * @param  setAddress                Address of the Set token for issuance order
-   * @param  quantity                  Number of Set tokens to create as part of issuance order
-   * @param  requiredComponents        Addresses of required component tokens of Set
-   * @param  requiredComponentAmounts  Amounts of each required component needed
-   * @param  makerAddress              Address of person making the order
-   * @param  makerToken                Address of token the issuer is paying in
-   * @param  makerTokenAmount          Number of tokens being exchanged for aggregate order size
-   * @param  expiration                Unix timestamp of expiration (in seconds)
-   * @param  relayerAddress            Address of relayer of order
-   * @param  relayerToken              Address of token paid to relayer
-   * @param  makerRelayerFee           Number of token paid to relayer by maker
-   * @param  takerRelayerFee           Number of token paid tp relayer by taker
-   * @param  salt                      Salt
-   * @return                           A transaction hash
+   * @param  setAddress                  Address of the Set token for issuance order
+   * @param  quantity                    Amount of the Set token to create as part of issuance order
+   * @param  requiredComponents          Addresses of required component tokens of the Set
+   * @param  requiredComponentAmounts    Amounts of each required component needed
+   * @param  makerAddress                Address of user making the issuance order
+   * @param  makerToken                  Address of token the issuance order maker is offering for the transaction
+   * @param  makerTokenAmount            Amount of tokens maker offers for aggergate order size
+   * @param  expiration                  Unix timestamp of expiration in seconds
+   * @param  relayerAddress              Address of relayer of order
+   * @param  relayerToken                Address of token paid to relayer as a fee
+   * @param  makerRelayerFee             Amount of relayer token paid to relayer by maker
+   * @param  takerRelayerFee             Amount of relayer token paid to relayer by taker
+   * @param  salt                        Optional salt to include in signing
+   * @return                             Object conforming to SignedIssuanceOrder with valid signature
    */
   public async createSignedOrderAsync(
     setAddress: Address,
@@ -192,22 +192,24 @@ export class OrderAPI {
   }
 
   /**
-   * Fills an Issuance Order
+   * Fills an issuance order on behalf of the taker. The taker should specifiy the fill amount and the liquidity
+   * sources, either other exchange orders that can be exchanged using the specified maker token in the issuance order,
+   * or from the taker's own wallet
    *
-   * @param  signedIssuanceOrder       Signed issuance order to fill
-   * @param  signature                 Signature of the order
-   * @param  quantityToFill            Number of Set to fill in this call
-   * @param  orders                    Bytes representation of orders used to fill issuance order
-   * @param  txOpts                    The options for executing the transaction
-   * @return                           A transaction hash
+   * @param  signedIssuanceOrder    Object confomring to SignedIssuanceOrder to fill
+   * @param  quantity               Amount of Set to fill in this call
+   * @param  orders                 Array of order objects conforming to either TakerWalletOrder or
+   *                                  ZeroExSignedFillOrder to fill issuance order
+   * @param  txOpts                 Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @return                        Transaction hash
    */
   public async fillOrderAsync(
     signedIssuanceOrder: SignedIssuanceOrder,
-    quantityToFill: BigNumber,
+    quantity: BigNumber,
     orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
     txOpts: TxDataWithFrom,
   ): Promise<string> {
-    await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantityToFill, orders);
+    await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantity, orders);
 
     const orderData = await this.setProtocolUtils.generateSerializedOrders(
       signedIssuanceOrder.makerToken,
@@ -215,25 +217,26 @@ export class OrderAPI {
       orders
     );
 
-    return await this.core.fillOrder(signedIssuanceOrder, quantityToFill, orderData, txOpts);
+    return await this.core.fillOrder(signedIssuanceOrder, quantity, orderData, txOpts);
   }
 
   /**
-   * Cancels an Issuance Order
+   * Cancels an issuance order on behalf of the maker. After successfully mining this transaction, a taker can only
+   * fill up to an issuance order's quantity minus the quantity
    *
-   * @param  issuanceOrder             Issuance order to cancel
-   * @param  quantityToCancel          Number of Set to cancel in this call
-   * @param  txOpts                    The options for executing the transaction
-   * @return                           A transaction hash
+   * @param  issuanceOrder    Object confomring to IssuanceOrder to cancel
+   * @param  quantity         Amount of the issuance order's quantity to cancel
+   * @param  txOpts           Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @return                  Transaction hash
    */
   public async cancelOrderAsync(
     issuanceOrder: IssuanceOrder,
-    quantityToCancel: BigNumber,
+    quantity: BigNumber,
     txOpts?: TxData,
   ): Promise<string> {
-    await this.assertCancelOrder(txOpts.from, issuanceOrder, quantityToCancel);
+    await this.assertCancelOrder(txOpts.from, issuanceOrder, quantity);
 
-    return await this.core.cancelOrder(issuanceOrder, quantityToCancel, txOpts);
+    return await this.core.cancelOrder(issuanceOrder, quantity, txOpts);
   }
 
   /**

@@ -30,7 +30,7 @@ import { TxData, TxDataWithFrom } from '../types/common';
  * @title AccountingAPI
  * @author Set Protocol
  *
- * A library for managing token and set balances throughout the SetProtocol system
+ * A library for managing ERC20 token and Set balances for users throughout the SetProtocol system
  */
 export class AccountingAPI {
   private web3: Web3;
@@ -38,11 +38,11 @@ export class AccountingAPI {
   private core: CoreWrapper;
 
   /**
-   * Instantiates a new AccountingAPI instance that contains methods for transferring balances in the vault.
+   * Instantiates a new AccountingAPI instance that contains methods for transferring balances in the vault
    *
-   * @param web3                  The Web3.js Provider instance you would like the SetProtocol.js library
-   *                              to use for interacting with the Ethereum network.
-   * @param core                  The address of the Set Core contract
+   * @param web3    Web3.js Provider instance you would like the SetProtocol.js library
+   *                  to use for interacting with the Ethereum network
+   * @param core    Address of the Set Core contract
    */
   constructor(web3: Web3 = undefined, core: CoreWrapper = undefined) {
     this.web3 = web3;
@@ -51,12 +51,13 @@ export class AccountingAPI {
   }
 
   /**
-   * Deposits tokens into the vault
+   * Deposits tokens into the vault under the signer's address that can be used to issue a Set. Uses a different
+   * transaction method depending on number of tokens to deposit in order to save gas
    *
-   * @param  tokenAddresses      Addresses of contracts to withdraw (typically SetToken or ERC20)
-   * @param  quantities          Quantities in units of the tokens to deposit into the vault
-   * @param  txOpts              The options for executing the transaction
-   * @return                     Transaction hash
+   * @param  tokenAddresses    Addresses of ERC20 tokens to deposit into the vault
+   * @param  quantities        Amount of each token to deposit into the vault in index order with `tokenAddresses`
+   * @param  txOpts            Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @return                   Transaction hash
    */
   public async depositAsync(
     tokenAddresses: Address[],
@@ -73,12 +74,13 @@ export class AccountingAPI {
   }
 
   /**
-   * Withdraws tokens from the vault
+   * Withdraws tokens from the vault belonging to the signer. Uses a different transaction method depending on
+   * number of tokens to withdraw in order to save gas
    *
-   * @param  tokenAddresses      Addresses of contracts to withdraw (typically SetToken or ERC20)
-   * @param  quantities          Quantities in units of the tokens to withdraw from the vault
-   * @param  txOpts              The options for executing the transaction
-   * @return                     Transaction hash
+   * @param  tokenAddresses    Addresses of ERC20 tokens to withdraw from the vault
+   * @param  quantities        Amount of each token token to withdraw from vault in index order with `tokenAddresses`
+   * @param  txOpts            Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @return                   Transaction hash
    */
   public async withdrawAsync(
     tokenAddresses: Address[],

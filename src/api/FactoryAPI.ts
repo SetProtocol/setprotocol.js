@@ -43,10 +43,10 @@ export class FactoryAPI {
   /**
    * Instantiates a new FactoryAPI instance that contains methods for creating new Sets
    *
-   * @param web3                     The Web3.js Provider instance you would like the SetProtocol.js library
-   *                                 to use for interacting with the Ethereum network.
-   * @param core                     An instance of CoreWrapper to interact with the deployed Core contract
-   * @param setTokenFactoryAddress   The address of the SetTokenFactory associated with the deployed Core contract
+   * @param web3                      Web3.js Provider instance you would like the SetProtocol.js library
+   *                                    to use for interacting with the Ethereum network.
+   * @param core                      An instance of CoreWrapper to interact with the deployed Core contract
+   * @param setTokenFactoryAddress    Address of the SetTokenFactory associated with the deployed Core contract
    */
   constructor(web3: Web3 = undefined, core: CoreWrapper = undefined, setTokenFactoryAddress: Address) {
     this.web3 = web3;
@@ -56,16 +56,19 @@ export class FactoryAPI {
   }
 
   /**
-   * Create a new SetToken by passing in parameters denoting component token addresses, quantities, natural
+   * Create a new Set by passing in parameters denoting component token addresses, quantities, natural
    * unit, and ERC20 properties
    *
-   * @param  components       Component token addresses
-   * @param  units            Units of corresponding token components
-   * @param  naturalUnit      Supplied as the lowest common denominator for the Set
-   * @param  name             Name for Set (i.e. "DEX Set"). Not unique
-   * @param  symbol           Symbol for Set (i.e. "DEX"). Not unique
-   * @param  txOpts           The options for executing the transaction
-   * @return                  A transaction hash to then later look up for the Set address
+   * Note: the return value is the transaction hash of the createSetAsync call, not the deployed SetToken
+   * contract address. Use `getSetAddressFromCreateTxHashAsync` to retrieve the SetToken address
+   *
+   * @param  components     Component ERC20 token addresses
+   * @param  units          Units of each component in Set paired in index order
+   * @param  naturalUnit    Lowest common denominator for the Set
+   * @param  name           Name for Set, i.e. "DEX Set"
+   * @param  symbol         Symbol for Set, i.e. "DEX"
+   * @param  txOpts         Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @return                Transaction hash
    */
   public async createSetAsync(
     components: Address[],
@@ -90,10 +93,10 @@ export class FactoryAPI {
   }
 
   /**
-   * Asynchronously retrieves a Set Token address from a createSet txHash
+   * Fetch a Set Token address from a createSetAsync transaction hash
    *
-   * @param  txHash     The transaction has to retrieve the set address from
-   * @return            The address of the newly created Set
+   * @param  txHash    Transaction hash of the createSetAsync transaction
+   * @return           Address of the newly created Set
    */
   public async getSetAddressFromCreateTxHash(txHash: string): Promise<Address> {
     this.assert.schema.isValidBytes32('txHash', txHash);
