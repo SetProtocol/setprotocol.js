@@ -48,8 +48,8 @@ export class OrderAssertions {
     commonAssertions.isValidExpiration(issuanceOrder.expiration, coreAPIErrors.EXPIRATION_PASSED());
 
     // Checks that it has not been fully filled already
-    const filledAmount = await core.getOrderFills(orderHash);
-    const cancelledAmount = await core.getOrderCancels(orderHash);
+    const filledAmount = await core.orderFills(orderHash);
+    const cancelledAmount = await core.orderCancels(orderHash);
     const fillableQuantity = issuanceOrder.quantity.sub(filledAmount).sub(cancelledAmount);
     commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FULLY_FILLED());
   }
