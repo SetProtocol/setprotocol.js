@@ -21,28 +21,28 @@ import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
 import { ERC20Assertions } from './ERC20Assertions';
-import { DetailedERC20Contract } from 'set-protocol-contracts';
+import { SetTokenContract, DetailedERC20Contract } from 'set-protocol-contracts';
 import { setTokenAssertionsErrors } from '../errors';
 import { BigNumber } from '../util';
 import { ZERO } from '../constants';
 
-const erc20Assertions = new ERC20Assertions();
-
 export class SetTokenAssertions {
   private web3: Web3;
+  private erc20Assertions: ERC20Assertions;
 
   constructor(web3: Web3) {
     this.web3 = web3;
+    this.erc20Assertions = new ERC20Assertions(this.web3);
   }
 
   /**
    * Throws if the given candidateContract does not respond to some methods from the Set Token interface.
    *
-   * @param  setTokenInstance An instance of the Set Token contract
+   * @param  setTokenAddress  A Set Token contract address to check
    * @return                  Void Promise
    */
-  public async implementsSetToken(setTokenInstance: Web3.ContractInstance): Promise<void> {
-    const { address } = setTokenInstance;
+  public async implementsSetToken(setTokenAddress: Address): Promise<void> {
+    const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
 
     try {
       await setTokenInstance.name.callAsync();
@@ -53,23 +53,25 @@ export class SetTokenAssertions {
       await setTokenInstance.getComponents.callAsync();
       await setTokenInstance.getUnits.callAsync();
     } catch (error) {
-      throw new Error(setTokenAssertionsErrors.IS_NOT_A_VALID_SET(address));
+      throw new Error(setTokenAssertionsErrors.IS_NOT_A_VALID_SET(setTokenAddress));
     }
   }
 
   /**
    * Throws if the given user doesn't have a sufficient balance for a component token in a Set
    *
-   * @param  setTokenInstance An instance of the Set Token contract
+   * @param  setTokenAddress  The address of the Set Token contract
    * @param  ownerAddress     The address of the owner
    * @param  quantityInWei    Amount of a Set in wei
    * @return                  Void Promise
    */
   public async hasSufficientBalances(
-    setTokenInstance: Web3.ContractInstance,
+    setTokenAddress: Address,
     ownerAddress: Address,
     quantityInWei: BigNumber,
   ): Promise<void> {
+    const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
+
     const components: Address[] = await setTokenInstance.getComponents.callAsync();
     const units = await setTokenInstance.getUnits.callAsync();
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
@@ -87,8 +89,8 @@ export class SetTokenAssertions {
       componentInstances,
       async (componentInstance, index) => {
         const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
-        await erc20Assertions.hasSufficientBalance(
-          componentInstance,
+        await this.erc20Assertions.hasSufficientBalance(
+          componentInstance.address,
           ownerAddress,
           requiredBalance,
           `User does not have enough balance of token at address ${componentInstance.address}`,
@@ -101,17 +103,19 @@ export class SetTokenAssertions {
   /**
    * Throws if the given user doesn't have a sufficient allowance for a component token in a Set
    *
-   * @param  setTokenInstance An instance of the Set Token contract
+   * @param  setTokenAddress  The address of the Set Token contract
    * @param  ownerAddress     The address of the owner
    * @param  quantityInWei    Amount of a Set in wei
    * @return                  Void Promise
    */
   public async hasSufficientAllowances(
-    setTokenInstance: Web3.ContractInstance,
+    setTokenAddress: Address,
     ownerAddress: Address,
     spenderAddress: Address,
     quantityInWei: BigNumber,
   ): Promise<void> {
+    const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
+
     const components = await setTokenInstance.getComponents.callAsync();
     const units = await setTokenInstance.getUnits.callAsync();
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
@@ -129,8 +133,8 @@ export class SetTokenAssertions {
       componentInstances,
       async (componentInstance, index) => {
         const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
-        return await erc20Assertions.hasSufficientAllowance(
-          componentInstance,
+        return await this.erc20Assertions.hasSufficientAllowance(
+          componentInstance.address,
           ownerAddress,
           spenderAddress,
           requiredBalance,
@@ -142,10 +146,12 @@ export class SetTokenAssertions {
   }
 
   public async isMultipleOfNaturalUnit(
-    setTokenInstance: Web3.ContractInstance,
+    setTokenAddress: Address,
     quantityInWei: BigNumber,
     errorMessage: string,
   ): Promise<void> {
+    const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
+
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
     if (!quantityInWei.mod(naturalUnit).eq(ZERO)) {
       throw new Error(errorMessage);

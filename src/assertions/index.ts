@@ -42,9 +42,9 @@ export class Assertions {
   public constructor(web3: Web3) {
     this.account = new AccountAssertions();
     this.common = new CommonAssertions();
-    this.core = new CoreAssertions();
-    this.erc20 = new ERC20Assertions();
-    this.order = new OrderAssertions();
+    this.core = new CoreAssertions(web3);
+    this.erc20 = new ERC20Assertions(web3);
+    this.order = new OrderAssertions(web3);
     this.schema = new SchemaAssertions();
     this.setToken = new SetTokenAssertions(web3);
     this.vault = new VaultAssertions(web3);

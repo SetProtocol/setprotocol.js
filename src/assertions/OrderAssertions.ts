@@ -18,26 +18,48 @@
 
 import * as _ from 'lodash';
 import { Address, IssuanceOrder, SetProtocolUtils, SignedIssuanceOrder } from 'set-protocol-utils';
-import { erc20AssertionErrors, coreAPIErrors } from '../errors';
+import { erc20AssertionErrors, coreAPIErrors, setTokenAssertionsErrors } from '../errors';
+import { SetTokenContract, CoreContract } from 'set-protocol-contracts';
 import { CoreAssertions } from './CoreAssertions';
 import { CommonAssertions } from './CommonAssertions';
+import { SchemaAssertions } from './SchemaAssertions';
+import { ERC20Assertions } from './ERC20Assertions';
+import { SetTokenAssertions } from './SetTokenAssertions';
 import { CoreWrapper } from '../wrappers';
+import { NULL_ADDRESS } from '../constants';
 import { BigNumber } from '../util';
 import * as Web3 from 'web3';
 
-const coreAssertions = new CoreAssertions();
-const commonAssertions = new CommonAssertions();
+
 
 export class OrderAssertions {
+  private web3: Web3;
+  private erc20Assertions: ERC20Assertions;
+  private schemaAssertions: SchemaAssertions;
+  private coreAssertions: CoreAssertions;
+  private commonAssertions: CommonAssertions;
+  private setTokenAssertions: SetTokenAssertions;
+
+  constructor(web3: Web3) {
+    this.web3 = web3;
+    this.erc20Assertions = new ERC20Assertions(web3);
+    this.schemaAssertions = new SchemaAssertions();
+    this.coreAssertions = new CoreAssertions(web3);
+    this.commonAssertions = new CommonAssertions();
+    this.setTokenAssertions = new SetTokenAssertions(web3);
+  }
+
   public async isIssuanceOrderFillable(
-    core: CoreWrapper,
+    coreAddress: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     fillQuantity: BigNumber,
   ): Promise<void> {
+    const coreContract = await CoreContract.at(coreAddress, this.web3, {});
+
     const issuanceOrder: IssuanceOrder = _.omit(signedIssuanceOrder, 'signature');
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
-    await coreAssertions.isValidSignature(
+    await this.coreAssertions.isValidSignature(
       orderHash,
       issuanceOrder.makerAddress,
       signedIssuanceOrder.signature,
@@ -45,12 +67,69 @@ export class OrderAssertions {
     );
 
     // Checks the order has not expired
-    commonAssertions.isValidExpiration(issuanceOrder.expiration, coreAPIErrors.EXPIRATION_PASSED());
+    this.commonAssertions.isValidExpiration(issuanceOrder.expiration, coreAPIErrors.EXPIRATION_PASSED());
 
     // Checks that it has not been fully filled already
-    const filledAmount = await core.orderFills(orderHash);
-    const cancelledAmount = await core.orderCancels(orderHash);
+    const filledAmount = await coreContract.orderFills.callAsync(orderHash);
+    const cancelledAmount = await coreContract.orderCancels.callAsync(orderHash);
     const fillableQuantity = issuanceOrder.quantity.sub(filledAmount).sub(cancelledAmount);
-    commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FULLY_FILLED());
+    this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FILL_EXCEEDS_AVAILABLE());
+  }
+
+  /**
+   * Checks the issuance order to ensure inputs adhere to the schema
+   * and are valid inputs
+   */
+  public async isValidIssuanceOrder(issuanceOrder: IssuanceOrder) {
+    const {
+      setAddress,
+      makerAddress,
+      makerToken,
+      relayerAddress,
+      relayerToken,
+      quantity,
+      makerTokenAmount,
+      expiration,
+      makerRelayerFee,
+      takerRelayerFee,
+      requiredComponents,
+      requiredComponentAmounts,
+      salt,
+    } = issuanceOrder;
+
+    this.schemaAssertions.isValidAddress('setAddress', setAddress);
+    this.schemaAssertions.isValidAddress('makerAddress', makerAddress);
+    this.schemaAssertions.isValidAddress('relayerAddress', relayerAddress);
+    this.schemaAssertions.isValidAddress('relayerToken', relayerToken);
+    this.commonAssertions.isValidExpiration(issuanceOrder.expiration, coreAPIErrors.EXPIRATION_PASSED());
+    this.commonAssertions.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
+    this.commonAssertions.greaterThanZero(
+      makerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(makerTokenAmount)
+    );
+    this.commonAssertions.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+    await this.erc20Assertions.implementsERC20(makerToken);
+
+
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.commonAssertions.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
+        this.schemaAssertions.isValidAddress('tokenAddress', tokenAddress);
+        await this.erc20Assertions.implementsERC20(tokenAddress);
+
+        this.commonAssertions.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+
+    if (relayerToken !== NULL_ADDRESS) {
+      await this.erc20Assertions.implementsERC20(relayerToken);
+    }
   }
 }

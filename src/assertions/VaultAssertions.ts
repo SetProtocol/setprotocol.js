@@ -21,7 +21,7 @@ import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
 import { BigNumber } from '../util';
-import { DetailedERC20Contract } from 'set-protocol-contracts';
+import { DetailedERC20Contract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
 export class VaultAssertions {
   private web3: Web3;
@@ -33,21 +33,23 @@ export class VaultAssertions {
   /**
    * Throws if the Vault doesn't have enough of token
    *
-   * @param  vaultInstance    An instance of the Vault contract
-   * @param  tokenAddress     An instance of the Set token contract
+   * @param  vaultAddress     The address of the Vault contract
+   * @param  tokenAddress     The address of the Set token contract
    * @param  ownerAddress     Address of owner withdrawing from vault
    * @param  quantityInWei    Amount of a Set in wei
    * @return                  Void Promise
    */
   public async hasSufficientTokenBalance(
-    vaultInstance: Web3.ContractInstance,
+    vaultAddress: Address,
     tokenAddress: Address,
     ownerAddress: Address,
     quantityInWei: BigNumber,
     errorMessage: string,
   ): Promise<void> {
+    const vaultContract = await VaultContract.at(vaultAddress, this.web3, {});
+
     // Assert that user has sufficient balance of Set
-    const ownerBalance = await vaultInstance.getOwnerBalance.callAsync(tokenAddress, ownerAddress);
+    const ownerBalance = await vaultContract.getOwnerBalance.callAsync(tokenAddress, ownerAddress);
 
     if (ownerBalance.lt(quantityInWei)) {
       throw new Error(errorMessage);
@@ -57,28 +59,31 @@ export class VaultAssertions {
   /**
    * Throws if the Set doesn't have a sufficient balance for its tokens in the Vault
    *
-   * @param  vaultInstance    An instance of the Vault contract
-   * @param  setTokenInstance An instance of the Set token contract
+   * @param  vaultAddress     The address of the Vault contract
+   * @param  setAddress       The address of the Set token contract
    * @param  quantityInWei    Amount of a Set in wei
    * @return                  Void Promise
    */
   public async hasSufficientSetTokensBalances(
-    vaultInstance: Web3.ContractInstance,
-    setTokenInstance: Web3.ContractInstance,
+    vaultAddress: Address,
+    setTokenAddress: Address,
     quantityInWei: BigNumber,
     errorMessage: string,
   ): Promise<void> {
+    const vaultInstance = await VaultContract.at(vaultAddress, this.web3, {});
+    const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
+
     const components: Address[] = await setTokenInstance.getComponents.callAsync();
     const units = await setTokenInstance.getUnits.callAsync();
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
 
-    const setTokenAddress = setTokenInstance.address;
+    const setAddress = setTokenInstance.address;
 
     // Create component ERC20 token instances
     const componentInstancePromises = _.map(
       components,
       async component =>
-        await DetailedERC20Contract.at(component, this.web3, { from: setTokenAddress }),
+        await DetailedERC20Contract.at(component, this.web3, { from: setAddress }),
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 
@@ -88,8 +93,8 @@ export class VaultAssertions {
       async (componentInstance, index) => {
         const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
         const ownerBalance = await vaultInstance.getOwnerBalance.callAsync(
-          components[index],
-          setTokenAddress,
+          componentInstance.address,
+          setAddress,
         );
         if (ownerBalance.lt(requiredBalance)) {
           throw new Error(errorMessage);
