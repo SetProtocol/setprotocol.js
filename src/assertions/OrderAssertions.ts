@@ -18,12 +18,13 @@
 
 import * as _ from 'lodash';
 import { Address, IssuanceOrder, SetProtocolUtils, SignedIssuanceOrder } from 'set-protocol-utils';
-import { erc20AssertionErrors, coreAPIErrors, orderErrors } from '../errors';
+import { erc20AssertionErrors, coreAPIErrors, orderErrors, setTokenAssertionsErrors } from '../errors';
 import { CoreContract } from 'set-protocol-contracts';
 import { CoreAssertions } from './CoreAssertions';
 import { CommonAssertions } from './CommonAssertions';
 import { SchemaAssertions } from './SchemaAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
+import { SetTokenAssertions } from './SetTokenAssertions';
 import { CoreWrapper } from '../wrappers';
 import { NULL_ADDRESS } from '../constants';
 import { BigNumber } from '../util';
@@ -44,6 +45,7 @@ export class OrderAssertions {
     this.schemaAssertions = new SchemaAssertions();
     this.coreAssertions = new CoreAssertions(web3);
     this.commonAssertions = new CommonAssertions();
+    this.setTokenAssertions = new SetTokenAssertions(web3);
   }
 
   public async isValidFill(
@@ -133,8 +135,12 @@ export class OrderAssertions {
       requiredComponents.map(async (tokenAddress, i) => {
         this.commonAssertions.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
         this.schemaAssertions.isValidAddress('tokenAddress', tokenAddress);
-
         await this.erc20Assertions.implementsERC20(tokenAddress);
+        await this.setTokenAssertions.isComponent(
+          setAddress,
+          tokenAddress,
+          setTokenAssertionsErrors.IS_NOT_COMPONENT(setAddress, tokenAddress)
+        );
 
         this.commonAssertions.greaterThanZero(
           requiredComponentAmounts[i],

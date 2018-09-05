@@ -291,6 +291,7 @@ describe('OrderAPI', () => {
     });
 
     async function subject(): Promise<void> {
+      console.log(subjectSignedIssuanceOrder.requiredComponents);
       return await ordersAPI.validateOrderFillableOrThrowAsync(
         subjectSignedIssuanceOrder,
         subjectFillQuantity
@@ -522,6 +523,30 @@ describe('OrderAPI', () => {
 
         Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
       `
+        );
+      });
+    });
+
+    describe.only('when a component that is not part of a Set is passed in', async () => {
+      let setTokenAddress: Address;
+      let faltyComponentAddress: Address;
+
+      beforeEach(async () => {
+        faltyComponentAddress = '0x8d98a5d27fe34cf7ca410e771a897ed0f14af34c';
+        const { signature, ...issuanceOrder } = subjectSignedIssuanceOrder;
+        setTokenAddress = issuanceOrder.setAddress;
+        issuanceOrder.requiredComponents[0] = faltyComponentAddress;
+
+        const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
+        const newSignature = await setProtocolUtils.signMessage(orderHash, issuanceOrderMaker);
+
+        subjectSignedIssuanceOrder.requiredComponents = issuanceOrder.requiredComponents;
+        subjectSignedIssuanceOrder.signature = newSignature;
+      });
+
+      test.only('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          'Token address at ${tokenAddress} is not a component of the Set Token at ${setTokenAddress}.'
         );
       });
     });

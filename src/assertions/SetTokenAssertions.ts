@@ -151,4 +151,17 @@ export class SetTokenAssertions {
       throw new Error(errorMessage);
     }
   }
+
+  public async isComponent(
+    setAddress: Address,
+    componentAddress: Address,
+    errorMessage: string,
+  ): Promise<void> {
+    const setTokenInstance = await SetTokenContract.at(setAddress, this.web3, {});
+    const isComponent = await setTokenInstance.tokenIsComponent.callAsync(componentAddress);
+    console.log('is it a component', isComponent);
+    if (!isComponent) {
+      throw new Error(errorMessage);
+    }
+  }
 }
