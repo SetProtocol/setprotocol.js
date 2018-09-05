@@ -21,7 +21,7 @@ import * as ethUtil from 'ethereumjs-util';
 import * as Web3 from 'web3';
 import { Address, ECSig, IssuanceOrder, SetProtocolUtils } from 'set-protocol-utils';
 
-import { SignatureUtils } from '../util/signatureUtils';
+import { SignatureUtils } from '../util/SignatureUtils';
 import { coreAssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 
