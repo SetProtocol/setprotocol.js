@@ -236,6 +236,30 @@ export class OrderAPI {
     return await this.core.cancelOrder(issuanceOrder, quantityToCancel, txOpts);
   }
 
+  /**
+   * Given an Issuance Order, gets the quantity of the Issuance Order filled
+   *
+   * @param  issuanceOrder  Issuance Order
+   * @return                Quantity of Issuance Order filled
+   */
+  public async getOrderFillsAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
+    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
+
+    return await this.core.orderFills(orderHash);
+  }
+
+  /**
+   * Given an Issuance Order, gets the quantity of the Issuance Order cancelled
+   *
+   * @param  issuanceOrder  Issuance Order
+   * @return                Quantity of Issuance Order cancelled
+   */
+  public async getOrderCancelledAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
+    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
+
+    return await this.core.orderCancels(orderHash);
+  }
+
   /* ============ Private Assertions ============ */
 
   private async assertFillOrder(
