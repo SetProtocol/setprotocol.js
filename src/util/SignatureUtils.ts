@@ -30,7 +30,7 @@ export class SignatureUtils {
     const pfxMessageHash = SignatureUtils.addPersonalMessagePrefix(messageHash);
 
     const messageHashBuff = ethUtil.toBuffer(messageHash);
-    const pfxMessageHashBuff = ethUtil.toBuffer(messageHash);
+    const pfxMessageHashBuff = ethUtil.toBuffer(pfxMessageHash);
 
     try {
       const pubKey = ethUtil.ecrecover(
