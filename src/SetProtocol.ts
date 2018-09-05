@@ -258,7 +258,7 @@ class SetProtocol {
    * @return                   Whether the factory contract is enabled
    */
   public async isValidFactoryAsync(factoryAddress: Address): Promise<boolean> {
-    return await this.core.isValidFactoryAsync(factoryAddress);
+    return await this.core.validFactories(factoryAddress);
   }
 
   /**
@@ -269,7 +269,7 @@ class SetProtocol {
    * @return               Whether the set contract is enabled
    */
   public async isValidSetAsync(setAddress: Address): Promise<boolean> {
-    return await this.core.isValidSetAsync(setAddress);
+    return await this.core.validSets(setAddress);
   }
 
   /**

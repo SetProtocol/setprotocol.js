@@ -729,15 +729,13 @@ describe('CoreWrapper', () => {
   });
 
   describe('Core State Getters', async () => {
-    let componentTokens: StandardTokenMockContract[];
     let setComponentUnit: BigNumber;
     let setToken: SetTokenContract;
-    let naturalUnit: BigNumber;
 
     beforeEach(async () => {
-      componentTokens = await deployTokensAsync(3, provider);
+      const componentTokens = await deployTokensAsync(3, provider);
       setComponentUnit = ether(4);
-      naturalUnit = ether(2);
+      const naturalUnit = ether(2);
       setToken = await deploySetTokenAsync(
         web3,
         core,
@@ -751,43 +749,49 @@ describe('CoreWrapper', () => {
     test('gets exchange address', async () => {
       const takerWalletWrapper = await deployTakerWalletWrapperContract(transferProxy, core, provider);
       const exchangeAddress = await coreWrapper.getExchangeAddress(SetProtocolUtils.EXCHANGES.TAKER_WALLET);
+
       expect(exchangeAddress).to.equal(takerWalletWrapper.address);
     });
 
-
     test('gets transfer proxy address', async () => {
       const transferProxyAddress = await coreWrapper.getTransferProxyAddress();
+
       expect(coreWrapper.transferProxyAddress).to.equal(transferProxyAddress);
     });
 
     test('gets vault address', async () => {
       const vaultAddress = await coreWrapper.getVaultAddress();
+
       expect(coreWrapper.vaultAddress).to.equal(vaultAddress);
     });
 
     test('gets factory addresses', async () => {
       const factoryAddresses = await coreWrapper.getFactories();
+
       expect(factoryAddresses.length).to.equal(1);
       expect(factoryAddresses[0]).to.equal(setTokenFactory.address);
     });
 
     test('gets Set addresses', async () => {
       const setAddresses = await coreWrapper.getSetAddresses();
+
       expect(setAddresses.length).to.equal(1);
       expect(setAddresses[0]).to.equal(setToken.address);
     });
 
     test('gets is valid factory address', async () => {
-      let isValidVaultAddress = await coreWrapper.isValidFactoryAsync(setTokenFactory.address);
+      let isValidVaultAddress = await coreWrapper.validFactories(setTokenFactory.address);
       expect(isValidVaultAddress).to.equal(true);
-      isValidVaultAddress = await coreWrapper.isValidFactoryAsync(NULL_ADDRESS);
+
+      isValidVaultAddress = await coreWrapper.validFactories(NULL_ADDRESS);
       expect(isValidVaultAddress).to.equal(false);
     });
 
     test('gets is valid Set address', async () => {
-      let isValidSetAddress = await coreWrapper.isValidSetAsync(setToken.address);
+      let isValidSetAddress = await coreWrapper.validSets(setToken.address);
       expect(isValidSetAddress).to.equal(true);
-      isValidSetAddress = await coreWrapper.isValidSetAsync(NULL_ADDRESS);
+
+      isValidSetAddress = await coreWrapper.validSets(NULL_ADDRESS);
       expect(isValidSetAddress).to.equal(false);
     });
   });

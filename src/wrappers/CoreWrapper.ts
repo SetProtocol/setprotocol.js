@@ -404,7 +404,7 @@ export class CoreWrapper {
    * @param  factoryAddress Address of the factory contract
    * @return                Whether the factory contract is enabled
    */
-  public async isValidFactoryAsync(factoryAddress: Address): Promise<boolean> {
+  public async validFactories(factoryAddress: Address): Promise<boolean> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidFactoryAddress = await coreInstance.validFactories.callAsync(factoryAddress);
 
@@ -418,7 +418,7 @@ export class CoreWrapper {
    * @param  setAddress Address of the SetToken or RebalancingSetToken contract
    * @return            Whether the contract is enabled
    */
-  public async isValidSetAsync(setAddress: Address): Promise<boolean> {
+  public async validSets(setAddress: Address): Promise<boolean> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const isValidSetAddress = await coreInstance.validSets.callAsync(setAddress);
 
@@ -431,7 +431,7 @@ export class CoreWrapper {
    * @param  orderHash  Bytes32 hash
    * @return            Quantity of Issuance Order filled
    */
-  public async getOrderFills(orderHash: Bytes): Promise<BigNumber> {
+  public async orderFills(orderHash: Bytes): Promise<BigNumber> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const orderFills = await coreInstance.orderFills.callAsync(orderHash);
 
@@ -444,7 +444,7 @@ export class CoreWrapper {
    * @param  orderHash  Address of the Set contract
    * @return            Quantity of Issuance Order cancelled
    */
-  public async getOrderCancels(orderHash: Bytes): Promise<BigNumber> {
+  public async orderCancels(orderHash: Bytes): Promise<BigNumber> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const orderCancels = await coreInstance.orderCancels.callAsync(orderHash);
 
