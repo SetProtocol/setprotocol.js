@@ -245,7 +245,7 @@ export class OrderAPI {
   public async getOrderFillsAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
-    return await this.core.getOrderFills(orderHash);
+    return await this.core.orderFills(orderHash);
   }
 
   /**
@@ -257,7 +257,7 @@ export class OrderAPI {
   public async getOrderCancelledAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
-    return await this.core.getOrderCancels(orderHash);
+    return await this.core.orderCancels(orderHash);
   }
 
   /* ============ Private Assertions ============ */
