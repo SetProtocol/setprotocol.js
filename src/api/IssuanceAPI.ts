@@ -109,16 +109,15 @@ export class IssuanceAPI {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
 
-    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
     await this.assert.setToken.isMultipleOfNaturalUnit(
-      setTokenContract,
+      setAddress,
       quantity,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
     );
 
-    await this.assert.setToken.hasSufficientBalances(setTokenContract, transactionCaller, quantity);
+    await this.assert.setToken.hasSufficientBalances(setAddress, transactionCaller, quantity);
     await this.assert.setToken.hasSufficientAllowances(
-      setTokenContract,
+      setAddress,
       transactionCaller,
       this.core.transferProxyAddress,
       quantity,
@@ -140,9 +139,8 @@ export class IssuanceAPI {
       this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     });
 
-    const setTokenContract = await SetTokenContract.at(setAddress, this.web3, {});
     await this.assert.setToken.isMultipleOfNaturalUnit(
-      setTokenContract,
+      setAddress,
       quantity,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
     );
@@ -153,10 +151,11 @@ export class IssuanceAPI {
       erc20AssertionErrors.INSUFFICIENT_BALANCE(),
     );
 
-    const vaultContract = await VaultContract.at(this.core.vaultAddress, this.web3, {});
+    const setTokenInstance = await SetTokenContract.at(setAddress, this.web3, {});
+
     await this.assert.vault.hasSufficientSetTokensBalances(
-      vaultContract,
-      setTokenContract,
+      this.core.vaultAddress,
+      setTokenInstance,
       quantity,
       vaultAssertionErrors.INSUFFICIENT_SET_TOKENS_BALANCE(),
     );

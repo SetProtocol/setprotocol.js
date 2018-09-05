@@ -18,8 +18,8 @@
 
 import * as _ from 'lodash';
 import { Address, IssuanceOrder, SetProtocolUtils, SignedIssuanceOrder } from 'set-protocol-utils';
-import { erc20AssertionErrors, coreAPIErrors, orderErrors, setTokenAssertionsErrors } from '../errors';
-import { CoreContract } from 'set-protocol-contracts';
+import { erc20AssertionErrors, coreAPIErrors, setTokenAssertionsErrors } from '../errors';
+import { SetTokenContract, CoreContract } from 'set-protocol-contracts';
 import { CoreAssertions } from './CoreAssertions';
 import { CommonAssertions } from './CommonAssertions';
 import { SchemaAssertions } from './SchemaAssertions';
@@ -48,12 +48,13 @@ export class OrderAssertions {
     this.setTokenAssertions = new SetTokenAssertions(web3);
   }
 
-  public async isValidFill(
-    transactionCaller: Address,
-    signedIssuanceOrder: SignedIssuanceOrder,
-    quantityToFill: BigNumber,
-    orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
-  ) {
+  // TODO - To create subsequent PR that uses this assertions
+  // public async isValidFill(
+  //   transactionCaller: Address,
+  //   signedIssuanceOrder: SignedIssuanceOrder,
+  //   quantityToFill: BigNumber,
+  //   orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
+  // ) {
     // Get required components
     // Calculate required components needed to fill the quantity
     // Sum tokens retrieved from orders
@@ -64,7 +65,7 @@ export class OrderAssertions {
     // If Taker Wallet Order
       // Ensure that allowances are set by the caller
       // Ensure that the caller has the balances to contribute
-  }
+  // }
 
   public async isIssuanceOrderFillable(
     coreAddress: Address,
@@ -90,7 +91,7 @@ export class OrderAssertions {
     const filledAmount = await coreContract.orderFills.callAsync(orderHash);
     const cancelledAmount = await coreContract.orderCancels.callAsync(orderHash);
     const fillableQuantity = issuanceOrder.quantity.sub(filledAmount).sub(cancelledAmount);
-    this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, orderErrors.FILL_EXCEEDS_AVAILABLE());
+    this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FILL_EXCEEDS_AVAILABLE());
   }
 
   /**
@@ -131,16 +132,12 @@ export class OrderAssertions {
     );
     await this.erc20Assertions.implementsERC20(makerToken);
 
+
     await Promise.all(
       requiredComponents.map(async (tokenAddress, i) => {
         this.commonAssertions.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
         this.schemaAssertions.isValidAddress('tokenAddress', tokenAddress);
         await this.erc20Assertions.implementsERC20(tokenAddress);
-        await this.setTokenAssertions.isComponent(
-          setAddress,
-          tokenAddress,
-          setTokenAssertionsErrors.IS_NOT_COMPONENT(setAddress, tokenAddress)
-        );
 
         this.commonAssertions.greaterThanZero(
           requiredComponentAmounts[i],

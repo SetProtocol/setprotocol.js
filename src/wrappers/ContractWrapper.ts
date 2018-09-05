@@ -96,7 +96,7 @@ export class ContractWrapper {
         this.web3,
         transactionOptions,
       );
-      await this.assert.setToken.implementsSetToken(setTokenContract);
+      await this.assert.setToken.implementsSetToken(setTokenAddress);
       this.cache[cacheKey] = setTokenContract;
       return setTokenContract;
     }
