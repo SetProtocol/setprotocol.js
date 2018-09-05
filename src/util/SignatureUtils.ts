@@ -27,6 +27,8 @@ export class SignatureUtils {
     // In certain circumstances, the `eth_sign` API adds an Ethereum-specific prefix to
     // message payloads so we want to check both with and without the prefix to see if
     // it is a valid signature.
+    // TODO: Review if there is a better way to validate signatures
+    // without having to check two separate hashes
     const pfxMessageHash = SignatureUtils.addPersonalMessagePrefix(messageHash);
 
     const messageHashBuff = ethUtil.toBuffer(messageHash);
