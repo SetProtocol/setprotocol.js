@@ -38,6 +38,7 @@ export class OrderAssertions {
   private schemaAssertions: SchemaAssertions;
   private coreAssertions: CoreAssertions;
   private commonAssertions: CommonAssertions;
+  private setTokenAssertions: SetTokenAssertions;
 
   constructor(web3: Web3) {
     this.web3 = web3;
