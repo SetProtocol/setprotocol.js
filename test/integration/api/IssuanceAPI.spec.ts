@@ -273,7 +273,7 @@ describe('IssuanceAPI', () => {
     });
   });
 
-  describe.only('redeemAsync', async () => {
+  describe('redeemAsync', async () => {
     let subjectSetToRedeem: Address;
     let subjectQuantityToRedeem: BigNumber;
     let subjectShouldWithdraw: boolean;
