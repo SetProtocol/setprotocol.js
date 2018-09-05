@@ -151,11 +151,9 @@ export class IssuanceAPI {
       erc20AssertionErrors.INSUFFICIENT_BALANCE(),
     );
 
-    const setTokenInstance = await SetTokenContract.at(setAddress, this.web3, {});
-
     await this.assert.vault.hasSufficientSetTokensBalances(
       this.core.vaultAddress,
-      setTokenInstance,
+      setAddress,
       quantity,
       vaultAssertionErrors.INSUFFICIENT_SET_TOKENS_BALANCE(),
     );

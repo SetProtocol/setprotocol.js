@@ -60,17 +60,18 @@ export class VaultAssertions {
    * Throws if the Set doesn't have a sufficient balance for its tokens in the Vault
    *
    * @param  vaultAddress     The address of the Vault contract
-   * @param  setAddress  The address of the Set token contract
+   * @param  setAddress       The address of the Set token contract
    * @param  quantityInWei    Amount of a Set in wei
    * @return                  Void Promise
    */
   public async hasSufficientSetTokensBalances(
     vaultAddress: Address,
-    setTokenInstance: Web3.ContractInstance, // TODO FIgure out why passing in address fails
+    setTokenAddress: Address,
     quantityInWei: BigNumber,
     errorMessage: string,
   ): Promise<void> {
     const vaultInstance = await VaultContract.at(vaultAddress, this.web3, {});
+    const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
 
     const components: Address[] = await setTokenInstance.getComponents.callAsync();
     const units = await setTokenInstance.getUnits.callAsync();

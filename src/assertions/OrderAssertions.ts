@@ -49,25 +49,6 @@ export class OrderAssertions {
     this.setTokenAssertions = new SetTokenAssertions(web3);
   }
 
-  // TODO - To create subsequent PR that uses this assertions
-  // public async isValidFill(
-  //   transactionCaller: Address,
-  //   signedIssuanceOrder: SignedIssuanceOrder,
-  //   quantityToFill: BigNumber,
-  //   orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
-  // ) {
-    // Get required components
-    // Calculate required components needed to fill the quantity
-    // Sum tokens retrieved from orders
-
-    // If Zero Ex Order
-      // Ensure the maker token amount is sufficient
-
-    // If Taker Wallet Order
-      // Ensure that allowances are set by the caller
-      // Ensure that the caller has the balances to contribute
-  // }
-
   public async isIssuanceOrderFillable(
     coreAddress: Address,
     signedIssuanceOrder: SignedIssuanceOrder,

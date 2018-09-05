@@ -157,18 +157,4 @@ export class SetTokenAssertions {
       throw new Error(errorMessage);
     }
   }
-
-  // TODO - To create subsequent PR that uses these assertions
-  // public async isComponent(
-  //   setTokenAddress: Address,
-  //   componentAddress: Address,
-  //   errorMessage: string,
-  // ): Promise<void> {
-  //   const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
-  //   const isComponent = await setTokenInstance.tokenIsComponent.callAsync(componentAddress);
-  //   console.log('is it a component', isComponent);
-  //   if (!isComponent) {
-  //     throw new Error(errorMessage);
-  //   }
-  // }
 }
