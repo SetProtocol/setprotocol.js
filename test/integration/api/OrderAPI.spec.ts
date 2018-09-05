@@ -890,7 +890,6 @@ describe('OrderAPI', () => {
     let subjectQuantityToFill: BigNumber;
 
     beforeEach(async () => {
-
       let orders: (ZeroExSignedFillOrder | TakerWalletOrder)[];
       let caller: Address;
 
@@ -1049,7 +1048,7 @@ describe('OrderAPI', () => {
       );
     });
 
-    async function subject(): Promise<string> {
+    async function subject(): Promise<BigNumber> {
       return ordersAPI.getOrderCancelledAsync(
         subjectSignedIssuanceOrder,
       );

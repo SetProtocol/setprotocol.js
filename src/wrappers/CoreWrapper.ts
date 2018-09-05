@@ -441,7 +441,7 @@ export class CoreWrapper {
   /**
    * Asynchronously gets the quantity of the Issuance Order cancelled
    *
-   * @param  orderHash  Bytes32 hash of the Issuance ORder
+   * @param  orderHash  Bytes32 hash of the Issuance Order
    * @return            Quantity of Issuance Order cancelled
    */
   public async orderCancels(orderHash: Bytes): Promise<BigNumber> {
