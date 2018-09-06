@@ -226,7 +226,7 @@ describe('OrderAPI', () => {
     async function subject(): Promise<ECSig> {
       return await ordersAPI.signOrderAsync(
         subjectIssuanceOrder,
-        subjectAddPrefix
+        subjectAddPrefix,
         { from: subjectSigner }
       );
     }
