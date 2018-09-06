@@ -23,7 +23,9 @@ const inputFile = "./documentation/typedoc.json";
  */
 const outputFile = "./documentation/output.md";
 
-// Classes to include in our markdown file genreation
+const methodSource = "https://github.com/SetProtocol/setprotocol.js/tree/master/src/";
+
+// Classes to include in our markdown file generation
 const classes = [
 	{
 		name: 'SetProtocol',
@@ -47,7 +49,7 @@ const classes = [
  * An instance of a TypedocParser, which is capable of turning Typedoc JSON
  * into more human-friendly documentation instructions.
  */
-const parser = new Parser(inputFile, classes);
+const parser = new Parser(inputFile, classes, methodSource);
 
 console.log(`Parsing and Generating Markdown "${inputFile}"`);
 parser.parse();

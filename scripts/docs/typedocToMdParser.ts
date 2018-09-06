@@ -323,9 +323,12 @@ class TypedocParser {
     // in argument generation
     private includedClasses: IncludedClass[];
 
-    constructor(filePath: string, includedClasses: IncludedClass[]) {
+    private methodSource: string;
+
+    constructor(filePath: string, includedClasses: IncludedClass[], methodSource: string) {
         this.filePath = filePath;
         this.includedClasses = includedClasses;
+        this.methodSource = methodSource;
     }
 
     public parse(): void {
@@ -387,7 +390,7 @@ class TypedocParser {
     private getMethodsMarkdown(methods: MethodDocumentation[]) {
       let content = '';
       _.each(methods, method => {
-        content += `${HeaderTags.H3} [${method.name}](${method.source})\n\n`
+        content += `${HeaderTags.H3} [${method.name}](${this.methodSource}${method.source})\n\n`
 
         if (method.description.length) {
           content += `${method.description}\n\n`  
