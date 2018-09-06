@@ -387,23 +387,21 @@ class TypedocParser {
     private getMethodsMarkdown(methods: MethodDocumentation[]) {
       let content = '';
       _.each(methods, method => {
-        content += `${HeaderTags.H3} ${method.name}\n\n`
+        content += `${HeaderTags.H3} [${method.name}](${method.source})\n\n`
 
         if (method.description.length) {
           content += `${method.description}\n\n`  
         }
-
-        content += `[Source](${method.source})\n\n`
         
         content += TypedocParser.jsCodeBlock(method.signature)
-        
+
         if (method.tableParams.length) {
-          content += `${HeaderTags.H6} Parameters\n`
+          content += `${HeaderTags.H4} Parameters\n`
           content += method.tableParams;  
         }
 
         if (method.returnType) {
-          content += `${HeaderTags.H6} Returns\n`
+          content += `${HeaderTags.H4} Returns\n`
           content += `\`${method.returnType}\` - ${method.returnComment}\n`  
         }
 
