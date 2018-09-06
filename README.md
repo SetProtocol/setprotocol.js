@@ -1,8 +1,8 @@
 <p align="center"><img src="https://s3-us-west-1.amazonaws.com/set-protocol/img/assets/set-protocol-logo.png" width="64" /></p>
 
 <p align="center">
-  <a href="https://img.shields.io/circleci/project/github/SetProtocol/setprotocol.js/master.svg" target="_blank" rel="noopener">
-    <img src="https://circleci.com/gh/SetProtocol/setprotocol.js.svg" />
+  <a href="https://circleci.com/gh/SetProtocol/setprotocol.js/tree/master" target="_blank" rel="noopener">
+    <img src="https://img.shields.io/circleci/project/github/SetProtocol/setprotocol.js/master.svg" />
   </a>
   <a href='https://github.com/SetProtocol/setProtocol.js/blob/master/LICENSE' target="_blank" rel="noopener">
     <img src='https://img.shields.io/badge/License-Apache%202.0-blue.svg' alt='License' />
