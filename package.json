@@ -1,6 +1,6 @@
 {
   "name": "setprotocol.js",
-  "version": "1.0.0-alpha.20",
+  "version": "1.0.0-alpha.21",
   "description": "A javascript library for interacting with the Set protocol",
   "keywords": [
     "setProtocol.js",
@@ -78,7 +78,8 @@
     "web3-utils": "1.0.0-beta.35"
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "husky": {
     "hooks": {
