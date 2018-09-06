@@ -16,7 +16,7 @@
 `setprotocol.js` is a library for interacting with Set Protocol smart contracts.
 This library enables you to create, issue, redeem, and create and fill issuance orders for Sets.
 
-### [Link to Docs Here](https://docs.setprotocol.com/).
+#### Take a look at our [developer portal](https://docs.setprotocol.com/) for the fastest way to get up and running.
 
 <a href="https://t.me/joinchat/Fx8D6wyprLUlM1jMVnaRdg" target="_blank" rel="noopener">
   Join us on Telegram
