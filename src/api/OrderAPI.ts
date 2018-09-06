@@ -93,10 +93,10 @@ export class OrderAPI {
    * Checks whether a signature produced for an issuance order is valid. A signature is valid only
    * if the issuance order is signed by the maker. The function throws upon receiving an invalid signature
    *
-   * @param  issuanceOrder        Object conforming to the IssuanceOrder interface
-   * @param  signature            Object conforming to ECSignature containing elliptic curve signature components
-   * @param  addSignaturePrefix   Boolean whether to add prefix (e.g. Metamask signatures)
-   * @return                      Whether the recovered signature matches the data hash
+   * @param  issuanceOrder         Object conforming to the IssuanceOrder interface
+   * @param  signature             Object conforming to ECSignature containing elliptic curve signature components
+   * @param  addSignaturePrefix    Boolean whether to add prefix (e.g. Metamask signatures)
+   * @return                       Whether the recovered signature matches the data hash
    */
   public async isValidSignatureOrThrowAsync(
     issuanceOrder: IssuanceOrder,
@@ -118,10 +118,10 @@ export class OrderAPI {
    * Generates a ECSig from an IssuanceOrder objects. It signs the user using the signer in the transaction options.
    * If none is provided, it will use the first account from the provider
    *
-   * @param  issuanceOrder        Issuance Order
-   * @param  txOpts               Transaction options object conforming to TxData with signer, gas, and gasPrice data
-   * @param  addSignaturePrefix   Boolean whether to add prefix (e.g. Metamask signatures)
-   * @return                      Object conforming to ECSignature containing elliptic curve signature components
+   * @param  issuanceOrder         Issuance Order
+   * @param  txOpts                Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  addSignaturePrefix    Boolean whether to add prefix (e.g. Metamask signatures)
+   * @return                       Object conforming to ECSignature containing elliptic curve signature components
    */
   public async signOrderAsync(
     issuanceOrder: IssuanceOrder,
