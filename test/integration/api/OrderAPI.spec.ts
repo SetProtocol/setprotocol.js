@@ -775,24 +775,6 @@ describe('OrderAPI', () => {
         );
       });
     });
-
-    describe('when the signature is invalid', async () => {
-      beforeEach(async () => {
-        const { signature, ...issuanceOrder } = subjectSignedIssuanceOrder;
-
-        const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-        const notOrderMakerAccount = ACCOUNTS[0].address;
-        const invalidSignature = await setProtocolUtils.signMessage(orderHash, notOrderMakerAccount);
-
-        subjectSignedIssuanceOrder.signature = invalidSignature;
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `Signature does not match issuance order attributes.`
-        );
-      });
-    });
   });
 
   describe('cancelOrderAsync', async () => {
