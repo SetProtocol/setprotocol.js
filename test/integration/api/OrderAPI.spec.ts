@@ -191,6 +191,7 @@ describe('OrderAPI', () => {
   describe('signOrderAsync', async () => {
     let subjectIssuanceOrder: IssuanceOrder;
     let subjectSigner: Address;
+    let subjectAddPrefix: boolean;
     let orderHash: string;
 
     beforeEach(async () => {
@@ -219,11 +220,13 @@ describe('OrderAPI', () => {
       };
 
       subjectSigner = DEFAULT_ACCOUNT;
+      subjectAddPrefix = false;
     });
 
     async function subject(): Promise<ECSig> {
       return await ordersAPI.signOrderAsync(
         subjectIssuanceOrder,
+        subjectAddPrefix
         { from: subjectSigner }
       );
     }
