@@ -53,6 +53,7 @@ export class OrderAssertions {
     coreAddress: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     fillQuantity: BigNumber,
+    isAddSigPrefix: boolean = true,
   ): Promise<void> {
     const coreContract = await CoreContract.at(coreAddress, this.web3, {});
 
@@ -63,6 +64,7 @@ export class OrderAssertions {
       orderHash,
       issuanceOrder.makerAddress,
       signedIssuanceOrder.signature,
+      isAddSigPrefix,
       coreAPIErrors.SIGNATURE_MISMATCH(),
     );
 

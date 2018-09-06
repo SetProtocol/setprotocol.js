@@ -142,6 +142,7 @@ describe('OrderAPI', () => {
     let orderHash: string;
     let subjectIssuanceOrder: IssuanceOrder;
     let subjectSignature: ECSig;
+    let subjectPrefix: boolean;
 
     beforeEach(async () => {
       const setAddress = '0x8d98a5d27fe34cf7ca410e771a897ed0f14af34c';
@@ -169,12 +170,14 @@ describe('OrderAPI', () => {
       };
       orderHash = SetProtocolUtils.hashOrderHex(subjectIssuanceOrder);
       subjectSignature = await setProtocolUtils.signMessage(orderHash, DEFAULT_ACCOUNT);
+      subjectPrefix = true;
     });
 
     async function subject(): Promise<boolean> {
       return await ordersAPI.isValidSignatureOrThrowAsync(
         subjectIssuanceOrder,
-        subjectSignature
+        subjectSignature,
+        subjectPrefix,
       );
     }
 

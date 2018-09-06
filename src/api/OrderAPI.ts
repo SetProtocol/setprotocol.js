@@ -95,15 +95,17 @@ export class OrderAPI {
    *
    * @param  issuanceOrder    Object conforming to the IssuanceOrder interface
    * @param  signature        Object conforming to ECSignature containing elliptic curve signature components
+   * @param  addPrefix        Boolean whether to add prefix (e.g. Metamask signatures)
    * @return                  Whether the recovered signature matches the data hash
    */
-  public async isValidSignatureOrThrowAsync(issuanceOrder: IssuanceOrder, signature: ECSig): Promise<boolean> {
+  public async isValidSignatureOrThrowAsync(issuanceOrder: IssuanceOrder, signature: ECSig, addPrefix: boolean): Promise<boolean> {
     const orderData = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
     return await this.assert.core.isValidSignature(
       orderData,
       issuanceOrder.makerAddress,
       signature,
+      addPrefix,
       coreAPIErrors.SIGNATURE_MISMATCH()
     );
   }

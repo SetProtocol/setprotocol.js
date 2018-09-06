@@ -22,7 +22,7 @@ import * as Web3 from 'web3';
 import { Address, ECSig, IssuanceOrder, SetProtocolUtils } from 'set-protocol-utils';
 import { CoreContract } from 'set-protocol-contracts';
 
-import { SignatureUtils } from '../util/SignatureUtils';
+import { SignatureUtils } from '../util/signatureUtils';
 import { coreAssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 
@@ -58,8 +58,14 @@ export class CoreAssertions {
     }
   }
 
-  public isValidSignature(data: string, signerAddress: Address, signature: ECSig, errorMessage: string): boolean {
-    if (!SignatureUtils.isValidSignature(data, signature, signerAddress)) {
+  public isValidSignature(
+    data: string,
+    signerAddress: Address,
+    signature: ECSig,
+    addPrefix: boolean,
+    errorMessage: string
+  ): boolean {
+    if (!SignatureUtils.isValidSignature(data, signature, signerAddress, addPrefix)) {
       throw new Error(errorMessage);
     } else {
       return true;
