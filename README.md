@@ -27,11 +27,11 @@ Note: This is Alpha software, and is subject to non-backwards compatible changes
 ### setprotocol.js
 ##### Using yarn:
 ```shell
-$ yarn add setprotocol.js@^1.0.0-alpha.23
+$ yarn add setprotocol.js@^1.0.0-alpha.24
 ```
 ##### Using npm:
 ```shell
-$ npm i --save setprotocol.js@^1.0.0-alpha.23
+$ npm i --save setprotocol.js@^1.0.0-alpha.24
 ```
 
 ### web3 & bignumber
