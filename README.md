@@ -11,10 +11,10 @@
 
 # setprotocol.js
 Welcome Settler of Tokan :wave: setprotocol.js is a library for interacting with Set Protocol smart contracts.
-This library enables you to create, issue, redeem, and create/fill orders for Sets.
+This library enables you to create, issue, redeem, and create/fill orders for Sets. You can find extensive documentation [here](https://docs.setprotocol.com/).
 
-<a href="https://join.slack.com/t/setprotocol/shared_invite/enQtMjYzNjk4MzI1NzgxLWRlYzhkY2JlNjQ4YmU4OTUwZWQ5NzdkZjM3ZDVlNzU1MTJmZWM1NTNmM2JlYmE5YzljZjFmZTBhNzkyN2M1MzQ" target="_blank" rel="noopener">
-  Join us on Slack
+<a href="https://t.me/joinchat/Fx8D6wyprLUlM1jMVnaRdg" target="_blank" rel="noopener">
+  Join us on Telegram
 </a>
 
 Note: This is pre-alpha software. Things will constantly be changing and getting updated.
@@ -50,6 +50,7 @@ const config = {
   coreAddress: '0x...',             // Address of the Set Protocol Core contract
   transferProxyAddress: '0x...',    // Address of the Set Protocol Transfer Proxy contract
   vaultAddress: '0x...',            // Address of the Set Protocol Vault contract
+  setTokenFactoryAddress: '0x...',            // Address of the Set Protocol Factory contract
 };
 
 const setProtocol = new SetProtocol(
@@ -77,100 +78,6 @@ const setProtocol = new SetProtocol(
 * **RebalancingSetTokenFactory** - 0x1be5ba38bb74ed973a40732c1ee2d92b7b720a5c
 * **TakerWalletWrapper** - 0x4f97502c7f161aa507f7cce50b94f17357e072de
 * **ZeroExExchangeWrapper** - N/A on Ropsten
-
-##### Usage
-The instantiated object from `new SetProtocol(...)` contains multiple child interfaces. Those interfaces are below:
-### Example Calls
-```js
-/* Core
- *
- * Example of calling `create` method
- */
-const createTxHash = await setProtocol.createSet(
-  '0xeebaba65769084d176d1ff6fd6e6be3f8e9a63b7', // Factory address
-  ['0x32cf71b0fc074385da15f8405b7622d14e3690dd', '0x4b34bb7e210f5a462e8cd2d92555d1bd18d03bf2'], // Component addresses
-  [new BigNumber(500000000000000000), new BigNumber(500000000000000000)], // Units in natural units
-  new BigNumber(500000000000000000), // The natural unit, aka lowest number all component units can be divided by
-  'FooSet', // Set name
-  'FOO', // Set symbol
-  { from: '0xf62ff63768819731092a4ad392519c7e3f14666c' /* User's address */ }, // txOptions
-);
-
-/* Set Token
- *
- * Example of calling setToken's `getBalanceOf` method
- */
- const balanceOfTxHash = await setProtocol.setToken.getBalanceOf(
-  '0x5eb32b0099eF21cA70fee8AF561D39e952D8089A', // Set Address
-  '0xf62ff63768819731092a4ad392519c7e3f14666c', // User Address
-);
-
-/* Vault
- *
- * Example of calling `getBalanceInVault` method
- */
- const ownerBalanceTxHash = await setProtocol.getBalanceInVault(
-  '0x5eb32b0099eF21cA70fee8AF561D39e952D8089A', // Token Address
-  '0xf62ff63768819731092a4ad392519c7e3f14666c', // User Address
-);
-```
-
-We have API docs below. Stay tuned for a rich set of designed documentation that's currently being built.
-
-## :rocket: setprotocol.js API Reference
-* [Core](documentation/classes/_coreapi_.coreapi.md)
-  * [assertBatchDeposit](documentation/classes/_coreapi_.coreapi.md#assertbatchdeposit)
-  * [assertBatchWithdraw](documentation/classes/_coreapi_.coreapi.md#assertbatchwithdraw)
-  * [assertCancelIssuanceOrder](documentation/classes/_coreapi_.coreapi.md#assertcancelissuanceorder)
-  * [assertCreateSet](documentation/classes/_coreapi_.coreapi.md#assertcreateset)
-  * [assertCreateSignedIssuanceOrder](documentation/classes/_coreapi_.coreapi.md#assertcreatesignedissuanceorder)
-  * [assertDeposit](documentation/classes/_coreapi_.coreapi.md#assertdeposit)
-  * [assertFillIssuanceOrder](documentation/classes/_coreapi_.coreapi.md#assertfillissuanceorder)
-  * [assertIssue](documentation/classes/_coreapi_.coreapi.md#assertissue)
-  * [assertRedeem](documentation/classes/_coreapi_.coreapi.md#assertredeem)
-  * [assertRedeemAndWithdraw](documentation/classes/_coreapi_.coreapi.md#assertredeemandwithdraw)
-  * [assertWithdraw](documentation/classes/_coreapi_.coreapi.md#assertwithdraw)
-  * [batchDeposit](documentation/classes/_coreapi_.coreapi.md#batchdeposit)
-  * [batchWithdraw](documentation/classes/_coreapi_.coreapi.md#batchwithdraw)
-  * [cancelOrder](documentation/classes/_coreapi_.coreapi.md#cancelorder)
-  * [createOrder](documentation/classes/_coreapi_.coreapi.md#createorder)
-  * [createSet](documentation/classes/_coreapi_.coreapi.md#createset)
-  * [deposit](documentation/classes/_coreapi_.coreapi.md#deposit)
-  * [fillOrder](documentation/classes/_coreapi_.coreapi.md#fillorder)
-  * [getExchangeAddress](documentation/classes/_coreapi_.coreapi.md#getexchangeaddress)
-  * [getFactories](documentation/classes/_coreapi_.coreapi.md#getfactories)
-  * [getIsValidFactory](documentation/classes/_coreapi_.coreapi.md#getisvalidfactory)
-  * [getIsValidSet](documentation/classes/_coreapi_.coreapi.md#getisvalidset)
-  * [getSetAddresses](documentation/classes/_coreapi_.coreapi.md#getsetaddresses)
-  * [getTransferProxyAddress](documentation/classes/_coreapi_.coreapi.md#gettransferproxyaddress)
-  * [getVaultAddress](documentation/classes/_coreapi_.coreapi.md#getvaultaddress)
-  * [issue](documentation/classes/_coreapi_.coreapi.md#issue)
-  * [redeem](documentation/classes/_coreapi_.coreapi.md#redeem)
-  * [redeemAndWithdraw](documentation/classes/_coreapi_.coreapi.md#redeemandwithdraw)
-  * [redeemToVault](documentation/classes/_coreapi_.coreapi.md#redeemtovault)
-  * [singleDeposit](documentation/classes/_coreapi_.coreapi.md#singledeposit)
-  * [singleWithdraw](documentation/classes/_coreapi_.coreapi.md#singlewithdraw)
-  * [withdraw](documentation/classes/_coreapi_.coreapi.md#withdraw)
-
-* [setToken](documentation/classes/_settokenapi_.settokenapi.md)
-  * [getBalanceOf](documentation/classes/_settokenapi_.settokenapi.md#getbalanceof)
-  * [getComponents](documentation/classes/_settokenapi_.settokenapi.md#getcomponents)
-  * [getName](documentation/classes/_settokenapi_.settokenapi.md#getname)
-  * [getNaturalUnit](documentation/classes/_settokenapi_.settokenapi.md#getnaturalunit)
-  * [getSymbol](documentation/classes/_settokenapi_.settokenapi.md#getsymbol)
-  * [getTotalSupply](documentation/classes/_settokenapi_.settokenapi.md#gettotalsupply)
-  * [getUnits](documentation/classes/_settokenapi_.settokenapi.md#getunits)
-
-* [contracts](documentation/classes/_contractsapi_.contractsapi.md)
-  * [getCoreCacheKey](documentation/classes/_contractsapi_.contractsapi.md#getcorecachekey)
-  * [getSetTokenCacheKey](documentation/classes/_contractsapi_.contractsapi.md#getsettokencachekey)
-  * [getVaultCacheKey](documentation/classes/_contractsapi_.contractsapi.md#getvaultcachekey)
-  * [loadCoreAsync](documentation/classes/_contractsapi_.contractsapi.md#loadcoreasync)
-  * [loadSetTokenAsync](documentation/classes/_contractsapi_.contractsapi.md#loadsettokenasync)
-  * [loadVaultAsync](documentation/classes/_contractsapi_.contractsapi.md#loadvaultasync)
-
-* [vault](documentation/classes/_vaultapi_.vaultapi.md)
-  * [getBalanceInVault](documentation/classes/_vaultapi_.vaultapi.md#getbalanceinvault)
 
 ## :raising_hand: Contributing
 ### Testing
