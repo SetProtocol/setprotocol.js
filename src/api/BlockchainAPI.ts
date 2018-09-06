@@ -54,10 +54,10 @@ export class BlockchainAPI {
   private web3Utils: Web3Utils;
 
   /**
-   * Instantiates a new BlockchainAPI instance that contains methods for transferring balances in the vault.
+   * Instantiates a new BlockchainAPI instance that contains methods for miscellaneous blockchain functionality
    *
-   * @param web3                  The Web3.js Provider instance you would like the SetProtocol.js library
-   *                              to use for interacting with the Ethereum network.
+   * @param web3    Web3.js Provider instance you would like the SetProtocol.js library
+   *                  to use for interacting with the Ethereum network.
    */
   constructor(web3: Web3 = undefined) {
     this.web3 = web3;
@@ -68,15 +68,14 @@ export class BlockchainAPI {
   }
 
   /**
-   * Asynchronously polls the Ethereum blockchain until the specified
-   * transaction has been mined or the timeout limit is reached, whichever
-   * occurs first.
+   * Polls the Ethereum blockchain until the specified transaction has been mined or
+   * the timeout limit is reached, whichever occurs first
    *
-   * @param  txHash                 the hash of the transaction.
-   * @param  pollingIntervalMs=1000 the interval at which the blockchain should be polled.
-   * @param  timeoutMs              the number of milliseconds until this process times out. If
-   *                                no value is provided, a default value is used.
-   * @return                        the transaction receipt resulting from the mining process.
+   * @param  txHash               Transaction hash to poll
+   * @param  pollingIntervalMs    Interval at which the blockchain should be polled. Defaults to 1000
+   * @param  timeoutMs            Number of milliseconds until this process times out. Defaults
+   *                                to DEFAULT_TIMEOUT_FOR_TX_MINED
+   * @return                      Transaction receipt resulting from the mining process
    */
   public async awaitTransactionMinedAsync(
     txHash: string,

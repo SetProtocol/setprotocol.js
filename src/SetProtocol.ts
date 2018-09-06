@@ -56,12 +56,12 @@ class SetProtocol {
   public static NULL_ADDRESS = SetProtocolUtils.CONSTANTS.NULL_ADDRESS;
 
   /**
-   * An instance of the OrderAPI class containing methods for relaying IssuanceOrders
+   * An instance of the OrderAPI class containing methods for relaying issuance orders
    */
   public orders: OrderAPI;
 
   /**
-   * An instance of the ERC20API class containing methods for interacting with ERC20 compliant contracts
+   * An instance of the ERC20API class containing methods for interacting with ERC20 compliant token contracts
    */
   public erc20: ERC20API;
 
@@ -71,10 +71,11 @@ class SetProtocol {
   public setToken: SetTokenAPI;
 
   /**
-   * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library.
-   * @param provider              The provider instance you would like the SetProtocol.js library
-   *                              to use for interacting with the Ethereum network.
-   * @param config                A configuration object with Set Protocol's contract addresses
+   * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library
+   *
+   * @param provider    Provider instance you would like the SetProtocol.js library
+   *                      to use for interacting with the Ethereum network.
+   * @param config      Configuration object conforming to SetProtocolConfig with Set Protocol's contract addresses
    */
   constructor(provider: Provider = undefined, config: SetProtocolConfig) {
     this.web3 = instantiateWeb3(provider);
@@ -94,13 +95,16 @@ class SetProtocol {
    * Create a new Set by passing in parameters denoting component token addresses, quantities, natural
    * unit, and ERC20 properties
    *
-   * @param  components       Component ERC20 token addresses
-   * @param  units            Units of each component in Set paired in index order
-   * @param  naturalUnit      Supplied as the lowest common denominator for the Set
-   * @param  name             Name for Set (i.e. "DEX Set"). Not unique
-   * @param  symbol           Symbol for Set (i.e. "DEX"). Not unique
-   * @param  txOpts           The options for executing the transaction
-   * @return                  A transaction hash to then later look up for the Set address
+   * Note: the return value is the transaction hash of the createSetAsync call, not the deployed SetToken
+   * contract address. Use `getSetAddressFromCreateTxHashAsync` to retrieve the SetToken address
+   *
+   * @param  components     Component ERC20 token addresses
+   * @param  units          Units of each component in Set paired in index order
+   * @param  naturalUnit    Lowest common denominator for the Set
+   * @param  name           Name for Set, i.e. "DEX Set"
+   * @param  symbol         Symbol for Set, i.e. "DEX"
+   * @param  txOpts         Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @return                Transaction hash
    */
   public async createSetAsync(
     components: Address[],
@@ -118,9 +122,9 @@ class SetProtocol {
    * the vault or in the signer's wallet. Component tokens must be approved to the Transfer
    * Proxy contract via setTransferProxyAllowanceAsync
    *
-   * @param  setAddress    Address of Set to issue
+   * @param  setAddress    Address Set to issue
    * @param  quantity      Amount of Set to issue. Must be multiple of the natural unit of the Set
-   * @param  txOpts        The options for executing the transaction
+   * @param  txOpts        Transaction options object conforming to TxData with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
   public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxDataWithFrom): Promise<string> {
@@ -128,15 +132,15 @@ class SetProtocol {
   }
 
   /**
-   * Redeems a Set to the transaction signer, returning the component tokens to the signer's wallet. Set withdraw
-   * to false to leave redeemed components in vault under the user's address to save gas if rebundling into another
+   * Redeems a Set to the transaction signer, returning the component tokens to the signer's wallet. Use `false` for
+   * `withdraw` to leave redeemed components in vault under the user's address to save gas if rebundling into another
    * Set with similar components
    *
    * @param  setAddress         Address of Set to issue
    * @param  quantity           Amount of Set to redeem. Must be multiple of the natural unit of the Set
    * @param  withdraw           Boolean to withdraw back to signer's wallet or leave in vault. Defaults to true
    * @param  tokensToExclude    Token addresses to exclude from withdrawal
-   * @param  txOpts             The options for executing the transaction
+   * @param  txOpts             Transaction options object conforming to TxData with signer, gas, and gasPrice data
    * @return                    Transaction hash
    */
   public async redeemAsync(
@@ -150,12 +154,12 @@ class SetProtocol {
   }
 
   /**
-   * Deposits token either using single token type deposit or batch deposit
+   * Deposits tokens into the vault under the signer's address that can be used to issue a Set
    *
-   * @param  tokenAddresses      Addresses of ERC20 tokens user wants to deposit into the vault
-   * @param  quantities          Numbers of tokens a user wants to deposit into the vault
-   * @param  txOpts              The options for executing the transaction
-   * @return                     Transaction hash
+   * @param  tokenAddresses    Addresses of ERC20 tokens to deposit into the vault
+   * @param  quantities        Amount of each token to deposit into the vault in index order with `tokenAddresses`
+   * @param  txOpts            Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @return                   Transaction hash
    */
   public async depositAsync(
     tokenAddresses: Address[],
@@ -166,12 +170,12 @@ class SetProtocol {
   }
 
   /**
-   * Withdraws tokens either using single token type withdraw or batch withdraw
+   * Withdraws tokens from the vault belonging to the signer
    *
-   * @param  tokenAddresses      Addresses of ERC20 tokens user wants to withdraw from the vault
-   * @param  quantities          Numbers of tokens a user wants to withdraw from the vault
-   * @param  txOpts              The options for executing the transaction
-   * @return                     Transaction hash
+   * @param  tokenAddresses    Addresses of ERC20 tokens to withdraw from the vault
+   * @param  quantities        Amount of each token token to withdraw from vault in index order with `tokenAddresses`
+   * @param  txOpts            Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @return                   Transaction hash
    */
   public async withdrawAsync(
     tokenAddresses: Address[],
@@ -182,13 +186,13 @@ class SetProtocol {
   }
 
   /**
-   * Sets the Set TransferProxy contract's allowance to a specified quantity on behalf of the user. Allowance is
+   * Sets the TransferProxy contract's allowance to a specified quantity on behalf of the signer. Allowance is
    * required for issuing, redeeming, and filling issuance orders
    *
-   * @param   tokenAddress        Address of contract to approve (typically SetToken or ERC20)
-   * @param   quantity            The allowance quantity
-   * @param   txOpts              The options for executing the transaction
-   * @return                      Transaction hash
+   * @param   tokenAddress    Address of token contract to approve (typically SetToken or ERC20)
+   * @param   quantity        Allowance quantity
+   * @param   txOpts          Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @return                  Transaction hash
    */
   public async setTransferProxyAllowanceAsync(
       tokenAddress: string,
@@ -204,11 +208,11 @@ class SetProtocol {
   }
 
   /**
-   * Sets the Set TransferProxy contract's allowance to a unlimited number on behalf of the user. Allowance is
+   * Sets the TransferProxy contract's allowance to the maximum amount on behalf of the signer. Allowance is
    * required for issuing, redeeming, and filling issuance orders
    *
    * @param  tokenAddress    Address of contract to approve (typically SetToken or ERC20)
-   * @param  txOpts          The options for executing the transaction
+   * @param  txOpts          Transaction options object conforming to TxData with signer, gas, and gasPrice data
    * @return                 Transaction hash
    */
   public async setUnlimitedTransferProxyAllowanceAsync(tokenAddress: string, txOpts?: TxData): Promise<string> {
@@ -220,39 +224,37 @@ class SetProtocol {
   }
 
   /**
-   * Fetch the balance of the provided contract address inside the vault specified
-   * in SetProtocolConfig
+   * Fetch the balance of the provided token contract address inside the Vault
    *
-   * @param  tokenAddress    Address of the contract (typically SetToken or ERC20)
-   * @param  ownerAddress    Address of the user
-   * @return                 The balance of the contract in the vault
+   * @param  tokenAddress    Address of the token contract (typically SetToken or ERC20)
+   * @param  ownerAddress    Address of the token owner
+   * @return                 Balance of the contract in the vault
    */
   public async getBalanceInVaultAsync(tokenAddress: Address, ownerAddress: Address): Promise<BigNumber> {
     return await this.vault.getBalanceInVault(tokenAddress, ownerAddress);
   }
 
   /**
-   * Asynchronously retrieves a Set Token address from a createSet txHash
+   * Fetch a Set Token address from a createSetAsync transaction hash
    *
-   * @param  txHash     The transaction has to retrieve the set address from
-   * @return            The address of the newly created Set
+   * @param  txHash    Transaction hash of the createSetAsync transaction
+   * @return           Address of the newly created Set
    */
   public async getSetAddressFromCreateTxHashAsync(txHash: string): Promise<Address> {
     return await this.factory.getSetAddressFromCreateTxHash(txHash);
   }
 
   /**
-   * Fetch the addresses of SetTokens and RebalancingSetTokens created by the system
-   * of contracts specified in SetProtcolConfig
+   * Fetch the addresses of all SetTokens and RebalancingSetTokens
    *
-   * @return Array of SetToken and RebalancingSetToken addresses
+   * @return    Array of SetToken and RebalancingSetToken addresses
    */
   public async getSetAddressesAsync(): Promise<Address[]> {
     return await this.core.getSetAddresses();
   }
 
   /**
-   * Verifies that the provided SetToken factory is enabled for creating a new SetToken
+   * Verifies that the provided factory address is enabled for creating new Sets
    *
    * @param  factoryAddress    Address of the factory contract
    * @return                   Whether the factory contract is enabled
@@ -266,33 +268,28 @@ class SetProtocol {
    * for issuance and redemption
    *
    * @param  setAddress    Address of the SetToken or RebalancingSetToken contract
-   * @return               Whether the set contract is enabled
+   * @return               Whether the contract is enabled for transacting
    */
   public async isValidSetAsync(setAddress: Address): Promise<boolean> {
     return await this.core.validSets(setAddress);
   }
 
   /**
-   * Polls the Ethereum blockchain until the specified
-   * transaction has been mined or the timeout limit is reached, whichever
-   * occurs first.
+   * Polls the Ethereum blockchain until the specified transaction has been mined or
+   * the timeout limit is reached, whichever occurs first
    *
-   * @param  txHash                 the hash of the transaction
-   * @param  pollingIntervalMs      the interval at which the blockchain should be polled
-   * @param  timeoutMs              the number of milliseconds until this process times out. If
+   * @param  txHash               Transaction hash to poll
+   * @param  pollingIntervalMs    Interval at which the blockchain should be polled
+   * @param  timeoutMs            Number of milliseconds until this process times out. If
    *                                no value is provided, a default value is used
-   * @return                        the transaction receipt resulting from the mining process
+   * @return                      Transaction receipt resulting from the mining process
    */
   public async awaitTransactionMinedAsync(
     txHash: string,
     pollingIntervalMs ?: number,
     timeoutMs ?: number,
   ): Promise<TransactionReceipt> {
-    return await this.blockchain.awaitTransactionMinedAsync(
-      txHash,
-      pollingIntervalMs,
-      timeoutMs,
-    );
+    return await this.blockchain.awaitTransactionMinedAsync(txHash, pollingIntervalMs, timeoutMs);
   }
 }
 

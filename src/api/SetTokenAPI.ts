@@ -32,7 +32,7 @@ import { TxData, TxDataWithFrom } from '../types/common';
  * @title SetTokenAPI
  * @author Set Protocol
  *
- * A library for interacting with set tokens
+ * A library for interacting with SetToken contracts
  */
 export class SetTokenAPI {
   private web3: Web3;
@@ -40,11 +40,11 @@ export class SetTokenAPI {
   private setToken: SetTokenWrapper;
 
   /**
-   * Instantiates a new IssuanceAPI instance that contains methods for transferring balances in the vault.
+   * Instantiates a new SetTokenAPI instance that contains methods for interacting with SetToken contracts
    *
-   * @param web3                  The Web3.js Provider instance you would like the SetProtocol.js library
-   *                              to use for interacting with the Ethereum network.
-   * @param core                  The address of the Set Core contract
+   * @param  web3    Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
+   *                   with the Ethereum network
+   * @param  core    Address of the Set Core contract
    */
   constructor(web3: Web3 = undefined) {
     this.web3 = web3;
@@ -54,10 +54,10 @@ export class SetTokenAPI {
   }
 
   /**
-   * Gets the Set's origin factory
+   * Fetches the address of the factory that created the Set
    *
-   * @param  setAddress Address of the Set
-   * @return            The factory address
+   * @param  setAddress    Address of the Set
+   * @return               Address of the factory that ceated the Set
    */
   public async getFactoryAsync(setAddress: Address): Promise<Address> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
@@ -66,10 +66,10 @@ export class SetTokenAPI {
   }
 
   /**
-   * Gets component tokens that make up the Set
+   * Fetches the addresses of the component tokens that make up the Set
    *
-   * @param  setAddress Address of the Set
-   * @return            An array of addresses
+   * @param  setAddress    Address of the Set
+   * @return               An array of token addresses
    */
   public async getComponentsAsync(setAddress: Address): Promise<Address[]> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
@@ -78,10 +78,10 @@ export class SetTokenAPI {
   }
 
   /**
-   * Gets natural unit of the Set
+   * Fetches the natural unit of the Set
    *
-   * @param  setAddress Address of the Set
-   * @return            The natural unit of the Set
+   * @param  setAddress    Address of the Set
+   * @return               Natural unit of the Set
    */
   public async getNaturalUnitAsync(setAddress: Address): Promise<BigNumber> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
@@ -90,11 +90,11 @@ export class SetTokenAPI {
   }
 
   /**
-   * Gets units of each component token that make up the Set
+   * Fetches units of each component token that make up the Set
    *
-   * @param  setAddress Address of the Set
-   * @return            An array of units that make up the Set composition which
-   *                    correspond to the component tokens in the Set
+   * @param  setAddress    Address of the Set
+   * @return               An array of units that make up the Set composition which correspond
+   *                         to the component tokens in the Set
    */
   public async getUnitsAsync(setAddress: Address): Promise<BigNumber[]> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
@@ -103,11 +103,11 @@ export class SetTokenAPI {
   }
 
   /**
-   * Returns whether the quantity passed in is a multiple of a Set's natural unit
+   * Valiates whether the quantity passed in is a multiple of a Set's natural unit
    *
-   * @param  setAddress Address of the Set
-   * @param  quantity   Quantity to be checked
-   * @return boolean    A boolean representing whether the Set is a multiple of the natural Unit
+   * @param  setAddress    Address of the Set
+   * @param  quantity      Quantity to be checked
+   * @return boolean       Boolean representing whether the Set is a multiple of the natural unit
    *
    */
   public async isMultipleOfNaturalUnitAsync(setAddress: Address, quantity: BigNumber): Promise<boolean> {

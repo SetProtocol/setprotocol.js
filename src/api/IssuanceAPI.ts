@@ -40,11 +40,11 @@ export class IssuanceAPI {
   private core: CoreWrapper;
 
   /**
-   * Instantiates a new IssuanceAPI instance that contains methods for transferring balances in the vault.
+   * Instantiates a new IssuanceAPI instance that contains methods for issuing and redeeming Sets
    *
-   * @param web3                  The Web3.js Provider instance you would like the SetProtocol.js library
-   *                              to use for interacting with the Ethereum network.
-   * @param core                  The address of the Set Core contract
+   * @param web3    The Web3.js Provider instance you would like the SetProtocol.js library
+   *                  to use for interacting with the Ethereum network.
+   * @param core    The address of the Set Core contract
    */
   constructor(web3: Web3 = undefined, core: CoreWrapper = undefined) {
     this.web3 = web3;
@@ -53,12 +53,14 @@ export class IssuanceAPI {
   }
 
   /**
-   * Asynchronously issues a particular quantity of tokens from a particular Sets
+   * Issues a Set to the transaction signer. Must have component tokens in the correct quantites in either
+   * the vault or in the signer's wallet. Component tokens must be approved to the Transfer
+   * Proxy contract via setTransferProxyAllowanceAsync
    *
-   * @param  setAddress     Set token address of Set being issued
-   * @param  quantity       Number of Sets a user wants to issue in Wei
-   * @param  txOpts         The options for executing the transaction
-   * @return                A transaction hash to then later look up
+   * @param  setAddress    Address Set to issue
+   * @param  quantity      Amount of Set to issue. Must be multiple of the natural unit of the Set
+   * @param  txOpts        Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @return               Transaction hash
    */
   public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxDataWithFrom): Promise<string> {
     await this.assertIssue(txOpts.from, setAddress, quantity);
@@ -67,14 +69,16 @@ export class IssuanceAPI {
   }
 
   /**
-   * Composite method to redeem and optionally withdraw tokens
+   * Redeems a Set to the transaction signer, returning the component tokens to the signer's wallet. Use `false` for
+   * to `withdraw` to leave redeemed components in vault under the user's address to save gas if rebundling into another
+   * Set with similar components
    *
-   * @param  setAddress        The address of the Set token
-   * @param  quantity          The number of tokens to redeem
-   * @param  withdraw          Boolean determining whether or not to withdraw
-   * @param  tokensToExclude   Array of token addresses to exclude from withdrawal
-   * @param  txOpts            The options for executing the transaction
-   * @return                   A transaction hash to then later look up
+   * @param  setAddress         Address of Set to issue
+   * @param  quantity           Amount of Set to redeem. Must be multiple of the natural unit of the Set
+   * @param  withdraw           Boolean to withdraw back to signer's wallet or leave in vault. Defaults to true
+   * @param  tokensToExclude    Token addresses to exclude from withdrawal
+   * @param  txOpts             Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @return                    Transaction hash
    */
   public async redeemAsync(
     setAddress: Address,
