@@ -23,13 +23,6 @@ export interface Token {
 }
 
 export interface TxData {
-  from?: Address;
-  gas?: UInt;
-  gasPrice?: UInt;
-  nonce?: number;
-}
-
-export interface TxDataWithFrom {
   from: Address;
   gas?: UInt;
   gasPrice?: UInt;

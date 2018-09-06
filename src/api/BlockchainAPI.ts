@@ -19,14 +19,9 @@
 import * as _ from 'lodash';
 import * as Web3 from 'web3';
 import { TransactionReceipt } from 'ethereum-types';
-import { Address } from 'set-protocol-utils';
-import { DetailedERC20Contract, VaultContract } from 'set-protocol-contracts';
 
-import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { CoreWrapper } from '../wrappers';
-import { BigNumber, IntervalManager, Web3Utils } from '../util';
-import { TxData, TxDataWithFrom } from '../types/common';
+import { IntervalManager, Web3Utils } from '../util';
 
 export const BlockchainAPIErrors = {
   AWAIT_MINE_TX_TIMED_OUT: (txHash: string) =>

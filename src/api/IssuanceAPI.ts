@@ -26,7 +26,7 @@ import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../er
 import { Assertions } from '../assertions';
 import { CoreWrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { TxData, TxDataWithFrom } from '../types/common';
+import { TxData } from '../types/common';
 
 /**
  * @title IssuanceAPI
@@ -62,7 +62,7 @@ export class IssuanceAPI {
    * @param  txOpts        Transaction options object conforming to TxData with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
-  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxDataWithFrom): Promise<string> {
+  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxData): Promise<string> {
     await this.assertIssue(txOpts.from, setAddress, quantity);
 
     return await this.core.issue(setAddress, quantity, txOpts);
@@ -85,7 +85,7 @@ export class IssuanceAPI {
     quantity: BigNumber,
     withdraw: boolean,
     tokensToExclude: Address[],
-    txOpts: TxDataWithFrom
+    txOpts: TxData
   ) {
     await this.assertRedeem(txOpts.from, setAddress, quantity, withdraw, tokensToExclude);
 

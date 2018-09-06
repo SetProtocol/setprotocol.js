@@ -76,7 +76,7 @@ export class FactoryAPI {
     naturalUnit: BigNumber,
     name: string,
     symbol: string,
-    txOpts?: TxData,
+    txOpts: TxData,
   ): Promise<string> {
     await this.assertCreateSet(txOpts.from, this.setTokenFactoryAddress, components, units, naturalUnit, name, symbol);
 
