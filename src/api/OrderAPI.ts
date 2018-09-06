@@ -243,7 +243,7 @@ export class OrderAPI {
   /**
    * Fetches the quantity of the issuance order that has already been filled
    *
-   * @param  issuanceOrder    Object conforming to IssuanceOrder
+   * @param  issuanceOrder    Object conforming to IssuanceOrder interface
    * @return                  Filled amount of issuance order
    */
   public async getOrderFillsAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
@@ -255,7 +255,7 @@ export class OrderAPI {
   /**
    * Fetches the quantity of the issuance order that has been cancelled
    *
-   * @param  issuanceOrder    Object conforming to IssuanceOrder
+   * @param  issuanceOrder    Object conforming to IssuanceOrder interface
    * @return                  Cancelled amount of the issuance order
    */
   public async getOrderCancelledAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
