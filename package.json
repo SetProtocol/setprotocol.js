@@ -27,7 +27,6 @@
     "playground": "yarn run build-ts; node dist/playground",
     "precommit": "lint-staged",
     "docs": "bash scripts/docs/generate_docs.sh",
-    "deploy-docs": "gh-pages -d docs",
     "prepublishOnly": "yarn build"
   },
   "config": {},

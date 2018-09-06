@@ -224,7 +224,7 @@ export class OrderAPI {
    * Cancels an issuance order on behalf of the maker. After successfully mining this transaction, a taker can only
    * fill up to an issuance order's quantity minus the quantity
    *
-   * @param  issuanceOrder    Object confomring to IssuanceOrder to cancel
+   * @param  issuanceOrder    Object conforming to IssuanceOrder to cancel
    * @param  quantity         Amount of the issuance order's quantity to cancel
    * @param  txOpts           Transaction options object conforming to TxData with signer, gas, and gasPrice data
    * @return                  Transaction hash
@@ -240,10 +240,10 @@ export class OrderAPI {
   }
 
   /**
-   * Given an Issuance Order, gets the quantity of the Issuance Order filled
+   * Fetches the quantity of the issuance order that has already been filled
    *
-   * @param  issuanceOrder  Issuance Order
-   * @return                Quantity of Issuance Order filled
+   * @param  issuanceOrder    Object conforming to IssuanceOrder
+   * @return                  Filled amount of issuance order
    */
   public async getOrderFillsAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
@@ -252,10 +252,10 @@ export class OrderAPI {
   }
 
   /**
-   * Given an Issuance Order, gets the quantity of the Issuance Order cancelled
+   * Fetches the quantity of the issuance order that has been cancelled
    *
-   * @param  issuanceOrder  Issuance Order
-   * @return                Quantity of Issuance Order cancelled
+   * @param  issuanceOrder    Object conforming to IssuanceOrder
+   * @return                  Cancelled amount of the issuance order
    */
   public async getOrderCancelledAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
