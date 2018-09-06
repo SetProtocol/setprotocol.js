@@ -53,20 +53,11 @@ export class OrderAssertions {
     coreAddress: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     fillQuantity: BigNumber,
-    isAddSigPrefix: boolean = true,
   ): Promise<void> {
     const coreContract = await CoreContract.at(coreAddress, this.web3, {});
 
     const issuanceOrder: IssuanceOrder = _.omit(signedIssuanceOrder, 'signature');
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-
-    await this.coreAssertions.isValidSignature(
-      orderHash,
-      issuanceOrder.makerAddress,
-      signedIssuanceOrder.signature,
-      isAddSigPrefix,
-      coreAPIErrors.SIGNATURE_MISMATCH(),
-    );
 
     // Checks the order has not expired
     this.commonAssertions.isValidExpiration(issuanceOrder.expiration, coreAPIErrors.EXPIRATION_PASSED());

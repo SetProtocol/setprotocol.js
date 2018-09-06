@@ -191,6 +191,7 @@ describe('OrderAPI', () => {
   describe('signOrderAsync', async () => {
     let subjectIssuanceOrder: IssuanceOrder;
     let subjectSigner: Address;
+    let subjectAddPrefix: boolean;
     let orderHash: string;
 
     beforeEach(async () => {
@@ -219,11 +220,13 @@ describe('OrderAPI', () => {
       };
 
       subjectSigner = DEFAULT_ACCOUNT;
+      subjectAddPrefix = false;
     });
 
     async function subject(): Promise<ECSig> {
       return await ordersAPI.signOrderAsync(
         subjectIssuanceOrder,
+        subjectAddPrefix,
         { from: subjectSigner }
       );
     }
@@ -302,24 +305,6 @@ describe('OrderAPI', () => {
 
     it('should not throw', async () => {
       return expect(subject()).to.not.be.rejected;
-    });
-
-    describe('when the signature is invalid', async () => {
-      beforeEach(async () => {
-        const { signature, ...issuanceOrder } = subjectSignedIssuanceOrder;
-
-        const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-        const notOrderMakerAccount = ACCOUNTS[0].address;
-        const invalidSignature = await setProtocolUtils.signMessage(orderHash, notOrderMakerAccount);
-
-        subjectSignedIssuanceOrder.signature = invalidSignature;
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `Signature does not match issuance order attributes.`
-        );
-      });
     });
 
     describe('when the order is expired', async () => {
@@ -769,24 +754,6 @@ describe('OrderAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `The array orders cannot be empty.`
-        );
-      });
-    });
-
-    describe('when the signature is invalid', async () => {
-      beforeEach(async () => {
-        const { signature, ...issuanceOrder } = subjectSignedIssuanceOrder;
-
-        const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-        const notOrderMakerAccount = ACCOUNTS[0].address;
-        const invalidSignature = await setProtocolUtils.signMessage(orderHash, notOrderMakerAccount);
-
-        subjectSignedIssuanceOrder.signature = invalidSignature;
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `Signature does not match issuance order attributes.`
         );
       });
     });
