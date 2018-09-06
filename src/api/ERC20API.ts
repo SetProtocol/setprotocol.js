@@ -53,7 +53,7 @@ export class ERC20API {
   }
 
   /**
-   * Fetches the balance of the ERC20 token the user
+   * Fetches the user's ERC20 token balance
    *
    * @param  tokenAddress    Address of the ERC20 token
    * @param  userAddress     Wallet address of the user
