@@ -23,7 +23,7 @@ import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
 import { AccountingAPI, BlockchainAPI, ERC20API, FactoryAPI, IssuanceAPI, OrderAPI, SetTokenAPI } from './api';
 import { CoreWrapper, VaultWrapper } from './wrappers';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
-import { TxData, TxDataWithFrom, Provider } from './types/common';
+import { TxData, Provider } from './types/common';
 
 export interface SetProtocolConfig {
   coreAddress: Address;
@@ -95,7 +95,7 @@ class SetProtocol {
    * Create a new Set by passing in parameters denoting component token addresses, quantities, natural
    * unit, and ERC20 properties
    *
-   * Note: the return value is the transaction hash of the createSetAsync call, not the deployed SetToken
+   * Note: the return value is the transaction hash of the `createSetAsync` call, not the deployed SetToken
    * contract address. Use `getSetAddressFromCreateTxHashAsync` to retrieve the SetToken address
    *
    * @param  components     Component ERC20 token addresses
@@ -112,7 +112,7 @@ class SetProtocol {
     naturalUnit: BigNumber,
     name: string,
     symbol: string,
-    txOpts?: TxData,
+    txOpts: TxData,
   ): Promise<string> {
     return await this.factory.createSetAsync(components, units, naturalUnit, name, symbol, txOpts);
   }
@@ -127,7 +127,7 @@ class SetProtocol {
    * @param  txOpts        Transaction options object conforming to TxData with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
-  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxDataWithFrom): Promise<string> {
+  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxData): Promise<string> {
     return await this.issuance.issueAsync(setAddress, quantity, txOpts);
   }
 
@@ -148,7 +148,7 @@ class SetProtocol {
     quantity: BigNumber,
     withdraw: boolean = true,
     tokensToExclude: Address[],
-    txOpts: TxDataWithFrom,
+    txOpts: TxData,
   ): Promise<string> {
     return await this.issuance.redeemAsync(setAddress, quantity, withdraw, tokensToExclude, txOpts);
   }
@@ -164,7 +164,7 @@ class SetProtocol {
   public async depositAsync(
     tokenAddresses: Address[],
     quantities: BigNumber[],
-    txOpts: TxDataWithFrom
+    txOpts: TxData
   ): Promise<string> {
     return await this.accounting.depositAsync(tokenAddresses, quantities, txOpts);
   }
@@ -180,7 +180,7 @@ class SetProtocol {
   public async withdrawAsync(
     tokenAddresses: Address[],
     quantities: BigNumber[],
-    txOpts: TxDataWithFrom
+    txOpts: TxData
   ): Promise<string> {
     return await this.accounting.withdrawAsync(tokenAddresses, quantities, txOpts);
   }
@@ -197,7 +197,7 @@ class SetProtocol {
   public async setTransferProxyAllowanceAsync(
       tokenAddress: string,
       quantity: BigNumber,
-      txOpts?: TxData,
+      txOpts: TxData,
   ): Promise<string> {
       return await this.erc20.approveAsync(
           tokenAddress,
@@ -215,7 +215,7 @@ class SetProtocol {
    * @param  txOpts          Transaction options object conforming to TxData with signer, gas, and gasPrice data
    * @return                 Transaction hash
    */
-  public async setUnlimitedTransferProxyAllowanceAsync(tokenAddress: string, txOpts?: TxData): Promise<string> {
+  public async setUnlimitedTransferProxyAllowanceAsync(tokenAddress: string, txOpts: TxData): Promise<string> {
       return await this.setTransferProxyAllowanceAsync(
           tokenAddress,
           SetProtocolUtils.CONSTANTS.UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
@@ -287,7 +287,7 @@ class SetProtocol {
   public async awaitTransactionMinedAsync(
     txHash: string,
     pollingIntervalMs ?: number,
-    timeoutMs ?: number,
+    timeoutMs?: number,
   ): Promise<TransactionReceipt> {
     return await this.blockchain.awaitTransactionMinedAsync(txHash, pollingIntervalMs, timeoutMs);
   }

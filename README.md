@@ -14,7 +14,9 @@
 
 # setprotocol.js
 `setprotocol.js` is a library for interacting with Set Protocol smart contracts.
-This library enables you to create, issue, redeem, and create and fill issuance orders for Sets. You can find extensive documentation [here](https://docs.setprotocol.com/).
+This library enables you to create, issue, redeem, and create and fill issuance orders for Sets.
+
+#### Take a look at our [developer portal](https://docs.setprotocol.com/) for the fastest way to get up and running.
 
 <a href="https://t.me/joinchat/Fx8D6wyprLUlM1jMVnaRdg" target="_blank" rel="noopener">
   Join us on Telegram
@@ -25,11 +27,11 @@ Note: This is Alpha software, and is subject to non-backwards compatible changes
 ### setprotocol.js
 ##### Using yarn:
 ```shell
-$ yarn add setprotocol.js@^1.0.0-alpha.21
+$ yarn add setprotocol.js@^1.0.0-alpha.22
 ```
 ##### Using npm:
 ```shell
-$ npm i --save setprotocol.js@^1.0.0-alpha.21
+$ npm i --save setprotocol.js@^1.0.0-alpha.22
 ```
 
 ### web3 & bignumber

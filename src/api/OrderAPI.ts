@@ -33,7 +33,7 @@ import { coreAPIErrors } from '../errors';
 import { CoreWrapper } from '../wrappers';
 import { NULL_ADDRESS } from '../constants';
 import { BigNumber, generateFutureTimestamp,  } from '../util';
-import { TxData, TxDataWithFrom } from '../types/common';
+import { TxData } from '../types/common';
 
 export {
   IssuanceOrder,
@@ -113,9 +113,10 @@ export class OrderAPI {
    * If none is provided, it will use the first account from the provider
    *
    * @param  issuanceOrder    Issuance Order
+   * @param  txOpts           Transaction options object conforming to TxData with signer, gas, and gasPrice data
    * @return                  Object conforming to ECSignature containing elliptic curve signature components
    */
-  public async signOrderAsync(issuanceOrder: IssuanceOrder, txOpts: TxDataWithFrom): Promise<ECSig> {
+  public async signOrderAsync(issuanceOrder: IssuanceOrder, txOpts: TxData): Promise<ECSig> {
     this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
@@ -126,8 +127,8 @@ export class OrderAPI {
    * Validates an IssuanceOrder object's signature, expiration, and fill amount. Developers should call this method
    * frequently to prune order books and ensure the order has not already been filled or cancelled
    *
-   * @param  issuanceOrder    Object conforming to SignedIssuanceOrder interface to be validated
-   * @param  fillQuantity     Fill quantity to check if fillable
+   * @param  signedIssuanceOrder    Object conforming to SignedIssuanceOrder interface to be validated
+   * @param  fillQuantity           Fill quantity to check if fillable
    */
   public async validateOrderFillableOrThrowAsync(signedIssuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber) {
     await this.assert.order.isIssuanceOrderFillable(this.core.coreAddress, signedIssuanceOrder, fillQuantity);
@@ -207,7 +208,7 @@ export class OrderAPI {
     signedIssuanceOrder: SignedIssuanceOrder,
     quantity: BigNumber,
     orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
-    txOpts: TxDataWithFrom,
+    txOpts: TxData,
   ): Promise<string> {
     await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantity, orders);
 

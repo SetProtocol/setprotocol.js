@@ -25,7 +25,7 @@ import { ZERO } from '../constants';
 import { Assertions } from '../assertions';
 import { ERC20Wrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { TxData, TxDataWithFrom } from '../types/common';
+import { TxData } from '../types/common';
 
 /**
  * @title ERC20API
@@ -144,7 +144,7 @@ export class ERC20API {
     tokenAddress: Address,
     to: Address,
     value: BigNumber,
-    txOpts?: TxData,
+    txOpts: TxData,
   ): Promise<string> {
     this.assertTransfer(tokenAddress, to);
 
@@ -168,7 +168,7 @@ export class ERC20API {
     from: Address,
     to: Address,
     value: BigNumber,
-    txOpts?: TxData,
+    txOpts: TxData,
   ): Promise<string> {
     this.assertTransferFrom(tokenAddress, from, to);
 
@@ -188,7 +188,7 @@ export class ERC20API {
     tokenAddress: Address,
     spenderAddress: Address,
     value: BigNumber,
-    txOpts?: TxData,
+    txOpts: TxData,
   ): Promise<string> {
     this.assertApprove(tokenAddress, spenderAddress);
 

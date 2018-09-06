@@ -22,11 +22,10 @@ import { Address } from 'set-protocol-utils';
 import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
 import { ZERO } from '../constants';
-import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
+import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { SetTokenWrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { TxData, TxDataWithFrom } from '../types/common';
 
 /**
  * @title SetTokenAPI
