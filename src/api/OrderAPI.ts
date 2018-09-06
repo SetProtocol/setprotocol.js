@@ -110,7 +110,7 @@ export class OrderAPI {
 
   /**
    * Generates a ECSig from an IssuanceOrder objects. It signs the user using the signer in the transaction options.
-   * If none is provided, it will assume, it will grab the first account from the provider
+   * If none is provided, it will use the first account from the provider
    *
    * @param  issuanceOrder    Issuance Order
    * @return                  Object conforming to ECSignature containing elliptic curve signature components
