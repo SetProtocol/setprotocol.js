@@ -15,24 +15,27 @@ export class SignatureUtils {
    * @param data                     Data payload
    * @param signature                Signature
    * @param signerAddress            The Signer's address
+   * @param addPrefix                Boolean whether to add prefix (e.g. Metamask signatures)
    * @return Whether or not the signature is valid.
    */
   public static isValidSignature(
     data: string,
     signature: ECSig,
     signerAddress: string,
+    addPrefix: boolean = true,
   ): boolean {
-    const messageHash = data;
+    let messageHash = data;
 
     // In certain circumstances, the `eth_sign` API adds an Ethereum-specific prefix to
     // message payloads so we want to check both with and without the prefix to see if
     // it is a valid signature.
     // TODO: Review if there is a better way to validate signatures
     // without having to check two separate hashes
-    const pfxMessageHash = SignatureUtils.addPersonalMessagePrefix(messageHash);
+    if (addPrefix) {
+      messageHash = SignatureUtils.addPersonalMessagePrefix(messageHash);
+    }
 
     const messageHashBuff = ethUtil.toBuffer(messageHash);
-    const pfxMessageHashBuff = ethUtil.toBuffer(pfxMessageHash);
 
     try {
       const pubKey = ethUtil.ecrecover(
@@ -41,16 +44,8 @@ export class SignatureUtils {
         ethUtil.toBuffer(signature.r),
         ethUtil.toBuffer(signature.s),
       );
-      const pfxPubKey = ethUtil.ecrecover(
-        pfxMessageHashBuff,
-        Number(signature.v.toString()),
-        ethUtil.toBuffer(signature.r),
-        ethUtil.toBuffer(signature.s),
-      );
       const retrievedAddress = ethUtil.bufferToHex(ethUtil.pubToAddress(pubKey));
-      const pfxRetrievedAddress = ethUtil.bufferToHex(ethUtil.pubToAddress(pfxPubKey));
-      return (retrievedAddress.toLowerCase() === signerAddress.toLowerCase() ||
-        pfxRetrievedAddress.toLowerCase() === signerAddress.toLowerCase());
+      return retrievedAddress.toLowerCase() === signerAddress.toLowerCase();
     } catch (err) {
       return false;
     }
