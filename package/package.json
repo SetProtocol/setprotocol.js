@@ -1,6 +1,6 @@
 {
   "name": "setprotocol.js",
-  "version": "1.0.0-alpha.20",
+  "version": "1.0.0-alpha.18",
   "description": "A javascript library for interacting with the Set protocol",
   "keywords": [
     "setProtocol.js",
@@ -27,6 +27,7 @@
     "playground": "yarn run build-ts; node dist/playground",
     "precommit": "lint-staged",
     "docs": "bash scripts/docs/generate_docs.sh",
+    "deploy-docs": "gh-pages -d docs",
     "prepublishOnly": "yarn build"
   },
   "config": {},
