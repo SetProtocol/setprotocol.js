@@ -42,7 +42,7 @@ yarn add bignumber.js@^4.1.0
 ```
 
 ##### Setup
-To initialize a `SetProtocol` instance, we need to first import our library and initialize a web3 instance([learn how to set that up here](https://github.com/ethereum/web3.js/)), and 4 addresses of the Set smart contracts that’ll be provided below:
+For the most up to date steps on how to initialize and use `setProtocol.js`, please refer to our [installation guide](https://docs.setprotocol.com/getting-started#installation).
 
 ## :raising_hand: Contributing
 ### Testing
