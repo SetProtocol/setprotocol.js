@@ -98,7 +98,11 @@ export class OrderAPI {
    * @param  addPrefix        Boolean whether to add prefix (e.g. Metamask signatures)
    * @return                  Whether the recovered signature matches the data hash
    */
-  public async isValidSignatureOrThrowAsync(issuanceOrder: IssuanceOrder, signature: ECSig, addPrefix: boolean): Promise<boolean> {
+  public async isValidSignatureOrThrowAsync(
+    issuanceOrder: IssuanceOrder,
+    signature: ECSig,
+    addPrefix: boolean = true,
+  ): Promise<boolean> {
     const orderData = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
     return await this.assert.core.isValidSignature(
