@@ -71,7 +71,7 @@
     "lodash": "^4.17.4",
     "lodash.compact": "^3.0.1",
     "set-protocol-contracts": "0.3.6",
-    "set-protocol-utils": "0.3.26",
+    "set-protocol-utils": "0.3.27",
     "tiny-promisify": "^1.0.0",
     "truffle-contract": "^3.0.1",
     "truffle-hdwallet-provider": "0.0.3",
