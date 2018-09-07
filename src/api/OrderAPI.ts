@@ -107,7 +107,7 @@ export class OrderAPI {
       orderData,
       issuanceOrder.makerAddress,
       signature,
-      this.isMetaMask(),
+      this.requiresSignaturePrefix(),
       coreAPIErrors.SIGNATURE_MISMATCH()
     );
   }
@@ -127,7 +127,7 @@ export class OrderAPI {
     this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
-    return await this.setProtocolUtils.signMessage(orderHash, txOpts.from, this.isMetaMask());
+    return await this.setProtocolUtils.signMessage(orderHash, txOpts.from, this.requiresSignaturePrefix());
   }
 
   /**
@@ -195,7 +195,7 @@ export class OrderAPI {
     await this.assert.order.isValidIssuanceOrder(order);
     const orderHash = SetProtocolUtils.hashOrderHex(order);
 
-    const signature = await this.setProtocolUtils.signMessage(orderHash, makerAddress, this.isMetaMask());
+    const signature = await this.setProtocolUtils.signMessage(orderHash, makerAddress, this.requiresSignaturePrefix());
     return { ...order, signature } as SignedIssuanceOrder;
   }
 
@@ -273,7 +273,7 @@ export class OrderAPI {
 
   /* ============ Private Helpers =============== */
 
-  private isMetaMask(): boolean {
+  private requiresSignaturePrefix(): boolean {
     return this.web3.currentProvider.constructor.name === 'MetamaskInpageProvider';
   }
 
