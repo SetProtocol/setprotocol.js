@@ -4797,9 +4797,9 @@ set-protocol-contracts@0.3.6:
     web3-utils "1.0.0-beta.35"
     zeppelin-solidity "^1.10.0"
 
-set-protocol-utils@0.3.26:
-  version "0.3.26"
-  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.26.tgz#177322679973b5c4fc1f0110e2e53d92b886b0b3"
+set-protocol-utils@0.3.27:
+  version "0.3.27"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.27.tgz#c139481f5d53c5bdb160ee4e83760d4d0dd358f5"
   dependencies:
     "@0xproject/base-contract" "^1.0.4"
     "@0xproject/order-utils" "^1.0.1-rc.2"
