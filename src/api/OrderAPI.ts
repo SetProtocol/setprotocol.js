@@ -107,7 +107,7 @@ export class OrderAPI {
       orderData,
       issuanceOrder.makerAddress,
       signature,
-      this.requiresSignaturePrefix(),
+      true,
       coreAPIErrors.SIGNATURE_MISMATCH()
     );
   }
