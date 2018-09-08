@@ -47,6 +47,7 @@ import {
   deployTokensAsync,
   deployTransferProxyContract
 } from '../../helpers';
+import { SetDetails } from '../../../src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
@@ -127,6 +128,60 @@ describe('SetTokenAPI', () => {
       expect(components).to.eql(componentTokenAddresses);
       expect(naturalUnit).to.bignumber.equal(naturalUnit);
       expect(JSON.stringify(units)).to.eql(JSON.stringify(componentTokenUnits));
+    });
+  });
+
+  describe('getDetails', async () => {
+    let componentTokens: StandardTokenMockContract[];
+    let componentTokenAddresses: Address[];
+    let componentTokenUnits: BigNumber[];
+    let setToken: SetTokenContract;
+    let naturalUnit: BigNumber;
+    let name: string;
+    let symbol: string;
+
+    let subjectSetTokenAddress: Address;
+
+    beforeEach(async () => {
+      componentTokens = await deployTokensAsync(3, provider);
+      componentTokenAddresses = componentTokens.map(token => token.address);
+      componentTokenUnits = componentTokens.map(token => ether(4));
+      naturalUnit = ether(2);
+      name = 'Default Set';
+      symbol = 'SET';
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentTokenAddresses,
+        componentTokenUnits,
+        naturalUnit,
+      );
+
+      subjectSetTokenAddress = setToken.address;
+    });
+
+    async function subject(): Promise<SetDetails> {
+      return await setTokenAPI.getDetails(subjectSetTokenAddress);
+    }
+
+    test('it fetchs the set token properties correctly', async () => {
+      const details = await subject();
+
+      console.log(details);
+
+
+      expect(details.address).to.eql(setToken.address);
+      expect(details.factoryAddress).to.eql(setTokenFactory.address);
+      expect(details.name).to.eql(name);
+      expect(details.symbol).to.eql(symbol);
+      expect(details.naturalUnit).to.bignumber.equal(naturalUnit);
+
+      const detailComponentAddresses = details.components.map(component => component.address);
+      expect(JSON.stringify(detailComponentAddresses)).to.eql(JSON.stringify(componentTokenAddresses));
+
+      const detailComponentUnits = details.components.map(component => component.unit);
+      expect(JSON.stringify(detailComponentUnits)).to.eql(JSON.stringify(componentTokenUnits));
     });
   });
 
