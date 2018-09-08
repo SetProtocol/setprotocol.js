@@ -24,8 +24,9 @@ import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 import { ZERO } from '../constants';
 import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { SetTokenWrapper } from '../wrappers';
+import { ERC20Wrapper, SetTokenWrapper } from '../wrappers';
 import { BigNumber } from '../util';
+import { Component, SetDetails } from '../types/common';
 
 /**
  * @title SetTokenAPI
@@ -37,6 +38,7 @@ export class SetTokenAPI {
   private web3: Web3;
   private assert: Assertions;
   private setToken: SetTokenWrapper;
+  private erc20: ERC20Wrapper;
 
   /**
    * Instantiates a new SetTokenAPI instance that contains methods for interacting with SetToken contracts
@@ -49,7 +51,8 @@ export class SetTokenAPI {
     this.web3 = web3;
     this.assert = new Assertions(this.web3);
 
-    this.setToken = new SetTokenWrapper(web3);
+    this.setToken = new SetTokenWrapper(this.web3);
+    this.erc20 = new ERC20Wrapper(this.web3);
   }
 
   /**
@@ -99,6 +102,39 @@ export class SetTokenAPI {
     this.assert.schema.isValidAddress('setAddress', setAddress);
 
     return await this.setToken.getUnits(setAddress);
+  }
+
+  /**
+   * Fetches details of a Set comprised of factory address, name, symbol, natural unit, component addresses,
+   * and component units
+   *
+   * @param  setAddress    Address of the Set
+   * @return               Object conforming to SetDetails interface
+   */
+  public async getDetails(setAddress: Address): Promise<SetDetails> {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+
+    const [factoryAddress, naturalUnit, componentAddresses, componentUnits, name, symbol] = await Promise.all([
+      this.setToken.factory(setAddress),
+      this.setToken.naturalUnit(setAddress),
+      this.setToken.getComponents(setAddress),
+      this.setToken.getUnits(setAddress),
+      this.erc20.name(setAddress),
+      this.erc20.symbol(setAddress),
+    ]);
+
+    const components: Component[] = componentAddresses.map(function(address, idx) {
+      return { address, unit: componentUnits[idx] } as Component;
+    });
+
+    return {
+      address: setAddress,
+      factoryAddress,
+      name,
+      symbol,
+      naturalUnit,
+      components,
+    } as SetDetails;
   }
 
   /**
