@@ -131,7 +131,7 @@ describe('SetTokenAPI', () => {
     });
   });
 
-  describe.only('getDetails', async () => {
+  describe('getDetails', async () => {
     let componentTokens: StandardTokenMockContract[];
     let componentTokenAddresses: Address[];
     let componentTokenUnits: BigNumber[];
