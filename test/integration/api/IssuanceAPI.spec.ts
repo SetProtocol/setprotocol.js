@@ -249,7 +249,8 @@ describe('IssuanceAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-    `User has balance of ${userTokenBalance} when required balance is ${subjectQuantitytoIssue.mul(2)}. Increase user's
+    // tslint:disable-next-line
+    `User has balance of ${userTokenBalance.toFixed()} when required balance is ${subjectQuantitytoIssue.mul(2).toFixed()}. Increase user's
     token balance at token address ${componentWithInsufficientBalance.address}`
         );
       });
@@ -270,7 +271,7 @@ describe('IssuanceAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-    `User has allowance of ${ZERO} when required allowance is ${setComponentUnit}. Increase user's
+    `User has allowance of ${ZERO} when required allowance is ${setComponentUnit.toFixed()}. Increase user's
     token allowance at token address ${componentWithInsufficientAllowance.address}`
         );
       });

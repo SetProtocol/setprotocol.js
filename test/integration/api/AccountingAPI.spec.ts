@@ -217,28 +217,43 @@ describe('AccountingAPI', () => {
     });
 
     describe('when the caller does not have enough balance of token', async () => {
+      let token;
+      let userTokenBalance;
+
       beforeEach(async () => {
+        token = _.first(tokens);
         subjectCaller = ACCOUNTS[1].address;
+        userTokenBalance = await token.balanceOf.callAsync(subjectCaller);
       });
 
       test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith('User does not have enough balance.');
+        return expect(subject()).to.be.rejectedWith(
+    `User has balance of ${userTokenBalance.toFixed()} when required balance is ${depositQuantity}. Increase user's
+    token balance at token address ${token.address}`
+        );
       });
     });
 
     describe('when the caller has not granted enough allowance to the transfer proxy', async () => {
+      let insufficientAllowance;
+      let tokenAddress;
+
       beforeEach(async () => {
-        const tokenAddress = subjectTokenAddressesToDeposit[0];
+        insufficientAllowance = depositQuantity.sub(1);
+        tokenAddress = subjectTokenAddressesToDeposit[0];
         const tokenWrapper = await StandardTokenMockContract.at(tokenAddress, web3, TX_DEFAULTS);
         await tokenWrapper.approve.sendTransactionAsync(
           coreWrapper.transferProxyAddress,
-          depositQuantity.sub(1),
+          insufficientAllowance,
           TX_DEFAULTS,
         );
       });
 
       test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith('User not approved for enough allowance.');
+        return expect(subject()).to.be.rejectedWith(
+    `User has allowance of ${insufficientAllowance} when required allowance is ${depositQuantity}. Increase user's
+    token allowance at token address ${tokenAddress}`
+        );
       });
     });
   });
