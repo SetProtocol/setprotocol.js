@@ -114,7 +114,7 @@ describe('IssuanceAPI', () => {
 
     componentTokens = await deployTokensAsync(3, provider);
     setComponentUnit = ether(4);
-    componentUnits = componentTokens.map(token => setComponentUnit);
+    componentUnits = componentTokens.map(() => setComponentUnit);
     naturalUnit = ether(2);
     setToken = await deploySetTokenAsync(
       web3,
@@ -229,6 +229,7 @@ describe('IssuanceAPI', () => {
 
     describe('when the caller does not have enough of a component', async () => {
       let componentWithInsufficientBalance: StandardTokenMockContract;
+      let userTokenBalance: BigNumber;
 
       beforeEach(async () => {
         // Only the first component will have a large unit
@@ -242,12 +243,14 @@ describe('IssuanceAPI', () => {
         const naturalUnit = ether(2);
         const componentUnit = ether(4);
 
+        userTokenBalance = await componentWithInsufficientBalance.balanceOf.callAsync(DEFAULT_ACCOUNT);
         subjectQuantitytoIssue = DEPLOYED_TOKEN_QUANTITY.div(naturalUnit).mul(componentUnit).add(naturalUnit);
       });
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `User does not have enough balance of token at address ${componentWithInsufficientBalance.address}`
+    `User has balance of ${userTokenBalance} when required balance is ${subjectQuantitytoIssue.mul(2)}. Increase user's
+    token balance at token address ${componentWithInsufficientBalance.address}`
         );
       });
     });
@@ -267,7 +270,8 @@ describe('IssuanceAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `User does not have enough allowance of token at address ${componentWithInsufficientAllowance.address}`
+    `User has allowance of ${ZERO} when required allowance is ${setComponentUnit}. Increase user's
+    token allowance at token address ${componentWithInsufficientAllowance.address}`
         );
       });
     });
@@ -326,7 +330,7 @@ describe('IssuanceAPI', () => {
         subjectTokensToExclude = [componentToExclude.address];
       });
 
-      test('incrementes the vault balance of the excluded token ', async () => {
+      test('increments the vault balance of the excluded token ', async () => {
         const existingVaultBalance = await vault.getOwnerBalance.callAsync(componentToExclude.address, subjectCaller);
 
         await subject();
@@ -436,13 +440,17 @@ describe('IssuanceAPI', () => {
       });
     });
 
-    describe('when the quantity to redeem is larger than the user balance', async () => {
+    describe('when the quantity to redeem is larger than the user\'s Set Token balance', async () => {
       beforeEach(async () => {
         subjectQuantityToRedeem = ether(4);
       });
 
       test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith('User does not have enough balance.');
+        const existingSetUserBalance = await setToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+        return expect(subject()).to.be.rejectedWith(
+    `User has balance of ${existingSetUserBalance} when required balance is ${subjectQuantityToRedeem}. Increase user's
+    token balance at token address ${setToken.address}`
+        );
       });
     });
   });
