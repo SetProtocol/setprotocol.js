@@ -116,7 +116,6 @@ export class IssuanceAPI {
     await this.assert.setToken.isMultipleOfNaturalUnit(
       setAddress,
       quantity,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
     );
 
     await this.assert.setToken.hasSufficientBalances(setAddress, transactionCaller, quantity);
@@ -146,20 +145,17 @@ export class IssuanceAPI {
     await this.assert.setToken.isMultipleOfNaturalUnit(
       setAddress,
       quantity,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(),
     );
     await this.assert.erc20.hasSufficientBalance(
       setAddress,
       transactionCaller,
       quantity,
-      erc20AssertionErrors.INSUFFICIENT_BALANCE(),
     );
 
     await this.assert.vault.hasSufficientSetTokensBalances(
       this.core.vaultAddress,
       setAddress,
       quantity,
-      vaultAssertionErrors.INSUFFICIENT_SET_TOKENS_BALANCE(),
     );
   }
 }

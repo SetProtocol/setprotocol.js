@@ -16,9 +16,17 @@
 
 'use strict';
 
+import { Address } from 'set-protocol-utils';
+
+import { BigNumber } from '../util';
+
 export const erc20AssertionErrors = {
   MISSING_ERC20_METHOD: (address: string) =>
     `Contract at ${address} does not implement ERC20 interface.`,
-  INSUFFICIENT_BALANCE: () => 'User does not have enough balance.',
-  INSUFFICIENT_ALLOWANCE: () => 'User not approved for enough allowance.',
+  INSUFFICIENT_BALANCE: (current: BigNumber, required: BigNumber, tokenAddress: Address) =>
+    `User has balance of ${current} when required balance is ${required}. Increase user's token
+    balance at token address ${tokenAddress}`,
+  INSUFFICIENT_ALLOWANCE: (current: BigNumber, required: BigNumber, tokenAddress: Address) =>
+    `User has allowance of ${current} when required allowance is ${required}. Increase user's token allowance at
+    token address ${tokenAddress}`,
 };

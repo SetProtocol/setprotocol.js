@@ -125,7 +125,6 @@ export class AccountingAPI {
           tokenAddress,
           transactionCaller,
           quantities[i],
-          erc20AssertionErrors.INSUFFICIENT_BALANCE(),
         );
 
         // Check allowance
@@ -134,7 +133,6 @@ export class AccountingAPI {
           transactionCaller,
           this.core.transferProxyAddress,
           quantities[i],
-          erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(),
         );
       }),
     );
@@ -167,7 +165,6 @@ export class AccountingAPI {
           tokenAddress,
           transactionCaller,
           quantities[i],
-          vaultAssertionErrors.INSUFFICIENT_TOKEN_BALANCE(),
         );
       }),
     );

@@ -21,7 +21,7 @@ import * as ethUtil from 'ethereumjs-util';
 import * as Web3 from 'web3';
 import { Address, ECSig, IssuanceOrder, SetProtocolUtils } from 'set-protocol-utils';
 import { CoreContract } from 'set-protocol-contracts';
-import { coreAssertionErrors } from '../errors';
+import { coreAPIErrors, coreAssertionErrors } from '../errors';
 import { BigNumber, SignatureUtils } from '../util';
 
 
@@ -61,10 +61,9 @@ export class CoreAssertions {
     signerAddress: Address,
     signature: ECSig,
     addPrefix: boolean,
-    errorMessage: string
   ): boolean {
     if (!SignatureUtils.isValidSignature(data, signature, signerAddress, addPrefix)) {
-      throw new Error(errorMessage);
+      throw new Error(coreAPIErrors.SIGNATURE_MISMATCH());
     } else {
       return true;
     }

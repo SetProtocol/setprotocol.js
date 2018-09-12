@@ -22,7 +22,7 @@ import { Address } from 'set-protocol-utils';
 
 import { ERC20Assertions } from './ERC20Assertions';
 import { SetTokenContract, DetailedERC20Contract } from 'set-protocol-contracts';
-import { setTokenAssertionsErrors } from '../errors';
+import { coreAPIErrors, setTokenAssertionsErrors } from '../errors';
 import { BigNumber } from '../util';
 import { ZERO } from '../constants';
 
@@ -93,7 +93,6 @@ export class SetTokenAssertions {
           componentInstance.address,
           ownerAddress,
           requiredBalance,
-          `User does not have enough balance of token at address ${componentInstance.address}`,
         );
       },
     );
@@ -138,7 +137,6 @@ export class SetTokenAssertions {
           ownerAddress,
           spenderAddress,
           requiredBalance,
-          `User does not have enough allowance of token at address ${componentInstance.address}`,
         );
       },
     );
@@ -148,13 +146,12 @@ export class SetTokenAssertions {
   public async isMultipleOfNaturalUnit(
     setTokenAddress: Address,
     quantityInWei: BigNumber,
-    errorMessage: string,
   ): Promise<void> {
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
 
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
     if (!quantityInWei.mod(naturalUnit).eq(ZERO)) {
-      throw new Error(errorMessage);
+      throw new Error(coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT());
     }
   }
 }

@@ -20,6 +20,7 @@ import * as _ from 'lodash';
 import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
+import { vaultAssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 import { DetailedERC20Contract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
@@ -44,7 +45,6 @@ export class VaultAssertions {
     tokenAddress: Address,
     ownerAddress: Address,
     quantityInWei: BigNumber,
-    errorMessage: string,
   ): Promise<void> {
     const vaultContract = await VaultContract.at(vaultAddress, this.web3, {});
 
@@ -52,7 +52,7 @@ export class VaultAssertions {
     const ownerBalance = await vaultContract.getOwnerBalance.callAsync(tokenAddress, ownerAddress);
 
     if (ownerBalance.lt(quantityInWei)) {
-      throw new Error(errorMessage);
+      throw new Error(vaultAssertionErrors.INSUFFICIENT_TOKEN_BALANCE());
     }
   }
 
@@ -68,7 +68,6 @@ export class VaultAssertions {
     vaultAddress: Address,
     setTokenAddress: Address,
     quantityInWei: BigNumber,
-    errorMessage: string,
   ): Promise<void> {
     const vaultInstance = await VaultContract.at(vaultAddress, this.web3, {});
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
@@ -97,7 +96,7 @@ export class VaultAssertions {
           setAddress,
         );
         if (ownerBalance.lt(requiredBalance)) {
-          throw new Error(errorMessage);
+          throw new Error(vaultAssertionErrors.INSUFFICIENT_SET_TOKENS_BALANCE());
         }
       },
     );
