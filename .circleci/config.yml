@@ -16,9 +16,10 @@ jobs:
               paths:
                 - node_modules
         - run: yarn build
+        - run: yarn tslint
         - run:
             name: testrpc
             command: yarn chain
             background: true
-        - run: sleep 90
+        - run: sleep 20
         - run: yarn test
