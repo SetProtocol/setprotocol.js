@@ -232,13 +232,10 @@ describe('IssuanceAPI', () => {
       let userTokenBalance: BigNumber;
 
       beforeEach(async () => {
-        // Only the first component will have a large unit
-        componentUnits = _.map(componentTokens, (token, index) => {
-          if (index > 0) {
-            return new BigNumber(1);
-          }
-          return setComponentUnit;
-        });
+        // Only the first component will have an insufficient balance
+        componentUnits = _.map(componentTokens, (token, index) =>
+          index === 0 ? new BigNumber(1) : setComponentUnit);
+
         componentWithInsufficientBalance = _.first(componentTokens);
         const naturalUnit = ether(2);
         const componentUnit = ether(4);
