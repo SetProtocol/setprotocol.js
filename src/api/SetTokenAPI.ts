@@ -138,7 +138,7 @@ export class SetTokenAPI {
   }
 
   /**
-   * Valiates whether the quantity passed in is a multiple of a Set's natural unit
+   * Validates whether the quantity passed in is a multiple of a Set's natural unit
    *
    * @param  setAddress    Address of the Set
    * @param  quantity      Quantity to be checked

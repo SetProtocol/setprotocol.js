@@ -19,7 +19,7 @@
 import * as Web3 from 'web3';
 import { TransactionReceipt } from 'ethereum-types';
 import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
-
+import { DetailedERC20Contract } from 'set-protocol-contracts';
 import { AccountingAPI, BlockchainAPI, ERC20API, FactoryAPI, IssuanceAPI, OrderAPI, SetTokenAPI } from './api';
 import { CoreWrapper, VaultWrapper } from './wrappers';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
@@ -51,7 +51,7 @@ class SetProtocol {
 
   /**
    * When creating an issuance order without a relayer token for a fee, you must use Solidity
-   * address null type (as opposed to Javascripts `null`, `undefined` or empty string).
+   * address null type (as opposed to Javascript's `null`, `undefined` or empty string).
    */
   public static NULL_ADDRESS = SetProtocolUtils.CONSTANTS.NULL_ADDRESS;
 
@@ -290,6 +290,43 @@ class SetProtocol {
     timeoutMs?: number,
   ): Promise<TransactionReceipt> {
     return await this.blockchain.awaitTransactionMinedAsync(txHash, pollingIntervalMs, timeoutMs);
+  }
+
+  /**
+   * Calculates the minimum allowable natural unit for a list of ERC20 component addresses
+   * where the minimum natural unit allowed equal 10^(18-minDecimal)
+   *
+   * @param componentAddresses    Component ERC20 addresses
+   *
+   * @return                      The minimum value of the natural unit allowed by component decimals
+   */
+  public async calculateMinimumNaturalUnit(
+    components: Address[],
+  ): Promise<BigNumber> {
+    const componentInstancePromises = _.map(components, component => {
+      return DetailedERC20Contract.at(component, this.web3, {});
+    });
+
+    const componentInstances = await Promise.all(componentInstancePromises);
+
+    let minDecimal;
+    try {
+      const decimalPromises = _.map(componentInstances, componentInstance => {
+        return componentInstance.decimals.callAsync();
+      });
+
+      const decimals = await Promise.all(decimalPromises);
+      minDecimal = BigNumber.min(decimals);
+    } catch (error) {
+      // If any of the conponent addresses does not implement decimals(),
+      // we assume the worst and set minDecimal to 0 so that minimum natural unit
+      // will be 10^18.
+      minDecimal = SetProtocolUtils.CONSTANTS.ZERO;
+    }
+
+    const baseNumber = new BigNumber(10);
+
+    return baseNumber.pow(minDecimal.negated().plus(18).toNumber());
   }
 }
 
