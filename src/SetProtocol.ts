@@ -16,6 +16,7 @@
 
 'use strict';
 
+import * as _ from 'lodash';
 import * as Web3 from 'web3';
 import { TransactionReceipt } from 'ethereum-types';
 import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
