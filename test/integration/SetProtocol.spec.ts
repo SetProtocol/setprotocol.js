@@ -23,16 +23,20 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as chai from 'chai';
+import * as _ from 'lodash';
 import * as Web3 from 'web3';
 import * as ABIDecoder from 'abi-decoder';
 import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
+  DetailedERC20Contract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
-  VaultContract
+  VaultContract,
+  NoDecimalTokenMock,
+  NoDecimalTokenMockContract,
 } from 'set-protocol-contracts';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 
@@ -48,6 +52,7 @@ import {
   addAuthorizationAsync,
   approveForTransferAsync,
   deployCoreContract,
+  deployNoDecimalTokenAsync,
   deploySetTokenAsync,
   deploySetTokenFactoryContract,
   deployTokensAsync,
@@ -110,6 +115,60 @@ describe('SetProtocol', async () => {
 
   afterEach(async () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
+  });
+
+  describe('calculateMinimumNaturalUnit', async () => {
+    let mockNoDecimalToken: NoDecimalTokenMockContract;
+    let mockTokens: StandardTokenMockContract[];
+    let subjectComponents: Address[];
+
+    beforeEach(async () => {
+      mockNoDecimalToken = await deployNoDecimalTokenAsync(provider);
+      mockTokens = await deployTokensAsync(3, provider);
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await setProtocol.calculateMinimumNaturalUnit(
+        subjectComponents,
+      );
+    }
+
+    test('returns the correct minimum natural unit', async () => {
+      const componentInstancePromises = _.map(mockTokens, mockToken => {
+        return DetailedERC20Contract.at(mockToken.address, web3, {});
+      });
+      const componentInstances = await Promise.all(componentInstancePromises);
+      const decimalPromises = _.map(componentInstances, componentInstance => {
+        return componentInstance.decimals.callAsync();
+      });
+      const decimals = await Promise.all(decimalPromises);
+      const minDecimal = BigNumber.min(decimals);
+
+      subjectComponents = _.map(componentInstances, componentInstance => componentInstance.address);
+
+      const minimumNaturalUnit = await subject();
+
+      expect(minimumNaturalUnit).to.bignumber.equal(new BigNumber(10).pow(18 - minDecimal.toNumber()));
+    });
+
+    test('returns max natural unit if one token does not have decimals', async () => {
+      const componentInstancePromises = _.map(mockTokens, mockToken => {
+        return DetailedERC20Contract.at(mockToken.address, web3, {});
+      });
+      const componentInstances = await Promise.all(componentInstancePromises);
+      const decimalPromises = _.map(componentInstances, componentInstance => {
+        return componentInstance.decimals.callAsync();
+      });
+      const decimals = await Promise.all(decimalPromises);
+      const minDecimal = BigNumber.min(decimals);
+
+      subjectComponents = _.map(componentInstances, componentInstance => componentInstance.address);
+      subjectComponents.push(mockNoDecimalToken.address);
+
+      const minimumNaturalUnit = await subject();
+      console.log(minimumNaturalUnit);
+      expect(minimumNaturalUnit).to.bignumber.equal(new BigNumber(10).pow(18));
+    });
   });
 
   describe('createSetAsync', async () => {
