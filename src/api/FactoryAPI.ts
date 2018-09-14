@@ -18,8 +18,13 @@
 
 import * as _ from 'lodash';
 import * as Web3 from 'web3';
-import { Address } from 'set-protocol-utils';
-import { StandardTokenMockContract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
+import { Address, SetProtocolUtils } from 'set-protocol-utils';
+import {
+  DetailedERC20Contract,
+  StandardTokenMockContract,
+  SetTokenContract,
+  VaultContract,
+} from 'set-protocol-contracts';
 
 import { ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
@@ -105,6 +110,41 @@ export class FactoryAPI {
     return extractNewSetTokenAddressFromLogs(transactionLogs);
   }
 
+  /**
+   * Calculates the minimum allowable natural unit for a list of ERC20 component addresses
+   * where the minimum natural unit allowed equal 10^(18-minDecimal)
+   *
+   * @param componentAddresses    Component ERC20 addresses
+   *
+   * @return                      The minimum value of the natural unit allowed by component decimals
+   */
+  public async calculateMinimumNaturalUnit(
+    components: Address[],
+  ): Promise<BigNumber> {
+    const componentInstancePromises = _.map(components, component => {
+      return DetailedERC20Contract.at(component, this.web3, {});
+    });
+
+    const componentInstances = await Promise.all(componentInstancePromises);
+
+    let minDecimal;
+    try {
+      const decimalPromises = _.map(componentInstances, componentInstance => {
+        return componentInstance.decimals.callAsync();
+      });
+
+      const decimals = await Promise.all(decimalPromises);
+      minDecimal = BigNumber.min(decimals);
+    } catch (error) {
+      // If any of the conponent addresses does not implement decimals(),
+      // we assume the worst and set minDecimal to 0 so that minimum natural unit
+      // will be 10^18.
+      minDecimal = SetProtocolUtils.CONSTANTS.ZERO;
+    }
+
+    return new BigNumber(10 ** (18 - minDecimal.toNumber()));
+  }
+
   /* ============ Private Assertions ============ */
 
   private async assertCreateSet(
@@ -126,27 +166,21 @@ export class FactoryAPI {
       this.assert.common.greaterThanZero(unit, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(unit));
     });
 
-    let minDecimals = new BigNumber(18);
-    let tokenDecimals;
     await Promise.all(
       components.map(async componentAddress => {
         this.assert.common.isValidString(componentAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('component'));
         this.assert.schema.isValidAddress('componentAddress', componentAddress);
 
-        const tokenContract = await StandardTokenMockContract.at(componentAddress, this.web3, {});
-        try {
-          tokenDecimals = await tokenContract.decimals.callAsync();
-          if (tokenDecimals.lt(minDecimals)) {
-            minDecimals = tokenDecimals;
-          }
-        } catch (err) {
-          minDecimals = ZERO;
-        }
-
         await this.assert.erc20.implementsERC20(componentAddress);
       }),
     );
 
-    this.assert.core.validateNaturalUnit(naturalUnit, minDecimals, coreAPIErrors.INVALID_NATURAL_UNIT());
+    const minNaturalUnit = await this.calculateMinimumNaturalUnit(components);
+
+    this.assert.core.validateNaturalUnit(
+      naturalUnit,
+      minNaturalUnit,
+      coreAPIErrors.INVALID_NATURAL_UNIT(minNaturalUnit),
+    );
   }
 }

@@ -304,30 +304,7 @@ class SetProtocol {
   public async calculateMinimumNaturalUnit(
     components: Address[],
   ): Promise<BigNumber> {
-    const componentInstancePromises = _.map(components, component => {
-      return DetailedERC20Contract.at(component, this.web3, {});
-    });
-
-    const componentInstances = await Promise.all(componentInstancePromises);
-
-    let minDecimal;
-    try {
-      const decimalPromises = _.map(componentInstances, componentInstance => {
-        return componentInstance.decimals.callAsync();
-      });
-
-      const decimals = await Promise.all(decimalPromises);
-      minDecimal = BigNumber.min(decimals);
-    } catch (error) {
-      // If any of the conponent addresses does not implement decimals(),
-      // we assume the worst and set minDecimal to 0 so that minimum natural unit
-      // will be 10^18.
-      minDecimal = SetProtocolUtils.CONSTANTS.ZERO;
-    }
-
-    const baseNumber = new BigNumber(10);
-
-    return baseNumber.pow(minDecimal.negated().plus(18).toNumber());
+    return await this.factory.calculateMinimumNaturalUnit(components);
   }
 }
 

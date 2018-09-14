@@ -50,8 +50,8 @@ export class CoreAssertions {
     }
   }
 
-  public validateNaturalUnit(naturalUnit: BigNumber, minDecimal: BigNumber, errorMessage: string) {
-    if (naturalUnit.lt(10 ** (18 - minDecimal.toNumber()))) {
+  public validateNaturalUnit(naturalUnit: BigNumber, minNaturalUnit: BigNumber, errorMessage: string) {
+    if (naturalUnit.lt(minNaturalUnit)) {
       throw new Error(errorMessage);
     }
   }
