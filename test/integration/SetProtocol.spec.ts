@@ -166,7 +166,7 @@ describe('SetProtocol', async () => {
       subjectComponents.push(mockNoDecimalToken.address);
 
       const minimumNaturalUnit = await subject();
-      console.log(minimumNaturalUnit);
+
       expect(minimumNaturalUnit).to.bignumber.equal(new BigNumber(10).pow(18));
     });
   });
