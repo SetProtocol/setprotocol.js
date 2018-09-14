@@ -25,7 +25,7 @@ export const coreAPIErrors = {
   EXPIRATION_PASSED: () => 'Expiration date has already passed.',
   FILL_EXCEEDS_AVAILABLE: () => 'The fill quantity supplied exceeds the amount available to fill.',
   INVALID_NATURAL_UNIT: (minNaturalUnit: BigNumber) =>
-    `Natural unit must be larger than minimum unit, ${minNaturalUnit.toString()} allowed by components.`,
+    `Natural unit must be larger than minimum unit, ${minNaturalUnit.toString()}, allowed by components.`,
   INVALID_ORDER_HASH_SCHEMA: () => `The order hash passed in is not in Bytes32 schema`,
   QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT: () => 'Quantity needs to be multiple of natural unit.',
   QUANTITY_NEEDS_TO_BE_POSITIVE: (quantity: BigNumber) =>
