@@ -228,26 +228,21 @@ describe('IssuanceAPI', () => {
     });
 
     describe('when the caller does not have enough of a component', async () => {
-      let componentWithInsufficientBalance: StandardTokenMockContract;
-      let userTokenBalance: BigNumber;
-
       beforeEach(async () => {
         // Only the first component will have an insufficient balance
         componentUnits = _.map(componentTokens, (token, index) =>
           index === 0 ? new BigNumber(1) : setComponentUnit);
-
-        componentWithInsufficientBalance = _.first(componentTokens);
         const naturalUnit = ether(2);
         const componentUnit = ether(4);
-
-        userTokenBalance = await componentWithInsufficientBalance.balanceOf.callAsync(DEFAULT_ACCOUNT);
         subjectQuantitytoIssue = DEPLOYED_TOKEN_QUANTITY.div(naturalUnit).mul(componentUnit).add(naturalUnit);
       });
 
       test('throws', async () => {
+        const componentWithInsufficientBalance = _.first(componentTokens);
+        const userTokenBalance = await componentWithInsufficientBalance.balanceOf.callAsync(DEFAULT_ACCOUNT);
         return expect(subject()).to.be.rejectedWith(
     // tslint:disable-next-line
-    `User has balance of ${userTokenBalance.toFixed()} when required balance is ${subjectQuantitytoIssue.mul(2).toFixed()}. Increase user's
+    `User has balance of ${userTokenBalance} when required balance is ${subjectQuantitytoIssue.mul(2).toNumber()}. Increase user's
     token balance at token address ${componentWithInsufficientBalance.address}`
         );
       });
@@ -268,7 +263,7 @@ describe('IssuanceAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-    `User has allowance of ${ZERO} when required allowance is ${setComponentUnit.toFixed()}. Increase user's
+    `User has allowance of ${ZERO} when required allowance is ${setComponentUnit}. Increase user's
     token allowance at token address ${componentWithInsufficientAllowance.address}`
         );
       });

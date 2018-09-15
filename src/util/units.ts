@@ -1,5 +1,5 @@
 import * as Web3 from 'web3';
-import { BigNumber } from 'bignumber.js';
+import { BigNumber } from '.';
 
 const web3 = new Web3();
 

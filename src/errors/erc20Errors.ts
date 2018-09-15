@@ -24,9 +24,9 @@ export const erc20AssertionErrors = {
   MISSING_ERC20_METHOD: (address: string) =>
     `Contract at ${address} does not implement ERC20 interface.`,
   INSUFFICIENT_BALANCE: (current: BigNumber, required: BigNumber, tokenAddress: Address) =>
-    `User has balance of ${current.toFixed()} when required balance is ${required.toFixed()}. Increase user's
+    `User has balance of ${current} when required balance is ${required}. Increase user's
     token balance at token address ${tokenAddress}`,
   INSUFFICIENT_ALLOWANCE: (current: BigNumber, required: BigNumber, tokenAddress: Address) =>
-    `User has allowance of ${current.toFixed()} when required allowance is ${required.toFixed()}. Increase user's
+    `User has allowance of ${current} when required allowance is ${required}. Increase user's
     token allowance at token address ${tokenAddress}`,
 };

@@ -1,5 +1,3 @@
-
-
 import * as Web3 from 'web3';
 import { Provider } from '../types/common';
 
