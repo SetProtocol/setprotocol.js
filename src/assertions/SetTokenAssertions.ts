@@ -22,7 +22,7 @@ import { Address } from 'set-protocol-utils';
 
 import { ERC20Assertions } from './ERC20Assertions';
 import { SetTokenContract, DetailedERC20Contract } from 'set-protocol-contracts';
-import { coreAPIErrors, setTokenAssertionsErrors } from '../errors';
+import { coreAPIErrors, setTokenAssertionsErrors, erc20AssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 import { ZERO } from '../constants';
 
@@ -89,7 +89,7 @@ export class SetTokenAssertions {
       componentInstances,
       async (componentInstance, index) => {
         const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
-        await this.erc20Assertions.hasSufficientBalance(
+        await this.erc20Assertions.hasSufficientBalanceAsync(
           componentInstance.address,
           ownerAddress,
           requiredBalance,
@@ -132,7 +132,7 @@ export class SetTokenAssertions {
       componentInstances,
       async (componentInstance, index) => {
         const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
-        return await this.erc20Assertions.hasSufficientAllowance(
+        return await this.erc20Assertions.hasSufficientAllowanceAsync(
           componentInstance.address,
           ownerAddress,
           spenderAddress,

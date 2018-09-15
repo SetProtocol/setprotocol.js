@@ -42,32 +42,43 @@ export class ERC20Assertions {
     }
   }
 
-  public async hasSufficientBalance(
+  public async hasSufficientBalanceAsync(
     tokenAddress: Address,
-    payer: Address,
-    balanceRequired: BigNumber,
+    userAddress: Address,
+    requiredBalance: BigNumber,
   ): Promise<void> {
     const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
 
-    const payerBalance = await tokenContract.balanceOf.callAsync(payer);
+    const userBalance = await tokenContract.balanceOf.callAsync(userAddress);
 
-    if (payerBalance.lt(balanceRequired)) {
-      throw new Error(erc20AssertionErrors.INSUFFICIENT_BALANCE(payerBalance, balanceRequired, tokenAddress));
+    if (userBalance.lt(requiredBalance)) {
+      throw new Error(erc20AssertionErrors.INSUFFICIENT_BALANCE(
+        tokenAddress,
+        userAddress,
+        userBalance,
+        requiredBalance
+      ));
     }
   }
 
-  public async hasSufficientAllowance(
+  public async hasSufficientAllowanceAsync(
     tokenAddress: Address,
-    owner: string,
-    spender: string,
-    allowanceRequired: BigNumber,
+    ownerAddress: Address,
+    spenderAddress: Address,
+    requiredAllowance: BigNumber,
   ): Promise<void> {
     const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
 
-    const payerAllowance = await tokenContract.allowance.callAsync(owner, spender);
+    const payerAllowance = await tokenContract.allowance.callAsync(ownerAddress, spenderAddress);
 
-    if (payerAllowance.lt(allowanceRequired)) {
-      throw new Error(erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(payerAllowance, allowanceRequired, tokenAddress));
+    if (payerAllowance.lt(requiredAllowance)) {
+      throw new Error(erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(
+        tokenAddress,
+        ownerAddress,
+        spenderAddress,
+        payerAllowance,
+        requiredAllowance,
+      ));
     }
   }
 }

@@ -121,17 +121,18 @@ export class AccountingAPI {
         await this.assert.erc20.implementsERC20(tokenAddress);
 
         // Check balance
-        await this.assert.erc20.hasSufficientBalance(
+        await this.assert.erc20.hasSufficientBalanceAsync(
           tokenAddress,
           transactionCaller,
           quantities[i],
         );
 
         // Check allowance
-        await this.assert.erc20.hasSufficientAllowance(
+        const { transferProxyAddress } = this.core;
+        await this.assert.erc20.hasSufficientAllowanceAsync(
           tokenAddress,
           transactionCaller,
-          this.core.transferProxyAddress,
+          transferProxyAddress,
           quantities[i],
         );
       }),

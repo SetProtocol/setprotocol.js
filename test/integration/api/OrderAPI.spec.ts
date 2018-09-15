@@ -241,6 +241,8 @@ describe('OrderAPI', () => {
     let subjectSignedIssuanceOrder: SignedIssuanceOrder;
     let subjectFillQuantity: BigNumber;
 
+    let makerToken: StandardTokenMockContract;
+
     beforeEach(async () => {
       const issuanceOrderTaker = ACCOUNTS[0].address;
       issuanceOrderMaker = ACCOUNTS[1].address;
@@ -249,7 +251,7 @@ describe('OrderAPI', () => {
 
       const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
       const secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
-      const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
       const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
 
       const componentTokens = [firstComponent, secondComponent];
@@ -288,6 +290,8 @@ describe('OrderAPI', () => {
         issuanceOrderTakerRelayerFee,
       );
       subjectFillQuantity = issuanceOrderQuantity;
+
+      await approveForTransferAsync([makerToken], transferProxy.address, issuanceOrderMaker);
     });
 
     async function subject(): Promise<void> {
@@ -326,6 +330,66 @@ describe('OrderAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith('The fill quantity supplied exceeds the amount available to fill.');
+      });
+    });
+
+    describe(
+      'when the issuance order maker has not set sufficient maker token allowance to the transfer proxy',
+      async () => {
+      let makerTokenContract: StandardTokenMockContract = makerToken;
+
+      beforeEach(async () => {
+        makerTokenContract = makerToken;
+        await makerToken.approve.sendTransactionAsync(
+          transferProxy.address,
+          new BigNumber(0),
+          { from: subjectSignedIssuanceOrder.makerAddress },
+        );
+      });
+
+      test('throws', async () => {
+        const { makerAddress, makerToken, makerTokenAmount } = subjectSignedIssuanceOrder;
+        const makerTokenBalance = await makerTokenContract.allowance.callAsync(
+          makerAddress,
+          transferProxy.address
+        );
+
+        return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${makerAddress} has allowance of ${makerTokenBalance}
+
+        when required allowance is ${makerTokenAmount} at token
+
+        address: ${makerToken} for spender: ${transferProxy.address}.
+      `
+        );
+      });
+    });
+
+    describe('when the issuance order maker does not have sufficient maker token balance', async () => {
+      let makerTokenContract: StandardTokenMockContract;
+
+      beforeEach(async () => {
+        makerTokenContract = makerToken;
+        const { makerAddress } = subjectSignedIssuanceOrder;
+        const burnAddress = ACCOUNTS[5].address;
+
+        const makerTokenBalance = await makerToken.balanceOf.callAsync(makerAddress);
+        await makerToken.transfer.sendTransactionAsync(burnAddress, makerTokenBalance, { from: makerAddress });
+        const makerTokenBalanceAfter = await makerToken.balanceOf.callAsync(makerAddress);
+      });
+
+      test('throws', async () => {
+        const { makerAddress, makerToken, makerTokenAmount } = subjectSignedIssuanceOrder;
+        const currentBalance = await makerTokenContract.balanceOf.callAsync(makerAddress);
+
+        return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${makerAddress} has balance of ${currentBalance}
+
+        when required balance is ${makerTokenAmount} at token address ${makerToken}.
+      `
+        );
       });
     });
   });

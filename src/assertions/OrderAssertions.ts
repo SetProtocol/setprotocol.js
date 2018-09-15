@@ -66,14 +66,39 @@ export class OrderAssertions {
     const issuanceOrder: IssuanceOrder = _.omit(signedIssuanceOrder, 'signature');
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
+    const {
+      expiration,
+      quantity,
+      makerToken,
+      makerAddress,
+      makerTokenAmount,
+    } = issuanceOrder;
+
     // Checks the order has not expired
-    this.commonAssertions.isValidExpiration(issuanceOrder.expiration, coreAPIErrors.EXPIRATION_PASSED());
+    this.commonAssertions.isValidExpiration(expiration, coreAPIErrors.EXPIRATION_PASSED());
 
     // Checks that it has not been fully filled already
     const filledAmount = await coreContract.orderFills.callAsync(orderHash);
     const cancelledAmount = await coreContract.orderCancels.callAsync(orderHash);
-    const fillableQuantity = issuanceOrder.quantity.sub(filledAmount).sub(cancelledAmount);
+    const fillableQuantity = quantity.sub(filledAmount).sub(cancelledAmount);
     this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FILL_EXCEEDS_AVAILABLE());
+
+    // Checks that the maker has sufficient allowance set to the transfer proxy
+    const transferProxyAddress = await coreContract.transferProxy.callAsync();
+    await this.erc20Assertions.hasSufficientAllowanceAsync(
+      makerToken,
+      makerAddress,
+      transferProxyAddress,
+      makerTokenAmount,
+    );
+
+    // Checks that the maker has sufficient balance of the maker token
+    const requiredMakerTokenAmount = fillQuantity.div(quantity).mul(makerTokenAmount);
+    await this.erc20Assertions.hasSufficientBalanceAsync(
+      makerToken,
+      makerAddress,
+      requiredMakerTokenAmount,
+    );
   }
 
   /**
