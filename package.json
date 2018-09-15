@@ -23,8 +23,6 @@
     "test": "jest --runInBand",
     "test:watch": "jest --watch --runInBand",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
-    "watch-ts": "tsc -w",
-    "playground": "yarn run build-ts; node dist/playground",
     "precommit": "lint-staged",
     "docs": "bash scripts/docs/generate_docs.sh",
     "prepublishOnly": "yarn build"
@@ -36,7 +34,7 @@
   },
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=8.0.0"
   },
   "devDependencies": {
     "chai": "^4.1.2",
