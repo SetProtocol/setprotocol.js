@@ -58,7 +58,7 @@
         "no-null-keyword": true,
         "prefer-const": true,
         "jsdoc-format": true,
-        "arrow-parens": [true, "ban-single-arg-parens"],
+        "arrow-parens": true,
         "trailing-comma": [
           true,
           {

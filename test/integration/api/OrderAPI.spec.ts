@@ -32,6 +32,7 @@ import {
   Address,
   Bytes,
   ECSig,
+  FillOrder,
   IssuanceOrder,
   SetProtocolUtils,
   SetProtocolTestUtils,
@@ -254,8 +255,8 @@ describe('OrderAPI', () => {
 
       const componentTokens = [firstComponent, secondComponent];
       const setComponentUnit = ether(4);
-      const componentAddresses = componentTokens.map(token => token.address);
-      const componentUnits = componentTokens.map(token => setComponentUnit);
+      const componentAddresses = componentTokens.map((token) => token.address);
+      const componentUnits = componentTokens.map((token) => setComponentUnit);
       const naturalUnit = ether(2);
       const setToken = await deploySetTokenAsync(
         web3,
@@ -270,7 +271,7 @@ describe('OrderAPI', () => {
       const issuanceOrderMakerTokenAmount = ether(10);
       const issuanceOrderExpiration = generateFutureTimestamp(10000);
       const requiredComponents = [firstComponent.address, secondComponent.address];
-      const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
+      const requredComponentAmounts = _.map(componentUnits, (unit) => unit.mul(issuanceOrderQuantity).div(naturalUnit));
       const issuanceOrderMakerRelayerFee = ZERO;
       const issuanceOrderTakerRelayerFee = ZERO;
       subjectSignedIssuanceOrder = await ordersAPI.createSignedOrderAsync(
@@ -611,7 +612,7 @@ describe('OrderAPI', () => {
 
     let subjectSignedIssuanceOrder: SignedIssuanceOrder;
     let subjectQuantityToFill: BigNumber;
-    let subjectOrders: (ZeroExSignedFillOrder | TakerWalletOrder)[];
+    let subjectOrders: FillOrder[];
     let subjectCaller: Address;
 
     beforeEach(async () => {
@@ -636,8 +637,8 @@ describe('OrderAPI', () => {
 
       const componentTokens = [firstComponent, secondComponent];
       const setComponentUnit = ether(4);
-      const componentAddresses = componentTokens.map(token => token.address);
-      const componentUnits = componentTokens.map(token => setComponentUnit);
+      const componentAddresses = componentTokens.map((token) => token.address);
+      const componentUnits = componentTokens.map((token) => setComponentUnit);
       const naturalUnit = ether(2);
       setToken = await deploySetTokenAsync(
         web3,
@@ -660,7 +661,7 @@ describe('OrderAPI', () => {
       const issuanceOrderMakerTokenAmount = ether(10);
       const issuanceOrderExpiration = generateFutureTimestamp(10000);
       const requiredComponents = [firstComponent.address, secondComponent.address];
-      const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
+      const requredComponentAmounts = _.map(componentUnits, (unit) => unit.mul(issuanceOrderQuantity).div(naturalUnit));
       const issuanceOrderMakerRelayerFee = ZERO;
       const issuanceOrderTakerRelayerFee = ZERO;
       subjectSignedIssuanceOrder = await ordersAPI.createSignedOrderAsync(
@@ -771,8 +772,8 @@ describe('OrderAPI', () => {
 
       const componentTokens = [firstComponent, secondComponent];
       const setComponentUnit = ether(4);
-      const componentAddresses = componentTokens.map(token => token.address);
-      const componentUnits = componentTokens.map(token => setComponentUnit);
+      const componentAddresses = componentTokens.map((token) => token.address);
+      const componentUnits = componentTokens.map((token) => setComponentUnit);
       const naturalUnit = ether(2);
       const setToken = await deploySetTokenAsync(
         web3,
@@ -787,7 +788,7 @@ describe('OrderAPI', () => {
       const issuanceOrderMakerTokenAmount = ether(10);
       const issuanceOrderExpiration = generateFutureTimestamp(10000);
       const requiredComponents = [firstComponent.address, secondComponent.address];
-      const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
+      const requredComponentAmounts = _.map(componentUnits, (unit) => unit.mul(issuanceOrderQuantity).div(naturalUnit));
       const issuanceOrderMakerRelayerFee = ZERO;
       const issuanceOrderTakerRelayerFee = ZERO;
       subjectSignedIssuanceOrder = await ordersAPI.createSignedOrderAsync(
@@ -854,7 +855,7 @@ describe('OrderAPI', () => {
     let subjectQuantityToFill: BigNumber;
 
     beforeEach(async () => {
-      let orders: (ZeroExSignedFillOrder | TakerWalletOrder)[];
+      let orders: FillOrder[];
       let caller: Address;
 
       await deployTakerWalletWrapperContract(transferProxy, core, provider);
@@ -877,8 +878,8 @@ describe('OrderAPI', () => {
 
       const componentTokens = [firstComponent, secondComponent];
       const setComponentUnit = ether(4);
-      const componentAddresses = componentTokens.map(token => token.address);
-      const componentUnits = componentTokens.map(token => setComponentUnit);
+      const componentAddresses = componentTokens.map((token) => token.address);
+      const componentUnits = componentTokens.map((token) => setComponentUnit);
       const naturalUnit = ether(2);
       setToken = await deploySetTokenAsync(
         web3,
@@ -900,7 +901,7 @@ describe('OrderAPI', () => {
       const issuanceOrderMakerTokenAmount = ether(10);
       const issuanceOrderExpiration = generateFutureTimestamp(10000);
       const requiredComponents = [firstComponent.address, secondComponent.address];
-      const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
+      const requredComponentAmounts = _.map(componentUnits, (unit) => unit.mul(issuanceOrderQuantity).div(naturalUnit));
       const issuanceOrderMakerRelayerFee = ZERO;
       const issuanceOrderTakerRelayerFee = ZERO;
       subjectSignedIssuanceOrder = await ordersAPI.createSignedOrderAsync(
@@ -969,8 +970,8 @@ describe('OrderAPI', () => {
 
       const componentTokens = [firstComponent];
       const setComponentUnit = ether(4);
-      const componentAddresses = componentTokens.map(token => token.address);
-      const componentUnits = componentTokens.map(token => setComponentUnit);
+      const componentAddresses = componentTokens.map((token) => token.address);
+      const componentUnits = componentTokens.map((token) => setComponentUnit);
       const naturalUnit = ether(2);
       const setToken = await deploySetTokenAsync(
         web3,
@@ -985,7 +986,7 @@ describe('OrderAPI', () => {
       const issuanceOrderMakerTokenAmount = ether(10);
       const issuanceOrderExpiration = generateFutureTimestamp(10000);
       const requiredComponents = [firstComponent.address];
-      const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
+      const requredComponentAmounts = _.map(componentUnits, (unit) => unit.mul(issuanceOrderQuantity).div(naturalUnit));
       const issuanceOrderMakerRelayerFee = ZERO;
       const issuanceOrderTakerRelayerFee = ZERO;
       subjectSignedIssuanceOrder = await ordersAPI.createSignedOrderAsync(

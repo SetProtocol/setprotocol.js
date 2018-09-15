@@ -25,8 +25,7 @@ import {
   IssuanceOrder,
   SetProtocolUtils,
   SignedIssuanceOrder,
-  TakerWalletOrder,
-  ZeroExSignedFillOrder,
+  FillOrder,
 } from 'set-protocol-utils';
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
@@ -34,13 +33,6 @@ import { CoreWrapper } from '../wrappers';
 import { NULL_ADDRESS } from '../constants';
 import { BigNumber, generateFutureTimestamp,  } from '../util';
 import { TxData } from '../types/common';
-
-export {
-  IssuanceOrder,
-  SignedIssuanceOrder,
-  TakerWalletOrder,
-  ZeroExSignedFillOrder
-};
 
 /**
  * @title OrderAPI
@@ -205,15 +197,14 @@ export class OrderAPI {
    *
    * @param  signedIssuanceOrder    Object confomring to SignedIssuanceOrder to fill
    * @param  quantity               Amount of Set to fill in this call
-   * @param  orders                 Array of order objects conforming to either TakerWalletOrder or
-   *                                  ZeroExSignedFillOrder to fill issuance order
+   * @param  orders                 Array of order objects conforming to FillOrder type
    * @param  txOpts                 Transaction options object conforming to TxData with signer, gas, and gasPrice data
    * @return                        Transaction hash
    */
   public async fillOrderAsync(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantity: BigNumber,
-    orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
+    orders: FillOrder[],
     txOpts: TxData,
   ): Promise<string> {
     await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantity, orders);
@@ -282,7 +273,7 @@ export class OrderAPI {
     transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
+    orders: FillOrder[],
   ) {
     const { signature, ...issuanceOrder } = signedIssuanceOrder;
     await this.assert.order.isValidIssuanceOrder(issuanceOrder);
@@ -290,6 +281,24 @@ export class OrderAPI {
     this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
     this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
+
+    let ordersTakerTokenAmount = SetProtocolUtils.CONSTANTS.ZERO;
+    _.each(orders, (order) => {
+      if (SetProtocolUtils.isZeroExOrder(order)) {
+        ordersTakerTokenAmount = ordersTakerTokenAmount.plus(order.takerAssetAmount);
+        this.assert.common.greaterThanZero(
+          order.fillAmount,
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(order.fillAmount),
+        );
+      } else if (SetProtocolUtils.isTakerWalletOrder(order)) {
+        ordersTakerTokenAmount = ordersTakerTokenAmount.plus(order.takerTokenAmount);
+      }
+    });
+    this.assert.common.isGreaterOrEqualThan(
+      signedIssuanceOrder.makerTokenAmount,
+      ordersTakerTokenAmount,
+      coreAPIErrors.MAKER_TOKEN_INSUFFICIENT(signedIssuanceOrder.makerTokenAmount, ordersTakerTokenAmount),
+    );
 
     await this.assert.order.isIssuanceOrderFillable(
       this.core.coreAddress,

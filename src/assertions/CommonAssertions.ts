@@ -21,7 +21,7 @@ import { ZERO } from '../constants';
 
 export class CommonAssertions {
   public greaterThanZero(quantity: BigNumber, errorMessage: string) {
-    if (quantity.lte(ZERO)) {
+    if (!quantity || quantity.lte(ZERO)) {
       throw new Error(errorMessage);
     }
   }
