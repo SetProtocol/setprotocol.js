@@ -29,7 +29,6 @@ import * as ABIDecoder from 'abi-decoder';
 import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
-  DetailedERC20Contract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -48,6 +47,7 @@ import { Web3Utils } from '../../src/util/Web3Utils';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util/logs';
 import { BigNumber } from '../../src/util';
 import { SetProtocolConfig } from '../../src/SetProtocol';
+import { ERC20Wrapper } from '../../src/wrappers/ERC20Wrapper';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -134,17 +134,14 @@ describe('SetProtocol', async () => {
     }
 
     test('returns the correct minimum natural unit', async () => {
-      const componentInstancePromises = _.map(mockTokens, mockToken => {
-        return DetailedERC20Contract.at(mockToken.address, web3, {});
-      });
-      const componentInstances = await Promise.all(componentInstancePromises);
-      const decimalPromises = _.map(componentInstances, componentInstance => {
-        return componentInstance.decimals.callAsync();
+      const erc20Wrapper = new ERC20Wrapper(web3);
+      const decimalPromises = _.map(mockTokens, mockToken => {
+        return erc20Wrapper.decimals(mockToken.address);
       });
       const decimals = await Promise.all(decimalPromises);
       const minDecimal = BigNumber.min(decimals);
 
-      subjectComponents = _.map(componentInstances, componentInstance => componentInstance.address);
+      subjectComponents = _.map(mockTokens, mockToken => mockToken.address);
 
       const minimumNaturalUnit = await subject();
 
@@ -152,17 +149,14 @@ describe('SetProtocol', async () => {
     });
 
     test('returns max natural unit if one token does not have decimals', async () => {
-      const componentInstancePromises = _.map(mockTokens, mockToken => {
-        return DetailedERC20Contract.at(mockToken.address, web3, {});
-      });
-      const componentInstances = await Promise.all(componentInstancePromises);
-      const decimalPromises = _.map(componentInstances, componentInstance => {
-        return componentInstance.decimals.callAsync();
+      const erc20Wrapper = new ERC20Wrapper(web3);
+      const decimalPromises = _.map(mockTokens, mockToken => {
+        return erc20Wrapper.decimals(mockToken.address);
       });
       const decimals = await Promise.all(decimalPromises);
       const minDecimal = BigNumber.min(decimals);
 
-      subjectComponents = _.map(componentInstances, componentInstance => componentInstance.address);
+      subjectComponents = _.map(mockTokens, mockToken => mockToken.address);
       subjectComponents.push(mockNoDecimalToken.address);
 
       const minimumNaturalUnit = await subject();

@@ -20,7 +20,6 @@ import * as _ from 'lodash';
 import * as Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import {
-  DetailedERC20Contract,
   StandardTokenMockContract,
   SetTokenContract,
   VaultContract,

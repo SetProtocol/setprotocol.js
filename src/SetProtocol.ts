@@ -16,11 +16,9 @@
 
 'use strict';
 
-import * as _ from 'lodash';
 import * as Web3 from 'web3';
 import { TransactionReceipt } from 'ethereum-types';
 import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
-import { DetailedERC20Contract } from 'set-protocol-contracts';
 import { AccountingAPI, BlockchainAPI, ERC20API, FactoryAPI, IssuanceAPI, OrderAPI, SetTokenAPI } from './api';
 import { CoreWrapper, VaultWrapper } from './wrappers';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
