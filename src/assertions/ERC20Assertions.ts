@@ -46,14 +46,13 @@ export class ERC20Assertions {
     tokenAddress: Address,
     payer: Address,
     balanceRequired: BigNumber,
-    errorMessage: string,
   ): Promise<void> {
     const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
 
     const payerBalance = await tokenContract.balanceOf.callAsync(payer);
 
     if (payerBalance.lt(balanceRequired)) {
-      throw new Error(errorMessage);
+      throw new Error(erc20AssertionErrors.INSUFFICIENT_BALANCE(payerBalance, balanceRequired, tokenAddress));
     }
   }
 
@@ -62,14 +61,13 @@ export class ERC20Assertions {
     owner: string,
     spender: string,
     allowanceRequired: BigNumber,
-    errorMessage: string,
   ): Promise<void> {
     const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
 
     const payerAllowance = await tokenContract.allowance.callAsync(owner, spender);
 
     if (payerAllowance.lt(allowanceRequired)) {
-      throw new Error(errorMessage);
+      throw new Error(erc20AssertionErrors.INSUFFICIENT_ALLOWANCE(payerAllowance, allowanceRequired, tokenAddress));
     }
   }
 }

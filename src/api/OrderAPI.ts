@@ -108,7 +108,6 @@ export class OrderAPI {
       issuanceOrder.makerAddress,
       signature,
       true,
-      coreAPIErrors.SIGNATURE_MISMATCH()
     );
   }
 

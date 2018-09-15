@@ -168,9 +168,6 @@ describe('SetTokenAPI', () => {
     test('it fetchs the set token properties correctly', async () => {
       const details = await subject();
 
-      console.log(details);
-
-
       expect(details.address).to.eql(setToken.address);
       expect(details.factoryAddress).to.eql(setTokenFactory.address);
       expect(details.name).to.eql(name);
