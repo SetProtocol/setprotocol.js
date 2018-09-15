@@ -295,15 +295,12 @@ class SetProtocol {
 
   /**
    * Calculates the minimum allowable natural unit for a list of ERC20 component addresses
-   * where the minimum natural unit allowed equal 10^(18-minDecimal)
+   * where the minimum natural unit allowed equal 10 ** (18 - minDecimal)
    *
    * @param componentAddresses    Component ERC20 addresses
-   *
    * @return                      The minimum value of the natural unit allowed by component decimals
    */
-  public async calculateMinimumNaturalUnit(
-    components: Address[],
-  ): Promise<BigNumber> {
+  public async calculateMinimumNaturalUnit(components: Address[]): Promise<BigNumber> {
     return await this.factory.calculateMinimumNaturalUnit(components);
   }
 }

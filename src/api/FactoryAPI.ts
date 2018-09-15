@@ -29,7 +29,7 @@ import {
 import { ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { CoreWrapper } from '../wrappers';
+import { CoreWrapper, ERC20Wrapper } from '../wrappers';
 import { BigNumber, extractNewSetTokenAddressFromLogs, generateTxOpts, getFormattedLogsFromTxHash } from '../util';
 import { TxData } from '../types/common';
 
@@ -43,6 +43,7 @@ export class FactoryAPI {
   private web3: Web3;
   private assert: Assertions;
   private core: CoreWrapper;
+  private erc20: ERC20Wrapper;
   private setTokenFactoryAddress: Address;
 
   /**
@@ -56,6 +57,7 @@ export class FactoryAPI {
   constructor(web3: Web3 = undefined, core: CoreWrapper = undefined, setTokenFactoryAddress: Address) {
     this.web3 = web3;
     this.core = core;
+    this.erc20 = new ERC20Wrapper(this.web3);
     this.assert = new Assertions(this.web3);
     this.setTokenFactoryAddress = setTokenFactoryAddress;
   }
@@ -112,28 +114,19 @@ export class FactoryAPI {
 
   /**
    * Calculates the minimum allowable natural unit for a list of ERC20 component addresses
-   * where the minimum natural unit allowed equal 10^(18-minDecimal)
+   * where the minimum natural unit allowed equal 10 ** (18 - minDecimal)
    *
    * @param componentAddresses    Component ERC20 addresses
-   *
    * @return                      The minimum value of the natural unit allowed by component decimals
    */
-  public async calculateMinimumNaturalUnit(
-    components: Address[],
-  ): Promise<BigNumber> {
-    const componentInstancePromises = _.map(components, component => {
-      return DetailedERC20Contract.at(component, this.web3, {});
-    });
-
-    const componentInstances = await Promise.all(componentInstancePromises);
-
+  public async calculateMinimumNaturalUnit(components: Address[]): Promise<BigNumber> {
     let minDecimal;
     try {
-      const decimalPromises = _.map(componentInstances, componentInstance => {
-        return componentInstance.decimals.callAsync();
-      });
+      const componentDecimalPromises = _.map(components, component =>
+        this.erc20.decimals(component)
+      );
 
-      const decimals = await Promise.all(decimalPromises);
+      const decimals = await Promise.all(componentDecimalPromises);
       minDecimal = BigNumber.min(decimals);
     } catch (error) {
       // If any of the conponent addresses does not implement decimals(),
@@ -177,7 +170,7 @@ export class FactoryAPI {
 
     const minNaturalUnit = await this.calculateMinimumNaturalUnit(components);
 
-    this.assert.core.validateNaturalUnit(
+    this.assert.common.isGreaterOrEqualThan(
       naturalUnit,
       minNaturalUnit,
       coreAPIErrors.INVALID_NATURAL_UNIT(minNaturalUnit),
