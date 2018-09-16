@@ -68,6 +68,7 @@ const contract = require('truffle-contract');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
+const erc20Wrapper = new ERC20Wrapper(web3);
 
 const coreContract = contract(Core);
 coreContract.setProvider(provider);
@@ -134,7 +135,6 @@ describe('SetProtocol', async () => {
     }
 
     test('returns the correct minimum natural unit', async () => {
-      const erc20Wrapper = new ERC20Wrapper(web3);
       const decimalPromises = _.map(mockTokens, mockToken => {
         return erc20Wrapper.decimals(mockToken.address);
       });
@@ -149,7 +149,6 @@ describe('SetProtocol', async () => {
     });
 
     test('returns max natural unit if one token does not have decimals', async () => {
-      const erc20Wrapper = new ERC20Wrapper(web3);
       const decimalPromises = _.map(mockTokens, mockToken => {
         return erc20Wrapper.decimals(mockToken.address);
       });
