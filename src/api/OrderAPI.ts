@@ -283,7 +283,7 @@ export class OrderAPI {
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
     let ordersTakerTokenAmount = SetProtocolUtils.CONSTANTS.ZERO;
-    _.each(orders, (order) => {
+    _.each(orders, (order: any) => {
       if (SetProtocolUtils.isZeroExOrder(order)) {
         ordersTakerTokenAmount = ordersTakerTokenAmount.plus(order.takerAssetAmount);
         this.assert.common.greaterThanZero(
