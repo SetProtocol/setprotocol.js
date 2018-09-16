@@ -32,7 +32,7 @@ import {
   Address,
   Bytes,
   ECSig,
-  FillOrder,
+  ExchangeOrder,
   IssuanceOrder,
   SetProtocolUtils,
   SetProtocolTestUtils,
@@ -612,7 +612,7 @@ describe('OrderAPI', () => {
 
     let subjectSignedIssuanceOrder: SignedIssuanceOrder;
     let subjectQuantityToFill: BigNumber;
-    let subjectOrders: FillOrder[];
+    let subjectOrders: ExchangeOrder[];
     let subjectCaller: Address;
 
     beforeEach(async () => {
@@ -855,7 +855,7 @@ describe('OrderAPI', () => {
     let subjectQuantityToFill: BigNumber;
 
     beforeEach(async () => {
-      let orders: FillOrder[];
+      let orders: ExchangeOrder[];
       let caller: Address;
 
       await deployTakerWalletWrapperContract(transferProxy, core, provider);

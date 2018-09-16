@@ -25,7 +25,7 @@ import {
   IssuanceOrder,
   SetProtocolUtils,
   SignedIssuanceOrder,
-  FillOrder,
+  ExchangeOrder,
 } from 'set-protocol-utils';
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
@@ -204,7 +204,7 @@ export class OrderAPI {
   public async fillOrderAsync(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantity: BigNumber,
-    orders: FillOrder[],
+    orders: ExchangeOrder[],
     txOpts: TxData,
   ): Promise<string> {
     await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantity, orders);
@@ -273,7 +273,7 @@ export class OrderAPI {
     transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orders: FillOrder[],
+    orders: ExchangeOrder[],
   ) {
     const { signature, ...issuanceOrder } = signedIssuanceOrder;
     await this.assert.order.isValidIssuanceOrder(issuanceOrder);

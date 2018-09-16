@@ -7,7 +7,7 @@ export {
   Constants,
   ECSig,
   Exchanges,
-  FillOrder,
+  ExchangeOrder,
   IssuanceOrder,
   SignedIssuanceOrder,
   Log,
