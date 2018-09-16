@@ -33,8 +33,8 @@ export const coreAPIErrors = {
   SIGNATURE_MISMATCH: () => 'Signature does not match issuance order attributes.',
   STRING_CANNOT_BE_EMPTY: (variable: string) => `The string ${variable} cannot be empty.`,
   MAKER_TOKEN_INSUFFICIENT: (makerTokenAmount: BigNumber, ordersTakerTokenAmount: BigNumber) =>
-    `The maker token amount, ${makerTokenAmount.toString()} of issuance order is not enough \
-     to fill the passed in order taker amount, ${ordersTakerTokenAmount.toString()}`,
+    `The maker token amount, ${makerTokenAmount.toString()} of issuance order is not enough ` +
+    `to fill the passed in order taker amount, ${ordersTakerTokenAmount.toString()}`,
 };
 
 export const coreAssertionErrors = {
