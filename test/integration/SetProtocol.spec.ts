@@ -23,6 +23,7 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as chai from 'chai';
+import * as _ from 'lodash';
 import * as Web3 from 'web3';
 import * as ABIDecoder from 'abi-decoder';
 import { Core } from 'set-protocol-contracts';
@@ -32,7 +33,9 @@ import {
   SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
-  VaultContract
+  VaultContract,
+  NoDecimalTokenMock,
+  NoDecimalTokenMockContract,
 } from 'set-protocol-contracts';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 
@@ -44,10 +47,12 @@ import { Web3Utils } from '../../src/util/Web3Utils';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util/logs';
 import { BigNumber } from '../../src/util';
 import { SetProtocolConfig } from '../../src/SetProtocol';
+import { ERC20Wrapper } from '../../src/wrappers/ERC20Wrapper';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
   deployCoreContract,
+  deployNoDecimalTokenAsync,
   deploySetTokenAsync,
   deploySetTokenFactoryContract,
   deployTokensAsync,
@@ -63,6 +68,7 @@ const contract = require('truffle-contract');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
+const erc20Wrapper = new ERC20Wrapper(web3);
 
 const coreContract = contract(Core);
 coreContract.setProvider(provider);
@@ -110,6 +116,52 @@ describe('SetProtocol', async () => {
 
   afterEach(async () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
+  });
+
+  describe('calculateMinimumNaturalUnit', async () => {
+    let mockNoDecimalToken: NoDecimalTokenMockContract;
+    let mockTokens: StandardTokenMockContract[];
+    let subjectComponents: Address[];
+
+    beforeEach(async () => {
+      mockNoDecimalToken = await deployNoDecimalTokenAsync(provider);
+      mockTokens = await deployTokensAsync(3, provider);
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await setProtocol.calculateMinimumNaturalUnit(
+        subjectComponents,
+      );
+    }
+
+    test('returns the correct minimum natural unit', async () => {
+      const decimalPromises = _.map(mockTokens, mockToken => {
+        return erc20Wrapper.decimals(mockToken.address);
+      });
+      const decimals = await Promise.all(decimalPromises);
+      const minDecimal = BigNumber.min(decimals);
+
+      subjectComponents = _.map(mockTokens, mockToken => mockToken.address);
+
+      const minimumNaturalUnit = await subject();
+
+      expect(minimumNaturalUnit).to.bignumber.equal(new BigNumber(10).pow(18 - minDecimal.toNumber()));
+    });
+
+    test('returns max natural unit if one token does not have decimals', async () => {
+      const decimalPromises = _.map(mockTokens, mockToken => {
+        return erc20Wrapper.decimals(mockToken.address);
+      });
+      const decimals = await Promise.all(decimalPromises);
+      const minDecimal = BigNumber.min(decimals);
+
+      subjectComponents = _.map(mockTokens, mockToken => mockToken.address);
+      subjectComponents.push(mockNoDecimalToken.address);
+
+      const minimumNaturalUnit = await subject();
+
+      expect(minimumNaturalUnit).to.bignumber.equal(new BigNumber(10).pow(18));
+    });
   });
 
   describe('createSetAsync', async () => {

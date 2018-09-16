@@ -4780,15 +4780,15 @@ set-immediate-shim@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/set-immediate-shim/-/set-immediate-shim-1.0.1.tgz#4b2b1b27eb808a9f8dcc481a58e5e56f599f3f61"
 
-set-protocol-contracts@0.3.6:
-  version "0.3.6"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-0.3.6.tgz#fe506e56b32cc4e11a95efb4c2adb89a558bc730"
+set-protocol-contracts@0.3.7:
+  version "0.3.7"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-0.3.7.tgz#64debb7f1b5fb64c581b01055a73b88c7476b537"
   dependencies:
     eth-gas-reporter "^0.1.10"
     fs-extra "^5.0.0"
     husky "^0.14.3"
     lint-staged "^7.2.0"
-    set-protocol-utils "^0.3.20"
+    set-protocol-utils "^0.3.28"
     sol-trace-set "^0.0.1"
     solium "^1.1.7"
     tiny-promisify "^1.0.0"
@@ -4797,9 +4797,9 @@ set-protocol-contracts@0.3.6:
     web3-utils "1.0.0-beta.35"
     zeppelin-solidity "^1.10.0"
 
-set-protocol-utils@0.3.27:
-  version "0.3.27"
-  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.27.tgz#c139481f5d53c5bdb160ee4e83760d4d0dd358f5"
+set-protocol-utils@0.3.28, set-protocol-utils@^0.3.28:
+  version "0.3.28"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.28.tgz#d5d32395c512124543c1349289163754a09a5b04"
   dependencies:
     "@0xproject/base-contract" "^1.0.4"
     "@0xproject/order-utils" "^1.0.1-rc.2"
@@ -4819,29 +4819,6 @@ set-protocol-utils@0.3.27:
     lint-staged "^7.2.0"
     lodash "^4.17.4"
     tiny-promisify "^1.0.0"
-    tslint-eslint-rules "^5.3.1"
-    web3 "0.20.0"
-
-set-protocol-utils@^0.3.20:
-  version "0.3.20"
-  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.20.tgz#a7c2d00990b220d4ee26f987a9a3018ae92050c4"
-  dependencies:
-    "@0xproject/base-contract" "^1.0.4"
-    "@0xproject/order-utils" "^1.0.1-rc.2"
-    "@0xproject/types" "^1.0.1-rc.3"
-    "@0xproject/typescript-typings" "^1.0.4"
-    "@0xproject/web3-wrapper" "^1.1.2"
-    "@types/lodash" "4.14.104"
-    "@types/node" "^8.0.53"
-    abi-decoder "^1.0.9"
-    bignumber.js "~4.1.0"
-    ethereum-types "^1.0.0"
-    ethereumjs-util "^5.1.1"
-    ethers "3.0.22"
-    husky "^0.14.3"
-    js-sha3 "^0.7.0"
-    lint-staged "^7.2.0"
-    lodash "^4.17.4"
     tslint-eslint-rules "^5.3.1"
     web3 "0.20.0"
 

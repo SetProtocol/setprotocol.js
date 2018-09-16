@@ -18,13 +18,17 @@
 
 import * as _ from 'lodash';
 import * as Web3 from 'web3';
-import { Address } from 'set-protocol-utils';
-import { StandardTokenMockContract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
+import { Address, SetProtocolUtils } from 'set-protocol-utils';
+import {
+  StandardTokenMockContract,
+  SetTokenContract,
+  VaultContract,
+} from 'set-protocol-contracts';
 
 import { ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { CoreWrapper } from '../wrappers';
+import { CoreWrapper, ERC20Wrapper } from '../wrappers';
 import { BigNumber, extractNewSetTokenAddressFromLogs, generateTxOpts, getFormattedLogsFromTxHash } from '../util';
 import { TxData } from '../types/common';
 
@@ -38,6 +42,7 @@ export class FactoryAPI {
   private web3: Web3;
   private assert: Assertions;
   private core: CoreWrapper;
+  private erc20: ERC20Wrapper;
   private setTokenFactoryAddress: Address;
 
   /**
@@ -51,6 +56,7 @@ export class FactoryAPI {
   constructor(web3: Web3 = undefined, core: CoreWrapper = undefined, setTokenFactoryAddress: Address) {
     this.web3 = web3;
     this.core = core;
+    this.erc20 = new ERC20Wrapper(this.web3);
     this.assert = new Assertions(this.web3);
     this.setTokenFactoryAddress = setTokenFactoryAddress;
   }
@@ -105,6 +111,32 @@ export class FactoryAPI {
     return extractNewSetTokenAddressFromLogs(transactionLogs);
   }
 
+  /**
+   * Calculates the minimum allowable natural unit for a list of ERC20 component addresses
+   * where the minimum natural unit allowed equal 10 ** (18 - minDecimal)
+   *
+   * @param componentAddresses    Component ERC20 addresses
+   * @return                      The minimum value of the natural unit allowed by component decimals
+   */
+  public async calculateMinimumNaturalUnit(components: Address[]): Promise<BigNumber> {
+    let minDecimal;
+    try {
+      const componentDecimalPromises = _.map(components, component =>
+        this.erc20.decimals(component)
+      );
+
+      const decimals = await Promise.all(componentDecimalPromises);
+      minDecimal = BigNumber.min(decimals);
+    } catch (error) {
+      // If any of the conponent addresses does not implement decimals(),
+      // we assume the worst and set minDecimal to 0 so that minimum natural unit
+      // will be 10^18.
+      minDecimal = SetProtocolUtils.CONSTANTS.ZERO;
+    }
+
+    return new BigNumber(10 ** (18 - minDecimal.toNumber()));
+  }
+
   /* ============ Private Assertions ============ */
 
   private async assertCreateSet(
@@ -126,27 +158,21 @@ export class FactoryAPI {
       this.assert.common.greaterThanZero(unit, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(unit));
     });
 
-    let minDecimals = new BigNumber(18);
-    let tokenDecimals;
     await Promise.all(
       components.map(async componentAddress => {
         this.assert.common.isValidString(componentAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('component'));
         this.assert.schema.isValidAddress('componentAddress', componentAddress);
 
-        const tokenContract = await StandardTokenMockContract.at(componentAddress, this.web3, {});
-        try {
-          tokenDecimals = await tokenContract.decimals.callAsync();
-          if (tokenDecimals.lt(minDecimals)) {
-            minDecimals = tokenDecimals;
-          }
-        } catch (err) {
-          minDecimals = ZERO;
-        }
-
         await this.assert.erc20.implementsERC20(componentAddress);
       }),
     );
 
-    this.assert.core.validateNaturalUnit(naturalUnit, minDecimals, coreAPIErrors.INVALID_NATURAL_UNIT());
+    const minNaturalUnit = await this.calculateMinimumNaturalUnit(components);
+
+    this.assert.common.isGreaterOrEqualThan(
+      naturalUnit,
+      minNaturalUnit,
+      coreAPIErrors.INVALID_NATURAL_UNIT(minNaturalUnit),
+    );
   }
 }

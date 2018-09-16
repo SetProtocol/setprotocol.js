@@ -2,6 +2,7 @@ export {
   deployTransferProxyContract,
   deployVaultContract,
   deployCoreContract,
+  deployNoDecimalTokenAsync,
   deploySetTokenFactoryContract,
   deployTokenAsync,
   deployTokensAsync,

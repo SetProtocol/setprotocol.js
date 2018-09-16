@@ -326,8 +326,9 @@ describe('FactoryAPI', () => {
       });
 
       test('throws', async () => {
+        const minNaturalUnit = await factoryAPI.calculateMinimumNaturalUnit(subjectComponents);
         return expect(subject()).to.be.rejectedWith(
-          `Natural unit must be larger than minimum unit allowed by components.`
+          `Natural unit must be larger than minimum unit, ${minNaturalUnit.toString()}, allowed by components.`
         );
       });
     });

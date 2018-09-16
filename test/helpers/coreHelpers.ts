@@ -5,6 +5,7 @@ import { Address, SetProtocolTestUtils } from 'set-protocol-utils';
 import {
   Core,
   ERC20Wrapper,
+  NoDecimalTokenMock,
   OrderLibrary,
   SetTokenFactory,
   SetToken,
@@ -16,6 +17,7 @@ import {
   AuthorizableContract,
   BaseContract,
   CoreContract,
+  NoDecimalTokenMockContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -191,6 +193,24 @@ export const deployTokensAsync = async (
   });
 
   return mockTokens;
+};
+
+export const deployNoDecimalTokenAsync = async (
+  provider: Provider,
+  owner: Address = DEFAULT_ACCOUNT,
+): Promise<NoDecimalTokenMockContract> => {
+  const noDecimalTokenMockContract = contract(NoDecimalTokenMock);
+  noDecimalTokenMockContract.setProvider(provider);
+  noDecimalTokenMockContract.defaults(TX_DEFAULTS);
+
+  const mockToken = await noDecimalTokenMockContract.new(
+    owner,
+    DEPLOYED_TOKEN_QUANTITY,
+    'Test',
+    'TST',
+  );
+
+  return mockToken;
 };
 
 export const deploySetTokenAsync = async(

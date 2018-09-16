@@ -50,12 +50,6 @@ export class CoreAssertions {
     }
   }
 
-  public validateNaturalUnit(naturalUnit: BigNumber, minDecimal: BigNumber, errorMessage: string) {
-    if (naturalUnit.lt(10 ** (18 - minDecimal.toNumber()))) {
-      throw new Error(errorMessage);
-    }
-  }
-
   public isValidSignature(
     data: string,
     signerAddress: Address,
