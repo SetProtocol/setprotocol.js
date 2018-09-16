@@ -269,6 +269,27 @@ export class OrderAPI {
 
   /* ============ Private Assertions ============ */
 
+  private assertOrdersValidity(signedIssuanceOrder: SignedIssuanceOrder, orders: ExchangeOrder[]): void {
+    let ordersTakerTokenAmount = SetProtocolUtils.CONSTANTS.ZERO;
+    _.each(orders, (order: any) => {
+      if (SetProtocolUtils.isZeroExOrder(order)) {
+        ordersTakerTokenAmount = ordersTakerTokenAmount.plus(order.takerAssetAmount);
+        this.assert.common.greaterThanZero(
+          order.fillAmount,
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(order.fillAmount),
+        );
+      } else if (SetProtocolUtils.isTakerWalletOrder(order)) {
+        ordersTakerTokenAmount = ordersTakerTokenAmount.plus(order.takerTokenAmount);
+      }
+    });
+
+    this.assert.common.isGreaterOrEqualThan(
+      signedIssuanceOrder.makerTokenAmount,
+      ordersTakerTokenAmount,
+      coreAPIErrors.MAKER_TOKEN_INSUFFICIENT(signedIssuanceOrder.makerTokenAmount, ordersTakerTokenAmount),
+    );
+  }
+
   private async assertFillOrder(
     transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
@@ -282,23 +303,7 @@ export class OrderAPI {
     this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
-    let ordersTakerTokenAmount = SetProtocolUtils.CONSTANTS.ZERO;
-    _.each(orders, (order: any) => {
-      if (SetProtocolUtils.isZeroExOrder(order)) {
-        ordersTakerTokenAmount = ordersTakerTokenAmount.plus(order.takerAssetAmount);
-        this.assert.common.greaterThanZero(
-          order.fillAmount,
-          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(order.fillAmount),
-        );
-      } else if (SetProtocolUtils.isTakerWalletOrder(order)) {
-        ordersTakerTokenAmount = ordersTakerTokenAmount.plus(order.takerTokenAmount);
-      }
-    });
-    this.assert.common.isGreaterOrEqualThan(
-      signedIssuanceOrder.makerTokenAmount,
-      ordersTakerTokenAmount,
-      coreAPIErrors.MAKER_TOKEN_INSUFFICIENT(signedIssuanceOrder.makerTokenAmount, ordersTakerTokenAmount),
-    );
+    this.assertOrdersValidity(signedIssuanceOrder, orders);
 
     await this.assert.order.isIssuanceOrderFillable(
       this.core.coreAddress,
