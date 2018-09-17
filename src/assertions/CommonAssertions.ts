@@ -54,4 +54,10 @@ export class CommonAssertions {
       throw new Error(errorMessage);
     }
   }
+
+  public isEqualString(string1: string, string2: string, errorMessage: string) {
+    if (string1 !== string2) {
+      throw new Error(errorMessage);
+    }
+  }
 }

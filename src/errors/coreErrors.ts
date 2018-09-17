@@ -35,6 +35,8 @@ export const coreAPIErrors = {
   MAKER_TOKEN_INSUFFICIENT: (makerTokenAmount: BigNumber, ordersTakerTokenAmount: BigNumber) =>
     `The maker token amount, ${makerTokenAmount.toString()} of issuance order is not enough ` +
     `to fill the passed in order taker amount, ${ordersTakerTokenAmount.toString()}`,
+  ISSUANCE_ORDER_MAKER_ZERO_EX_TAKER_MISMATCH: () =>
+    'Issuance order maker token needs to equal the taker asset of the 0x orders',
 };
 
 export const coreAssertionErrors = {

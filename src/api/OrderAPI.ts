@@ -269,7 +269,7 @@ export class OrderAPI {
 
   /* ============ Private Assertions ============ */
 
-  private assertFillAmountValidity(
+  private assertZeroExOrderValidity(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: ExchangeOrder[],
@@ -282,6 +282,11 @@ export class OrderAPI {
           coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(order.fillAmount),
         );
         zeroExFillAmounts = zeroExFillAmounts.plus(order.fillAmount);
+        this.assert.common.isEqualString(
+          signedIssuanceOrder.makerToken,
+          SetProtocolUtils.extractAddressFromAssetData(order.takerAssetData),
+          coreAPIErrors.ISSUANCE_ORDER_MAKER_ZERO_EX_TAKER_MISMATCH(),
+        );
       }
     });
 
@@ -312,7 +317,7 @@ export class OrderAPI {
     this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
-    this.assertFillAmountValidity(signedIssuanceOrder, quantityToFill, orders);
+    this.assertZeroExOrderValidity(signedIssuanceOrder, quantityToFill, orders);
 
     await this.assert.order.isIssuanceOrderFillable(
       this.core.coreAddress,
