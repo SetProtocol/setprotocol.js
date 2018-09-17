@@ -275,7 +275,7 @@ export class OrderAPI {
     orders: ExchangeOrder[],
   ): void {
     let zeroExFillAmounts = SetProtocolUtils.CONSTANTS.ZERO;
-    _.each(orders, (order: ExchangeOrder) => {
+    _.each(orders, (order: any) => {
       if (SetProtocolUtils.isZeroExOrder(order)) {
         this.assert.common.greaterThanZero(
           order.fillAmount,
