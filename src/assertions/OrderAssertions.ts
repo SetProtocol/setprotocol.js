@@ -17,7 +17,13 @@
 'use strict';
 
 import * as _ from 'lodash';
-import { Address, IssuanceOrder, SetProtocolUtils, SignedIssuanceOrder } from 'set-protocol-utils';
+import {
+  Address,
+  ExchangeOrder,
+  IssuanceOrder,
+  SetProtocolUtils,
+  SignedIssuanceOrder,
+} from 'set-protocol-utils';
 import { erc20AssertionErrors, coreAPIErrors, setTokenAssertionsErrors } from '../errors';
 import { SetTokenContract, CoreContract } from 'set-protocol-contracts';
 import { CoreAssertions } from './CoreAssertions';
@@ -124,5 +130,40 @@ export class OrderAssertions {
     if (relayerToken !== NULL_ADDRESS) {
       await this.erc20Assertions.implementsERC20(relayerToken);
     }
+  }
+
+  public isValidZeroExOrderFills (
+    signedIssuanceOrder: SignedIssuanceOrder,
+    quantityToFill: BigNumber,
+    orders: ExchangeOrder[],
+  ) {
+    let zeroExFillAmounts = SetProtocolUtils.CONSTANTS.ZERO;
+    _.each(orders, (order: any) => {
+      if (SetProtocolUtils.isZeroExOrder(order)) {
+        this.commonAssertions.greaterThanZero(
+          order.fillAmount,
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(order.fillAmount),
+        );
+        zeroExFillAmounts = zeroExFillAmounts.plus(order.fillAmount);
+        this.commonAssertions.isEqualString(
+          signedIssuanceOrder.makerToken,
+          SetProtocolUtils.extractAddressFromAssetData(order.takerAssetData),
+          coreAPIErrors.ISSUANCE_ORDER_MAKER_ZERO_EX_TAKER_MISMATCH(),
+        );
+      }
+    });
+
+    // All 0x signed fill order fillAmounts are filled using the makerTokenAmount of the
+    // signedIssuanceOrder so we need to make sure that signedIssuanceOrder.makerTokenAmount
+    // has enough for the 0x orders (scaled by fraction of order quantity being filled).
+    const {
+      makerTokenAmount,
+      quantity,
+    } = signedIssuanceOrder;
+    this.commonAssertions.isGreaterOrEqualThan(
+      signedIssuanceOrder.makerTokenAmount.mul(quantityToFill).div(quantity),
+      zeroExFillAmounts,
+      coreAPIErrors.MAKER_TOKEN_INSUFFICIENT(signedIssuanceOrder.makerTokenAmount, zeroExFillAmounts),
+    );
   }
 }

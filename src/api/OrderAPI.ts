@@ -269,41 +269,6 @@ export class OrderAPI {
 
   /* ============ Private Assertions ============ */
 
-  private assertZeroExOrderValidity(
-    signedIssuanceOrder: SignedIssuanceOrder,
-    quantityToFill: BigNumber,
-    orders: ExchangeOrder[],
-  ): void {
-    let zeroExFillAmounts = SetProtocolUtils.CONSTANTS.ZERO;
-    _.each(orders, (order: any) => {
-      if (SetProtocolUtils.isZeroExOrder(order)) {
-        this.assert.common.greaterThanZero(
-          order.fillAmount,
-          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(order.fillAmount),
-        );
-        zeroExFillAmounts = zeroExFillAmounts.plus(order.fillAmount);
-        this.assert.common.isEqualString(
-          signedIssuanceOrder.makerToken,
-          SetProtocolUtils.extractAddressFromAssetData(order.takerAssetData),
-          coreAPIErrors.ISSUANCE_ORDER_MAKER_ZERO_EX_TAKER_MISMATCH(),
-        );
-      }
-    });
-
-    // All 0x signed fill order fillAmounts are filled using the makerTokenAmount of the
-    // signedIssuanceOrder so we need to make sure that signedIssuanceOrder.makerTokenAmount
-    // has enough for the 0x orders (scaled by fraction of order quantity being filled).
-    const {
-      makerTokenAmount,
-      quantity,
-    } = signedIssuanceOrder;
-    this.assert.common.isGreaterOrEqualThan(
-      signedIssuanceOrder.makerTokenAmount.mul(quantityToFill).div(quantity),
-      zeroExFillAmounts,
-      coreAPIErrors.MAKER_TOKEN_INSUFFICIENT(signedIssuanceOrder.makerTokenAmount, zeroExFillAmounts),
-    );
-  }
-
   private async assertFillOrder(
     transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
@@ -317,7 +282,7 @@ export class OrderAPI {
     this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
-    this.assertZeroExOrderValidity(signedIssuanceOrder, quantityToFill, orders);
+    this.assert.order.isValidZeroExOrderFills(signedIssuanceOrder, quantityToFill, orders);
 
     await this.assert.order.isIssuanceOrderFillable(
       this.core.coreAddress,
