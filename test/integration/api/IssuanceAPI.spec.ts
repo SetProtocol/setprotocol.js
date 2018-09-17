@@ -441,7 +441,7 @@ describe('IssuanceAPI', () => {
       });
 
       test('throws', async () => {
-        let currentBalance = await setToken.balanceOf.callAsync(subjectCaller);
+        const currentBalance = await setToken.balanceOf.callAsync(subjectCaller);
 
         return expect(subject()).to.be.rejectedWith(
       `
