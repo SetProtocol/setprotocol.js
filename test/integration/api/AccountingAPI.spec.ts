@@ -217,9 +217,6 @@ describe('AccountingAPI', () => {
     });
 
     describe('when the caller does not have enough balance of token', async () => {
-      let userTokenBalance: BigNumber;
-      let token: StandardTokenMockContract;
-
       beforeEach(async () => {
         token = _.first(tokens);
         subjectTokenAddressesToDeposit = [token.address];
