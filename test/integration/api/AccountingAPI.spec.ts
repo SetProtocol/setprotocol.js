@@ -218,8 +218,8 @@ describe('AccountingAPI', () => {
 
     describe('when the caller does not have enough balance of token', async () => {
       beforeEach(async () => {
-        token = _.first(tokens);
-        subjectTokenAddressesToDeposit = [token.address];
+        const depositToken = _.first(tokens);
+        subjectTokenAddressesToDeposit = [depositToken.address];
         subjectQuantitiesToDeposit = [depositQuantity];
         subjectCaller = ACCOUNTS[1].address;
       });

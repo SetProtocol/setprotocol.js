@@ -56,7 +56,7 @@ export class ERC20Assertions {
         tokenAddress,
         userAddress,
         userBalance,
-        requiredBalance
+        requiredBalance,
       ));
     }
   }
