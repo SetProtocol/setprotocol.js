@@ -194,8 +194,6 @@ export class OrderAssertions {
   ) {
     const {
       quantity,
-      requiredComponents,
-      requiredComponentAmounts,
       setAddress,
     } = issuanceOrder;
 
