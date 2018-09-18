@@ -186,7 +186,7 @@ export class OrderAssertions {
       coreAPIErrors.MAKER_TOKEN_INSUFFICIENT(signedIssuanceOrder.makerTokenAmount, zeroExFillAmounts),
     );
   }
-  
+
   public async isValidFillQuantity(
     coreContract: CoreContract,
     issuanceOrder: IssuanceOrder,
