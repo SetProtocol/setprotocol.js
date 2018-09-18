@@ -62,13 +62,13 @@ export class SetTokenAssertions {
    *
    * @param  setTokenAddress  The address of the Set Token contract
    * @param  ownerAddress     The address of the owner
-   * @param  quantityInWei    Amount of a Set in wei
+   * @param  quantity         Amount of a Set in base units
    * @return                  Void Promise
    */
   public async hasSufficientBalances(
     setTokenAddress: Address,
     ownerAddress: Address,
-    quantityInWei: BigNumber,
+    quantity: BigNumber,
   ): Promise<void> {
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
 
@@ -88,7 +88,7 @@ export class SetTokenAssertions {
     const userHasSufficientBalancePromises = _.map(
       componentInstances,
       async (componentInstance, index) => {
-        const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
+        const requiredBalance = units[index].div(naturalUnit).times(quantity);
         await this.erc20Assertions.hasSufficientBalanceAsync(
           componentInstance.address,
           ownerAddress,
@@ -104,14 +104,14 @@ export class SetTokenAssertions {
    *
    * @param  setTokenAddress  The address of the Set Token contract
    * @param  ownerAddress     The address of the owner
-   * @param  quantityInWei    Amount of a Set in wei
+   * @param  quantity         Amount of a Set in base units
    * @return                  Void Promise
    */
   public async hasSufficientAllowances(
     setTokenAddress: Address,
     ownerAddress: Address,
     spenderAddress: Address,
-    quantityInWei: BigNumber,
+    quantity: BigNumber,
   ): Promise<void> {
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
 
@@ -131,7 +131,7 @@ export class SetTokenAssertions {
     const userHasSufficientAllowancePromises = _.map(
       componentInstances,
       async (componentInstance, index) => {
-        const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
+        const requiredBalance = units[index].div(naturalUnit).times(quantity);
         return await this.erc20Assertions.hasSufficientAllowanceAsync(
           componentInstance.address,
           ownerAddress,
@@ -145,12 +145,12 @@ export class SetTokenAssertions {
 
   public async isMultipleOfNaturalUnit(
     setTokenAddress: Address,
-    quantityInWei: BigNumber,
+    quantity: BigNumber,
   ): Promise<void> {
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
 
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
-    if (!quantityInWei.mod(naturalUnit).eq(ZERO)) {
+    if (!quantity.mod(naturalUnit).eq(ZERO)) {
       throw new Error(coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT());
     }
   }
