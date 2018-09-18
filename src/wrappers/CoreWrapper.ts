@@ -106,7 +106,7 @@ export class CoreWrapper {
    * Asynchronously issues a particular quantity of tokens from a particular Sets
    *
    * @param  setAddress     Set token address of Set being issued
-   * @param  quantity       Number of Sets a user wants to issue in Wei
+   * @param  quantity       Number of Sets a user wants to issue in base units
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up
    */
@@ -125,7 +125,7 @@ export class CoreWrapper {
    * Asynchronously redeems a particular quantity of tokens from a particular Sets
    *
    * @param  setAddress     Set token address of Set being issued
-   * @param  quantity       Number of Sets a user wants to redeem in Wei
+   * @param  quantity       Number of Sets a user wants to redeem in base units
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up
    */
@@ -149,7 +149,7 @@ export class CoreWrapper {
    * address in the vault. The rest will be transferred to the user.
    *
    * @param  setAddress        The address of the Set token
-   * @param  quantity          The number of tokens to redeem
+   * @param  quantity          Number of Sets a user wants to redeem in base units
    * @param  toExclude         Bitmask of component indexes to exclude from withdrawal
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash to then later look up
@@ -175,7 +175,7 @@ export class CoreWrapper {
    * Asynchronously deposits tokens to the vault
    *
    * @param  tokenAddress  Address of the ERC20 token
-   * @param  quantity      Number of tokens a user wants to deposit into the vault
+   * @param  quantity      Number of tokens a user wants to deposit into the vault in base units
    * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
@@ -194,7 +194,7 @@ export class CoreWrapper {
    * Asynchronously withdraw tokens from the vault
    *
    * @param  tokenAddress  Address of the ERC20 token
-   * @param  quantity      Number of tokens a user wants to withdraw from the vault
+   * @param  quantity      Number of tokens a user wants to withdraw from the vault in base units
    * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
@@ -213,7 +213,7 @@ export class CoreWrapper {
    * Asynchronously batch deposits tokens to the vault
    *
    * @param  tokenAddresses    Addresses of ERC20 tokens user wants to deposit into the vault
-   * @param  quantitiesInWei   Numbers of tokens a user wants to deposit into the vault
+   * @param  quantities        Numbers of tokens a user wants to deposit into the vault in base units
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
@@ -232,7 +232,7 @@ export class CoreWrapper {
    * Asynchronously batch withdraws tokens from the vault
    *
    * @param  tokenAddresses    Addresses of ERC20 tokens user wants to withdraw from the vault
-   * @param  quantitiesInWei   Numbers of tokens a user wants to withdraw from the vault
+   * @param  quantities        Numbers of tokens a user wants to withdraw from the vault
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
@@ -252,7 +252,7 @@ export class CoreWrapper {
    *
    * @param  signedIssuanceOrder       Signed issuance order to fill
    * @param  signature                 Signature of the order
-   * @param  fillAmount                Number of Set to fill in this call
+   * @param  fillAmount                Number of Sets to fill in this call in base units
    * @param  orderData                 Bytes representation of orders used to fill issuance order
    * @param  txOpts                    The options for executing the transaction
    * @return                           A transaction hash
@@ -300,7 +300,7 @@ export class CoreWrapper {
    * Cancels an Issuance Order
    *
    * @param  issuanceOrder             Issuance order to cancel
-   * @param  cancelAmount              Number of Set to cancel in this call
+   * @param  cancelAmount              Number of Sets to cancel in this call in base units
    * @param  txOpts                    The options for executing the transaction
    * @return                           A transaction hash
    */
