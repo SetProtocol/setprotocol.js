@@ -418,7 +418,20 @@ describe('OrderAPI', () => {
       const makerTokenAddress = componentTokens[2].address;
       const relayerTokenAddress = componentTokens[3].address;
 
-      subjectSetAddress = '0x8d98a5d27fe34cf7ca410e771a897ed0f14af34c';
+      const setComponentUnit = ether(4);
+      const componentAddresses = componentTokens.map(token => token.address);
+      const componentUnits = componentTokens.map(token => setComponentUnit);
+      const naturalUnit = ether(2);
+      const setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        componentUnits,
+        naturalUnit,
+      );
+
+      subjectSetAddress = setToken.address;
       subjectQuantity = ether(4);
       subjectMakerToken = makerTokenAddress;
       subjectMakerAddress = DEFAULT_ACCOUNT;
@@ -634,6 +647,22 @@ describe('OrderAPI', () => {
 
         Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
       `
+        );
+      });
+    });
+
+    describe('when a required component are not a part of the Set', async () => {
+      let invalidComponentAddress: Address;
+      beforeEach(async () => {
+        const [invalidComponent] = await deployTokensAsync(1, provider);
+
+        invalidComponentAddress = invalidComponent.address;
+        subjectRequiredComponents[0] = invalidComponentAddress;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Token address at ${invalidComponentAddress} is not a component of the Set Token at ${subjectSetAddress}.`
         );
       });
     });
