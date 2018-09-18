@@ -19,10 +19,11 @@
 import * as _ from 'lodash';
 import {
   Address,
-  ExchangeOrder,
   IssuanceOrder,
   SetProtocolUtils,
   SignedIssuanceOrder,
+  TakerWalletOrder,
+  ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 import { erc20AssertionErrors, coreAPIErrors, setTokenAssertionsErrors } from '../errors';
 import { SetTokenContract, CoreContract } from 'set-protocol-contracts';
@@ -135,7 +136,7 @@ export class OrderAssertions {
   public isValidZeroExOrderFills (
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orders: ExchangeOrder[],
+    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
     let zeroExFillAmounts = SetProtocolUtils.CONSTANTS.ZERO;
     _.each(orders, (order: any) => {

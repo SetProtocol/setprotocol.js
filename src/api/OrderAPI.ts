@@ -25,7 +25,8 @@ import {
   IssuanceOrder,
   SetProtocolUtils,
   SignedIssuanceOrder,
-  ExchangeOrder,
+  TakerWalletOrder,
+  ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
@@ -197,14 +198,14 @@ export class OrderAPI {
    *
    * @param  signedIssuanceOrder    Object confomring to SignedIssuanceOrder to fill
    * @param  quantity               Amount of Set to fill in this call
-   * @param  orders                 Array of order objects conforming to ExchangeOrder type
+   * @param  orders                 Array of order objects conforming to (TakerWalletOrder | ZeroExSignedFillOrder) type
    * @param  txOpts                 Transaction options object conforming to TxData with signer, gas, and gasPrice data
    * @return                        Transaction hash
    */
   public async fillOrderAsync(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantity: BigNumber,
-    orders: ExchangeOrder[],
+    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
     txOpts: TxData,
   ): Promise<string> {
     await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantity, orders);
@@ -273,7 +274,7 @@ export class OrderAPI {
     transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orders: ExchangeOrder[],
+    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
     const { signature, ...issuanceOrder } = signedIssuanceOrder;
     await this.assert.order.isValidIssuanceOrder(issuanceOrder);
