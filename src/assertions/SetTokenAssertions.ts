@@ -160,7 +160,6 @@ export class SetTokenAssertions {
     componentAddress: Address,
   ): Promise<void> {
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
-    const components = await setTokenInstance.getComponents.callAsync(new BigNumber(0));
     const isComponent = await setTokenInstance.tokenIsComponent.callAsync(componentAddress);
     if (!isComponent) {
       throw new Error(setTokenAssertionsErrors.IS_NOT_COMPONENT(setTokenAddress, componentAddress));
