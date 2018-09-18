@@ -54,7 +54,7 @@ export class BlockchainAPI {
    * @param web3    Web3.js Provider instance you would like the SetProtocol.js library
    *                  to use for interacting with the Ethereum network.
    */
-  constructor(web3: Web3 = undefined) {
+  constructor(web3: Web3) {
     this.web3 = web3;
     this.assert = new Assertions(this.web3);
 
@@ -84,7 +84,7 @@ export class BlockchainAPI {
     return new Promise<TransactionReceipt>((resolve, reject) => {
       intervalManager.setInterval(
         txHash,
-        async () => {
+        async (): Promise<boolean> => {
           try {
             const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
             if (receipt) {
@@ -98,6 +98,7 @@ export class BlockchainAPI {
           } catch (e) {
             reject(e);
           }
+          return false;
         },
         async () => {
           reject(new Error(BlockchainAPIErrors.AWAIT_MINE_TX_TIMED_OUT(txHash)));

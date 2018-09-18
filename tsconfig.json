@@ -4,6 +4,7 @@
     "target": "es5",
     "declaration": true,
     "noImplicitAny": true,
+    "strictNullChecks": true,
     "moduleResolution": "node",
     "sourceMap": true,
     "outDir": "dist",
