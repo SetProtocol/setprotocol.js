@@ -149,7 +149,7 @@ export class CoreWrapper {
    * address in the vault. The rest will be transferred to the user.
    *
    * @param  setAddress        The address of the Set token
-   * @param  quantity          Nmber of Sets a user wants to redeem in base units
+   * @param  quantity          Number of Sets a user wants to redeem in base units
    * @param  toExclude         Bitmask of component indexes to exclude from withdrawal
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash to then later look up
@@ -175,7 +175,7 @@ export class CoreWrapper {
    * Asynchronously deposits tokens to the vault
    *
    * @param  tokenAddress  Address of the ERC20 token
-   * @param  quantity      Number of Sets a user wants to deposit into the vault in base units
+   * @param  quantity      Number of tokens a user wants to deposit into the vault in base units
    * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
@@ -194,7 +194,7 @@ export class CoreWrapper {
    * Asynchronously withdraw tokens from the vault
    *
    * @param  tokenAddress  Address of the ERC20 token
-   * @param  quantity      Number of Sets a user wants to withdraw from the vault in base units
+   * @param  quantity      Number of tokens a user wants to withdraw from the vault in base units
    * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
@@ -213,7 +213,7 @@ export class CoreWrapper {
    * Asynchronously batch deposits tokens to the vault
    *
    * @param  tokenAddresses    Addresses of ERC20 tokens user wants to deposit into the vault
-   * @param  quantities        Numbers of Sets a user wants to deposit into the vault in base units
+   * @param  quantities        Numbers of tokens a user wants to deposit into the vault in base units
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
