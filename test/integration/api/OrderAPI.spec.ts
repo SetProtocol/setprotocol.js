@@ -611,7 +611,7 @@ describe('OrderAPI', () => {
 
     let subjectSignedIssuanceOrder: SignedIssuanceOrder;
     let subjectQuantityToFill: BigNumber;
-    let subjectOrders: (ZeroExSignedFillOrder | TakerWalletOrder)[];
+    let subjectOrders: (TakerWalletOrder | ZeroExSignedFillOrder)[];
     let subjectCaller: Address;
 
     beforeEach(async () => {
@@ -854,7 +854,7 @@ describe('OrderAPI', () => {
     let subjectQuantityToFill: BigNumber;
 
     beforeEach(async () => {
-      let orders: (ZeroExSignedFillOrder | TakerWalletOrder)[];
+      let orders: (TakerWalletOrder | ZeroExSignedFillOrder)[];
       let caller: Address;
 
       await deployTakerWalletWrapperContract(transferProxy, core, provider);

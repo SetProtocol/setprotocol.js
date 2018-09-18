@@ -25,8 +25,6 @@ import {
   Bytes,
   IssuanceOrder,
   SignedIssuanceOrder,
-  TakerWalletOrder,
-  ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 
 import { ContractWrapper } from '.';

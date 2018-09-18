@@ -35,13 +35,6 @@ import { NULL_ADDRESS } from '../constants';
 import { BigNumber, generateFutureTimestamp,  } from '../util';
 import { TxData } from '../types/common';
 
-export {
-  IssuanceOrder,
-  SignedIssuanceOrder,
-  TakerWalletOrder,
-  ZeroExSignedFillOrder
-};
-
 /**
  * @title OrderAPI
  * @author Set Protocol
@@ -205,15 +198,14 @@ export class OrderAPI {
    *
    * @param  signedIssuanceOrder    Object confomring to SignedIssuanceOrder to fill
    * @param  quantity               Amount of Set to fill in this call
-   * @param  orders                 Array of order objects conforming to either TakerWalletOrder or
-   *                                  ZeroExSignedFillOrder to fill issuance order
+   * @param  orders                 Array of order objects conforming to (TakerWalletOrder | ZeroExSignedFillOrder) type
    * @param  txOpts                 Transaction options object conforming to TxData with signer, gas, and gasPrice data
    * @return                        Transaction hash
    */
   public async fillOrderAsync(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantity: BigNumber,
-    orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
+    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
     txOpts: TxData,
   ): Promise<string> {
     await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantity, orders);
@@ -282,7 +274,7 @@ export class OrderAPI {
     transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orders: (ZeroExSignedFillOrder | TakerWalletOrder)[],
+    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
     const { signature, ...issuanceOrder } = signedIssuanceOrder;
     await this.assert.order.isValidIssuanceOrder(issuanceOrder);
@@ -290,6 +282,8 @@ export class OrderAPI {
     this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
     this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
+
+    this.assert.order.isValidZeroExOrderFills(signedIssuanceOrder, quantityToFill, orders);
 
     await this.assert.order.isIssuanceOrderFillable(
       this.core.coreAddress,
