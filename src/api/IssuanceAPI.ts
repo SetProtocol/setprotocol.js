@@ -146,7 +146,7 @@ export class IssuanceAPI {
       setAddress,
       quantity,
     );
-    await this.assert.erc20.hasSufficientBalance(
+    await this.assert.erc20.hasSufficientBalanceAsync(
       setAddress,
       transactionCaller,
       quantity,
