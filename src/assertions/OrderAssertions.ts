@@ -165,11 +165,20 @@ export class OrderAssertions {
           order.fillAmount,
           coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(order.fillAmount),
         );
+
         zeroExFillAmounts = zeroExFillAmounts.plus(order.fillAmount);
+
+        // The 0x taker token is equivalent to the issuance order maker token
         this.commonAssertions.isEqualString(
           signedIssuanceOrder.makerToken,
           SetProtocolUtils.extractAddressFromAssetData(order.takerAssetData),
           coreAPIErrors.ISSUANCE_ORDER_MAKER_ZERO_EX_TAKER_MISMATCH(),
+        );
+
+        // The 0x maker token is a component of the set
+        this.setTokenAssertions.isComponent(
+          signedIssuanceOrder.setAddress,
+          SetProtocolUtils.extractAddressFromAssetData(order.makerAssetData),
         );
       }
     });

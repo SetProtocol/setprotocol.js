@@ -857,6 +857,22 @@ describe('OrderAPI', () => {
         );
       });
     });
+
+    describe('when the 0x order maker asset is not a component of the Set', async () => {
+      beforeEach(async () => {
+        const zeroExOrder = subjectOrders[1];
+        zeroExOrder.
+
+
+        subjectOrders = [];
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The array orders cannot be empty.`
+        );
+      });
+    });
   });
 
   describe('cancelOrderAsync', async () => {
