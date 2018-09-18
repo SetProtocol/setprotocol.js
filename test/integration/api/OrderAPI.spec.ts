@@ -32,6 +32,7 @@ import {
   Address,
   Bytes,
   ECSig,
+  encodeAddressAsAssetData,
   IssuanceOrder,
   SetProtocolUtils,
   SetProtocolTestUtils,
@@ -703,6 +704,9 @@ describe('OrderAPI', () => {
     let issuanceOrderQuantity: BigNumber;
     let setToken: SetTokenContract;
 
+    let takerWalletOrder: TakerWalletOrder;
+    let zeroExOrder: ZeroExSignedFillOrder;
+
     let subjectSignedIssuanceOrder: SignedIssuanceOrder;
     let subjectQuantityToFill: BigNumber;
     let subjectOrders: (TakerWalletOrder | ZeroExSignedFillOrder)[];
@@ -772,12 +776,12 @@ describe('OrderAPI', () => {
         issuanceOrderTakerRelayerFee,
       );
 
-      const takerWalletOrder = {
+      takerWalletOrder = {
         takerTokenAddress: firstComponent.address,
         takerTokenAmount: requredComponentAmounts[0],
       } as TakerWalletOrder;
 
-      const zeroExOrder: ZeroExSignedFillOrder = await setProtocolUtils.generateZeroExSignedFillOrder(
+      zeroExOrder = await setProtocolUtils.generateZeroExSignedFillOrder(
         NULL_ADDRESS,                                  // senderAddress
         zeroExOrderMaker,                              // makerAddress
         NULL_ADDRESS,                                  // takerAddress
@@ -860,8 +864,7 @@ describe('OrderAPI', () => {
 
     describe('when the 0x order maker asset is not a component of the Set', async () => {
       beforeEach(async () => {
-        const zeroExOrder = subjectOrders[1];
-        zeroExOrder.
+        zeroExOrder.makerAssetData = encodeAddressAsAssetData();
 
 
         subjectOrders = [];
