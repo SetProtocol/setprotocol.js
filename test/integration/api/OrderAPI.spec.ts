@@ -863,16 +863,19 @@ describe('OrderAPI', () => {
     });
 
     describe('when the 0x order maker asset is not a component of the Set', async () => {
+      let nonComponentToken: StandardTokenMockContract;
+
       beforeEach(async () => {
-        zeroExOrder.makerAssetData = encodeAddressAsAssetData();
+        nonComponentToken = await deployTokenAsync(provider, issuanceOrderMaker);
+        zeroExOrder.makerAssetData = assetDataUtils.encodeERC20AssetData(nonComponentToken.address);
 
-
-        subjectOrders = [];
+        subjectOrders[1] = zeroExOrder;
       });
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `The array orders cannot be empty.`
+          `Token address at ${nonComponentToken.address} is not a component ` +
+          `of the Set Token at ${subjectSignedIssuanceOrder.setAddress}.`
         );
       });
     });
