@@ -651,8 +651,9 @@ describe('OrderAPI', () => {
       });
     });
 
-    describe('when a required component are not a part of the Set', async () => {
+    describe('when a required component is not a part of the Set', async () => {
       let invalidComponentAddress: Address;
+
       beforeEach(async () => {
         const [invalidComponent] = await deployTokensAsync(1, provider);
 
