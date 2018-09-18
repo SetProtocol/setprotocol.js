@@ -418,7 +418,20 @@ describe('OrderAPI', () => {
       const makerTokenAddress = componentTokens[2].address;
       const relayerTokenAddress = componentTokens[3].address;
 
-      subjectSetAddress = '0x8d98a5d27fe34cf7ca410e771a897ed0f14af34c';
+      const setComponentUnit = ether(4);
+      const componentAddresses = componentTokens.map(token => token.address);
+      const componentUnits = componentTokens.map(token => setComponentUnit);
+      const naturalUnit = ether(2);
+      const setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        componentUnits,
+        naturalUnit,
+      );
+
+      subjectSetAddress = setToken.address;
       subjectQuantity = ether(4);
       subjectMakerToken = makerTokenAddress;
       subjectMakerAddress = DEFAULT_ACCOUNT;
@@ -638,6 +651,23 @@ describe('OrderAPI', () => {
       });
     });
 
+    describe('when a required component is not a part of the Set', async () => {
+      let invalidComponentAddress: Address;
+
+      beforeEach(async () => {
+        const [invalidComponent] = await deployTokensAsync(1, provider);
+
+        invalidComponentAddress = invalidComponent.address;
+        subjectRequiredComponents[0] = invalidComponentAddress;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Token address at ${invalidComponentAddress} is not a component of the Set Token at ${subjectSetAddress}.`
+        );
+      });
+    });
+
     describe('when the token addresses contains an address for a contract that is not ERC20', async () => {
       let nonERC20ContractAddress: Address;
 
@@ -788,7 +818,7 @@ describe('OrderAPI', () => {
       expect(newUserSetTokenBalance).to.eql(expectedUserSetTokenBalance);
     });
 
-    describe('when the quantities containes a negative number', async () => {
+    describe('when the quantities contains a negative number', async () => {
       let invalidQuantity: BigNumber;
 
       beforeEach(async () => {
@@ -812,6 +842,18 @@ describe('OrderAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `The array orders cannot be empty.`
+        );
+      });
+    });
+
+    describe('when the fill amount is not valid multiple of natural unit', async () => {
+      beforeEach(async () => {
+        subjectQuantityToFill = ether(3); // naturalUnit = ether(2)
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Fill quantity of issuance order needs to be multiple of natural unit.`
         );
       });
     });

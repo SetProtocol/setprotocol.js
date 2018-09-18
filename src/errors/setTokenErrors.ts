@@ -20,6 +20,6 @@
 export const setTokenAssertionsErrors = {
   IS_NOT_A_VALID_SET: (setAddress: string) =>
     `Contract at ${setAddress} is not a valid Set token address.`,
-  IS_NOT_COMPONENT: (setTokenAddress: string, tokenAddress: string) =>
-    `Token address at ${tokenAddress} is not a component of the Set Token at ${setTokenAddress}.`,
+  IS_NOT_COMPONENT: (setTokenAddress: string, componentAddress: string) =>
+    `Token address at ${componentAddress} is not a component of the Set Token at ${setTokenAddress}.`,
 };

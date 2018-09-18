@@ -223,7 +223,7 @@ describe('IssuanceAPI', () => {
       });
 
       test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith('Quantity needs to be multiple of natural unit.');
+        return expect(subject()).to.be.rejectedWith('Issue quantity needs to be multiple of natural unit.');
       });
     });
 
@@ -431,7 +431,7 @@ describe('IssuanceAPI', () => {
       });
 
       test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith('Quantity needs to be multiple of natural unit.');
+        return expect(subject()).to.be.rejectedWith('Redeem quantity needs to be multiple of natural unit.');
       });
     });
 
