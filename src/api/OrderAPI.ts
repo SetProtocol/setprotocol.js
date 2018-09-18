@@ -197,7 +197,7 @@ export class OrderAPI {
    *
    * @param  signedIssuanceOrder    Object confomring to SignedIssuanceOrder to fill
    * @param  quantity               Amount of Set to fill in this call
-   * @param  orders                 Array of order objects conforming to FillOrder type
+   * @param  orders                 Array of order objects conforming to ExchangeOrder type
    * @param  txOpts                 Transaction options object conforming to TxData with signer, gas, and gasPrice data
    * @return                        Transaction hash
    */
