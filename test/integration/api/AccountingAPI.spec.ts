@@ -246,8 +246,6 @@ describe('AccountingAPI', () => {
       });
 
       test('throws', async () => {
-        const tokenAddress = subjectTokenAddressesToDeposit[0];
-
         return expect(subject()).to.be.rejectedWith(
       `
         User: ${TX_DEFAULTS.from} has allowance of ${insufficientAllowance}
