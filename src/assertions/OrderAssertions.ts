@@ -207,16 +207,11 @@ export class OrderAssertions {
     // Verify there is still enough non-filled amount in order
     this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FILL_EXCEEDS_AVAILABLE());
 
-    // Validate that fraction of issuance order components being filled is valid multiple of natural unit
-    await Promise.all(
-      _.map(requiredComponentAmounts, async (componentAmount, i) => {
-        const partialComponentAmount = componentAmount.mul(fillQuantity).div(quantity);
-        await this.setTokenAssertions.isMultipleOfNaturalUnit(
-          setAddress,
-          partialComponentAmount,
-          `Partial amount of required component ${requiredComponents[i]}`,
-        );
-      })
+    // Validate that fillAmount of issuance order is valid multiple of natural unit
+    await this.setTokenAssertions.isMultipleOfNaturalUnit(
+      setAddress,
+      fillQuantity,
+      `Fill quantity of issuance order`,
     );
   }
 }
