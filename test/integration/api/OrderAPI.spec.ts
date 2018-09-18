@@ -818,7 +818,7 @@ describe('OrderAPI', () => {
       expect(newUserSetTokenBalance).to.eql(expectedUserSetTokenBalance);
     });
 
-    describe('when the quantities containes a negative number', async () => {
+    describe('when the quantities contains a negative number', async () => {
       let invalidQuantity: BigNumber;
 
       beforeEach(async () => {
@@ -842,6 +842,18 @@ describe('OrderAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `The array orders cannot be empty.`
+        );
+      });
+    });
+
+    describe('when the fill amount is not valid multiple of natural unit', async () => {
+      beforeEach(async () => {
+        subjectQuantityToFill = ether(3); // naturalUnit = ether(2)
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Fill quantity of issuance order needs to be multiple of natural unit.`
         );
       });
     });

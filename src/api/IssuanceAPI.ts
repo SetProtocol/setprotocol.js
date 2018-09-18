@@ -116,6 +116,7 @@ export class IssuanceAPI {
     await this.assert.setToken.isMultipleOfNaturalUnit(
       setAddress,
       quantity,
+      'Issue quantity',
     );
 
     await this.assert.setToken.hasSufficientBalances(setAddress, transactionCaller, quantity);
@@ -145,6 +146,7 @@ export class IssuanceAPI {
     await this.assert.setToken.isMultipleOfNaturalUnit(
       setAddress,
       quantity,
+      'Redeem quantity',
     );
     await this.assert.erc20.hasSufficientBalanceAsync(
       setAddress,
