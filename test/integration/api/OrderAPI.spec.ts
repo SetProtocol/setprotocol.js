@@ -818,7 +818,7 @@ describe('OrderAPI', () => {
 
     describe('when the fill amount is not valid multiple of natural unit', async () => {
       beforeEach(async () => {
-        subjectQuantityToFill = ether(5); // naturalUnit = ether(2)
+        subjectQuantityToFill = ether(3); // naturalUnit = ether(2)
       });
 
       test('throws', async () => {
