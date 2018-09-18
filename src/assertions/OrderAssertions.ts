@@ -192,13 +192,31 @@ export class OrderAssertions {
     issuanceOrder: IssuanceOrder,
     fillQuantity: BigNumber,
   ) {
-    const { quantity } = issuanceOrder;
+    const {
+      quantity,
+      requiredComponents,
+      requiredComponentAmounts,
+      setAddress,
+    } = issuanceOrder;
 
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
     const filledAmount = await coreContract.orderFills.callAsync(orderHash);
     const cancelledAmount = await coreContract.orderCancels.callAsync(orderHash);
     const fillableQuantity = quantity.sub(filledAmount).sub(cancelledAmount);
 
+    // Verify there is still enough non-filled amount in order
     this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FILL_EXCEEDS_AVAILABLE());
+
+    // Validate that fraction of issuance order components being filled is valid multiple of natural unit
+    await Promise.all(
+      _.map(requiredComponentAmounts, async (componentAmount, i) => {
+        const partialComponentAmount = componentAmount.mul(fillQuantity).div(quantity);
+        await this.setTokenAssertions.isMultipleOfNaturalUnit(
+          setAddress,
+          partialComponentAmount,
+          `Partial amount of required component ${requiredComponents[i]}`,
+        );
+      })
+    );
   }
 }

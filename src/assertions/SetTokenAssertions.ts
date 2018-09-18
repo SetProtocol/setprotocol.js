@@ -146,12 +146,13 @@ export class SetTokenAssertions {
   public async isMultipleOfNaturalUnit(
     setTokenAddress: Address,
     quantityInWei: BigNumber,
+    quantityType: string,
   ): Promise<void> {
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
 
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
     if (!quantityInWei.mod(naturalUnit).eq(ZERO)) {
-      throw new Error(coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT());
+      throw new Error(coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(quantityType));
     }
   }
 }
