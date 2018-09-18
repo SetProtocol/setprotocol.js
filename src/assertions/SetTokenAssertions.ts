@@ -154,4 +154,15 @@ export class SetTokenAssertions {
       throw new Error(coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT());
     }
   }
+
+  public async isComponent(
+    setTokenAddress: Address,
+    componentAddress: Address,
+  ): Promise<void> {
+    const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
+    const isComponent = await setTokenInstance.tokenIsComponent.callAsync(componentAddress);
+    if (!isComponent) {
+      throw new Error(setTokenAssertionsErrors.IS_NOT_COMPONENT(setTokenAddress, componentAddress));
+    }
+  }
 }
