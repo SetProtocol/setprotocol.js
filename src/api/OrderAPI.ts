@@ -284,6 +284,7 @@ export class OrderAPI {
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
     await this.assert.order.isValidZeroExOrderFills(signedIssuanceOrder, quantityToFill, orders);
+    await this.assert.order.isValidTakerWalletOrderFills(signedIssuanceOrder, quantityToFill, orders);
 
     await this.assert.order.isIssuanceOrderFillable(
       this.core.coreAddress,

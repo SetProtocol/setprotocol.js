@@ -877,6 +877,23 @@ describe('OrderAPI', () => {
         );
       });
     });
+
+    describe('when the taker wallet order taker asset is not a component of the Set', async () => {
+      let nonComponentToken: StandardTokenMockContract;
+
+      beforeEach(async () => {
+        nonComponentToken = await deployTokenAsync(provider, issuanceOrderMaker);
+        takerWalletOrder.takerTokenAddress = nonComponentToken.address;
+        subjectOrders[0] = takerWalletOrder;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Token address at ${nonComponentToken.address} is not a component ` +
+          `of the Set Token at ${subjectSignedIssuanceOrder.setAddress}.`
+        );
+      });
+    });
   });
 
   describe('cancelOrderAsync', async () => {
