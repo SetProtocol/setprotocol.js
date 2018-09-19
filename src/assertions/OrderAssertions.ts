@@ -198,6 +198,30 @@ export class OrderAssertions {
     );
   }
 
+  public async isValidTakerWalletOrderFills (
+    signedIssuanceOrder: SignedIssuanceOrder,
+    quantityToFill: BigNumber,
+    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+  ) {
+    await Promise.all(
+      _.map(orders, async (order: any) => {
+        if (SetProtocolUtils.isTakerWalletOrder(order)) {
+
+          this.commonAssertions.greaterThanZero(
+            order.takerTokenAmount,
+            coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(order.takerTokenAmount),
+          );
+
+          // The taker wallet Taker token is a component of the set
+          await this.setTokenAssertions.isComponent(
+            signedIssuanceOrder.setAddress,
+            order.takerTokenAddress,
+          );
+        }
+      })
+    );
+  }
+
   public async isValidFillQuantity(
     coreContract: CoreContract,
     issuanceOrder: IssuanceOrder,
