@@ -248,8 +248,8 @@ describe('IssuanceAPI', () => {
       let requiredAllowance: BigNumber;
 
       beforeEach(async () => {
-        componentWithInsufficientAllowance = _.first(componentTokens);
-        requiredAllowance = _.first(componentUnits);
+        componentWithInsufficientAllowance = componentTokens[0];
+        requiredAllowance = componentUnits[0];
 
         await componentWithInsufficientAllowance.approve.sendTransactionAsync(
           transferProxy.address,
@@ -318,7 +318,7 @@ describe('IssuanceAPI', () => {
       let componentToWithdraw: StandardTokenMockContract;
 
       beforeEach(async () => {
-        componentToExclude = _.first(componentTokens);
+        componentToExclude = componentTokens[0];
         componentToWithdraw = componentTokens[1];
 
         subjectShouldWithdraw = true;

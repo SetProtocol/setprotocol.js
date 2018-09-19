@@ -618,7 +618,7 @@ describe('OrderAPI', () => {
       beforeEach(async () => {
         const placeholderRequiredAmountForArrayLength = ether(1);
 
-        subjectRequiredComponents = [undefined];
+        subjectRequiredComponents = [''];
         subjectRequredComponentAmounts = [placeholderRequiredAmountForArrayLength];
       });
 

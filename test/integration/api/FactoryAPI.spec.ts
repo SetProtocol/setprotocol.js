@@ -202,7 +202,7 @@ describe('FactoryAPI', () => {
 
     describe('when the component addresses and units are not the same length', async () => {
       beforeEach(async () => {
-        subjectComponents = [_.first(subjectComponents)];
+        subjectComponents = [subjectComponents[0]];
         subjectUnits = [];
       });
 
