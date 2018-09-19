@@ -45,9 +45,8 @@ export class SetTokenAPI {
    *
    * @param  web3    Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
    *                   with the Ethereum network
-   * @param  core    Address of the Set Core contract
    */
-  constructor(web3: Web3 = undefined) {
+  constructor(web3: Web3) {
     this.web3 = web3;
     this.assert = new Assertions(this.web3);
 

@@ -52,9 +52,9 @@ export class OrderAPI {
    *
    * @param web3    Web3.js Provider instance you would like the SetProtocol.js library
    *                  to use for interacting with the Ethereum network
-   * @param core    Address of the Set Core contract
+   * @param core    An instance of CoreWrapper to interact with the deployed Core contract
    */
-  constructor(web3: Web3 = undefined, core: CoreWrapper = undefined) {
+  constructor(web3: Web3, core: CoreWrapper) {
     this.web3 = web3;
     this.core = core;
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
@@ -231,7 +231,7 @@ export class OrderAPI {
   public async cancelOrderAsync(
     issuanceOrder: IssuanceOrder,
     quantity: BigNumber,
-    txOpts?: TxData,
+    txOpts: TxData,
   ): Promise<string> {
     await this.assertCancelOrder(txOpts.from, issuanceOrder, quantity);
 

@@ -53,7 +53,7 @@ export async function awaitTx(
               const block = await web3.eth.getBlock(resolvedReceipt.blockNumber);
               const current = await web3.eth.getBlock('latest');
 
-              if (current.number - block.number >= 12) {
+              if (current.number && block.number && current.number - block.number >= 12) {
                 const txn = await web3.eth.getTransaction(txHash);
                 if (txn.blockNumber) {
                   resolve(resolvedReceipt);

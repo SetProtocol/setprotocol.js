@@ -52,8 +52,8 @@ export class CoreWrapper {
   public constructor(
     web3: Web3,
     coreAddress: Address,
-    transferProxyAddress: Address = undefined,
-    vaultAddress: Address = undefined,
+    transferProxyAddress: Address,
+    vaultAddress: Address,
   ) {
     this.web3 = web3;
     this.contracts = new ContractWrapper(this.web3);

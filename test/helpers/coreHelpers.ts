@@ -1,7 +1,7 @@
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
 import { Provider } from 'ethereum-types';
-import { Address, SetProtocolTestUtils } from 'set-protocol-utils';
+import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
 import {
   Core,
   ERC20Wrapper,
@@ -157,7 +157,7 @@ export const deployTokenAsync = async (
 ): Promise<StandardTokenMockContract> => {
   const tokens = await deployTokensAsync(1, provider, owner);
 
-  return _.first(tokens);
+  return tokens[0];
 };
 
 export const deployTokensAsync = async (
@@ -297,7 +297,7 @@ export const getTokenBalances = async (
     return token.balanceOf.callAsync(owner);
   });
 
-  let ownerBalances: BigNumber[];
+  let ownerBalances: BigNumber[] = new Array(tokens.length).fill(SetProtocolUtils.CONSTANTS.ZERO);
   await Promise.all(balancePromises).then(fetchedTokenBalances => {
     ownerBalances = fetchedTokenBalances;
   });

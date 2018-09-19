@@ -18,7 +18,7 @@
 
 import * as _ from 'lodash';
 import * as Web3 from 'web3';
-import { Address } from 'set-protocol-utils';
+import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import { Provider } from 'ethereum-types';
 import { Vault, VaultContract } from 'set-protocol-contracts';
 
@@ -39,7 +39,7 @@ export const getVaultBalances = async (
     return vault.getOwnerBalance.callAsync(address, owner);
   });
 
-  let vaultBalances: BigNumber[];
+  let vaultBalances: BigNumber[] = new Array(tokenAddresses.length).fill(SetProtocolUtils.CONSTANTS.ZERO);
   await Promise.all(balancePromises).then(fetchedTokenBalances => {
     vaultBalances = fetchedTokenBalances;
   });
