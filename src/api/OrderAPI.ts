@@ -285,7 +285,7 @@ export class OrderAPI {
     this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
-    await this.orderAsserts.assertLiquidityOrders(
+    await this.orderAsserts.assertLiquidityValidity(
       transactionCaller,
       signedIssuanceOrder,
       quantityToFill,

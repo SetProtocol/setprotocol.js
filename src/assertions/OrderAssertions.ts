@@ -171,14 +171,14 @@ export class OrderAssertions {
     );
   }
 
-  public async assertLiquidityOrders(
-    transactionCaller: Address,
+  public async assertLiquidityValidity(
+    issuanceOrderTaker: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
     await this.assertOrdersValidity(
-      transactionCaller,
+      issuanceOrderTaker,
       signedIssuanceOrder,
       quantityToFill,
       orders,
@@ -234,7 +234,7 @@ export class OrderAssertions {
   }
 
   private async assertOrdersValidity(
-    transactionCaller: Address,
+    issuanceOrderTaker: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: (TakerWalletOrder | ZeroExSignedFillOrder)[]
@@ -245,7 +245,7 @@ export class OrderAssertions {
           await this.isValidZeroExOrderFills(signedIssuanceOrder, quantityToFill, order);
         } else if (SetProtocolUtils.isTakerWalletOrder(order)) {
           await this.isValidTakerWalletOrderFills(
-            transactionCaller,
+            issuanceOrderTaker,
             signedIssuanceOrder,
             quantityToFill,
             order,
@@ -280,7 +280,7 @@ export class OrderAssertions {
   }
 
   private async isValidTakerWalletOrderFills (
-    transactionCaller: Address,
+    issuanceOrderTaker: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     order: TakerWalletOrder,
@@ -302,14 +302,14 @@ export class OrderAssertions {
     const transferProxyAddress = await this.coreContract.transferProxy.callAsync();
     await this.erc20Assertions.hasSufficientAllowanceAsync(
       takerTokenAddress,
-      transactionCaller,
+      issuanceOrderTaker,
       transferProxyAddress,
       takerTokenAmount,
     );
 
     await this.erc20Assertions.hasSufficientBalanceAsync(
       takerTokenAddress,
-      transactionCaller,
+      issuanceOrderTaker,
       takerTokenAmount,
     );
   }
