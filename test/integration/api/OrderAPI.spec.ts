@@ -703,6 +703,9 @@ describe('OrderAPI', () => {
     let issuanceOrderQuantity: BigNumber;
     let setToken: SetTokenContract;
 
+    let takerWalletOrder: TakerWalletOrder;
+    let zeroExOrder: ZeroExSignedFillOrder;
+
     let subjectSignedIssuanceOrder: SignedIssuanceOrder;
     let subjectQuantityToFill: BigNumber;
     let subjectOrders: (TakerWalletOrder | ZeroExSignedFillOrder)[];
@@ -772,12 +775,12 @@ describe('OrderAPI', () => {
         issuanceOrderTakerRelayerFee,
       );
 
-      const takerWalletOrder = {
+      takerWalletOrder = {
         takerTokenAddress: firstComponent.address,
         takerTokenAmount: requredComponentAmounts[0],
       } as TakerWalletOrder;
 
-      const zeroExOrder: ZeroExSignedFillOrder = await setProtocolUtils.generateZeroExSignedFillOrder(
+      zeroExOrder = await setProtocolUtils.generateZeroExSignedFillOrder(
         NULL_ADDRESS,                                  // senderAddress
         zeroExOrderMaker,                              // makerAddress
         NULL_ADDRESS,                                  // takerAddress
@@ -854,6 +857,23 @@ describe('OrderAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `Fill quantity of issuance order needs to be multiple of natural unit.`
+        );
+      });
+    });
+
+    describe('when the 0x order maker asset is not a component of the Set', async () => {
+      let nonComponentToken: StandardTokenMockContract;
+
+      beforeEach(async () => {
+        nonComponentToken = await deployTokenAsync(provider, issuanceOrderMaker);
+        zeroExOrder.makerAssetData = SetProtocolUtils.encodeAddressAsAssetData(nonComponentToken.address);
+        subjectOrders[1] = zeroExOrder;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Token address at ${nonComponentToken.address} is not a component ` +
+          `of the Set Token at ${subjectSignedIssuanceOrder.setAddress}.`
         );
       });
     });

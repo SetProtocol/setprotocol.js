@@ -43,7 +43,7 @@
     jsonschema "^1.2.0"
     lodash.values "^4.3.0"
 
-"@0xproject/order-utils@^1.0.1-rc.2":
+"@0xproject/order-utils@^1.0.1", "@0xproject/order-utils@^1.0.1-rc.2":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@0xproject/order-utils/-/order-utils-1.0.1.tgz#d64c1eb61d08a50ee2b24cab0a5f6d2127d40cf8"
   dependencies:
@@ -4733,7 +4733,32 @@ set-protocol-contracts@0.3.7:
     web3-utils "1.0.0-beta.35"
     zeppelin-solidity "^1.10.0"
 
-set-protocol-utils@0.3.29, set-protocol-utils@^0.3.28:
+set-protocol-utils@0.3.30:
+  version "0.3.30"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.30.tgz#d24f5cd34aa76b912a0744b958da47c976631b83"
+  dependencies:
+    "@0xproject/base-contract" "^1.0.4"
+    "@0xproject/order-utils" "^1.0.1"
+    "@0xproject/types" "^1.0.1-rc.3"
+    "@0xproject/typescript-typings" "^1.0.4"
+    "@0xproject/web3-wrapper" "^1.1.2"
+    "@types/lodash" "4.14.104"
+    "@types/node" "^8.0.53"
+    abi-decoder "^1.0.9"
+    bignumber.js "~4.1.0"
+    chai "^4.1.2"
+    ethereum-types "^1.0.0"
+    ethereumjs-util "^5.1.1"
+    ethers "3.0.22"
+    husky "^0.14.3"
+    js-sha3 "^0.7.0"
+    lint-staged "^7.2.0"
+    lodash "^4.17.4"
+    tiny-promisify "^1.0.0"
+    tslint-eslint-rules "^5.3.1"
+    web3 "0.20.0"
+
+set-protocol-utils@^0.3.28:
   version "0.3.29"
   resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.29.tgz#82b3b403db533368604faf130f9a70789f5f6630"
   dependencies:

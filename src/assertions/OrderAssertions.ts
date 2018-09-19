@@ -133,7 +133,6 @@ export class OrderAssertions {
     );
     await this.erc20Assertions.implementsERC20(makerToken);
 
-
     await Promise.all(
       requiredComponents.map(async (tokenAddress, i) => {
         this.commonAssertions.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
@@ -153,26 +152,37 @@ export class OrderAssertions {
     }
   }
 
-  public isValidZeroExOrderFills (
+  public async isValidZeroExOrderFills (
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
     let zeroExFillAmounts = SetProtocolUtils.CONSTANTS.ZERO;
-    _.each(orders, (order: any) => {
-      if (SetProtocolUtils.isZeroExOrder(order)) {
-        this.commonAssertions.greaterThanZero(
-          order.fillAmount,
-          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(order.fillAmount),
-        );
-        zeroExFillAmounts = zeroExFillAmounts.plus(order.fillAmount);
-        this.commonAssertions.isEqualString(
-          signedIssuanceOrder.makerToken,
-          SetProtocolUtils.extractAddressFromAssetData(order.takerAssetData),
-          coreAPIErrors.ISSUANCE_ORDER_MAKER_ZERO_EX_TAKER_MISMATCH(),
-        );
-      }
-    });
+    await Promise.all(
+      _.map(orders, async (order: any) => {
+        if (SetProtocolUtils.isZeroExOrder(order)) {
+          this.commonAssertions.greaterThanZero(
+            order.fillAmount,
+            coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(order.fillAmount),
+          );
+
+          zeroExFillAmounts = zeroExFillAmounts.plus(order.fillAmount);
+
+          // The 0x taker token is equivalent to the issuance order maker token
+          this.commonAssertions.isEqualString(
+            signedIssuanceOrder.makerToken,
+            SetProtocolUtils.extractAddressFromAssetData(order.takerAssetData),
+            coreAPIErrors.ISSUANCE_ORDER_MAKER_ZERO_EX_TAKER_MISMATCH(),
+          );
+
+          // The 0x maker token is a component of the set
+          await this.setTokenAssertions.isComponent(
+            signedIssuanceOrder.setAddress,
+            SetProtocolUtils.extractAddressFromAssetData(order.makerAssetData),
+          );
+        }
+      })
+    );
 
     // All 0x signed fill order fillAmounts are filled using the makerTokenAmount of the
     // signedIssuanceOrder so we need to make sure that signedIssuanceOrder.makerTokenAmount
