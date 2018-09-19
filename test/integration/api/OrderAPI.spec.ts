@@ -32,7 +32,6 @@ import {
   Address,
   Bytes,
   ECSig,
-  encodeAddressAsAssetData,
   IssuanceOrder,
   SetProtocolUtils,
   SetProtocolTestUtils,
@@ -867,8 +866,7 @@ describe('OrderAPI', () => {
 
       beforeEach(async () => {
         nonComponentToken = await deployTokenAsync(provider, issuanceOrderMaker);
-        zeroExOrder.makerAssetData = assetDataUtils.encodeERC20AssetData(nonComponentToken.address);
-
+        zeroExOrder.makerAssetData = SetProtocolUtils.encodeAddressAsAssetData(nonComponentToken.address);
         subjectOrders[1] = zeroExOrder;
       });
 
