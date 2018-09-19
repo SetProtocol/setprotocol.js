@@ -153,19 +153,29 @@ export class OrderAssertions {
   }
 
   public async assertLiquidityOrders(
+    coreAddress: Address,
+    transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
+    const coreContract = await CoreContract.at(coreAddress, this.web3, {});
+
     let makerTokensUsed = SetProtocolUtils.CONSTANTS.ZERO;
 
     await Promise.all(
       _.map(orders, async (order: any) => {
         if (SetProtocolUtils.isZeroExOrder(order)) {
-          await this.isValidZeroExOrderFills(signedIssuanceOrder, quantityToFill, order);
+          await this.isValidZeroExOrderFills(coreContract, signedIssuanceOrder, quantityToFill, order);
           makerTokensUsed = makerTokensUsed.plus(order.fillAmount);
         } else if (SetProtocolUtils.isTakerWalletOrder(order)) {
-          await this.isValidTakerWalletOrderFills(signedIssuanceOrder, quantityToFill, order);
+          await this.isValidTakerWalletOrderFills(
+            coreContract,
+            transactionCaller,
+            signedIssuanceOrder,
+            quantityToFill,
+            order
+          );
         }
       })
     );
@@ -185,6 +195,7 @@ export class OrderAssertions {
   }
 
   private async isValidZeroExOrderFills (
+    coreContract: CoreContract,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     order: ZeroExSignedFillOrder,
@@ -209,19 +220,39 @@ export class OrderAssertions {
   }
 
   private async isValidTakerWalletOrderFills (
+    coreContract: CoreContract,
+    transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     order: TakerWalletOrder,
   ) {
+    const { takerTokenAddress, takerTokenAmount } = order;
+
     this.commonAssertions.greaterThanZero(
-      order.takerTokenAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(order.takerTokenAmount),
+      takerTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerTokenAmount),
     );
 
     // The taker wallet Taker token is a component of the set
     await this.setTokenAssertions.isComponent(
       signedIssuanceOrder.setAddress,
-      order.takerTokenAddress,
+      takerTokenAddress,
+    );
+
+    // Checks that the taker has sufficient allowance set to the transfer proxy
+    const transferProxyAddress = await coreContract.transferProxy.callAsync();
+    await this.erc20Assertions.hasSufficientAllowanceAsync(
+      takerTokenAddress,
+      transactionCaller,
+      transferProxyAddress,
+      takerTokenAmount,
+    );
+
+    // Checks that the taker has sufficient balance of the taker token
+    await this.erc20Assertions.hasSufficientBalanceAsync(
+      takerTokenAddress,
+      transactionCaller,
+      takerTokenAmount,
     );
   }
 
