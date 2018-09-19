@@ -41,6 +41,8 @@ import * as Web3 from 'web3';
 
 export class OrderAssertions {
   private web3: Web3;
+  private coreAddress: Address;
+  private coreContract: CoreContract;
   private erc20Assertions: ERC20Assertions;
   private schemaAssertions: SchemaAssertions;
   private coreAssertions: CoreAssertions;
@@ -56,12 +58,21 @@ export class OrderAssertions {
     this.setTokenAssertions = new SetTokenAssertions(web3);
   }
 
+  public setCoreAddress(coreAddress: Address) {
+    this.coreAddress = coreAddress;
+  }
+
+  public async ensureCoreContract() {
+    if (!this.coreContract) {
+      this.coreContract = await CoreContract.at(this.coreAddress, this.web3, {});
+    }
+  }
+
   public async isIssuanceOrderFillable(
-    coreAddress: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     fillQuantity: BigNumber,
   ): Promise<void> {
-    const coreContract = await CoreContract.at(coreAddress, this.web3, {});
+    await this.ensureCoreContract();
 
     const issuanceOrder: IssuanceOrder = _.omit(signedIssuanceOrder, 'signature');
     const {
@@ -75,10 +86,10 @@ export class OrderAssertions {
     // Checks the order has not expired
     this.commonAssertions.isValidExpiration(expiration, coreAPIErrors.EXPIRATION_PASSED());
 
-    await this.isValidFillQuantity(coreContract, issuanceOrder, fillQuantity);
+    await this.isValidFillQuantity(issuanceOrder, fillQuantity);
 
     // Checks that the maker has sufficient allowance set to the transfer proxy
-    const transferProxyAddress = await coreContract.transferProxy.callAsync();
+    const transferProxyAddress = await this.coreContract.transferProxy.callAsync();
     await this.erc20Assertions.hasSufficientAllowanceAsync(
       makerToken,
       makerAddress,
@@ -153,24 +164,20 @@ export class OrderAssertions {
   }
 
   public async assertLiquidityOrders(
-    coreAddress: Address,
     transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
-    const coreContract = await CoreContract.at(coreAddress, this.web3, {});
-
     let makerTokensUsed = SetProtocolUtils.CONSTANTS.ZERO;
 
     await Promise.all(
       _.map(orders, async (order: any) => {
         if (SetProtocolUtils.isZeroExOrder(order)) {
-          await this.isValidZeroExOrderFills(coreContract, signedIssuanceOrder, quantityToFill, order);
+          await this.isValidZeroExOrderFills(signedIssuanceOrder, quantityToFill, order);
           makerTokensUsed = makerTokensUsed.plus(order.fillAmount);
         } else if (SetProtocolUtils.isTakerWalletOrder(order)) {
           await this.isValidTakerWalletOrderFills(
-            coreContract,
             transactionCaller,
             signedIssuanceOrder,
             quantityToFill,
@@ -195,7 +202,6 @@ export class OrderAssertions {
   }
 
   private async isValidZeroExOrderFills (
-    coreContract: CoreContract,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     order: ZeroExSignedFillOrder,
@@ -220,12 +226,13 @@ export class OrderAssertions {
   }
 
   private async isValidTakerWalletOrderFills (
-    coreContract: CoreContract,
     transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     order: TakerWalletOrder,
   ) {
+    await this.ensureCoreContract();
+
     const { takerTokenAddress, takerTokenAmount } = order;
 
     this.commonAssertions.greaterThanZero(
@@ -240,7 +247,7 @@ export class OrderAssertions {
     );
 
     // Checks that the taker has sufficient allowance set to the transfer proxy
-    const transferProxyAddress = await coreContract.transferProxy.callAsync();
+    const transferProxyAddress = await this.coreContract.transferProxy.callAsync();
     await this.erc20Assertions.hasSufficientAllowanceAsync(
       takerTokenAddress,
       transactionCaller,
@@ -257,18 +264,19 @@ export class OrderAssertions {
   }
 
   public async isValidFillQuantity(
-    coreContract: CoreContract,
     issuanceOrder: IssuanceOrder,
     fillQuantity: BigNumber,
   ) {
+    await this.ensureCoreContract();
+
     const {
       quantity,
       setAddress,
     } = issuanceOrder;
 
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-    const filledAmount = await coreContract.orderFills.callAsync(orderHash);
-    const cancelledAmount = await coreContract.orderCancels.callAsync(orderHash);
+    const filledAmount = await this.coreContract.orderFills.callAsync(orderHash);
+    const cancelledAmount = await this.coreContract.orderCancels.callAsync(orderHash);
     const fillableQuantity = quantity.sub(filledAmount).sub(cancelledAmount);
 
     // Verify there is still enough non-filled amount in order

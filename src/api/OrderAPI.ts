@@ -59,6 +59,7 @@ export class OrderAPI {
     this.core = core;
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
     this.assert = new Assertions(this.web3);
+    this.assert.order.setCoreAddress(this.core.coreAddress);
   }
 
   /**
@@ -130,7 +131,7 @@ export class OrderAPI {
    * @param  fillQuantity           Fill quantity to check if fillable
    */
   public async validateOrderFillableOrThrowAsync(signedIssuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber) {
-    await this.assert.order.isIssuanceOrderFillable(this.core.coreAddress, signedIssuanceOrder, fillQuantity);
+    await this.assert.order.isIssuanceOrderFillable(signedIssuanceOrder, fillQuantity);
   }
 
   /**
@@ -284,7 +285,6 @@ export class OrderAPI {
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
     await this.assert.order.assertLiquidityOrders(
-      this.core.coreAddress,
       transactionCaller,
       signedIssuanceOrder,
       quantityToFill,
@@ -292,7 +292,6 @@ export class OrderAPI {
     );
 
     await this.assert.order.isIssuanceOrderFillable(
-      this.core.coreAddress,
       signedIssuanceOrder,
       quantityToFill,
     );
