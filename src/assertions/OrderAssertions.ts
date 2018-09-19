@@ -74,21 +74,18 @@ export class OrderAssertions {
   ): Promise<void> {
     await this.ensureCoreContract();
 
-    const issuanceOrder: IssuanceOrder = _.omit(signedIssuanceOrder, 'signature');
     const {
       expiration,
       quantity,
       makerToken,
       makerAddress,
       makerTokenAmount,
-    } = issuanceOrder;
+    } = signedIssuanceOrder;
 
-    // Checks the order has not expired
     this.commonAssertions.isValidExpiration(expiration, coreAPIErrors.EXPIRATION_PASSED());
 
-    await this.isValidFillQuantity(issuanceOrder, fillQuantity);
+    await this.isValidFillQuantity(signedIssuanceOrder, fillQuantity);
 
-    // Checks that the maker has sufficient allowance set to the transfer proxy
     const transferProxyAddress = await this.coreContract.transferProxy.callAsync();
     await this.erc20Assertions.hasSufficientAllowanceAsync(
       makerToken,
@@ -97,8 +94,12 @@ export class OrderAssertions {
       makerTokenAmount,
     );
 
-    // Checks that the maker has sufficient balance of the maker token
-    const requiredMakerTokenAmount = fillQuantity.div(quantity).mul(makerTokenAmount);
+    const requiredMakerTokenAmount = this.calculateReqMakerToken(
+      fillQuantity,
+      quantity,
+      makerTokenAmount,
+    );
+
     await this.erc20Assertions.hasSufficientBalanceAsync(
       makerToken,
       makerAddress,
@@ -194,8 +195,15 @@ export class OrderAssertions {
       makerTokenAmount,
       quantity,
     } = signedIssuanceOrder;
+
+    const requiredMakerTokenAmount = this.calculateReqMakerToken(
+      quantityToFill,
+      quantity,
+      makerTokenAmount,
+    );
+
     this.commonAssertions.isGreaterOrEqualThan(
-      signedIssuanceOrder.makerTokenAmount.mul(quantityToFill).div(quantity),
+      requiredMakerTokenAmount,
       makerTokensUsed,
       coreAPIErrors.MAKER_TOKEN_INSUFFICIENT(signedIssuanceOrder.makerTokenAmount, makerTokensUsed),
     );
@@ -240,13 +248,11 @@ export class OrderAssertions {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerTokenAmount),
     );
 
-    // The taker wallet Taker token is a component of the set
     await this.setTokenAssertions.isComponent(
       signedIssuanceOrder.setAddress,
       takerTokenAddress,
     );
 
-    // Checks that the taker has sufficient allowance set to the transfer proxy
     const transferProxyAddress = await this.coreContract.transferProxy.callAsync();
     await this.erc20Assertions.hasSufficientAllowanceAsync(
       takerTokenAddress,
@@ -255,7 +261,6 @@ export class OrderAssertions {
       takerTokenAmount,
     );
 
-    // Checks that the taker has sufficient balance of the taker token
     await this.erc20Assertions.hasSufficientBalanceAsync(
       takerTokenAddress,
       transactionCaller,
@@ -263,11 +268,24 @@ export class OrderAssertions {
     );
   }
 
-  public async isValidFillQuantity(
-    issuanceOrder: IssuanceOrder,
+  private async isValidFillQuantity(
+    signedIssuanceOrder: SignedIssuanceOrder,
     fillQuantity: BigNumber,
   ) {
     await this.ensureCoreContract();
+
+    const fillableQuantity = await this.calculateFillableQuantity(signedIssuanceOrder);
+    this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FILL_EXCEEDS_AVAILABLE());
+
+    await this.setTokenAssertions.isMultipleOfNaturalUnit(
+      signedIssuanceOrder.setAddress,
+      fillQuantity,
+      `Fill quantity of issuance order`,
+    );
+  }
+
+  private async calculateFillableQuantity(signedIssuanceOrder: SignedIssuanceOrder): Promise<BigNumber> {
+    const issuanceOrder: IssuanceOrder = _.omit(signedIssuanceOrder, 'signature');
 
     const {
       quantity,
@@ -277,16 +295,14 @@ export class OrderAssertions {
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
     const filledAmount = await this.coreContract.orderFills.callAsync(orderHash);
     const cancelledAmount = await this.coreContract.orderCancels.callAsync(orderHash);
-    const fillableQuantity = quantity.sub(filledAmount).sub(cancelledAmount);
+    return quantity.sub(filledAmount).sub(cancelledAmount);
+  }
 
-    // Verify there is still enough non-filled amount in order
-    this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FILL_EXCEEDS_AVAILABLE());
-
-    // Validate that fillAmount of issuance order is valid multiple of natural unit
-    await this.setTokenAssertions.isMultipleOfNaturalUnit(
-      setAddress,
-      fillQuantity,
-      `Fill quantity of issuance order`,
-    );
+  private calculateReqMakerToken(
+    fillQuantity: BigNumber,
+    quantity: BigNumber,
+    makerTokenAmount: BigNumber
+  ): BigNumber {
+    return fillQuantity.div(quantity).mul(makerTokenAmount);
   }
 }
