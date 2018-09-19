@@ -37,21 +37,21 @@ export class VaultAssertions {
    * @param  vaultAddress     The address of the Vault contract
    * @param  tokenAddress     The address of the Set token contract
    * @param  ownerAddress     Address of owner withdrawing from vault
-   * @param  quantityInWei    Amount of a Set in wei
+   * @param  quantity         Amount of a Set in base units
    * @return                  Void Promise
    */
   public async hasSufficientTokenBalance(
     vaultAddress: Address,
     tokenAddress: Address,
     ownerAddress: Address,
-    quantityInWei: BigNumber,
+    quantity: BigNumber,
   ): Promise<void> {
     const vaultContract = await VaultContract.at(vaultAddress, this.web3, {});
 
     // Assert that user has sufficient balance of Set
     const ownerBalance = await vaultContract.getOwnerBalance.callAsync(tokenAddress, ownerAddress);
 
-    if (ownerBalance.lt(quantityInWei)) {
+    if (ownerBalance.lt(quantity)) {
       throw new Error(vaultAssertionErrors.INSUFFICIENT_TOKEN_BALANCE());
     }
   }
@@ -61,13 +61,13 @@ export class VaultAssertions {
    *
    * @param  vaultAddress     The address of the Vault contract
    * @param  setAddress       The address of the Set token contract
-   * @param  quantityInWei    Amount of a Set in wei
+   * @param  quantity         Amount of a Set in base units
    * @return                  Void Promise
    */
   public async hasSufficientSetTokensBalances(
     vaultAddress: Address,
     setTokenAddress: Address,
-    quantityInWei: BigNumber,
+    quantity: BigNumber,
   ): Promise<void> {
     const vaultInstance = await VaultContract.at(vaultAddress, this.web3, {});
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
@@ -90,7 +90,7 @@ export class VaultAssertions {
     const setHasSufficientBalancePromises = _.map(
       componentInstances,
       async (componentInstance, index) => {
-        const requiredBalance = units[index].div(naturalUnit).times(quantityInWei);
+        const requiredBalance = units[index].div(naturalUnit).times(quantity);
         const ownerBalance = await vaultInstance.getOwnerBalance.callAsync(
           componentInstance.address,
           setAddress,
