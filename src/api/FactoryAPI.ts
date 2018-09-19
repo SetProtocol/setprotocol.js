@@ -53,7 +53,7 @@ export class FactoryAPI {
    * @param core                      An instance of CoreWrapper to interact with the deployed Core contract
    * @param setTokenFactoryAddress    Address of the SetTokenFactory associated with the deployed Core contract
    */
-  constructor(web3: Web3 = undefined, core: CoreWrapper = undefined, setTokenFactoryAddress: Address) {
+  constructor(web3: Web3, core: CoreWrapper, setTokenFactoryAddress: Address) {
     this.web3 = web3;
     this.core = core;
     this.erc20 = new ERC20Wrapper(this.web3);

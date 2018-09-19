@@ -2,7 +2,7 @@ import * as Web3 from 'web3';
 import { Provider } from '../types/common';
 
 // This function has basically been copied vertabim from the amazing Dharma repo
-export const instantiateWeb3 = (provider: Provider = undefined): Web3 => {
+export const instantiateWeb3 = (provider: Provider): Web3 => {
   /**
    * There are two ways we can access a web3 provider:
    * 1. We pass in the address of an Eth node, e.g. https://localhost:8545

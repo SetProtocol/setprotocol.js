@@ -76,7 +76,7 @@ class SetProtocol {
    *                      to use for interacting with the Ethereum network.
    * @param config      Configuration object conforming to SetProtocolConfig with Set Protocol's contract addresses
    */
-  constructor(provider: Provider = undefined, config: SetProtocolConfig) {
+  constructor(provider: Provider, config: SetProtocolConfig) {
     this.web3 = instantiateWeb3(provider);
 
     this.core = new CoreWrapper(this.web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);

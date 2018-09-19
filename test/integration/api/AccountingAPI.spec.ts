@@ -160,7 +160,7 @@ describe('AccountingAPI', () => {
 
     describe('when the token addresses and quantities are not the same length', async () => {
       beforeEach(async () => {
-        subjectTokenAddressesToDeposit = [_.first(subjectTokenAddressesToDeposit)];
+        subjectTokenAddressesToDeposit = [subjectTokenAddressesToDeposit[0]];
         subjectQuantitiesToDeposit = [];
       });
 
@@ -177,7 +177,7 @@ describe('AccountingAPI', () => {
       beforeEach(async () => {
         invalidQuantity = new BigNumber(-1);
 
-        subjectTokenAddressesToDeposit = [_.first(subjectTokenAddressesToDeposit)];
+        subjectTokenAddressesToDeposit = [subjectTokenAddressesToDeposit[0]];
         subjectQuantitiesToDeposit = [invalidQuantity];
       });
 
@@ -190,7 +190,7 @@ describe('AccountingAPI', () => {
 
     describe('when the token addresses contains an empty address', async () => {
       beforeEach(async () => {
-        subjectTokenAddressesToDeposit = [undefined];
+        subjectTokenAddressesToDeposit = [''];
         subjectQuantitiesToDeposit = [depositQuantity];
       });
 
@@ -218,7 +218,7 @@ describe('AccountingAPI', () => {
 
     describe('when the caller does not have enough balance of token', async () => {
       beforeEach(async () => {
-        const depositToken = _.first(tokens);
+        const depositToken = tokens[0];
         subjectTokenAddressesToDeposit = [depositToken.address];
         subjectQuantitiesToDeposit = [depositQuantity];
         subjectCaller = ACCOUNTS[1].address;
@@ -339,7 +339,7 @@ describe('AccountingAPI', () => {
 
     describe('when the token addresses and quantities are not the same length', async () => {
       beforeEach(async () => {
-        subjectTokenAddressesToWithdraw = [_.first(subjectTokenAddressesToWithdraw)];
+        subjectTokenAddressesToWithdraw = [subjectTokenAddressesToWithdraw[0]];
         subjectQuantitiesToWithdraw = [];
       });
 
@@ -356,7 +356,7 @@ describe('AccountingAPI', () => {
       beforeEach(async () => {
         invalidQuantity = new BigNumber(-1);
 
-        subjectTokenAddressesToWithdraw = [_.first(subjectTokenAddressesToWithdraw)];
+        subjectTokenAddressesToWithdraw = [subjectTokenAddressesToWithdraw[0]];
         subjectQuantitiesToWithdraw = [invalidQuantity];
       });
 
@@ -369,7 +369,7 @@ describe('AccountingAPI', () => {
 
     describe('when the token addresses contains an empty address', async () => {
       beforeEach(async () => {
-        subjectTokenAddressesToWithdraw = [undefined];
+        subjectTokenAddressesToWithdraw = [''];
         subjectQuantitiesToWithdraw = [withdrawQuantity];
       });
 
