@@ -28,7 +28,7 @@ import {
   TakerWalletOrder,
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
-import { Assertions } from '../assertions';
+import { Assertions, OrderAssertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
 import { CoreWrapper } from '../wrappers';
 import { NULL_ADDRESS } from '../constants';
@@ -44,6 +44,7 @@ import { TxData } from '../types/common';
 export class OrderAPI {
   private web3: Web3;
   private assert: Assertions;
+  private orderAsserts: OrderAssertions;
   public core: CoreWrapper;
   public setProtocolUtils: SetProtocolUtils;
 
@@ -59,7 +60,7 @@ export class OrderAPI {
     this.core = core;
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
     this.assert = new Assertions(this.web3);
-    this.assert.order.setCoreAddress(this.core.coreAddress);
+    this.orderAsserts = new OrderAssertions(this.web3, this.core.coreAddress);
   }
 
   /**
@@ -131,7 +132,7 @@ export class OrderAPI {
    * @param  fillQuantity           Fill quantity to check if fillable
    */
   public async validateOrderFillableOrThrowAsync(signedIssuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber) {
-    await this.assert.order.isIssuanceOrderFillable(signedIssuanceOrder, fillQuantity);
+    await this.orderAsserts.isIssuanceOrderFillable(signedIssuanceOrder, fillQuantity);
   }
 
   /**
@@ -185,7 +186,7 @@ export class OrderAPI {
       salt,
     };
 
-    await this.assert.order.isValidIssuanceOrder(order);
+    await this.orderAsserts.isValidIssuanceOrder(order);
     const orderHash = SetProtocolUtils.hashOrderHex(order);
 
     const signature = await this.setProtocolUtils.signMessage(orderHash, makerAddress, this.requiresSignaturePrefix());
@@ -278,20 +279,20 @@ export class OrderAPI {
     orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
     const { signature, ...issuanceOrder } = signedIssuanceOrder;
-    await this.assert.order.isValidIssuanceOrder(issuanceOrder);
+    await this.orderAsserts.isValidIssuanceOrder(issuanceOrder);
 
     this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
     this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
-    await this.assert.order.assertLiquidityOrders(
+    await this.orderAsserts.assertLiquidityOrders(
       transactionCaller,
       signedIssuanceOrder,
       quantityToFill,
       orders,
     );
 
-    await this.assert.order.isIssuanceOrderFillable(
+    await this.orderAsserts.isIssuanceOrderFillable(
       signedIssuanceOrder,
       quantityToFill,
     );
@@ -302,7 +303,7 @@ export class OrderAPI {
     issuanceOrder: IssuanceOrder,
     quantityToCancel: BigNumber
   ) {
-    await this.assert.order.isValidIssuanceOrder(issuanceOrder);
+    await this.orderAsserts.isValidIssuanceOrder(issuanceOrder);
 
     this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
     this.assert.common.greaterThanZero(quantityToCancel, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToCancel));

@@ -37,8 +37,6 @@ import { NULL_ADDRESS } from '../constants';
 import { BigNumber } from '../util';
 import * as Web3 from 'web3';
 
-
-
 export class OrderAssertions {
   private web3: Web3;
   private coreAddress: Address;
@@ -49,17 +47,14 @@ export class OrderAssertions {
   private commonAssertions: CommonAssertions;
   private setTokenAssertions: SetTokenAssertions;
 
-  constructor(web3: Web3) {
+  constructor(web3: Web3, coreAddress: Address) {
     this.web3 = web3;
+    this.coreAddress = coreAddress;
     this.erc20Assertions = new ERC20Assertions(web3);
     this.schemaAssertions = new SchemaAssertions();
     this.coreAssertions = new CoreAssertions(web3);
     this.commonAssertions = new CommonAssertions();
     this.setTokenAssertions = new SetTokenAssertions(web3);
-  }
-
-  public setCoreAddress(coreAddress: Address) {
-    this.coreAddress = coreAddress;
   }
 
   public async ensureCoreContract() {
