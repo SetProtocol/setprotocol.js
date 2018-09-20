@@ -705,9 +705,12 @@ describe('OrderAPI', () => {
     let issuanceOrderQuantity: BigNumber;
     let setToken: SetTokenContract;
     let firstComponent: StandardTokenMockContract;
+    let secondComponent: StandardTokenMockContract;
 
     let takerWalletOrder: TakerWalletOrder;
+
     let zeroExOrder: ZeroExSignedFillOrder;
+    let zeroExOrderMaker: Address;
 
     let subjectSignedIssuanceOrder: SignedIssuanceOrder;
     let subjectQuantityToFill: BigNumber;
@@ -727,10 +730,10 @@ describe('OrderAPI', () => {
       const issuanceOrderTaker = ACCOUNTS[0].address;
       issuanceOrderMaker = ACCOUNTS[1].address;
       const relayerAddress = ACCOUNTS[2].address;
-      const zeroExOrderMaker = ACCOUNTS[3].address;
+      zeroExOrderMaker = ACCOUNTS[3].address;
 
       firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
-      const secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
+      secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
       const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
       const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
 
@@ -877,6 +880,49 @@ describe('OrderAPI', () => {
         return expect(subject()).to.be.rejectedWith(
           `Token address at ${nonComponentToken.address} is not a component ` +
           `of the Set Token at ${subjectSignedIssuanceOrder.setAddress}.`
+        );
+      });
+    });
+
+    describe('when the 0x order maker does not have sufficient allowance to the 0x Proxy', async () => {
+      beforeEach(async () => {
+        await secondComponent.approve.sendTransactionAsync(
+          SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+          ZERO,
+          { from: zeroExOrderMaker }
+        );
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${zeroExOrderMaker} has allowance of ${ZERO}
+
+        when required allowance is ${takerWalletOrder.takerTokenAmount} at token
+
+        address: ${secondComponent.address} for spender: ${SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS}.
+      `
+        );
+      });
+    });
+
+    describe('when the 0x order maker  does not have sufficient maker token balance', async () => {
+      beforeEach(async () => {
+        const subjectZeroExMakerBalance = await secondComponent.balanceOf.callAsync(zeroExOrderMaker);
+        await secondComponent.transfer.sendTransactionAsync(
+          transferProxy.address, // Faulty address
+          subjectZeroExMakerBalance,
+          { from: zeroExOrderMaker }
+        );
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${zeroExOrderMaker} has balance of ${ZERO}
+
+        when required balance is ${takerWalletOrder.takerTokenAmount} at token address ${secondComponent.address}.
+      `
         );
       });
     });

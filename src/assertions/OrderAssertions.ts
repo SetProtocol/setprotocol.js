@@ -21,6 +21,7 @@ import {
   Address,
   IssuanceOrder,
   SetProtocolUtils,
+  SetProtocolTestUtils,
   SignedIssuanceOrder,
   TakerWalletOrder,
   ZeroExSignedFillOrder,
@@ -248,24 +249,39 @@ export class OrderAssertions {
   private async isValidZeroExOrderFills (
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    order: ZeroExSignedFillOrder,
+    zeroExOrder: ZeroExSignedFillOrder,
   ) {
     this.commonAssertions.greaterThanZero(
-      order.fillAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(order.fillAmount),
+      zeroExOrder.fillAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(zeroExOrder.fillAmount),
     );
 
     // The 0x taker token is equivalent to the issuance order maker token
     this.commonAssertions.isEqualString(
       signedIssuanceOrder.makerToken,
-      SetProtocolUtils.extractAddressFromAssetData(order.takerAssetData),
+      SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.takerAssetData),
       coreAPIErrors.ISSUANCE_ORDER_MAKER_ZERO_EX_TAKER_MISMATCH(),
     );
 
     // The 0x maker token is a component of the set
     await this.setTokenAssertions.isComponent(
       signedIssuanceOrder.setAddress,
-      SetProtocolUtils.extractAddressFromAssetData(order.makerAssetData),
+      SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),
+    );
+
+    // The zero ex maker has sufficient allowance to the zero ex proxy
+    await this.erc20Assertions.hasSufficientAllowanceAsync(
+      SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),
+      zeroExOrder.makerAddress,
+      SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+      zeroExOrder.makerAssetAmount,
+    );
+
+    // The zero ex maker has sufficient balance of the maker token
+    await this.erc20Assertions.hasSufficientBalanceAsync(
+      SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),
+      zeroExOrder.makerAddress,
+      zeroExOrder.makerAssetAmount,
     );
   }
 
