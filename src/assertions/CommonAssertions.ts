@@ -55,6 +55,12 @@ export class CommonAssertions {
     }
   }
 
+  public isEqualBigNumber(bigNumber1: BigNumber, bigNumber2: BigNumber, errorMessage: string) {
+    if (!bigNumber1.eq(bigNumber2)) {
+      throw new Error(errorMessage);
+    }
+  }
+
   public isEqualString(string1: string, string2: string, errorMessage: string) {
     if (string1 !== string2) {
       throw new Error(errorMessage);

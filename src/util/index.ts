@@ -21,6 +21,7 @@ export { classUtils } from './classUtils';
 export { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from './logs';
 export { instantiateWeb3 } from './provider';
 export { IntervalManager } from './intervalManager';
+export { calculatePartialAmount } from './commonMath';
 export { estimateIssueRedeemGasCost } from './setTokenUtils';
 export { SignatureUtils } from './SignatureUtils';
 export { getFormattedLogsFromReceipt } from './logs';
