@@ -55,6 +55,7 @@ import { CoreWrapper } from '../../../src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
 import { OrderAPI } from '../../../src/api';
 import { ZERO } from '../../../src/constants';
+import { Assertions } from '../../../src/assertions';
 import { ether, Web3Utils, generateFutureTimestamp } from '../../../src/util';
 import {
   addAuthorizationAsync,
@@ -101,7 +102,8 @@ describe('OrderAPI', () => {
     await addAuthorizationAsync(transferProxy, core.address);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
-    ordersAPI = new OrderAPI(web3, coreWrapper);
+    const assertions = new Assertions(web3, coreWrapper);
+    ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
   });
 
   describe('generateSalt', async () => {

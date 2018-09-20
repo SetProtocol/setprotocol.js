@@ -53,10 +53,11 @@ export class BlockchainAPI {
    *
    * @param web3    Web3.js Provider instance you would like the SetProtocol.js library
    *                  to use for interacting with the Ethereum network.
+   * @param assertions  An instance of the Assertion library
    */
-  constructor(web3: Web3) {
+  constructor(web3: Web3, assertions: Assertions) {
     this.web3 = web3;
-    this.assert = new Assertions(this.web3);
+    this.assert = assertions;
 
     this.intervalManager = new IntervalManager();
     this.web3Utils = new Web3Utils(this.web3);

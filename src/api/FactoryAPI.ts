@@ -51,13 +51,14 @@ export class FactoryAPI {
    * @param web3                      Web3.js Provider instance you would like the SetProtocol.js library
    *                                    to use for interacting with the Ethereum network.
    * @param core                      An instance of CoreWrapper to interact with the deployed Core contract
+   * @param assertions                An instance of the Assertion library
    * @param setTokenFactoryAddress    Address of the SetTokenFactory associated with the deployed Core contract
    */
-  constructor(web3: Web3, core: CoreWrapper, setTokenFactoryAddress: Address) {
+  constructor(web3: Web3, core: CoreWrapper, assertions: Assertions, setTokenFactoryAddress: Address) {
     this.web3 = web3;
     this.core = core;
     this.erc20 = new ERC20Wrapper(this.web3);
-    this.assert = new Assertions(this.web3);
+    this.assert = assertions;
     this.setTokenFactoryAddress = setTokenFactoryAddress;
   }
 

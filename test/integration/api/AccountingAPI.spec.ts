@@ -33,6 +33,7 @@ import { CoreContract, StandardTokenMockContract, TransferProxyContract, VaultCo
 import ChaiSetup from '../../helpers/chaiSetup';
 import { AccountingAPI } from '../../../src/api';
 import { BigNumber } from '../../../src/util';
+import { Assertions } from '../../../src/assertions';
 import { CoreWrapper } from '../../../src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
 import { TX_DEFAULTS, ZERO } from '../../../src/constants';
@@ -77,7 +78,9 @@ describe('AccountingAPI', () => {
     await addAuthorizationAsync(transferProxy, core.address);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
-    accountingAPI = new AccountingAPI(web3, coreWrapper);
+
+    const assertions = new Assertions(web3, coreWrapper);
+    accountingAPI = new AccountingAPI(web3, coreWrapper, assertions);
 
     tokens = await deployTokensAsync(3, provider);
     await approveForTransferAsync(tokens, transferProxy.address);

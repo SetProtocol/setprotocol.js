@@ -21,6 +21,7 @@ import { TransactionReceipt } from 'ethereum-types';
 import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
 import { AccountingAPI, BlockchainAPI, ERC20API, FactoryAPI, IssuanceAPI, OrderAPI, SetTokenAPI } from './api';
 import { CoreWrapper, VaultWrapper } from './wrappers';
+import { Assertions } from './assertions';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
 import { TxData, Provider } from './types/common';
 
@@ -82,12 +83,14 @@ class SetProtocol {
     this.core = new CoreWrapper(this.web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
     this.vault = new VaultWrapper(this.web3, config.vaultAddress);
 
-    this.accounting = new AccountingAPI(this.web3, this.core);
-    this.erc20 = new ERC20API(this.web3);
-    this.factory = new FactoryAPI(this.web3, this.core, config.setTokenFactoryAddress);
-    this.issuance = new IssuanceAPI(this.web3, this.core);
-    this.orders = new OrderAPI(this.web3, this.core);
-    this.setToken = new SetTokenAPI(this.web3);
+    const assertions = new Assertions(this.web3, this.core);
+
+    this.accounting = new AccountingAPI(this.web3, this.core, assertions);
+    this.erc20 = new ERC20API(this.web3, assertions);
+    this.factory = new FactoryAPI(this.web3, this.core, assertions, config.setTokenFactoryAddress);
+    this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
+    this.orders = new OrderAPI(this.web3, this.core, assertions);
+    this.setToken = new SetTokenAPI(this.web3, assertions);
   }
 
   /**

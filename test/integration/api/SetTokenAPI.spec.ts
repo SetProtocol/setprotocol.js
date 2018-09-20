@@ -37,6 +37,8 @@ import { Address } from 'set-protocol-utils';
 import { SetTokenAPI } from '../../../src/api';
 import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '../../../src/constants';
 import { BigNumber, ether, Web3Utils } from '../../../src/util';
+import { Assertions } from '../../../src/assertions';
+import { CoreWrapper } from '../../../src/wrappers';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -79,7 +81,10 @@ describe('SetTokenAPI', () => {
     await addAuthorizationAsync(vault, core.address);
     await addAuthorizationAsync(transferProxy, core.address);
 
-    setTokenAPI = new SetTokenAPI(web3);
+    const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+    const assertions = new Assertions(web3, coreWrapper);
+
+    setTokenAPI = new SetTokenAPI(web3, assertions);
   });
 
   afterEach(async () => {
