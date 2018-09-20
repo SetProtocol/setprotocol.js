@@ -19,6 +19,8 @@
 // External
 import * as Web3 from 'web3';
 
+import { CoreWrapper } from '../wrappers';
+
 // Assertions
 import { AccountAssertions } from './AccountAssertions';
 import { CommonAssertions } from './CommonAssertions';
@@ -39,14 +41,15 @@ export class Assertions {
   public setToken: SetTokenAssertions;
   public vault: VaultAssertions;
 
-  public constructor(web3: Web3) {
+  public constructor(web3: Web3, coreWrapper: CoreWrapper) {
     this.account = new AccountAssertions();
     this.common = new CommonAssertions();
     this.core = new CoreAssertions(web3);
     this.erc20 = new ERC20Assertions(web3);
-    this.order = new OrderAssertions(web3);
+    this.order = new OrderAssertions(web3, coreWrapper);
     this.schema = new SchemaAssertions();
     this.setToken = new SetTokenAssertions(web3);
     this.vault = new VaultAssertions(web3);
   }
 }
+

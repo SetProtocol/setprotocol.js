@@ -43,11 +43,12 @@ export class AccountingAPI {
    * @param web3    Web3.js Provider instance you would like the SetProtocol.js library
    *                  to use for interacting with the Ethereum network
    * @param core    An instance of CoreWrapper to interact with the deployed Core contract
+   * @param assertions  An instance of the Assertion library
    */
-  constructor(web3: Web3, core: CoreWrapper) {
+  constructor(web3: Web3, core: CoreWrapper, assertions: Assertions) {
     this.web3 = web3;
     this.core = core;
-    this.assert = new Assertions(this.web3);
+    this.assert = assertions;
   }
 
   /**

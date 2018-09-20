@@ -20,7 +20,6 @@ import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
 import { ContractWrapper } from '.';
-import { Assertions } from '../assertions';
 import { BigNumber } from '../util';
 
 /**
@@ -32,14 +31,12 @@ import { BigNumber } from '../util';
  */
 export class VaultWrapper {
   private web3: Web3;
-  private assert: Assertions;
   private contracts: ContractWrapper;
   private vaultAddress: Address;
 
   public constructor(web3: Web3, vaultAddress: Address) {
     this.web3 = web3;
     this.vaultAddress = vaultAddress;
-    this.assert = new Assertions(this.web3);
     this.contracts = new ContractWrapper(this.web3);
   }
 
@@ -52,8 +49,6 @@ export class VaultWrapper {
    * @return              The balance of the user's Set
    */
   public async getBalanceInVault(tokenAddress: Address, ownerAddress: Address): Promise<BigNumber> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
-    this.assert.schema.isValidAddress('ownerAddress', ownerAddress);
     const vaultInstance = await this.contracts.loadVaultAsync(this.vaultAddress);
 
     return await vaultInstance.getOwnerBalance.callAsync(tokenAddress, ownerAddress);

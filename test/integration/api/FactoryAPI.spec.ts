@@ -41,6 +41,7 @@ import {
 import ChaiSetup from '../../helpers/chaiSetup';
 import { FactoryAPI } from '../../../src/api';
 import { BigNumber } from '../../../src/util';
+import { Assertions } from '../../../src/assertions';
 import { CoreWrapper } from '../../../src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
 import { TX_DEFAULTS, ZERO } from '../../../src/constants';
@@ -77,6 +78,7 @@ describe('FactoryAPI', () => {
   let setTokenFactory: SetTokenFactoryContract;
   let coreWrapper: CoreWrapper;
   let factoryAPI: FactoryAPI;
+  let assertions: Assertions;
 
   let componentTokens: StandardTokenMockContract[];
 
@@ -99,8 +101,10 @@ describe('FactoryAPI', () => {
     await addAuthorizationAsync(vault, core.address);
     await addAuthorizationAsync(transferProxy, core.address);
 
+    assertions = new Assertions(web3, coreWrapper);
+
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
-    factoryAPI = new FactoryAPI(web3, coreWrapper, setTokenFactory.address);
+    factoryAPI = new FactoryAPI(web3, coreWrapper, assertions, setTokenFactory.address);
 
     componentTokens = await deployTokensAsync(3, provider);
   });
@@ -184,7 +188,7 @@ describe('FactoryAPI', () => {
       beforeEach(async () => {
         invalidSetFactoryAddress = 'invalidSetFactoryAddress';
 
-        factoryAPI = new FactoryAPI(web3, coreWrapper, invalidSetFactoryAddress);
+        factoryAPI = new FactoryAPI(web3, coreWrapper, assertions, invalidSetFactoryAddress);
       });
 
       test('throws', async () => {

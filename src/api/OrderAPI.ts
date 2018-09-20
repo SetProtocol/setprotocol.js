@@ -50,15 +50,16 @@ export class OrderAPI {
   /**
    * Instantiates a new OrderAPI instance that contains methods for creating, filling, and cancelling issuance orders
    *
-   * @param web3    Web3.js Provider instance you would like the SetProtocol.js library
-   *                  to use for interacting with the Ethereum network
-   * @param core    An instance of CoreWrapper to interact with the deployed Core contract
+   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library
+   *                    to use for interacting with the Ethereum network
+   * @param core        An instance of CoreWrapper to interact with the deployed Core contract
+   * @param assertions  An instance of the Assertion library
    */
-  constructor(web3: Web3, core: CoreWrapper) {
+  constructor(web3: Web3, core: CoreWrapper, assertions: Assertions) {
     this.web3 = web3;
     this.core = core;
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
-    this.assert = new Assertions(this.web3);
+    this.assert = assertions;
   }
 
   /**
@@ -130,7 +131,7 @@ export class OrderAPI {
    * @param  fillQuantity           Fill quantity to check if fillable
    */
   public async validateOrderFillableOrThrowAsync(signedIssuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber) {
-    await this.assert.order.isIssuanceOrderFillable(this.core.coreAddress, signedIssuanceOrder, fillQuantity);
+    await this.assert.order.isIssuanceOrderFillable(signedIssuanceOrder, fillQuantity);
   }
 
   /**
@@ -283,10 +284,14 @@ export class OrderAPI {
     this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
-    await this.assert.order.assertLiquidityOrders(signedIssuanceOrder, quantityToFill, orders);
+    await this.assert.order.assertLiquidityValidity(
+      transactionCaller,
+      signedIssuanceOrder,
+      quantityToFill,
+      orders,
+    );
 
     await this.assert.order.isIssuanceOrderFillable(
-      this.core.coreAddress,
       signedIssuanceOrder,
       quantityToFill,
     );

@@ -55,6 +55,7 @@ import { CoreWrapper } from '../../../src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
 import { OrderAPI } from '../../../src/api';
 import { ZERO } from '../../../src/constants';
+import { Assertions } from '../../../src/assertions';
 import { ether, Web3Utils, generateFutureTimestamp } from '../../../src/util';
 import {
   addAuthorizationAsync,
@@ -101,7 +102,8 @@ describe('OrderAPI', () => {
     await addAuthorizationAsync(transferProxy, core.address);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
-    ordersAPI = new OrderAPI(web3, coreWrapper);
+    const assertions = new Assertions(web3, coreWrapper);
+    ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
   });
 
   describe('generateSalt', async () => {
@@ -702,6 +704,7 @@ describe('OrderAPI', () => {
     let issuanceOrderMaker: Address;
     let issuanceOrderQuantity: BigNumber;
     let setToken: SetTokenContract;
+    let firstComponent: StandardTokenMockContract;
 
     let takerWalletOrder: TakerWalletOrder;
     let zeroExOrder: ZeroExSignedFillOrder;
@@ -726,7 +729,7 @@ describe('OrderAPI', () => {
       const relayerAddress = ACCOUNTS[2].address;
       const zeroExOrderMaker = ACCOUNTS[3].address;
 
-      const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
+      firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
       const secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
       const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
       const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
@@ -891,6 +894,49 @@ describe('OrderAPI', () => {
         return expect(subject()).to.be.rejectedWith(
           `Token address at ${nonComponentToken.address} is not a component ` +
           `of the Set Token at ${subjectSignedIssuanceOrder.setAddress}.`
+        );
+      });
+    });
+
+    describe('when the taker wallet order submitter has not set sufficient taker token allowance', async () => {
+      beforeEach(async () => {
+        await firstComponent.approve.sendTransactionAsync(
+          transferProxy.address,
+          ZERO,
+          { from: subjectCaller }
+        );
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${subjectCaller} has allowance of ${ZERO}
+
+        when required allowance is ${takerWalletOrder.takerTokenAmount} at token
+
+        address: ${firstComponent.address} for spender: ${transferProxy.address}.
+      `
+        );
+      });
+    });
+
+    describe('when the taker wallet order submitter does not have sufficient taker token balance', async () => {
+      beforeEach(async () => {
+        const subjectCallerBalance = await firstComponent.balanceOf.callAsync(subjectCaller);
+        await firstComponent.transfer.sendTransactionAsync(
+          transferProxy.address, // Faulty address
+          subjectCallerBalance,
+          { from: subjectCaller }
+        );
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${subjectCaller} has balance of ${ZERO}
+
+        when required balance is ${takerWalletOrder.takerTokenAmount} at token address ${firstComponent.address}.
+      `
         );
       });
     });

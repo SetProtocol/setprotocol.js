@@ -59,6 +59,7 @@ import {
   deployVaultContract,
   getTokenBalances,
 } from '../../helpers/coreHelpers';
+import { Assertions } from '../../../src/assertions';
 import { ether } from '../../../src/util/units';
 import { Web3Utils } from '../../../src/util/Web3Utils';
 
@@ -110,7 +111,8 @@ describe('IssuanceAPI', () => {
     await addAuthorizationAsync(transferProxy, core.address);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
-    issuanceAPI = new IssuanceAPI(web3, coreWrapper);
+    const assertions = new Assertions(web3, coreWrapper);
+    issuanceAPI = new IssuanceAPI(web3, coreWrapper, assertions);
 
     componentTokens = await deployTokensAsync(3, provider);
     setComponentUnit = ether(4);

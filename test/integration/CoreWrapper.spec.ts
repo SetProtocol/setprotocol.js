@@ -50,6 +50,7 @@ import {
   ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
 import { NULL_ADDRESS, TX_DEFAULTS, ZERO } from '../../src/constants';
+import { Assertions } from '../../src/assertions';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -97,6 +98,7 @@ describe('CoreWrapper', () => {
   let setTokenFactory: SetTokenFactoryContract;
 
   let coreWrapper: CoreWrapper;
+  let assertions: Assertions;
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -118,6 +120,8 @@ describe('CoreWrapper', () => {
     await addAuthorizationAsync(transferProxy, core.address);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+
+    assertions = new Assertions(web3, coreWrapper);
   });
 
   afterEach(async () => {
@@ -532,7 +536,7 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      ordersAPI = new OrderAPI(web3, coreWrapper);
+      ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
 
       await deployTakerWalletWrapperContract(transferProxy, core, provider);
       await deployZeroExExchangeWrapperContract(
@@ -656,7 +660,7 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      ordersAPI = new OrderAPI(web3, coreWrapper);
+      ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
 
       const issuanceOrderTaker = ACCOUNTS[0].address;
       const issuanceOrderMaker = ACCOUNTS[1].address;

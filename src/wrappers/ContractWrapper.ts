@@ -18,7 +18,6 @@
 
 import * as Web3 from 'web3';
 
-import { Assertions } from '../assertions';
 import {
   BaseContract,
   CoreContract,
@@ -27,6 +26,7 @@ import {
   VaultContract,
 } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
+import { CoreWrapper } from './CoreWrapper';
 
 /**
  * @title ContractWrapper
@@ -37,13 +37,11 @@ import { Address } from 'set-protocol-utils';
  */
 export class ContractWrapper {
   private web3: Web3;
-  private assert: Assertions;
   private cache: { [contractName: string]: BaseContract };
 
   public constructor(web3: Web3) {
     this.web3 = web3;
     this.cache = {};
-    this.assert = new Assertions(this.web3);
   }
 
   /**
@@ -57,13 +55,11 @@ export class ContractWrapper {
     coreAddress: Address,
     transactionOptions: object = {},
   ): Promise<CoreContract> {
-    this.assert.schema.isValidAddress('coreAddress', coreAddress);
     const cacheKey = this.getCoreCacheKey(coreAddress);
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as CoreContract;
     } else {
-      await this.assert.core.implementsCore(coreAddress);
       const coreContract = await CoreContract.at(
         coreAddress,
         this.web3,
@@ -85,7 +81,6 @@ export class ContractWrapper {
     setTokenAddress: Address,
     transactionOptions: object = {},
   ): Promise<SetTokenContract> {
-    this.assert.schema.isValidAddress('setTokenAddress', setTokenAddress);
     const cacheKey = this.getSetTokenCacheKey(setTokenAddress);
 
     if (cacheKey in this.cache) {
@@ -96,7 +91,6 @@ export class ContractWrapper {
         this.web3,
         transactionOptions,
       );
-      await this.assert.setToken.implementsSetToken(setTokenAddress);
       this.cache[cacheKey] = setTokenContract;
       return setTokenContract;
     }
@@ -113,7 +107,6 @@ export class ContractWrapper {
     tokenAddress: Address,
     transactionOptions: object = {},
   ): Promise<DetailedERC20Contract> {
-    this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     const cacheKey = this.getERC20TokenCacheKey(tokenAddress);
 
     if (cacheKey in this.cache) {
@@ -125,7 +118,6 @@ export class ContractWrapper {
         transactionOptions,
       );
       this.cache[cacheKey] = erc20TokenContract;
-      await this.assert.erc20.implementsERC20(tokenAddress);
       return erc20TokenContract;
     }
   }
@@ -141,7 +133,6 @@ export class ContractWrapper {
     vaultAddress: Address,
     transactionOptions: object = {},
   ): Promise<VaultContract> {
-    this.assert.schema.isValidAddress('vaultAddress', vaultAddress);
     const cacheKey = this.getVaultCacheKey(vaultAddress);
 
     if (cacheKey in this.cache) {
