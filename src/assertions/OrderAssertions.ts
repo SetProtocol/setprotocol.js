@@ -269,14 +269,6 @@ export class OrderAssertions {
       SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),
     );
 
-    // The zero ex maker has sufficient allowance to the zero ex proxy
-    await this.erc20Assertions.hasSufficientAllowanceAsync(
-      SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),
-      zeroExOrder.makerAddress,
-      SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
-      zeroExOrder.makerAssetAmount,
-    );
-
     // The zero ex maker has sufficient balance of the maker token
     await this.erc20Assertions.hasSufficientBalanceAsync(
       SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),

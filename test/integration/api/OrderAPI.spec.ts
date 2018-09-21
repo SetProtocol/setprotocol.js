@@ -884,28 +884,6 @@ describe('OrderAPI', () => {
       });
     });
 
-    describe('when the 0x order maker does not have sufficient allowance to the 0x Proxy', async () => {
-      beforeEach(async () => {
-        await secondComponent.approve.sendTransactionAsync(
-          SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
-          ZERO,
-          { from: zeroExOrderMaker }
-        );
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-      `
-        User: ${zeroExOrderMaker} has allowance of ${ZERO}
-
-        when required allowance is ${takerWalletOrder.takerTokenAmount} at token
-
-        address: ${secondComponent.address} for spender: ${SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS}.
-      `
-        );
-      });
-    });
-
     describe('when the 0x order maker  does not have sufficient maker token balance', async () => {
       beforeEach(async () => {
         const subjectZeroExMakerBalance = await secondComponent.balanceOf.callAsync(zeroExOrderMaker);
