@@ -179,7 +179,7 @@ export class OrderAssertions {
       signedIssuanceOrder,
       quantityToFill,
       orders,
-    };
+    );
   }
 
   /* ============ Private Helpers =============== */
