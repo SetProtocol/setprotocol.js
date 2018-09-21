@@ -956,11 +956,11 @@ describe('OrderAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `
-            User: ${subjectCaller} has balance of ${ZERO}
+      `
+        User: ${subjectCaller} has balance of ${ZERO}
 
-            when required balance is ${takerWalletOrder.takerTokenAmount} at token address ${firstComponent.address}.
-          `
+        when required balance is ${takerWalletOrder.takerTokenAmount} at token address ${firstComponent.address}.
+      `
         );
       });
     });
