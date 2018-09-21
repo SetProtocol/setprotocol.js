@@ -142,26 +142,6 @@ export class OrderAssertions {
     }
   }
 
-  private async assertRequiredComponentsAndAmounts(
-    requiredComponents: Address[],
-    requiredComponentAmounts: BigNumber[],
-    setAddress: Address,
-  ) {
-    await Promise.all(
-      requiredComponents.map(async (tokenAddress, i) => {
-        this.commonAssertions.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
-        this.schemaAssertions.isValidAddress('tokenAddress', tokenAddress);
-        await this.erc20Assertions.implementsERC20(tokenAddress);
-        await this.setTokenAssertions.isComponent(setAddress, tokenAddress);
-
-        this.commonAssertions.greaterThanZero(
-          requiredComponentAmounts[i],
-          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
-        );
-      }),
-    );
-  }
-
   public async assertLiquidityValidity(
     issuanceOrderTaker: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
@@ -184,59 +164,18 @@ export class OrderAssertions {
 
   /* ============ Private Helpers =============== */
 
-  private calculateLiquidityFills(
-    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
-  ) {
-    let requiredComponentFills: { [addr: string]: BigNumber } = {};
-
-    _.each(orders, (order: any) => {
-      // Count up components of issuance order that have been filled from this liquidity order
-      requiredComponentFills = this.addLiquidityOrderContribution(order, requiredComponentFills);
-    });
-
-    return requiredComponentFills;
-  }
-
-  private assertSufficientMakerTokensForOrders(
+  private async isValidFillQuantity(
     signedIssuanceOrder: SignedIssuanceOrder,
-    quantityToFill: BigNumber,
-    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+    fillQuantity: BigNumber,
   ) {
-    const makerTokensUsed = this.calculateMakerTokensUsed(orders);
+    const fillableQuantity = await this.calculateFillableQuantity(signedIssuanceOrder);
+    this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FILL_EXCEEDS_AVAILABLE());
 
-    // All 0x signed fill order fillAmounts are filled using the makerTokenAmount of the
-    // signedIssuanceOrder so we need to make sure that signedIssuanceOrder.makerTokenAmount
-    // has enough for the 0x orders (scaled by fraction of order quantity being filled).
-    const {
-      makerTokenAmount,
-      quantity,
-    } = signedIssuanceOrder;
-
-    const requiredMakerTokenAmount = this.calculateReqMakerToken(
-      quantityToFill,
-      quantity,
-      makerTokenAmount,
+    await this.setTokenAssertions.isMultipleOfNaturalUnit(
+      signedIssuanceOrder.setAddress,
+      fillQuantity,
+      `Fill quantity of issuance order`,
     );
-
-    this.commonAssertions.isGreaterOrEqualThan(
-      requiredMakerTokenAmount,
-      makerTokensUsed,
-      coreAPIErrors.MAKER_TOKEN_INSUFFICIENT(makerTokenAmount, makerTokensUsed),
-    );
-  }
-
-  private calculateMakerTokensUsed(
-    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[]
-  ) {
-    let makerTokensUsed: BigNumber = SetProtocolUtils.CONSTANTS.ZERO;
-
-    _.each(orders, (order: any) => {
-      if (SetProtocolUtils.isZeroExOrder(order)) {
-        makerTokensUsed = makerTokensUsed.plus(order.fillAmount);
-      }
-    });
-
-    return makerTokensUsed;
   }
 
   private async assertOrdersValidity(
@@ -269,6 +208,34 @@ export class OrderAssertions {
     );
   }
 
+  private assertSufficientMakerTokensForOrders(
+    signedIssuanceOrder: SignedIssuanceOrder,
+    quantityToFill: BigNumber,
+    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+  ): void {
+    const makerTokensUsed = this.calculateMakerTokensUsed(orders);
+
+    // All 0x signed fill order fillAmounts are filled using the makerTokenAmount of the
+    // signedIssuanceOrder so we need to make sure that signedIssuanceOrder.makerTokenAmount
+    // has enough for the 0x orders (scaled by fraction of order quantity being filled).
+    const {
+      makerTokenAmount,
+      quantity,
+    } = signedIssuanceOrder;
+
+    const requiredMakerTokenAmount = this.calculateReqMakerToken(
+      quantityToFill,
+      quantity,
+      makerTokenAmount,
+    );
+
+    this.commonAssertions.isGreaterOrEqualThan(
+      requiredMakerTokenAmount,
+      makerTokensUsed,
+      coreAPIErrors.MAKER_TOKEN_INSUFFICIENT(makerTokenAmount, makerTokensUsed),
+    );
+  }
+
   private isValidLiquidityAmounts(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
@@ -296,6 +263,53 @@ export class OrderAssertions {
         ),
       );
     });
+  }
+
+  private async assertRequiredComponentsAndAmounts(
+    requiredComponents: Address[],
+    requiredComponentAmounts: BigNumber[],
+    setAddress: Address,
+  ) {
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.commonAssertions.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
+        this.schemaAssertions.isValidAddress('tokenAddress', tokenAddress);
+        await this.erc20Assertions.implementsERC20(tokenAddress);
+        await this.setTokenAssertions.isComponent(setAddress, tokenAddress);
+
+        this.commonAssertions.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+  }
+
+  private calculateLiquidityFills(
+    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+  ): { [addr: string]: BigNumber } {
+    let requiredComponentFills: { [addr: string]: BigNumber } = {};
+
+    _.each(orders, (order: any) => {
+      // Count up components of issuance order that have been filled from this liquidity order
+      requiredComponentFills = this.addLiquidityOrderContribution(order, requiredComponentFills);
+    });
+
+    return requiredComponentFills;
+  }
+
+  private calculateMakerTokensUsed(
+    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[]
+  ): BigNumber {
+    let makerTokensUsed: BigNumber = SetProtocolUtils.CONSTANTS.ZERO;
+
+    _.each(orders, (order: any) => {
+      if (SetProtocolUtils.isZeroExOrder(order)) {
+        makerTokensUsed = makerTokensUsed.plus(order.fillAmount);
+      }
+    });
+
+    return makerTokensUsed;
   }
 
   /*
@@ -399,20 +413,6 @@ export class OrderAssertions {
       takerTokenAddress,
       issuanceOrderTaker,
       takerTokenAmount,
-    );
-  }
-
-  private async isValidFillQuantity(
-    signedIssuanceOrder: SignedIssuanceOrder,
-    fillQuantity: BigNumber,
-  ) {
-    const fillableQuantity = await this.calculateFillableQuantity(signedIssuanceOrder);
-    this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FILL_EXCEEDS_AVAILABLE());
-
-    await this.setTokenAssertions.isMultipleOfNaturalUnit(
-      signedIssuanceOrder.setAddress,
-      fillQuantity,
-      `Fill quantity of issuance order`,
     );
   }
 
