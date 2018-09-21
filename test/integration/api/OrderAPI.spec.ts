@@ -106,6 +106,10 @@ describe('OrderAPI', () => {
     ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
   });
 
+  afterEach(async () => {
+    await web3Utils.revertToSnapshot(currentSnapshotId);
+  });
+
   describe('generateSalt', async () => {
     function subject(): BigNumber {
       return ordersAPI.generateSalt();
