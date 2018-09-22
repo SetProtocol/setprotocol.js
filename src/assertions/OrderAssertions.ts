@@ -35,7 +35,7 @@ import { ERC20Assertions } from './ERC20Assertions';
 import { SetTokenAssertions } from './SetTokenAssertions';
 import { CoreWrapper } from '../wrappers';
 import { NULL_ADDRESS } from '../constants';
-import { BigNumber } from '../util';
+import { BigNumber, calculatePartialAmount } from '../util';
 import * as Web3 from 'web3';
 
 export class OrderAssertions {
@@ -142,26 +142,6 @@ export class OrderAssertions {
     }
   }
 
-  private async assertRequiredComponentsAndAmounts(
-    requiredComponents: Address[],
-    requiredComponentAmounts: BigNumber[],
-    setAddress: Address,
-  ) {
-    await Promise.all(
-      requiredComponents.map(async (tokenAddress, i) => {
-        this.commonAssertions.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
-        this.schemaAssertions.isValidAddress('tokenAddress', tokenAddress);
-        await this.erc20Assertions.implementsERC20(tokenAddress);
-        await this.setTokenAssertions.isComponent(setAddress, tokenAddress);
-
-        this.commonAssertions.greaterThanZero(
-          requiredComponentAmounts[i],
-          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
-        );
-      }),
-    );
-  }
-
   public async assertLiquidityValidity(
     issuanceOrderTaker: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
@@ -182,11 +162,57 @@ export class OrderAssertions {
     );
   }
 
-  private assertSufficientMakerTokensForOrders(
+  /* ============ Private Helpers =============== */
+
+  private async isValidFillQuantity(
+    signedIssuanceOrder: SignedIssuanceOrder,
+    fillQuantity: BigNumber,
+  ) {
+    const fillableQuantity = await this.calculateFillableQuantity(signedIssuanceOrder);
+    this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FILL_EXCEEDS_AVAILABLE());
+
+    await this.setTokenAssertions.isMultipleOfNaturalUnit(
+      signedIssuanceOrder.setAddress,
+      fillQuantity,
+      `Fill quantity of issuance order`,
+    );
+  }
+
+  private async assertOrdersValidity(
+    issuanceOrderTaker: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
+     await Promise.all(
+      _.map(orders, async (order: any) => {
+        if (SetProtocolUtils.isZeroExOrder(order)) {
+          await this.isValidZeroExOrderFills(signedIssuanceOrder, quantityToFill, order);
+        } else if (SetProtocolUtils.isTakerWalletOrder(order)) {
+          await this.isValidTakerWalletOrderFills(
+            issuanceOrderTaker,
+            signedIssuanceOrder,
+            quantityToFill,
+            order,
+          );
+        }
+      })
+    );
+
+    // Ensure that the liquidity orders that we have specified can fill the amount of the
+    // issuance order that we're trying to fill.
+    this.isValidLiquidityAmounts(
+      signedIssuanceOrder,
+      quantityToFill,
+      orders,
+    );
+  }
+
+  private assertSufficientMakerTokensForOrders(
+    signedIssuanceOrder: SignedIssuanceOrder,
+    quantityToFill: BigNumber,
+    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+  ): void {
     const makerTokensUsed = this.calculateMakerTokensUsed(orders);
 
     // All 0x signed fill order fillAmounts are filled using the makerTokenAmount of the
@@ -210,9 +236,71 @@ export class OrderAssertions {
     );
   }
 
+  private isValidLiquidityAmounts(
+    signedIssuanceOrder: SignedIssuanceOrder,
+    quantityToFill: BigNumber,
+    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+  ) {
+    const {
+      quantity,
+      requiredComponents,
+      requiredComponentAmounts,
+    } = signedIssuanceOrder;
+
+    const requiredComponentFills = this.calculateLiquidityFills(orders);
+
+    _.each(requiredComponents, (component, i) => {
+      const issuanceOrderComponentPartialAmount =
+        calculatePartialAmount(requiredComponentAmounts[i], quantityToFill, quantity);
+
+      this.commonAssertions.isEqualBigNumber(
+        requiredComponentFills[component],
+        issuanceOrderComponentPartialAmount,
+        coreAPIErrors.LIQUIDITY_REQUIRED_COMPONENT_MISMATCH(
+          component,
+          requiredComponentFills[component],
+          issuanceOrderComponentPartialAmount,
+        ),
+      );
+    });
+  }
+
+  private async assertRequiredComponentsAndAmounts(
+    requiredComponents: Address[],
+    requiredComponentAmounts: BigNumber[],
+    setAddress: Address,
+  ) {
+    await Promise.all(
+      requiredComponents.map(async (tokenAddress, i) => {
+        this.commonAssertions.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
+        this.schemaAssertions.isValidAddress('tokenAddress', tokenAddress);
+        await this.erc20Assertions.implementsERC20(tokenAddress);
+        await this.setTokenAssertions.isComponent(setAddress, tokenAddress);
+
+        this.commonAssertions.greaterThanZero(
+          requiredComponentAmounts[i],
+          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(requiredComponentAmounts[i]),
+        );
+      }),
+    );
+  }
+
+  private calculateLiquidityFills(
+    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+  ): { [addr: string]: BigNumber } {
+    let requiredComponentFills: { [addr: string]: BigNumber } = {};
+
+    _.each(orders, (order: any) => {
+      // Count up components of issuance order that have been filled from this liquidity order
+      requiredComponentFills = this.addLiquidityOrderContribution(order, requiredComponentFills);
+    });
+
+    return requiredComponentFills;
+  }
+
   private calculateMakerTokensUsed(
     orders: (TakerWalletOrder | ZeroExSignedFillOrder)[]
-  ) {
+  ): BigNumber {
     let makerTokensUsed: BigNumber = SetProtocolUtils.CONSTANTS.ZERO;
 
     _.each(orders, (order: any) => {
@@ -224,26 +312,45 @@ export class OrderAssertions {
     return makerTokensUsed;
   }
 
-  private async assertOrdersValidity(
-    issuanceOrderTaker: Address,
-    signedIssuanceOrder: SignedIssuanceOrder,
-    quantityToFill: BigNumber,
-    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[]
-  ) {
-     await Promise.all(
-      _.map(orders, async (order: any) => {
-        if (SetProtocolUtils.isZeroExOrder(order)) {
-          await this.isValidZeroExOrderFills(signedIssuanceOrder, quantityToFill, order);
-        } else if (SetProtocolUtils.isTakerWalletOrder(order)) {
-          await this.isValidTakerWalletOrderFills(
-            issuanceOrderTaker,
-            signedIssuanceOrder,
-            quantityToFill,
-            order,
-          );
-        }
-      })
-    );
+  /*
+   * This takes in an order from a liquidity source and adds up the amount of token being filled
+   * for a given component.
+   */
+  private addLiquidityOrderContribution(
+    order: any,
+    requiredComponentFills: { [addr: string]: BigNumber },
+  ): { [addr: string]: BigNumber } {
+    let existingAmount: BigNumber;
+    let currentOrderAmount: BigNumber;
+    let orderComponent: Address;
+    if (SetProtocolUtils.isZeroExOrder(order)) {
+      const {
+        fillAmount,
+        makerAssetAmount,
+        makerAssetData,
+        takerAssetAmount,
+      } = order;
+      const tokenAddress = SetProtocolUtils.extractAddressFromAssetData(makerAssetData);
+
+      // Accumulate fraction of 0x order that was filled
+      existingAmount = requiredComponentFills[tokenAddress] || SetProtocolUtils.CONSTANTS.ZERO;
+      currentOrderAmount = calculatePartialAmount(makerAssetAmount, fillAmount, takerAssetAmount);
+      orderComponent = tokenAddress;
+
+      return Object.assign(requiredComponentFills, { [orderComponent]: existingAmount.plus(currentOrderAmount) });
+    } else if (SetProtocolUtils.isTakerWalletOrder(order)) {
+      const {
+        takerTokenAddress,
+        takerTokenAmount,
+      } = order;
+
+      existingAmount = requiredComponentFills[takerTokenAddress] || SetProtocolUtils.CONSTANTS.ZERO;
+      currentOrderAmount = takerTokenAmount;
+      orderComponent = takerTokenAddress;
+
+      return Object.assign(requiredComponentFills, { [orderComponent]: existingAmount.plus(currentOrderAmount) });
+    }
+    return requiredComponentFills;
   }
 
   private async isValidZeroExOrderFills (
@@ -306,20 +413,6 @@ export class OrderAssertions {
       takerTokenAddress,
       issuanceOrderTaker,
       takerTokenAmount,
-    );
-  }
-
-  private async isValidFillQuantity(
-    signedIssuanceOrder: SignedIssuanceOrder,
-    fillQuantity: BigNumber,
-  ) {
-    const fillableQuantity = await this.calculateFillableQuantity(signedIssuanceOrder);
-    this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FILL_EXCEEDS_AVAILABLE());
-
-    await this.setTokenAssertions.isMultipleOfNaturalUnit(
-      signedIssuanceOrder.setAddress,
-      fillQuantity,
-      `Fill quantity of issuance order`,
     );
   }
 

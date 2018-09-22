@@ -56,7 +56,7 @@ import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
 import { OrderAPI } from '../../../src/api';
 import { ZERO } from '../../../src/constants';
 import { Assertions } from '../../../src/assertions';
-import { ether, Web3Utils, generateFutureTimestamp } from '../../../src/util';
+import { ether, Web3Utils, generateFutureTimestamp, calculatePartialAmount } from '../../../src/util';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -104,6 +104,10 @@ describe('OrderAPI', () => {
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
     ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
+  });
+
+  afterEach(async () => {
+    await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
   describe('generateSalt', async () => {
@@ -961,6 +965,47 @@ describe('OrderAPI', () => {
 
         when required balance is ${takerWalletOrder.takerTokenAmount} at token address ${firstComponent.address}.
       `
+        );
+      });
+    });
+
+    describe('when liquidity amounts don’t match amount of components of issuance order', async () => {
+      beforeEach(async () => {
+        const takerWalletOrder = subjectOrders[0] as TakerWalletOrder;
+        takerWalletOrder.takerTokenAmount = takerWalletOrder.takerTokenAmount.sub(1);
+        subjectOrders[0] = takerWalletOrder;
+      });
+
+      test('throws', async () => {
+        const {
+          takerTokenAddress,
+          takerTokenAmount,
+        } = subjectOrders[0] as TakerWalletOrder;
+
+        const {
+          requiredComponentAmounts,
+          requiredComponents,
+          quantity,
+        } = subjectSignedIssuanceOrder;
+
+        let takerIndex = 0;
+        _.each(requiredComponents, (component, i) => {
+          if (component === takerTokenAddress) {
+            takerIndex = i;
+          }
+        });
+
+        const desiredComponentFillAmount =
+          calculatePartialAmount(
+            requiredComponentAmounts[takerIndex],
+            subjectQuantityToFill,
+            quantity,
+          );
+
+        return expect(subject()).to.be.rejectedWith(
+          `Token amount of ${takerTokenAddress} from liquidity sources, ${takerTokenAmount.toString()}, ` +
+          `do not match up to the desired component fill amount of issuance order ` +
+          `${desiredComponentFillAmount.toString()}.`,
         );
       });
     });

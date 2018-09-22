@@ -284,16 +284,16 @@ export class OrderAPI {
     this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
+    await this.assert.order.isIssuanceOrderFillable(
+      signedIssuanceOrder,
+      quantityToFill,
+    );
+
     await this.assert.order.assertLiquidityValidity(
       transactionCaller,
       signedIssuanceOrder,
       quantityToFill,
       orders,
-    );
-
-    await this.assert.order.isIssuanceOrderFillable(
-      signedIssuanceOrder,
-      quantityToFill,
     );
   }
 
