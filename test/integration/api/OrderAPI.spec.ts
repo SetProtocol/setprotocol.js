@@ -49,14 +49,14 @@ import {
   VaultContract
 } from 'set-protocol-contracts';
 
-import { BigNumber, SignatureUtils } from '../../../src/util';
-import ChaiSetup from '../../helpers/chaiSetup';
-import { CoreWrapper } from '../../../src/wrappers';
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
-import { OrderAPI } from '../../../src/api';
-import { ZERO } from '../../../src/constants';
-import { Assertions } from '../../../src/assertions';
-import { ether, Web3Utils, generateFutureTimestamp, calculatePartialAmount } from '../../../src/util';
+import { BigNumber, SignatureUtils } from '@src/util';
+import ChaiSetup from '@helpers/chaiSetup';
+import { CoreWrapper } from '@src/wrappers';
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
+import { OrderAPI } from '@src/api';
+import { ZERO } from '@src/constants';
+import { Assertions } from '@src/assertions';
+import { ether, Web3Utils, generateFutureTimestamp, calculatePartialAmount } from '@src/util';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -67,8 +67,8 @@ import {
   deploySetTokenFactoryContract,
   deployTransferProxyContract,
   deployVaultContract,
-} from '../../helpers/coreHelpers';
-import { deployTakerWalletWrapperContract, deployZeroExExchangeWrapperContract } from '../../helpers/exchangeHelpers';
+} from '@helpers/coreHelpers';
+import { deployTakerWalletWrapperContract, deployZeroExExchangeWrapperContract } from '@helpers/exchangeHelpers';
 
 ChaiSetup.configure();
 const { expect } = chai;

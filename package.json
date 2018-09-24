@@ -113,7 +113,8 @@
       "node"
     ],
     "moduleNameMapper": {
-      "^@src/(.*)": "<rootDir>/src/$1"
+      "^@src/(.*)": "<rootDir>/src/$1",
+      "^@helpers/(.*)": "<rootDir>/test/helpers/$2"
     }
   }
 }

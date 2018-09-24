@@ -18,6 +18,7 @@
         "src/types/*",
       ],
       "@src/*": [ "src/*" ],
+      "@helpers/*": [ "test/helpers/*" ],
     },
     "declarationDir": "dist/types"
   },

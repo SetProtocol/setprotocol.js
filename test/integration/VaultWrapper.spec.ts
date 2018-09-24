@@ -32,9 +32,9 @@ import {
 } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
-import { CoreWrapper, VaultWrapper } from '../../src/wrappers';
-import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '../../src/constants';
-import { BigNumber, Web3Utils } from '../../src/util';
+import { CoreWrapper, VaultWrapper } from '@src/wrappers';
+import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
+import { BigNumber, Web3Utils } from '@src/util';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,

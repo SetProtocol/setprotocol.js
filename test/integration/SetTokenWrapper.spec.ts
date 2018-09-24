@@ -34,10 +34,10 @@ import {
 } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
-import { CoreWrapper, SetTokenWrapper } from '../../src/wrappers';
-import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '../../src/constants';
-import { BigNumber, Web3Utils } from '../../src/util';
-import { ether } from '../../src/util/units';
+import { CoreWrapper, SetTokenWrapper } from '@src/wrappers';
+import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
+import { BigNumber, Web3Utils } from '@src/util';
+import { ether } from '@src/util/units';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,

@@ -32,22 +32,22 @@ import { Address, Log } from 'set-protocol-utils';
 import { StandardTokenMock } from 'set-protocol-contracts';
 import { CoreContract, StandardTokenMockContract, VaultContract } from 'set-protocol-contracts';
 
-import ChaiSetup from '../../helpers/chaiSetup';
-import { BlockchainAPI } from '../../../src/api';
-import { CoreWrapper } from '../../../src/wrappers';
-import { Assertions } from '../../../src/assertions';
-import { BigNumber, getFormattedLogsFromReceipt } from '../../../src/util';
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
-import { TX_DEFAULTS, ZERO } from '../../../src/constants';
+import ChaiSetup from '@helpers/chaiSetup';
+import { BlockchainAPI } from '@src/api';
+import { CoreWrapper } from '@src/wrappers';
+import { Assertions } from '@src/assertions';
+import { BigNumber, getFormattedLogsFromReceipt } from '@src/util';
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
+import { TX_DEFAULTS, ZERO } from '@src/constants';
 import {
   deployTokenAsync,
   deployVaultContract,
   deployTransferProxyContract,
   deployCoreContract
-} from '../../helpers';
-import { getVaultBalances } from '../../helpers/vaultHelpers';
+} from '@helpers/index';
+import { getVaultBalances } from '@helpers/vaultHelpers';
 import { testSets, TestSet } from '../../testSets';
-import { Web3Utils } from '../../../src/util/Web3Utils';
+import { Web3Utils } from '@src/util/Web3Utils';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');

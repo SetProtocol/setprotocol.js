@@ -40,14 +40,14 @@ import {
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 
 import ChaiSetup from '../helpers/chaiSetup';
-import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
-import SetProtocol from '../../src/SetProtocol';
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS, TX_DEFAULTS } from '../../src/constants';
-import { Web3Utils } from '../../src/util/Web3Utils';
-import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util/logs';
-import { BigNumber } from '../../src/util';
-import { SetProtocolConfig } from '../../src/SetProtocol';
-import { ERC20Wrapper } from '../../src/wrappers/ERC20Wrapper';
+import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
+import SetProtocol from '@src/SetProtocol';
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS, TX_DEFAULTS } from '@src/constants';
+import { Web3Utils } from '@src/util/Web3Utils';
+import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
+import { BigNumber } from '@src/util';
+import { SetProtocolConfig } from '@src/SetProtocol';
+import { ERC20Wrapper } from '@src/wrappers/ERC20Wrapper';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -59,7 +59,7 @@ import {
   deployTransferProxyContract,
   deployVaultContract,
 } from '../helpers';
-import { ether } from '../../src/util/units';
+import { ether } from '@src/util/units';
 
 ChaiSetup.configure();
 const { expect } = chai;

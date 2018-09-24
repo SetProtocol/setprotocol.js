@@ -12,9 +12,9 @@ import {
   ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
-import { BigNumber } from '../../src/util';
-import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
-import { TX_DEFAULTS } from '../../src/constants';
+import { BigNumber } from '@src/util';
+import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
+import { TX_DEFAULTS } from '@src/constants';
 
 const contract = require('truffle-contract');
 
