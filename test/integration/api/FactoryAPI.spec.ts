@@ -38,13 +38,13 @@ import {
   VaultContract
 } from 'set-protocol-contracts';
 
-import ChaiSetup from '../../helpers/chaiSetup';
-import { FactoryAPI } from '../../../src/api';
-import { BigNumber } from '../../../src/util';
-import { Assertions } from '../../../src/assertions';
-import { CoreWrapper } from '../../../src/wrappers';
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
-import { TX_DEFAULTS, ZERO } from '../../../src/constants';
+import ChaiSetup from '@test/helpers/chaiSetup';
+import { FactoryAPI } from '@src/api';
+import { BigNumber } from '@src/util';
+import { Assertions } from '@src/assertions';
+import { CoreWrapper } from '@src/wrappers';
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
+import { TX_DEFAULTS, ZERO } from '@src/constants';
 import {
   addAuthorizationAsync,
   deployCoreContract,
@@ -52,10 +52,10 @@ import {
   deploySetTokenFactoryContract,
   deployTransferProxyContract,
   deployVaultContract,
-} from '../../helpers/coreHelpers';
-import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../../src/util/logs';
-import { ether } from '../../../src/util/units';
-import { Web3Utils } from '../../../src/util/Web3Utils';
+} from '@test/helpers/coreHelpers';
+import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
+import { ether } from '@src/util/units';
+import { Web3Utils } from '@src/util/Web3Utils';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');

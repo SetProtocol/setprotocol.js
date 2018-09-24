@@ -28,12 +28,12 @@ import { StandardTokenMock } from 'set-protocol-contracts';
 import { StandardTokenMockContract } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
-import { ERC20Wrapper } from '../../src/wrappers';
-import { DEFAULT_ACCOUNT, DEPLOYED_TOKEN_QUANTITY, TX_DEFAULTS } from '../../src/constants';
-import { ACCOUNTS } from '../../src/constants/accounts';
-import { BigNumber, Web3Utils } from '../../src/util';
-import { ether } from '../../src/util/units';
-import { addAuthorizationAsync, deployTokenAsync } from '../helpers';
+import { ERC20Wrapper } from '@src/wrappers';
+import { DEFAULT_ACCOUNT, DEPLOYED_TOKEN_QUANTITY, TX_DEFAULTS } from '@src/constants';
+import { ACCOUNTS } from '@src/constants/accounts';
+import { BigNumber, Web3Utils } from '@src/util';
+import { ether } from '@src/util/units';
+import { addAuthorizationAsync, deployTokenAsync } from '@test/helpers';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));

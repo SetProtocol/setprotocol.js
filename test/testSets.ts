@@ -1,4 +1,4 @@
-import { BigNumber } from '../src/util';
+import { BigNumber } from '@src/util';
 
 export interface Token {
   name: string;

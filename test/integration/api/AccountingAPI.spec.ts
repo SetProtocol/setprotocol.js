@@ -30,13 +30,13 @@ import { Address } from 'set-protocol-utils';
 import { Core } from 'set-protocol-contracts';
 import { CoreContract, StandardTokenMockContract, TransferProxyContract, VaultContract } from 'set-protocol-contracts';
 
-import ChaiSetup from '../../helpers/chaiSetup';
-import { AccountingAPI } from '../../../src/api';
-import { BigNumber } from '../../../src/util';
-import { Assertions } from '../../../src/assertions';
-import { CoreWrapper } from '../../../src/wrappers';
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
-import { TX_DEFAULTS, ZERO } from '../../../src/constants';
+import ChaiSetup from '@test/helpers/chaiSetup';
+import { AccountingAPI } from '@src/api';
+import { BigNumber } from '@src/util';
+import { Assertions } from '@src/assertions';
+import { CoreWrapper } from '@src/wrappers';
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
+import { TX_DEFAULTS, ZERO } from '@src/constants';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -45,9 +45,9 @@ import {
   deployTransferProxyContract,
   deployVaultContract,
   getVaultBalances
-} from '../../helpers';
+} from '@test/helpers';
 import { testSets, TestSet } from '../../testSets';
-import { Web3Utils } from '../../../src/util/Web3Utils';
+import { Web3Utils } from '@src/util/Web3Utils';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');

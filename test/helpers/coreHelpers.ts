@@ -30,9 +30,9 @@ import {
   DEPLOYED_TOKEN_QUANTITY,
   TX_DEFAULTS,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS
-} from '../../src/constants';
-import { BigNumber, getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '../../src/util';
-import { CoreWrapper } from '../../src/wrappers';
+} from '@src/constants';
+import { BigNumber, getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util';
+import { CoreWrapper } from '@src/wrappers';
 
 const contract = require('truffle-contract');
 

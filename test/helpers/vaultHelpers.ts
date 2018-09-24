@@ -22,10 +22,10 @@ import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import { Provider } from 'ethereum-types';
 import { Vault, VaultContract } from 'set-protocol-contracts';
 
-import { DEFAULT_ACCOUNT } from '../../src/constants/accounts';
-import { VaultWrapper } from '../../src/wrappers';
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, TX_DEFAULTS } from '../../src/constants';
-import { BigNumber } from '../../src/util';
+import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
+import { VaultWrapper } from '@src/wrappers';
+import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, TX_DEFAULTS } from '@src/constants';
+import { BigNumber } from '@src/util';
 
 const contract = require('truffle-contract');
 

@@ -34,11 +34,11 @@ import {
 } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
-import { SetTokenAPI } from '../../../src/api';
-import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '../../../src/constants';
-import { BigNumber, ether, Web3Utils } from '../../../src/util';
-import { Assertions } from '../../../src/assertions';
-import { CoreWrapper } from '../../../src/wrappers';
+import { SetTokenAPI } from '@src/api';
+import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
+import { BigNumber, ether, Web3Utils } from '@src/util';
+import { Assertions } from '@src/assertions';
+import { CoreWrapper } from '@src/wrappers';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -48,8 +48,8 @@ import {
   deployVaultContract,
   deployTokensAsync,
   deployTransferProxyContract
-} from '../../helpers';
-import { SetDetails } from '../../../src/types/common';
+} from '@test/helpers';
+import { SetDetails } from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));

@@ -38,16 +38,16 @@ import {
   VaultContract
 } from 'set-protocol-contracts';
 
-import ChaiSetup from '../../helpers/chaiSetup';
-import { IssuanceAPI } from '../../../src/api';
-import { BigNumber } from '../../../src/util';
-import { CoreWrapper } from '../../../src/wrappers';
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../../src/constants/accounts';
+import ChaiSetup from '@test/helpers/chaiSetup';
+import { IssuanceAPI } from '@src/api';
+import { BigNumber } from '@src/util';
+import { CoreWrapper } from '@src/wrappers';
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import {
   DEPLOYED_TOKEN_QUANTITY,
   TX_DEFAULTS,
   ZERO
-} from '../../../src/constants';
+} from '@src/constants';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -58,10 +58,10 @@ import {
   deployTransferProxyContract,
   deployVaultContract,
   getTokenBalances,
-} from '../../helpers/coreHelpers';
-import { Assertions } from '../../../src/assertions';
-import { ether } from '../../../src/util/units';
-import { Web3Utils } from '../../../src/util/Web3Utils';
+} from '@test/helpers/coreHelpers';
+import { Assertions } from '@src/assertions';
+import { ether } from '@src/util/units';
+import { Web3Utils } from '@src/util/Web3Utils';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
