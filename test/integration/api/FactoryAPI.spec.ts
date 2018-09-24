@@ -38,7 +38,7 @@ import {
   VaultContract
 } from 'set-protocol-contracts';
 
-import ChaiSetup from '@helpers/chaiSetup';
+import ChaiSetup from '@test/helpers/chaiSetup';
 import { FactoryAPI } from '@src/api';
 import { BigNumber } from '@src/util';
 import { Assertions } from '@src/assertions';
@@ -52,7 +52,7 @@ import {
   deploySetTokenFactoryContract,
   deployTransferProxyContract,
   deployVaultContract,
-} from '@helpers/coreHelpers';
+} from '@test/helpers/coreHelpers';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { ether } from '@src/util/units';
 import { Web3Utils } from '@src/util/Web3Utils';
