@@ -37,9 +37,9 @@ import {
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '../../src/constants/accounts';
-import { CoreWrapper } from '../../src/wrappers';
-import { OrderAPI } from '../../src/api';
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
+import { CoreWrapper } from '@src/wrappers';
+import { OrderAPI } from '@src/api';
 import {
   CoreContract,
   SetTokenContract,
@@ -49,8 +49,8 @@ import {
   VaultContract,
   ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
-import { NULL_ADDRESS, TX_DEFAULTS, ZERO } from '../../src/constants';
-import { Assertions } from '../../src/assertions';
+import { NULL_ADDRESS, TX_DEFAULTS, ZERO } from '@src/constants';
+import { Assertions } from '@src/assertions';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -72,7 +72,7 @@ import {
   generateFutureTimestamp,
   getFormattedLogsFromTxHash,
   Web3Utils
-} from '../../src/util';
+} from '@src/util';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));

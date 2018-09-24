@@ -16,7 +16,8 @@
         "node_modules/@0xproject/typescript-typings/types/*",
         "node_modules/*",
         "src/types/*",
-      ]
+      ],
+      "@src/*": [ "src/*" ],
     },
     "declarationDir": "dist/types"
   },
