@@ -48,7 +48,7 @@ import {
   deployVaultContract,
   deployTokensAsync,
   deployTransferProxyContract
-} from '@helpers/index';
+} from '@test/helpers';
 import { SetDetails } from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');

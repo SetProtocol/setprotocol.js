@@ -30,7 +30,7 @@ import { Address } from 'set-protocol-utils';
 import { Core } from 'set-protocol-contracts';
 import { CoreContract, StandardTokenMockContract, TransferProxyContract, VaultContract } from 'set-protocol-contracts';
 
-import ChaiSetup from '@helpers/chaiSetup';
+import ChaiSetup from '@test/helpers/chaiSetup';
 import { AccountingAPI } from '@src/api';
 import { BigNumber } from '@src/util';
 import { Assertions } from '@src/assertions';
@@ -45,7 +45,7 @@ import {
   deployTransferProxyContract,
   deployVaultContract,
   getVaultBalances
-} from '@helpers/index';
+} from '@test/helpers';
 import { testSets, TestSet } from '../../testSets';
 import { Web3Utils } from '@src/util/Web3Utils';
 

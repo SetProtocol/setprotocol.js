@@ -32,7 +32,7 @@ import { Address, Log } from 'set-protocol-utils';
 import { StandardTokenMock } from 'set-protocol-contracts';
 import { CoreContract, StandardTokenMockContract, VaultContract } from 'set-protocol-contracts';
 
-import ChaiSetup from '@helpers/chaiSetup';
+import ChaiSetup from '@test/helpers/chaiSetup';
 import { BlockchainAPI } from '@src/api';
 import { CoreWrapper } from '@src/wrappers';
 import { Assertions } from '@src/assertions';
@@ -44,8 +44,8 @@ import {
   deployVaultContract,
   deployTransferProxyContract,
   deployCoreContract
-} from '@helpers/index';
-import { getVaultBalances } from '@helpers/vaultHelpers';
+} from '@test/helpers';
+import { getVaultBalances } from '@test/helpers/vaultHelpers';
 import { testSets, TestSet } from '../../testSets';
 import { Web3Utils } from '@src/util/Web3Utils';
 

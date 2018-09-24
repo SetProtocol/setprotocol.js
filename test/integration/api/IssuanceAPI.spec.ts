@@ -38,7 +38,7 @@ import {
   VaultContract
 } from 'set-protocol-contracts';
 
-import ChaiSetup from '@helpers/chaiSetup';
+import ChaiSetup from '@test/helpers/chaiSetup';
 import { IssuanceAPI } from '@src/api';
 import { BigNumber } from '@src/util';
 import { CoreWrapper } from '@src/wrappers';
@@ -58,7 +58,7 @@ import {
   deployTransferProxyContract,
   deployVaultContract,
   getTokenBalances,
-} from '@helpers/coreHelpers';
+} from '@test/helpers/coreHelpers';
 import { Assertions } from '@src/assertions';
 import { ether } from '@src/util/units';
 import { Web3Utils } from '@src/util/Web3Utils';

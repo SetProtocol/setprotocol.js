@@ -28,7 +28,7 @@ import { StandardTokenMock } from 'set-protocol-contracts';
 import { StandardTokenMockContract } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
-import ChaiSetup from '@helpers/chaiSetup';
+import ChaiSetup from '@test/helpers/chaiSetup';
 import { CoreWrapper } from '@src/wrappers';
 import { Assertions } from '@src/assertions';
 import { ERC20API } from '@src/api';
@@ -41,7 +41,7 @@ import {
   deployVaultContract,
   deployTransferProxyContract,
   deployCoreContract
-} from '@helpers/index';
+} from '@test/helpers';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');

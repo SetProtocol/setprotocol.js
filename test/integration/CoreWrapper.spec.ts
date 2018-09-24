@@ -64,7 +64,7 @@ import {
   deployTakerWalletWrapperContract,
   deployZeroExExchangeWrapperContract,
   getVaultBalances,
-} from '@helpers/index';
+} from '@test/helpers';
 import {
   BigNumber,
   ether,

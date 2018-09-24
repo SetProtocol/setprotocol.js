@@ -50,7 +50,7 @@ import {
 } from 'set-protocol-contracts';
 
 import { BigNumber, SignatureUtils } from '@src/util';
-import ChaiSetup from '@helpers/chaiSetup';
+import ChaiSetup from '@test/helpers/chaiSetup';
 import { CoreWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { OrderAPI } from '@src/api';
@@ -67,8 +67,8 @@ import {
   deploySetTokenFactoryContract,
   deployTransferProxyContract,
   deployVaultContract,
-} from '@helpers/coreHelpers';
-import { deployTakerWalletWrapperContract, deployZeroExExchangeWrapperContract } from '@helpers/exchangeHelpers';
+} from '@test/helpers/coreHelpers';
+import { deployTakerWalletWrapperContract, deployZeroExExchangeWrapperContract } from '@test/helpers/exchangeHelpers';
 
 ChaiSetup.configure();
 const { expect } = chai;

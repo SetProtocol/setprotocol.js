@@ -33,7 +33,7 @@ import { DEFAULT_ACCOUNT, DEPLOYED_TOKEN_QUANTITY, TX_DEFAULTS } from '@src/cons
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber, Web3Utils } from '@src/util';
 import { ether } from '@src/util/units';
-import { addAuthorizationAsync, deployTokenAsync } from '../helpers';
+import { addAuthorizationAsync, deployTokenAsync } from '@test/helpers';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));

@@ -58,7 +58,7 @@ import {
   deployTokensAsync,
   deployTransferProxyContract,
   deployVaultContract,
-} from '../helpers';
+} from '@test/helpers';
 import { ether } from '@src/util/units';
 
 ChaiSetup.configure();
