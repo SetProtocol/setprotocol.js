@@ -138,6 +138,78 @@ export class FactoryAPI {
     return new BigNumber(10 ** (18 - minDecimal.toNumber()));
   }
 
+  public async calculateNaturalUnitBySetPrice(
+    componentPrices: BigNumber[],
+    components: Address[],
+    componentUnits: BigNumber[],
+    desiredPercentages: BigNumber[],
+    targetSetPrice: BigNumber,
+  ) {
+    const componentAmountRequireds = await this.calculateComponentPrices(
+      componentPrices,
+      components,
+      desiredPercentages,
+      targetSetPrice
+    );
+
+    const naturalUnit = componentUnits[0].mul(10 ** 18).div(componentAmountRequireds[0]);
+
+    if (naturalUnit.gt(await this.calculateMinimumNaturalUnit(components))) {
+      return naturalUnit;
+    } else {
+      // Invalid naturalUnit throw an error
+    }
+  }
+
+  public async calculateComponentUnitsForSet(
+    componentPrices: BigNumber[],
+    components: Address[],
+    desiredPercentages: BigNumber[],
+    naturalUnit: BigNumber,
+    targetSetPrice: BigNumber,
+  ): Promise<BigNumber[]> {
+    const componentAmountRequireds = await this.calculateComponentPrices(
+      componentPrices,
+      components,
+      desiredPercentages,
+      targetSetPrice
+    );
+
+    const componentUnits = componentAmountRequireds.map((amountRequired, i) => {
+      return amountRequired.mul(naturalUnit).div(10 ** 18);
+    });
+
+    return componentUnits;
+  }
+
+  /* ============ Private Helpers =============== */
+
+  private async calculateComponentPrices(
+    componentPrices: BigNumber[],
+    components: Address[],
+    desiredPercentages: BigNumber[],
+    targetSetPrice: BigNumber,
+  ): Promise<BigNumber[]> {
+    // Calculate price of each component
+    const targetComponentPrices = desiredPercentages.map(percentage => {
+      return percentage.mul(targetSetPrice);
+    });
+    // Calculate the target amount of tokens required by dividing the target component price
+    // with the price of a component and then multiply by the token's base unit amount
+    // (10 ** componentDecimal) to get it in base units.
+    const componentAmountRequiredPromises = targetComponentPrices.map(async(targetComponentPrice, i) => {
+      let componentDecimals: number;
+      try {
+        componentDecimals = (await this.erc20.decimals(components[i])).toNumber();
+      } catch (err) {
+        componentDecimals = 18;
+      }
+      return targetComponentPrice.div(componentPrices[i]).mul(10 ** componentDecimals);
+    });
+
+    return Promise.all(componentAmountRequiredPromises);
+  }
+
   /* ============ Private Assertions ============ */
 
   private async assertCreateSet(
