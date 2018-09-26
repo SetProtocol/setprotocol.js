@@ -145,7 +145,7 @@ export class FactoryAPI {
     desiredPercentages: BigNumber[],
     targetSetPrice: BigNumber,
   ) {
-    const componentAmountRequireds = await this.calculateComponentPrices(
+    const componentAmountRequireds = await this.calculateComponentAmounts(
       componentPrices,
       components,
       desiredPercentages,
@@ -168,7 +168,7 @@ export class FactoryAPI {
     naturalUnit: BigNumber,
     targetSetPrice: BigNumber,
   ): Promise<BigNumber[]> {
-    const componentAmountRequireds = await this.calculateComponentPrices(
+    const componentAmountRequireds = await this.calculateComponentAmounts(
       componentPrices,
       components,
       desiredPercentages,
@@ -184,7 +184,7 @@ export class FactoryAPI {
 
   /* ============ Private Helpers =============== */
 
-  private async calculateComponentPrices(
+  private async calculateComponentAmounts(
     componentPrices: BigNumber[],
     components: Address[],
     desiredPercentages: BigNumber[],
