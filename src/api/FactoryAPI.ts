@@ -180,12 +180,15 @@ export class FactoryAPI {
     return Promise.all(componentAmountRequiredPromises);
   }
 
-  public async calculateComponentUnitsForSet(
+  public calculateComponentUnitsForSet(
     naturalUnit: BigNumber,
     requiredComponentUnits: BigNumber[],
-  ): Promise<BigNumber[]> {
+  ): BigNumber[] {
     const componentUnits = requiredComponentUnits.map((amountRequired, i) => {
-      return amountRequired.mul(naturalUnit).div(ether(1));
+      return amountRequired
+        .mul(naturalUnit)
+        .div(ether(1))
+        .ceil();
     });
 
     return componentUnits;
