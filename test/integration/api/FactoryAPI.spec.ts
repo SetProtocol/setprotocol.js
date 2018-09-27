@@ -554,15 +554,15 @@ describe('FactoryAPI', () => {
 
       test('should calculate the correct required component units', async () => {
         const expectedResult = [
-          new BigNumber('6711742209631728045.33', ),
-          new BigNumber('4940616541353383458.65', ),
-          new BigNumber('44258572949946751863.68', ),
-          new BigNumber('1301943097014925373.13', ),
-          new BigNumber('92988464730290.45643154', ),
-          new BigNumber('2973066455696202531.65', ),
-          new BigNumber('6763830769230769230.77', ),
-          new BigNumber('47212759.643916913947', ),
-          new BigNumber('140347061778001004.52', ),
+          new BigNumber('6711742209631728045.33'),
+          new BigNumber('4940616541353383458.65'),
+          new BigNumber('44258572949946751863.68'),
+          new BigNumber('1301943097014925373.13'),
+          new BigNumber('92988464730290.45643154'),
+          new BigNumber('2973066455696202531.65'),
+          new BigNumber('6763830769230769230.77'),
+          new BigNumber('47212759.643916913947'),
+          new BigNumber('140347061778001004.52'),
           new BigNumber('12760481927710843373.49'),
         ];
 
@@ -584,15 +584,15 @@ describe('FactoryAPI', () => {
     describe('when the inputs represent a real world integration case', async () => {
       beforeEach(async () => {
         subjectRequiredComponentUnits = [
-          new BigNumber('6711742209631728045.33', ),
-          new BigNumber('4940616541353383458.65', ),
-          new BigNumber('44258572949946751863.68', ),
-          new BigNumber('1301943097014925373.13', ),
-          new BigNumber('92988464730290.45643154', ),
-          new BigNumber('2973066455696202531.65', ),
-          new BigNumber('6763830769230769230.77', ),
-          new BigNumber('47212759.643916913947', ),
-          new BigNumber('140347061778001004.52', ),
+          new BigNumber('6711742209631728045.33'),
+          new BigNumber('4940616541353383458.65'),
+          new BigNumber('44258572949946751863.68'),
+          new BigNumber('1301943097014925373.13'),
+          new BigNumber('92988464730290.45643154'),
+          new BigNumber('2973066455696202531.65'),
+          new BigNumber('6763830769230769230.77'),
+          new BigNumber('47212759.643916913947'),
+          new BigNumber('140347061778001004.52'),
           new BigNumber('12760481927710843373.49'),
         ];
 
