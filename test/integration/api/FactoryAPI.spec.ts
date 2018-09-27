@@ -31,6 +31,7 @@ import { Address } from 'set-protocol-utils';
 import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
+  NoDecimalTokenMockContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -48,7 +49,9 @@ import { TX_DEFAULTS, ZERO } from '@src/constants';
 import {
   addAuthorizationAsync,
   deployCoreContract,
+  deployNoDecimalTokenAsync,
   deployTokensAsync,
+  deployTokensSpecifyingDecimals,
   deploySetTokenFactoryContract,
   deployTransferProxyContract,
   deployVaultContract,
@@ -385,6 +388,84 @@ describe('FactoryAPI', () => {
         Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{64}$"
       `
         );
+      });
+    });
+  });
+
+  describe('calculateMinimumNaturalUnit', async () => {
+    let componentInstances: (StandardTokenMockContract | NoDecimalTokenMockContract)[];
+    let subjectComponents: Address[];
+
+    beforeEach(async () => {
+      subjectComponents = componentInstances.map(component => component.address);
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await factoryAPI.calculateMinimumNaturalUnit(subjectComponents);
+    }
+
+    describe('when the decimals and token count are standard', async () => {
+      beforeAll(async () => {
+        const tokenCount = 2;
+        const decimalsList = [18, 18];
+        componentInstances = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+      });
+
+      afterAll(async () => {
+        componentInstances = [];
+      });
+
+      test('it calculates the min minimum natural unit correctly', async () => {
+        const expectedResult = new BigNumber(1);
+
+        const result = await subject();
+
+        expect(result).to.bignumber.equal(expectedResult);
+      });
+    });
+
+    describe('when a component does not implement decimals', async () => {
+      beforeAll(async () => {
+        const [standardToken] = await deployTokensSpecifyingDecimals(1, [18], provider);
+        const nonDecimalComponent = await deployNoDecimalTokenAsync(provider);
+
+        componentInstances = [standardToken, nonDecimalComponent];
+      });
+
+      afterAll(async () => {
+        componentInstances = [];
+      });
+
+      it('it calculates the min minimum natural unit correctly', async () => {
+        const expectedResult = new BigNumber(10).pow(18);
+
+        const result = await subject();
+
+        expect(result).to.bignumber.equal(expectedResult);
+      });
+    });
+
+    describe('when the decimals of the components are all different', async () => {
+      const smallerDecimal = 8;
+      const largerDecimal = 18 - smallerDecimal;
+      let decimalsList: number[];
+
+      beforeAll(async () => {
+        const tokenCount = 2;
+        decimalsList = [largerDecimal, smallerDecimal];
+        componentInstances = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+      });
+
+      afterAll(async () => {
+        componentInstances = [];
+      });
+
+      test('it calculates the min minimum natural unit correctly', async () => {
+        const expectedResult = new BigNumber(10).pow(largerDecimal);
+
+        const result = await subject();
+
+        expect(result).to.bignumber.equal(expectedResult);
       });
     });
   });

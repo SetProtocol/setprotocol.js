@@ -29,7 +29,13 @@ import { ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { CoreWrapper, ERC20Wrapper } from '../wrappers';
-import { BigNumber, extractNewSetTokenAddressFromLogs, generateTxOpts, getFormattedLogsFromTxHash } from '../util';
+import {
+  BigNumber,
+  ether,
+  extractNewSetTokenAddressFromLogs,
+  generateTxOpts,
+  getFormattedLogsFromTxHash
+} from '../util';
 import { TxData } from '../types/common';
 
 /**
@@ -144,6 +150,8 @@ export class FactoryAPI {
     desiredPercentages: BigNumber[],
     targetSetPrice: BigNumber,
   ): Promise<BigNumber[]> {
+    this.assert.common.sumsToOneHundredPercent(desiredPercentages, coreAPIErrors.PERCENTAGES_DONT_ADD_UP_TO_100());
+
     // Calculate price of each component
     const targetComponentPrices = desiredPercentages.map(percentage => {
       return percentage.mul(targetSetPrice);
@@ -169,7 +177,7 @@ export class FactoryAPI {
     requiredComponentUnits: BigNumber[],
   ): Promise<BigNumber[]> {
     const componentUnits = requiredComponentUnits.map((amountRequired, i) => {
-      return amountRequired.mul(naturalUnit).div(10 ** 18);
+      return amountRequired.mul(naturalUnit).div(ether(1));
     });
 
     return componentUnits;

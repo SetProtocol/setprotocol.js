@@ -19,6 +19,7 @@
 import { BigNumber } from '../util';
 
 export const coreAPIErrors = {
+  PERCENTAGES_DONT_ADD_UP_TO_100: () => `The component percentages inputted does not add up to 100 percent`,
   ARRAYS_EQUAL_LENGTHS: (firstArray: string, secondArray: string) =>
     `The ${firstArray} and ${secondArray} arrays need to be equal lengths.`,
   EMPTY_ARRAY: (variable: string) => `The array ${variable} cannot be empty.`,
