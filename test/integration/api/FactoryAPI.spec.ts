@@ -469,4 +469,109 @@ describe('FactoryAPI', () => {
       });
     });
   });
+
+  describe.only('calculateRequiredComponentUnits', async () => {
+    let subjectComponentPrices: BigNumber[];
+    let subjectComponents: StandardTokenMockContract[];
+    let subjectComponentAllocations: BigNumber[];
+    let subjectTargetSetPrice: BigNumber;
+
+    beforeEach(async () => {
+      const tokenCount = 2;
+      const decimalsList = [18, 18];
+      subjectComponents = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+      subjectComponentPrices = [new BigNumber(2), new BigNumber(2)];
+      subjectComponentAllocations = [new BigNumber(0.5), new BigNumber(0.5)];
+      subjectTargetSetPrice = new BigNumber(10);
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      const subjectComponentAddresses = _.map(subjectComponents, components => components.address);
+
+      return await factoryAPI.calculateRequiredComponentUnits(
+        subjectComponentPrices,
+        subjectComponentAddresses,
+        subjectComponentAllocations,
+        subjectTargetSetPrice,
+      );
+    }
+
+    describe('when the inputs are standard', async () => {
+      test('should calculate the correct required component units', async () => {
+        const expectedResult = [
+          new BigNumber(2.5).mul(ether(1)),
+          new BigNumber(2.5).mul(ether(1)),
+        ];
+
+        const result = await subject();
+
+        expect(JSON.stringify(result)).to.equal(JSON.stringify(expectedResult));
+      });
+    });
+
+    describe('when the allocation inputs do not sum up to 1', async () => {
+      beforeEach(async () => {
+        subjectComponentAllocations = [new BigNumber(0.5), new BigNumber(0.49)];
+      });
+
+      test('it should throw', async () => {
+        return expect(subject()).to.be.rejectedWith(`The component percentages inputted does not add up to 1`);
+      });
+    });
+
+    describe('when the inputs represent a real world integration case', async () => {
+      beforeEach(async () => {
+        const tokenCount = 10;
+        const decimalsList = [18, 18, 18, 18, 12, 18, 18, 8, 18, 18];
+        subjectComponents = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+        subjectComponentPrices = [
+          new BigNumber(3.53),
+          new BigNumber(2.66),
+          new BigNumber(0.0939),
+          new BigNumber(10.72),
+          new BigNumber(0.1205),
+          new BigNumber(3.16),
+          new BigNumber(1.3),
+          new BigNumber(13.48),
+          new BigNumber(39.82),
+          new BigNumber(0.2905),
+        ];
+        subjectComponentAllocations = [
+          new BigNumber(0.2369245),
+          new BigNumber(0.1314204),
+          new BigNumber(0.0415588),
+          new BigNumber(0.1395683),
+          new BigNumber(0.1120511),
+          new BigNumber(0.0939489),
+          new BigNumber(0.0879298),
+          new BigNumber(0.0636428),
+          new BigNumber(0.0558862),
+          new BigNumber(0.0370692),
+        ];
+
+        subjectTargetSetPrice = new BigNumber(100);
+      });
+
+      test('should calculate the correct required component units', async () => {
+        const expectedResult = [
+          new BigNumber('6711742209631728045.33', ),
+          new BigNumber('4940616541353383458.65', ),
+          new BigNumber('44258572949946751863.68', ),
+          new BigNumber('1301943097014925373.13', ),
+          new BigNumber('92988464730290.45643154', ),
+          new BigNumber('2973066455696202531.65', ),
+          new BigNumber('6763830769230769230.77', ),
+          new BigNumber('47212759.643916913947', ),
+          new BigNumber('140347061778001004.52', ),
+          new BigNumber('12760481927710843373.49'),
+        ];
+
+        const result = await subject();
+
+        expect(JSON.stringify(result)).to.equal(JSON.stringify(expectedResult));
+      });
+    });
+
+
+  });
 });

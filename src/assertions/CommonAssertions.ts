@@ -68,10 +68,10 @@ export class CommonAssertions {
     }
   }
 
-  public sumsToOneHundredPercent(percentages: BigNumber[], errorMesage: string) {
-    const total: BigNumber = new BigNumber(0);
+  public proportionsSumToOne(percentages: BigNumber[], errorMesage: string) {
+    let total: BigNumber = new BigNumber(0);
     _.each(percentages, percentage => {
-      total.add(percentage);
+      total = total.add(percentage);
     });
 
     if (!total.eq(new BigNumber(1))) {

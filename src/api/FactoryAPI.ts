@@ -147,26 +147,34 @@ export class FactoryAPI {
   public async calculateRequiredComponentUnits(
     componentPrices: BigNumber[],
     components: Address[],
-    desiredPercentages: BigNumber[],
+    componentAllocation: BigNumber[],
     targetSetPrice: BigNumber,
   ): Promise<BigNumber[]> {
-    this.assert.common.sumsToOneHundredPercent(desiredPercentages, coreAPIErrors.PERCENTAGES_DONT_ADD_UP_TO_100());
+    this.assert.common.proportionsSumToOne(componentAllocation, coreAPIErrors.PROPORTIONS_DONT_ADD_UP_TO_1());
+    this.assert.common.isEqualLength(
+      componentPrices,
+      components,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('componentPrices', 'components')
+    );
+    this.assert.common.isEqualLength(
+      componentPrices,
+      componentAllocation,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('componentPrices', 'componentAllocation')
+    );
 
-    // Calculate price of each component
-    const targetComponentPrices = desiredPercentages.map(percentage => {
-      return percentage.mul(targetSetPrice);
-    });
+    const targetComponentValues = this.calculateTargetComponentValues(componentAllocation, targetSetPrice);
+
     // Calculate the target amount of tokens required by dividing the target component price
     // with the price of a component and then multiply by the token's base unit amount
     // (10 ** componentDecimal) to get it in base units.
-    const componentAmountRequiredPromises = targetComponentPrices.map(async(targetComponentPrice, i) => {
-      let componentDecimals: number;
-      try {
-        componentDecimals = (await this.erc20.decimals(components[i])).toNumber();
-      } catch (err) {
-        componentDecimals = 18;
-      }
-      return targetComponentPrice.div(componentPrices[i]).mul(10 ** componentDecimals);
+    const componentAmountRequiredPromises = targetComponentValues.map(async(targetComponentValue, i) => {
+      const componentDecimals: number = await this.getComponentDecimals(components[i]);
+
+      const numComponentsRequired = targetComponentValue.div(componentPrices[i]);
+
+      const standardComponentUnit = new BigNumber(10).pow(componentDecimals);
+
+      return numComponentsRequired.mul(standardComponentUnit);
     });
 
     return Promise.all(componentAmountRequiredPromises);
@@ -181,6 +189,27 @@ export class FactoryAPI {
     });
 
     return componentUnits;
+  }
+
+  /* ============ Private Function ============ */
+  private async getComponentDecimals(componentAddress: Address): Promise<number> {
+    let componentDecimals: number;
+    try {
+      componentDecimals = (await this.erc20.decimals(componentAddress)).toNumber();
+    } catch (err) {
+      componentDecimals = 18;
+    }
+
+    return componentDecimals;
+  }
+
+  private calculateTargetComponentValues(
+    componentAllocation: BigNumber[],
+    targetSetPrice: BigNumber
+  ): BigNumber[] {
+    return componentAllocation.map(percentage => {
+      return percentage.mul(targetSetPrice);
+    });
   }
 
   /* ============ Private Assertions ============ */
