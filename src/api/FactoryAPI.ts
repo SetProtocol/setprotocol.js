@@ -138,53 +138,7 @@ export class FactoryAPI {
     return new BigNumber(10 ** (18 - minDecimal.toNumber()));
   }
 
-  public async calculateNaturalUnitBySetPrice(
-    componentPrices: BigNumber[],
-    components: Address[],
-    componentUnits: BigNumber[],
-    desiredPercentages: BigNumber[],
-    targetSetPrice: BigNumber,
-  ) {
-    const componentAmountRequireds = await this.calculateComponentAmounts(
-      componentPrices,
-      components,
-      desiredPercentages,
-      targetSetPrice
-    );
-
-    const naturalUnit = componentUnits[0].mul(10 ** 18).div(componentAmountRequireds[0]);
-
-    if (naturalUnit.gt(await this.calculateMinimumNaturalUnit(components))) {
-      return naturalUnit;
-    } else {
-      // Invalid naturalUnit throw an error
-    }
-  }
-
-  public async calculateComponentUnitsForSet(
-    componentPrices: BigNumber[],
-    components: Address[],
-    desiredPercentages: BigNumber[],
-    naturalUnit: BigNumber,
-    targetSetPrice: BigNumber,
-  ): Promise<BigNumber[]> {
-    const componentAmountRequireds = await this.calculateComponentAmounts(
-      componentPrices,
-      components,
-      desiredPercentages,
-      targetSetPrice
-    );
-
-    const componentUnits = componentAmountRequireds.map((amountRequired, i) => {
-      return amountRequired.mul(naturalUnit).div(10 ** 18);
-    });
-
-    return componentUnits;
-  }
-
-  /* ============ Private Helpers =============== */
-
-  private async calculateComponentAmounts(
+  public async calculateRequiredComponentUnits(
     componentPrices: BigNumber[],
     components: Address[],
     desiredPercentages: BigNumber[],
@@ -208,6 +162,17 @@ export class FactoryAPI {
     });
 
     return Promise.all(componentAmountRequiredPromises);
+  }
+
+  public async calculateComponentUnitsForSet(
+    naturalUnit: BigNumber,
+    requiredComponentUnits: BigNumber[],
+  ): Promise<BigNumber[]> {
+    const componentUnits = requiredComponentUnits.map((amountRequired, i) => {
+      return amountRequired.mul(naturalUnit).div(10 ** 18);
+    });
+
+    return componentUnits;
   }
 
   /* ============ Private Assertions ============ */
