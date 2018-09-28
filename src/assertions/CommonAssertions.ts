@@ -16,6 +16,7 @@
 
 'use strict';
 
+import * as _ from 'lodash';
 import { BigNumber } from '../util';
 import { ZERO } from '../constants';
 
@@ -64,6 +65,17 @@ export class CommonAssertions {
   public isEqualString(string1: string, string2: string, errorMessage: string) {
     if (string1 !== string2) {
       throw new Error(errorMessage);
+    }
+  }
+
+  public proportionsSumToOne(percentages: BigNumber[], errorMesage: string) {
+    let total: BigNumber = ZERO;
+    _.each(percentages, percentage => {
+      total = total.add(percentage);
+    });
+
+    if (!total.eq(new BigNumber(1))) {
+      throw new Error(errorMesage);
     }
   }
 }

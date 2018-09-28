@@ -165,6 +165,18 @@ export const deployTokensAsync = async (
   provider: Provider,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<StandardTokenMockContract[]> => {
+  const decimals: number[] = [];
+  _.times(tokenCount, () => decimals.push(_.random(4, 18)));
+
+  return deployTokensSpecifyingDecimals(tokenCount, decimals, provider, owner);
+};
+
+export const deployTokensSpecifyingDecimals = async (
+  tokenCount: number,
+  decimalsList: number[],
+  provider: Provider,
+  owner: Address = DEFAULT_ACCOUNT,
+): Promise<StandardTokenMockContract[]> => {
   const web3 = new Web3(provider);
 
   const standardTokenMockContract = contract(StandardTokenMock);
@@ -178,7 +190,7 @@ export const deployTokensAsync = async (
       DEPLOYED_TOKEN_QUANTITY,
       `Component ${index}`,
       index,
-      _.random(4, 18),
+      decimalsList[index],
       TX_DEFAULTS,
     )
   ));

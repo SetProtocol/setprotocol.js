@@ -118,7 +118,7 @@ describe('SetProtocol', async () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('calculateMinimumNaturalUnit', async () => {
+  describe('calculateMinimumNaturalUnitAsync', async () => {
     let mockNoDecimalToken: NoDecimalTokenMockContract;
     let mockTokens: StandardTokenMockContract[];
     let subjectComponents: Address[];
@@ -129,7 +129,7 @@ describe('SetProtocol', async () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await setProtocol.calculateMinimumNaturalUnit(
+      return await setProtocol.calculateMinimumNaturalUnitAsync(
         subjectComponents,
       );
     }

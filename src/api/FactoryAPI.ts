@@ -29,7 +29,13 @@ import { ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { CoreWrapper, ERC20Wrapper } from '../wrappers';
-import { BigNumber, extractNewSetTokenAddressFromLogs, generateTxOpts, getFormattedLogsFromTxHash } from '../util';
+import {
+  BigNumber,
+  ether,
+  extractNewSetTokenAddressFromLogs,
+  generateTxOpts,
+  getFormattedLogsFromTxHash,
+} from '../util';
 import { TxData } from '../types/common';
 
 /**
@@ -136,6 +142,78 @@ export class FactoryAPI {
     }
 
     return new BigNumber(10 ** (18 - minDecimal.toNumber()));
+  }
+
+  public async calculateRequiredComponentUnits(
+    componentPrices: BigNumber[],
+    components: Address[],
+    componentProportions: BigNumber[],
+    targetSetPrice: BigNumber,
+  ): Promise<BigNumber[]> {
+    this.assert.common.proportionsSumToOne(componentProportions, coreAPIErrors.PROPORTIONS_DONT_ADD_UP_TO_1());
+    this.assert.common.isEqualLength(
+      componentPrices,
+      components,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('componentPrices', 'components')
+    );
+    this.assert.common.isEqualLength(
+      componentPrices,
+      componentProportions,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('componentPrices', 'componentProportions')
+    );
+
+    const targetComponentValues = this.calculateTargetComponentValues(componentProportions, targetSetPrice);
+
+    // Calculate the target amount of tokens required by dividing the target component price
+    // with the price of a component and then multiply by the token's base unit amount
+    // (10 ** componentDecimal) to get it in base units.
+    const componentAmountRequiredPromises = _.map(targetComponentValues, async(targetComponentValue, i) => {
+      const componentDecimals: number = await this.getComponentDecimals(components[i]);
+
+      const numComponentsRequired = targetComponentValue.div(componentPrices[i]);
+
+      const standardComponentUnit = new BigNumber(10).pow(componentDecimals);
+
+      return numComponentsRequired.mul(standardComponentUnit);
+    });
+
+    return Promise.all(componentAmountRequiredPromises);
+  }
+
+  public calculateComponentUnits(
+    naturalUnit: BigNumber,
+    requiredComponentUnits: BigNumber[],
+  ): BigNumber[] {
+    const componentUnits = requiredComponentUnits.map((amountRequired, i) => {
+      return amountRequired
+        .mul(naturalUnit)
+        .div(ether(1))
+        .ceil();
+    });
+
+    return componentUnits;
+  }
+
+  /* ============ Private Function ============ */
+
+  private async getComponentDecimals(componentAddress: Address): Promise<number> {
+    let componentDecimals: number;
+    try {
+      componentDecimals = (await this.erc20.decimals(componentAddress)).toNumber();
+    } catch (err) {
+      componentDecimals = 18;
+    }
+
+    return componentDecimals;
+  }
+
+  private calculateTargetComponentValues(
+    componentProportions: BigNumber[],
+    targetSetPrice: BigNumber,
+  ): BigNumber[] {
+    return componentProportions.map(decimalAllocation => {
+      return decimalAllocation.mul(targetSetPrice);
+    });
   }
 
   /* ============ Private Assertions ============ */

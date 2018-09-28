@@ -301,8 +301,47 @@ class SetProtocol {
    * @param componentAddresses    Component ERC20 addresses
    * @return                      The minimum value of the natural unit allowed by component decimals
    */
-  public async calculateMinimumNaturalUnit(components: Address[]): Promise<BigNumber> {
+  public async calculateMinimumNaturalUnitAsync(components: Address[]): Promise<BigNumber> {
     return await this.factory.calculateMinimumNaturalUnit(components);
+  }
+
+  /**
+   * Calculates the component units required to achieve a target Set price given a list of
+   * components, desired component proportions (in decimal format), and component prices.
+   *
+   * @param componentPrices         A list of fiat-denominated component prices
+   * @param componentAddresses      Component ERC20 addresses
+   * @param componentProportions    Decimal-formatted allocations. Must add up to 1
+   * @param targetSetPrice          Desired price of a single unit of the Set
+   * @return                        A list of component units
+   */
+  public async calculateRequiredComponentUnitsAsync(
+    componentPrices: BigNumber[],
+    componentAddresses: Address[],
+    componentProportions: BigNumber[],
+    targetSetPrice: BigNumber,
+  ): Promise<BigNumber[]> {
+    return await this.factory.calculateRequiredComponentUnits(
+      componentPrices,
+      componentAddresses,
+      componentProportions,
+      targetSetPrice,
+    );
+  }
+
+  /**
+   * Calculates a list of rounded component units that can be inputted into the Set
+   * create function given a natural unit and minimum required units.
+   *
+   * @param naturalUnit               The Set natural unit
+   * @param requiredComponentUnits    List of unformatted component units
+   * @return                          List of formatted, rounded component units
+   */
+  public calculateComponentUnits(
+    naturalUnit: BigNumber,
+    requiredComponentUnits: BigNumber[],
+  ): BigNumber[] {
+    return this.factory.calculateComponentUnits(naturalUnit, requiredComponentUnits);
   }
 }
 
