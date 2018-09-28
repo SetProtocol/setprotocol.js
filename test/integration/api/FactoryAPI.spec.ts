@@ -578,7 +578,7 @@ describe('FactoryAPI', () => {
     let subjectRequiredComponentUnits: BigNumber[];
 
     function subject(): BigNumber[] {
-      return factoryAPI.calculateComponentUnitsForSet(subjectNaturalUnit, subjectRequiredComponentUnits);
+      return factoryAPI.calculateComponentUnits(subjectNaturalUnit, subjectRequiredComponentUnits);
     }
 
     describe('when the inputs represent a real world integration case', async () => {
