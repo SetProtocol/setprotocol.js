@@ -153,7 +153,7 @@ export class OrderAPI {
   public async calculateRequiredComponentsAndUnitsAsync(
     setAddress: Address,
     makerAddress: Address,
-    quantity: BigNumber
+    quantity: BigNumber,
   ): Promise<RequiredComponents> {
     const components = await this.setToken.getComponents(setAddress);
     const componentUnits = await this.setToken.getUnits(setAddress);
@@ -171,7 +171,7 @@ export class OrderAPI {
         const userTokenbalance = walletBalance.add(vaultBalance);
 
         const currentUnitsNeeded = totalUnitsNeeded[index];
-        const missingUnits = currentUnitsNeeded.minus(userTokenbalance);
+        const missingUnits = currentUnitsNeeded.sub(userTokenbalance);
 
         if (missingUnits.gt(ZERO)) {
           requiredComponents.push(componentAddress);
