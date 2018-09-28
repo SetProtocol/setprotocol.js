@@ -573,7 +573,7 @@ describe('FactoryAPI', () => {
     });
   });
 
-  describe('calculateComponentUnitsForSet', async () => {
+  describe('calculateComponentUnits', async () => {
     let subjectNaturalUnit: BigNumber;
     let subjectRequiredComponentUnits: BigNumber[];
 

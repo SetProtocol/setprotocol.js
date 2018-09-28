@@ -34,7 +34,7 @@ import {
   ether,
   extractNewSetTokenAddressFromLogs,
   generateTxOpts,
-  getFormattedLogsFromTxHash
+  getFormattedLogsFromTxHash,
 } from '../util';
 import { TxData } from '../types/common';
 
@@ -147,10 +147,10 @@ export class FactoryAPI {
   public async calculateRequiredComponentUnits(
     componentPrices: BigNumber[],
     components: Address[],
-    componentAllocation: BigNumber[],
+    componentProportions: BigNumber[],
     targetSetPrice: BigNumber,
   ): Promise<BigNumber[]> {
-    this.assert.common.proportionsSumToOne(componentAllocation, coreAPIErrors.PROPORTIONS_DONT_ADD_UP_TO_1());
+    this.assert.common.proportionsSumToOne(componentProportions, coreAPIErrors.PROPORTIONS_DONT_ADD_UP_TO_1());
     this.assert.common.isEqualLength(
       componentPrices,
       components,
@@ -158,16 +158,16 @@ export class FactoryAPI {
     );
     this.assert.common.isEqualLength(
       componentPrices,
-      componentAllocation,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('componentPrices', 'componentAllocation')
+      componentProportions,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('componentPrices', 'componentProportions')
     );
 
-    const targetComponentValues = this.calculateTargetComponentValues(componentAllocation, targetSetPrice);
+    const targetComponentValues = this.calculateTargetComponentValues(componentProportions, targetSetPrice);
 
     // Calculate the target amount of tokens required by dividing the target component price
     // with the price of a component and then multiply by the token's base unit amount
     // (10 ** componentDecimal) to get it in base units.
-    const componentAmountRequiredPromises = targetComponentValues.map(async(targetComponentValue, i) => {
+    const componentAmountRequiredPromises = _.map(targetComponentValues, async(targetComponentValue, i) => {
       const componentDecimals: number = await this.getComponentDecimals(components[i]);
 
       const numComponentsRequired = targetComponentValue.div(componentPrices[i]);
@@ -180,7 +180,7 @@ export class FactoryAPI {
     return Promise.all(componentAmountRequiredPromises);
   }
 
-  public calculateComponentUnitsForSet(
+  public calculateComponentUnits(
     naturalUnit: BigNumber,
     requiredComponentUnits: BigNumber[],
   ): BigNumber[] {
@@ -195,6 +195,7 @@ export class FactoryAPI {
   }
 
   /* ============ Private Function ============ */
+
   private async getComponentDecimals(componentAddress: Address): Promise<number> {
     let componentDecimals: number;
     try {
@@ -207,11 +208,11 @@ export class FactoryAPI {
   }
 
   private calculateTargetComponentValues(
-    componentAllocation: BigNumber[],
-    targetSetPrice: BigNumber
+    componentProportions: BigNumber[],
+    targetSetPrice: BigNumber,
   ): BigNumber[] {
-    return componentAllocation.map(percentage => {
-      return percentage.mul(targetSetPrice);
+    return componentProportions.map(decimalAllocation => {
+      return decimalAllocation.mul(targetSetPrice);
     });
   }
 
