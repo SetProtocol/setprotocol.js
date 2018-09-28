@@ -515,7 +515,7 @@ describe('FactoryAPI', () => {
       });
 
       test('it should throw', async () => {
-        return expect(subject()).to.be.rejectedWith(`The component percentages inputted does not add up to 1`);
+        return expect(subject()).to.be.rejectedWith(`The component percentages inputted do not add up to 1`);
       });
     });
 
