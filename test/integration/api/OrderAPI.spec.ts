@@ -51,9 +51,10 @@ import {
 
 import { BigNumber, SignatureUtils } from '@src/util';
 import ChaiSetup from '@test/helpers/chaiSetup';
-import { CoreWrapper } from '@src/wrappers';
+import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { OrderAPI } from '@src/api';
+import { RequiredComponents } from '@src/types/common';
 import { ZERO } from '@src/constants';
 import { Assertions } from '@src/assertions';
 import { ether, Web3Utils, generateFutureTimestamp, calculatePartialAmount } from '@src/util';
@@ -88,6 +89,9 @@ describe('OrderAPI', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let coreWrapper: CoreWrapper;
+  let erc20Wrapper: ERC20Wrapper;
+  let setTokenWrapper: SetTokenWrapper;
+  let vaultWrapper: VaultWrapper;
   let ordersAPI: OrderAPI;
 
   beforeEach(async () => {
@@ -102,6 +106,9 @@ describe('OrderAPI', () => {
     await addAuthorizationAsync(transferProxy, core.address);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+    erc20Wrapper = new ERC20Wrapper(web3);
+    setTokenWrapper = new SetTokenWrapper(web3);
+    vaultWrapper = new VaultWrapper(web3, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
     ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
   });
@@ -396,6 +403,172 @@ describe('OrderAPI', () => {
         when required balance is ${makerTokenAmount} at token address ${makerToken}.
       `
         );
+      });
+    });
+  });
+
+  describe('calculateRequiredComponentsAndUnitsAsync', async () => {
+    let setComponents: StandardTokenMockContract[];
+    let componentUnits: BigNumber[];
+    let setToken: SetTokenContract;
+    let naturalUnit: BigNumber;
+
+    let subjectSetAddress: Address;
+    let subjectMakerAddress: Address;
+    let subjectQuantity: BigNumber;
+
+    const makerAccount = ACCOUNTS[3].address;
+    let componentRecipient = makerAccount;
+
+    beforeEach(async () => {
+      setComponents = await deployTokensAsync(2, provider, componentRecipient);
+
+      // Deploy Set with those tokens
+      const setComponentUnit = ether(4);
+      const componentAddresses = setComponents.map(token => token.address);
+      componentUnits = setComponents.map(token => setComponentUnit);
+      naturalUnit = ether(2);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        componentUnits,
+        naturalUnit,
+      );
+
+      subjectSetAddress = setToken.address;
+      subjectMakerAddress = makerAccount;
+      subjectQuantity = naturalUnit;
+    });
+
+    async function subject(): Promise<RequiredComponents> {
+      return ordersAPI.calculateRequiredComponentsAndUnitsAsync(
+        subjectSetAddress,
+        subjectMakerAddress,
+        subjectQuantity,
+      );
+    }
+
+    describe('when the inputs are standard and the maker has no token balances', async () => {
+      beforeAll(async () => {
+        componentRecipient = DEFAULT_ACCOUNT;
+      });
+
+      afterAll(async () => {
+        componentRecipient = makerAccount;
+      });
+
+      test('should return the correct required components', async () => {
+        const expectedComponents = setComponents.map(setComponent => setComponent.address);
+
+        const { components } = await subject();
+
+        const sortedExpectedComponents = expectedComponents.sort();
+        const sortedActualComponents = components.sort();
+
+        expect(JSON.stringify(sortedActualComponents)).to.equal(JSON.stringify(sortedExpectedComponents));
+      });
+
+      test('should return the correct required units', async () => {
+        const expectedUnits = componentUnits.map(componentUnit => componentUnit.mul(subjectQuantity).div(naturalUnit));
+
+        const { units } = await subject();
+
+        const sortedExpectedUnits = expectedUnits.sort();
+        const sortedActualUnits = units.sort();
+
+        expect(JSON.stringify(sortedActualUnits)).to.equal(JSON.stringify(sortedExpectedUnits));
+      });
+    });
+
+    describe('when a user has sufficient balance in the wallet', async () => {
+      test('should return an empty array of required components', async () => {
+        const expectedComponents: Address[] = [];
+
+        const { components } = await subject();
+
+        expect(JSON.stringify(components)).to.equal(JSON.stringify(expectedComponents));
+      });
+
+      test('should return an empty array of required units', async () => {
+        const expectedUnits: BigNumber[] = [];
+
+        const { units } = await subject();
+
+        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedUnits));
+      });
+    });
+
+    describe('when a user has sufficient balance in the vault', async () => {
+      beforeEach(async () => {
+        // Approve and deposit tokens to the vault
+        for (let i = 0; i < setComponents.length; i++) {
+          const currentComponent = setComponents[i];
+          const makerComponentBalance = await currentComponent.balanceOf.callAsync(makerAccount);
+          await currentComponent.approve.sendTransactionAsync(
+            transferProxy.address,
+            makerComponentBalance,
+            { from: makerAccount }
+          );
+
+          await coreWrapper.deposit(currentComponent.address, makerComponentBalance, { from: makerAccount });
+        }
+      });
+
+      test('should return an empty array of required components', async () => {
+        const expectedComponents: Address[] = [];
+
+        const { components } = await subject();
+
+        expect(JSON.stringify(components)).to.equal(JSON.stringify(expectedComponents));
+      });
+
+      test('should return an empty array of required units', async () => {
+        const expectedUnits: BigNumber[] = [];
+
+        const { units } = await subject();
+
+        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedUnits));
+      });
+    });
+
+    describe('when a user has half of the required balance', async () => {
+      let requiredBalances: BigNumber[];
+
+      beforeEach(async () => {
+        subjectMakerAddress = DEFAULT_ACCOUNT;
+
+        requiredBalances = [];
+        // Transfer half of each required amount to the maker
+        for (let i = 0; i < setComponents.length; i++) {
+          const currentComponent = setComponents[i];
+          const currentUnit = componentUnits[i];
+          const halfRequiredAmount = subjectQuantity.mul(currentUnit).div(naturalUnit).div(2);
+          await currentComponent.transfer.sendTransactionAsync(
+            subjectMakerAddress,
+            halfRequiredAmount,
+            { from: componentRecipient }
+          );
+
+          requiredBalances.push(halfRequiredAmount);
+        }
+      });
+
+      test('should return an empty array of required components', async () => {
+        const expectedComponents: Address[] = setComponents.map(setComponent => setComponent.address);
+
+        const { components } = await subject();
+
+        expect(JSON.stringify(components)).to.equal(JSON.stringify(expectedComponents));
+      });
+
+      test('should return an empty array of required units', async () => {
+        const expectedUnits: BigNumber[] = requiredBalances;
+
+        const { units } = await subject();
+
+        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedUnits));
       });
     });
   });

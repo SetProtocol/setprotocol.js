@@ -30,10 +30,11 @@ import {
 } from 'set-protocol-utils';
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
-import { CoreWrapper } from '../wrappers';
-import { NULL_ADDRESS } from '../constants';
+import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from '../wrappers';
+import { NULL_ADDRESS, ZERO } from '../constants';
 import { BigNumber, generateFutureTimestamp,  } from '../util';
-import { TxData } from '../types/common';
+import { TxData, RequiredComponents } from '../types/common';
+
 
 /**
  * @title OrderAPI
@@ -45,6 +46,9 @@ export class OrderAPI {
   private web3: Web3;
   private assert: Assertions;
   public core: CoreWrapper;
+  public setToken: SetTokenWrapper;
+  public erc20: ERC20Wrapper;
+  public vault: VaultWrapper;
   public setProtocolUtils: SetProtocolUtils;
 
   /**
@@ -59,6 +63,9 @@ export class OrderAPI {
     this.web3 = web3;
     this.core = core;
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
+    this.erc20 = new ERC20Wrapper(this.web3);
+    this.setToken = new SetTokenWrapper(this.web3);
+    this.vault = new VaultWrapper(this.web3, this.core.vaultAddress);
     this.assert = assertions;
   }
 
@@ -132,6 +139,51 @@ export class OrderAPI {
    */
   public async validateOrderFillableOrThrowAsync(signedIssuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber) {
     await this.assert.order.isIssuanceOrderFillable(signedIssuanceOrder, fillQuantity);
+  }
+
+  /**
+   * Calculates the requiredComponents and requiredComponentAmounts that a maker requires as input
+   * into an issuance order. Developers can treat this as a convenience function.
+   *
+   * @param  setAddress                  Address of the Set token for issuance order
+   * @param  makerAddress                Address of user making the issuance order
+   * @param  quantity                    Amount of the Set token to create as part of issuance order
+   * @return                             Object confirming to the RequiredComponents interface
+   */
+  public async calculateRequiredComponentsAndUnitsAsync(
+    setAddress: Address,
+    makerAddress: Address,
+    quantity: BigNumber
+  ): Promise<RequiredComponents> {
+    const components = await this.setToken.getComponents(setAddress);
+    const componentUnits = await this.setToken.getUnits(setAddress);
+    const naturalUnit = await this.setToken.naturalUnit(setAddress);
+    const totalUnitsNeeded = _.map(componentUnits, componentUnit => componentUnit.mul(quantity).div(naturalUnit));
+
+    const requiredComponents: Address[] = [];
+    const requiredUnits: BigNumber[] = [];
+
+    // Gather how many components are owned by the user in balance/vault
+    await Promise.all(
+      components.map(async (componentAddress, index) => {
+        const walletBalance = await this.erc20.balanceOf(componentAddress, makerAddress);
+        const vaultBalance = await this.vault.getBalanceInVault(componentAddress, makerAddress);
+        const userTokenbalance = walletBalance.add(vaultBalance);
+
+        const currentUnitsNeeded = totalUnitsNeeded[index];
+        const missingUnits = currentUnitsNeeded.minus(userTokenbalance);
+
+        if (missingUnits.gt(ZERO)) {
+          requiredComponents.push(componentAddress);
+          requiredUnits.push(missingUnits);
+        }
+      }),
+    );
+
+    return {
+      components: requiredComponents,
+      units: requiredUnits,
+    };
   }
 
   /**
