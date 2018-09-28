@@ -415,7 +415,7 @@ describe('FactoryAPI', () => {
         componentInstances = [];
       });
 
-      test('it calculates the min minimum natural unit correctly', async () => {
+      test('it calculates the minimum natural unit correctly', async () => {
         const expectedResult = new BigNumber(1);
 
         const result = await subject();
@@ -436,7 +436,7 @@ describe('FactoryAPI', () => {
         componentInstances = [];
       });
 
-      it('it calculates the min minimum natural unit correctly', async () => {
+      it('it calculates the minimum natural unit correctly', async () => {
         const expectedResult = new BigNumber(10).pow(18);
 
         const result = await subject();
