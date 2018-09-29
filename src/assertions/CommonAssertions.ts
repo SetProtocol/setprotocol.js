@@ -68,7 +68,7 @@ export class CommonAssertions {
     }
   }
 
-  public proportionsSumToOne(percentages: BigNumber[], errorMesage: string) {
+  public verifyProportionsSumToOne(percentages: BigNumber[], errorMesage: string) {
     let total: BigNumber = ZERO;
     _.each(percentages, percentage => {
       total = total.add(percentage);

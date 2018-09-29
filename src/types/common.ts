@@ -14,6 +14,11 @@ export interface SetComponent {
   symbol: string;
 }
 
+export interface CreateUnitInputs {
+  componentUnits: BigNumber[];
+  naturalUnit: BigNumber;
+}
+
 export interface SetDetails {
   address: Address;
   factoryAddress: Address;

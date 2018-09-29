@@ -36,7 +36,7 @@ import {
   generateTxOpts,
   getFormattedLogsFromTxHash,
 } from '../util';
-import { TxData } from '../types/common';
+import { CreateUnitInputs, TxData } from '../types/common';
 
 /**
  * @title FactoryAPI
@@ -144,24 +144,62 @@ export class FactoryAPI {
     return new BigNumber(10 ** (18 - minDecimal.toNumber()));
   }
 
-  public async calculateRequiredComponentUnits(
+  /**
+   * Convenience function for calculating the component units required and natural unit to achieve a target
+   * Set price given a list of components, desired component proportions (in decimal format), and component prices.
+   *
+   * @param componentPrices         A list of fiat-denominated component prices
+   * @param componentAddresses      Component ERC20 addresses
+   * @param componentProportions    Decimal-formatted allocations. Must add up to 1
+   * @param targetSetPrice          Desired fiat-denominated price of a single unit of the Set
+   * @param extraPrecision          Improve component unit precision by increasing naturalUnit exponent
+   * @return                        A list of component units and naturalUnit
+   */
+  public async calculateCreateUnitInputs(
+    componentPrices: BigNumber[],
+    components: Address[],
+    componentProportions: BigNumber[],
+    targetSetPrice: BigNumber,
+    extraPrecision: BigNumber,
+  ): Promise<CreateUnitInputs> {
+    await this.assertCalculateCreateUnitInputs(
+      componentPrices,
+      components,
+      componentProportions,
+    );
+
+    const requiredComponentUnits = await this.calculateRequiredComponentUnits(
+      componentPrices,
+      components,
+      componentProportions,
+      targetSetPrice,
+    );
+
+    const minimumUnitExponent = new BigNumber(BigNumber.min(requiredComponentUnits).e);
+    const naturalUnitExponent = new BigNumber(18).sub(minimumUnitExponent).add(extraPrecision);
+    const naturalUnit = new BigNumber(10).pow(naturalUnitExponent.toNumber());
+
+    const formattedComponentUnits = requiredComponentUnits.map((amountRequired, i) => {
+      return amountRequired
+        .mul(naturalUnit)
+        .div(ether(1))
+        .ceil();
+    });
+
+    return {
+      componentUnits: formattedComponentUnits,
+      naturalUnit,
+    };
+  }
+
+  /* ============ Private Function ============ */
+
+  private async calculateRequiredComponentUnits(
     componentPrices: BigNumber[],
     components: Address[],
     componentProportions: BigNumber[],
     targetSetPrice: BigNumber,
   ): Promise<BigNumber[]> {
-    this.assert.common.proportionsSumToOne(componentProportions, coreAPIErrors.PROPORTIONS_DONT_ADD_UP_TO_1());
-    this.assert.common.isEqualLength(
-      componentPrices,
-      components,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('componentPrices', 'components')
-    );
-    this.assert.common.isEqualLength(
-      componentPrices,
-      componentProportions,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('componentPrices', 'componentProportions')
-    );
-
     const targetComponentValues = this.calculateTargetComponentValues(componentProportions, targetSetPrice);
 
     // Calculate the target amount of tokens required by dividing the target component price
@@ -179,22 +217,6 @@ export class FactoryAPI {
 
     return Promise.all(componentAmountRequiredPromises);
   }
-
-  public calculateComponentUnits(
-    naturalUnit: BigNumber,
-    requiredComponentUnits: BigNumber[],
-  ): BigNumber[] {
-    const componentUnits = requiredComponentUnits.map((amountRequired, i) => {
-      return amountRequired
-        .mul(naturalUnit)
-        .div(ether(1))
-        .ceil();
-    });
-
-    return componentUnits;
-  }
-
-  /* ============ Private Function ============ */
 
   private async getComponentDecimals(componentAddress: Address): Promise<number> {
     let componentDecimals: number;
@@ -252,6 +274,24 @@ export class FactoryAPI {
       naturalUnit,
       minNaturalUnit,
       coreAPIErrors.INVALID_NATURAL_UNIT(minNaturalUnit),
+    );
+  }
+
+  private async assertCalculateCreateUnitInputs(
+    componentPrices: BigNumber[],
+    components: Address[],
+    componentProportions: BigNumber[],
+  ) {
+    this.assert.common.verifyProportionsSumToOne(componentProportions, coreAPIErrors.PROPORTIONS_DONT_ADD_UP_TO_1());
+    this.assert.common.isEqualLength(
+      componentPrices,
+      components,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('componentPrices', 'components')
+    );
+    this.assert.common.isEqualLength(
+      componentPrices,
+      componentProportions,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('componentPrices', 'componentProportions')
     );
   }
 }
