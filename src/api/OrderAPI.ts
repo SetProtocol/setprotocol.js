@@ -33,7 +33,7 @@ import { coreAPIErrors } from '../errors';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from '../wrappers';
 import { NULL_ADDRESS, ZERO } from '../constants';
 import { BigNumber, generateFutureTimestamp,  } from '../util';
-import { TxData, RequiredComponents } from '../types/common';
+import { TxData, Component } from '../types/common';
 
 
 /**
@@ -154,14 +154,13 @@ export class OrderAPI {
     setAddress: Address,
     makerAddress: Address,
     quantity: BigNumber,
-  ): Promise<RequiredComponents> {
+  ): Promise<Component[]> {
     const components = await this.setToken.getComponents(setAddress);
     const componentUnits = await this.setToken.getUnits(setAddress);
     const naturalUnit = await this.setToken.naturalUnit(setAddress);
     const totalUnitsNeeded = _.map(componentUnits, componentUnit => componentUnit.mul(quantity).div(naturalUnit));
 
-    const requiredComponents: Address[] = [];
-    const requiredUnits: BigNumber[] = [];
+    const requiredComponents: Component[] = [];
 
     // Gather how many components are owned by the user in balance/vault
     await Promise.all(
@@ -174,16 +173,17 @@ export class OrderAPI {
         const missingUnits = currentUnitsNeeded.sub(userTokenbalance);
 
         if (missingUnits.gt(ZERO)) {
-          requiredComponents.push(componentAddress);
-          requiredUnits.push(missingUnits);
+          const requiredComponent: Component = {
+            address: componentAddress,
+            unit: missingUnits,
+          };
+
+          requiredComponents.push(requiredComponent);
         }
       }),
     );
 
-    return {
-      components: requiredComponents,
-      units: requiredUnits,
-    };
+    return requiredComponents;
   }
 
   /**

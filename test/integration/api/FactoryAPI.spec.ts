@@ -59,6 +59,7 @@ import {
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { ether } from '@src/util/units';
 import { Web3Utils } from '@src/util/Web3Utils';
+import { CreateUnitInputs } from '@src/types/common';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
@@ -447,7 +448,7 @@ describe('FactoryAPI', () => {
 
     describe('when the decimals of the components are all different', async () => {
       const smallerDecimal = 8;
-      const largerDecimal = 18 - smallerDecimal;
+      const largerDecimal = 10;
       let decimalsList: number[];
 
       beforeAll(async () => {
@@ -470,11 +471,12 @@ describe('FactoryAPI', () => {
     });
   });
 
-  describe('calculateRequiredComponentUnits', async () => {
+  describe('calculateCreateUnitInputs', async () => {
     let subjectComponentPrices: BigNumber[];
     let subjectComponents: StandardTokenMockContract[];
     let subjectComponentAllocations: BigNumber[];
     let subjectTargetSetPrice: BigNumber;
+    let subjectExtraPrecision: BigNumber;
 
     beforeEach(async () => {
       const tokenCount = 2;
@@ -483,29 +485,66 @@ describe('FactoryAPI', () => {
       subjectComponentPrices = [new BigNumber(2), new BigNumber(2)];
       subjectComponentAllocations = [new BigNumber(0.5), new BigNumber(0.5)];
       subjectTargetSetPrice = new BigNumber(10);
+      subjectExtraPrecision = ZERO;
     });
 
-    async function subject(): Promise<BigNumber[]> {
+    async function subject(): Promise<CreateUnitInputs> {
       const subjectComponentAddresses = _.map(subjectComponents, components => components.address);
 
-      return await factoryAPI.calculateRequiredComponentUnits(
+      return await factoryAPI.calculateCreateUnitInputs(
         subjectComponentPrices,
         subjectComponentAddresses,
         subjectComponentAllocations,
         subjectTargetSetPrice,
+        subjectExtraPrecision,
       );
     }
 
-    describe('when the inputs are standard', async () => {
+    test('should calculate the correct required component units', async () => {
+      const expectedResult = [
+        new BigNumber(3),
+        new BigNumber(3),
+      ];
+
+      const result = await subject();
+      const { componentUnits } = result;
+
+      expect(JSON.stringify(componentUnits)).to.equal(JSON.stringify(expectedResult));
+    });
+
+    test('should calculate the correct natural units', async () => {
+      const expectedResult = new BigNumber(1);
+
+      const result = await subject();
+      const { naturalUnit } = result;
+
+      expect(naturalUnit).to.bignumber.equal(expectedResult);
+    });
+
+    describe('when the precision is set to 1', async () => {
+      beforeEach(async () => {
+        subjectExtraPrecision = new BigNumber(1);
+      });
+
       test('should calculate the correct required component units', async () => {
         const expectedResult = [
-          new BigNumber(2.5).mul(ether(1)),
-          new BigNumber(2.5).mul(ether(1)),
+          new BigNumber(25),
+          new BigNumber(25),
         ];
 
         const result = await subject();
+        const { componentUnits } = result;
 
-        expect(JSON.stringify(result)).to.equal(JSON.stringify(expectedResult));
+        expect(JSON.stringify(componentUnits)).to.equal(JSON.stringify(expectedResult));
+      });
+
+      test('should calculate the correct natural units', async () => {
+        const expectedResult = new BigNumber(10);
+
+        const result = await subject();
+        const { naturalUnit } = result;
+
+        expect(naturalUnit).to.bignumber.equal(expectedResult);
       });
     });
 
@@ -519,7 +558,9 @@ describe('FactoryAPI', () => {
       });
     });
 
-    describe('when the inputs represent a real world integration case', async () => {
+    describe(
+      'when the set is $100 with 10 components of varying prices and decimals weighted by market-cap',
+    async () => {
       beforeEach(async () => {
         const tokenCount = 10;
         const decimalsList = [18, 18, 18, 18, 12, 18, 18, 8, 18, 18];
@@ -554,54 +595,6 @@ describe('FactoryAPI', () => {
 
       test('should calculate the correct required component units', async () => {
         const expectedResult = [
-          new BigNumber('6711742209631728045.33'),
-          new BigNumber('4940616541353383458.65'),
-          new BigNumber('44258572949946751863.68'),
-          new BigNumber('1301943097014925373.13'),
-          new BigNumber('92988464730290.45643154'),
-          new BigNumber('2973066455696202531.65'),
-          new BigNumber('6763830769230769230.77'),
-          new BigNumber('47212759.643916913947'),
-          new BigNumber('140347061778001004.52'),
-          new BigNumber('12760481927710843373.49'),
-        ];
-
-        const result = await subject();
-
-        expect(JSON.stringify(result)).to.equal(JSON.stringify(expectedResult));
-      });
-    });
-  });
-
-  describe('calculateComponentUnits', async () => {
-    let subjectNaturalUnit: BigNumber;
-    let subjectRequiredComponentUnits: BigNumber[];
-
-    function subject(): BigNumber[] {
-      return factoryAPI.calculateComponentUnits(subjectNaturalUnit, subjectRequiredComponentUnits);
-    }
-
-    describe('when the inputs represent a real world integration case', async () => {
-      beforeEach(async () => {
-        subjectRequiredComponentUnits = [
-          new BigNumber('6711742209631728045.33'),
-          new BigNumber('4940616541353383458.65'),
-          new BigNumber('44258572949946751863.68'),
-          new BigNumber('1301943097014925373.13'),
-          new BigNumber('92988464730290.45643154'),
-          new BigNumber('2973066455696202531.65'),
-          new BigNumber('6763830769230769230.77'),
-          new BigNumber('47212759.643916913947'),
-          new BigNumber('140347061778001004.52'),
-          new BigNumber('12760481927710843373.49'),
-        ];
-
-        subjectNaturalUnit = new BigNumber(100000000000);
-      });
-
-
-      test('should calculate the correct component units', async () => {
-        const expectedResult = [
           new BigNumber('671174220964'),
           new BigNumber('494061654136'),
           new BigNumber('4425857294995'),
@@ -615,10 +608,19 @@ describe('FactoryAPI', () => {
         ];
 
         const result = await subject();
+        const { componentUnits } = result;
 
-        expect(JSON.stringify(result)).to.equal(JSON.stringify(expectedResult));
+        expect(JSON.stringify(componentUnits)).to.equal(JSON.stringify(expectedResult));
+      });
+
+      test('should calculate the correct natural units', async () => {
+        const expectedResult = new BigNumber(100000000000);
+
+        const result = await subject();
+        const { naturalUnit } = result;
+
+        expect(naturalUnit).to.bignumber.equal(expectedResult);
       });
     });
-
   });
 });

@@ -54,7 +54,7 @@ import ChaiSetup from '@test/helpers/chaiSetup';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { OrderAPI } from '@src/api';
-import { RequiredComponents } from '@src/types/common';
+import { Component } from '@src/types/common';
 import { ZERO } from '@src/constants';
 import { Assertions } from '@src/assertions';
 import { ether, Web3Utils, generateFutureTimestamp, calculatePartialAmount } from '@src/util';
@@ -442,7 +442,7 @@ describe('OrderAPI', () => {
       subjectQuantity = naturalUnit;
     });
 
-    async function subject(): Promise<RequiredComponents> {
+    async function subject(): Promise<Component[]> {
       return ordersAPI.calculateRequiredComponentsAndUnitsAsync(
         subjectSetAddress,
         subjectMakerAddress,
@@ -462,10 +462,11 @@ describe('OrderAPI', () => {
       test('should return the correct required components', async () => {
         const expectedComponents = setComponents.map(setComponent => setComponent.address);
 
-        const { components } = await subject();
+        const requiredComponents = await subject();
+        const componentAddresses = requiredComponents.map(requiredComponent => requiredComponent.address);
 
         const sortedExpectedComponents = expectedComponents.sort();
-        const sortedActualComponents = components.sort();
+        const sortedActualComponents = componentAddresses.sort();
 
         expect(JSON.stringify(sortedActualComponents)).to.equal(JSON.stringify(sortedExpectedComponents));
       });
@@ -473,7 +474,8 @@ describe('OrderAPI', () => {
       test('should return the correct required units', async () => {
         const expectedUnits = componentUnits.map(componentUnit => componentUnit.mul(subjectQuantity).div(naturalUnit));
 
-        const { units } = await subject();
+        const requiredComponents = await subject();
+        const units = requiredComponents.map(requiredComponent => requiredComponent.unit);
 
         const sortedExpectedUnits = expectedUnits.sort();
         const sortedActualUnits = units.sort();
@@ -486,7 +488,8 @@ describe('OrderAPI', () => {
       test('should return an empty array of required components', async () => {
         const expectedComponents: Address[] = [];
 
-        const { components } = await subject();
+        const requiredComponents = await subject();
+        const components = requiredComponents.map(requiredComponent => requiredComponent.address);
 
         expect(JSON.stringify(components)).to.equal(JSON.stringify(expectedComponents));
       });
@@ -494,7 +497,8 @@ describe('OrderAPI', () => {
       test('should return an empty array of required units', async () => {
         const expectedUnits: BigNumber[] = [];
 
-        const { units } = await subject();
+        const requiredComponents = await subject();
+        const units = requiredComponents.map(requiredComponent => requiredComponent.unit);
 
         expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedUnits));
       });
@@ -519,7 +523,8 @@ describe('OrderAPI', () => {
       test('should return an empty array of required components', async () => {
         const expectedComponents: Address[] = [];
 
-        const { components } = await subject();
+        const requiredComponents = await subject();
+        const components = requiredComponents.map(requiredComponent => requiredComponent.address);
 
         expect(JSON.stringify(components)).to.equal(JSON.stringify(expectedComponents));
       });
@@ -527,7 +532,8 @@ describe('OrderAPI', () => {
       test('should return an empty array of required units', async () => {
         const expectedUnits: BigNumber[] = [];
 
-        const { units } = await subject();
+        const requiredComponents = await subject();
+        const units = requiredComponents.map(requiredComponent => requiredComponent.unit);
 
         expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedUnits));
       });
@@ -555,20 +561,28 @@ describe('OrderAPI', () => {
         }
       });
 
-      test('should return an empty array of required components', async () => {
+      test('should return the correct array of required components', async () => {
         const expectedComponents: Address[] = setComponents.map(setComponent => setComponent.address);
 
-        const { components } = await subject();
+        const requiredComponents = await subject();
+        const components = requiredComponents.map(requiredComponent => requiredComponent.address);
 
-        expect(JSON.stringify(components)).to.equal(JSON.stringify(expectedComponents));
+        const sortedExpectedComponents = expectedComponents.sort();
+        const sortedActualComponents = components.sort();
+
+        expect(JSON.stringify(sortedActualComponents)).to.equal(JSON.stringify(sortedExpectedComponents));
       });
 
-      test('should return an empty array of required units', async () => {
+      test('should return the correct array of required units', async () => {
         const expectedUnits: BigNumber[] = requiredBalances;
 
-        const { units } = await subject();
+        const requiredComponents = await subject();
+        const units = requiredComponents.map(requiredComponent => requiredComponent.unit);
 
-        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedUnits));
+        const sortedExpectedUnits = expectedUnits.sort();
+        const sortedActualUnits = units.sort();
+
+        expect(JSON.stringify(sortedActualUnits)).to.equal(JSON.stringify(sortedExpectedUnits));
       });
     });
   });

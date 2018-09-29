@@ -23,7 +23,7 @@ import { AccountingAPI, BlockchainAPI, ERC20API, FactoryAPI, IssuanceAPI, OrderA
 import { CoreWrapper, VaultWrapper } from './wrappers';
 import { Assertions } from './assertions';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
-import { TxData, Provider } from './types/common';
+import { CreateUnitInputs, TxData, Provider } from './types/common';
 
 export interface SetProtocolConfig {
   coreAddress: Address;
@@ -201,12 +201,12 @@ class SetProtocol {
       quantity: BigNumber,
       txOpts: TxData,
   ): Promise<string> {
-      return await this.erc20.approveAsync(
-          tokenAddress,
-          this.core.transferProxyAddress,
-          quantity,
-          txOpts,
-      );
+    return await this.erc20.approveAsync(
+      tokenAddress,
+      this.core.transferProxyAddress,
+      quantity,
+      txOpts,
+    );
   }
 
   /**
@@ -218,11 +218,11 @@ class SetProtocol {
    * @return                 Transaction hash
    */
   public async setUnlimitedTransferProxyAllowanceAsync(tokenAddress: string, txOpts: TxData): Promise<string> {
-      return await this.setTransferProxyAllowanceAsync(
-          tokenAddress,
-          SetProtocolUtils.CONSTANTS.UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-          txOpts,
-      );
+    return await this.setTransferProxyAllowanceAsync(
+      tokenAddress,
+      SetProtocolUtils.CONSTANTS.UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+      txOpts,
+    );
   }
 
   /**
@@ -288,7 +288,7 @@ class SetProtocol {
    */
   public async awaitTransactionMinedAsync(
     txHash: string,
-    pollingIntervalMs ?: number,
+    pollingIntervalMs?: number,
     timeoutMs?: number,
   ): Promise<TransactionReceipt> {
     return await this.blockchain.awaitTransactionMinedAsync(txHash, pollingIntervalMs, timeoutMs);
@@ -306,42 +306,30 @@ class SetProtocol {
   }
 
   /**
-   * Calculates the component units required to achieve a target Set price given a list of
+   * Calculates the component units required and natural unit to achieve a target Set price given a list of
    * components, desired component proportions (in decimal format), and component prices.
    *
    * @param componentPrices         A list of fiat-denominated component prices
    * @param componentAddresses      Component ERC20 addresses
    * @param componentProportions    Decimal-formatted allocations. Must add up to 1
-   * @param targetSetPrice          Desired price of a single unit of the Set
-   * @return                        A list of component units
+   * @param targetSetPrice          Desired fiat-denominated price of a single unit of the Set
+   * @param extraPrecision          Optional: Improve component unit precision by increasing naturalUnit exponent
+   * @return                        A list of component units and naturalUnit
    */
-  public async calculateRequiredComponentUnitsAsync(
+  public async calculateCreateUnitInputsAsync(
     componentPrices: BigNumber[],
     componentAddresses: Address[],
     componentProportions: BigNumber[],
     targetSetPrice: BigNumber,
-  ): Promise<BigNumber[]> {
-    return await this.factory.calculateRequiredComponentUnits(
+    extraPrecision: BigNumber = new BigNumber(0),
+  ): Promise<CreateUnitInputs> {
+    return await this.factory.calculateCreateUnitInputs(
       componentPrices,
       componentAddresses,
       componentProportions,
       targetSetPrice,
+      extraPrecision,
     );
-  }
-
-  /**
-   * Calculates a list of rounded component units that can be inputted into the Set
-   * create function given a natural unit and minimum required units.
-   *
-   * @param naturalUnit               The Set natural unit
-   * @param requiredComponentUnits    List of unformatted component units
-   * @return                          List of formatted, rounded component units
-   */
-  public calculateComponentUnits(
-    naturalUnit: BigNumber,
-    requiredComponentUnits: BigNumber[],
-  ): BigNumber[] {
-    return this.factory.calculateComponentUnits(naturalUnit, requiredComponentUnits);
   }
 }
 

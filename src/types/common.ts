@@ -14,9 +14,9 @@ export interface SetComponent {
   symbol: string;
 }
 
-export interface RequiredComponents {
-  components: Address[];
-  units: BigNumber[];
+export interface CreateUnitInputs {
+  componentUnits: BigNumber[];
+  naturalUnit: BigNumber;
 }
 
 export interface SetDetails {
