@@ -450,7 +450,7 @@ describe('OrderAPI', () => {
       );
     }
 
-    describe('when the inputs are standard and the maker has no token balances', async () => {
+    describe('when the maker has no token balances', async () => {
       beforeAll(async () => {
         componentRecipient = DEFAULT_ACCOUNT;
       });
@@ -465,10 +465,10 @@ describe('OrderAPI', () => {
         const requiredComponents = await subject();
         const componentAddresses = requiredComponents.map(requiredComponent => requiredComponent.address);
 
-        const sortedExpectedComponents = expectedComponents.sort();
-        const sortedActualComponents = componentAddresses.sort();
+        expectedComponents.sort();
+        componentAddresses.sort();
 
-        expect(JSON.stringify(sortedActualComponents)).to.equal(JSON.stringify(sortedExpectedComponents));
+        expect(JSON.stringify(expectedComponents)).to.equal(JSON.stringify(componentAddresses));
       });
 
       test('should return the correct required units', async () => {
@@ -477,10 +477,9 @@ describe('OrderAPI', () => {
         const requiredComponents = await subject();
         const units = requiredComponents.map(requiredComponent => requiredComponent.unit);
 
-        const sortedExpectedUnits = expectedUnits.sort();
-        const sortedActualUnits = units.sort();
-
-        expect(JSON.stringify(sortedActualUnits)).to.equal(JSON.stringify(sortedExpectedUnits));
+        expectedUnits.sort();
+        units.sort();
+        expect(JSON.stringify(expectedUnits)).to.equal(JSON.stringify(units));
       });
     });
 
@@ -533,8 +532,8 @@ describe('OrderAPI', () => {
         const expectedUnits: BigNumber[] = [];
 
         const requiredComponents = await subject();
-        const units = requiredComponents.map(requiredComponent => requiredComponent.unit);
 
+        const units = requiredComponents.map(requiredComponent => requiredComponent.unit);
         expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedUnits));
       });
     });
@@ -567,10 +566,10 @@ describe('OrderAPI', () => {
         const requiredComponents = await subject();
         const components = requiredComponents.map(requiredComponent => requiredComponent.address);
 
-        const sortedExpectedComponents = expectedComponents.sort();
-        const sortedActualComponents = components.sort();
+        expectedComponents.sort();
+        components.sort();
 
-        expect(JSON.stringify(sortedActualComponents)).to.equal(JSON.stringify(sortedExpectedComponents));
+        expect(JSON.stringify(components)).to.equal(JSON.stringify(expectedComponents));
       });
 
       test('should return the correct array of required units', async () => {
@@ -579,10 +578,10 @@ describe('OrderAPI', () => {
         const requiredComponents = await subject();
         const units = requiredComponents.map(requiredComponent => requiredComponent.unit);
 
-        const sortedExpectedUnits = expectedUnits.sort();
-        const sortedActualUnits = units.sort();
+        expectedUnits.sort();
+        units.sort();
 
-        expect(JSON.stringify(sortedActualUnits)).to.equal(JSON.stringify(sortedExpectedUnits));
+        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedUnits));
       });
     });
   });

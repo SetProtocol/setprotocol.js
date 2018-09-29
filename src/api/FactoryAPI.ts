@@ -145,8 +145,8 @@ export class FactoryAPI {
   }
 
   /**
-   * Calculates the component units required and natural unit to achieve a target Set price given a list of
-   * components, desired component proportions (in decimal format), and component prices.
+   * Convenience function for calculating the component units required and natural unit to achieve a target
+   * Set price given a list of components, desired component proportions (in decimal format), and component prices.
    *
    * @param componentPrices         A list of fiat-denominated component prices
    * @param componentAddresses      Component ERC20 addresses

@@ -142,13 +142,13 @@ export class OrderAPI {
   }
 
   /**
-   * Calculates the requiredComponents and requiredComponentAmounts that a maker requires as input
-   * into an issuance order. Developers can treat this as a convenience function.
+   * Convenience function for calculateing the requiredComponents and requiredComponentAmounts
+   * that a maker requires as input into an issuance order.
    *
    * @param  setAddress                  Address of the Set token for issuance order
    * @param  makerAddress                Address of user making the issuance order
    * @param  quantity                    Amount of the Set token to create as part of issuance order
-   * @return                             Object confirming to the RequiredComponents interface
+   * @return                             Object conforming to the RequiredComponents interface
    */
   public async calculateRequiredComponentsAndUnitsAsync(
     setAddress: Address,
@@ -169,9 +169,7 @@ export class OrderAPI {
         const vaultBalance = await this.vault.getBalanceInVault(componentAddress, makerAddress);
         const userTokenbalance = walletBalance.add(vaultBalance);
 
-        const currentUnitsNeeded = totalUnitsNeeded[index];
-        const missingUnits = currentUnitsNeeded.sub(userTokenbalance);
-
+        const missingUnits = totalUnitsNeeded[index].sub(userTokenbalance);
         if (missingUnits.gt(ZERO)) {
           const requiredComponent: Component = {
             address: componentAddress,
