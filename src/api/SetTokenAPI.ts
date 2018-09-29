@@ -152,6 +152,23 @@ export class SetTokenAPI {
     return quantity.mod(naturalUnit).eq(ZERO);
   }
 
+  /**
+   * Convenience function to calculate the units of components transfered given an issue quantity.
+   *
+   * @param  setAddress    Address of the Set
+   * @param  quantity      Quantity to be checked
+   * @return boolean       List of units
+   *
+   */
+  public async calculateComponentTransfered(setAddress: Address, quantity: BigNumber): Promise<BigNumber[]> {
+    const [naturalUnit, componentUnits] = await Promise.all([
+      this.setToken.naturalUnit(setAddress),
+      this.setToken.getUnits(setAddress),
+    ]);
+
+    return _.map(componentUnits, componentUnit => componentUnit.mul(quantity).div(naturalUnit));
+  }
+
   /* ============ Private Assertions ============ */
 
   private async assertIsMultipleOfNaturalUnitAsync(setAddress: Address, quantity: BigNumber) {
