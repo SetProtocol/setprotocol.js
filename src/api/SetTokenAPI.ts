@@ -25,7 +25,7 @@ import { ZERO } from '../constants';
 import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { ERC20Wrapper, SetTokenWrapper } from '../wrappers';
-import { BigNumber } from '../util';
+import { BigNumber, calculatePartialAmount } from '../util';
 import { Component, SetDetails } from '../types/common';
 
 /**
@@ -153,20 +153,48 @@ export class SetTokenAPI {
   }
 
   /**
-   * Convenience function to calculate the units of components transfered given an issue quantity.
+   * Convenience function to calculate the units of components transferred given an issue quantity.
    *
    * @param  setAddress    Address of the Set
    * @param  quantity      Quantity to be checked
    * @return boolean       List of units
    *
    */
-  public async calculateComponentTransfered(setAddress: Address, quantity: BigNumber): Promise<BigNumber[]> {
+  public async calculateComponentUnitsTransfered(setAddress: Address, quantity: BigNumber): Promise<BigNumber[]> {
     const [naturalUnit, componentUnits] = await Promise.all([
       this.setToken.naturalUnit(setAddress),
       this.setToken.getUnits(setAddress),
     ]);
 
-    return _.map(componentUnits, componentUnit => componentUnit.mul(quantity).div(naturalUnit));
+    return _.map(componentUnits, componentUnit => calculatePartialAmount(componentUnit, quantity, naturalUnit));
+  }
+
+  /**
+   * Convenience function to calculate the units of component transferred given an issue quantity.
+   *
+   * @param  setAddress        Address of the Set
+   * @param  componentAddress  Address of the component
+   * @param  quantity          Quantity to be checked
+   * @return boolean           Unit transfered in BigNumber format
+   *
+   */
+  public async calculateComponentUnitTransfered(
+    setAddress: Address,
+    componentAddress: Address,
+    quantity: BigNumber,
+  ): Promise<BigNumber> {
+    const [naturalUnit, componentUnits, components] = await Promise.all([
+      this.setToken.naturalUnit(setAddress),
+      this.setToken.getUnits(setAddress),
+      this.setToken.getComponents(setAddress),
+    ]);
+
+    const componentIndex = _.indexOf(components, componentAddress);
+    if (componentIndex < 0) {
+      throw new Error('Component `${componentAddress} is not a component of Set ${setAddress}');
+    }
+
+    return calculatePartialAmount(componentUnits[componentIndex], quantity, naturalUnit);
   }
 
   /* ============ Private Assertions ============ */
