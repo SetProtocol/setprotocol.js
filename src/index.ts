@@ -17,6 +17,15 @@ export {
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 
+export {
+  Component,
+  SetComponent,
+  CreateUnitInputs,
+  SetDetails,
+  Token,
+  TxData,
+} from './types/common';
+
 import SetProtocol from './SetProtocol';
 
 export { SetProtocolConfig } from './SetProtocol';
