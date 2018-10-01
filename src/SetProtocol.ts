@@ -94,6 +94,45 @@ class SetProtocol {
   }
 
   /**
+   * Calculates the minimum allowable natural unit for a list of ERC20 token addresses
+   * where the minimum natural unit allowed is equal to `10 ** (18 - minimumDecimal)`. `minimumDecimal`
+   * is the smallest decimal amongst the tokens passed in
+   *
+   * @param componentAddresses    List of ERC20 token addresses to use for Set creation
+   * @return                      Minimum natural unit allowed
+   */
+  public async calculateMinimumNaturalUnitAsync(components: Address[]): Promise<BigNumber> {
+    return await this.factory.calculateMinimumNaturalUnit(components);
+  }
+
+  /**
+   * Calculates inputs for `createSetAsync` for a given list of ERC20 token addreses, desired proportions,
+   * current token prices, and target Set price
+   *
+   * @param componentPrices         A list of fiat-denominated component prices
+   * @param componentAddresses      Component ERC20 addresses
+   * @param componentProportions    Decimal-formatted allocations. Must add up to 1
+   * @param targetSetPrice          Desired fiat-denominated price of a single unit of the Set
+   * @param extraPrecision          Optional: Improve component unit precision by increasing naturalUnit exponent
+   * @return                        A list of component units and naturalUnit
+   */
+  public async calculateCreateUnitInputsAsync(
+    componentPrices: BigNumber[],
+    componentAddresses: Address[],
+    componentProportions: BigNumber[],
+    targetSetPrice: BigNumber,
+    extraPrecision: BigNumber = new BigNumber(0),
+  ): Promise<CreateUnitInputs> {
+    return await this.factory.calculateCreateUnitInputs(
+      componentPrices,
+      componentAddresses,
+      componentProportions,
+      targetSetPrice,
+      extraPrecision,
+    );
+  }
+
+  /**
    * Create a new Set by passing in parameters denoting component token addresses, quantities, natural
    * unit, and ERC20 properties
    *
@@ -292,44 +331,6 @@ class SetProtocol {
     timeoutMs?: number,
   ): Promise<TransactionReceipt> {
     return await this.blockchain.awaitTransactionMinedAsync(txHash, pollingIntervalMs, timeoutMs);
-  }
-
-  /**
-   * Calculates the minimum allowable natural unit for a list of ERC20 component addresses
-   * where the minimum natural unit allowed equal 10 ** (18 - minDecimal)
-   *
-   * @param componentAddresses    Component ERC20 addresses
-   * @return                      The minimum value of the natural unit allowed by component decimals
-   */
-  public async calculateMinimumNaturalUnitAsync(components: Address[]): Promise<BigNumber> {
-    return await this.factory.calculateMinimumNaturalUnit(components);
-  }
-
-  /**
-   * Calculates the component units required and natural unit to achieve a target Set price given a list of
-   * components, desired component proportions (in decimal format), and component prices.
-   *
-   * @param componentPrices         A list of fiat-denominated component prices
-   * @param componentAddresses      Component ERC20 addresses
-   * @param componentProportions    Decimal-formatted allocations. Must add up to 1
-   * @param targetSetPrice          Desired fiat-denominated price of a single unit of the Set
-   * @param extraPrecision          Optional: Improve component unit precision by increasing naturalUnit exponent
-   * @return                        A list of component units and naturalUnit
-   */
-  public async calculateCreateUnitInputsAsync(
-    componentPrices: BigNumber[],
-    componentAddresses: Address[],
-    componentProportions: BigNumber[],
-    targetSetPrice: BigNumber,
-    extraPrecision: BigNumber = new BigNumber(0),
-  ): Promise<CreateUnitInputs> {
-    return await this.factory.calculateCreateUnitInputs(
-      componentPrices,
-      componentAddresses,
-      componentProportions,
-      targetSetPrice,
-      extraPrecision,
-    );
   }
 }
 
