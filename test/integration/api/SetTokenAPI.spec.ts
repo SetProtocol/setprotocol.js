@@ -233,7 +233,7 @@ describe('SetTokenAPI', () => {
     });
   });
 
-  describe('calculateUnitTransferred', async () => {
+  describe('calculateComponentAmountForIssuance', async () => {
     let componentTokens: StandardTokenMockContract[];
     let componentTokenAddresses: Address[];
     let componentTokenUnits: BigNumber[];
@@ -268,7 +268,7 @@ describe('SetTokenAPI', () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await setTokenAPI.calculateUnitTransferred(
+      return await setTokenAPI.calculateComponentAmountForIssuance(
         subjectSetTokenAddress,
         subjectComponentAddress,
         subjectQuantity
@@ -311,7 +311,7 @@ describe('SetTokenAPI', () => {
     });
   });
 
-  describe('calculateUnitsTransferred', async () => {
+  describe('calculateComponentAmountsForIssuance', async () => {
     let componentTokens: StandardTokenMockContract[];
     let componentTokenAddresses: Address[];
     let componentTokenUnits: BigNumber[];
@@ -344,7 +344,7 @@ describe('SetTokenAPI', () => {
     });
 
     async function subject(): Promise<BigNumber[]> {
-      return await setTokenAPI.calculateUnitsTransferred(
+      return await setTokenAPI.calculateComponentAmountsForIssuance(
         subjectSetTokenAddress,
         subjectQuantity
       );
