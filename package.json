@@ -68,6 +68,7 @@
     "jsonschema": "^1.2.4",
     "lodash": "^4.17.4",
     "lodash.compact": "^3.0.1",
+    "module-alias": "^2.1.0",
     "set-protocol-contracts": "0.3.7",
     "set-protocol-utils": "0.3.30",
     "tiny-promisify": "^1.0.0",
@@ -116,5 +117,8 @@
       "^@src/(.*)": "<rootDir>/src/$1",
       "^@test/(.*)": "<rootDir>/test/$1"
     }
+  },
+  "_moduleAliases": {
+    "@src": "dist/src"
   }
 }
