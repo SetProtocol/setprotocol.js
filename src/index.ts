@@ -1,5 +1,3 @@
-require('module-alias/register');
-
 import { Address } from 'set-protocol-utils';
 
 export {
