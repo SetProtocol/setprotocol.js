@@ -471,7 +471,7 @@ describe('FactoryAPI', () => {
     });
   });
 
-  describe.only('calculateSetParametersAsync', async () => {
+  describe('calculateSetParametersAsync', async () => {
     let subjectComponentPrices: BigNumber[];
     let subjectComponents: StandardTokenMockContract[];
     let subjectComponentAllocations: BigNumber[];
