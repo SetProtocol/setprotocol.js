@@ -18,23 +18,25 @@
 
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
+
+import { Assertions } from '../assertions';
+import { coreAPIErrors } from '../errors';
+import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from '../wrappers';
+import { NULL_ADDRESS, ZERO } from '../constants';
+import { BigNumber, generateFutureTimestamp,  } from '../util';
 import {
   Address,
   Bytes,
+  Component,
   ECSig,
   IssuanceOrder,
   KyberTrade,
   SetProtocolUtils,
   SignedIssuanceOrder,
   TakerWalletOrder,
+  TxData,
   ZeroExSignedFillOrder,
-} from 'set-protocol-utils';
-import { Assertions } from '../assertions';
-import { coreAPIErrors } from '../errors';
-import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from '../wrappers';
-import { NULL_ADDRESS, ZERO } from '../constants';
-import { BigNumber, generateFutureTimestamp,  } from '../util';
-import { TxData, Component } from '../types/common';
+} from '../types/common';
 
 
 /**

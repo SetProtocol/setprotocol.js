@@ -81,7 +81,7 @@ export class OrderAssertions {
       makerTokenAmount,
     );
 
-    const requiredMakerTokenAmount = this.calculateReqMakerToken(
+    const requiredMakerTokenAmount = this.calculateRequiredMakerToken(
       fillQuantity,
       quantity,
       makerTokenAmount,
@@ -224,7 +224,7 @@ export class OrderAssertions {
       quantity,
     } = signedIssuanceOrder;
 
-    const requiredMakerTokenAmount = this.calculateReqMakerToken(
+    const requiredMakerTokenAmount = this.calculateRequiredMakerToken(
       quantityToFill,
       quantity,
       makerTokenAmount,
@@ -419,19 +419,14 @@ export class OrderAssertions {
 
   private async calculateFillableQuantity(signedIssuanceOrder: SignedIssuanceOrder): Promise<BigNumber> {
     const issuanceOrder: IssuanceOrder = _.omit(signedIssuanceOrder, 'signature');
-
-    const {
-      quantity,
-      setAddress,
-    } = issuanceOrder;
-
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
     const filledAmount = await this.core.orderFills(orderHash);
     const cancelledAmount = await this.core.orderCancels(orderHash);
-    return quantity.sub(filledAmount).sub(cancelledAmount);
+
+    return issuanceOrder.quantity.sub(filledAmount).sub(cancelledAmount);
   }
 
-  private calculateReqMakerToken(
+  private calculateRequiredMakerToken(
     fillQuantity: BigNumber,
     quantity: BigNumber,
     makerTokenAmount: BigNumber
