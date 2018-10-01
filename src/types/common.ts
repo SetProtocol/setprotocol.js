@@ -7,13 +7,6 @@ export interface Component {
   unit: BigNumber;
 }
 
-export interface SetComponent {
-  address: Address;
-  quantity: string;
-  name: string;
-  symbol: string;
-}
-
 export interface CreateUnitInputs {
   componentUnits: BigNumber[];
   naturalUnit: BigNumber;

@@ -20,6 +20,7 @@ import * as _ from 'lodash';
 import {
   Address,
   IssuanceOrder,
+  KyberTrade,
   SetProtocolUtils,
   SetProtocolTestUtils,
   SignedIssuanceOrder,
@@ -146,7 +147,7 @@ export class OrderAssertions {
     issuanceOrderTaker: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+    orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
     await this.assertOrdersValidity(
       issuanceOrderTaker,
@@ -182,7 +183,7 @@ export class OrderAssertions {
     issuanceOrderTaker: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+    orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
      await Promise.all(
       _.map(orders, async (order: any) => {
@@ -211,7 +212,7 @@ export class OrderAssertions {
   private assertSufficientMakerTokensForOrders(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+    orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
   ): void {
     const makerTokensUsed = this.calculateMakerTokensUsed(orders);
 
@@ -239,7 +240,7 @@ export class OrderAssertions {
   private isValidLiquidityAmounts(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+    orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
     const {
       quantity,
@@ -286,7 +287,7 @@ export class OrderAssertions {
   }
 
   private calculateLiquidityFills(
-    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+    orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
   ): { [addr: string]: BigNumber } {
     let requiredComponentFills: { [addr: string]: BigNumber } = {};
 
@@ -299,7 +300,7 @@ export class OrderAssertions {
   }
 
   private calculateMakerTokensUsed(
-    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[]
+    orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[]
   ): BigNumber {
     let makerTokensUsed: BigNumber = SetProtocolUtils.CONSTANTS.ZERO;
 

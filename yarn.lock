@@ -43,7 +43,7 @@
     jsonschema "^1.2.0"
     lodash.values "^4.3.0"
 
-"@0xproject/order-utils@^1.0.1", "@0xproject/order-utils@^1.0.1-rc.2":
+"@0xproject/order-utils@^1.0.1-rc.2":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@0xproject/order-utils/-/order-utils-1.0.1.tgz#d64c1eb61d08a50ee2b24cab0a5f6d2127d40cf8"
   dependencies:
@@ -1280,6 +1280,12 @@ crypto-js@^3.1.4:
 crypto-js@^3.1.9-1:
   version "3.1.9-1"
   resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.1.9-1.tgz#fda19e761fc077e01ffbfdc6e9fdfc59e8806cd8"
+
+cryptofin-solidity@^0.0.5:
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/cryptofin-solidity/-/cryptofin-solidity-0.0.5.tgz#c978872a5912eb86f1e0e50d52f4ce756c03adfa"
+  dependencies:
+    openzeppelin-solidity "^1.10.0"
 
 cssom@0.3.x, "cssom@>= 0.3.2 < 0.4.0":
   version "0.3.4"
@@ -3982,6 +3988,10 @@ onetime@^1.0.0:
   version "1.1.0"
   resolved "http://registry.npmjs.org/onetime/-/onetime-1.1.0.tgz#a1f7838f8314c516f05ecefcbc4ccfe04b4ed789"
 
+openzeppelin-solidity@^1.10.0:
+  version "1.12.0"
+  resolved "https://registry.yarnpkg.com/openzeppelin-solidity/-/openzeppelin-solidity-1.12.0.tgz#7b9c55975e73370d4541e3442b30cb3d91ac973a"
+
 optimist@^0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/optimist/-/optimist-0.6.1.tgz#da3ea74686fa21a19a111c326e90eb15a0196686"
@@ -4720,15 +4730,17 @@ set-blocking@^2.0.0, set-blocking@~2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/set-blocking/-/set-blocking-2.0.0.tgz#045f9782d011ae9a6803ddd382b24392b3d890f7"
 
-set-protocol-contracts@0.3.7:
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-0.3.7.tgz#64debb7f1b5fb64c581b01055a73b88c7476b537"
+set-protocol-contracts@0.3.8:
+  version "0.3.8"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-0.3.8.tgz#02ac665da860e8e60c3a03c520590e86e7e9fdda"
   dependencies:
+    cryptofin-solidity "^0.0.5"
     eth-gas-reporter "^0.1.10"
     fs-extra "^5.0.0"
     husky "^0.14.3"
     lint-staged "^7.2.0"
-    set-protocol-utils "^0.3.28"
+    module-alias "^2.1.0"
+    set-protocol-utils "^0.3.37"
     sol-trace-set "^0.0.1"
     solium "^1.1.7"
     tiny-promisify "^1.0.0"
@@ -4737,12 +4749,12 @@ set-protocol-contracts@0.3.7:
     web3-utils "1.0.0-beta.35"
     zeppelin-solidity "^1.10.0"
 
-set-protocol-utils@0.3.30:
-  version "0.3.30"
-  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.30.tgz#d24f5cd34aa76b912a0744b958da47c976631b83"
+set-protocol-utils@0.3.38:
+  version "0.3.38"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.38.tgz#83cf6f7ea91a073479de5fd437a9b1e66da13a75"
   dependencies:
     "@0xproject/base-contract" "^1.0.4"
-    "@0xproject/order-utils" "^1.0.1"
+    "@0xproject/order-utils" "^1.0.1-rc.2"
     "@0xproject/types" "^1.0.1-rc.3"
     "@0xproject/typescript-typings" "^1.0.4"
     "@0xproject/web3-wrapper" "^1.1.2"
@@ -4762,9 +4774,9 @@ set-protocol-utils@0.3.30:
     tslint-eslint-rules "^5.3.1"
     web3 "0.20.0"
 
-set-protocol-utils@^0.3.28:
-  version "0.3.29"
-  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.29.tgz#82b3b403db533368604faf130f9a70789f5f6630"
+set-protocol-utils@^0.3.37:
+  version "0.3.37"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-0.3.37.tgz#4632ff3708dc0c9792a4c63765ac6518c709b790"
   dependencies:
     "@0xproject/base-contract" "^1.0.4"
     "@0xproject/order-utils" "^1.0.1-rc.2"

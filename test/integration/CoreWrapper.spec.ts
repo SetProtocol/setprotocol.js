@@ -623,11 +623,7 @@ describe('CoreWrapper', () => {
         ether(10).div(2),                              // amount of zeroExOrder to fill
       );
 
-      subjectOrdersData = await setProtocolUtils.generateSerializedOrders(
-        subjectSignedIssuanceOrder.makerToken,
-        subjectSignedIssuanceOrder.makerTokenAmount,
-        [takerWalletOrder, zeroExOrder]
-      );
+      subjectOrdersData = await setProtocolUtils.generateSerializedOrders([takerWalletOrder, zeroExOrder]);
       subjectQuantityToFill = issuanceOrderQuantity;
       subjectCaller = issuanceOrderTaker;
     });

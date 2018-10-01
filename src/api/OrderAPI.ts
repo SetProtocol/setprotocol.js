@@ -23,6 +23,7 @@ import {
   Bytes,
   ECSig,
   IssuanceOrder,
+  KyberTrade,
   SetProtocolUtils,
   SignedIssuanceOrder,
   TakerWalletOrder,
@@ -256,16 +257,11 @@ export class OrderAPI {
   public async fillOrderAsync(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantity: BigNumber,
-    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+    orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
     txOpts: TxData,
   ): Promise<string> {
     await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantity, orders);
-
-    const orderData = await this.setProtocolUtils.generateSerializedOrders(
-      signedIssuanceOrder.makerToken,
-      signedIssuanceOrder.makerTokenAmount,
-      orders
-    );
+    const orderData = await this.setProtocolUtils.generateSerializedOrders(orders);
 
     return await this.core.fillOrder(signedIssuanceOrder, quantity, orderData, txOpts);
   }
@@ -325,7 +321,7 @@ export class OrderAPI {
     transactionCaller: Address,
     signedIssuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
-    orders: (TakerWalletOrder | ZeroExSignedFillOrder)[],
+    orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
     const { signature, ...issuanceOrder } = signedIssuanceOrder;
     await this.assert.order.isValidIssuanceOrder(issuanceOrder);
