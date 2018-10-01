@@ -22,7 +22,7 @@ import { Address } from 'set-protocol-utils';
 import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
 import { ZERO } from '../constants';
-import { coreAPIErrors } from '../errors';
+import { coreAPIErrors, setTokenAssertionsErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { ERC20Wrapper, SetTokenWrapper } from '../wrappers';
 import { BigNumber, calculatePartialAmount } from '../util';
@@ -153,14 +153,15 @@ export class SetTokenAPI {
   }
 
   /**
-   * Convenience function to calculate the units of components transferred given an issue quantity.
+   * Calculates the units of components of a Set transferred given an issue or redeem quantity.
    *
    * @param  setAddress    Address of the Set
-   * @param  quantity      Quantity to be checked
-   * @return boolean       List of units
-   *
+   * @param  quantity      Quantity of Set issued or redeemed
+   * @return               List of units transferred ordered
    */
-  public async calculateComponentUnitsTransfered(setAddress: Address, quantity: BigNumber): Promise<BigNumber[]> {
+  public async calculateUnitsTransferred(setAddress: Address, quantity: BigNumber): Promise<BigNumber[]> {
+    this.assertCalculateUnitsTransferred(setAddress, quantity);
+
     const [naturalUnit, componentUnits] = await Promise.all([
       this.setToken.naturalUnit(setAddress),
       this.setToken.getUnits(setAddress),
@@ -170,19 +171,20 @@ export class SetTokenAPI {
   }
 
   /**
-   * Convenience function to calculate the units of component transferred given an issue quantity.
+   * Calculate the units of a specified component of a Set transferred given an issue or redeem quantity.
    *
    * @param  setAddress        Address of the Set
    * @param  componentAddress  Address of the component
-   * @param  quantity          Quantity to be checked
-   * @return boolean           Unit transfered in BigNumber format
-   *
+   * @param  quantity          Quantity of Set issued or redeemed
+   * @return                   Unit transferred in BigNumber format
    */
-  public async calculateComponentUnitTransfered(
+  public async calculateUnitTransferred(
     setAddress: Address,
     componentAddress: Address,
     quantity: BigNumber,
   ): Promise<BigNumber> {
+    await this.assertCalculateUnitTransferred(setAddress, componentAddress, quantity);
+
     const [naturalUnit, componentUnits, components] = await Promise.all([
       this.setToken.naturalUnit(setAddress),
       this.setToken.getUnits(setAddress),
@@ -190,17 +192,31 @@ export class SetTokenAPI {
     ]);
 
     const componentIndex = _.indexOf(components, componentAddress);
-    if (componentIndex < 0) {
-      throw new Error('Component `${componentAddress} is not a component of Set ${setAddress}');
-    }
 
     return calculatePartialAmount(componentUnits[componentIndex], quantity, naturalUnit);
   }
 
   /* ============ Private Assertions ============ */
 
-  private async assertIsMultipleOfNaturalUnitAsync(setAddress: Address, quantity: BigNumber) {
+  private assertIsMultipleOfNaturalUnitAsync(setAddress: Address, quantity: BigNumber) {
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
+  }
+
+  private assertCalculateUnitsTransferred(setAddress: Address, quantity: BigNumber) {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
+  }
+
+  private async assertCalculateUnitTransferred(setAddress: Address, componentAddress: Address, quantity: BigNumber) {
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('componentAddress', componentAddress);
+    this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
+
+    const componentAddresses = await this.setToken.getComponents(setAddress);
+    const componentIndex = _.indexOf(componentAddresses, componentAddress);
+    if (componentIndex < 0) {
+      throw new Error(setTokenAssertionsErrors.IS_NOT_COMPONENT(setAddress, componentAddress));
+    }
   }
 }

@@ -39,6 +39,7 @@ import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
 import { BigNumber, ether, Web3Utils } from '@src/util';
 import { Assertions } from '@src/assertions';
 import { CoreWrapper } from '@src/wrappers';
+import ChaiSetup from '@test/helpers/chaiSetup';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -47,12 +48,12 @@ import {
   deploySetTokenFactoryContract,
   deployVaultContract,
   deployTokensAsync,
+  deployTokensSpecifyingDecimals,
   deployTransferProxyContract
 } from '@test/helpers';
 import { SetDetails } from '@src/types/common';
 
-const chaiBigNumber = require('chai-bignumber');
-chai.use(chaiBigNumber(BigNumber));
+ChaiSetup.configure();
 const { expect } = chai;
 const contract = require('truffle-contract');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
@@ -229,6 +230,134 @@ describe('SetTokenAPI', () => {
 
         expect(isQuantityMultiple).to.be.false;
       });
+    });
+  });
+
+  describe('calculateUnitTransferred', async () => {
+    let componentTokens: StandardTokenMockContract[];
+    let componentTokenAddresses: Address[];
+    let componentTokenUnits: BigNumber[];
+    let naturalUnit: BigNumber;
+    let setToken: SetTokenContract;
+
+    let subjectSetTokenAddress: Address;
+    let subjectComponentAddress: Address;
+    let subjectQuantity: BigNumber;
+
+    beforeEach(async () => {
+      const tokenCount = 2;
+      const decimalsList = [18, 8];
+      const tokenUnits = [ether(2), ether(4)];
+      componentTokens = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+
+      componentTokenAddresses = componentTokens.map(token => token.address);
+      componentTokenUnits = tokenUnits;
+      naturalUnit = ether(2);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentTokenAddresses,
+        componentTokenUnits,
+        naturalUnit,
+      );
+
+      subjectSetTokenAddress = setToken.address;
+      subjectComponentAddress = componentTokenAddresses[0];
+      subjectQuantity = ether(4);
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await setTokenAPI.calculateUnitTransferred(
+        subjectSetTokenAddress,
+        subjectComponentAddress,
+        subjectQuantity
+      );
+    }
+
+    test('correctly calculates the first component unit transferred', async () => {
+      const expectedResult = componentTokenUnits[0].mul(subjectQuantity).div(naturalUnit);
+
+      const result = await subject();
+
+      expect(result).to.bignumber.equal(expectedResult);
+    });
+
+    describe('when the subjectComponentAddress is the second component', async () => {
+      beforeEach(async () => {
+        subjectComponentAddress = componentTokenAddresses[1];
+      });
+
+      test('correctly calculates the second component unit transferred', async () => {
+        const expectedResult = componentTokenUnits[1].mul(subjectQuantity).div(naturalUnit);
+
+        const result = await subject();
+
+        expect(result).to.bignumber.equal(expectedResult);
+      });
+    });
+
+    describe('when the component is not part of the Set', async () => {
+      beforeEach(async () => {
+        subjectComponentAddress = DEFAULT_ACCOUNT;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Token address at ${subjectComponentAddress} is not a ` +
+          `component of the Set Token at ${subjectSetTokenAddress}.`
+        );
+      });
+    });
+  });
+
+  describe('calculateUnitsTransferred', async () => {
+    let componentTokens: StandardTokenMockContract[];
+    let componentTokenAddresses: Address[];
+    let componentTokenUnits: BigNumber[];
+    let naturalUnit: BigNumber;
+    let setToken: SetTokenContract;
+
+    let subjectSetTokenAddress: Address;
+    let subjectQuantity: BigNumber;
+
+    beforeEach(async () => {
+      const tokenCount = 2;
+      const decimalsList = [18, 8];
+      const tokenUnits = [ether(2), ether(4)];
+      componentTokens = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+
+      componentTokenAddresses = componentTokens.map(token => token.address);
+      componentTokenUnits = tokenUnits;
+      naturalUnit = ether(2);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentTokenAddresses,
+        componentTokenUnits,
+        naturalUnit,
+      );
+
+      subjectSetTokenAddress = setToken.address;
+      subjectQuantity = ether(4);
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return await setTokenAPI.calculateUnitsTransferred(
+        subjectSetTokenAddress,
+        subjectQuantity
+      );
+    }
+
+    test('correctly calculates the component units transferred', async () => {
+      const expectedResult: BigNumber[] = componentTokenUnits.map((componentTokenUnit, index) => {
+        return componentTokenUnit.mul(subjectQuantity).div(naturalUnit);
+      });
+
+      const result = await subject();
+
+      expect(JSON.stringify(result)).to.equal(JSON.stringify(expectedResult));
     });
   });
 });

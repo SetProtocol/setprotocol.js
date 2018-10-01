@@ -6,6 +6,7 @@ export {
   deploySetTokenFactoryContract,
   deployTokenAsync,
   deployTokensAsync,
+  deployTokensSpecifyingDecimals,
   deploySetTokenAsync,
   registerExchange,
   approveForTransferAsync,
