@@ -18,12 +18,13 @@
 
 import * as Web3 from 'web3';
 import { TransactionReceipt } from 'ethereum-types';
-import { Address, Bytes, SetProtocolUtils } from 'set-protocol-utils';
+
 import { AccountingAPI, BlockchainAPI, ERC20API, FactoryAPI, IssuanceAPI, OrderAPI, SetTokenAPI } from './api';
 import { CoreWrapper, VaultWrapper } from './wrappers';
 import { Assertions } from './assertions';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
-import { CreateUnitInputs, TxData, Provider } from './types/common';
+import { Address, Bytes, NewSetParameters, TxData, Provider } from './types/common';
+import { NULL_ADDRESS, UNLIMITED_ALLOWANCE_IN_BASE_UNITS } from './constants';
 
 export interface SetProtocolConfig {
   coreAddress: Address;
@@ -53,7 +54,7 @@ class SetProtocol {
    * When creating an issuance order without a relayer token for a fee, you must use Solidity
    * address null type (as opposed to Javascript's `null`, `undefined` or empty string).
    */
-  public static NULL_ADDRESS = SetProtocolUtils.CONSTANTS.NULL_ADDRESS;
+  public static NULL_ADDRESS = NULL_ADDRESS;
 
   /**
    * An instance of the OrderAPI class containing methods for relaying issuance orders
@@ -98,7 +99,7 @@ class SetProtocol {
    * where the minimum natural unit allowed is equal to `10 ** (18 - minimumDecimal)`. `minimumDecimal`
    * is the smallest decimal amongst the tokens passed in
    *
-   * @param componentAddresses    List of ERC20 token addresses to use for Set creation
+   * @param components            List of ERC20 token addresses to use for Set creation
    * @return                      Minimum natural unit allowed
    */
   public async calculateMinimumNaturalUnitAsync(components: Address[]): Promise<BigNumber> {
@@ -106,29 +107,30 @@ class SetProtocol {
   }
 
   /**
-   * Calculates inputs for `createSetAsync` for a given list of ERC20 token addreses, desired proportions,
+   * Calculates inputs for `createSetAsync` for a given list of ERC20 token addreses, proportions of each,
    * current token prices, and target Set price
    *
-   * @param componentPrices         A list of fiat-denominated component prices
-   * @param componentAddresses      Component ERC20 addresses
-   * @param componentProportions    Decimal-formatted allocations. Must add up to 1
-   * @param targetSetPrice          Desired fiat-denominated price of a single unit of the Set
-   * @param extraPrecision          Optional: Improve component unit precision by increasing naturalUnit exponent
-   * @return                        A list of component units and naturalUnit
+   * @param components       List of ERC20 token addresses to use for Set creation
+   * @param prices           List of current prices for the components in index order
+   * @param proportions      Decimal-formatted allocations in index order. Must add up to 1
+   * @param targetPrice      Target fiat-denominated price of a single natural unit of the Set
+   * @param precision        Improve component unit precision by increasi0ng naturalUnit exponent
+   * @return                 Object conforming to NewSetParameters containing a list of component units in index order
+   *                           and a valid natural unit. These can be passed directly into `createSetAsync`
    */
-  public async calculateCreateUnitInputsAsync(
-    componentPrices: BigNumber[],
-    componentAddresses: Address[],
-    componentProportions: BigNumber[],
-    targetSetPrice: BigNumber,
-    extraPrecision: BigNumber = new BigNumber(0),
-  ): Promise<CreateUnitInputs> {
-    return await this.factory.calculateCreateUnitInputs(
-      componentPrices,
-      componentAddresses,
-      componentProportions,
-      targetSetPrice,
-      extraPrecision,
+  public async calculateSetParametersAsync(
+    components: Address[],
+    prices: BigNumber[],
+    proportions: BigNumber[],
+    targetPrice: BigNumber,
+    precision: BigNumber = new BigNumber(0),
+  ): Promise<NewSetParameters> {
+    return await this.factory.calculateSetParametersAsync(
+      components,
+      prices,
+      proportions,
+      targetPrice,
+      precision,
     );
   }
 
@@ -259,7 +261,7 @@ class SetProtocol {
   public async setUnlimitedTransferProxyAllowanceAsync(tokenAddress: string, txOpts: TxData): Promise<string> {
     return await this.setTransferProxyAllowanceAsync(
       tokenAddress,
-      SetProtocolUtils.CONSTANTS.UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+      UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
       txOpts,
     );
   }

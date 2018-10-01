@@ -18,7 +18,6 @@
 
 import * as _ from 'lodash';
 import * as Web3 from 'web3';
-import { Address } from 'set-protocol-utils';
 import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
 import { ZERO } from '../constants';
@@ -26,7 +25,7 @@ import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { ERC20Wrapper, SetTokenWrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { Component, SetDetails } from '../types/common';
+import { Address, Component, SetDetails } from '../types/common';
 
 /**
  * @title SetTokenAPI

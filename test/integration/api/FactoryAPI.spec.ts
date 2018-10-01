@@ -59,7 +59,7 @@ import {
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { ether } from '@src/util/units';
 import { Web3Utils } from '@src/util/Web3Utils';
-import { CreateUnitInputs } from '@src/types/common';
+import { NewSetParameters } from '@src/types/common';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
@@ -471,12 +471,12 @@ describe('FactoryAPI', () => {
     });
   });
 
-  describe('calculateCreateUnitInputs', async () => {
+  describe('calculateSetParametersAsync', async () => {
     let subjectComponentPrices: BigNumber[];
     let subjectComponents: StandardTokenMockContract[];
     let subjectComponentAllocations: BigNumber[];
     let subjectTargetSetPrice: BigNumber;
-    let subjectExtraPrecision: BigNumber;
+    let subjectPrecision: BigNumber;
 
     beforeEach(async () => {
       const tokenCount = 2;
@@ -485,65 +485,51 @@ describe('FactoryAPI', () => {
       subjectComponentPrices = [new BigNumber(2), new BigNumber(2)];
       subjectComponentAllocations = [new BigNumber(0.5), new BigNumber(0.5)];
       subjectTargetSetPrice = new BigNumber(10);
-      subjectExtraPrecision = ZERO;
+      subjectPrecision = ZERO;
     });
 
-    async function subject(): Promise<CreateUnitInputs> {
+    async function subject(): Promise<NewSetParameters> {
       const subjectComponentAddresses = _.map(subjectComponents, components => components.address);
 
-      return await factoryAPI.calculateCreateUnitInputs(
-        subjectComponentPrices,
+      return await factoryAPI.calculateSetParametersAsync(
         subjectComponentAddresses,
+        subjectComponentPrices,
         subjectComponentAllocations,
         subjectTargetSetPrice,
-        subjectExtraPrecision,
+        subjectPrecision,
       );
     }
 
     test('should calculate the correct required component units', async () => {
-      const expectedResult = [
-        new BigNumber(3),
-        new BigNumber(3),
-      ];
+      const { units } = await subject();
 
-      const result = await subject();
-      const { componentUnits } = result;
-
-      expect(JSON.stringify(componentUnits)).to.equal(JSON.stringify(expectedResult));
+      const expectedResult = [new BigNumber(3), new BigNumber(3)];
+      expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
     });
 
     test('should calculate the correct natural units', async () => {
+      const { naturalUnit } = await subject();
+
       const expectedResult = new BigNumber(1);
-
-      const result = await subject();
-      const { naturalUnit } = result;
-
       expect(naturalUnit).to.bignumber.equal(expectedResult);
     });
 
     describe('when the precision is set to 1', async () => {
       beforeEach(async () => {
-        subjectExtraPrecision = new BigNumber(1);
+        subjectPrecision = new BigNumber(1);
       });
 
       test('should calculate the correct required component units', async () => {
-        const expectedResult = [
-          new BigNumber(25),
-          new BigNumber(25),
-        ];
+        const { units } = await subject();
 
-        const result = await subject();
-        const { componentUnits } = result;
-
-        expect(JSON.stringify(componentUnits)).to.equal(JSON.stringify(expectedResult));
+        const expectedResult = [new BigNumber(25), new BigNumber(25)];
+        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
       });
 
       test('should calculate the correct natural units', async () => {
+        const { naturalUnit } = await subject();
+
         const expectedResult = new BigNumber(10);
-
-        const result = await subject();
-        const { naturalUnit } = result;
-
         expect(naturalUnit).to.bignumber.equal(expectedResult);
       });
     });
@@ -607,18 +593,15 @@ describe('FactoryAPI', () => {
           new BigNumber('1276048192772'),
         ];
 
-        const result = await subject();
-        const { componentUnits } = result;
+        const { units } = await subject();
 
-        expect(JSON.stringify(componentUnits)).to.equal(JSON.stringify(expectedResult));
+        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
       });
 
       test('should calculate the correct natural units', async () => {
+        const { naturalUnit } = await subject();
+
         const expectedResult = new BigNumber(100000000000);
-
-        const result = await subject();
-        const { naturalUnit } = result;
-
         expect(naturalUnit).to.bignumber.equal(expectedResult);
       });
     });

@@ -1,26 +1,22 @@
-import { Address } from 'set-protocol-utils';
-
 export {
   Address,
   Bytes,
-  UInt,
+  Component,
   Constants,
   ECSig,
   Exchanges,
   IssuanceOrder,
-  SignedIssuanceOrder,
+  KyberTrade,
   Log,
+  NewSetParameters,
+  SetDetails,
+  SignedIssuanceOrder,
   SolidityTypes,
   TakerWalletOrder,
-  ZeroExSignedFillOrder,
-} from 'set-protocol-utils';
-
-export {
-  Component,
-  CreateUnitInputs,
-  SetDetails,
   Token,
   TxData,
+  UInt,
+  ZeroExSignedFillOrder,
 } from './types/common';
 
 import SetProtocol from './SetProtocol';

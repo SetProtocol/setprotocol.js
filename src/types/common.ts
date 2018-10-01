@@ -2,13 +2,30 @@
 import { BigNumber } from '../util';
 import { Address, UInt } from 'set-protocol-utils';
 
+export {
+  Address,
+  Bytes,
+  Constants,
+  ECSig,
+  Exchanges,
+  IssuanceOrder,
+  KyberTrade,
+  Log,
+  SetProtocolUtils,
+  SignedIssuanceOrder,
+  SolidityTypes,
+  TakerWalletOrder,
+  UInt,
+  ZeroExSignedFillOrder,
+} from 'set-protocol-utils';
+
 export interface Component {
   address: Address;
   unit: BigNumber;
 }
 
-export interface CreateUnitInputs {
-  componentUnits: BigNumber[];
+export interface NewSetParameters {
+  units: BigNumber[];
   naturalUnit: BigNumber;
 }
 
