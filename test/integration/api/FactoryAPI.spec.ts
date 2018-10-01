@@ -471,7 +471,7 @@ describe('FactoryAPI', () => {
     });
   });
 
-  describe('calculateSetParametersAsync', async () => {
+  describe.only('calculateSetParametersAsync', async () => {
     let subjectComponentPrices: BigNumber[];
     let subjectComponents: StandardTokenMockContract[];
     let subjectComponentAllocations: BigNumber[];
@@ -602,6 +602,38 @@ describe('FactoryAPI', () => {
         const { naturalUnit } = await subject();
 
         const expectedResult = new BigNumber(100000000000);
+        expect(naturalUnit).to.bignumber.equal(expectedResult);
+      });
+    });
+
+    describe('when $100 Set is composed of ZRX and ZIL with 50/50 split', async () => {
+      beforeEach(async () => {
+        const tokenCount = 2;
+        const decimalsList = [18, 12];
+        subjectComponents = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+        subjectComponentPrices = [
+          new BigNumber(0.627),
+          new BigNumber(0.0342),
+        ];
+        subjectComponentAllocations = [
+          new BigNumber(0.5),
+          new BigNumber(0.5),
+        ];
+
+        subjectTargetSetPrice = new BigNumber(100);
+      });
+
+      test('should calculate the correct required component units', async () => {
+        const { units } = await subject();
+
+        const expectedResult = [new BigNumber('79744817'), new BigNumber('1462')];
+        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
+      });
+
+      test('should calculate the correct natural units', async () => {
+        const { naturalUnit } = await subject();
+
+        const expectedResult = new BigNumber(1000000);
         expect(naturalUnit).to.bignumber.equal(expectedResult);
       });
     });

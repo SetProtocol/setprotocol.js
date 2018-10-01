@@ -117,7 +117,11 @@ export class FactoryAPI {
 
     const minimumUnitExponent = new BigNumber(BigNumber.min(requiredComponentUnits).e);
     const naturalUnitExponent = new BigNumber(18).sub(minimumUnitExponent).add(precision);
-    const naturalUnit = new BigNumber(10).pow(naturalUnitExponent.toNumber());
+    const derivedNaturalUnit = new BigNumber(10).pow(naturalUnitExponent.toNumber());
+
+    const minimumNaturalUnit = await this.calculateMinimumNaturalUnit(components);
+
+    const naturalUnit = BigNumber.max(minimumNaturalUnit, derivedNaturalUnit);
 
     const formattedComponentUnits = requiredComponentUnits.map((amountRequired, i) => {
       return amountRequired
