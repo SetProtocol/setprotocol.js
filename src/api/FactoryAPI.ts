@@ -18,7 +18,6 @@
 
 import * as _ from 'lodash';
 import * as Web3 from 'web3';
-import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import {
   StandardTokenMockContract,
   SetTokenContract,
@@ -36,7 +35,7 @@ import {
   generateTxOpts,
   getFormattedLogsFromTxHash,
 } from '../util';
-import { CreateUnitInputs, TxData } from '../types/common';
+import { Address, NewSetParameters, TxData } from '../types/common';
 
 /**
  * @title FactoryAPI
@@ -66,6 +65,71 @@ export class FactoryAPI {
     this.erc20 = new ERC20Wrapper(this.web3);
     this.assert = assertions;
     this.setTokenFactoryAddress = setTokenFactoryAddress;
+  }
+
+  /**
+   * Calculates the minimum allowable natural unit for a list of ERC20 component addresses
+   *
+   * @param components        List of ERC20 token addresses to use for Set creation
+   * @return                  Minimum natural unit allowed
+   */
+  public async calculateMinimumNaturalUnit(components: Address[]): Promise<BigNumber> {
+    let minimumDecimal;
+    try {
+      const decimals = await Promise.all(_.map(components, component => this.erc20.decimals(component)));
+      minimumDecimal = BigNumber.min(decimals);
+    } catch (error) {
+      // If any of the conponent addresses does not implement decimals(),
+      // we set minimumDecimal to 0 so that minimum natural unit will be 10 ** 18
+      minimumDecimal = ZERO;
+    }
+
+    return new BigNumber(10 ** (18 - minimumDecimal.toNumber()));
+  }
+
+  /**
+   * Convenience function for calculating the component units required and natural unit to achieve a target
+   * Set price given a list of components, desired component proportions (in decimal format), and component prices.
+   *
+   * @param components       List of ERC20 token addresses to use for Set creation
+   * @param prices           List of current prices for the components in index order
+   * @param proportions      Decimal-formatted allocations in index order. Must add up to 1
+   * @param targetPrice      Target fiat-denominated price of a single natural unit of the Set
+   * @param precision        Improve component unit precision by increasing naturalUnit exponent
+   * @return                 Object conforming to CreateUnitInputs containing a list of component units in index order
+   *                           and a valid natural unit. These can be passed directly into `createSetAsync`
+   */
+  public async calculateSetParametersAsync(
+    components: Address[],
+    prices: BigNumber[],
+    proportions: BigNumber[],
+    targetPrice: BigNumber,
+    precision: BigNumber,
+  ): Promise<NewSetParameters> {
+    await this.assertCalculateCreateUnitInputs(components, prices, proportions);
+
+    const requiredComponentUnits = await this.calculateRequiredComponentUnits(
+      components,
+      prices,
+      proportions,
+      targetPrice,
+    );
+
+    const minimumUnitExponent = new BigNumber(BigNumber.min(requiredComponentUnits).e);
+    const naturalUnitExponent = new BigNumber(18).sub(minimumUnitExponent).add(precision);
+    const naturalUnit = new BigNumber(10).pow(naturalUnitExponent.toNumber());
+
+    const formattedComponentUnits = requiredComponentUnits.map((amountRequired, i) => {
+      return amountRequired
+        .mul(naturalUnit)
+        .div(ether(1))
+        .ceil();
+    });
+
+    return {
+      units: formattedComponentUnits,
+      naturalUnit,
+    };
   }
 
   /**
@@ -118,89 +182,15 @@ export class FactoryAPI {
     return extractNewSetTokenAddressFromLogs(transactionLogs);
   }
 
-  /**
-   * Calculates the minimum allowable natural unit for a list of ERC20 component addresses
-   * where the minimum natural unit allowed equal 10 ** (18 - minDecimal)
-   *
-   * @param componentAddresses    Component ERC20 addresses
-   * @return                      The minimum value of the natural unit allowed by component decimals
-   */
-  public async calculateMinimumNaturalUnit(components: Address[]): Promise<BigNumber> {
-    let minDecimal;
-    try {
-      const componentDecimalPromises = _.map(components, component =>
-        this.erc20.decimals(component)
-      );
-
-      const decimals = await Promise.all(componentDecimalPromises);
-      minDecimal = BigNumber.min(decimals);
-    } catch (error) {
-      // If any of the conponent addresses does not implement decimals(),
-      // we assume the worst and set minDecimal to 0 so that minimum natural unit
-      // will be 10^18.
-      minDecimal = SetProtocolUtils.CONSTANTS.ZERO;
-    }
-
-    return new BigNumber(10 ** (18 - minDecimal.toNumber()));
-  }
-
-  /**
-   * Convenience function for calculating the component units required and natural unit to achieve a target
-   * Set price given a list of components, desired component proportions (in decimal format), and component prices.
-   *
-   * @param componentPrices         A list of fiat-denominated component prices
-   * @param componentAddresses      Component ERC20 addresses
-   * @param componentProportions    Decimal-formatted allocations. Must add up to 1
-   * @param targetSetPrice          Desired fiat-denominated price of a single unit of the Set
-   * @param extraPrecision          Improve component unit precision by increasing naturalUnit exponent
-   * @return                        A list of component units and naturalUnit
-   */
-  public async calculateCreateUnitInputs(
-    componentPrices: BigNumber[],
-    components: Address[],
-    componentProportions: BigNumber[],
-    targetSetPrice: BigNumber,
-    extraPrecision: BigNumber,
-  ): Promise<CreateUnitInputs> {
-    await this.assertCalculateCreateUnitInputs(
-      componentPrices,
-      components,
-      componentProportions,
-    );
-
-    const requiredComponentUnits = await this.calculateRequiredComponentUnits(
-      componentPrices,
-      components,
-      componentProportions,
-      targetSetPrice,
-    );
-
-    const minimumUnitExponent = new BigNumber(BigNumber.min(requiredComponentUnits).e);
-    const naturalUnitExponent = new BigNumber(18).sub(minimumUnitExponent).add(extraPrecision);
-    const naturalUnit = new BigNumber(10).pow(naturalUnitExponent.toNumber());
-
-    const formattedComponentUnits = requiredComponentUnits.map((amountRequired, i) => {
-      return amountRequired
-        .mul(naturalUnit)
-        .div(ether(1))
-        .ceil();
-    });
-
-    return {
-      componentUnits: formattedComponentUnits,
-      naturalUnit,
-    };
-  }
-
   /* ============ Private Function ============ */
 
   private async calculateRequiredComponentUnits(
-    componentPrices: BigNumber[],
     components: Address[],
-    componentProportions: BigNumber[],
-    targetSetPrice: BigNumber,
+    prices: BigNumber[],
+    proportions: BigNumber[],
+    targetPrice: BigNumber,
   ): Promise<BigNumber[]> {
-    const targetComponentValues = this.calculateTargetComponentValues(componentProportions, targetSetPrice);
+    const targetComponentValues = this.calculateTargetComponentValues(proportions, targetPrice);
 
     // Calculate the target amount of tokens required by dividing the target component price
     // with the price of a component and then multiply by the token's base unit amount
@@ -208,7 +198,7 @@ export class FactoryAPI {
     const componentAmountRequiredPromises = _.map(targetComponentValues, async(targetComponentValue, i) => {
       const componentDecimals: number = await this.getComponentDecimals(components[i]);
 
-      const numComponentsRequired = targetComponentValue.div(componentPrices[i]);
+      const numComponentsRequired = targetComponentValue.div(prices[i]);
 
       const standardComponentUnit = new BigNumber(10).pow(componentDecimals);
 
@@ -230,15 +220,29 @@ export class FactoryAPI {
   }
 
   private calculateTargetComponentValues(
-    componentProportions: BigNumber[],
-    targetSetPrice: BigNumber,
+    proportions: BigNumber[],
+    targetPrice: BigNumber,
   ): BigNumber[] {
-    return componentProportions.map(decimalAllocation => {
-      return decimalAllocation.mul(targetSetPrice);
+    return proportions.map(decimalAllocation => {
+      return decimalAllocation.mul(targetPrice);
     });
   }
 
   /* ============ Private Assertions ============ */
+
+  private async assertCalculateCreateUnitInputs(components: Address[], prices: BigNumber[], proportions: BigNumber[]) {
+    this.assert.common.verifyProportionsSumToOne(proportions, coreAPIErrors.PROPORTIONS_DONT_ADD_UP_TO_1());
+    this.assert.common.isEqualLength(
+      prices,
+      components,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('prices', 'components')
+    );
+    this.assert.common.isEqualLength(
+      prices,
+      proportions,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('prices', 'proportions')
+    );
+  }
 
   private async assertCreateSet(
     userAddress: Address,
@@ -274,24 +278,6 @@ export class FactoryAPI {
       naturalUnit,
       minNaturalUnit,
       coreAPIErrors.INVALID_NATURAL_UNIT(minNaturalUnit),
-    );
-  }
-
-  private async assertCalculateCreateUnitInputs(
-    componentPrices: BigNumber[],
-    components: Address[],
-    componentProportions: BigNumber[],
-  ) {
-    this.assert.common.verifyProportionsSumToOne(componentProportions, coreAPIErrors.PROPORTIONS_DONT_ADD_UP_TO_1());
-    this.assert.common.isEqualLength(
-      componentPrices,
-      components,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('componentPrices', 'components')
-    );
-    this.assert.common.isEqualLength(
-      componentPrices,
-      componentProportions,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('componentPrices', 'componentProportions')
     );
   }
 }

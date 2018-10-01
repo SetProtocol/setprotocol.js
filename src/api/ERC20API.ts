@@ -18,14 +18,13 @@
 
 import * as _ from 'lodash';
 import * as Web3 from 'web3';
-import { Address } from 'set-protocol-utils';
 import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
 import { ZERO } from '../constants';
 import { Assertions } from '../assertions';
 import { ERC20Wrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { TxData } from '../types/common';
+import { Address, TxData } from '../types/common';
 
 /**
  * @title ERC20API

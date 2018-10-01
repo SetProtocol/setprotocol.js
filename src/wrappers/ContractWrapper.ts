@@ -17,7 +17,6 @@
 'use strict';
 
 import * as Web3 from 'web3';
-
 import {
   BaseContract,
   CoreContract,
@@ -25,8 +24,9 @@ import {
   SetTokenContract,
   VaultContract,
 } from 'set-protocol-contracts';
-import { Address } from 'set-protocol-utils';
+
 import { CoreWrapper } from './CoreWrapper';
+import { Address } from '../types/common';
 
 /**
  * @title ContractWrapper
