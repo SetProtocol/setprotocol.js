@@ -19,7 +19,6 @@ export {
 
 export {
   Component,
-  SetComponent,
   CreateUnitInputs,
   SetDetails,
   Token,
