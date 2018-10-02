@@ -40,6 +40,9 @@ export const E18: BigNumber = new BigNumber(10).pow(18);
 export function UINT256(value: number): BigNumber {
   return new BigNumber(value);
 }
+export const ONE_DAY_IN_SECONDS = new BigNumber(86400);
+export const DEFAULT_UNIT_SHARES = new BigNumber(10 ** 10);
+export const DEFAULT_REBALANCING_NATURAL_UNIT = new BigNumber(10 ** 10);
 
 export const TX_DEFAULTS = {
   from: DEFAULT_ACCOUNT,

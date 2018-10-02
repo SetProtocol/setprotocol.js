@@ -21,6 +21,7 @@ import {
   BaseContract,
   CoreContract,
   DetailedERC20Contract,
+  RebalancingSetTokenContract,
   SetTokenContract,
   VaultContract,
 } from 'set-protocol-contracts';
@@ -93,6 +94,32 @@ export class ContractWrapper {
       );
       this.cache[cacheKey] = setTokenContract;
       return setTokenContract;
+    }
+  }
+
+  /**
+   * Load Set Token contract
+   *
+   * @param  setTokenAddress    Address of the Set Token contract
+   * @param  transactionOptions Options sent into the contract deployed method
+   * @return                    The Set Token Contract
+   */
+  public async loadRebalancingSetTokenAsync(
+    rebalancingSetTokenAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<RebalancingSetTokenContract> {
+    const cacheKey = this.getSetTokenCacheKey(rebalancingSetTokenAddress);
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as RebalancingSetTokenContract;
+    } else {
+      const rebalancingSetTokenContract = await RebalancingSetTokenContract.at(
+        rebalancingSetTokenAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = rebalancingSetTokenContract;
+      return rebalancingSetTokenContract;
     }
   }
 
