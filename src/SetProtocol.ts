@@ -110,12 +110,12 @@ class SetProtocol {
    * Calculates inputs for `createSetAsync` for a given list of ERC20 token addreses, proportions of each,
    * current token prices, and target Set price
    *
-   * @param components       List of ERC20 token addresses to use for Set creation
-   * @param prices           List of current prices for the components in index order
-   * @param proportions      Decimal-formatted allocations in index order. Must add up to 1
-   * @param targetPrice      Target fiat-denominated price of a single natural unit of the Set
-   * @param precision        Improve component unit precision by increasi0ng naturalUnit exponent
-   * @return                 Object conforming to NewSetParameters containing a list of component units in index order
+   * @param components        List of ERC20 token addresses to use for Set creation
+   * @param prices            List of current prices for the components in index order
+   * @param proportions       Decimal-formatted allocations in index order. Must add up to 1
+   * @param targetPrice       Target fiat-denominated price of a single natural unit of the Set
+   * @param maxPercentError   Maximum percentage price error in decimals of Set from the target price
+   * @return                  Object conforming to NewSetParameters containing a list of component units in index order
    *                           and a valid natural unit. These can be passed directly into `createSetAsync`
    */
   public async calculateSetParametersAsync(
@@ -123,14 +123,14 @@ class SetProtocol {
     prices: BigNumber[],
     proportions: BigNumber[],
     targetPrice: BigNumber,
-    precision: BigNumber = new BigNumber(0),
+    maxPercentError: BigNumber = new BigNumber(1),
   ): Promise<NewSetParameters> {
     return await this.factory.calculateSetParametersAsync(
       components,
       prices,
       proportions,
       targetPrice,
-      precision,
+      maxPercentError,
     );
   }
 
