@@ -334,7 +334,7 @@ describe('FactoryAPI', () => {
       });
 
       test('throws', async () => {
-        const minNaturalUnit = await factoryAPI.calculateMinimumNaturalUnit(subjectComponents);
+        const minNaturalUnit = await factoryAPI.calculateMinimumNaturalUnitAsync(subjectComponents);
         return expect(subject()).to.be.rejectedWith(
           `Natural unit must be larger than minimum unit, ${minNaturalUnit.toString()}, allowed by components.`
         );
@@ -402,7 +402,7 @@ describe('FactoryAPI', () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await factoryAPI.calculateMinimumNaturalUnit(subjectComponents);
+      return await factoryAPI.calculateMinimumNaturalUnitAsync(subjectComponents);
     }
 
     describe('when the decimals and token count are standard', async () => {
@@ -491,7 +491,7 @@ describe('FactoryAPI', () => {
     async function subject(): Promise<SetUnits> {
       const subjectComponentAddresses = _.map(subjectComponents, components => components.address);
 
-      return await factoryAPI.calculateSetUnits(
+      return await factoryAPI.calculateSetUnitsAsync(
         subjectComponentAddresses,
         subjectComponentPrices,
         subjectComponentAllocations,

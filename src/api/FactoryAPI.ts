@@ -74,7 +74,7 @@ export class FactoryAPI {
    * @param components        List of ERC20 token addresses to use for Set creation
    * @return                  Minimum natural unit allowed
    */
-  public async calculateMinimumNaturalUnit(components: Address[]): Promise<BigNumber> {
+  public async calculateMinimumNaturalUnitAsync(components: Address[]): Promise<BigNumber> {
     let minimumDecimal;
     try {
       const decimals = await Promise.all(_.map(components, component => this.erc20.decimals(component)));
@@ -101,7 +101,7 @@ export class FactoryAPI {
    *                          index order and a valid natural unit. These properties can be passed directly
    *                          into `createSetAsync`
    */
-  public async calculateSetUnits(
+  public async calculateSetUnitsAsync(
     components: Address[],
     prices: BigNumber[],
     proportions: BigNumber[],
@@ -121,7 +121,7 @@ export class FactoryAPI {
     const naturalUnitExponent = UINT256(18).sub(minimumUnitExponent);
     const derivedNaturalUnit = UINT256(10).pow(naturalUnitExponent.toNumber());
 
-    const minimumNaturalUnit = await this.calculateMinimumNaturalUnit(components);
+    const minimumNaturalUnit = await this.calculateMinimumNaturalUnitAsync(components);
 
     let naturalUnit = BigNumber.max(minimumNaturalUnit, derivedNaturalUnit);
     let formattedComponentUnits: BigNumber[];
@@ -310,7 +310,7 @@ export class FactoryAPI {
       }),
     );
 
-    const minNaturalUnit = await this.calculateMinimumNaturalUnit(components);
+    const minNaturalUnit = await this.calculateMinimumNaturalUnitAsync(components);
 
     this.assert.common.isGreaterOrEqualThan(
       naturalUnit,

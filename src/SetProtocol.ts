@@ -103,7 +103,7 @@ class SetProtocol {
    * @return                      Minimum natural unit allowed
    */
   public async calculateMinimumNaturalUnitAsync(components: Address[]): Promise<BigNumber> {
-    return await this.factory.calculateMinimumNaturalUnit(components);
+    return await this.factory.calculateMinimumNaturalUnitAsync(components);
   }
 
   /**
@@ -122,14 +122,14 @@ class SetProtocol {
    *                          index order and a valid natural unit. These properties can be passed directly
    *                          into `createSetAsync`
    */
-  public async calculateSetUnits(
+  public async calculateSetUnitsAsync(
     components: Address[],
     prices: BigNumber[],
     proportions: BigNumber[],
     targetPrice: BigNumber,
     percentError: number = 10,
   ): Promise<SetUnits> {
-    return await this.factory.calculateSetUnits(
+    return await this.factory.calculateSetUnitsAsync(
       components,
       prices,
       proportions,
