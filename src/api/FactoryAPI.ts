@@ -128,7 +128,7 @@ export class FactoryAPI {
     let percentError: BigNumber;
 
     // If the percentage error from the naturalUnit and units combination is greater
-    // than. the max allowable error, we attempt to improve the precision by increasing
+    // than the max allowable error, we attempt to improve the precision by increasing
     // the naturalUnit and recalculating the component units.
     while (true) {
       formattedComponentUnits = requiredComponentUnits.map(amountRequired => {
@@ -141,9 +141,7 @@ export class FactoryAPI {
       const impliedSetPrice = this.calculateImpliedSetPrice(formattedComponentUnits, naturalUnit, prices);
       percentError = calculatePercentDifference(impliedSetPrice, targetPrice);
 
-      console.log(percentError.toString(), maxPercentError.toString(), priorPercentError.toString());
-
-      // Only continue to experiemnt with improvements if the following conditions are met:
+      // Only continue to experiment with improvements if the following conditions are met:
       // 1. The Percent error is still greater than the maximum allowable error
       // 2. Increasing the natural unit helps with improving precision
       if (percentError.gt(maxPercentError) && percentError.lt(priorPercentError)) {
