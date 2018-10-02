@@ -24,7 +24,7 @@ import {
   VaultContract,
 } from 'set-protocol-contracts';
 
-import { ZERO, TEN, EIGHTEEN, E18 } from '../constants';
+import { E18, UINT256, ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { CoreWrapper, ERC20Wrapper } from '../wrappers';
@@ -36,7 +36,7 @@ import {
   generateTxOpts,
   getFormattedLogsFromTxHash,
 } from '../util';
-import { Address, NewSetParameters, TxData } from '../types/common';
+import { Address, SetUnits, TxData } from '../types/common';
 
 /**
  * @title FactoryAPI
@@ -89,24 +89,25 @@ export class FactoryAPI {
   }
 
   /**
-   * Convenience function for calculating the component units required and natural unit to achieve a target
-   * Set price given a list of components, desired component proportions (in decimal format), and component prices.
+   * Calculates unit and naturalUnit inputs for `createSetAsync` for a given list of ERC20 token addreses, proportions
+   * of each, current token prices, and target Set price
    *
-   * @param components        List of ERC20 token addresses to use for Set creation
-   * @param prices            List of current prices for the components in index order
-   * @param proportions       Decimal-formatted allocations in index order. Must add up to 1
-   * @param targetPrice       Target fiat-denominated price of a single natural unit of the Set
-   * @param maxPercentError   Maximum percentage price error in decimals of Set from the target price
-   * @return                  Object conforming to CreateUnitInputs containing a list of component units in index order
-   *                           and a valid natural unit. These can be passed directly into `createSetAsync`
+   * @param components      List of ERC20 token addresses to use for Set creation
+   * @param prices          List of current prices for the components in index order
+   * @param proportions     Decimal-formatted allocations in index order. Must add up to 1
+   * @param targetPrice     Target fiat-denominated price of a single natural unit of the Set
+   * @param percentError    Allowable price error percentage of resulting Set price from the target price
+   * @return                Object conforming to SetUnits containing a list of component units in
+   *                          index order and a valid natural unit. These properties can be passed directly
+   *                          into `createSetAsync`
    */
-  public async calculateSetParametersAsync(
+  public async calculateSetUnits(
     components: Address[],
     prices: BigNumber[],
     proportions: BigNumber[],
     targetPrice: BigNumber,
-    maxPercentError: BigNumber,
-  ): Promise<NewSetParameters> {
+    percentError: number,
+  ): Promise<SetUnits> {
     await this.assertCalculateCreateUnitInputs(components, prices, proportions);
 
     const requiredComponentUnits = await this.calculateRequiredComponentUnits(
@@ -117,15 +118,15 @@ export class FactoryAPI {
     );
 
     const minimumUnitExponent = new BigNumber(BigNumber.min(requiredComponentUnits).e);
-    const naturalUnitExponent = EIGHTEEN.sub(minimumUnitExponent);
-    const derivedNaturalUnit = TEN.pow(naturalUnitExponent.toNumber());
+    const naturalUnitExponent = UINT256(18).sub(minimumUnitExponent);
+    const derivedNaturalUnit = UINT256(10).pow(naturalUnitExponent.toNumber());
 
     const minimumNaturalUnit = await this.calculateMinimumNaturalUnit(components);
 
     let naturalUnit = BigNumber.max(minimumNaturalUnit, derivedNaturalUnit);
     let formattedComponentUnits: BigNumber[];
     let priorPercentError: BigNumber = E18; // Start with a large percentage figure
-    let percentError: BigNumber;
+    let errorPercentage: BigNumber;
 
     // If the percentage error from the naturalUnit and units combination is greater
     // than the max allowable error, we attempt to improve the precision by increasing
@@ -139,14 +140,15 @@ export class FactoryAPI {
       });
 
       const impliedSetPrice = this.calculateImpliedSetPrice(formattedComponentUnits, naturalUnit, prices);
-      percentError = calculatePercentDifference(impliedSetPrice, targetPrice);
+      errorPercentage = calculatePercentDifference(impliedSetPrice, targetPrice);
 
       // Only continue to experiment with improvements if the following conditions are met:
       // 1. The Percent error is still greater than the maximum allowable error
       // 2. Increasing the natural unit helps with improving precision
-      if (percentError.gt(maxPercentError) && percentError.lt(priorPercentError)) {
-        naturalUnit = naturalUnit.mul(TEN);
-        priorPercentError = percentError;
+      const error = new BigNumber(percentError).div(100);
+      if (errorPercentage.gt(error) && errorPercentage.lt(priorPercentError)) {
+        naturalUnit = naturalUnit.mul(UINT256(10));
+        priorPercentError = errorPercentage;
       } else {
         return {
           units: formattedComponentUnits,
