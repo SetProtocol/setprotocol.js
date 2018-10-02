@@ -51,7 +51,7 @@ import {
   deployTokensSpecifyingDecimals,
   deployTransferProxyContract
 } from '@test/helpers';
-import { SetDetails } from '@src/types/common';
+import { Component, SetDetails } from '@src/types/common';
 
 ChaiSetup.configure();
 const { expect } = chai;
@@ -267,7 +267,7 @@ describe('SetTokenAPI', () => {
       subjectQuantity = ether(4);
     });
 
-    async function subject(): Promise<BigNumber> {
+    async function subject(): Promise<Component> {
       return await setTokenAPI.calculateComponentAmountForIssuance(
         subjectSetTokenAddress,
         subjectComponentAddress,
@@ -276,11 +276,14 @@ describe('SetTokenAPI', () => {
     }
 
     test('correctly calculates the first component unit transferred', async () => {
-      const expectedResult = componentTokenUnits[0].mul(subjectQuantity).div(naturalUnit);
+      const expectedResult: Component =  {
+        address: componentTokenAddresses[0],
+        unit: componentTokenUnits[0].mul(subjectQuantity).div(naturalUnit),
+      };
 
       const result = await subject();
 
-      expect(result).to.bignumber.equal(expectedResult);
+      expect(result.unit).to.bignumber.equal(expectedResult.unit);
     });
 
     describe('when the subjectComponentAddress is the second component', async () => {
@@ -289,11 +292,14 @@ describe('SetTokenAPI', () => {
       });
 
       test('correctly calculates the second component unit transferred', async () => {
-        const expectedResult = componentTokenUnits[1].mul(subjectQuantity).div(naturalUnit);
+        const expectedResult: Component = {
+          address: componentTokenAddresses[1],
+          unit: componentTokenUnits[1].mul(subjectQuantity).div(naturalUnit),
+        };
 
         const result = await subject();
 
-        expect(result).to.bignumber.equal(expectedResult);
+        expect(result.unit).to.bignumber.equal(expectedResult.unit);
       });
     });
 
@@ -343,7 +349,7 @@ describe('SetTokenAPI', () => {
       subjectQuantity = ether(4);
     });
 
-    async function subject(): Promise<BigNumber[]> {
+    async function subject(): Promise<Component[]> {
       return await setTokenAPI.calculateComponentAmountsForIssuance(
         subjectSetTokenAddress,
         subjectQuantity
@@ -351,8 +357,11 @@ describe('SetTokenAPI', () => {
     }
 
     test('correctly calculates the component units transferred', async () => {
-      const expectedResult: BigNumber[] = componentTokenUnits.map((componentTokenUnit, index) => {
-        return componentTokenUnit.mul(subjectQuantity).div(naturalUnit);
+      const expectedResult: Component[] = componentTokenUnits.map((componentTokenUnit, index) => {
+        return {
+          address: componentTokenAddresses[index],
+          unit: componentTokenUnit.mul(subjectQuantity).div(naturalUnit),
+        };
       });
 
       const result = await subject();

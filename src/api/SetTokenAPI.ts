@@ -156,12 +156,12 @@ export class SetTokenAPI {
    *
    * @param  setAddress         Address of the Set
    * @param  quantity           Quantity of Set to issue or redeem
-   * @return                    List of amounts required for issuance or redemption
+   * @return                    List of objects with addresses and amounts required for issuance or redemption
    */
   public async calculateComponentAmountsForIssuance(
     setAddress: Address,
     quantity: BigNumber,
-  ): Promise<BigNumber[]> {
+  ): Promise<Component[]> {
     this.assertcalculateComponentAmountsForIssuance(setAddress, quantity);
 
     const [naturalUnit, componentUnits, components] = await Promise.all([
@@ -170,7 +170,12 @@ export class SetTokenAPI {
       this.setToken.getComponents(setAddress),
     ]);
 
-    return _.map(componentUnits, componentUnit => calculatePartialAmount(componentUnit, quantity, naturalUnit));
+    return _.map(componentUnits, (componentUnit, index) => {
+      return {
+        address: components[index],
+        unit: calculatePartialAmount(componentUnit, quantity, naturalUnit),
+      } as Component;
+    });
   }
 
   /**
@@ -179,13 +184,13 @@ export class SetTokenAPI {
    * @param  setAddress         Address of the Set
    * @param  componentAddress   Address of the component
    * @param  quantity           Quantity of Set to issue or redeem
-   * @return                    Amount required for issuance or redemption
+   * @return                    Object with addresses and amounts required for issuance or redemption
    */
   public async calculateComponentAmountForIssuance(
     setAddress: Address,
     componentAddress: Address,
     quantity: BigNumber,
-  ): Promise<BigNumber> {
+  ): Promise<Component> {
     await this.assertCalculateUnitTransferred(setAddress, componentAddress, quantity);
 
     const components = await this.setToken.getComponents(setAddress);
