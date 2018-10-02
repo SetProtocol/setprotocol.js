@@ -610,10 +610,29 @@ describe('FactoryAPI', () => {
           subjectMaxPercentError = new BigNumber(0.0001);
         });
 
+        test('should calculate the correct required component units', async () => {
+        const expectedResult = [
+          new BigNumber('6711742209632'),
+          new BigNumber('4940616541354'),
+          new BigNumber('44258572949947'),
+          new BigNumber('1301943097015'),
+          new BigNumber('92988465'),
+          new BigNumber('2973066455697'),
+          new BigNumber('6763830769231'),
+          new BigNumber('48'),
+          new BigNumber('140347061779'),
+          new BigNumber('12760481927711'),
+        ];
+
+        const { units } = await subject();
+
+        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
+      });
+
         test('should calculate the correct natural units', async () => {
           const { naturalUnit } = await subject();
 
-          const expectedResult = new BigNumber(100000000000);
+          const expectedResult = new BigNumber(1000000000000);
           expect(naturalUnit).to.bignumber.equal(expectedResult);
         });
       });

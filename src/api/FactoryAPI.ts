@@ -124,7 +124,7 @@ export class FactoryAPI {
 
     let naturalUnit = BigNumber.max(minimumNaturalUnit, derivedNaturalUnit);
     let formattedComponentUnits: BigNumber[];
-    let priorPercentError: BigNumber = maxPercentError;
+    let priorPercentError: BigNumber = E18; // Start with a large percentage figure
     let percentError: BigNumber;
 
     // If the percentage error from the naturalUnit and units combination is greater
@@ -140,6 +140,8 @@ export class FactoryAPI {
 
       const impliedSetPrice = this.calculateImpliedSetPrice(formattedComponentUnits, naturalUnit, prices);
       percentError = calculatePercentDifference(impliedSetPrice, targetPrice);
+
+      console.log(percentError.toString(), maxPercentError.toString(), priorPercentError.toString());
 
       // Only continue to experiemnt with improvements if the following conditions are met:
       // 1. The Percent error is still greater than the maximum allowable error
