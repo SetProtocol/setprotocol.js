@@ -7,7 +7,7 @@ import {
   ERC20Wrapper,
   NoDecimalTokenMock,
   OrderLibrary,
-  RebalancingSetTokenFactory
+  RebalancingSetTokenFactory,
   SetTokenFactory,
   SetToken,
   StandardTokenMock,

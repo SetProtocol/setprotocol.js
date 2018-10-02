@@ -405,4 +405,4 @@ describe('SetTokenWrapper', () => {
       expect(rebalanceState).to.eql('Rebalance');
     });
   });
-};
+});
