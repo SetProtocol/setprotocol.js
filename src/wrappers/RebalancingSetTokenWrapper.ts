@@ -17,7 +17,7 @@
 'use strict';
 
 import * as Web3 from 'web3';
-import { Address } from 'set-protocol-utils';
+import { Address } from '../types/common';
 
 import { ContractWrapper } from '.';
 import { BigNumber } from '../util';

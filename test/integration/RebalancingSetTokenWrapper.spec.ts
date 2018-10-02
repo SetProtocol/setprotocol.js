@@ -173,11 +173,17 @@ describe('SetTokenWrapper', () => {
       } = await subject();
 
       expect(manager).to.eql(managerAddress);
+
       expect(rebalanceState).to.eql('Default');
+
       expect(currentSet).to.eql(currentSetToken.address);
+
       expect(unitShares).to.be.bignumber.equal(DEFAULT_UNIT_SHARES);
+
       expect(lastRebalanceTimestamp).to.be.bignumber.equal(rebalanceTimestamp);
+
       expect(proposalPeriod).to.be.bignumber.equal(ONE_DAY_IN_SECONDS);
+
       expect(rebalanceInterval).to.be.bignumber.equal(ONE_DAY_IN_SECONDS);
     });
   });
@@ -272,11 +278,17 @@ describe('SetTokenWrapper', () => {
       } = await subject();
 
       expect(proposalStartTime).to.be.bignumber.equal(proposalStartTimestamp);
+
       expect(nextSet).to.eql(nextSetToken.address);
+
       expect(auctionLibrary).to.eql(auctionPriceCurveAddress);
+
       expect(curveCoefficient).to.be.bignumber.equal(setCurveCoefficient);
+
       expect(auctionStartPrice).to.be.bignumber.equal(setAuctionStartPrice);
+
       expect(auctionPriceDivisor).to.be.bignumber.equal(setAuctionPriceDivisor);
+
       expect(rebalanceState).to.eql('Proposal');
     });
   });
@@ -391,17 +403,23 @@ describe('SetTokenWrapper', () => {
       );
 
       expect(auctionStartTime).to.be.bignumber.equal(auctionStartTimestamp);
+
       expect(minimumBid).to.be.bignumber.equal(auctionSetUpOutputs['expectedMinimumBid']);
+
       expect(remainingCurrentSets).to.be.bignumber.equal(rebalancingSetQuantityToIssue);
-      expect(JSON.stringify(combinedTokenArray)).to.equal(
-        JSON.stringify(auctionSetUpOutputs['expectedCombinedTokenArray'])
-      );
-      expect(JSON.stringify(combinedCurrentUnits)).to.equal(
-        JSON.stringify(auctionSetUpOutputs['expectedCombinedCurrentUnits'])
-      );
-      expect(JSON.stringify(combinedNextSetUnits)).to.equal(
-        JSON.stringify(auctionSetUpOutputs['expectedCombinedNextUnits'])
-      );
+
+      const returnedCombinedTokenArray = JSON.stringify(combinedTokenArray);
+      const expectedCombinedTokenArray = JSON.stringify(auctionSetUpOutputs['expectedCombinedTokenArray']);
+      expect(returnedCombinedTokenArray).to.equal(expectedCombinedTokenArray);
+
+      const returnedCombinedCurrentUnits = JSON.stringify(combinedCurrentUnits);
+      const expectedCombinedCurrentUnits = JSON.stringify(auctionSetUpOutputs['expectedCombinedCurrentUnits']);
+      expect(returnedCombinedCurrentUnits).to.equal(expectedCombinedCurrentUnits);
+
+      const returnedCombinedNextSetUnits = JSON.stringify(combinedNextSetUnits);
+      const expectedCombinedNextSetUnits = JSON.stringify(auctionSetUpOutputs['expectedCombinedNextUnits']);
+      expect(returnedCombinedNextSetUnits).to.equal(expectedCombinedNextSetUnits);
+
       expect(rebalanceState).to.eql('Rebalance');
     });
   });

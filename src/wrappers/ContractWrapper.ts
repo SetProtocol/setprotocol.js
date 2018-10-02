@@ -98,17 +98,17 @@ export class ContractWrapper {
   }
 
   /**
-   * Load Set Token contract
+   * Load Rebalancing Set Token contract
    *
-   * @param  setTokenAddress    Address of the Set Token contract
-   * @param  transactionOptions Options sent into the contract deployed method
-   * @return                    The Set Token Contract
+   * @param  rebalancingSetTokenAddress    Address of the Set Token contract
+   * @param  transactionOptions            Options sent into the contract deployed method
+   * @return                               The Set Token Contract
    */
   public async loadRebalancingSetTokenAsync(
     rebalancingSetTokenAddress: Address,
     transactionOptions: object = {},
   ): Promise<RebalancingSetTokenContract> {
-    const cacheKey = this.getSetTokenCacheKey(rebalancingSetTokenAddress);
+    const cacheKey = this.getRebalancingSetTokenCacheKey(rebalancingSetTokenAddress);
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as RebalancingSetTokenContract;
@@ -189,6 +189,16 @@ export class ContractWrapper {
    */
   private getSetTokenCacheKey(setTokenAddress: Address): string {
     return `SetToken_${setTokenAddress}`;
+  }
+
+  /**
+   * Creates a string used for accessing values in the rebalancing set token cache
+   *
+   * @param  rebalancingSetTokenAddress Address of the Set Token contract to use
+   * @return                            The cache key
+   */
+  private getRebalancingSetTokenCacheKey(rebalancingSetTokenAddress: Address): string {
+    return `RebalancingSetToken_${rebalancingSetTokenAddress}`;
   }
 
   /**
