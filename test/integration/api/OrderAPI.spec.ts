@@ -1075,7 +1075,7 @@ describe('OrderAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `The array orders cannot be empty.`
+          'The array orders cannot be empty.'
         );
       });
     });
@@ -1087,7 +1087,7 @@ describe('OrderAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `Fill quantity of issuance order needs to be multiple of natural unit.`
+          'Fill quantity of issuance order needs to be multiple of natural unit.'
         );
       });
     });
@@ -1117,7 +1117,19 @@ describe('OrderAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `Kyber trade source token needs to be the same as the issuance order maker token.`
+          'Kyber trade source token needs to be the same as the issuance order maker token.'
+        );
+      });
+    });
+
+    describe('when the Kyber trade destination token is equal to the maker token of the issuance order', async () => {
+      beforeEach(async () => {
+        kyberTrade.destinationToken = makerToken.address;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          'Kyber trade destination token cannot be the same as the issuance order maker token.'
         );
       });
     });

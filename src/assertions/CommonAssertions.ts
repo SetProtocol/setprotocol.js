@@ -68,6 +68,12 @@ export class CommonAssertions {
     }
   }
 
+  public isDifferentString(string1: string, string2: string, errorMessage: string) {
+    if (string1 == string2) {
+      throw new Error(errorMessage);
+    }
+  }
+
   public verifyProportionsSumToOne(percentages: BigNumber[], errorMesage: string) {
     let total: BigNumber = ZERO;
     _.each(percentages, percentage => {

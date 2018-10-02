@@ -18,7 +18,7 @@ export {
 export {
   deployKyberNetworkWrapperContract,
   deployTakerWalletWrapperContract,
-  deployZeroExExchangeWrapperContract
+  deployZeroExExchangeWrapperContract,
 } from './exchangeHelpers';
 
 export { getVaultBalances } from './vaultHelpers';

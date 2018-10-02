@@ -363,6 +363,13 @@ export class OrderAssertions {
       orderErrors.MAKER_TOKEN_AND_KYBER_SOURCE_TOKEN_MISMATCH(),
     );
 
+    // Kyber trade destination token is not the issuance order maker token
+    this.commonAssertions.isDifferentString(
+      issuanceOrder.makerToken,
+      trade.destinationToken,
+      orderErrors.MAKER_TOKEN_AND_KYBER_DESTINATION_TOKEN_MISMATCH(),
+    );
+
     // Kyber destination token is a component of the Set
     await this.setTokenAssertions.isComponent(issuanceOrder.setAddress, trade.destinationToken);
 

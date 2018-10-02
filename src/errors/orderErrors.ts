@@ -41,6 +41,8 @@ export const orderErrors = {
     `yield ${amountYield.toString()} of ${destinationToken}. Try providing additional source token quantity.`,
   MAKER_TOKEN_AND_ZERO_EX_TAKER_TOKEN_MISMATCH: () =>
     '0x taker asset needs to be the same as the issuance order maker token.',
+  MAKER_TOKEN_AND_KYBER_DESTINATION_TOKEN_MISMATCH: () =>
+    'Kyber trade destination token cannot be the same as the issuance order maker token.',
   MAKER_TOKEN_AND_KYBER_SOURCE_TOKEN_MISMATCH: () =>
     'Kyber trade source token needs to be the same as the issuance order maker token.',
 };
