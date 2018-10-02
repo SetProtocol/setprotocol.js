@@ -22,24 +22,13 @@
 jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
-import * as chai from 'chai';
-import * as Web3 from 'web3';
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
+import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
+import * as Web3 from 'web3';
 import { Core, Vault } from 'set-protocol-contracts';
-import {
-  Address,
-  SetProtocolTestUtils,
-  SetProtocolUtils,
-  SignedIssuanceOrder,
-  TakerWalletOrder,
-  ZeroExSignedFillOrder,
-} from 'set-protocol-utils';
-
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
-import { CoreWrapper } from '@src/wrappers';
-import { OrderAPI } from '@src/api';
+import * as setProtocolUtils from 'set-protocol-utils';
 import {
   CoreContract,
   SetTokenContract,
@@ -49,21 +38,27 @@ import {
   VaultContract,
   ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
+
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
+import { CoreWrapper } from '@src/wrappers';
+import { OrderAPI } from '@src/api';
 import { NULL_ADDRESS, TX_DEFAULTS, ZERO } from '@src/constants';
 import { Assertions } from '@src/assertions';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
   deployCoreContract,
+  deployKyberNetworkWrapperContract,
   deploySetTokenAsync,
   deploySetTokenFactoryContract,
+  deployTakerWalletWrapperContract,
   deployTokenAsync,
   deployTokensAsync,
   deployTransferProxyContract,
   deployVaultContract,
-  deployTakerWalletWrapperContract,
   deployZeroExExchangeWrapperContract,
   getVaultBalances,
+  tokenDeployedOnSnapshot,
 } from '@test/helpers';
 import {
   BigNumber,
@@ -73,6 +68,13 @@ import {
   getFormattedLogsFromTxHash,
   Web3Utils
 } from '@src/util';
+import {
+  Address,
+  SignedIssuanceOrder,
+  KyberTrade,
+  TakerWalletOrder,
+  ZeroExSignedFillOrder,
+} from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
@@ -81,8 +83,9 @@ const contract = require('truffle-contract');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
-const setProtocolUtils = new SetProtocolUtils(web3);
-const setProtocolTestUtils = new SetProtocolTestUtils(web3);
+const { SetProtocolTestUtils: SetTestUtils, SetProtocolUtils: SetUtils } = setProtocolUtils;
+const setUtils = new SetUtils(web3);
+const setTestUtils = new SetTestUtils(web3);
 
 const coreContract = contract(Core);
 coreContract.setProvider(provider);
@@ -540,24 +543,31 @@ describe('CoreWrapper', () => {
 
       await deployTakerWalletWrapperContract(transferProxy, core, provider);
       await deployZeroExExchangeWrapperContract(
-        SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
-        SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
+        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        transferProxy,
+        core,
+        provider,
+      );
+      await deployKyberNetworkWrapperContract(
+        SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
         transferProxy,
         core,
         provider,
       );
 
-      const issuanceOrderTaker = ACCOUNTS[0].address;
-      issuanceOrderMaker = ACCOUNTS[1].address;
-      const relayerAddress = ACCOUNTS[2].address;
-      const zeroExOrderMaker = ACCOUNTS[3].address;
+      const relayerAddress = ACCOUNTS[0].address;
+      const zeroExOrderMaker = ACCOUNTS[1].address;
+      const issuanceOrderTaker = ACCOUNTS[2].address;
+      issuanceOrderMaker = ACCOUNTS[3].address;
 
       const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
       const secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
-      const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      const thirdComponent = await tokenDeployedOnSnapshot(web3, SetTestUtils.KYBER_RESERVE_DESTINATION_TOKEN_ADDRESS);
+      const makerToken = await tokenDeployedOnSnapshot(web3, SetTestUtils.KYBER_RESERVE_SOURCE_TOKEN_ADDRESS);
       const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
 
-      const componentTokens = [firstComponent, secondComponent];
+      const componentTokens = [firstComponent, secondComponent, thirdComponent];
       const setComponentUnit = ether(4);
       const componentAddresses = componentTokens.map(token => token.address);
       const componentUnits = componentTokens.map(token => setComponentUnit);
@@ -575,14 +585,15 @@ describe('CoreWrapper', () => {
       await approveForTransferAsync([firstComponent, relayerToken], transferProxy.address, issuanceOrderTaker);
       await approveForTransferAsync(
         [secondComponent],
-        SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
         zeroExOrderMaker
       );
 
+      // Create issuance order, submitting ether(30) makerToken for ether(4) of the Set with 3 components
       issuanceOrderQuantity = ether(4);
-      const issuanceOrderMakerTokenAmount = ether(10);
+      const issuanceOrderMakerTokenAmount = ether(30);
       const issuanceOrderExpiration = generateFutureTimestamp(10000);
-      const requiredComponents = [firstComponent.address, secondComponent.address];
+      const requiredComponents = [firstComponent.address, secondComponent.address, thirdComponent.address];
       const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
       const issuanceOrderMakerRelayerFee = ZERO;
       const issuanceOrderTakerRelayerFee = ZERO;
@@ -601,29 +612,49 @@ describe('CoreWrapper', () => {
         issuanceOrderTakerRelayerFee,
       );
 
+      // Create Taker Wallet transfer for the first component
       const takerWalletOrder = {
         takerTokenAddress: firstComponent.address,
         takerTokenAmount: requredComponentAmounts[0],
       } as TakerWalletOrder;
 
-      const zeroExOrder: ZeroExSignedFillOrder = await setProtocolUtils.generateZeroExSignedFillOrder(
+      // Create 0x order for the second component, using ether(4) makerToken
+      const zeroExOrderTakerAssetAmount = ether(4);
+      const zeroExOrder: ZeroExSignedFillOrder = await setUtils.generateZeroExSignedFillOrder(
         NULL_ADDRESS,                                  // senderAddress
         zeroExOrderMaker,                              // makerAddress
         NULL_ADDRESS,                                  // takerAddress
         ZERO,                                          // makerFee
         ZERO,                                          // takerFee
         requredComponentAmounts[1],                    // makerAssetAmount
-        ether(10).div(2),                              // takerAssetAmount
+        zeroExOrderTakerAssetAmount,                   // takerAssetAmount
         secondComponent.address,                       // makerAssetAddress
         makerToken.address,                            // takerAssetAddress
-        SetProtocolUtils.generateSalt(),               // salt
-        SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS, // exchangeAddress
+        SetUtils.generateSalt(),                       // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,         // exchangeAddress
         NULL_ADDRESS,                                  // feeRecipientAddress
         generateFutureTimestamp(10000),                // expirationTimeSeconds
-        ether(10).div(2),                              // amount of zeroExOrder to fill
+        zeroExOrderTakerAssetAmount,                   // amount of zeroExOrder to fill
       );
 
-      subjectOrdersData = await setProtocolUtils.generateSerializedOrders([takerWalletOrder, zeroExOrder]);
+      // Create Kyber trade for the third component, using ether(25) makerToken. Conversion rate pre set on snapshot
+      const sourceTokenQuantity = ether(25);
+      const maxDestinationQuantity = requredComponentAmounts[2];
+      const componentTokenDecimals = (await thirdComponent.decimals.callAsync()).toNumber();
+      const sourceTokenDecimals = (await makerToken.decimals.callAsync()).toNumber();
+      const kyberConversionRatePower = new BigNumber(10).pow(18 + sourceTokenDecimals - componentTokenDecimals);
+      const minimumConversionRate = maxDestinationQuantity.div(sourceTokenQuantity)
+                                                          .mul(kyberConversionRatePower)
+                                                          .round();
+      const kyberTrade = {
+        sourceToken: makerToken.address,
+        destinationToken: thirdComponent.address,
+        sourceTokenQuantity: sourceTokenQuantity,
+        minimumConversionRate: minimumConversionRate,
+        maxDestinationQuantity: maxDestinationQuantity,
+      } as KyberTrade;
+
+      subjectOrdersData = await setUtils.generateSerializedOrders([takerWalletOrder, zeroExOrder, kyberTrade]);
       subjectQuantityToFill = issuanceOrderQuantity;
       subjectCaller = issuanceOrderTaker;
     });
@@ -717,7 +748,7 @@ describe('CoreWrapper', () => {
 
     test('updates the cancel amount for the order', async () => {
       const { signature, ...issuanceOrder } = subjectSignedIssuanceOrder;
-      const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
+      const orderHash = SetUtils.hashOrderHex(issuanceOrder);
       const existingCancelAmount = await core.orderCancels.callAsync(orderHash);
 
       await subject();
@@ -748,7 +779,7 @@ describe('CoreWrapper', () => {
 
     test('gets exchange address', async () => {
       const takerWalletWrapper = await deployTakerWalletWrapperContract(transferProxy, core, provider);
-      const exchangeAddress = await coreWrapper.getExchangeAddress(SetProtocolUtils.EXCHANGES.TAKER_WALLET);
+      const exchangeAddress = await coreWrapper.getExchangeAddress(SetUtils.EXCHANGES.TAKER_WALLET);
 
       expect(exchangeAddress).to.equal(takerWalletWrapper.address);
     });

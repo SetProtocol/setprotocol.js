@@ -18,6 +18,7 @@
 
 export { coreAPIErrors, coreAssertionErrors } from './coreErrors';
 export { erc20AssertionErrors } from './erc20Errors';
+export { orderErrors } from './orderErrors';
 export { schemaAssertionsError } from './schemaErrors';
 export { setTokenAssertionsErrors } from './setTokenErrors';
 export { vaultAssertionErrors } from './vaultErrors';

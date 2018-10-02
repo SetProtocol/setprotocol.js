@@ -26,19 +26,9 @@ import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
+import * as setProtocolUtils from 'set-protocol-utils';
 import * as Web3 from 'web3';
 import compact = require('lodash.compact');
-import {
-  Address,
-  Bytes,
-  ECSig,
-  IssuanceOrder,
-  SetProtocolUtils,
-  SetProtocolTestUtils,
-  SignedIssuanceOrder,
-  TakerWalletOrder,
-  ZeroExSignedFillOrder,
-} from 'set-protocol-utils';
 import {
   CoreContract,
   SetTokenContract,
@@ -54,7 +44,17 @@ import ChaiSetup from '@test/helpers/chaiSetup';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { OrderAPI } from '@src/api';
-import { Component } from '@src/types/common';
+import {
+  Address,
+  Bytes,
+  Component,
+  ECSig,
+  IssuanceOrder,
+  KyberTrade,
+  SignedIssuanceOrder,
+  TakerWalletOrder,
+  ZeroExSignedFillOrder,
+} from '@src/types/common';
 import { ZERO } from '@src/constants';
 import { Assertions } from '@src/assertions';
 import { ether, Web3Utils, generateFutureTimestamp, calculatePartialAmount } from '@src/util';
@@ -62,14 +62,17 @@ import {
   addAuthorizationAsync,
   approveForTransferAsync,
   deployCoreContract,
+  deployKyberNetworkWrapperContract,
   deploySetTokenAsync,
+  deploySetTokenFactoryContract,
+  deployTakerWalletWrapperContract,
   deployTokenAsync,
   deployTokensAsync,
-  deploySetTokenFactoryContract,
   deployTransferProxyContract,
   deployVaultContract,
-} from '@test/helpers/coreHelpers';
-import { deployTakerWalletWrapperContract, deployZeroExExchangeWrapperContract } from '@test/helpers/exchangeHelpers';
+  deployZeroExExchangeWrapperContract,
+  tokenDeployedOnSnapshot,
+} from '@test/helpers';
 
 ChaiSetup.configure();
 const { expect } = chai;
@@ -77,8 +80,9 @@ const contract = require('truffle-contract');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
-const setProtocolUtils = new SetProtocolUtils(web3);
-const { NULL_ADDRESS } = SetProtocolUtils.CONSTANTS;
+const { SetProtocolTestUtils: SetTestUtils, SetProtocolUtils: SetUtils } = setProtocolUtils;
+const setUtils = new SetUtils(web3);
+const { NULL_ADDRESS } = SetUtils.CONSTANTS;
 
 let currentSnapshotId: number;
 
@@ -180,8 +184,8 @@ describe('OrderAPI', () => {
         requiredComponentAmounts,
         salt: ordersAPI.generateSalt(),
       };
-      orderHash = SetProtocolUtils.hashOrderHex(subjectIssuanceOrder);
-      subjectSignature = await setProtocolUtils.signMessage(orderHash, DEFAULT_ACCOUNT);
+      orderHash = SetUtils.hashOrderHex(subjectIssuanceOrder);
+      subjectSignature = await setUtils.signMessage(orderHash, DEFAULT_ACCOUNT);
     });
 
     async function subject(): Promise<boolean> {
@@ -241,7 +245,7 @@ describe('OrderAPI', () => {
     test('produces a valid signature', async () => {
       const signature = await subject();
 
-      orderHash = SetProtocolUtils.hashOrderHex(subjectIssuanceOrder);
+      orderHash = SetUtils.hashOrderHex(subjectIssuanceOrder);
       const isValid = SignatureUtils.isValidSignature(orderHash, signature, DEFAULT_ACCOUNT);
       expect(isValid);
     });
@@ -324,8 +328,8 @@ describe('OrderAPI', () => {
         const { signature, ...issuanceOrder } = subjectSignedIssuanceOrder;
         issuanceOrder.expiration = expiredTime;
 
-        const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-        const newSignature = await setProtocolUtils.signMessage(orderHash, issuanceOrderMaker);
+        const orderHash = SetUtils.hashOrderHex(issuanceOrder);
+        const newSignature = await setUtils.signMessage(orderHash, issuanceOrderMaker);
 
         subjectSignedIssuanceOrder.expiration = expiredTime;
         subjectSignedIssuanceOrder.signature = newSignature;
@@ -342,7 +346,8 @@ describe('OrderAPI', () => {
       });
 
       test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith('The fill quantity supplied exceeds the amount available to fill.');
+        return expect(subject()).to.be.rejectedWith('The fill quantity supplied exceeds the amount available to ' +
+          'fill. Remaining fillable quantity: 4000000000000000000');
       });
     });
 
@@ -674,7 +679,7 @@ describe('OrderAPI', () => {
         requiredComponentAmounts: subjectRequredComponentAmounts,
         salt: subjectSalt,
       };
-      const orderHashBuffer = SignatureUtils.addPersonalMessagePrefix(SetProtocolUtils.hashOrderHex(order));
+      const orderHashBuffer = SignatureUtils.addPersonalMessagePrefix(SetUtils.hashOrderHex(order));
       const signature = signedIssuanceOrder.signature;
       const signerPublicKey = ethUtil.ecrecover(
         ethUtil.toBuffer(orderHashBuffer),
@@ -893,41 +898,50 @@ describe('OrderAPI', () => {
   describe('fillOrderAsync', async () => {
     let issuanceOrderMaker: Address;
     let issuanceOrderQuantity: BigNumber;
+    let makerToken: StandardTokenMockContract;
     let setToken: SetTokenContract;
     let firstComponent: StandardTokenMockContract;
     let secondComponent: StandardTokenMockContract;
+    let thirdComponent: StandardTokenMockContract;
 
+    let kyberTrade: KyberTrade;
     let takerWalletOrder: TakerWalletOrder;
-
     let zeroExOrder: ZeroExSignedFillOrder;
     let zeroExOrderMaker: Address;
 
     let subjectSignedIssuanceOrder: SignedIssuanceOrder;
     let subjectQuantityToFill: BigNumber;
-    let subjectOrders: (TakerWalletOrder | ZeroExSignedFillOrder)[];
+    let subjectOrders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[];
     let subjectCaller: Address;
 
     beforeEach(async () => {
       await deployTakerWalletWrapperContract(transferProxy, core, provider);
       await deployZeroExExchangeWrapperContract(
-        SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
-        SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
+        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        transferProxy,
+        core,
+        provider,
+      );
+      await deployKyberNetworkWrapperContract(
+        SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
         transferProxy,
         core,
         provider,
       );
 
-      const issuanceOrderTaker = ACCOUNTS[0].address;
-      issuanceOrderMaker = ACCOUNTS[1].address;
-      const relayerAddress = ACCOUNTS[2].address;
-      zeroExOrderMaker = ACCOUNTS[3].address;
+      const relayerAddress = ACCOUNTS[0].address;
+      zeroExOrderMaker = ACCOUNTS[1].address;
+      const issuanceOrderTaker = ACCOUNTS[2].address;
+      issuanceOrderMaker = ACCOUNTS[3].address;
 
       firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
       secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
-      const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      thirdComponent = await tokenDeployedOnSnapshot(web3, SetTestUtils.KYBER_RESERVE_DESTINATION_TOKEN_ADDRESS);
+      makerToken = await tokenDeployedOnSnapshot(web3, SetTestUtils.KYBER_RESERVE_SOURCE_TOKEN_ADDRESS);
       const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
 
-      const componentTokens = [firstComponent, secondComponent];
+      const componentTokens = [firstComponent, secondComponent, thirdComponent];
       const setComponentUnit = ether(4);
       const componentAddresses = componentTokens.map(token => token.address);
       const componentUnits = componentTokens.map(token => setComponentUnit);
@@ -945,14 +959,15 @@ describe('OrderAPI', () => {
       await approveForTransferAsync([firstComponent, relayerToken], transferProxy.address, issuanceOrderTaker);
       await approveForTransferAsync(
         [secondComponent],
-        SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
         zeroExOrderMaker
       );
 
+      // Create issuance order, submitting ether(30) makerToken for ether(4) of the Set with 3 components
       issuanceOrderQuantity = ether(4);
-      const issuanceOrderMakerTokenAmount = ether(10);
+      const issuanceOrderMakerTokenAmount = ether(30);
       const issuanceOrderExpiration = generateFutureTimestamp(10000);
-      const requiredComponents = [firstComponent.address, secondComponent.address];
+      const requiredComponents = [firstComponent.address, secondComponent.address, thirdComponent.address];
       const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
       const issuanceOrderMakerRelayerFee = ZERO;
       const issuanceOrderTakerRelayerFee = ZERO;
@@ -971,29 +986,49 @@ describe('OrderAPI', () => {
         issuanceOrderTakerRelayerFee,
       );
 
+      // Create Taker Wallet transfer for the first component
       takerWalletOrder = {
         takerTokenAddress: firstComponent.address,
         takerTokenAmount: requredComponentAmounts[0],
       } as TakerWalletOrder;
 
-      zeroExOrder = await setProtocolUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                                  // senderAddress
-        zeroExOrderMaker,                              // makerAddress
-        NULL_ADDRESS,                                  // takerAddress
-        ZERO,                                          // makerFee
-        ZERO,                                          // takerFee
-        requredComponentAmounts[1],                    // makerAssetAmount
-        ether(10).div(2),                              // takerAssetAmount
-        secondComponent.address,                       // makerAssetAddress
-        makerToken.address,                            // takerAssetAddress
-        SetProtocolUtils.generateSalt(),               // salt
-        SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS, // exchangeAddress
-        NULL_ADDRESS,                                  // feeRecipientAddress
-        generateFutureTimestamp(10000),                // expirationTimeSeconds
-        ether(10).div(2),                              // amount of zeroExOrder to fill
+      // Create 0x order for the second component, using ether(4) makerToken
+      const zeroExOrderTakerAssetAmount = ether(4);
+      zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
+        NULL_ADDRESS,                                        // senderAddress
+        zeroExOrderMaker,                                    // makerAddress
+        NULL_ADDRESS,                                        // takerAddress
+        ZERO,                                                // makerFee
+        ZERO,                                                // takerFee
+        requredComponentAmounts[1],                          // makerAssetAmount
+        zeroExOrderTakerAssetAmount,                         // takerAssetAmount
+        secondComponent.address,                             // makerAssetAddress
+        makerToken.address,                                  // takerAssetAddress
+        SetUtils.generateSalt(),                             // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,               // exchangeAddress
+        NULL_ADDRESS,                                        // feeRecipientAddress
+        generateFutureTimestamp(10000),                      // expirationTimeSeconds
+        zeroExOrderTakerAssetAmount,                         // amount of zeroExOrder to fill
       );
 
-      subjectOrders = [takerWalletOrder, zeroExOrder];
+      // Create Kyber trade for the third component, using ether(25) makerToken. Conversion rate pre set on snapshot
+      const sourceTokenQuantity = ether(25);
+      const maxDestinationQuantity = requredComponentAmounts[2];
+      const componentTokenDecimals = (await thirdComponent.decimals.callAsync()).toNumber();
+      const sourceTokenDecimals = (await makerToken.decimals.callAsync()).toNumber();
+      const kyberConversionRatePower = new BigNumber(10).pow(18 + sourceTokenDecimals - componentTokenDecimals);
+      const minimumConversionRate = maxDestinationQuantity.div(sourceTokenQuantity)
+                                                          .mul(kyberConversionRatePower)
+                                                          .round();
+      kyberTrade = {
+        sourceToken: makerToken.address,
+        destinationToken: thirdComponent.address,
+        sourceTokenQuantity: sourceTokenQuantity,
+        minimumConversionRate: minimumConversionRate,
+        maxDestinationQuantity: maxDestinationQuantity,
+      } as KyberTrade;
+
+      subjectOrders = [takerWalletOrder, zeroExOrder, kyberTrade];
       subjectQuantityToFill = issuanceOrderQuantity;
       subjectCaller = issuanceOrderTaker;
     });
@@ -1040,7 +1075,7 @@ describe('OrderAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `The array orders cannot be empty.`
+          'The array orders cannot be empty.'
         );
       });
     });
@@ -1052,17 +1087,17 @@ describe('OrderAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `Fill quantity of issuance order needs to be multiple of natural unit.`
+          'Fill quantity of issuance order needs to be multiple of natural unit.'
         );
       });
     });
 
-    describe('when the 0x order maker asset is not a component of the Set', async () => {
+    describe('when the Kyber trade destination token is not a component of the Set', async () => {
       let nonComponentToken: StandardTokenMockContract;
 
       beforeEach(async () => {
         nonComponentToken = await deployTokenAsync(provider, issuanceOrderMaker);
-        zeroExOrder.makerAssetData = SetProtocolUtils.encodeAddressAsAssetData(nonComponentToken.address);
+        kyberTrade.destinationToken = nonComponentToken.address;
         subjectOrders[1] = zeroExOrder;
       });
 
@@ -1074,7 +1109,76 @@ describe('OrderAPI', () => {
       });
     });
 
-    describe('when the 0x order maker  does not have sufficient maker token balance', async () => {
+    describe('when the Kyber trade source token is not the maker token of the issuance order', async () => {
+      beforeEach(async () => {
+        const incorrectMakerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+        kyberTrade.sourceToken = incorrectMakerToken.address;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          'Kyber trade source token needs to be the same as the issuance order maker token.'
+        );
+      });
+    });
+
+    describe('when the Kyber trade destination token is equal to the maker token of the issuance order', async () => {
+      beforeEach(async () => {
+        kyberTrade.destinationToken = makerToken.address;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          'Kyber trade destination token cannot be the same as the issuance order maker token.'
+        );
+      });
+    });
+
+    describe('when the Kyber trade rate and source token are not enough to get the dstination quantity', async () => {
+      beforeEach(async () => {
+        kyberTrade.maxDestinationQuantity = kyberTrade.sourceTokenQuantity.mul(kyberTrade.minimumConversionRate).add(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Kyber trade conversion rate for souce token amount ${kyberTrade.sourceTokenQuantity.toString()} ` +
+          `will only yield 8000000000000000000000000000000000000 of ${kyberTrade.destinationToken}. Try providing ` +
+          `additional source token quantity.`
+        );
+      });
+    });
+
+    describe('when the 0x order maker asset is not a component of the Set', async () => {
+      let nonComponentToken: StandardTokenMockContract;
+
+      beforeEach(async () => {
+        nonComponentToken = await deployTokenAsync(provider, issuanceOrderMaker);
+        zeroExOrder.makerAssetData = SetUtils.encodeAddressAsAssetData(nonComponentToken.address);
+        subjectOrders[1] = zeroExOrder;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Token address at ${nonComponentToken.address} is not a component ` +
+          `of the Set Token at ${subjectSignedIssuanceOrder.setAddress}.`
+        );
+      });
+    });
+
+    describe('when the 0x taker token is not the maker token of the issuance order', async () => {
+      beforeEach(async () => {
+        const incorrectMakerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+        zeroExOrder.takerAssetData = SetUtils.encodeAddressAsAssetData(incorrectMakerToken.address);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `0x taker asset needs to be the same as the issuance order maker token`
+        );
+      });
+    });
+
+    describe('when the 0x order maker does not have sufficient maker token balance', async () => {
       beforeEach(async () => {
         const subjectZeroExMakerBalance = await secondComponent.balanceOf.callAsync(zeroExOrderMaker);
         await secondComponent.transfer.sendTransactionAsync(
@@ -1136,12 +1240,8 @@ describe('OrderAPI', () => {
 
     describe('when the taker wallet order submitter does not have sufficient taker token balance', async () => {
       beforeEach(async () => {
-        const subjectCallerBalance = await firstComponent.balanceOf.callAsync(subjectCaller);
-        await firstComponent.transfer.sendTransactionAsync(
-          transferProxy.address, // Faulty address
-          subjectCallerBalance,
-          { from: subjectCaller }
-        );
+        const accountWithoutTakerToken = ACCOUNTS[5].address;
+        subjectCaller = accountWithoutTakerToken;
       });
 
       test('throws', async () => {
@@ -1189,9 +1289,9 @@ describe('OrderAPI', () => {
           );
 
         return expect(subject()).to.be.rejectedWith(
-          `Token amount of ${takerTokenAddress} from liquidity sources, ${takerTokenAmount.toString()}, ` +
+          `Token amount of ${takerTokenAddress} from liquidity sources, ${desiredComponentFillAmount.toString()}, ` +
           `do not match up to the desired component fill amount of issuance order ` +
-          `${desiredComponentFillAmount.toString()}.`,
+          `${takerTokenAmount.toString()}.`
         );
       });
     });
@@ -1262,7 +1362,7 @@ describe('OrderAPI', () => {
 
     test('updates the cancel amount for the order', async () => {
       const { signature, ...issuanceOrder } = subjectSignedIssuanceOrder;
-      const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
+      const orderHash = SetUtils.hashOrderHex(issuanceOrder);
       const existingCancelAmount = await core.orderCancels.callAsync(orderHash);
 
       await subject();
@@ -1303,8 +1403,8 @@ describe('OrderAPI', () => {
 
       await deployTakerWalletWrapperContract(transferProxy, core, provider);
       await deployZeroExExchangeWrapperContract(
-        SetProtocolTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
-        SetProtocolTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
+        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
         transferProxy,
         core,
         provider,

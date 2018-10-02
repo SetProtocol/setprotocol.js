@@ -12,6 +12,13 @@ export {
   approveForTransferAsync,
   addAuthorizationAsync,
   getTokenBalances,
+  tokenDeployedOnSnapshot,
 } from './coreHelpers';
-export { deployTakerWalletWrapperContract, deployZeroExExchangeWrapperContract } from './exchangeHelpers';
+
+export {
+  deployKyberNetworkWrapperContract,
+  deployTakerWalletWrapperContract,
+  deployZeroExExchangeWrapperContract,
+} from './exchangeHelpers';
+
 export { getVaultBalances } from './vaultHelpers';

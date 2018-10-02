@@ -23,22 +23,8 @@ export const coreAPIErrors = {
     `The ${firstArray} and ${secondArray} arrays need to be equal lengths.`,
   EMPTY_ARRAY: (variable: string) => `The array ${variable} cannot be empty.`,
   EXPIRATION_PASSED: () => 'Expiration date has already passed.',
-  FILL_EXCEEDS_AVAILABLE: () => 'The fill quantity supplied exceeds the amount available to fill.',
   INVALID_NATURAL_UNIT: (minNaturalUnit: BigNumber) =>
     `Natural unit must be larger than minimum unit, ${minNaturalUnit.toString()}, allowed by components.`,
-  INVALID_ORDER_HASH_SCHEMA: () => `The order hash passed in is not in Bytes32 schema.`,
-  ISSUANCE_ORDER_MAKER_ZERO_EX_TAKER_MISMATCH: () =>
-    'Issuance order maker token needs to equal the taker asset of the 0x orders.',
-  LIQUIDITY_REQUIRED_COMPONENT_MISMATCH: (
-    component: string,
-    liquidityAmount: BigNumber,
-    componentAmount: BigNumber,
-  ) =>
-    `Token amount of ${component} from liquidity sources, ${liquidityAmount.toString()}, do ` +
-    `not match up to the desired component fill amount of issuance order ${componentAmount.toString()}.`,
-  MAKER_TOKEN_INSUFFICIENT: (makerTokenAmount: BigNumber, ordersTakerTokenAmount: BigNumber) =>
-    `The maker token amount, ${makerTokenAmount.toString()} of issuance order is not enough ` +
-    `to fill the passed in order taker amount, ${ordersTakerTokenAmount.toString()}.`,
   PROPORTIONS_DONT_ADD_UP_TO_1: () => `The component percentages inputted do not add up to 1`,
   QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT: (quantityType: string) =>
     `${quantityType} needs to be multiple of natural unit.`,

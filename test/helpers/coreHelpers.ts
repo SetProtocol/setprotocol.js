@@ -256,6 +256,17 @@ export const deploySetTokenAsync = async(
   );
 };
 
+export const tokenDeployedOnSnapshot = async (
+  web3: Web3,
+  tokenAddress: Address,
+): Promise<StandardTokenMockContract> => {
+  return await StandardTokenMockContract.at(
+    tokenAddress,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
 export const registerExchange = async (
   web3: Web3,
   coreAddress: Address,
