@@ -21,6 +21,7 @@ import {
   BaseContract,
   CoreContract,
   DetailedERC20Contract,
+  RebalancingSetTokenContract,
   SetTokenContract,
   VaultContract,
 } from 'set-protocol-contracts';
@@ -97,6 +98,32 @@ export class ContractWrapper {
   }
 
   /**
+   * Load Rebalancing Set Token contract
+   *
+   * @param  rebalancingSetTokenAddress    Address of the Set Token contract
+   * @param  transactionOptions            Options sent into the contract deployed method
+   * @return                               The Set Token Contract
+   */
+  public async loadRebalancingSetTokenAsync(
+    rebalancingSetTokenAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<RebalancingSetTokenContract> {
+    const cacheKey = this.getRebalancingSetTokenCacheKey(rebalancingSetTokenAddress);
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as RebalancingSetTokenContract;
+    } else {
+      const rebalancingSetTokenContract = await RebalancingSetTokenContract.at(
+        rebalancingSetTokenAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = rebalancingSetTokenContract;
+      return rebalancingSetTokenContract;
+    }
+  }
+
+  /**
    * Load ERC20 Token contract
    *
    * @param  tokenAddress    Address of the ERC20 Token contract
@@ -162,6 +189,16 @@ export class ContractWrapper {
    */
   private getSetTokenCacheKey(setTokenAddress: Address): string {
     return `SetToken_${setTokenAddress}`;
+  }
+
+  /**
+   * Creates a string used for accessing values in the rebalancing set token cache
+   *
+   * @param  rebalancingSetTokenAddress Address of the Set Token contract to use
+   * @return                            The cache key
+   */
+  private getRebalancingSetTokenCacheKey(rebalancingSetTokenAddress: Address): string {
+    return `RebalancingSetToken_${rebalancingSetTokenAddress}`;
   }
 
   /**

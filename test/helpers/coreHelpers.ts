@@ -7,6 +7,7 @@ import {
   ERC20Wrapper,
   NoDecimalTokenMock,
   OrderLibrary,
+  RebalancingSetTokenFactory,
   SetTokenFactory,
   SetToken,
   StandardTokenMock,
@@ -18,6 +19,7 @@ import {
   BaseContract,
   CoreContract,
   NoDecimalTokenMockContract,
+  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -149,6 +151,34 @@ export const deploySetTokenFactoryContract = async (
   );
 
   return setTokenFactoryContract;
+};
+
+export const deployRebalancingSetTokenFactoryContract = async (
+  provider: Provider,
+  core: CoreContract
+): Promise<SetTokenFactoryContract> => {
+  const web3 = new Web3(provider);
+
+  // Deploy SetTokenFactory contract
+  const truffleRebalancingSetTokenFactoryContract = contract(RebalancingSetTokenFactory);
+  truffleRebalancingSetTokenFactoryContract.setProvider(provider);
+  truffleRebalancingSetTokenFactoryContract.defaults(TX_DEFAULTS);
+  const deployedRebalancingSetTokenFactory = await truffleRebalancingSetTokenFactoryContract.new(core.address);
+
+  // Initialize typed contract class
+  const rebalancingSetTokenFactoryContract = await RebalancingSetTokenFactoryContract.at(
+    deployedRebalancingSetTokenFactory.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  // Enable factory for provided core
+  await core.enableFactory.sendTransactionAsync(
+    rebalancingSetTokenFactoryContract.address,
+    TX_DEFAULTS
+  );
+
+  return rebalancingSetTokenFactoryContract;
 };
 
 export const deployTokenAsync = async (

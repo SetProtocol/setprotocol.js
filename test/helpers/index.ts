@@ -3,6 +3,7 @@ export {
   deployVaultContract,
   deployCoreContract,
   deployNoDecimalTokenAsync,
+  deployRebalancingSetTokenFactoryContract,
   deploySetTokenFactoryContract,
   deployTokenAsync,
   deployTokensAsync,
@@ -21,4 +22,11 @@ export {
   deployZeroExExchangeWrapperContract,
 } from './exchangeHelpers';
 
+export {
+  createDefaultRebalancingSetTokenAsync,
+  deploySetTokensAsync,
+  transitionToProposeAsync,
+  transitionToRebalanceAsync,
+  getAuctionSetUpOutputs,
+} from './rebalancingHelpers';
 export { getVaultBalances } from './vaultHelpers';

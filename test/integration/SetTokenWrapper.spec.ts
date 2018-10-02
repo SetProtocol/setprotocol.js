@@ -66,7 +66,6 @@ describe('SetTokenWrapper', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
 
-  let coreWrapper: CoreWrapper;
   let setTokenWrapper: SetTokenWrapper;
 
   beforeEach(async () => {
@@ -80,7 +79,6 @@ describe('SetTokenWrapper', () => {
     await addAuthorizationAsync(vault, core.address);
     await addAuthorizationAsync(transferProxy, core.address);
 
-    coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     setTokenWrapper = new SetTokenWrapper(web3);
   });
 
