@@ -5,6 +5,8 @@ import { Provider } from 'ethereum-types';
 import {
   CoreContract,
   ERC20Wrapper,
+  KyberNetworkWrapper,
+  KyberNetworkWrapperContract,
   TakerWalletWrapper,
   TakerWalletWrapperContract,
   TransferProxyContract,
@@ -92,4 +94,46 @@ export const deployZeroExExchangeWrapperContract = async (
   );
 
   return zeroExExchangeWrapperContract;
+};
+
+export const deployKyberNetworkWrapperContract = async (
+  kyberNetworkProxyAddress: Address,
+  transferProxy: TransferProxyContract,
+  core: CoreContract,
+  provider: Provider,
+): Promise<KyberNetworkWrapperContract> => {
+  const web3 = new Web3(provider);
+
+  const truffleKyberNetworkWrapperContract = contract(KyberNetworkWrapper);
+  truffleKyberNetworkWrapperContract.setProvider(provider);
+  truffleKyberNetworkWrapperContract.setNetwork(50);
+  truffleKyberNetworkWrapperContract.defaults(TX_DEFAULTS);
+
+  const truffleERC20WrapperContract = contract(ERC20Wrapper);
+  truffleERC20WrapperContract.setProvider(provider);
+  truffleERC20WrapperContract.setNetwork(50);
+  truffleERC20WrapperContract.defaults(TX_DEFAULTS);
+
+  const deployedERC20Wrapper = await truffleERC20WrapperContract.new();
+  await truffleKyberNetworkWrapperContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
+
+  const deployedKyberNetworkWrapper = await truffleKyberNetworkWrapperContract.new(
+    kyberNetworkProxyAddress,
+    transferProxy.address,
+    TX_DEFAULTS
+  );
+  const kyberNetworkWrapper = await KyberNetworkWrapperContract.at(
+    deployedKyberNetworkWrapper.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  await kyberNetworkWrapper.addAuthorizedAddress.sendTransactionAsync(core.address, TX_DEFAULTS);
+  await core.registerExchange.sendTransactionAsync(
+    SetProtocolUtils.EXCHANGES.KYBER,
+    kyberNetworkWrapper.address,
+    TX_DEFAULTS
+  );
+
+  return kyberNetworkWrapper;
 };

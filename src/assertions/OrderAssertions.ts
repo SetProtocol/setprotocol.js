@@ -17,17 +17,10 @@
 'use strict';
 
 import * as _ from 'lodash';
-import {
-  Address,
-  IssuanceOrder,
-  KyberTrade,
-  SetProtocolUtils,
-  SetProtocolTestUtils,
-  SignedIssuanceOrder,
-  TakerWalletOrder,
-  ZeroExSignedFillOrder,
-} from 'set-protocol-utils';
-import { erc20AssertionErrors, coreAPIErrors, setTokenAssertionsErrors } from '../errors';
+import * as Web3 from 'web3';
+import { SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
+
+import { erc20AssertionErrors, coreAPIErrors, orderErrors, setTokenAssertionsErrors } from '../errors';
 import { SetTokenContract, CoreContract } from 'set-protocol-contracts';
 import { CoreAssertions } from './CoreAssertions';
 import { CommonAssertions } from './CommonAssertions';
@@ -35,9 +28,15 @@ import { SchemaAssertions } from './SchemaAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
 import { SetTokenAssertions } from './SetTokenAssertions';
 import { CoreWrapper } from '../wrappers';
-import { NULL_ADDRESS } from '../constants';
+import { NULL_ADDRESS, ZERO } from '../constants';
 import { BigNumber, calculatePartialAmount } from '../util';
-import * as Web3 from 'web3';
+import { Address,
+  IssuanceOrder,
+  KyberTrade,
+  SignedIssuanceOrder,
+  TakerWalletOrder,
+  ZeroExSignedFillOrder,
+} from '../types/common';
 
 export class OrderAssertions {
   private web3: Web3;
@@ -58,21 +57,18 @@ export class OrderAssertions {
     this.setTokenAssertions = new SetTokenAssertions(web3);
   }
 
-  public async isIssuanceOrderFillable(
-    signedIssuanceOrder: SignedIssuanceOrder,
-    fillQuantity: BigNumber,
-  ): Promise<void> {
+  public async isIssuanceOrderFillable(issuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber): Promise<void> {
     const {
       expiration,
       quantity,
       makerToken,
       makerAddress,
       makerTokenAmount,
-    } = signedIssuanceOrder;
+    } = issuanceOrder;
 
     this.commonAssertions.isValidExpiration(expiration, coreAPIErrors.EXPIRATION_PASSED());
 
-    await this.isValidFillQuantity(signedIssuanceOrder, fillQuantity);
+    await this.isValidFillQuantity(issuanceOrder, fillQuantity);
 
     await this.erc20Assertions.hasSufficientAllowanceAsync(
       makerToken,
@@ -81,17 +77,8 @@ export class OrderAssertions {
       makerTokenAmount,
     );
 
-    const requiredMakerTokenAmount = this.calculateRequiredMakerToken(
-      fillQuantity,
-      quantity,
-      makerTokenAmount,
-    );
-
-    await this.erc20Assertions.hasSufficientBalanceAsync(
-      makerToken,
-      makerAddress,
-      requiredMakerTokenAmount,
-    );
+    const requiredMakerTokenAmount = this.calculateRequiredMakerToken(fillQuantity, quantity, makerTokenAmount);
+    await this.erc20Assertions.hasSufficientBalanceAsync(makerToken, makerAddress, requiredMakerTokenAmount);
   }
 
   /**
@@ -131,12 +118,7 @@ export class OrderAssertions {
       coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
     );
     await this.erc20Assertions.implementsERC20(makerToken);
-
-    await this.assertRequiredComponentsAndAmounts(
-      requiredComponents,
-      requiredComponentAmounts,
-      setAddress,
-    );
+    await this.assertRequiredComponentsAndAmounts(requiredComponents, requiredComponentAmounts, setAddress);
 
     if (relayerToken !== NULL_ADDRESS) {
       await this.erc20Assertions.implementsERC20(relayerToken);
@@ -144,20 +126,20 @@ export class OrderAssertions {
   }
 
   public async assertLiquidityValidity(
-    issuanceOrderTaker: Address,
-    signedIssuanceOrder: SignedIssuanceOrder,
+    orderTaker: Address,
+    issuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
     await this.assertOrdersValidity(
-      issuanceOrderTaker,
-      signedIssuanceOrder,
+      orderTaker,
+      issuanceOrder,
       quantityToFill,
       orders,
     );
 
     this.assertSufficientMakerTokensForOrders(
-      signedIssuanceOrder,
+      issuanceOrder,
       quantityToFill,
       orders,
     );
@@ -165,15 +147,16 @@ export class OrderAssertions {
 
   /* ============ Private Helpers =============== */
 
-  private async isValidFillQuantity(
-    signedIssuanceOrder: SignedIssuanceOrder,
-    fillQuantity: BigNumber,
-  ) {
-    const fillableQuantity = await this.calculateFillableQuantity(signedIssuanceOrder);
-    this.commonAssertions.isGreaterOrEqualThan(fillableQuantity, fillQuantity, coreAPIErrors.FILL_EXCEEDS_AVAILABLE());
+  private async isValidFillQuantity(issuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber) {
+    const fillableQuantity = await this.calculateFillableQuantity(issuanceOrder);
+    this.commonAssertions.isGreaterOrEqualThan(
+      fillableQuantity,
+      fillQuantity,
+      orderErrors.FILL_EXCEEDS_AVAILABLE(fillableQuantity)
+    );
 
     await this.setTokenAssertions.isMultipleOfNaturalUnit(
-      signedIssuanceOrder.setAddress,
+      issuanceOrder.setAddress,
       fillQuantity,
       `Fill quantity of issuance order`,
     );
@@ -181,48 +164,41 @@ export class OrderAssertions {
 
   private async assertOrdersValidity(
     issuanceOrderTaker: Address,
-    signedIssuanceOrder: SignedIssuanceOrder,
+    issuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
      await Promise.all(
       _.map(orders, async (order: any) => {
         if (SetProtocolUtils.isZeroExOrder(order)) {
-          await this.isValidZeroExOrderFills(signedIssuanceOrder, quantityToFill, order);
+          await this.isValidZeroExOrderFill(issuanceOrder, quantityToFill, order);
         } else if (SetProtocolUtils.isTakerWalletOrder(order)) {
-          await this.isValidTakerWalletOrderFills(
-            issuanceOrderTaker,
-            signedIssuanceOrder,
-            quantityToFill,
-            order,
-          );
+          await this.isValidTakerWalletOrderFill(issuanceOrderTaker, issuanceOrder, quantityToFill, order);
+        } else if (SetProtocolUtils.isKyberTrade(order)) {
+          await this.isValidKyberTradeFill(issuanceOrder, order);
         }
       })
     );
 
     // Ensure that the liquidity orders that we have specified can fill the amount of the
     // issuance order that we're trying to fill.
-    this.isValidLiquidityAmounts(
-      signedIssuanceOrder,
-      quantityToFill,
-      orders,
-    );
+    this.isValidLiquidityAmounts(issuanceOrder, quantityToFill, orders);
   }
 
   private assertSufficientMakerTokensForOrders(
-    signedIssuanceOrder: SignedIssuanceOrder,
+    issuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
   ): void {
     const makerTokensUsed = this.calculateMakerTokensUsed(orders);
 
     // All 0x signed fill order fillAmounts are filled using the makerTokenAmount of the
-    // signedIssuanceOrder so we need to make sure that signedIssuanceOrder.makerTokenAmount
+    // issuanceOrder so we need to make sure that issuanceOrder.makerTokenAmount
     // has enough for the 0x orders (scaled by fraction of order quantity being filled).
     const {
       makerTokenAmount,
       quantity,
-    } = signedIssuanceOrder;
+    } = issuanceOrder;
 
     const requiredMakerTokenAmount = this.calculateRequiredMakerToken(
       quantityToFill,
@@ -233,12 +209,12 @@ export class OrderAssertions {
     this.commonAssertions.isGreaterOrEqualThan(
       requiredMakerTokenAmount,
       makerTokensUsed,
-      coreAPIErrors.MAKER_TOKEN_INSUFFICIENT(makerTokenAmount, makerTokensUsed),
+      orderErrors.INSUFFICIENT_MAKER_TOKEN(makerTokenAmount, makerTokensUsed),
     );
   }
 
   private isValidLiquidityAmounts(
-    signedIssuanceOrder: SignedIssuanceOrder,
+    issuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
   ) {
@@ -246,21 +222,24 @@ export class OrderAssertions {
       quantity,
       requiredComponents,
       requiredComponentAmounts,
-    } = signedIssuanceOrder;
+    } = issuanceOrder;
 
-    const requiredComponentFills = this.calculateLiquidityFills(orders);
+    const componentAmountsFromLiquidity = this.calculateLiquidityFills(orders);
 
     _.each(requiredComponents, (component, i) => {
-      const issuanceOrderComponentPartialAmount =
-        calculatePartialAmount(requiredComponentAmounts[i], quantityToFill, quantity);
+      const requiredComponentAmountForFillQuantity = calculatePartialAmount(
+        requiredComponentAmounts[i],
+        quantityToFill,
+        quantity
+      );
 
       this.commonAssertions.isEqualBigNumber(
-        requiredComponentFills[component],
-        issuanceOrderComponentPartialAmount,
-        coreAPIErrors.LIQUIDITY_REQUIRED_COMPONENT_MISMATCH(
+        componentAmountsFromLiquidity[component],
+        requiredComponentAmountForFillQuantity,
+        orderErrors.INSUFFICIENT_COMPONENT_AMOUNT_FROM_LIQUIDITY(
           component,
-          requiredComponentFills[component],
-          issuanceOrderComponentPartialAmount,
+          componentAmountsFromLiquidity[component],
+          requiredComponentAmountForFillQuantity,
         ),
       );
     });
@@ -302,11 +281,13 @@ export class OrderAssertions {
   private calculateMakerTokensUsed(
     orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[]
   ): BigNumber {
-    let makerTokensUsed: BigNumber = SetProtocolUtils.CONSTANTS.ZERO;
+    let makerTokensUsed: BigNumber = ZERO;
 
     _.each(orders, (order: any) => {
       if (SetProtocolUtils.isZeroExOrder(order)) {
-        makerTokensUsed = makerTokensUsed.plus(order.fillAmount);
+        makerTokensUsed = makerTokensUsed.add(order.fillAmount);
+      } if (SetProtocolUtils.isKyberTrade(order)) {
+        makerTokensUsed = makerTokensUsed.add(order.sourceTokenQuantity);
       }
     });
 
@@ -334,7 +315,7 @@ export class OrderAssertions {
       const tokenAddress = SetProtocolUtils.extractAddressFromAssetData(makerAssetData);
 
       // Accumulate fraction of 0x order that was filled
-      existingAmount = requiredComponentFills[tokenAddress] || SetProtocolUtils.CONSTANTS.ZERO;
+      existingAmount = requiredComponentFills[tokenAddress] || ZERO;
       currentOrderAmount = calculatePartialAmount(makerAssetAmount, fillAmount, takerAssetAmount);
       orderComponent = tokenAddress;
 
@@ -345,17 +326,61 @@ export class OrderAssertions {
         takerTokenAmount,
       } = order;
 
-      existingAmount = requiredComponentFills[takerTokenAddress] || SetProtocolUtils.CONSTANTS.ZERO;
+      existingAmount = requiredComponentFills[takerTokenAddress] || ZERO;
       currentOrderAmount = takerTokenAmount;
       orderComponent = takerTokenAddress;
 
       return Object.assign(requiredComponentFills, { [orderComponent]: existingAmount.plus(currentOrderAmount) });
+    } else if (SetProtocolUtils.isKyberTrade(order)) {
+      const {
+        destinationToken,
+        maxDestinationQuantity,
+      } = order;
+
+      existingAmount = requiredComponentFills[destinationToken] || ZERO;
+      currentOrderAmount = maxDestinationQuantity;
+      orderComponent = destinationToken;
+
+      return Object.assign(requiredComponentFills, { [orderComponent]: existingAmount.plus(currentOrderAmount) });
     }
+
     return requiredComponentFills;
   }
 
-  private async isValidZeroExOrderFills (
-    signedIssuanceOrder: SignedIssuanceOrder,
+  private async isValidKyberTradeFill(
+    issuanceOrder: SignedIssuanceOrder,
+    trade: KyberTrade
+  ) {
+    this.commonAssertions.greaterThanZero(
+      trade.sourceTokenQuantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(trade.sourceTokenQuantity),
+    );
+
+    // Kyber trade source token is equivalent to the issuance order maker token
+    this.commonAssertions.isEqualString(
+      issuanceOrder.makerToken,
+      trade.sourceToken,
+      orderErrors.MAKER_TOKEN_AND_KYBER_SOURCE_TOKEN_MISMATCH(),
+    );
+
+    // Kyber destination token is a component of the Set
+    await this.setTokenAssertions.isComponent(issuanceOrder.setAddress, trade.destinationToken);
+
+    // Kyber trade parameters will yield enough component token
+    const amountComponentTokenFromTrade = trade.minimumConversionRate.mul(trade.sourceTokenQuantity);
+    this.commonAssertions.isGreaterOrEqualThan(
+      amountComponentTokenFromTrade,
+      trade.maxDestinationQuantity,
+      orderErrors.INSUFFICIENT_KYBER_SOURCE_TOKEN_FOR_RATE(
+        trade.sourceTokenQuantity,
+        amountComponentTokenFromTrade,
+        trade.destinationToken
+      )
+    );
+  }
+
+  private async isValidZeroExOrderFill(
+    issuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     zeroExOrder: ZeroExSignedFillOrder,
   ) {
@@ -364,20 +389,20 @@ export class OrderAssertions {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(zeroExOrder.fillAmount),
     );
 
-    // The 0x taker token is equivalent to the issuance order maker token
+    // 0x taker token is equivalent to the issuance order maker token
     this.commonAssertions.isEqualString(
-      signedIssuanceOrder.makerToken,
+      issuanceOrder.makerToken,
       SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.takerAssetData),
-      coreAPIErrors.ISSUANCE_ORDER_MAKER_ZERO_EX_TAKER_MISMATCH(),
+      orderErrors.MAKER_TOKEN_AND_ZERO_EX_TAKER_TOKEN_MISMATCH(),
     );
 
-    // The 0x maker token is a component of the set
+    // 0x maker token is a component of the Set
     await this.setTokenAssertions.isComponent(
-      signedIssuanceOrder.setAddress,
+      issuanceOrder.setAddress,
       SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),
     );
 
-    // The zero ex maker has sufficient balance of the maker token
+    // 0x order maker has sufficient balance of the maker token
     await this.erc20Assertions.hasSufficientBalanceAsync(
       SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),
       zeroExOrder.makerAddress,
@@ -385,9 +410,9 @@ export class OrderAssertions {
     );
   }
 
-  private async isValidTakerWalletOrderFills (
+  private async isValidTakerWalletOrderFill(
     issuanceOrderTaker: Address,
-    signedIssuanceOrder: SignedIssuanceOrder,
+    issuanceOrder: SignedIssuanceOrder,
     quantityToFill: BigNumber,
     order: TakerWalletOrder,
   ) {
@@ -398,21 +423,17 @@ export class OrderAssertions {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(takerTokenAmount),
     );
 
-    await this.setTokenAssertions.isComponent(
-      signedIssuanceOrder.setAddress,
-      takerTokenAddress,
-    );
+    // Token provided by order taker is a component of the Set
+    await this.setTokenAssertions.isComponent(issuanceOrder.setAddress, takerTokenAddress);
 
+    // Order taker has enough of component token they plan to contribute
+    await this.erc20Assertions.hasSufficientBalanceAsync(takerTokenAddress, issuanceOrderTaker, takerTokenAmount);
+
+    // Transfer proxy has enough allowance to transfer cmoponent token from taker
     await this.erc20Assertions.hasSufficientAllowanceAsync(
       takerTokenAddress,
       issuanceOrderTaker,
       this.core.transferProxyAddress,
-      takerTokenAmount,
-    );
-
-    await this.erc20Assertions.hasSufficientBalanceAsync(
-      takerTokenAddress,
-      issuanceOrderTaker,
       takerTokenAmount,
     );
   }
