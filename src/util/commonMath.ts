@@ -25,3 +25,12 @@ export const calculatePartialAmount = (
 ): BigNumber => {
   return quantity.mul(numerator).div(denominator);
 };
+
+export const calculatePercentDifference = (
+  newNumber: BigNumber,
+  originalNumber: BigNumber,
+): BigNumber => {
+  const difference = newNumber.sub(originalNumber).abs();
+
+  return difference.div(originalNumber);
+};

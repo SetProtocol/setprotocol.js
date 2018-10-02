@@ -45,7 +45,7 @@ import { BigNumber } from '@src/util';
 import { Assertions } from '@src/assertions';
 import { CoreWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
-import { TX_DEFAULTS, ZERO } from '@src/constants';
+import { TX_DEFAULTS, ZERO, ONE, TWO, TEN } from '@src/constants';
 import {
   addAuthorizationAsync,
   deployCoreContract,
@@ -471,21 +471,21 @@ describe('FactoryAPI', () => {
     });
   });
 
-  describe('calculateSetParametersAsync', async () => {
+  describe.only('calculateSetParametersAsync', async () => {
     let subjectComponentPrices: BigNumber[];
     let subjectComponents: StandardTokenMockContract[];
     let subjectComponentAllocations: BigNumber[];
     let subjectTargetSetPrice: BigNumber;
-    let subjectPrecision: BigNumber;
+    let subjectMaxPercentError: BigNumber;
 
     beforeEach(async () => {
       const tokenCount = 2;
       const decimalsList = [18, 18];
       subjectComponents = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
-      subjectComponentPrices = [new BigNumber(2), new BigNumber(2)];
+      subjectComponentPrices = [TWO, TWO];
       subjectComponentAllocations = [new BigNumber(0.5), new BigNumber(0.5)];
-      subjectTargetSetPrice = new BigNumber(10);
-      subjectPrecision = ZERO;
+      subjectTargetSetPrice = TEN;
+      subjectMaxPercentError = ONE;
     });
 
     async function subject(): Promise<NewSetParameters> {
@@ -496,7 +496,7 @@ describe('FactoryAPI', () => {
         subjectComponentPrices,
         subjectComponentAllocations,
         subjectTargetSetPrice,
-        subjectPrecision,
+        subjectMaxPercentError,
       );
     }
 
@@ -514,9 +514,9 @@ describe('FactoryAPI', () => {
       expect(naturalUnit).to.bignumber.equal(expectedResult);
     });
 
-    describe('when the precision is set to 1', async () => {
+    describe('when the max percent error is set to 10%', async () => {
       beforeEach(async () => {
-        subjectPrecision = new BigNumber(1);
+        subjectMaxPercentError = new BigNumber(0.1);
       });
 
       test('should calculate the correct required component units', async () => {
@@ -603,6 +603,19 @@ describe('FactoryAPI', () => {
 
         const expectedResult = new BigNumber(100000000000);
         expect(naturalUnit).to.bignumber.equal(expectedResult);
+      });
+
+      describe('when the maximum percent error is artificially low', async () => {
+        beforeEach(async () => {
+          subjectMaxPercentError = new BigNumber(0.0001);
+        });
+
+        test('should calculate the correct natural units', async () => {
+          const { naturalUnit } = await subject();
+
+          const expectedResult = new BigNumber(100000000000);
+          expect(naturalUnit).to.bignumber.equal(expectedResult);
+        });
       });
     });
 
