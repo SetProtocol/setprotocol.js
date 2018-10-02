@@ -274,7 +274,7 @@ export class RebalancingSetTokenWrapper {
       return 'Default';
     } else if (stateNumber.eq(new BigNumber(1))) {
       return 'Proposal';
-    } else if (stateNumber.eq(new BigNumber(2))) {
+    } else {
       return 'Rebalance';
     }
   }

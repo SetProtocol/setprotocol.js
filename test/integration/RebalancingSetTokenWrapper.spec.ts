@@ -134,7 +134,7 @@ describe('SetTokenWrapper', () => {
       );
 
       const lastBlock = await web3.eth.getBlock('latest');
-      rebalanceTimestamp = lastBlock.timestamp;
+      rebalanceTimestamp = new BigNumber(lastBlock.timestamp);
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
     });
@@ -234,7 +234,7 @@ describe('SetTokenWrapper', () => {
         setAuctionPriceDivisor
       );
       const lastBlock = await web3.eth.getBlock('latest');
-      proposalStartTimestamp = lastBlock.timestamp;
+      proposalStartTimestamp = new BigNumber(lastBlock.timestamp);
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
     });
@@ -317,7 +317,7 @@ describe('SetTokenWrapper', () => {
       );
 
       // Issue currentSetToken
-      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), {TX_DEFAULTS});
+      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
       await approveForTransferAsync([currentSetToken], transferProxy.address);
 
       // Use issued currentSetToken to issue rebalancingSetToken
@@ -339,7 +339,7 @@ describe('SetTokenWrapper', () => {
         setAuctionPriceDivisor
       );
       const lastBlock = await web3.eth.getBlock('latest');
-      auctionStartTimestamp = lastBlock.timestamp;
+      auctionStartTimestamp = new BigNumber(lastBlock.timestamp);
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
     });

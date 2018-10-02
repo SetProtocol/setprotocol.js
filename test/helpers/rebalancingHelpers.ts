@@ -49,7 +49,7 @@ export const deploySetTokensAsync = async(
   factory: Address,
   transferProxy: Address,
   tokenCount: number,
-  naturalUnits: BigNumber[] = undefined,
+  naturalUnits: BigNumber[] = [],
 ): Promise<SetTokenContract[]> => {
   let naturalUnit: BigNumber;
   const setTokenArray: SetTokenContract[] = [];
@@ -65,7 +65,7 @@ export const deploySetTokensAsync = async(
     const componentTwoDecimal = await components[idx + 1].decimals.callAsync();
 
     // Determine minimum natural unit if not passed in
-    if (naturalUnits) {
+    if (naturalUnits.length > 0) {
       naturalUnit = naturalUnits[idx];
       minimumDecimal = 18 - naturalUnit.e;
     } else {
