@@ -59,7 +59,7 @@ import {
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { ether } from '@src/util/units';
 import { Web3Utils } from '@src/util/Web3Utils';
-import { NewSetParameters } from '@src/types/common';
+import { SetUnits } from '@src/types/common';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
@@ -471,12 +471,12 @@ describe('FactoryAPI', () => {
     });
   });
 
-  describe('calculateSetParametersAsync', async () => {
+  describe('calculateComponentAllocation', async () => {
     let subjectComponentPrices: BigNumber[];
     let subjectComponents: StandardTokenMockContract[];
     let subjectComponentAllocations: BigNumber[];
     let subjectTargetSetPrice: BigNumber;
-    let subjectPrecision: BigNumber;
+    let percentError: number;
 
     beforeEach(async () => {
       const tokenCount = 2;
@@ -485,38 +485,38 @@ describe('FactoryAPI', () => {
       subjectComponentPrices = [new BigNumber(2), new BigNumber(2)];
       subjectComponentAllocations = [new BigNumber(0.5), new BigNumber(0.5)];
       subjectTargetSetPrice = new BigNumber(10);
-      subjectPrecision = ZERO;
+      percentError = 10;
     });
 
-    async function subject(): Promise<NewSetParameters> {
+    async function subject(): Promise<SetUnits> {
       const subjectComponentAddresses = _.map(subjectComponents, components => components.address);
 
-      return await factoryAPI.calculateSetParametersAsync(
+      return await factoryAPI.calculateSetUnits(
         subjectComponentAddresses,
         subjectComponentPrices,
         subjectComponentAllocations,
         subjectTargetSetPrice,
-        subjectPrecision,
+        percentError,
       );
     }
 
     test('should calculate the correct required component units', async () => {
       const { units } = await subject();
 
-      const expectedResult = [new BigNumber(3), new BigNumber(3)];
+      const expectedResult = [new BigNumber(25), new BigNumber(25)];
       expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
     });
 
     test('should calculate the correct natural units', async () => {
       const { naturalUnit } = await subject();
 
-      const expectedResult = new BigNumber(1);
+      const expectedResult = new BigNumber(10);
       expect(naturalUnit).to.bignumber.equal(expectedResult);
     });
 
-    describe('when the precision is set to 1', async () => {
+    describe('when the max percent error is set to 1%', async () => {
       beforeEach(async () => {
-        subjectPrecision = new BigNumber(1);
+        percentError = 1;
       });
 
       test('should calculate the correct required component units', async () => {
@@ -575,22 +575,21 @@ describe('FactoryAPI', () => {
           new BigNumber(0.0558862),
           new BigNumber(0.0370692),
         ];
-
         subjectTargetSetPrice = new BigNumber(100);
       });
 
       test('should calculate the correct required component units', async () => {
         const expectedResult = [
-          new BigNumber('671174220964'),
-          new BigNumber('494061654136'),
-          new BigNumber('4425857294995'),
-          new BigNumber('130194309702'),
-          new BigNumber('9298847'),
-          new BigNumber('297306645570'),
-          new BigNumber('676383076924'),
-          new BigNumber('5'),
-          new BigNumber('14034706178'),
-          new BigNumber('1276048192772'),
+          new BigNumber('6711742209632'),
+          new BigNumber('4940616541354'),
+          new BigNumber('44258572949947'),
+          new BigNumber('1301943097015'),
+          new BigNumber('92988465'),
+          new BigNumber('2973066455697'),
+          new BigNumber('6763830769231'),
+          new BigNumber('48'),
+          new BigNumber('140347061779'),
+          new BigNumber('12760481927711'),
         ];
 
         const { units } = await subject();
@@ -601,8 +600,40 @@ describe('FactoryAPI', () => {
       test('should calculate the correct natural units', async () => {
         const { naturalUnit } = await subject();
 
-        const expectedResult = new BigNumber(100000000000);
+        const expectedResult = new BigNumber(1000000000000);
         expect(naturalUnit).to.bignumber.equal(expectedResult);
+      });
+
+      describe('when the maximum percent error is artificially low', async () => {
+        beforeEach(async () => {
+          percentError = 0.0001;
+        });
+
+        test('should calculate the correct required component units', async () => {
+        const expectedResult = [
+          new BigNumber('6711742209632'),
+          new BigNumber('4940616541354'),
+          new BigNumber('44258572949947'),
+          new BigNumber('1301943097015'),
+          new BigNumber('92988465'),
+          new BigNumber('2973066455697'),
+          new BigNumber('6763830769231'),
+          new BigNumber('48'),
+          new BigNumber('140347061779'),
+          new BigNumber('12760481927711'),
+        ];
+
+        const { units } = await subject();
+
+        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
+      });
+
+        test('should calculate the correct natural units', async () => {
+          const { naturalUnit } = await subject();
+
+          const expectedResult = new BigNumber(1000000000000);
+          expect(naturalUnit).to.bignumber.equal(expectedResult);
+        });
       });
     });
 
@@ -626,14 +657,14 @@ describe('FactoryAPI', () => {
       test('should calculate the correct required component units', async () => {
         const { units } = await subject();
 
-        const expectedResult = [new BigNumber('79744817'), new BigNumber('1462')];
+        const expectedResult = [new BigNumber('797448166'), new BigNumber('14620')];
         expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
       });
 
       test('should calculate the correct natural units', async () => {
         const { naturalUnit } = await subject();
 
-        const expectedResult = new BigNumber(1000000);
+        const expectedResult = new BigNumber(10000000);
         expect(naturalUnit).to.bignumber.equal(expectedResult);
       });
     });

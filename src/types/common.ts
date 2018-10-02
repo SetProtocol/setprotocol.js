@@ -24,7 +24,7 @@ export interface Component {
   unit: BigNumber;
 }
 
-export interface NewSetParameters {
+export interface SetUnits {
   units: BigNumber[];
   naturalUnit: BigNumber;
 }

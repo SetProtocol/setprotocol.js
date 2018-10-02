@@ -23,7 +23,7 @@ import { AccountingAPI, BlockchainAPI, ERC20API, FactoryAPI, IssuanceAPI, OrderA
 import { CoreWrapper, VaultWrapper } from './wrappers';
 import { Assertions } from './assertions';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
-import { Address, Bytes, NewSetParameters, TxData, Provider } from './types/common';
+import { Address, Bytes, SetUnits, Provider, TxData } from './types/common';
 import { NULL_ADDRESS, UNLIMITED_ALLOWANCE_IN_BASE_UNITS } from './constants';
 
 export interface SetProtocolConfig {
@@ -107,30 +107,34 @@ class SetProtocol {
   }
 
   /**
-   * Calculates inputs for `createSetAsync` for a given list of ERC20 token addreses, proportions of each,
-   * current token prices, and target Set price
+   * Calculates unit and naturalUnit inputs for `createSetAsync` for a given list of ERC20 token addreses, proportions
+   * of each, current token prices, and target Set price
    *
-   * @param components       List of ERC20 token addresses to use for Set creation
-   * @param prices           List of current prices for the components in index order
-   * @param proportions      Decimal-formatted allocations in index order. Must add up to 1
-   * @param targetPrice      Target fiat-denominated price of a single natural unit of the Set
-   * @param precision        Improve component unit precision by increasi0ng naturalUnit exponent
-   * @return                 Object conforming to NewSetParameters containing a list of component units in index order
-   *                           and a valid natural unit. These can be passed directly into `createSetAsync`
+   * Note: the target price may not be achievable with the lowest viable naturalUnit. Improve precision by increasing
+   * the magnitude of naturalUnit up to `10 ** 18` and recalculating the component units. Defaults to 10 percent
+   *
+   * @param components      List of ERC20 token addresses to use for Set creation
+   * @param prices          List of current prices for the components in index order
+   * @param proportions     Decimal-formatted allocations in index order. Must add up to 1
+   * @param targetPrice     Target fiat-denominated price of a single natural unit of the Set
+   * @param percentError    Allowable price error percentage of resulting Set price from the target price
+   * @return                Object conforming to SetUnits containing a list of component units in
+   *                          index order and a valid natural unit. These properties can be passed directly
+   *                          into `createSetAsync`
    */
-  public async calculateSetParametersAsync(
+  public async calculateSetUnits(
     components: Address[],
     prices: BigNumber[],
     proportions: BigNumber[],
     targetPrice: BigNumber,
-    precision: BigNumber = new BigNumber(0),
-  ): Promise<NewSetParameters> {
-    return await this.factory.calculateSetParametersAsync(
+    percentError: number = 10,
+  ): Promise<SetUnits> {
+    return await this.factory.calculateSetUnits(
       components,
       prices,
       proportions,
       targetPrice,
-      precision,
+      percentError,
     );
   }
 

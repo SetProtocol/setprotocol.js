@@ -34,6 +34,12 @@ export const STANDARD_TRANSFER_VALUE: BigNumber = new BigNumber(1000000000000000
 export const UNLIMITED_ALLOWANCE_IN_BASE_UNITS: BigNumber =
   SetProtocolUtils.CONSTANTS.UNLIMITED_ALLOWANCE_IN_BASE_UNITS; // 2 ** 256 - 1
 export const ZERO: BigNumber = SetProtocolUtils.CONSTANTS.ZERO;
+export const E18: BigNumber = new BigNumber(10).pow(18);
+
+// Returns a big number that can be passed in as a smart contract parameter
+export function UINT256(value: number): BigNumber {
+  return new BigNumber(value);
+}
 
 export const TX_DEFAULTS = {
   from: DEFAULT_ACCOUNT,
