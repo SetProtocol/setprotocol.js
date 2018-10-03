@@ -13,7 +13,6 @@ export {
   SignedIssuanceOrder,
   SolidityTypes,
   TakerWalletOrder,
-  Token,
   TxData,
   UInt,
   ZeroExSignedFillOrder,

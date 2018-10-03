@@ -41,9 +41,9 @@ export class IssuanceAPI {
   /**
    * Instantiates a new IssuanceAPI instance that contains methods for issuing and redeeming Sets
    *
-   * @param web3    The Web3.js Provider instance you would like the SetProtocol.js library
-   *                  to use for interacting with the Ethereum network.
-   * @param core    An instance of CoreWrapper to interact with the deployed Core contract
+   * @param web3        The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
+   *                      with the Ethereum network
+   * @param core        An instance of CoreWrapper to interact with the deployed Core contract
    * @param assertions  An instance of the Assertion library
    */
   constructor(web3: Web3, core: CoreWrapper, assertions: Assertions) {
@@ -59,7 +59,7 @@ export class IssuanceAPI {
    *
    * @param  setAddress    Address Set to issue
    * @param  quantity      Amount of Set to issue. Must be multiple of the natural unit of the Set
-   * @param  txOpts        Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts        Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
   public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxData): Promise<string> {
@@ -70,14 +70,14 @@ export class IssuanceAPI {
 
   /**
    * Redeems a Set to the transaction signer, returning the component tokens to the signer's wallet. Use `false` for
-   * to `withdraw` to leave redeemed components in vault under the user's address to save gas if rebundling into another
-   * Set with similar components
+   * to `withdraw` to leave redeemed components in vault under the user's address to save gas if rebundling into
+   * another Set with similar components
    *
    * @param  setAddress         Address of Set to issue
    * @param  quantity           Amount of Set to redeem. Must be multiple of the natural unit of the Set
    * @param  withdraw           Boolean to withdraw back to signer's wallet or leave in vault. Defaults to true
    * @param  tokensToExclude    Token addresses to exclude from withdrawal
-   * @param  txOpts             Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts             Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                    Transaction hash
    */
   public async redeemAsync(

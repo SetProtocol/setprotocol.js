@@ -74,8 +74,8 @@ class SetProtocol {
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library
    *
-   * @param provider    Provider instance you would like the SetProtocol.js library
-   *                      to use for interacting with the Ethereum network.
+   * @param provider    Provider instance you would like the SetProtocol.js library to use for interacting with the
+   *                      Ethereum network
    * @param config      Configuration object conforming to SetProtocolConfig with Set Protocol's contract addresses
    */
   constructor(provider: Provider, config: SetProtocolConfig) {
@@ -100,7 +100,7 @@ class SetProtocol {
    * is the smallest decimal amongst the tokens passed in
    *
    * @param components            List of ERC20 token addresses to use for Set creation
-   * @return                      Minimum natural unit allowed
+   * @return                      Minimum natural unit allowed for the component tokens
    */
   public async calculateMinimumNaturalUnitAsync(components: Address[]): Promise<BigNumber> {
     return await this.factory.calculateMinimumNaturalUnitAsync(components);
@@ -110,24 +110,24 @@ class SetProtocol {
    * Calculates unit and naturalUnit inputs for `createSetAsync` for a given list of ERC20 token addreses, proportions
    * of each, current token prices, and target Set price
    *
-   * Note: the target price may not be achievable with the lowest viable naturalUnit. Improve precision by increasing
-   * the magnitude of naturalUnit up to `10 ** 18` and recalculating the component units. Defaults to 10 percent
+   * Note: the target price may not be achievable with the lowest viable natural unit. Precision is achieved by
+   * increasing the magnitude of natural unit up to `10 ** 18` and recalculating the component units. Defaults to
+   * 10 percent
    *
    * @param components      List of ERC20 token addresses to use for Set creation
    * @param prices          List of current prices for the components in index order
    * @param proportions     Decimal-formatted allocations in index order. Must add up to 1
    * @param targetPrice     Target fiat-denominated price of a single natural unit of the Set
-   * @param percentError    Allowable price error percentage of resulting Set price from the target price
-   * @return                Object conforming to SetUnits containing a list of component units in
-   *                          index order and a valid natural unit. These properties can be passed directly
-   *                          into `createSetAsync`
+   * @param percentError    Allowable price error percentage of resulting Set price from the target price input
+   * @return                Object conforming to `SetUnits` containing a list of component units in index order and a
+   *                          valid natural unit. These properties can be passed directly into `createSetAsync`
    */
   public async calculateSetUnitsAsync(
     components: Address[],
     prices: BigNumber[],
     proportions: BigNumber[],
     targetPrice: BigNumber,
-    percentError: number = 10,
+    percentError?: number,
   ): Promise<SetUnits> {
     return await this.factory.calculateSetUnitsAsync(
       components,
@@ -150,7 +150,7 @@ class SetProtocol {
    * @param  naturalUnit    Lowest common denominator for the Set
    * @param  name           Name for Set, i.e. "DEX Set"
    * @param  symbol         Symbol for Set, i.e. "DEX"
-   * @param  txOpts         Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts         Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                Transaction hash
    */
   public async createSetAsync(
@@ -171,7 +171,7 @@ class SetProtocol {
    *
    * @param  setAddress    Address Set to issue
    * @param  quantity      Amount of Set to issue. Must be multiple of the natural unit of the Set
-   * @param  txOpts        Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts        Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
   public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxData): Promise<string> {
@@ -187,7 +187,7 @@ class SetProtocol {
    * @param  quantity           Amount of Set to redeem. Must be multiple of the natural unit of the Set
    * @param  withdraw           Boolean to withdraw back to signer's wallet or leave in vault. Defaults to true
    * @param  tokensToExclude    Token addresses to exclude from withdrawal
-   * @param  txOpts             Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts             Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                    Transaction hash
    */
   public async redeemAsync(
@@ -205,7 +205,7 @@ class SetProtocol {
    *
    * @param  tokenAddresses    Addresses of ERC20 tokens to deposit into the vault
    * @param  quantities        Amount of each token to deposit into the vault in index order with `tokenAddresses`
-   * @param  txOpts            Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts            Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                   Transaction hash
    */
   public async depositAsync(
@@ -221,7 +221,7 @@ class SetProtocol {
    *
    * @param  tokenAddresses    Addresses of ERC20 tokens to withdraw from the vault
    * @param  quantities        Amount of each token token to withdraw from vault in index order with `tokenAddresses`
-   * @param  txOpts            Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts            Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                   Transaction hash
    */
   public async withdrawAsync(
@@ -238,7 +238,7 @@ class SetProtocol {
    *
    * @param   tokenAddress    Address of token contract to approve (typically SetToken or ERC20)
    * @param   quantity        Allowance quantity
-   * @param   txOpts          Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param   txOpts          Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                  Transaction hash
    */
   public async setTransferProxyAllowanceAsync(
@@ -259,7 +259,7 @@ class SetProtocol {
    * required for issuing, redeeming, and filling issuance orders
    *
    * @param  tokenAddress    Address of contract to approve (typically SetToken or ERC20)
-   * @param  txOpts          Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts          Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                 Transaction hash
    */
   public async setUnlimitedTransferProxyAllowanceAsync(tokenAddress: string, txOpts: TxData): Promise<string> {
@@ -284,7 +284,7 @@ class SetProtocol {
   /**
    * Fetch a Set Token address from a createSetAsync transaction hash
    *
-   * @param  txHash    Transaction hash of the createSetAsync transaction
+   * @param  txHash    Transaction hash of the `createSetAsync` transaction
    * @return           Address of the newly created Set
    */
   public async getSetAddressFromCreateTxHashAsync(txHash: string): Promise<Address> {
@@ -327,8 +327,8 @@ class SetProtocol {
    *
    * @param  txHash               Transaction hash to poll
    * @param  pollingIntervalMs    Interval at which the blockchain should be polled
-   * @param  timeoutMs            Number of milliseconds until this process times out. If
-   *                                no value is provided, a default value is used
+   * @param  timeoutMs            Number of milliseconds until this process times out. If no value is provided, a
+   *                                default value is used
    * @return                      Transaction receipt resulting from the mining process
    */
   public async awaitTransactionMinedAsync(

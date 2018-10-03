@@ -38,14 +38,6 @@ export interface SetDetails {
   components: Component[];
 }
 
-export interface Token {
-  address: Address;
-  name: string;
-  symbol: string;
-  balance: BigNumber;
-  decimals: BigNumber;
-}
-
 export interface TxData {
   from: Address;
   gas?: UInt;

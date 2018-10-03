@@ -54,8 +54,8 @@ export class FactoryAPI {
   /**
    * Instantiates a new FactoryAPI instance that contains methods for creating new Sets
    *
-   * @param web3                      Web3.js Provider instance you would like the SetProtocol.js library
-   *                                    to use for interacting with the Ethereum network.
+   * @param web3                      Web3.js Provider instance you would like the SetProtocol.js library to use for
+   *                                    interacting with the Ethereum network
    * @param core                      An instance of CoreWrapper to interact with the deployed Core contract
    * @param assertions                An instance of the Assertion library
    * @param setTokenFactoryAddress    Address of the SetTokenFactory associated with the deployed Core contract
@@ -97,16 +97,15 @@ export class FactoryAPI {
    * @param proportions     Decimal-formatted allocations in index order. Must add up to 1
    * @param targetPrice     Target fiat-denominated price of a single natural unit of the Set
    * @param percentError    Allowable price error percentage of resulting Set price from the target price
-   * @return                Object conforming to SetUnits containing a list of component units in
-   *                          index order and a valid natural unit. These properties can be passed directly
-   *                          into `createSetAsync`
+   * @return                Object conforming to `SetUnits` containing a list of component units in index order and a
+   *                          valid natural unit. These properties can be passed directly into `createSetAsync`
    */
   public async calculateSetUnitsAsync(
     components: Address[],
     prices: BigNumber[],
     proportions: BigNumber[],
     targetPrice: BigNumber,
-    percentError: number,
+    percentError: number = 10,
   ): Promise<SetUnits> {
     await this.assertCalculateCreateUnitInputs(components, prices, proportions);
 
@@ -170,7 +169,7 @@ export class FactoryAPI {
    * @param  naturalUnit    Lowest common denominator for the Set
    * @param  name           Name for Set, i.e. "DEX Set"
    * @param  symbol         Symbol for Set, i.e. "DEX"
-   * @param  txOpts         Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts         Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                Transaction hash
    */
   public async createSetAsync(
@@ -223,9 +222,7 @@ export class FactoryAPI {
     // (10 ** componentDecimal) to get it in base units.
     const componentAmountRequiredPromises = _.map(targetComponentValues, async(targetComponentValue, i) => {
       const componentDecimals: number = await this.getComponentDecimals(components[i]);
-
       const numComponentsRequired = targetComponentValue.div(prices[i]);
-
       const standardComponentUnit = new BigNumber(10).pow(componentDecimals);
 
       return numComponentsRequired.mul(standardComponentUnit);

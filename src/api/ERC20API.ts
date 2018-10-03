@@ -40,8 +40,8 @@ export class ERC20API {
   /**
    * Instantiates a new IssuanceAPI instance that contains methods for transferring balances in the vault
    *
-   * @param web3    Web3.js Provider instance you would like the SetProtocol.js library
-   *                  to use for interacting with the Ethereum network
+   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
+   *                      the Ethereum network
    * @param assertions  An instance of the Assertion library
    */
   constructor(web3: Web3, assertions: Assertions) {
@@ -136,7 +136,7 @@ export class ERC20API {
    * @param  tokenAddress    Address of the token to transfer
    * @param  to              Address of the receiver
    * @param  value           Amount being transferred
-   * @param  txOpts          Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts          Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                 Transaction hash
    */
   public async transferAsync(
@@ -159,7 +159,7 @@ export class ERC20API {
    * @param  from            Token owner
    * @param  to              Address of the receiver
    * @param  value           Amount to be transferred
-   * @param  txOpts           Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts          Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                 Transaction hash
    */
   public async transferFromAsync(
@@ -180,8 +180,8 @@ export class ERC20API {
    * @param  tokenAddress      Address of the token being used
    * @param  spenderAddress    Address to approve allowance to
    * @param  value             Amount of allowance to grant
-   * @param  txOpts            Transaction options object conforming to TxData with signer, gas, and gasPrice data
-   * @return                   The hash of the resulting transaction
+   * @param  txOpts            Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @return                   Transaction hash
    */
   public async approveAsync(
     tokenAddress: Address,

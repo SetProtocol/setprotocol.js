@@ -57,8 +57,8 @@ export class OrderAPI {
   /**
    * Instantiates a new OrderAPI instance that contains methods for creating, filling, and cancelling issuance orders
    *
-   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library
-   *                    to use for interacting with the Ethereum network
+   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
+   *                      the Ethereum network
    * @param core        An instance of CoreWrapper to interact with the deployed Core contract
    * @param assertions  An instance of the Assertion library
    */
@@ -137,7 +137,7 @@ export class OrderAPI {
    * Validates an IssuanceOrder object's signature, expiration, and fill amount. Developers should call this method
    * frequently to prune order books and ensure the order has not already been filled or cancelled
    *
-   * @param  signedIssuanceOrder    Object conforming to SignedIssuanceOrder interface to be validated
+   * @param  signedIssuanceOrder    Object conforming to `SignedIssuanceOrder` interface to be validated
    * @param  fillQuantity           Fill quantity to check if fillable
    */
   public async validateOrderFillableOrThrowAsync(signedIssuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber) {
@@ -145,13 +145,15 @@ export class OrderAPI {
   }
 
   /**
-   * Convenience function for calculateing the requiredComponents and requiredComponentAmounts
-   * that a maker requires as input into an issuance order.
+   * Calculates additional amounts of each component token in a Set needed in order to issue a specific quantity of
+   * the Set. This includes token balances a user may have in both the account wallet and the Vault contract. Can be
+   * used as `requiredComponents` and `requiredComponentAmounts` inputs for an issuance order
    *
-   * @param  setAddress                  Address of the Set token for issuance order
-   * @param  makerAddress                Address of user making the issuance order
-   * @param  quantity                    Amount of the Set token to create as part of issuance order
-   * @return                             Object conforming to the RequiredComponents interface
+   * @param  setAddress       Address of the Set token for issuance order
+   * @param  makerAddress     Address of user making the issuance order
+   * @param  quantity         Amount of the Set token to create as part of issuance order
+   * @return                  List of objects conforming to the `Component` interface with address and units of each
+   *                            component required for issuance
    */
   public async calculateRequiredComponentsAndUnitsAsync(
     setAddress: Address,
@@ -205,7 +207,7 @@ export class OrderAPI {
    * @param  makerRelayerFee             Amount of relayer token paid to relayer by maker
    * @param  takerRelayerFee             Amount of relayer token paid to relayer by taker
    * @param  salt                        Optional salt to include in signing
-   * @return                             Object conforming to SignedIssuanceOrder with valid signature
+   * @return                             Object conforming to `SignedIssuanceOrder` with valid signature
    */
   public async createSignedOrderAsync(
     setAddress: Address,
@@ -250,10 +252,13 @@ export class OrderAPI {
    * sources, either other exchange orders that can be exchanged using the specified maker token in the issuance order,
    * or from the taker's own wallet
    *
-   * @param  signedIssuanceOrder    Object confomring to SignedIssuanceOrder to fill
+   * @param  signedIssuanceOrder    Object conforming to `SignedIssuanceOrder` to fill
    * @param  quantity               Amount of Set to fill in this call
-   * @param  orders                 Array of order objects conforming to (TakerWalletOrder | ZeroExSignedFillOrder) type
-   * @param  txOpts                 Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  orders                 Array of liquidity source objects conforming to `KyberTrade` or `TakerWalletOrder`
+   *                                  or `ZeroExSignedFillOrder` types that will collateralize the Set in the issuance
+   *                                  order
+   * @param  txOpts                 Transaction options object conforming to `TxData` with signer, gas, and gasPrice
+   *                                  data
    * @return                        Transaction hash
    */
   public async fillOrderAsync(
@@ -272,9 +277,9 @@ export class OrderAPI {
    * Cancels an issuance order on behalf of the maker. After successfully mining this transaction, a taker can only
    * fill up to an issuance order's quantity minus the quantity
    *
-   * @param  issuanceOrder    Object conforming to IssuanceOrder to cancel
+   * @param  issuanceOrder    Object conforming to `IssuanceOrder` to cancel
    * @param  quantity         Amount of the issuance order's quantity to cancel
-   * @param  txOpts           Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts           Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                  Transaction hash
    */
   public async cancelOrderAsync(
@@ -290,7 +295,7 @@ export class OrderAPI {
   /**
    * Fetches the quantity of the issuance order that has already been filled
    *
-   * @param  issuanceOrder    Object conforming to the IssuanceOrder interface
+   * @param  issuanceOrder    Object conforming to the `IssuanceOrder` interface
    * @return                  Filled amount of issuance order
    */
   public async getOrderFillsAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
@@ -302,7 +307,7 @@ export class OrderAPI {
   /**
    * Fetches the quantity of the issuance order that has been cancelled
    *
-   * @param  issuanceOrder    Object conforming to the IssuanceOrder interface
+   * @param  issuanceOrder    Object conforming to the `IssuanceOrder` interface
    * @return                  Cancelled amount of the issuance order
    */
   public async getOrderCancelledAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {

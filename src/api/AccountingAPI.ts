@@ -39,9 +39,9 @@ export class AccountingAPI {
   /**
    * Instantiates a new AccountingAPI instance that contains methods for transferring balances in the vault
    *
-   * @param web3    Web3.js Provider instance you would like the SetProtocol.js library
-   *                  to use for interacting with the Ethereum network
-   * @param core    An instance of CoreWrapper to interact with the deployed Core contract
+   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
+   *                      the Ethereum network
+   * @param core        An instance of CoreWrapper to interact with the deployed Core contract
    * @param assertions  An instance of the Assertion library
    */
   constructor(web3: Web3, core: CoreWrapper, assertions: Assertions) {
@@ -56,7 +56,7 @@ export class AccountingAPI {
    *
    * @param  tokenAddresses    Addresses of ERC20 tokens to deposit into the vault
    * @param  quantities        Amount of each token to deposit into the vault in index order with `tokenAddresses`
-   * @param  txOpts            Transaction options object conforming to TxDataFrom with signer, gas, and gasPrice data
+   * @param  txOpts            Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                   Transaction hash
    */
   public async depositAsync(
@@ -79,7 +79,7 @@ export class AccountingAPI {
    *
    * @param  tokenAddresses    Addresses of ERC20 tokens to withdraw from the vault
    * @param  quantities        Amount of each token token to withdraw from vault in index order with `tokenAddresses`
-   * @param  txOpts            Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts            Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
    * @return                   Transaction hash
    */
   public async withdrawAsync(

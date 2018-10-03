@@ -42,8 +42,8 @@ export class SetTokenAPI {
   /**
    * Instantiates a new SetTokenAPI instance that contains methods for interacting with SetToken contracts
    *
-   * @param web3    Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
-   *                   with the Ethereum network
+   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
+   *                      the Ethereum network
    * @param assertions  An instance of the Assertion library
    */
   constructor(web3: Web3, assertions: Assertions) {
@@ -52,6 +52,56 @@ export class SetTokenAPI {
 
     this.setToken = new SetTokenWrapper(this.web3);
     this.erc20 = new ERC20Wrapper(this.web3);
+  }
+
+  /**
+   * Calculates the required amount of a component token required for issuance or redemption for a quantity of the Set
+   *
+   * @param  setAddress          Address of the Set
+   * @param  componentAddress    Address of the component
+   * @param  quantity            Quantity of Set to issue or redeem
+   * @return                     Amount of `componentAddress` required for issuance or redemption
+   */
+  public async calculateComponentAmountForIssuanceAsync(
+    setAddress: Address,
+    componentAddress: Address,
+    quantity: BigNumber,
+  ): Promise<BigNumber> {
+    await this.assertCalculateUnitTransferred(setAddress, componentAddress, quantity);
+
+    const components = await this.setToken.getComponents(setAddress);
+    const componentIndex = _.indexOf(components, componentAddress);
+
+    const amountsForIssuance = await this.calculateComponentAmountsForIssuanceAsync(setAddress, quantity);
+    return amountsForIssuance[componentIndex].unit;
+  }
+
+  /**
+   * Calculates the amounts of each component required for issuance or redemption for a quantity of the Set
+   *
+   * @param  setAddress     Address of the Set
+   * @param  quantity       Quantity of Set to issue or redeem
+   * @return                List of objects conforming to `Component` interface with addresses and amounts required
+   *                          for issuance or redemption
+   */
+  public async calculateComponentAmountsForIssuanceAsync(
+    setAddress: Address,
+    quantity: BigNumber,
+  ): Promise<Component[]> {
+    this.assertcalculateComponentAmountsForIssuance(setAddress, quantity);
+
+    const [naturalUnit, componentUnits, components] = await Promise.all([
+      this.setToken.naturalUnit(setAddress),
+      this.setToken.getUnits(setAddress),
+      this.setToken.getComponents(setAddress),
+    ]);
+
+    return _.map(componentUnits, (componentUnit, index) => {
+      return {
+        address: components[index],
+        unit: calculatePartialAmount(componentUnit, quantity, naturalUnit),
+      } as Component;
+    });
   }
 
   /**
@@ -94,8 +144,8 @@ export class SetTokenAPI {
    * Fetches units of each component token that make up the Set
    *
    * @param  setAddress    Address of the Set
-   * @return               An array of units that make up the Set composition which correspond
-   *                         to the component tokens in the Set
+   * @return               An array of units that make up the Set composition which correspond to the component tokens
+   *                         in the Set
    */
   public async getUnitsAsync(setAddress: Address): Promise<BigNumber[]> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
@@ -108,7 +158,7 @@ export class SetTokenAPI {
    * and component units
    *
    * @param  setAddress    Address of the Set
-   * @return               Object conforming to SetDetails interface
+   * @return               Object conforming to `SetDetails` interface
    */
   public async getDetails(setAddress: Address): Promise<SetDetails> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
@@ -137,7 +187,7 @@ export class SetTokenAPI {
   }
 
   /**
-   * Validates whether the quantity passed in is a multiple of a Set's natural unit
+   * Validates whether the quantity op a Set to issue or redeem in is a multiple of the Set's natural unit
    *
    * @param  setAddress    Address of the Set
    * @param  quantity      Quantity to be checked
@@ -149,55 +199,6 @@ export class SetTokenAPI {
 
     const naturalUnit = await this.setToken.naturalUnit(setAddress);
     return quantity.mod(naturalUnit).eq(ZERO);
-  }
-
-  /**
-   * Calculate the amounts of each component required for Set issuance or redemption for a given quantity
-   *
-   * @param  setAddress         Address of the Set
-   * @param  quantity           Quantity of Set to issue or redeem
-   * @return                    List of objects with addresses and amounts required for issuance or redemption
-   */
-  public async calculateComponentAmountsForIssuance(
-    setAddress: Address,
-    quantity: BigNumber,
-  ): Promise<Component[]> {
-    this.assertcalculateComponentAmountsForIssuance(setAddress, quantity);
-
-    const [naturalUnit, componentUnits, components] = await Promise.all([
-      this.setToken.naturalUnit(setAddress),
-      this.setToken.getUnits(setAddress),
-      this.setToken.getComponents(setAddress),
-    ]);
-
-    return _.map(componentUnits, (componentUnit, index) => {
-      return {
-        address: components[index],
-        unit: calculatePartialAmount(componentUnit, quantity, naturalUnit),
-      } as Component;
-    });
-  }
-
-  /**
-   * Calculate the amounts for a specified component required for Set issuance or redemption for a given quantity
-   *
-   * @param  setAddress         Address of the Set
-   * @param  componentAddress   Address of the component
-   * @param  quantity           Quantity of Set to issue or redeem
-   * @return                    Object with addresses and amounts required for issuance or redemption
-   */
-  public async calculateComponentAmountForIssuance(
-    setAddress: Address,
-    componentAddress: Address,
-    quantity: BigNumber,
-  ): Promise<Component> {
-    await this.assertCalculateUnitTransferred(setAddress, componentAddress, quantity);
-
-    const components = await this.setToken.getComponents(setAddress);
-    const componentIndex = _.indexOf(components, componentAddress);
-
-    const amountsForIssuance = await this.calculateComponentAmountsForIssuance(setAddress, quantity);
-    return amountsForIssuance[componentIndex];
   }
 
   /* ============ Private Assertions ============ */
