@@ -23,10 +23,14 @@ export {
 } from './exchangeHelpers';
 
 export {
+  constructInflowOutflowArraysAsync,
   createDefaultRebalancingSetTokenAsync,
+  deployConstantAuctionPriceCurveAsync,
   deploySetTokensAsync,
+  increaseChainTimeAsync,
   transitionToProposeAsync,
   transitionToRebalanceAsync,
-  getAuctionSetUpOutputs,
+  getAuctionSetUpOutputsAsync,
+  getExpectedUnitSharesAsync
 } from './rebalancingHelpers';
 export { getVaultBalances } from './vaultHelpers';

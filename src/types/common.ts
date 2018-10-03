@@ -49,6 +49,11 @@ export interface TxDataPayable extends TxData {
   value?: BigNumber;
 }
 
+export interface TokenFlowArrays {
+  inflow: BigNumber[];
+  outflow: BigNumber[];
+}
+
 export interface CreateLogArgs {
   _setTokenAddress: Address;
   _factoryAddress: Address;
