@@ -340,6 +340,7 @@ export class CoreWrapper {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
     return await coreInstance.bid.sendTransactionAsync(
+      rebalancingSetTokenAddress,
       quantity,
       txSettings,
     );
