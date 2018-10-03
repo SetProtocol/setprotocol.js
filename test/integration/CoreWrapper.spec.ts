@@ -952,6 +952,7 @@ describe('CoreWrapper', () => {
 
       expect(factoryAddresses.length).to.equal(2);
       expect(factoryAddresses[0]).to.equal(setTokenFactory.address);
+      expect(factoryAddresses[1]).to.equal(rebalancingSetTokenFactory.address);
     });
 
     test('gets Set addresses', async () => {
