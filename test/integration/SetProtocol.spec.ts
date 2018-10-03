@@ -37,7 +37,7 @@ import {
   NoDecimalTokenMock,
   NoDecimalTokenMockContract,
 } from 'set-protocol-contracts';
-import { Address, SetProtocolUtils } from 'set-protocol-utils';
+import { SetProtocolUtils } from 'set-protocol-utils';
 
 import ChaiSetup from '../helpers/chaiSetup';
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
@@ -48,6 +48,7 @@ import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@
 import { BigNumber } from '@src/util';
 import { SetProtocolConfig } from '@src/SetProtocol';
 import { ERC20Wrapper } from '@src/wrappers/ERC20Wrapper';
+import { Address, SetUnits } from '@src/types/common';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
@@ -56,6 +57,7 @@ import {
   deploySetTokenAsync,
   deploySetTokenFactoryContract,
   deployTokensAsync,
+  deployTokensSpecifyingDecimals,
   deployTransferProxyContract,
   deployVaultContract,
 } from '@test/helpers';
@@ -161,6 +163,71 @@ describe('SetProtocol', async () => {
       const minimumNaturalUnit = await subject();
 
       expect(minimumNaturalUnit).to.bignumber.equal(new BigNumber(10).pow(18));
+    });
+  });
+
+  describe('calculateComponentAllocation', async () => {
+    let subjectComponentAddresses: Address[];
+    let subjectComponentPrices: BigNumber[];
+    let subjectComponentAllocations: BigNumber[];
+    let subjectTargetSetPrice: BigNumber;
+    let subjectPercentError: number;
+
+    beforeEach(async () => {
+      const tokenCount = 2;
+      const decimalsList = [18, 18];
+      const components = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+
+      subjectComponentAddresses = _.map(components, component => component.address);
+      subjectComponentPrices = [new BigNumber(2), new BigNumber(2)];
+      subjectComponentAllocations = [new BigNumber(0.5), new BigNumber(0.5)];
+      subjectTargetSetPrice = new BigNumber(10);
+      subjectPercentError = 10;
+    });
+
+    async function subject(): Promise<SetUnits> {
+      return await setProtocol.calculateSetUnitsAsync(
+        subjectComponentAddresses,
+        subjectComponentPrices,
+        subjectComponentAllocations,
+        subjectTargetSetPrice,
+        subjectPercentError,
+      );
+    }
+
+    test('should calculate the correct required component units', async () => {
+      const { units } = await subject();
+
+      const expectedResult = [new BigNumber(25), new BigNumber(25)];
+      expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
+    });
+
+    test('should calculate the correct natural units', async () => {
+      const { naturalUnit } = await subject();
+
+      const expectedResult = new BigNumber(10);
+      expect(naturalUnit).to.bignumber.equal(expectedResult);
+    });
+
+    describe('when the percent error is not pass in', async () => {
+      async function subject(): Promise<SetUnits> {
+        return await setProtocol.calculateSetUnitsAsync(
+          subjectComponentAddresses,
+          subjectComponentPrices,
+          subjectComponentAllocations,
+          subjectTargetSetPrice
+        );
+      }
+
+      test('it defaults to 10%', async () => {
+        const { units, naturalUnit } = await subject();
+
+        const expectedComponentUnit = [new BigNumber(25), new BigNumber(25)];
+        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedComponentUnit));
+
+        const expectedNaturalUnit = new BigNumber(10);
+        expect(naturalUnit).to.bignumber.equal(expectedNaturalUnit);
+      });
     });
   });
 

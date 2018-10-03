@@ -51,8 +51,8 @@ export class BlockchainAPI {
   /**
    * Instantiates a new BlockchainAPI instance that contains methods for miscellaneous blockchain functionality
    *
-   * @param web3    Web3.js Provider instance you would like the SetProtocol.js library
-   *                  to use for interacting with the Ethereum network.
+   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
+   *                      the Ethereum network
    * @param assertions  An instance of the Assertion library
    */
   constructor(web3: Web3, assertions: Assertions) {
@@ -69,14 +69,13 @@ export class BlockchainAPI {
    *
    * @param  txHash               Transaction hash to poll
    * @param  pollingIntervalMs    Interval at which the blockchain should be polled. Defaults to 1000
-   * @param  timeoutMs            Number of milliseconds until this process times out. Defaults
-   *                                to DEFAULT_TIMEOUT_FOR_TX_MINED
+   * @param  timeoutMs            Number of milliseconds until this process times out. Defaults to 60000
    * @return                      Transaction receipt resulting from the mining process
    */
   public async awaitTransactionMinedAsync(
     txHash: string,
-    pollingIntervalMs = 1000,
-    timeoutMs = DEFAULT_TIMEOUT_FOR_TX_MINED,
+    pollingIntervalMs: number = 1000,
+    timeoutMs: number = DEFAULT_TIMEOUT_FOR_TX_MINED,
   ): Promise<TransactionReceipt> {
     this.assert.schema.isValidBytes32('txHash', txHash);
 

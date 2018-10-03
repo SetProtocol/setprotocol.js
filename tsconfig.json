@@ -4,12 +4,11 @@
     "target": "es5",
     "declaration": true,
     "noImplicitAny": true,
-    "strictNullChecks": true,
     "moduleResolution": "node",
     "sourceMap": true,
     "outDir": "dist",
     "baseUrl": ".",
-    "lib": ["es2015", "es2016", "es2017", "dom"],
+    "lib": ["es2015", "es2016", "es2017", "es2018", "dom"],
     "typeRoots": ["node_modules/@0xproject/typescript-typings/types", "node_modules/@types"],
     "paths": {
       "*": [
