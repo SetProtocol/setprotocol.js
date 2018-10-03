@@ -328,6 +328,24 @@ export class CoreWrapper {
   }
 
   /**
+   * Asynchronously submit a bid for a rebalancing auction on a rebalancingSetToken
+   *
+   * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
+   * @param  quantity                      Amount of currentSetToken the bidder wants to rebalance
+   * @param  txOpts                        The options for executing the transaction
+   * @return                               A transaction hash
+   */
+  public async bid(rebalancingSetTokenAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+
+    return await coreInstance.bid.sendTransactionAsync(
+      quantity,
+      txSettings,
+    );
+  }
+
+  /**
    * Asynchronously gets the exchange address for a given exhange id
    *
    * @param  exchangeId Enum id of the exchange

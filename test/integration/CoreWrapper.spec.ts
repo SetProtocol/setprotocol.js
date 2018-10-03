@@ -31,6 +31,8 @@ import { Core, Vault } from 'set-protocol-contracts';
 import * as setProtocolUtils from 'set-protocol-utils';
 import {
   CoreContract,
+  RebalancingSetTokenContract,
+  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -42,14 +44,17 @@ import {
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { CoreWrapper } from '@src/wrappers';
 import { OrderAPI } from '@src/api';
-import { NULL_ADDRESS, TX_DEFAULTS, ZERO } from '@src/constants';
+import { NULL_ADDRESS, TX_DEFAULTS, ZERO, ONE_DAY_IN_SECONDS } from '@src/constants';
 import { Assertions } from '@src/assertions';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
+  createDefaultRebalancingSetTokenAsync,
   deployCoreContract,
   deployKyberNetworkWrapperContract,
+  deployRebalancingSetTokenFactoryContract,
   deploySetTokenAsync,
+  deploySetTokensAsync,
   deploySetTokenFactoryContract,
   deployTakerWalletWrapperContract,
   deployTokenAsync,
@@ -59,6 +64,7 @@ import {
   deployZeroExExchangeWrapperContract,
   getVaultBalances,
   tokenDeployedOnSnapshot,
+  transitionToRebalanceAsync,
 } from '@test/helpers';
 import {
   BigNumber,
@@ -118,6 +124,7 @@ describe('CoreWrapper', () => {
     vault = await deployVaultContract(provider);
     core = await deployCoreContract(provider, transferProxy.address, vault.address);
     setTokenFactory = await deploySetTokenFactoryContract(provider, core);
+    rebalancingSetTokenFactory = await deployRebalancingSetTokenFactoryContract(provider, core);
 
     await addAuthorizationAsync(vault, core.address);
     await addAuthorizationAsync(transferProxy, core.address);
@@ -756,6 +763,83 @@ describe('CoreWrapper', () => {
       const expectedCancelAmounts = existingCancelAmount.add(subjectCancelQuantity);
       const newCancelAmount = await core.orderCancels.callAsync(orderHash);
       expect(newCancelAmount).to.bignumber.equal(expectedCancelAmounts);
+    });
+  });
+
+  describe.only('bid', async () => {
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let currentSetToken: SetTokenContract;
+    let nextSetToken: SetTokenContract;
+
+    let subjectRebalancingSetToken: Address;
+    let subjectBidQuantity: BigNumber;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const setTokens = await deploySetTokensAsync(
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        2,
+      );
+
+      currentSetToken = setTokens[0];
+      nextSetToken = setTokens[1];
+
+      const proposalPeriod = ONE_DAY_IN_SECONDS;
+      const managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      // Issue currentSetToken
+      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      const rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
+      // Transition to proposal state
+      const auctionPriceCurveAddress = ACCOUNTS[2].address;
+      const setCurveCoefficient = new BigNumber(1);
+      const setAuctionStartPrice = new BigNumber(500);
+      const setAuctionPriceDivisor = new BigNumber(1000);
+      await transitionToRebalanceAsync(
+        rebalancingSetToken,
+        managerAddress,
+        nextSetToken.address,
+        auctionPriceCurveAddress,
+        setCurveCoefficient,
+        setAuctionStartPrice,
+        setAuctionPriceDivisor
+      );
+
+      subjectRebalancingSetToken = rebalancingSetToken.address;
+      subjectBidQuantity = ether(2);
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await coreWrapper.bid(
+        subjectRebalancingSetToken,
+        subjectBidQuantity,
+        { from: subjectCaller },
+      );
+    }
+
+    test('subtract correct amount from remainingCurrentSets', async () => {
+      const existingRemainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+
+      await subject();
+
+      const expectedRemainingCurrentSets = existingRemainingCurrentSets.sub(subjectBidQuantity);
+      const newRemainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+      expect(newRemainingCurrentSets).to.eql(expectedRemainingCurrentSets);
     });
   });
 
