@@ -775,7 +775,7 @@ describe('CoreWrapper', () => {
     });
   });
 
-  describe.only('bid', async () => {
+  describe('bid', async () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
