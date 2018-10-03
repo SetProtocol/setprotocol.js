@@ -4,30 +4,26 @@ import * as _ from 'lodash';
 import { Provider } from 'ethereum-types';
 import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
 import {
-  RebalancingSetToken
+  RebalancingSetToken,
+  ConstantAuctionPriceCurve,
 } from 'set-protocol-contracts';
 import {
-  AuthorizableContract,
-  BaseContract,
+  ConstantAuctionPriceCurveContract,
   CoreContract,
-  NoDecimalTokenMockContract,
   RebalancingSetTokenContract,
   SetTokenContract,
-  SetTokenFactoryContract,
-  StandardTokenMockContract,
-  TransferProxyContract,
-  VaultContract,
+  VaultContract
 } from 'set-protocol-contracts';
+import { TokenFlowArrays } from '@src/types/common';
 
 import {
-  DEFAULT_ACCOUNT,
-  DEPLOYED_TOKEN_QUANTITY,
   TX_DEFAULTS,
   DEFAULT_GAS_LIMIT,
-  UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
   ONE_DAY_IN_SECONDS,
   DEFAULT_UNIT_SHARES,
-  DEFAULT_REBALANCING_NATURAL_UNIT
+  DEFAULT_REBALANCING_NATURAL_UNIT,
+  DEFAULT_AUCTION_PRICE_DIVISOR,
+  UNLIMITED_ALLOWANCE_IN_BASE_UNITS
 } from '@src/constants';
 
 import {
@@ -95,6 +91,26 @@ export const deploySetTokensAsync = async(
   }
 
   return setTokenArray;
+};
+
+export const deployConstantAuctionPriceCurveAsync = async(
+  provider: Provider,
+  price: BigNumber,
+): Promise<ConstantAuctionPriceCurveContract> => {
+  const web3 = new Web3(provider);
+
+  const truffleConstantAuctionPriceCurveContract = contract(ConstantAuctionPriceCurve);
+  truffleConstantAuctionPriceCurveContract.setProvider(provider);
+  truffleConstantAuctionPriceCurveContract.setNetwork(50);
+  truffleConstantAuctionPriceCurveContract.defaults(TX_DEFAULTS);
+
+  // Deploy ConstantAuctionPriceCurve
+  const deployedConstantAuctionPriceCurveInstance = await truffleConstantAuctionPriceCurveContract.new(price);
+  return await ConstantAuctionPriceCurveContract.at(
+    deployedConstantAuctionPriceCurveInstance.address,
+    web3,
+    TX_DEFAULTS,
+  );
 };
 
 export const createRebalancingSetTokenAsync = async(
@@ -206,7 +222,7 @@ export const transitionToRebalanceAsync = async(
   );
 };
 
-const increaseChainTimeAsync = async(
+export const increaseChainTimeAsync = async(
   duration: BigNumber
 ): Promise<void> => {
   await sendJSONRpcRequestAsync('evm_increaseTime', [duration.toNumber()]);
@@ -255,7 +271,7 @@ export const constructCombinedUnitArrayAsync = async(
   return combinedSetTokenUnits;
 };
 
-export const getAuctionSetUpOutputs = async(
+export const getAuctionSetUpOutputsAsync = async(
   rebalancingSetToken: RebalancingSetTokenContract,
   currentSetToken: SetTokenContract,
   nextSetToken: SetTokenContract,
@@ -287,4 +303,71 @@ export const getAuctionSetUpOutputs = async(
   const maxNaturalUnit = Math.max(currentSetTokenNaturalUnit.toNumber(), nextSetTokenNaturalUnit.toNumber());
   const expectedMinimumBid = new BigNumber(maxNaturalUnit).mul(auctionPriceDivisor);
   return { expectedCombinedTokenArray, expectedCombinedCurrentUnits, expectedCombinedNextUnits, expectedMinimumBid };
+};
+
+export const constructInflowOutflowArraysAsync = async(
+  rebalancingSetToken: RebalancingSetTokenContract,
+  quantity: BigNumber,
+  priceNumerator: BigNumber,
+): Promise<TokenFlowArrays> => {
+  const inflowArray: BigNumber[] = [];
+  const outflowArray: BigNumber[] = [];
+
+  // Get unit arrays
+  const combinedCurrentUnits = await rebalancingSetToken.getCombinedCurrentUnits.callAsync();
+  const combinedRebalanceUnits = await rebalancingSetToken.getCombinedNextSetUnits.callAsync();
+
+  // Define price
+  const priceDivisor = DEFAULT_AUCTION_PRICE_DIVISOR;
+
+  // Calculate the inflows and outflow arrays
+  const minimumBid = await rebalancingSetToken.minimumBid.callAsync();
+  const coefficient = minimumBid.div(priceDivisor);
+  const effectiveQuantity = quantity.mul(priceDivisor).div(priceNumerator);
+
+  for (let i = 0; i < combinedCurrentUnits.length; i++) {
+    const flow = combinedRebalanceUnits[i].mul(priceDivisor).sub(combinedCurrentUnits[i].mul(priceNumerator));
+    if (flow.greaterThan(0)) {
+      inflowArray.push(effectiveQuantity.mul(flow).div(coefficient).round(0, 3).div(priceDivisor).round(0, 3));
+      outflowArray.push(new BigNumber(0));
+    } else {
+      outflowArray.push(
+        flow.mul(effectiveQuantity).div(coefficient).round(0, 3).div(priceDivisor).round(0, 3).mul(new BigNumber(-1))
+      );
+      inflowArray.push(new BigNumber(0));
+    }
+  }
+  return { inflow: inflowArray, outflow: outflowArray };
+};
+
+export const getExpectedUnitSharesAsync = async(
+  rebalancingSetToken: RebalancingSetTokenContract,
+  newSet: SetTokenContract,
+  vault: VaultContract
+): Promise<BigNumber> => {
+  // Gather data needed for calculations
+  const totalSupply = await rebalancingSetToken.totalSupply.callAsync();
+  const rebalancingNaturalUnit = await rebalancingSetToken.naturalUnit.callAsync();
+  const newSetNaturalUnit = await newSet.naturalUnit.callAsync();
+  const components = await newSet.getComponents.callAsync();
+  const units = await newSet.getUnits.callAsync();
+
+  // Figure out how many new Sets can be issued from balance in Vault, if less than previously calculated
+  // amount, then set that to maxIssueAmount
+  let maxIssueAmount: BigNumber = UNLIMITED_ALLOWANCE_IN_BASE_UNITS;
+  for (let i = 0; i < components.length; i++) {
+    const componentAmount = await vault.getOwnerBalance.callAsync(components[i], rebalancingSetToken.address);
+    const componentIssueAmount = componentAmount.div(units[i]).round(0, 3).mul(newSetNaturalUnit);
+
+    if (componentIssueAmount.lessThan(maxIssueAmount)) {
+      maxIssueAmount = componentIssueAmount;
+    }
+  }
+  const naturalUnitsOutstanding = totalSupply.div(rebalancingNaturalUnit);
+  // Calculate unitShares by finding how many natural units worth of the rebalancingSetToken have been issued
+  // Divide maxIssueAmount by this to find unitShares, remultiply unitShares by issued amount of rebalancing-
+  // SetToken in natural units to get amount of new Sets to issue
+  const issueAmount = maxIssueAmount.div(newSetNaturalUnit).round(0, 3).mul(newSetNaturalUnit);
+  const unitShares = issueAmount.div(naturalUnitsOutstanding).round(0, 3);
+  return unitShares;
 };

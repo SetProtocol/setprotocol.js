@@ -43,6 +43,8 @@ export function UINT256(value: number): BigNumber {
 export const ONE_DAY_IN_SECONDS = new BigNumber(86400);
 export const DEFAULT_UNIT_SHARES = new BigNumber(10 ** 10);
 export const DEFAULT_REBALANCING_NATURAL_UNIT = new BigNumber(10 ** 10);
+export const DEFAULT_CONSTANT_AUCTION_PRICE = new BigNumber(2000);
+export const DEFAULT_AUCTION_PRICE_DIVISOR = new BigNumber(1000);
 
 export const TX_DEFAULTS = {
   from: DEFAULT_ACCOUNT,

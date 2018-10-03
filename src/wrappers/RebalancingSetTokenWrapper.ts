@@ -17,7 +17,7 @@
 'use strict';
 
 import * as Web3 from 'web3';
-import { Address } from '../types/common';
+import { Address, TokenFlowArrays, TxData } from '../types/common';
 
 import { ContractWrapper } from '.';
 import { BigNumber } from '../util';
@@ -38,6 +38,114 @@ export class RebalancingSetTokenWrapper {
   public constructor(web3: Web3) {
     this.web3 = web3;
     this.contracts = new ContractWrapper(this.web3);
+  }
+
+  /**
+   * Proposes rebalance, can only be called by manager
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @param  nextSet                 Amount of currentSet to rebalance
+   * @param  auctionLibrary          Amount of currentSet to rebalance
+   * @param  curveCoefficient        Amount of currentSet to rebalance
+   * @param  auctionStartPrice       Amount of currentSet to rebalance
+   * @param  auctionPriceDivisor     Amount of currentSet to rebalance
+   * @param  txOpts                  Transaction options
+   * @return                         Transaction hash
+   */
+  public async propose(
+    rebalancingSetAddress: Address,
+    nextSet: Address,
+    auctionLibrary: Address,
+    curveCoefficient: BigNumber,
+    auctionStartPrice: BigNumber,
+    auctionPriceDivisor: BigNumber,
+    txOpts: TxData
+  ): Promise<string> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    return await rebalancingSetTokenInstance.propose.sendTransactionAsync(
+      nextSet,
+      auctionLibrary,
+      curveCoefficient,
+      auctionStartPrice,
+      auctionPriceDivisor,
+      txOpts
+    );
+  }
+
+  /**
+   * Starts rebalance after proposal period has elapsed
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @param  txOpts                  Transaction options
+   * @return                         Transaction hash
+   */
+  public async rebalance(
+    rebalancingSetAddress: Address,
+    txOpts: TxData
+  ): Promise<string> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    return await rebalancingSetTokenInstance.rebalance.sendTransactionAsync(
+      txOpts
+    );
+  }
+
+  /**
+   * Settles rebalance after currentSets been rebalanced
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @param  txOpts                  Transaction options
+   * @return                         Transaction hash
+   */
+  public async settleRebalance(
+    rebalancingSetAddress: Address,
+    txOpts: TxData
+  ): Promise<string> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    return await rebalancingSetTokenInstance.settleRebalance.sendTransactionAsync(
+      txOpts
+    );
+  }
+
+  /**
+   * Change token manager address
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @param  newManager              Address of new manager
+   * @param  txOpts                  Transaction options
+   * @return                         Transaction hash
+   */
+  public async setManager(
+    rebalancingSetAddress: Address,
+    newManager: Address,
+    txOpts: TxData
+  ): Promise<string> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    return await rebalancingSetTokenInstance.setManager.sendTransactionAsync(
+      newManager,
+      txOpts
+    );
+  }
+
+  /**
+   * Gets token inflow and outflows for current rebalance price
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @param  quantity                Amount of currentSet to rebalance
+   * @return                         Array of token inflows
+   * @return                         Array of token outflows
+   */
+  public async getBidPrice(
+    rebalancingSetAddress: Address,
+    quantity: BigNumber
+  ): Promise<TokenFlowArrays> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    const tokenFlows = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
+    return { inflow: tokenFlows[0], outflow: tokenFlows[1] } as TokenFlowArrays;
   }
 
   /**
