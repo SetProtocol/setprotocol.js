@@ -187,7 +187,7 @@ export class SetTokenAPI {
   }
 
   /**
-   * Validates whether the quantity op a Set to issue or redeem in is a multiple of the Set's natural unit
+   * Validates whether the quantity of a Set to issue or redeem in is a multiple of the Set's natural unit
    *
    * @param  setAddress    Address of the Set
    * @param  quantity      Quantity to be checked
