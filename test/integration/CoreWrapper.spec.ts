@@ -950,7 +950,7 @@ describe('CoreWrapper', () => {
     test('gets factory addresses', async () => {
       const factoryAddresses = await coreWrapper.getFactories();
 
-      expect(factoryAddresses.length).to.equal(1);
+      expect(factoryAddresses.length).to.equal(2);
       expect(factoryAddresses[0]).to.equal(setTokenFactory.address);
     });
 
