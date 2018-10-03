@@ -96,7 +96,7 @@ describe('BlockchainAPI', () => {
     let subjectCaller: Address;
     let subjectSpender: Address;
     let subjectQuantity: BigNumber;
-    let subjectTxHash: ByteString;
+    let subjectTxHash: string;
 
     beforeEach(async () => {
       subjectCaller = DEFAULT_ACCOUNT;
