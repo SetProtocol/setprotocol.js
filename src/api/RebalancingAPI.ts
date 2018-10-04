@@ -117,7 +117,7 @@ export class RebalancingAPI {
 
     await this.assert.rebalancing.isNotInRebalanceState(rebalancingSetTokenAddress);
     await this.assert.rebalancing.isManager(rebalancingSetTokenAddress, txOpts.from);
-    // await this.assert.rebalancingSetToken.sufficientTimeBetweenRebalance(rebalancingSetTokenAddress);
+    await this.assert.rebalancing.sufficientTimeBetweenRebalance(rebalancingSetTokenAddress);
     await this.assert.setToken.isValidSetToken(this.coreAddress, nextSetAddress);
   }
 }

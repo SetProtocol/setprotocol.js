@@ -32,18 +32,12 @@ import {
   SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
-  VaultContract
+  VaultContract,
 } from 'set-protocol-contracts';
-import { Address } from 'set-protocol-utils';
 
 import { RebalancingAPI } from '@src/api';
 import { RebalancingSetTokenWrapper } from '@src/wrappers';
-import {
-  DEFAULT_ACCOUNT,
-  TX_DEFAULTS,
-  ONE_DAY_IN_SECONDS,
-  DEFAULT_CONSTANT_AUCTION_PRICE
-} from '@src/constants';
+import { DEFAULT_ACCOUNT, ONE_DAY_IN_SECONDS, DEFAULT_CONSTANT_AUCTION_PRICE, TX_DEFAULTS } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber, ether, Web3Utils } from '@src/util';
 import { Assertions } from '@src/assertions';
@@ -61,12 +55,13 @@ import {
   deploySetTokenFactoryContract,
   deployVaultContract,
   deployTransferProxyContract,
-  increaseChainTimeAsync
+  increaseChainTimeAsync,
 } from '@test/helpers';
-import { Component, SetDetails } from '@src/types/common';
+import { Address, Component, SetDetails } from '@src/types/common';
 
 ChaiSetup.configure();
 const { expect } = chai;
+const timeKeeper = require('timekeeper');
 const contract = require('truffle-contract');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
@@ -74,7 +69,10 @@ const web3Utils = new Web3Utils(web3);
 
 let currentSnapshotId: number;
 
+
 describe('RebalancingAPI', () => {
+  let rebalancingTokenDeployedAt: number;
+
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
@@ -86,6 +84,9 @@ describe('RebalancingAPI', () => {
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
+
+    rebalancingTokenDeployedAt = 1514808000000;
+    timeKeeper.freeze(rebalancingTokenDeployedAt);
 
     transferProxy = await deployTransferProxyContract(provider);
     vault = await deployVaultContract(provider);
@@ -111,7 +112,7 @@ describe('RebalancingAPI', () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
-
+    let proposalPeriod: BigNumber;
     let managerAddress: Address;
 
     let subjectRebalancingSetTokenAddress: Address;
@@ -131,7 +132,7 @@ describe('RebalancingAPI', () => {
         setTokensToDeploy,
       );
 
-      const proposalPeriod = ONE_DAY_IN_SECONDS;
+      proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
         core,
@@ -145,6 +146,7 @@ describe('RebalancingAPI', () => {
       const priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
 
       // Fast forward to allow propose to be called
+      timeKeeper.freeze(rebalancingTokenDeployedAt + proposalPeriod.valueOf());
       increaseChainTimeAsync(proposalPeriod.add(1));
 
       subjectNextSet = nextSetToken.address;
@@ -164,7 +166,7 @@ describe('RebalancingAPI', () => {
         subjectCurveCoefficient,
         subjectAuctionStartPrice,
         subjectAuctionPriceDivisor,
-        { from: subjectCaller}
+        { from: subjectCaller }
       );
     }
 
@@ -172,38 +174,49 @@ describe('RebalancingAPI', () => {
       await subject();
 
       const nextSet = await rebalancingSetTokenWrapper.nextSet(subjectRebalancingSetTokenAddress);
+      expect(nextSet).to.eql(subjectNextSet);
+
       const auctionLibrary = await rebalancingSetTokenWrapper.auctionLibrary(subjectRebalancingSetTokenAddress);
+      expect(auctionLibrary).to.eql(subjectAuctionPriceCurveAddress);
+
       const curveCoefficient = await rebalancingSetTokenWrapper.curveCoefficient(subjectRebalancingSetTokenAddress);
+      expect(curveCoefficient).to.be.bignumber.equal(subjectCurveCoefficient);
+
       const auctionStartPrice = await rebalancingSetTokenWrapper.auctionStartPrice(subjectRebalancingSetTokenAddress);
+      expect(auctionStartPrice).to.be.bignumber.equal(subjectAuctionStartPrice);
+
       const auctionPriceDivisor = await rebalancingSetTokenWrapper.auctionPriceDivisor(
         subjectRebalancingSetTokenAddress
       );
-      const rebalanceState = await rebalancingSetTokenWrapper.rebalanceState(subjectRebalancingSetTokenAddress);
-
-      expect(nextSet).to.eql(subjectNextSet);
-
-      expect(auctionLibrary).to.eql(subjectAuctionPriceCurveAddress);
-
-      expect(curveCoefficient).to.be.bignumber.equal(subjectCurveCoefficient);
-
-      expect(auctionStartPrice).to.be.bignumber.equal(subjectAuctionStartPrice);
-
       expect(auctionPriceDivisor).to.be.bignumber.equal(subjectAuctionPriceDivisor);
 
+      const rebalanceState = await rebalancingSetTokenWrapper.rebalanceState(subjectRebalancingSetTokenAddress);
       expect(rebalanceState).to.eql('Proposal');
     });
 
-    // describe('when the component is not part of the Set', async () => {
-    //   beforeEach(async () => {
-    //     subjectComponentAddress = DEFAULT_ACCOUNT;
-    //   });
+    describe('when the rebalance interval hasn\'t elapsed since the last rebalance', async () => {
+      beforeEach(async () => {
+        timeKeeper.freeze(rebalancingTokenDeployedAt);
+      });
 
-    //   test('throws', async () => {
-    //     return expect(subject()).to.be.rejectedWith(
-    //       `Token address at ${subjectComponentAddress} is not a ` +
-    //       `component of the Set Token at ${subjectSetTokenAddress}.`
-    //     );
-    //   });
-    // });
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          'Attempting to rebalance too soon. Rebalancing next available on Monday, January 1st 2018, 12:00:01 am'
+        );
+      });
+    });
+
+    describe('when the caller is not the manager', async () => {
+      beforeEach(async () => {
+        const invalidCallerAddress = ACCOUNTS[0].address;
+        subjectCaller = invalidCallerAddress;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Caller ${subjectCaller} is not the manager of this Rebalancing Set Token.`
+        );
+      });
+    });
   });
 });

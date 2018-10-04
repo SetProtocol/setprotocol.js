@@ -27,6 +27,8 @@ import { BigNumber } from '../util';
 import { RebalancingState } from '../types/common';
 import { ZERO } from '../constants';
 
+const moment = require('moment');
+
 export class RebalancingAssertions {
   private web3: Web3;
 
@@ -73,11 +75,12 @@ export class RebalancingAssertions {
 
     const lastRebalanceTime = await rebalancingSetTokenInstance.lastRebalanceTimestamp.callAsync();
     const rebalanceInterval = await rebalancingSetTokenInstance.rebalanceInterval.callAsync();
-    const rebalanceTimeLimit = lastRebalanceTime.add(rebalanceInterval);
+    const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval);
     const currentTimeStamp = new BigNumber(Date.now() / 1000);
 
-    if (rebalanceTimeLimit.greaterThan(currentTimeStamp)) {
-      throw new Error(rebalancingErrors.INSUFFICIENT_TIME_PASSED('rebalance'));
+    if (nextAvailableRebalance.greaterThan(currentTimeStamp)) {
+      const nextRebalanceFormattedDate = moment(nextAvailableRebalance).format('dddd, MMMM Do YYYY, h:mm:ss a');
+      throw new Error(rebalancingErrors.INSUFFICIENT_TIME_PASSED(nextRebalanceFormattedDate));
     }
   }
 }
