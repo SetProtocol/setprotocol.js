@@ -72,7 +72,7 @@ let currentSnapshotId: number;
 
 
 describe('RebalancingAPI', () => {
-  let rebalancingTokenDeployedAt: number;
+  let nextRebalanceAvailalbeAtSeconds: number;
 
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
@@ -85,9 +85,6 @@ describe('RebalancingAPI', () => {
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
-
-    rebalancingTokenDeployedAt = 1514808000000;
-    timeKeeper.freeze(rebalancingTokenDeployedAt);
 
     transferProxy = await deployTransferProxyContract(provider);
     vault = await deployVaultContract(provider);
@@ -106,6 +103,8 @@ describe('RebalancingAPI', () => {
   });
 
   afterEach(async () => {
+    timeKeeper.reset();
+
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
@@ -147,7 +146,9 @@ describe('RebalancingAPI', () => {
       const priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
 
       // Fast forward to allow propose to be called
-      timeKeeper.freeze(rebalancingTokenDeployedAt + proposalPeriod.valueOf());
+      const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+      nextRebalanceAvailalbeAtSeconds = lastRebalancedTimestampSeconds.toNumber() + proposalPeriod.toNumber();
+      timeKeeper.freeze(nextRebalanceAvailalbeAtSeconds * 1000);
       increaseChainTimeAsync(proposalPeriod.add(1));
 
       subjectNextSet = nextSetToken.address;
@@ -197,12 +198,12 @@ describe('RebalancingAPI', () => {
 
     describe('when the rebalance interval hasn\'t elapsed since the last rebalance', async () => {
       beforeEach(async () => {
-        timeKeeper.freeze(rebalancingTokenDeployedAt);
+        timeKeeper.freeze(nextRebalanceAvailalbeAtSeconds * 1000 - 1);
       });
 
       it('throw', async () => {
         return expect(subject()).to.be.rejectedWith(
-          'Attempting to rebalance too soon. Rebalancing next available on Monday, January 1st 2018, 12:00:01 am'
+          'Attempting to rebalance too soon. Rebalancing next available on'
         );
       });
     });

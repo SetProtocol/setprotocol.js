@@ -72,14 +72,14 @@ export class RebalancingAssertions {
    */
   public async sufficientTimeBetweenRebalance(rebalancingSetTokenAddress: Address): Promise<void> {
     const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
-
     const lastRebalanceTime = await rebalancingSetTokenInstance.lastRebalanceTimestamp.callAsync();
     const rebalanceInterval = await rebalancingSetTokenInstance.rebalanceInterval.callAsync();
     const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval);
-    const currentTimeStamp = new BigNumber(Date.now() / 1000);
+    const currentTimeStampSeconds = new BigNumber(Date.now() / 1000);
 
-    if (nextAvailableRebalance.greaterThan(currentTimeStamp)) {
-      const nextRebalanceFormattedDate = moment(nextAvailableRebalance).format('dddd, MMMM Do YYYY, h:mm:ss a');
+    if (nextAvailableRebalance.greaterThan(currentTimeStampSeconds)) {
+      const nextAvailableRebalanceMSeconds = nextAvailableRebalance.mul(1000).toNumber();
+      const nextRebalanceFormattedDate = moment(nextAvailableRebalanceMSeconds).format('dddd, MMMM Do YYYY, h:mm:ss a');
       throw new Error(rebalancingErrors.INSUFFICIENT_TIME_PASSED(nextRebalanceFormattedDate));
     }
   }
