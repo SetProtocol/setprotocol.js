@@ -758,7 +758,7 @@ describe('SetTokenWrapper', () => {
       // Deploy price curve used in auction
       const priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
 
-      // Transition to proposal state
+      // Transition to rebalance state
       const auctionPriceCurveAddress = priceCurve.address;
       const setCurveCoefficient = new BigNumber(1);
       const setAuctionStartPrice = new BigNumber(500);

@@ -56,6 +56,7 @@ import {
   deployVaultContract,
   deployTransferProxyContract,
   increaseChainTimeAsync,
+  transitionToRebalanceAsync
 } from '@test/helpers';
 import { Address, Component, SetDetails } from '@src/types/common';
 
@@ -215,6 +216,44 @@ describe('RebalancingAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `Caller ${subjectCaller} is not the manager of this Rebalancing Set Token.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Rebalance state', async () => {
+      beforeEach(async () => {
+        // Transition to rebalance state
+        const setCurveCoefficient = new BigNumber(1);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPriceDivisor = new BigNumber(1000);
+        await transitionToRebalanceAsync(
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          subjectAuctionPriceCurveAddress,
+          setCurveCoefficient,
+          setAuctionStartPrice,
+          setAuctionPriceDivisor
+        );
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} is currently in rebalancing state.` +
+          ` Issue, Redeem, and propose functionality is not available during this time`
+        );
+      });
+    });
+
+    describe('when the proposed set token is not a valid set', async () => {
+      beforeEach(async () => {
+        const invalidNextSet = ACCOUNTS[3].address;
+        subjectNextSet = invalidNextSet;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Contract at ${subjectNextSet} is not a valid Set token address.`
         );
       });
     });
