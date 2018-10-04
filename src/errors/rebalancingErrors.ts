@@ -17,9 +17,9 @@
 'use strict';
 
 
-export const rebalancingSetTokenAssertionsErrors = {
-  REBALANCE_IN_PROGRESS: (rebalancingSetAddress: string) => `Contract at ${rebalancingSetAddress} is undergoing a\
-   rebalance and functionality is limited.`,
-  ONLY_MANAGER: (caller: string) => '${caller} is not the manager of this Rebalancing Set Token.',
+export const rebalancingErrors = {
+  REBALANCE_IN_PROGRESS: (rebalancingSetAddress: string) => `Rebalancing token at ${rebalancingSetAddress} is ` +
+    `currently in rebalancing state.`,
+  NOT_REBALANCING_MANAGER: (caller: string) => '${caller} is not the manager of this Rebalancing Set Token.',
   INSUFFICIENT_TIME_PASSED: (state: string) => 'Not enough time passed from ${state}.',
 };

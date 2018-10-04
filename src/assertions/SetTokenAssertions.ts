@@ -39,7 +39,6 @@ export class SetTokenAssertions {
    * Throws if the given candidateContract does not respond to some methods from the Set Token interface.
    *
    * @param  setTokenAddress  A Set Token contract address to check
-   * @return                  Void Promise
    */
   public async implementsSetToken(setTokenAddress: Address): Promise<void> {
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
@@ -63,7 +62,6 @@ export class SetTokenAssertions {
    * @param  setTokenAddress  The address of the Set Token contract
    * @param  ownerAddress     The address of the owner
    * @param  quantity         Amount of a Set in base units
-   * @return                  Void Promise
    */
   public async hasSufficientBalances(
     setTokenAddress: Address,
@@ -105,7 +103,6 @@ export class SetTokenAssertions {
    * @param  setTokenAddress  The address of the Set Token contract
    * @param  ownerAddress     The address of the owner
    * @param  quantity         Amount of a Set in base units
-   * @return                  Void Promise
    */
   public async hasSufficientAllowances(
     setTokenAddress: Address,

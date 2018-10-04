@@ -27,7 +27,7 @@ import { CommonAssertions } from './CommonAssertions';
 import { CoreAssertions } from './CoreAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
 import { OrderAssertions } from './OrderAssertions';
-import { RebalancingSetTokenAssertions } from './RebalancingSetTokenAssertions';
+import { RebalancingAssertions } from './RebalancingAssertions';
 import { SchemaAssertions } from './SchemaAssertions';
 import { SetTokenAssertions } from './SetTokenAssertions';
 import { VaultAssertions } from './VaultAssertions';
@@ -38,7 +38,7 @@ export class Assertions {
   public core: CoreAssertions;
   public erc20: ERC20Assertions;
   public order: OrderAssertions;
-  public rebalancingSetToken: RebalancingSetTokenAssertions;
+  public rebalancing: RebalancingAssertions;
   public schema: SchemaAssertions;
   public setToken: SetTokenAssertions;
   public vault: VaultAssertions;
@@ -49,7 +49,7 @@ export class Assertions {
     this.core = new CoreAssertions(web3);
     this.erc20 = new ERC20Assertions(web3);
     this.order = new OrderAssertions(web3, coreWrapper);
-    this.rebalancingSetToken = new RebalancingSetTokenAssertions(web3);
+    this.rebalancing = new RebalancingAssertions(web3);
     this.schema = new SchemaAssertions();
     this.setToken = new SetTokenAssertions(web3);
     this.vault = new VaultAssertions(web3);

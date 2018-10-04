@@ -26,7 +26,7 @@ import {
   FactoryAPI,
   IssuanceAPI,
   OrderAPI,
-  RebalancingSetTokenAPI,
+  RebalancingAPI,
   SetTokenAPI
 } from './api';
 import { CoreWrapper, VaultWrapper } from './wrappers';
@@ -66,24 +66,24 @@ class SetProtocol {
   public static NULL_ADDRESS = NULL_ADDRESS;
 
   /**
-   * An instance of the OrderAPI class containing methods for relaying issuance orders
-   */
-  public orders: OrderAPI;
-
-  /**
    * An instance of the ERC20API class containing methods for interacting with ERC20 compliant token contracts
    */
   public erc20: ERC20API;
 
   /**
+   * An instance of the OrderAPI class containing methods for relaying issuance orders
+   */
+  public orders: OrderAPI;
+
+  /**
+   * An instance of the RebalancingAPI class containing methods for rebalancing Sets
+   */
+  public rebalancing: RebalancingAPI;
+
+  /**
    * An instance of the SetTokenAPI class containing methods for interacting with SetToken contracts
    */
   public setToken: SetTokenAPI;
-
-  /**
-   * An instance of the RebalancingSetTokenAPI class containing methods for interacting with SetToken contracts
-   */
-  public rebalancingSetToken: RebalancingSetTokenAPI;
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library
@@ -105,7 +105,7 @@ class SetProtocol {
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config.setTokenFactoryAddress);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
     this.orders = new OrderAPI(this.web3, this.core, assertions);
-    this.rebalancingSetToken = new RebalancingSetTokenAPI(this.web3, assertions, config.coreAddress);
+    this.rebalancing = new RebalancingAPI(this.web3, assertions, config.coreAddress);
     this.setToken = new SetTokenAPI(this.web3, assertions);
   }
 

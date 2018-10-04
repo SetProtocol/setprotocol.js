@@ -28,13 +28,13 @@ import { BigNumber, calculatePartialAmount } from '../util';
 import { Address, Component, SetDetails, TxData, } from '../types/common';
 
 /**
- * @title RebalancingSetTokenAPI
+ * @title RebalancingAPI
  * @author Set Protocol
  *
  * A library for interacting with RebalancingSetToken contracts
  */
 
-export class RebalancingSetTokenAPI {
+export class RebalancingAPI {
   private web3: Web3;
   private assert: Assertions;
   private coreAddress: Address;
@@ -42,7 +42,7 @@ export class RebalancingSetTokenAPI {
   private setToken: SetTokenWrapper;
 
   /**
-   * Instantiates a new RebalancingSetTokenAPI instance that contains methods
+   * Instantiates a new RebalancingAPI instance that contains methods
    * for interacting with RebalancingSetToken contracts
    *
    * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
@@ -89,6 +89,7 @@ export class RebalancingSetTokenAPI {
   }
 
   /* ============ Private Assertions ============ */
+
   private async assertPropose(
     rebalancingSetTokenAddress: Address,
     nextSetAddress: Address,
@@ -102,20 +103,20 @@ export class RebalancingSetTokenAPI {
     this.assert.schema.isValidAddress('nextSetAddress', nextSetAddress);
     this.assert.schema.isValidAddress('auctionLibrary', auctionLibrary);
 
-    this.assert.common.greaterThanZero(curveCoefficient, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(curveCoefficient));
-
     this.assert.common.greaterThanZero(
-      auctionPriceDivisor,
+      curveCoefficient,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(curveCoefficient)
+    );
+    this.assert.common.greaterThanZero(auctionPriceDivisor,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(auctionPriceDivisor)
     );
-
     this.assert.common.greaterThanZero(
       auctionStartPrice,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(auctionStartPrice)
     );
 
-    await this.assert.rebalancingSetToken.isNotInRebalanceState(rebalancingSetTokenAddress);
-    await this.assert.rebalancingSetToken.isManager(rebalancingSetTokenAddress, txOpts.from);
+    await this.assert.rebalancing.isNotInRebalanceState(rebalancingSetTokenAddress);
+    await this.assert.rebalancing.isManager(rebalancingSetTokenAddress, txOpts.from);
     // await this.assert.rebalancingSetToken.sufficientTimeBetweenRebalance(rebalancingSetTokenAddress);
     await this.assert.setToken.isValidSetToken(this.coreAddress, nextSetAddress);
   }

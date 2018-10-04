@@ -36,7 +36,7 @@ import {
 } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
-import { RebalancingSetTokenAPI } from '@src/api';
+import { RebalancingAPI } from '@src/api';
 import { RebalancingSetTokenWrapper } from '@src/wrappers';
 import {
   DEFAULT_ACCOUNT,
@@ -74,7 +74,7 @@ const web3Utils = new Web3Utils(web3);
 
 let currentSnapshotId: number;
 
-describe('RebalancingSetTokenAPI', () => {
+describe('RebalancingAPI', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
@@ -82,7 +82,7 @@ describe('RebalancingSetTokenAPI', () => {
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
 
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
-  let rebalancingSetTokenAPI: RebalancingSetTokenAPI;
+  let rebalancingAPI: RebalancingAPI;
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
@@ -100,7 +100,7 @@ describe('RebalancingSetTokenAPI', () => {
     const assertions = new Assertions(web3, coreWrapper);
 
     rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
-    rebalancingSetTokenAPI = new RebalancingSetTokenAPI(web3, assertions, core.address);
+    rebalancingAPI = new RebalancingAPI(web3, assertions, core.address);
   });
 
   afterEach(async () => {
@@ -123,15 +123,13 @@ describe('RebalancingSetTokenAPI', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const setTokens = await deploySetTokensAsync(
+      const setTokensToDeploy = 2;
+      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
         core,
         setTokenFactory.address,
         transferProxy.address,
-        2,
+        setTokensToDeploy,
       );
-
-      currentSetToken = setTokens[0];
-      nextSetToken = setTokens[1];
 
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -159,7 +157,7 @@ describe('RebalancingSetTokenAPI', () => {
     });
 
     async function subject(): Promise<string> {
-      return await rebalancingSetTokenAPI.proposeAsync(
+      return await rebalancingAPI.proposeAsync(
         subjectRebalancingSetTokenAddress,
         subjectNextSet,
         subjectAuctionPriceCurveAddress,
