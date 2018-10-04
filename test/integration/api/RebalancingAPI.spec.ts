@@ -67,6 +67,7 @@ const contract = require('truffle-contract');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
+const moment = require('moment');
 
 let currentSnapshotId: number;
 
@@ -197,13 +198,18 @@ describe('RebalancingAPI', () => {
     });
 
     describe('when the rebalance interval hasn\'t elapsed since the last rebalance', async () => {
+      let nextRebalanceFormattedDate: string;
+
       beforeEach(async () => {
+        const nextAvailableRebalanceMSeconds = nextRebalanceAvailalbeAtSeconds * 1000;
+        nextRebalanceFormattedDate = moment(nextAvailableRebalanceMSeconds).format('dddd, MMMM Do YYYY, h:mm:ss a');
+
         timeKeeper.freeze(nextRebalanceAvailalbeAtSeconds * 1000 - 1);
       });
 
       it('throw', async () => {
         return expect(subject()).to.be.rejectedWith(
-          'Attempting to rebalance too soon. Rebalancing next available on'
+          `Attempting to rebalance too soon. Rebalancing next available on ${nextRebalanceFormattedDate}`
         );
       });
     });
