@@ -42,9 +42,9 @@ export class RebalancingSetTokenAssertions {
   public async isNotInRebalanceState(rebalancingSetTokenAddress: Address): Promise<void> {
     const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
 
-    const currentState = rebalancingSetTokenInstance.rebalanceState.callAsync();
-
-    if (currentState.isEqualTo(new BigNumber(2))) {
+    const currentState = await rebalancingSetTokenInstance.rebalanceState.callAsync();
+    console.log(currentState);
+    if (currentState.eq(new BigNumber(2))) {
       throw new Error(rebalancingSetTokenAssertionsErrors.REBALANCE_IN_PROGRESS(rebalancingSetTokenAddress));
     }
   }
@@ -55,10 +55,10 @@ export class RebalancingSetTokenAssertions {
    * @param  caller   The address of the rebalancing set token
    * @return          Void Promise
    */
-  public async isManager(caller: Address): Promise<void> {
+  public async isManager(rebalancingSetTokenAddress: Address, caller: Address): Promise<void> {
     const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
 
-    const manager = rebalancingSetTokenInstance.manager.callAsync();
+    const manager = await rebalancingSetTokenInstance.manager.callAsync();
 
     if (manager != caller) {
       throw new Error(rebalancingSetTokenAssertionsErrors.ONLY_MANAGER(caller));

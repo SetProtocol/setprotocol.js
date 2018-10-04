@@ -19,7 +19,16 @@
 import * as Web3 from 'web3';
 import { TransactionReceipt } from 'ethereum-types';
 
-import { AccountingAPI, BlockchainAPI, ERC20API, FactoryAPI, IssuanceAPI, OrderAPI, SetTokenAPI } from './api';
+import {
+  AccountingAPI,
+  BlockchainAPI,
+  ERC20API,
+  FactoryAPI,
+  IssuanceAPI,
+  OrderAPI,
+  RebalancingSetTokenAPI,
+  SetTokenAPI
+} from './api';
 import { CoreWrapper, VaultWrapper } from './wrappers';
 import { Assertions } from './assertions';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
@@ -72,6 +81,11 @@ class SetProtocol {
   public setToken: SetTokenAPI;
 
   /**
+   * An instance of the RebalancingSetTokenAPI class containing methods for interacting with SetToken contracts
+   */
+  public rebalancingSetToken: RebalancingSetTokenAPI;
+
+  /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library
    *
    * @param provider    Provider instance you would like the SetProtocol.js library to use for interacting with the
@@ -91,6 +105,7 @@ class SetProtocol {
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config.setTokenFactoryAddress);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
     this.orders = new OrderAPI(this.web3, this.core, assertions);
+    this.rebalancingSetToken = new RebalancingSetTokenAPI(this.web3, assertions, config.coreAddress);
     this.setToken = new SetTokenAPI(this.web3, assertions);
   }
 

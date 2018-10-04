@@ -54,7 +54,7 @@ export class RebalancingSetTokenAPI {
     this.assert = assertions;
     this.coreAddress = coreAddress;
 
-    this.rebalancingSetToken = RebalancingSetTokenWrapper(this.web3);
+    this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
     this.setToken = new SetTokenWrapper(this.web3);
   }
 
@@ -67,18 +67,29 @@ export class RebalancingSetTokenAPI {
     auctionPriceDivisor: BigNumber,
     txOpts: TxData
   ): Promise<string> {
-    this.assertPropose(
+    await this.assertPropose(
       rebalancingSetTokenAddress,
       nextSetAddress,
       auctionLibrary,
       curveCoefficient,
       auctionStartPrice,
-      auctionPriceDivisor
+      auctionPriceDivisor,
+      txOpts
+    );
+
+    return await this.rebalancingSetToken.propose(
+      rebalancingSetTokenAddress,
+      nextSetAddress,
+      auctionLibrary,
+      curveCoefficient,
+      auctionStartPrice,
+      auctionPriceDivisor,
+      txOpts
     );
   }
 
   /* ============ Private Assertions ============ */
-  private assertPropose(
+  private async assertPropose(
     rebalancingSetTokenAddress: Address,
     nextSetAddress: Address,
     auctionLibrary: Address,
@@ -103,9 +114,9 @@ export class RebalancingSetTokenAPI {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(auctionStartPrice)
     );
 
-    this.assert.rebalancingSetToken.isNotInRebalanceState(rebalancingSetTokenAddress);
-    this.assert.rebalancingSetToken.isManager(txOpts.from);
-    this.assert.rebalancingSetToken.sufficientTimeBetweenRebalance(rebalancingSetTokenAddress);
-    this.assert.setToken.isValidSetToken(this.coreAddress, nextSetAddress);
+    await this.assert.rebalancingSetToken.isNotInRebalanceState(rebalancingSetTokenAddress);
+    await this.assert.rebalancingSetToken.isManager(rebalancingSetTokenAddress, txOpts.from);
+    // await this.assert.rebalancingSetToken.sufficientTimeBetweenRebalance(rebalancingSetTokenAddress);
+    await this.assert.setToken.isValidSetToken(this.coreAddress, nextSetAddress);
   }
 }
