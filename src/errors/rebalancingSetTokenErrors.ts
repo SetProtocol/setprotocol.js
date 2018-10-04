@@ -16,10 +16,10 @@
 
 'use strict';
 
-export { coreAPIErrors, coreAssertionErrors } from './coreErrors';
-export { erc20AssertionErrors } from './erc20Errors';
-export { orderErrors } from './orderErrors';
-export { rebalancingSetTokenAssertionsErrors } from './rebalancingSetTokenErrors';
-export { schemaAssertionsError } from './schemaErrors';
-export { setTokenAssertionsErrors } from './setTokenErrors';
-export { vaultAssertionErrors } from './vaultErrors';
+
+export const rebalancingSetTokenAssertionsErrors = {
+  REBALANCE_IN_PROGRESS: (rebalancingSetAddress: string) => `Contract at ${rebalancingSetAddress} is undergoing a\
+   rebalance and functionality is limited.`,
+  ONLY_MANAGER: (caller: string) => '${caller} is not the manager of this Rebalancing Set Token.',
+  INSUFFICIENT_TIME_PASSED: (state: string) => 'Not enough time passed from ${state}.',
+};

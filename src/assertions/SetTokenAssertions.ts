@@ -21,7 +21,7 @@ import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
 import { ERC20Assertions } from './ERC20Assertions';
-import { SetTokenContract, DetailedERC20Contract } from 'set-protocol-contracts';
+import { SetTokenContract, DetailedERC20Contract, CoreContract } from 'set-protocol-contracts';
 import { coreAPIErrors, setTokenAssertionsErrors, erc20AssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 import { ZERO } from '../constants';
@@ -166,6 +166,18 @@ export class SetTokenAssertions {
 
     if (!isComponent) {
       throw new Error(setTokenAssertionsErrors.IS_NOT_COMPONENT(setTokenAddress, componentAddress));
+    }
+  }
+
+  public async isValidSetToken(
+    coreAddress: Address,
+    setTokenAddress: Address,
+  ): Promise<void> {
+    const coreInstance = await CoreContract.at(coreAddress, this.web3, {});
+    const isValidSet = await coreInstance.validSets.callAsync(setTokenAddress);
+
+    if (!isValidSet) {
+      throw new Error(setTokenAssertionsErrors.IS_NOT_A_VALID_SET(setTokenAddress));
     }
   }
 }
