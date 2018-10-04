@@ -31,6 +31,7 @@ export {
   transitionToProposeAsync,
   transitionToRebalanceAsync,
   getAuctionSetUpOutputsAsync,
-  getExpectedUnitSharesAsync
+  getExpectedUnitSharesAsync,
 } from './rebalancingHelpers';
+
 export { getVaultBalances } from './vaultHelpers';

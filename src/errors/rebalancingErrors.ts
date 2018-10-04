@@ -16,10 +16,11 @@
 
 'use strict';
 
-export { coreAPIErrors, coreAssertionErrors } from './coreErrors';
-export { erc20AssertionErrors } from './erc20Errors';
-export { orderErrors } from './orderErrors';
-export { rebalancingErrors } from './rebalancingErrors';
-export { schemaAssertionsError } from './schemaErrors';
-export { setTokenAssertionsErrors } from './setTokenErrors';
-export { vaultAssertionErrors } from './vaultErrors';
+
+export const rebalancingErrors = {
+  REBALANCE_IN_PROGRESS: (rebalancingSetAddress: string) => `Rebalancing token at ${rebalancingSetAddress} is ` +
+    `currently in rebalancing state.`,
+  NOT_REBALANCING_MANAGER: (caller: string) => `Caller ${caller} is not the manager of this Rebalancing Set Token.`,
+  INSUFFICIENT_TIME_PASSED: (nextAvailableRebalance: string) => `Attempting to rebalance too soon. Rebalancing next ` +
+    `available on ${nextAvailableRebalance}`,
+};

@@ -19,7 +19,16 @@
 import * as Web3 from 'web3';
 import { TransactionReceipt } from 'ethereum-types';
 
-import { AccountingAPI, BlockchainAPI, ERC20API, FactoryAPI, IssuanceAPI, OrderAPI, SetTokenAPI } from './api';
+import {
+  AccountingAPI,
+  BlockchainAPI,
+  ERC20API,
+  FactoryAPI,
+  IssuanceAPI,
+  OrderAPI,
+  RebalancingAPI,
+  SetTokenAPI
+} from './api';
 import { CoreWrapper, VaultWrapper } from './wrappers';
 import { Assertions } from './assertions';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
@@ -57,14 +66,19 @@ class SetProtocol {
   public static NULL_ADDRESS = NULL_ADDRESS;
 
   /**
+   * An instance of the ERC20API class containing methods for interacting with ERC20 compliant token contracts
+   */
+  public erc20: ERC20API;
+
+  /**
    * An instance of the OrderAPI class containing methods for relaying issuance orders
    */
   public orders: OrderAPI;
 
   /**
-   * An instance of the ERC20API class containing methods for interacting with ERC20 compliant token contracts
+   * An instance of the RebalancingAPI class containing methods for rebalancing Sets
    */
-  public erc20: ERC20API;
+  public rebalancing: RebalancingAPI;
 
   /**
    * An instance of the SetTokenAPI class containing methods for interacting with SetToken contracts
@@ -91,6 +105,7 @@ class SetProtocol {
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config.setTokenFactoryAddress);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
     this.orders = new OrderAPI(this.web3, this.core, assertions);
+    this.rebalancing = new RebalancingAPI(this.web3, assertions, config.coreAddress);
     this.setToken = new SetTokenAPI(this.web3, assertions);
   }
 

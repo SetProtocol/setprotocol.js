@@ -21,7 +21,7 @@ import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
 import { ERC20Assertions } from './ERC20Assertions';
-import { SetTokenContract, DetailedERC20Contract } from 'set-protocol-contracts';
+import { SetTokenContract, DetailedERC20Contract, CoreContract } from 'set-protocol-contracts';
 import { coreAPIErrors, setTokenAssertionsErrors, erc20AssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 import { ZERO } from '../constants';
@@ -39,7 +39,6 @@ export class SetTokenAssertions {
    * Throws if the given candidateContract does not respond to some methods from the Set Token interface.
    *
    * @param  setTokenAddress  A Set Token contract address to check
-   * @return                  Void Promise
    */
   public async implementsSetToken(setTokenAddress: Address): Promise<void> {
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
@@ -63,7 +62,6 @@ export class SetTokenAssertions {
    * @param  setTokenAddress  The address of the Set Token contract
    * @param  ownerAddress     The address of the owner
    * @param  quantity         Amount of a Set in base units
-   * @return                  Void Promise
    */
   public async hasSufficientBalances(
     setTokenAddress: Address,
@@ -105,7 +103,6 @@ export class SetTokenAssertions {
    * @param  setTokenAddress  The address of the Set Token contract
    * @param  ownerAddress     The address of the owner
    * @param  quantity         Amount of a Set in base units
-   * @return                  Void Promise
    */
   public async hasSufficientAllowances(
     setTokenAddress: Address,
@@ -166,6 +163,18 @@ export class SetTokenAssertions {
 
     if (!isComponent) {
       throw new Error(setTokenAssertionsErrors.IS_NOT_COMPONENT(setTokenAddress, componentAddress));
+    }
+  }
+
+  public async isValidSetToken(
+    coreAddress: Address,
+    setTokenAddress: Address,
+  ): Promise<void> {
+    const coreInstance = await CoreContract.at(coreAddress, this.web3, {});
+    const isValidSet = await coreInstance.validSets.callAsync(setTokenAddress);
+
+    if (!isValidSet) {
+      throw new Error(setTokenAssertionsErrors.IS_NOT_A_VALID_SET(setTokenAddress));
     }
   }
 }
