@@ -158,7 +158,7 @@ describe('RebalancingSetTokenAPI', () => {
       subjectCaller = managerAddress;
     });
 
-    async function subject(): Promise<SetDetails> {
+    async function subject(): Promise<string> {
       return await rebalancingSetTokenAPI.proposeAsync(
         subjectRebalancingSetTokenAddress,
         subjectNextSet,
