@@ -31,6 +31,8 @@ import { Core, Vault } from 'set-protocol-contracts';
 import * as setProtocolUtils from 'set-protocol-utils';
 import {
   CoreContract,
+  RebalancingSetTokenContract,
+  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -42,14 +44,25 @@ import {
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { CoreWrapper } from '@src/wrappers';
 import { OrderAPI } from '@src/api';
-import { NULL_ADDRESS, TX_DEFAULTS, ZERO } from '@src/constants';
+import {
+  NULL_ADDRESS,
+  TX_DEFAULTS,
+  ZERO,
+  ONE_DAY_IN_SECONDS,
+  DEFAULT_CONSTANT_AUCTION_PRICE,
+} from '@src/constants';
 import { Assertions } from '@src/assertions';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
+  constructInflowOutflowArraysAsync,
+  createDefaultRebalancingSetTokenAsync,
+  deployConstantAuctionPriceCurveAsync,
   deployCoreContract,
   deployKyberNetworkWrapperContract,
+  deployRebalancingSetTokenFactoryContract,
   deploySetTokenAsync,
+  deploySetTokensAsync,
   deploySetTokenFactoryContract,
   deployTakerWalletWrapperContract,
   deployTokenAsync,
@@ -59,6 +72,7 @@ import {
   deployZeroExExchangeWrapperContract,
   getVaultBalances,
   tokenDeployedOnSnapshot,
+  transitionToRebalanceAsync,
 } from '@test/helpers';
 import {
   BigNumber,
@@ -99,6 +113,7 @@ describe('CoreWrapper', () => {
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
 
   let coreWrapper: CoreWrapper;
   let assertions: Assertions;
@@ -118,6 +133,7 @@ describe('CoreWrapper', () => {
     vault = await deployVaultContract(provider);
     core = await deployCoreContract(provider, transferProxy.address, vault.address);
     setTokenFactory = await deploySetTokenFactoryContract(provider, core);
+    rebalancingSetTokenFactory = await deployRebalancingSetTokenFactoryContract(provider, core);
 
     await addAuthorizationAsync(vault, core.address);
     await addAuthorizationAsync(transferProxy, core.address);
@@ -759,6 +775,141 @@ describe('CoreWrapper', () => {
     });
   });
 
+  describe('bid', async () => {
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let currentSetToken: SetTokenContract;
+    let nextSetToken: SetTokenContract;
+
+    let subjectRebalancingSetToken: Address;
+    let subjectBidQuantity: BigNumber;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const setTokens = await deploySetTokensAsync(
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        2,
+      );
+
+      currentSetToken = setTokens[0];
+      nextSetToken = setTokens[1];
+
+      const proposalPeriod = ONE_DAY_IN_SECONDS;
+      const managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      // Issue currentSetToken
+      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      const rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
+      // Deploy price curve used in auction
+      const priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
+
+      // Transition to proposal state
+      const auctionPriceCurveAddress = priceCurve.address;
+      const setCurveCoefficient = new BigNumber(1);
+      const setAuctionStartPrice = new BigNumber(500);
+      const setAuctionPriceDivisor = new BigNumber(1000);
+      await transitionToRebalanceAsync(
+        rebalancingSetToken,
+        managerAddress,
+        nextSetToken.address,
+        auctionPriceCurveAddress,
+        setCurveCoefficient,
+        setAuctionStartPrice,
+        setAuctionPriceDivisor
+      );
+
+      subjectRebalancingSetToken = rebalancingSetToken.address;
+      subjectBidQuantity = ether(2);
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await coreWrapper.bid(
+        subjectRebalancingSetToken,
+        subjectBidQuantity,
+        { from: subjectCaller },
+      );
+    }
+
+    test('subtract correct amount from remainingCurrentSets', async () => {
+      const existingRemainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+
+      await subject();
+
+      const expectedRemainingCurrentSets = existingRemainingCurrentSets.sub(subjectBidQuantity);
+      const newRemainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+      expect(newRemainingCurrentSets).to.eql(expectedRemainingCurrentSets);
+    });
+
+    test('transfers the correct amount of tokens from the bidder to the rebalancing token in Vault', async () => {
+      const expectedTokenFlows = await constructInflowOutflowArraysAsync(
+        rebalancingSetToken,
+        subjectBidQuantity,
+        DEFAULT_CONSTANT_AUCTION_PRICE
+      );
+      const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+      const oldSenderBalances = await getVaultBalances(
+        vault,
+        combinedTokenArray,
+        rebalancingSetToken.address
+      );
+
+      await subject();
+
+      const newSenderBalances = await getVaultBalances(
+        vault,
+        combinedTokenArray,
+        rebalancingSetToken.address
+      );
+      const expectedSenderBalances = _.map(oldSenderBalances, (balance, index) =>
+        balance.add(expectedTokenFlows['inflow'][index]).sub(expectedTokenFlows['outflow'][index])
+      );
+      expect(JSON.stringify(newSenderBalances)).to.equal(JSON.stringify(expectedSenderBalances));
+    });
+
+    it('transfers the correct amount of tokens to the bidder in the Vault', async () => {
+      const expectedTokenFlows = await constructInflowOutflowArraysAsync(
+        rebalancingSetToken,
+        subjectBidQuantity,
+        DEFAULT_CONSTANT_AUCTION_PRICE
+      );
+      const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+      const oldReceiverBalances = await getVaultBalances(
+        vault,
+        combinedTokenArray,
+        DEFAULT_ACCOUNT
+      );
+
+      await subject();
+
+      const newReceiverBalances = await getVaultBalances(
+        vault,
+        combinedTokenArray,
+        DEFAULT_ACCOUNT
+      );
+      const expectedReceiverBalances = _.map(oldReceiverBalances, (balance, index) =>
+        balance.add(expectedTokenFlows['outflow'][index])
+      );
+
+      expect(JSON.stringify(newReceiverBalances)).to.equal(JSON.stringify(expectedReceiverBalances));
+    });
+  });
+
   describe('Core State Getters', async () => {
     let setComponentUnit: BigNumber;
     let setToken: SetTokenContract;
@@ -799,8 +950,9 @@ describe('CoreWrapper', () => {
     test('gets factory addresses', async () => {
       const factoryAddresses = await coreWrapper.getFactories();
 
-      expect(factoryAddresses.length).to.equal(1);
+      expect(factoryAddresses.length).to.equal(2);
       expect(factoryAddresses[0]).to.equal(setTokenFactory.address);
+      expect(factoryAddresses[1]).to.equal(rebalancingSetTokenFactory.address);
     });
 
     test('gets Set addresses', async () => {
