@@ -145,7 +145,7 @@ export class RebalancingSetTokenWrapper {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 
     const tokenFlows = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
-    return { inflow: tokenFlows[0], outflow: tokenFlows[1] } as TokenFlowArrays;
+    return { inflow: tokenFlows[0], outflow: tokenFlows[1] } as TokenFlows;
   }
 
   /**
