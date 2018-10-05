@@ -23,7 +23,7 @@ import { RebalancingSetTokenContract, SetTokenContract, VaultContract } from 'se
 import { ZERO } from '../constants';
 import { coreAPIErrors, setTokenAssertionsErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { ERC20Wrapper, SetTokenWrapper, RebalancingSetTokenWrapper } from '../wrappers';
+import { ERC20Wrapper, SetTokenWrapper, RebalancingSetTokenWrapper, CoreWrapper } from '../wrappers';
 import { BigNumber, calculatePartialAmount } from '../util';
 import { Address, Component, SetDetails, TxData, } from '../types/common';
 
@@ -37,7 +37,7 @@ import { Address, Component, SetDetails, TxData, } from '../types/common';
 export class RebalancingAPI {
   private web3: Web3;
   private assert: Assertions;
-  private coreAddress: Address;
+  private core: CoreWrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private setToken: SetTokenWrapper;
 
@@ -49,10 +49,10 @@ export class RebalancingAPI {
    *                      the Ethereum network
    * @param assertions  An instance of the Assertion library
    */
-  constructor(web3: Web3, assertions: Assertions, coreAddress: Address) {
+  constructor(web3: Web3, assertions: Assertions, core: CoreWrapper) {
     this.web3 = web3;
     this.assert = assertions;
-    this.coreAddress = coreAddress;
+    this.core = core;
 
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
     this.setToken = new SetTokenWrapper(this.web3);
@@ -143,6 +143,32 @@ export class RebalancingAPI {
     );
   }
 
+  /**
+   * Allows user to bid on a rebalance auction occuring on a Rebalancing Set Token
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
+   * @param  txOpts                         Transaction options
+   * @return                                Transaction hash
+   */
+  public async bidAsync(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    txOpts: TxData
+  ): Promise<string> {
+    await this.assertBid(
+      rebalancingSetTokenAddress,
+      bidQuantity,
+      txOpts
+    );
+
+    return await this.core.bid(
+      rebalancingSetTokenAddress,
+      bidQuantity,
+      txOpts
+    );
+  }
+
   /* ============ Private Assertions ============ */
 
   private async assertPropose(
@@ -173,7 +199,7 @@ export class RebalancingAPI {
     await this.assert.rebalancing.isNotInRebalanceState(rebalancingSetTokenAddress);
     await this.assert.rebalancing.isManager(rebalancingSetTokenAddress, txOpts.from);
     await this.assert.rebalancing.sufficientTimeBetweenRebalance(rebalancingSetTokenAddress);
-    await this.assert.setToken.isValidSetToken(this.coreAddress, nextSetAddress);
+    await this.assert.setToken.isValidSetToken(this.core.coreAddress, nextSetAddress);
   }
 
   private async assertRebalance(
@@ -192,5 +218,32 @@ export class RebalancingAPI {
 
     await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
     await this.assert.rebalancing.enoughSetsRebalanced(rebalancingSetTokenAddress);
+  }
+
+  private async assertBid(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    txOpts: TxData
+  ) {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+    this.assert.common.greaterThanZero(
+      bidQuantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(bidQuantity)
+    );
+
+    await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
+    await this.assert.rebalancing.bidAmountLessThanRemainingSets(rebalancingSetTokenAddress, bidQuantity);
+    await this.assert.rebalancing.bidIsMultipleOfMinimumBid(rebalancingSetTokenAddress, bidQuantity);
+    await this.assert.rebalancing.hasSufficientAllowances(
+      rebalancingSetTokenAddress,
+      txOpts.from,
+      this.core.transferProxyAddress,
+      bidQuantity
+    );
+    await this.assert.rebalancing.hasSufficientBalances(
+      rebalancingSetTokenAddress,
+      txOpts.from,
+      bidQuantity
+    );
   }
 }

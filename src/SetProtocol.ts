@@ -105,7 +105,7 @@ class SetProtocol {
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config.setTokenFactoryAddress);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
     this.orders = new OrderAPI(this.web3, this.core, assertions);
-    this.rebalancing = new RebalancingAPI(this.web3, assertions, config.coreAddress);
+    this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core);
     this.setToken = new SetTokenAPI(this.web3, assertions);
   }
 

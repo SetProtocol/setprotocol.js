@@ -28,4 +28,8 @@ export const rebalancingErrors = {
   NOT_ENOUGH_SETS_REBALANCED: (nextAvailableRebalance: string, minimumBid: string, remainingCurrentSets: string) =>
     `In order to settle rebalance there must be less than current ${minimumBid} sets remaining to be rebalanced. ` +
     `There are currently ${remainingCurrentSets} remaining for rebalance.`,
+  BID_AMOUNT_EXCEEDS_REMAINING_CURRENT_SETS: (remainingCurrentSets: string, bidQuantity: string) => `The submitted ` +
+    `bid quantity, ${bidQuantity}, exceeds the remaining current sets, ${remainingCurrentSets}.`,
+  BID_AMOUNT_NOT_MULTIPLE_OF_MINIMUM_BID: (bidQuantity: string, minimumBid: string) => `The submitted bid quantity` +
+    `, ${bidQuantity}, must be a multiple of the minimumBid, ${minimumBid}.`,
 };

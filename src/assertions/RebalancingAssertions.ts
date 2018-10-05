@@ -21,7 +21,7 @@ import * as Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
 import { ERC20Assertions } from './ERC20Assertions';
-import { RebalancingSetTokenContract } from 'set-protocol-contracts';
+import { RebalancingSetTokenContract, DetailedERC20Contract } from 'set-protocol-contracts';
 import { coreAPIErrors, rebalancingErrors } from '../errors';
 import { BigNumber } from '../util';
 import { RebalancingState } from '../types/common';
@@ -31,9 +31,11 @@ const moment = require('moment');
 
 export class RebalancingAssertions {
   private web3: Web3;
+  private erc20Assertions: ERC20Assertions;
 
   constructor(web3: Web3) {
     this.web3 = web3;
+    this.erc20Assertions = new ERC20Assertions(this.web3);
   }
 
   /**
@@ -152,5 +154,134 @@ export class RebalancingAssertions {
         remainingCurrentSets.toString()
       ));
     }
+  }
+
+  /**
+   * Throws if user bids to rebalance an amount of current set token that is greater than amount of current set
+   * token remaining.
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   * @param  bidQuantity                  The amount of current set the user is seeking to rebalance
+   */
+  public async bidAmountLessThanRemainingSets(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber
+  ): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+    const remainingCurrentSets = await rebalancingSetTokenInstance.remainingCurrentSets.callAsync();
+
+    if (bidQuantity.greaterThan(remainingCurrentSets)) {
+      throw new Error(rebalancingErrors.BID_AMOUNT_EXCEEDS_REMAINING_CURRENT_SETS(
+        remainingCurrentSets.toString(),
+        bidQuantity.toString()
+      ));
+    }
+  }
+
+  /**
+   * Throws if user bids to rebalance an amount of current set token that is not a multiple of the minimumBid.
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   * @param  bidQuantity                  The amount of current set the user is seeking to rebalance
+   */
+  public async bidIsMultipleOfMinimumBid(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber
+  ): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+    const minimumBid = await rebalancingSetTokenInstance.minimumBid.callAsync();
+
+    if (!bidQuantity.modulo(minimumBid).isZero()) {
+      throw new Error(rebalancingErrors.BID_AMOUNT_NOT_MULTIPLE_OF_MINIMUM_BID(
+        bidQuantity.toString(),
+        minimumBid.toString()
+      ));
+    }
+  }
+
+  /**
+   * Throws if the given user doesn't have a sufficient balance for a component token needed to be
+   * injected for a bid. Since the price can only get better for a bidder the inflow amounts queried
+   * when this function is called suffices.
+   *
+   * @param  rebalancingSetTokenAddress  The address of the Rebalancing Set Token contract
+   * @param  ownerAddress                The address of the owner
+   * @param  quantity                    Amount of a Set in base units
+   */
+  public async hasSufficientBalances(
+    rebalancingSetTokenAddress: Address,
+    ownerAddress: Address,
+    quantity: BigNumber,
+  ): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+
+    const [inflowArray, outflowArray] = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
+    const components = await rebalancingSetTokenInstance.getCombinedTokenArray.callAsync();
+
+    // Create component ERC20 token instances
+    const componentInstancePromises = _.map(
+      components,
+      async component =>
+        await DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
+    );
+    const componentInstances = await Promise.all(componentInstancePromises);
+
+    // Assert that user has sufficient balance for each component token
+    const userHasSufficientBalancePromises = _.map(
+      componentInstances,
+      async (componentInstance, index) => {
+        const requiredBalance = inflowArray[index];
+        await this.erc20Assertions.hasSufficientBalanceAsync(
+          componentInstance.address,
+          ownerAddress,
+          requiredBalance,
+        );
+      },
+    );
+    await Promise.all(userHasSufficientBalancePromises);
+  }
+
+  /**
+   * Throws if the given user doesn't have a sufficient allowance for a component token needed to be
+   * injected for a bid. Since the price can only get better for a bidder the inflow amounts queried
+   * when this function is called suffices.
+   *
+   * @param  rebalancingSetTokenAddress  The address of the Rebalancing Set Token contract
+   * @param  ownerAddress                The address of the owner
+   * @param  quantity                    Amount of a Set in base units
+   */
+  public async hasSufficientAllowances(
+    rebalancingSetTokenAddress: Address,
+    ownerAddress: Address,
+    spenderAddress: Address,
+    quantity: BigNumber,
+  ): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+
+    const [inflowArray, outflowArray] = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
+    const components = await rebalancingSetTokenInstance.getCombinedTokenArray.callAsync();
+
+    // Create component ERC20 token instances
+    const componentInstancePromises = _.map(
+      components,
+      async component =>
+        await DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
+    );
+    const componentInstances = await Promise.all(componentInstancePromises);
+
+    // Assert that user has sufficient allowances for each component token
+    const userHasSufficientAllowancePromises = _.map(
+      componentInstances,
+      async (componentInstance, index) => {
+        const requiredBalance = inflowArray[index];
+        return await this.erc20Assertions.hasSufficientAllowanceAsync(
+          componentInstance.address,
+          ownerAddress,
+          spenderAddress,
+          requiredBalance,
+        );
+      },
+    );
+    await Promise.all(userHasSufficientAllowancePromises);
   }
 }
