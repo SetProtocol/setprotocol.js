@@ -39,8 +39,8 @@ export class AccountingAPI {
   /**
    * Instantiates a new AccountingAPI instance that contains methods for transferring balances in the vault
    *
-   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
-   *                      the Ethereum network
+   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
+   *                      with the Ethereum network
    * @param core        An instance of CoreWrapper to interact with the deployed Core contract
    * @param assertions  An instance of the Assertion library
    */

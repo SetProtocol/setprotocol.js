@@ -64,8 +64,8 @@ export class BlockchainAPI {
   }
 
   /**
-   * Polls the Ethereum blockchain until the specified transaction has been mined or
-   * the timeout limit is reached, whichever occurs first
+   * Polls the Ethereum blockchain until the specified transaction has been mined or the timeout limit is reached,
+   * whichever occurs first
    *
    * @param  txHash               Transaction hash to poll
    * @param  pollingIntervalMs    Interval at which the blockchain should be polled. Defaults to 1000

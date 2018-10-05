@@ -184,8 +184,8 @@ class SetProtocol {
    * Create a new Rebalancing token by passing in parameters denoting a Set to track, the manager, and various
    * rebalancing properties to facilitate rebalancing events
    *
-   * Note: the return value is the transaction hash of the createSetAsync call, not the deployed SetToken
-   * contract address. Use `getSetAddressFromCreateTxHashAsync` to retrieve the SetToken address
+   * Note: the return value is the transaction hash of the createRebalancingSetTokenAsync call, not the deployed Token
+   * contract address. Use `getSetAddressFromCreateTxHashAsync` to retrieve the RebalancingSetToken address
    *
    * @param  manager              Address of account to propose, rebalance, and settle the Rebalancing token
    * @param  initialSet           Address of the Set the Rebalancing token is initially tracking

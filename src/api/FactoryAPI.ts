@@ -53,8 +53,8 @@ export class FactoryAPI {
   /**
    * Instantiates a new FactoryAPI instance that contains methods for creating new Sets
    *
-   * @param web3                      Web3.js Provider instance you would like the SetProtocol.js library to use for
-   *                                    interacting with the Ethereum network
+   * @param web3                      Web3.js Provider instance you would like the SetProtocol.js library to use
+   *                                    for interacting with the Ethereum network
    * @param core                      An instance of CoreWrapper to interact with the deployed Core contract
    * @param assertions                An instance of the Assertion library
    * @param config                    Object conforming to SetProtocolConfig interface with contract addresses
@@ -198,7 +198,7 @@ export class FactoryAPI {
    * Create a new Rebalancing token by passing in parameters denoting a Set to track, the manager, and various
    * rebalancing properties to facilitate rebalancing events
    *
-   * Note: the return value is the transaction hash of the createSetAsync call, not the deployed SetToken
+   * Note: the return value is the transaction hash of the createRebalancingSetTokenAsync call, not the deployed Token
    * contract address. Use `getSetAddressFromCreateTxHashAsync` to retrieve the SetToken address
    *
    * @param  manager              Address of account to propose, rebalance, and settle the Rebalancing token
