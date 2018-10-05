@@ -229,6 +229,7 @@ export class RebalancingAPI {
 
     return {
       address: rebalancingSetTokenAddress,
+      factoryAddress,
       managerAddress,
       currentSetAddress,
       unitShares,

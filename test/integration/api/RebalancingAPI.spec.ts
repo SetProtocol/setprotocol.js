@@ -42,11 +42,13 @@ import { RebalancingAPI } from '@src/api';
 import { RebalancingSetTokenWrapper, CoreWrapper } from '@src/wrappers';
 import {
   DEFAULT_ACCOUNT,
-  ONE_DAY_IN_SECONDS,
   DEFAULT_CONSTANT_AUCTION_PRICE,
+  DEFAULT_REBALANCING_NATURAL_UNIT,
+  DEFAULT_UNIT_SHARES,
+  ONE_DAY_IN_SECONDS,
   TX_DEFAULTS,
-  ZERO,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+  ZERO,
 } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber, ether, Web3Utils } from '@src/util';
@@ -1113,6 +1115,72 @@ describe('RebalancingAPI', () => {
 
   describe('getProposalDetails', async () => {
     let currentSetToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let proposalPeriod: BigNumber;
+    let managerAddress: Address;
+    let priceCurve: ConstantAuctionPriceCurveContract;
+    let rebalancingSetQuantityToIssue: BigNumber;
+
+    let subjectRebalancingSetTokenAddress: Address;
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 1;
+      [currentSetToken] = await deploySetTokensAsync(
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      proposalPeriod = ONE_DAY_IN_SECONDS;
+      managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      // Issue currentSetToken
+      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
+      // Deploy price curve used in auction
+      priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
+
+      subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
+    });
+
+    async function subject(): Promise<RebalancingSetDetails> {
+      return await rebalancingAPI.getDetails(subjectRebalancingSetTokenAddress);
+    }
+
+    it('returns the rebalancing token properties', async () => {
+      const details = await subject();
+
+      const lastRebalancedAt = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+      expect(details.lastRebalancedAt).to.bignumber.equal(lastRebalancedAt);
+
+      expect(details.address).to.eql(subjectRebalancingSetTokenAddress);
+      expect(details.factoryAddress).to.eql(rebalancingSetTokenFactory.address);
+      expect(details.managerAddress).to.eql(managerAddress);
+      expect(details.currentSetAddress).to.eql(currentSetToken.address);
+      expect(details.unitShares).to.bignumber.equal(DEFAULT_UNIT_SHARES);
+      expect(details.naturalUnit).to.bignumber.equal(DEFAULT_REBALANCING_NATURAL_UNIT);
+      expect(details.state).to.eql('Default');
+      expect(details.supply).to.bignumber.equal(rebalancingSetQuantityToIssue);
+      expect(details.name).to.eql('Rebalancing Set Token');
+      expect(details.symbol).to.eql('RBSET');
+    });
+  });
+
+  describe('getProposalDetails', async () => {
+    let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
@@ -1274,7 +1342,6 @@ describe('RebalancingAPI', () => {
       priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
-      subjectCaller = DEFAULT_ACCOUNT;
     });
 
     async function subject(): Promise<RebalancingProgressDetails> {
