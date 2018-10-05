@@ -108,10 +108,7 @@ export class RebalancingAPI {
    * @param  txOpts                         Transaction options
    * @return                                Transaction hash
    */
-  public async rebalanceAsync(
-    rebalancingSetTokenAddress: Address,
-    txOpts: TxData
-  ): Promise<string> {
+  public async rebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: TxData): Promise<string> {
     await this.assertRebalance(
       rebalancingSetTokenAddress,
     );
@@ -129,10 +126,7 @@ export class RebalancingAPI {
    * @param  txOpts                         Transaction options
    * @return                                Transaction hash
    */
-  public async settleRebalanceAsync(
-    rebalancingSetTokenAddress: Address,
-    txOpts: TxData
-  ): Promise<string> {
+  public async settleRebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: TxData): Promise<string> {
     await this.assertSettleRebalance(
       rebalancingSetTokenAddress,
     );

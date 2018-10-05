@@ -564,7 +564,7 @@ describe('RebalancingAPI', () => {
         );
       });
 
-      test('it fetches the set token properties correctly', async () => {
+      test('updates the rebalancing properties correctly', async () => {
         const expectedUnitShares = await getExpectedUnitSharesAsync(
           rebalancingSetToken,
           nextSetToken,

@@ -138,7 +138,7 @@ export class RebalancingAssertions {
   }
 
   /**
-   * Throws if given rebalancingSetToken is not in Rebalance state
+   * Throws if not enough current sets rebalanced in auction
    *
    * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
    */
