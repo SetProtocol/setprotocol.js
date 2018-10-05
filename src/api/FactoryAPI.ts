@@ -18,13 +18,10 @@
 
 import * as _ from 'lodash';
 import * as Web3 from 'web3';
-import {
-  StandardTokenMockContract,
-  SetTokenContract,
-  VaultContract,
-} from 'set-protocol-contracts';
+import { StandardTokenMockContract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
+import { SetProtocolUtils } from 'set-protocol-utils';
 
-import { E18, UINT256, ZERO } from '../constants';
+import { DEFAULT_REBALANCING_NATURAL_UNIT, E18, ONE_DAY_IN_SECONDS, UINT256, ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { CoreWrapper, ERC20Wrapper } from '../wrappers';
@@ -36,6 +33,7 @@ import {
   generateTxOpts,
   getFormattedLogsFromTxHash,
 } from '../util';
+import { SetProtocolConfig } from '../SetProtocol';
 import { Address, SetUnits, TxData } from '../types/common';
 
 /**
@@ -49,6 +47,7 @@ export class FactoryAPI {
   private assert: Assertions;
   private core: CoreWrapper;
   private erc20: ERC20Wrapper;
+  private rebalancingSetTokenFactoryAddress: Address;
   private setTokenFactoryAddress: Address;
 
   /**
@@ -58,14 +57,15 @@ export class FactoryAPI {
    *                                    interacting with the Ethereum network
    * @param core                      An instance of CoreWrapper to interact with the deployed Core contract
    * @param assertions                An instance of the Assertion library
-   * @param setTokenFactoryAddress    Address of the SetTokenFactory associated with the deployed Core contract
+   * @param config                    Object conforming to SetProtocolConfig interface with contract addresses
    */
-  constructor(web3: Web3, core: CoreWrapper, assertions: Assertions, setTokenFactoryAddress: Address) {
+  constructor(web3: Web3, core: CoreWrapper, assertions: Assertions, config: SetProtocolConfig) {
     this.web3 = web3;
     this.core = core;
     this.erc20 = new ERC20Wrapper(this.web3);
     this.assert = assertions;
-    this.setTokenFactoryAddress = setTokenFactoryAddress;
+    this.rebalancingSetTokenFactoryAddress = config.rebalancingSetTokenFactoryAddress;
+    this.setTokenFactoryAddress = config.setTokenFactoryAddress;
   }
 
   /**
@@ -195,6 +195,61 @@ export class FactoryAPI {
   }
 
   /**
+   * Create a new Rebalancing token by passing in parameters denoting a Set to track, the manager, and various
+   * rebalancing properties to facilitate rebalancing events
+   *
+   * Note: the return value is the transaction hash of the createSetAsync call, not the deployed SetToken
+   * contract address. Use `getSetAddressFromCreateTxHashAsync` to retrieve the SetToken address
+   *
+   * @param  manager              Address of account to propose, rebalance, and settle the Rebalancing token
+   * @param  initialSet           Address of the Set the Rebalancing token is initially tracking
+   * @param  initialUnitShares    Ratio between balance of this Rebalancing token and the currently tracked Set
+   * @param  proposalPeriod       Duration after a manager proposes a new Set to rebalance into when users who wish to
+   *                                pull out may redeem their balance of the RebalancingSetToken for balance of the Set
+   *                                denominated in seconds
+   * @param  rebalanceInterval    Duration after a rebalance is completed when the manager cannot initiate a new
+   *                                Rebalance event
+   * @param  name                 Name for RebalancingSet, i.e. "Top 10"
+   * @param  symbol               Symbol for Set, i.e. "TOP10"
+   * @param  txOpts               Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @return                      Transaction hash
+   */
+  public async createRebalancingSetTokenAsync(
+    manager: Address,
+    initialSet: Address,
+    initialUnitShares: BigNumber,
+    proposalPeriod: BigNumber,
+    rebalanceInterval: BigNumber,
+    name: string,
+    symbol: string,
+    txOpts: TxData,
+  ): Promise<string> {
+    await this.assertCreateRebalancingSet(
+      txOpts.from,
+      this.setTokenFactoryAddress,
+      initialSet,
+      initialUnitShares,
+      proposalPeriod,
+      rebalanceInterval,
+      name,
+      symbol,
+    );
+
+    const callData = SetProtocolUtils.generateRebalancingSetTokenCallData(manager, proposalPeriod, rebalanceInterval);
+
+    return await this.core.create(
+      this.rebalancingSetTokenFactoryAddress,
+      [initialSet],
+      [initialUnitShares],
+      DEFAULT_REBALANCING_NATURAL_UNIT,
+      name,
+      symbol,
+      callData,
+      txOpts
+    );
+  }
+
+  /**
    * Fetch a Set Token address from a createSetAsync transaction hash
    *
    * @param  txHash    Transaction hash of the createSetAsync transaction
@@ -314,5 +369,30 @@ export class FactoryAPI {
       minNaturalUnit,
       coreAPIErrors.INVALID_NATURAL_UNIT(minNaturalUnit),
     );
+  }
+
+  private async assertCreateRebalancingSet(
+    userAddress: Address,
+    factoryAddress: Address,
+    initialSetAddress: Address,
+    initialUnitShares: BigNumber,
+    proposalPeriod: BigNumber,
+    rebalanceInterval: BigNumber,
+    name: string,
+    symbol: string,
+  ) {
+    this.assert.schema.isValidAddress('txOpts.from', userAddress);
+    this.assert.schema.isValidAddress('factoryAddress', factoryAddress);
+    this.assert.schema.isValidAddress('initialSet', initialSetAddress);
+    this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY('name'));
+    this.assert.common.isValidString(symbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY('symbol'));
+    this.assert.common.isGreaterOrEqualThan(proposalPeriod, ONE_DAY_IN_SECONDS,
+       `Parameter proposalPeriod: ${proposalPeriod} must be greater than or equal to ${ONE_DAY_IN_SECONDS}.`);
+    this.assert.common.isGreaterOrEqualThan(rebalanceInterval, ONE_DAY_IN_SECONDS,
+       `Parameter rebalanceInterval: ${rebalanceInterval} must be greater than or equal to ${ONE_DAY_IN_SECONDS}.`);
+    this.assert.common.greaterThanZero(initialUnitShares,
+      `Parameter initialUnitShares: ${initialUnitShares} must be greater than 0.`);
+
+    await this.assert.setToken.implementsSetToken(initialSetAddress);
   }
 }

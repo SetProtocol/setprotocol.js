@@ -34,7 +34,6 @@ import {
   TransferProxyContract,
   VaultContract
 } from 'set-protocol-contracts';
-import { Address } from 'set-protocol-utils';
 
 import { CoreWrapper, RebalancingSetTokenWrapper } from '@src/wrappers';
 import {
@@ -47,6 +46,7 @@ import {
 } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber, Web3Utils } from '@src/util';
+import { Address } from '@src/types/common';
 import { ether } from '@src/util/units';
 import {
   addAuthorizationAsync,

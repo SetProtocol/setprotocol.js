@@ -11,7 +11,6 @@ export {
   IssuanceOrder,
   KyberTrade,
   Log,
-  SetProtocolUtils,
   SignedIssuanceOrder,
   SolidityTypes,
   TakerWalletOrder,

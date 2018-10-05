@@ -29,14 +29,18 @@ export class ERC20Assertions {
     this.web3 = web3;
   }
 
-  // Throws if the given candidateContract does not respond to some methods from the ERC20 interface.
+  /**
+   * Throws if the given contract address does not respond to some methods from the ERC20 interface
+   */
   public async implementsERC20(tokenAddress: Address): Promise<void> {
     const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
 
     try {
-      await tokenContract.balanceOf.callAsync(tokenAddress);
-      await tokenContract.allowance.callAsync(tokenAddress, tokenAddress);
-      await tokenContract.totalSupply.callAsync();
+      await Promise.all([
+        tokenContract.balanceOf.callAsync(tokenAddress),
+        tokenContract.allowance.callAsync(tokenAddress, tokenAddress),
+        tokenContract.totalSupply.callAsync(),
+      ]);
     } catch (error) {
       throw new Error(erc20AssertionErrors.MISSING_ERC20_METHOD(tokenAddress));
     }

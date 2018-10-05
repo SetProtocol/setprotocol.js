@@ -58,7 +58,6 @@ export class RebalancingAPI {
     this.setToken = new SetTokenWrapper(this.web3);
   }
 
-
   /**
    * Proposes rebalance, can only be called by manager
    *
