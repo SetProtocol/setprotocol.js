@@ -79,7 +79,8 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "bin"
   ],
   "husky": {
     "hooks": {
