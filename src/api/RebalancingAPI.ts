@@ -122,6 +122,27 @@ export class RebalancingAPI {
     );
   }
 
+  /**
+   * Settles rebalance after auction has been completed
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  txOpts                         Transaction options
+   * @return                                Transaction hash
+   */
+  public async settleRebalanceAsync(
+    rebalancingSetTokenAddress: Address,
+    txOpts: TxData
+  ): Promise<string> {
+    await this.assertSettleRebalance(
+      rebalancingSetTokenAddress,
+    );
+
+    return await this.rebalancingSetToken.settleRebalance(
+      rebalancingSetTokenAddress,
+      txOpts
+    );
+  }
+
   /* ============ Private Assertions ============ */
 
   private async assertPropose(
@@ -162,5 +183,14 @@ export class RebalancingAPI {
 
     await this.assert.rebalancing.isInProposalState(rebalancingSetTokenAddress);
     await this.assert.rebalancing.sufficientTimeInProposalState(rebalancingSetTokenAddress);
+  }
+
+  private async assertSettleRebalance(
+    rebalancingSetTokenAddress: Address,
+  ) {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+
+    await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
+    await this.assert.rebalancing.enoughSetsRebalanced(rebalancingSetTokenAddress);
   }
 }

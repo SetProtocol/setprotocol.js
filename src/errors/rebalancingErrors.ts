@@ -24,5 +24,8 @@ export const rebalancingErrors = {
   INSUFFICIENT_TIME_PASSED: (nextAvailableRebalance: string) => `Attempting to rebalance too soon. Rebalancing next ` +
     `available on ${nextAvailableRebalance}`,
   INCORRECT_STATE: (rebalancingSetAddress: string, requiredState: string) => `Rebalancing token at ` +
-  `${rebalancingSetAddress} must be in ${requiredState} state to call that function.`,
+    `${rebalancingSetAddress} must be in ${requiredState} state to call that function.`,
+  NOT_ENOUGH_SETS_REBALANCED: (nextAvailableRebalance: string, minimumBid: string, remainingCurrentSets: string) =>
+    `In order to settle rebalance there must be less than current ${minimumBid} sets remaining to be rebalanced. ` +
+    `There are currently ${remainingCurrentSets} remaining for rebalance.`,
 };

@@ -65,6 +65,20 @@ export class RebalancingAssertions {
   }
 
   /**
+   * Throws if given rebalancingSetToken is not in Rebalance state
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   */
+  public async isInRebalanceState(rebalancingSetTokenAddress: Address): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+
+    const currentState = await rebalancingSetTokenInstance.rebalanceState.callAsync();
+    if (!currentState.eq(RebalancingState.REBALANCE)) {
+      throw new Error(rebalancingErrors.INCORRECT_STATE(rebalancingSetTokenAddress, 'Rebalance'));
+    }
+  }
+
+  /**
    * Throws if caller of rebalancingSetToken is not manager
    *
    * @param  caller   The address of the rebalancing set token
@@ -118,6 +132,25 @@ export class RebalancingAssertions {
         nextAvailableRebalance.toNumber()).format('dddd, MMMM Do YYYY, h:mm:ss a'
       );
       throw new Error(rebalancingErrors.INSUFFICIENT_TIME_PASSED(nextRebalanceFormattedDate));
+    }
+  }
+
+  /**
+   * Throws if given rebalancingSetToken is not in Rebalance state
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   */
+  public async enoughSetsRebalanced(rebalancingSetTokenAddress: Address): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+    const minimumBid = await rebalancingSetTokenInstance.minimumBid.callAsync();
+    const remainingCurrentSets = await rebalancingSetTokenInstance.remainingCurrentSets.callAsync();
+
+    if (remainingCurrentSets.greaterThanOrEqualTo(minimumBid)) {
+      throw new Error(rebalancingErrors.NOT_ENOUGH_SETS_REBALANCED(
+        rebalancingSetTokenAddress,
+        minimumBid.toString(),
+        remainingCurrentSets.toString()
+      ));
     }
   }
 }
