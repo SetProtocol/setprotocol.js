@@ -43,14 +43,14 @@ export class RebalancingSetTokenWrapper {
   /**
    * Proposes rebalance, can only be called by manager
    *
-   * @param  rebalancingSetAddress   Address of the Set
-   * @param  nextSet                 Amount of currentSet to rebalance
-   * @param  auctionLibrary          Amount of currentSet to rebalance
-   * @param  curveCoefficient        Amount of currentSet to rebalance
-   * @param  auctionStartPrice       Amount of currentSet to rebalance
-   * @param  auctionPriceDivisor     Amount of currentSet to rebalance
-   * @param  txOpts                  Transaction options
-   * @return                         Transaction hash
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  nextSetAddress                 Set to rebalance into
+   * @param  auctionLibrary                 Address of auction price curve to use
+   * @param  curveCoefficient               Set auction price curve coefficient
+   * @param  auctionStartPrice              Used with auctionPriceDivisor, define auction start price
+   * @param  auctionPriceDivisor            Parameter to control how fast price moves
+   * @param  txOpts                         Transaction options
+   * @return                                Transaction hash
    */
   public async propose(
     rebalancingSetAddress: Address,

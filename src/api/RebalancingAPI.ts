@@ -58,6 +58,19 @@ export class RebalancingAPI {
     this.setToken = new SetTokenWrapper(this.web3);
   }
 
+
+  /**
+   * Proposes rebalance, can only be called by manager
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  nextSetAddress                 Set to rebalance into
+   * @param  auctionLibrary                 Address of auction price curve to use
+   * @param  curveCoefficient               Set auction price curve coefficient
+   * @param  auctionStartPrice              Used with auctionPriceDivisor, define auction start price
+   * @param  auctionPriceDivisor            Parameter to control how fast price moves
+   * @param  txOpts                         Transaction options
+   * @return                                Transaction hash
+   */
   public async proposeAsync(
     rebalancingSetTokenAddress: Address,
     nextSetAddress: Address,
@@ -84,6 +97,27 @@ export class RebalancingAPI {
       curveCoefficient,
       auctionStartPrice,
       auctionPriceDivisor,
+      txOpts
+    );
+  }
+
+  /**
+   * Initiates rebalance after proposal period has passed
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  txOpts                         Transaction options
+   * @return                                Transaction hash
+   */
+  public async rebalanceAsync(
+    rebalancingSetTokenAddress: Address,
+    txOpts: TxData
+  ): Promise<string> {
+    await this.assertRebalance(
+      rebalancingSetTokenAddress,
+    );
+
+    return await this.rebalancingSetToken.rebalance(
+      rebalancingSetTokenAddress,
       txOpts
     );
   }
@@ -119,5 +153,14 @@ export class RebalancingAPI {
     await this.assert.rebalancing.isManager(rebalancingSetTokenAddress, txOpts.from);
     await this.assert.rebalancing.sufficientTimeBetweenRebalance(rebalancingSetTokenAddress);
     await this.assert.setToken.isValidSetToken(this.coreAddress, nextSetAddress);
+  }
+
+  private async assertRebalance(
+    rebalancingSetTokenAddress: Address,
+  ) {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+
+    await this.assert.rebalancing.isInProposalState(rebalancingSetTokenAddress);
+    await this.assert.rebalancing.sufficientTimeInProposalState(rebalancingSetTokenAddress);
   }
 }

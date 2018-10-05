@@ -51,6 +51,20 @@ export class RebalancingAssertions {
   }
 
   /**
+   * Throws if given rebalancingSetToken is not in Proposal state
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   */
+  public async isInProposalState(rebalancingSetTokenAddress: Address): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+
+    const currentState = await rebalancingSetTokenInstance.rebalanceState.callAsync();
+    if (!currentState.eq(RebalancingState.PROPOSAL)) {
+      throw new Error(rebalancingErrors.INCORRECT_STATE(rebalancingSetTokenAddress, 'Proposal'));
+    }
+  }
+
+  /**
    * Throws if caller of rebalancingSetToken is not manager
    *
    * @param  caller   The address of the rebalancing set token
@@ -75,11 +89,34 @@ export class RebalancingAssertions {
 
     const lastRebalanceTime = await rebalancingSetTokenInstance.lastRebalanceTimestamp.callAsync();
     const rebalanceInterval = await rebalancingSetTokenInstance.rebalanceInterval.callAsync();
-    const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval);
-    const currentTimeStamp = new BigNumber(Date.now() / 1000);
+    const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval).mul(1000);
+    const currentTimeStamp = new BigNumber(Date.now());
 
     if (nextAvailableRebalance.greaterThan(currentTimeStamp)) {
-      const nextRebalanceFormattedDate = moment(nextAvailableRebalance).format('dddd, MMMM Do YYYY, h:mm:ss a');
+      const nextRebalanceFormattedDate = moment(
+        nextAvailableRebalance.toNumber()).format('dddd, MMMM Do YYYY, h:mm:ss a'
+      );
+      throw new Error(rebalancingErrors.INSUFFICIENT_TIME_PASSED(nextRebalanceFormattedDate));
+    }
+  }
+
+  /**
+   * Throws if not enough time passed in proposal state
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   */
+  public async sufficientTimeInProposalState(rebalancingSetTokenAddress: Address): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+
+    const proposalStartTime = await rebalancingSetTokenInstance.proposalStartTime.callAsync();
+    const proposalPeriod = await rebalancingSetTokenInstance.proposalPeriod.callAsync();
+    const nextAvailableRebalance = proposalStartTime.add(proposalPeriod).mul(1000);
+    const currentTimeStamp = new BigNumber(Date.now());
+
+    if (nextAvailableRebalance.greaterThan(currentTimeStamp)) {
+      const nextRebalanceFormattedDate = moment(
+        nextAvailableRebalance.toNumber()).format('dddd, MMMM Do YYYY, h:mm:ss a'
+      );
       throw new Error(rebalancingErrors.INSUFFICIENT_TIME_PASSED(nextRebalanceFormattedDate));
     }
   }
