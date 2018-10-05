@@ -54,7 +54,7 @@ export interface TxDataPayable extends TxData {
   value?: BigNumber;
 }
 
-export interface TokenFlowArrays {
+export interface TokenFlows {
   inflow: BigNumber[];
   outflow: BigNumber[];
 }

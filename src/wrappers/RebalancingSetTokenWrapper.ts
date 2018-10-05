@@ -17,7 +17,7 @@
 'use strict';
 
 import * as Web3 from 'web3';
-import { Address, TokenFlowArrays, TxData } from '../types/common';
+import { Address, TokenFlows, TxData } from '../types/common';
 
 import { ContractWrapper } from '.';
 import { BigNumber } from '../util';
@@ -141,11 +141,11 @@ export class RebalancingSetTokenWrapper {
   public async getBidPrice(
     rebalancingSetAddress: Address,
     quantity: BigNumber
-  ): Promise<TokenFlowArrays> {
+  ): Promise<TokenFlows> {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 
     const tokenFlows = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
-    return { inflow: tokenFlows[0], outflow: tokenFlows[1] } as TokenFlowArrays;
+    return { inflow: tokenFlows[0], outflow: tokenFlows[1] } as TokenFlows;
   }
 
   /**

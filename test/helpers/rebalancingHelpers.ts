@@ -14,7 +14,7 @@ import {
   SetTokenContract,
   VaultContract
 } from 'set-protocol-contracts';
-import { TokenFlowArrays } from '@src/types/common';
+import { TokenFlows } from '@src/types/common';
 
 import {
   TX_DEFAULTS,
@@ -309,7 +309,7 @@ export const constructInflowOutflowArraysAsync = async(
   rebalancingSetToken: RebalancingSetTokenContract,
   quantity: BigNumber,
   priceNumerator: BigNumber,
-): Promise<TokenFlowArrays> => {
+): Promise<TokenFlows> => {
   const inflowArray: BigNumber[] = [];
   const outflowArray: BigNumber[] = [];
 
