@@ -25,7 +25,7 @@ import { coreAPIErrors, setTokenAssertionsErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { ERC20Wrapper, SetTokenWrapper, RebalancingSetTokenWrapper, CoreWrapper } from '../wrappers';
 import { BigNumber, calculatePartialAmount } from '../util';
-import { Address, Component, SetDetails, TxData, TokenFlowArrays } from '../types/common';
+import { Address, Component, SetDetails, TxData, TokenFlows } from '../types/common';
 
 /**
  * @title RebalancingAPI
@@ -200,7 +200,7 @@ export class RebalancingAPI {
     rebalancingSetTokenAddress: Address,
     bidQuantity: BigNumber,
     txOpts: TxData,
-  ): Promise<TokenFlowArrays> {
+  ): Promise<TokenFlows> {
     await this.assertGetBidPrice(
       rebalancingSetTokenAddress,
       bidQuantity,

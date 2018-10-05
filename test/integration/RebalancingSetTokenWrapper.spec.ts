@@ -67,6 +67,7 @@ import {
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync
 } from '@test/helpers';
+import { TokenFlows } from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
@@ -483,7 +484,7 @@ describe('SetTokenWrapper', () => {
       subjectBidQuantity = ether(2);
     });
 
-    async function subject(): Promise<any> {
+    async function subject(): Promise<TokenFlows> {
       return await rebalancingSetTokenWrapper.getBidPrice(
         subjectRebalancingSetTokenAddress,
         subjectBidQuantity

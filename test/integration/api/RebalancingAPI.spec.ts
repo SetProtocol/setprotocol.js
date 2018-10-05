@@ -72,7 +72,7 @@ import {
   transitionToProposeAsync,
   transitionToRebalanceAsync
 } from '@test/helpers';
-import { Address, Component, SetDetails, TokenFlowArrays } from '@src/types/common';
+import { Address, Component, SetDetails, TokenFlows } from '@src/types/common';
 
 ChaiSetup.configure();
 const { expect } = chai;
@@ -992,7 +992,7 @@ describe('RebalancingAPI', () => {
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
-    async function subject(): Promise<TokenFlowArrays> {
+    async function subject(): Promise<TokenFlows> {
       return await rebalancingAPI.getBidPriceAsync(
         subjectRebalancingSetTokenAddress,
         subjectBidQuantity,
