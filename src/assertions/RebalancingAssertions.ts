@@ -184,10 +184,7 @@ export class RebalancingAssertions {
    * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
    * @param  bidQuantity                  The amount of current set the user is seeking to rebalance
    */
-  public async bidIsMultipleOfMinimumBid(
-    rebalancingSetTokenAddress: Address,
-    bidQuantity: BigNumber
-  ): Promise<void> {
+  public async bidIsMultipleOfMinimumBid(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber): Promise<void> {
     const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
     const minimumBid = await rebalancingSetTokenInstance.minimumBid.callAsync();
 
