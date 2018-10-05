@@ -25,7 +25,16 @@ import { coreAPIErrors, setTokenAssertionsErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { ERC20Wrapper, SetTokenWrapper, RebalancingSetTokenWrapper, CoreWrapper } from '../wrappers';
 import { BigNumber, calculatePartialAmount } from '../util';
-import { Address, Component, SetDetails, TxData, TokenFlows } from '../types/common';
+import {
+  Address,
+  Component,
+  RebalancingProgressDetails,
+  RebalancingProposalDetails,
+  RebalancingSetDetails,
+  SetDetails,
+  TxData,
+  TokenFlows
+} from '../types/common';
 
 /**
  * @title RebalancingAPI
@@ -38,6 +47,7 @@ export class RebalancingAPI {
   private web3: Web3;
   private assert: Assertions;
   private core: CoreWrapper;
+  private erc20: ERC20Wrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private setToken: SetTokenWrapper;
 
@@ -54,6 +64,7 @@ export class RebalancingAPI {
     this.assert = assertions;
     this.core = core;
 
+    this.erc20 = new ERC20Wrapper(this.web3);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
     this.setToken = new SetTokenWrapper(this.web3);
   }
@@ -108,14 +119,9 @@ export class RebalancingAPI {
    * @return                                Transaction hash
    */
   public async rebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: TxData): Promise<string> {
-    await this.assertRebalance(
-      rebalancingSetTokenAddress,
-    );
+    await this.assertRebalance(rebalancingSetTokenAddress);
 
-    return await this.rebalancingSetToken.rebalance(
-      rebalancingSetTokenAddress,
-      txOpts
-    );
+    return await this.rebalancingSetToken.rebalance(rebalancingSetTokenAddress, txOpts);
   }
 
   /**
@@ -126,14 +132,9 @@ export class RebalancingAPI {
    * @return                                Transaction hash
    */
   public async settleRebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: TxData): Promise<string> {
-    await this.assertSettleRebalance(
-      rebalancingSetTokenAddress,
-    );
+    await this.assertSettleRebalance(rebalancingSetTokenAddress);
 
-    return await this.rebalancingSetToken.settleRebalance(
-      rebalancingSetTokenAddress,
-      txOpts
-    );
+    return await this.rebalancingSetToken.settleRebalance(rebalancingSetTokenAddress, txOpts);
   }
 
   /**
@@ -144,22 +145,10 @@ export class RebalancingAPI {
    * @param  txOpts                         Transaction options
    * @return                                Transaction hash
    */
-  public async bidAsync(
-    rebalancingSetTokenAddress: Address,
-    bidQuantity: BigNumber,
-    txOpts: TxData,
-  ): Promise<string> {
-    await this.assertBid(
-      rebalancingSetTokenAddress,
-      bidQuantity,
-      txOpts
-    );
+  public async bidAsync(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: TxData): Promise<string> {
+    await this.assertBid(rebalancingSetTokenAddress, bidQuantity, txOpts);
 
-    return await this.core.bid(
-      rebalancingSetTokenAddress,
-      bidQuantity,
-      txOpts
-    );
+    return await this.core.bid(rebalancingSetTokenAddress, bidQuantity, txOpts);
   }
 
   /**
@@ -175,17 +164,9 @@ export class RebalancingAPI {
     newManager: Address,
     txOpts: TxData,
   ): Promise<string> {
-    await this.assertUpdateManager(
-      rebalancingSetTokenAddress,
-      newManager,
-      txOpts
-    );
+    await this.assertUpdateManager(rebalancingSetTokenAddress, newManager, txOpts);
 
-    return await this.rebalancingSetToken.setManager(
-      rebalancingSetTokenAddress,
-      newManager,
-      txOpts
-    );
+    return await this.rebalancingSetToken.setManager(rebalancingSetTokenAddress, newManager, txOpts);
   }
 
   /**
@@ -210,6 +191,130 @@ export class RebalancingAPI {
       rebalancingSetTokenAddress,
       bidQuantity,
     );
+  }
+
+  /**
+   * Fetches details of a RebalancingSetToken comprised of factory address, manager, current set, unit shares,
+   * natural unit, state, date the last rebalance ended, supply, name, and symbol
+   *
+   * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
+   * @return                               Object conforming to `RebalancingSetDetails` interface
+   */
+  public async getDetails(rebalancingSetTokenAddress: Address): Promise<RebalancingSetDetails> {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+
+    const [
+      factoryAddress,
+      managerAddress,
+      currentSetAddress,
+      unitShares,
+      naturalUnit,
+      state,
+      lastRebalancedAt,
+      supply,
+      name,
+      symbol,
+    ] = await Promise.all([
+      this.setToken.factory(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.manager(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.currentSet(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.unitShares(rebalancingSetTokenAddress),
+      this.setToken.naturalUnit(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.rebalanceState(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.lastRebalanceTimestamp(rebalancingSetTokenAddress),
+      this.erc20.totalSupply(rebalancingSetTokenAddress),
+      this.erc20.name(rebalancingSetTokenAddress),
+      this.erc20.symbol(rebalancingSetTokenAddress),
+    ]);
+
+    return {
+      address: rebalancingSetTokenAddress,
+      factoryAddress,
+      managerAddress,
+      currentSetAddress,
+      unitShares,
+      naturalUnit,
+      state,
+      lastRebalancedAt,
+      supply,
+      name,
+      symbol,
+    } as RebalancingSetDetails;
+  }
+
+  /**
+   * Fetches details of the proposal. This includes the proposal time, next set, starting rebalance price, the pricing
+   * library being used, the curve coefficient of the price, and the price divisor
+   *
+   * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
+   * @return                               Object conforming to `RebalancingProposalDetails` interface
+   */
+  public async getProposalDetails(rebalancingSetTokenAddress: Address): Promise<RebalancingProposalDetails> {
+    await this.assertGetProposalDetails(rebalancingSetTokenAddress);
+
+    const [
+      proposedAt,
+      nextSetAddress,
+      startingPrice,
+      pricingLibraryAddress,
+      priceCurveCoefficient,
+      priceDivisor,
+    ] = await Promise.all([
+      this.rebalancingSetToken.proposalStartTime(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.nextSet(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.auctionStartPrice(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.auctionLibrary(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.curveCoefficient(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.auctionPriceDivisor(rebalancingSetTokenAddress),
+    ]);
+
+    return {
+      proposedAt,
+      nextSetAddress,
+      startingPrice,
+      pricingLibraryAddress,
+      priceCurveCoefficient,
+      priceDivisor,
+    } as RebalancingProposalDetails;
+  }
+
+  /**
+   * Fetches details of the current rebalancing event. This information can be used to confirm the elapsed time
+   * of the rebalance, the next set, and the remaining quantity of the old set to rebalance.
+   *
+   * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
+   * @return                               Object conforming to `RebalancingProgressDetails` interface
+   */
+  public async getRebalanceDetails(rebalancingSetTokenAddress: Address): Promise<RebalancingProgressDetails> {
+    await this.assertGetRebalanceDetails(rebalancingSetTokenAddress);
+
+    const [
+      rebalancingStartedAt,
+      nextSetAddress,
+      startingPrice,
+      pricingLibraryAddress,
+      priceCurveCoefficient,
+      priceDivisor,
+      remainingCurrentSet,
+    ] = await Promise.all([
+      this.rebalancingSetToken.auctionStartTime(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.nextSet(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.auctionStartPrice(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.auctionLibrary(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.curveCoefficient(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.auctionPriceDivisor(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.remainingCurrentSets(rebalancingSetTokenAddress),
+    ]);
+
+    return {
+      rebalancingStartedAt,
+      nextSetAddress,
+      startingPrice,
+      pricingLibraryAddress,
+      priceCurveCoefficient,
+      priceDivisor,
+      remainingCurrentSet,
+    } as RebalancingProgressDetails;
   }
 
   /* ============ Private Assertions ============ */
@@ -299,5 +404,15 @@ export class RebalancingAPI {
     await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
     await this.assert.rebalancing.bidAmountLessThanRemainingSets(rebalancingSetTokenAddress, bidQuantity);
     await this.assert.rebalancing.bidIsMultipleOfMinimumBid(rebalancingSetTokenAddress, bidQuantity);
+  }
+
+  private async assertGetRebalanceDetails(rebalancingSetTokenAddress: Address) {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+    await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
+  }
+
+  private async assertGetProposalDetails(rebalancingSetTokenAddress: Address) {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+    await this.assert.rebalancing.isInProposalState(rebalancingSetTokenAddress);
   }
 }
