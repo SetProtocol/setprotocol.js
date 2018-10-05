@@ -25,6 +25,7 @@ jest.setTimeout(30000);
 import * as chai from 'chai';
 import * as Web3 from 'web3';
 import {
+  ConstantAuctionPriceCurveContract,
   CoreContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
@@ -37,7 +38,7 @@ import {
 
 import { RebalancingAPI } from '@src/api';
 import { RebalancingSetTokenWrapper } from '@src/wrappers';
-import { DEFAULT_ACCOUNT, ONE_DAY_IN_SECONDS, DEFAULT_CONSTANT_AUCTION_PRICE, TX_DEFAULTS } from '@src/constants';
+import { DEFAULT_ACCOUNT, ONE_DAY_IN_SECONDS, DEFAULT_CONSTANT_AUCTION_PRICE, TX_DEFAULTS, ZERO } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber, ether, Web3Utils } from '@src/util';
 import { Assertions } from '@src/assertions';
@@ -55,7 +56,9 @@ import {
   deploySetTokenFactoryContract,
   deployVaultContract,
   deployTransferProxyContract,
+  getAuctionSetUpOutputsAsync,
   increaseChainTimeAsync,
+  transitionToProposeAsync,
   transitionToRebalanceAsync
 } from '@test/helpers';
 import { Address, Component, SetDetails } from '@src/types/common';
@@ -67,12 +70,13 @@ const contract = require('truffle-contract');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
 const web3Utils = new Web3Utils(web3);
+const moment = require('moment');
 
 let currentSnapshotId: number;
 
 
 describe('RebalancingAPI', () => {
-  let rebalancingTokenDeployedAt: number;
+  let nextRebalanceAvailableAtSeconds: number;
 
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
@@ -85,9 +89,6 @@ describe('RebalancingAPI', () => {
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
-
-    rebalancingTokenDeployedAt = 1514808000000;
-    timeKeeper.freeze(rebalancingTokenDeployedAt);
 
     transferProxy = await deployTransferProxyContract(provider);
     vault = await deployVaultContract(provider);
@@ -106,6 +107,8 @@ describe('RebalancingAPI', () => {
   });
 
   afterEach(async () => {
+    timeKeeper.reset();
+
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
@@ -147,7 +150,9 @@ describe('RebalancingAPI', () => {
       const priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
 
       // Fast forward to allow propose to be called
-      timeKeeper.freeze(rebalancingTokenDeployedAt + proposalPeriod.valueOf());
+      const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+      nextRebalanceAvailableAtSeconds = lastRebalancedTimestampSeconds.toNumber() + proposalPeriod.toNumber();
+      timeKeeper.freeze(nextRebalanceAvailableAtSeconds * 1000);
       increaseChainTimeAsync(proposalPeriod.add(1));
 
       subjectNextSet = nextSetToken.address;
@@ -171,7 +176,7 @@ describe('RebalancingAPI', () => {
       );
     }
 
-    test('it fetchs the rebalancing set token properties correctly', async () => {
+    test('it fetches the rebalancing set token properties correctly', async () => {
       await subject();
 
       const nextSet = await rebalancingSetTokenWrapper.nextSet(subjectRebalancingSetTokenAddress);
@@ -195,14 +200,19 @@ describe('RebalancingAPI', () => {
       expect(rebalanceState).to.eql('Proposal');
     });
 
-    describe('when the rebalance interval hasn\'t elapsed since the last rebalance', async () => {
+    describe("when the rebalance interval hasn't elapsed since the last rebalance", async () => {
+      let nextRebalanceFormattedDate: string;
+
       beforeEach(async () => {
-        timeKeeper.freeze(rebalancingTokenDeployedAt);
+        const nextAvailableRebalanceMSeconds = nextRebalanceAvailableAtSeconds * 1000;
+        nextRebalanceFormattedDate = moment(nextAvailableRebalanceMSeconds).format('dddd, MMMM Do YYYY, h:mm:ss a');
+
+        timeKeeper.freeze(nextAvailableRebalanceMSeconds - 1);
       });
 
       it('throw', async () => {
         return expect(subject()).to.be.rejectedWith(
-          'Attempting to rebalance too soon. Rebalancing next available on Monday, January 1st 2018, 12:00:01 am'
+          `Attempting to rebalance too soon. Rebalancing next available on ${nextRebalanceFormattedDate}`
         );
       });
     });
@@ -254,6 +264,179 @@ describe('RebalancingAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `Contract at ${subjectNextSet} is not a valid Set token address.`
+        );
+      });
+    });
+  });
+
+  describe('rebalanceAsync', async () => {
+    let currentSetToken: SetTokenContract;
+    let nextSetToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let proposalPeriod: BigNumber;
+    let managerAddress: Address;
+    let priceCurve: ConstantAuctionPriceCurveContract;
+    let setAuctionPriceDivisor: BigNumber;
+
+    let nextRebalanceAvailableAtSeconds: number;
+
+    let subjectRebalancingSetTokenAddress: Address;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 2;
+      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      proposalPeriod = ONE_DAY_IN_SECONDS;
+      managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      // Deploy price curve used in auction
+      priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
+
+      subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await rebalancingAPI.rebalanceAsync(
+        subjectRebalancingSetTokenAddress,
+        { from: subjectCaller }
+      );
+    }
+
+    describe('when the Rebalancing Set Token is in Default state', async () => {
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Proposal state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Proposal state', async () => {
+      beforeEach(async () => {
+        const setNextSet = nextSetToken.address;
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setCurveCoefficient = new BigNumber(1);
+        const setAuctionStartPrice = new BigNumber(500);
+        setAuctionPriceDivisor = new BigNumber(1000);
+        await transitionToProposeAsync(
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setCurveCoefficient,
+          setAuctionStartPrice,
+          setAuctionPriceDivisor
+        );
+
+        // Fast forward to allow rebalance to be called
+        const proposalStartTimeSeconds = await rebalancingSetToken.proposalStartTime.callAsync();
+        const fastForwardPeriod = proposalPeriod.toNumber();
+        nextRebalanceAvailableAtSeconds = proposalStartTimeSeconds.toNumber() + fastForwardPeriod;
+        timeKeeper.freeze(nextRebalanceAvailableAtSeconds * 1000 + 1);
+        increaseChainTimeAsync(proposalPeriod.add(1));
+      });
+
+      test('it fetches the set token properties correctly', async () => {
+        await subject();
+
+        const returnedMinimumBid = await rebalancingSetTokenWrapper.minimumBid(subjectRebalancingSetTokenAddress);
+        const returnedRemainingCurrentSets = await rebalancingSetTokenWrapper.remainingCurrentSets(
+          subjectRebalancingSetTokenAddress
+        );
+        const combinedTokenArray = await rebalancingSetTokenWrapper.getCombinedTokenArray(
+          subjectRebalancingSetTokenAddress
+        );
+        const combinedCurrentUnits = await rebalancingSetTokenWrapper.getCombinedCurrentUnits(
+          subjectRebalancingSetTokenAddress
+        );
+        const combinedNextSetUnits = await rebalancingSetTokenWrapper.getCombinedNextSetUnits(
+          subjectRebalancingSetTokenAddress
+        );
+        const returnedRebalanceState = await rebalancingSetTokenWrapper.rebalanceState(
+          subjectRebalancingSetTokenAddress
+        );
+
+        const auctionSetUpOutputs = await getAuctionSetUpOutputsAsync(
+          rebalancingSetToken,
+          currentSetToken,
+          nextSetToken,
+          setAuctionPriceDivisor
+        );
+
+        expect(returnedMinimumBid).to.be.bignumber.equal(auctionSetUpOutputs['expectedMinimumBid']);
+
+        expect(returnedRemainingCurrentSets).to.be.bignumber.equal(ZERO);
+
+        const returnedCombinedTokenArray = JSON.stringify(combinedTokenArray);
+        const expectedCombinedTokenArray = JSON.stringify(auctionSetUpOutputs['expectedCombinedTokenArray']);
+        expect(returnedCombinedTokenArray).to.equal(expectedCombinedTokenArray);
+
+        const returnedCombinedCurrentUnits = JSON.stringify(combinedCurrentUnits);
+        const expectedCombinedCurrentUnits = JSON.stringify(auctionSetUpOutputs['expectedCombinedCurrentUnits']);
+        expect(returnedCombinedCurrentUnits).to.equal(expectedCombinedCurrentUnits);
+
+        const returnedCombinedNextSetUnits = JSON.stringify(combinedNextSetUnits);
+        const expectedCombinedNextSetUnits = JSON.stringify(auctionSetUpOutputs['expectedCombinedNextUnits']);
+        expect(returnedCombinedNextSetUnits).to.equal(expectedCombinedNextSetUnits);
+
+        expect(returnedRebalanceState).to.eql('Rebalance');
+      });
+
+      describe('but not enough time has passed in the proposal period', async () => {
+        let nextRebalanceFormattedDate: string;
+
+        beforeEach(async () => {
+          const nextAvailableRebalanceMSeconds = nextRebalanceAvailableAtSeconds * 1000;
+          nextRebalanceFormattedDate = moment(nextAvailableRebalanceMSeconds).format('dddd, MMMM Do YYYY, h:mm:ss a');
+
+          // Rewind time to create error
+          const proposalStartTimeSeconds = await rebalancingSetToken.proposalStartTime.callAsync();
+          const proposalStartTimeMSeconds = 1000 * proposalStartTimeSeconds.toNumber();
+          timeKeeper.freeze(proposalStartTimeMSeconds);
+        });
+
+        it('throw', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Attempting to rebalance too soon. Rebalancing next available on ${nextRebalanceFormattedDate}`
+          );
+        });
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Default state', async () => {
+      beforeEach(async () => {
+        const setNextSet = nextSetToken.address;
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setCurveCoefficient = new BigNumber(1);
+        const setAuctionStartPrice = new BigNumber(500);
+        setAuctionPriceDivisor = new BigNumber(1000);
+        await transitionToRebalanceAsync(
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setCurveCoefficient,
+          setAuctionStartPrice,
+          setAuctionPriceDivisor
+        );
+      });
+
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Proposal state to call that function.`
         );
       });
     });
