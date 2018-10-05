@@ -18,6 +18,7 @@
 
 import * as Web3 from 'web3';
 import * as _ from 'lodash';
+import { SetProtocolUtils } from 'set-protocol-utils';
 
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
@@ -31,7 +32,6 @@ import {
   ECSig,
   IssuanceOrder,
   KyberTrade,
-  SetProtocolUtils,
   SignedIssuanceOrder,
   TakerWalletOrder,
   TxData,
@@ -48,11 +48,11 @@ import {
 export class OrderAPI {
   private web3: Web3;
   private assert: Assertions;
-  public core: CoreWrapper;
-  public setToken: SetTokenWrapper;
-  public erc20: ERC20Wrapper;
-  public vault: VaultWrapper;
-  public setProtocolUtils: SetProtocolUtils;
+  private core: CoreWrapper;
+  private setToken: SetTokenWrapper;
+  private erc20: ERC20Wrapper;
+  private vault: VaultWrapper;
+  private setProtocolUtils: SetProtocolUtils;
 
   /**
    * Instantiates a new OrderAPI instance that contains methods for creating, filling, and cancelling issuance orders

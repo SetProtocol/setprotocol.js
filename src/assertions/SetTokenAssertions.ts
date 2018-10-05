@@ -148,7 +148,6 @@ export class SetTokenAssertions {
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
 
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
-
     if (!quantity.mod(naturalUnit).eq(ZERO)) {
       throw new Error(coreAPIErrors.QUANTITY_NEEDS_TO_BE_MULTIPLE_OF_NATURAL_UNIT(quantityType));
     }
@@ -159,8 +158,8 @@ export class SetTokenAssertions {
     componentAddress: Address,
   ): Promise<void> {
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
-    const isComponent = await setTokenInstance.tokenIsComponent.callAsync(componentAddress);
 
+    const isComponent = await setTokenInstance.tokenIsComponent.callAsync(componentAddress);
     if (!isComponent) {
       throw new Error(setTokenAssertionsErrors.IS_NOT_COMPONENT(setTokenAddress, componentAddress));
     }
@@ -171,8 +170,8 @@ export class SetTokenAssertions {
     setTokenAddress: Address,
   ): Promise<void> {
     const coreInstance = await CoreContract.at(coreAddress, this.web3, {});
-    const isValidSet = await coreInstance.validSets.callAsync(setTokenAddress);
 
+    const isValidSet = await coreInstance.validSets.callAsync(setTokenAddress);
     if (!isValidSet) {
       throw new Error(setTokenAssertionsErrors.IS_NOT_A_VALID_SET(setTokenAddress));
     }

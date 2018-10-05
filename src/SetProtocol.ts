@@ -40,6 +40,7 @@ export interface SetProtocolConfig {
   transferProxyAddress: Address;
   vaultAddress: Address;
   setTokenFactoryAddress: Address;
+  rebalancingSetTokenFactoryAddress: Address;
 }
 
 /**
@@ -102,7 +103,7 @@ class SetProtocol {
 
     this.accounting = new AccountingAPI(this.web3, this.core, assertions);
     this.erc20 = new ERC20API(this.web3, assertions);
-    this.factory = new FactoryAPI(this.web3, this.core, assertions, config.setTokenFactoryAddress);
+    this.factory = new FactoryAPI(this.web3, this.core, assertions, config);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
     this.orders = new OrderAPI(this.web3, this.core, assertions);
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core);
@@ -177,6 +178,48 @@ class SetProtocol {
     txOpts: TxData,
   ): Promise<string> {
     return await this.factory.createSetAsync(components, units, naturalUnit, name, symbol, txOpts);
+  }
+
+  /**
+   * Create a new Rebalancing token by passing in parameters denoting a Set to track, the manager, and various
+   * rebalancing properties to facilitate rebalancing events
+   *
+   * Note: the return value is the transaction hash of the createSetAsync call, not the deployed SetToken
+   * contract address. Use `getSetAddressFromCreateTxHashAsync` to retrieve the SetToken address
+   *
+   * @param  manager              Address of account to propose, rebalance, and settle the Rebalancing token
+   * @param  initialSet           Address of the Set the Rebalancing token is initially tracking
+   * @param  initialUnitShares    Ratio between balance of this Rebalancing token and the currently tracked Set
+   * @param  proposalPeriod       Duration after a manager proposes a new Set to rebalance into when users who wish to
+   *                                pull out may redeem their balance of the RebalancingSetToken for balance of the Set
+   *                                denominated in seconds
+   * @param  rebalanceInterval    Duration after a rebalance is completed when the manager cannot initiate a new
+   *                                Rebalance event
+   * @param  name                 Name for RebalancingSet, i.e. "Top 10"
+   * @param  symbol               Symbol for Set, i.e. "TOP10"
+   * @param  txOpts               Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @return                      Transaction hash
+   */
+  public async createRebalancingSetTokenAsync(
+    manager: Address,
+    initialSet: Address,
+    initialUnitShares: BigNumber,
+    proposalPeriod: BigNumber,
+    rebalanceInterval: BigNumber,
+    name: string,
+    symbol: string,
+    txOpts: TxData,
+  ): Promise<string> {
+    return await this.factory.createRebalancingSetTokenAsync(
+      manager,
+      initialSet,
+      initialUnitShares,
+      proposalPeriod,
+      rebalanceInterval,
+      name,
+      symbol,
+      txOpts,
+    );
   }
 
   /**

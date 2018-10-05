@@ -27,11 +27,12 @@ import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
 import * as Web3 from 'web3';
-import { Address } from 'set-protocol-utils';
 import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
   NoDecimalTokenMockContract,
+  RebalancingSetTokenContract,
+  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -44,22 +45,33 @@ import { FactoryAPI } from '@src/api';
 import { BigNumber } from '@src/util';
 import { Assertions } from '@src/assertions';
 import { CoreWrapper } from '@src/wrappers';
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
-import { TX_DEFAULTS, ZERO } from '@src/constants';
+import { ACCOUNTS } from '@src/constants/accounts';
+import { Address } from '@src/types/common';
+import {
+  DEFAULT_ACCOUNT,
+  DEFAULT_UNIT_SHARES,
+  ONE_DAY_IN_SECONDS,
+  TX_DEFAULTS,
+  ZERO,
+} from '@src/constants';
 import {
   addAuthorizationAsync,
   deployCoreContract,
   deployNoDecimalTokenAsync,
+  deploySetTokensAsync,
+  deployTokenAsync,
   deployTokensAsync,
   deployTokensSpecifyingDecimals,
+  deployRebalancingSetTokenFactoryContract,
   deploySetTokenFactoryContract,
   deployTransferProxyContract,
   deployVaultContract,
-} from '@test/helpers/coreHelpers';
+} from '@test/helpers';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { ether } from '@src/util/units';
 import { Web3Utils } from '@src/util/Web3Utils';
 import { SetUnits } from '@src/types/common';
+import { SetProtocolConfig } from '../../../src/SetProtocol';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
@@ -79,7 +91,9 @@ describe('FactoryAPI', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let setTokenFactory: SetTokenFactoryContract;
+  let config: SetProtocolConfig;
   let coreWrapper: CoreWrapper;
   let factoryAPI: FactoryAPI;
   let assertions: Assertions;
@@ -101,14 +115,22 @@ describe('FactoryAPI', () => {
     vault = await deployVaultContract(provider);
     core = await deployCoreContract(provider, transferProxy.address, vault.address);
     setTokenFactory = await deploySetTokenFactoryContract(provider, core);
+    rebalancingSetTokenFactory = await deployRebalancingSetTokenFactoryContract(provider, core);
 
     await addAuthorizationAsync(vault, core.address);
     await addAuthorizationAsync(transferProxy, core.address);
 
     assertions = new Assertions(web3, coreWrapper);
 
-    coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
-    factoryAPI = new FactoryAPI(web3, coreWrapper, assertions, setTokenFactory.address);
+    config = {
+      coreAddress: core.address,
+      transferProxyAddress: transferProxy.address,
+      vaultAddress: vault.address,
+      setTokenFactoryAddress: setTokenFactory.address,
+      rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
+    };
+    coreWrapper = new CoreWrapper(web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
+    factoryAPI = new FactoryAPI(web3, coreWrapper, assertions, config);
 
     componentTokens = await deployTokensAsync(3, provider);
   });
@@ -191,8 +213,9 @@ describe('FactoryAPI', () => {
 
       beforeEach(async () => {
         invalidSetFactoryAddress = 'invalidSetFactoryAddress';
+        config.setTokenFactoryAddress = 'invalidSetFactoryAddress';
 
-        factoryAPI = new FactoryAPI(web3, coreWrapper, assertions, invalidSetFactoryAddress);
+        factoryAPI = new FactoryAPI(web3, coreWrapper, assertions, config);
       });
 
       test('throws', async () => {
@@ -337,6 +360,128 @@ describe('FactoryAPI', () => {
         const minNaturalUnit = await factoryAPI.calculateMinimumNaturalUnitAsync(subjectComponents);
         return expect(subject()).to.be.rejectedWith(
           `Natural unit must be larger than minimum unit, ${minNaturalUnit.toString()}, allowed by components.`
+        );
+      });
+    });
+  });
+
+  describe('createRebalancingSetTokenAsync', async () => {
+    let subjectManager: Address;
+    let subjectInitialSet: Address;
+    let subjectInitialUnitShares: BigNumber;
+    let subjectProposalPeriod: BigNumber;
+    let subjectRebalanceInterval: BigNumber;
+    let subjectName: string;
+    let subjectSymbol: string;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 1;
+      const [setToken] = await deploySetTokensAsync(
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      subjectManager = ACCOUNTS[1].address;
+      subjectInitialSet = setToken.address;
+      subjectInitialUnitShares = DEFAULT_UNIT_SHARES;
+      subjectProposalPeriod = ONE_DAY_IN_SECONDS;
+      subjectRebalanceInterval = ONE_DAY_IN_SECONDS;
+      subjectName = 'My Set';
+      subjectSymbol = 'SET';
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await factoryAPI.createRebalancingSetTokenAsync(
+        subjectManager,
+        subjectInitialSet,
+        subjectInitialUnitShares,
+        subjectProposalPeriod,
+        subjectRebalanceInterval,
+        subjectName,
+        subjectSymbol,
+        { from: subjectCaller }
+      );
+    }
+
+    test('deploys a new SetToken contract', async () => {
+      const createRebalancingSetTransactionHash = await subject();
+
+      const logs = await getFormattedLogsFromTxHash(web3, createRebalancingSetTransactionHash);
+      const deployedRebalancingSetTokenAddress = extractNewSetTokenAddressFromLogs(logs);
+      const rebalancingSetTokenContract = await RebalancingSetTokenContract.at(
+        deployedRebalancingSetTokenAddress,
+        web3,
+        TX_DEFAULTS
+      );
+
+      const currentSetAddress = await rebalancingSetTokenContract.currentSet.callAsync();
+      expect(currentSetAddress).to.eql(subjectInitialSet);
+
+      const manager = await rebalancingSetTokenContract.manager.callAsync();
+      expect(manager).to.eql(subjectManager);
+
+      const proposalPeriod = await rebalancingSetTokenContract.proposalPeriod.callAsync();
+      expect(proposalPeriod).to.bignumber.equal(subjectProposalPeriod);
+
+      const rebalanceInterval = await rebalancingSetTokenContract.rebalanceInterval.callAsync();
+      expect(rebalanceInterval).to.bignumber.equal(subjectRebalanceInterval);
+
+      const name = await rebalancingSetTokenContract.name.callAsync();
+      expect(name).to.eql(subjectName);
+
+      const symbol = await rebalancingSetTokenContract.symbol.callAsync();
+      expect(symbol).to.eql(subjectSymbol);
+    });
+
+    describe('when the initialSet is not an address of a Set', async () => {
+      beforeEach(async () => {
+        const token = await deployTokenAsync(provider);
+        subjectInitialSet = token.address;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Contract at ${subjectInitialSet} is not a valid Set token address.`
+        );
+      });
+    });
+
+    describe('when the proposal period is less than one day in seconds', async () => {
+      beforeEach(async () => {
+        subjectProposalPeriod = ONE_DAY_IN_SECONDS.sub(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Parameter proposalPeriod: ${subjectProposalPeriod} must be greater than or equal to 86400.`
+        );
+      });
+    });
+
+    describe('when the rebalance interval is less than one day in seconds', async () => {
+      beforeEach(async () => {
+        subjectRebalanceInterval = ONE_DAY_IN_SECONDS.sub(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Parameter rebalanceInterval: ${subjectRebalanceInterval} must be greater than or equal to 86400.`
+        );
+      });
+    });
+
+    describe('when the init shares ratio is zero', async () => {
+      beforeEach(async () => {
+        subjectInitialUnitShares = ZERO;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Parameter initialUnitShares: ${subjectInitialUnitShares} must be greater than 0.`
         );
       });
     });
