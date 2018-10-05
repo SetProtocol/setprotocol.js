@@ -233,12 +233,13 @@ export class OrderAssertions {
         quantity
       );
 
+      const normalizedTokenAddress = component.toLowerCase();
       this.commonAssertions.isEqualBigNumber(
-        componentAmountsFromLiquidity[component],
+        componentAmountsFromLiquidity[normalizedTokenAddress],
         requiredComponentAmountForFillQuantity,
         orderErrors.INSUFFICIENT_COMPONENT_AMOUNT_FROM_LIQUIDITY(
-          component,
-          componentAmountsFromLiquidity[component],
+          normalizedTokenAddress,
+          componentAmountsFromLiquidity[normalizedTokenAddress],
           requiredComponentAmountForFillQuantity,
         ),
       );
@@ -304,7 +305,6 @@ export class OrderAssertions {
   ): { [addr: string]: BigNumber } {
     let existingAmount: BigNumber;
     let currentOrderAmount: BigNumber;
-    let orderComponent: Address;
     if (SetProtocolUtils.isZeroExOrder(order)) {
       const {
         fillAmount,
@@ -312,36 +312,35 @@ export class OrderAssertions {
         makerAssetData,
         takerAssetAmount,
       } = order;
-      const tokenAddress = SetProtocolUtils.extractAddressFromAssetData(makerAssetData);
+      const tokenAddress = SetProtocolUtils.extractAddressFromAssetData(makerAssetData).toLowerCase();
 
       // Accumulate fraction of 0x order that was filled
       existingAmount = requiredComponentFills[tokenAddress] || ZERO;
       currentOrderAmount = calculatePartialAmount(makerAssetAmount, fillAmount, takerAssetAmount);
-      orderComponent = tokenAddress;
 
-      return Object.assign(requiredComponentFills, { [orderComponent]: existingAmount.plus(currentOrderAmount) });
+      return Object.assign(requiredComponentFills, { [tokenAddress]: existingAmount.plus(currentOrderAmount) });
     } else if (SetProtocolUtils.isTakerWalletOrder(order)) {
       const {
         takerTokenAddress,
         takerTokenAmount,
       } = order;
+      const tokenAddress = takerTokenAddress.toLowerCase();
 
-      existingAmount = requiredComponentFills[takerTokenAddress] || ZERO;
+      existingAmount = requiredComponentFills[tokenAddress] || ZERO;
       currentOrderAmount = takerTokenAmount;
-      orderComponent = takerTokenAddress;
 
-      return Object.assign(requiredComponentFills, { [orderComponent]: existingAmount.plus(currentOrderAmount) });
+      return Object.assign(requiredComponentFills, { [tokenAddress]: existingAmount.plus(currentOrderAmount) });
     } else if (SetProtocolUtils.isKyberTrade(order)) {
       const {
         destinationToken,
         maxDestinationQuantity,
       } = order;
+      const tokenAddress = destinationToken.toLowerCase();
 
-      existingAmount = requiredComponentFills[destinationToken] || ZERO;
+      existingAmount = requiredComponentFills[tokenAddress] || ZERO;
       currentOrderAmount = maxDestinationQuantity;
-      orderComponent = destinationToken;
 
-      return Object.assign(requiredComponentFills, { [orderComponent]: existingAmount.plus(currentOrderAmount) });
+      return Object.assign(requiredComponentFills, { [tokenAddress]: existingAmount.plus(currentOrderAmount) });
     }
 
     return requiredComponentFills;
