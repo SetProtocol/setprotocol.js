@@ -78,7 +78,7 @@ export class RebalancingAPI {
     curveCoefficient: BigNumber,
     auctionStartPrice: BigNumber,
     auctionPriceDivisor: BigNumber,
-    txOpts: TxData
+    txOpts: TxData,
   ): Promise<string> {
     await this.assertPropose(
       rebalancingSetTokenAddress,
@@ -148,7 +148,7 @@ export class RebalancingAPI {
   public async bidAsync(
     rebalancingSetTokenAddress: Address,
     bidQuantity: BigNumber,
-    txOpts: TxData
+    txOpts: TxData,
   ): Promise<string> {
     await this.assertBid(
       rebalancingSetTokenAddress,
@@ -196,29 +196,21 @@ export class RebalancingAPI {
     await this.assert.setToken.isValidSetToken(this.core.coreAddress, nextSetAddress);
   }
 
-  private async assertRebalance(
-    rebalancingSetTokenAddress: Address,
-  ) {
+  private async assertRebalance(rebalancingSetTokenAddress: Address) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
 
     await this.assert.rebalancing.isInProposalState(rebalancingSetTokenAddress);
     await this.assert.rebalancing.sufficientTimeInProposalState(rebalancingSetTokenAddress);
   }
 
-  private async assertSettleRebalance(
-    rebalancingSetTokenAddress: Address,
-  ) {
+  private async assertSettleRebalance(rebalancingSetTokenAddress: Address) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
 
     await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
     await this.assert.rebalancing.enoughSetsRebalanced(rebalancingSetTokenAddress);
   }
 
-  private async assertBid(
-    rebalancingSetTokenAddress: Address,
-    bidQuantity: BigNumber,
-    txOpts: TxData
-  ) {
+  private async assertBid(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: TxData) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
     this.assert.common.greaterThanZero(
       bidQuantity,
