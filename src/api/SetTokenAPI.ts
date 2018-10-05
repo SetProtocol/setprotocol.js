@@ -50,8 +50,8 @@ export class SetTokenAPI {
     this.web3 = web3;
     this.assert = assertions;
 
-    this.setToken = new SetTokenWrapper(this.web3);
     this.erc20 = new ERC20Wrapper(this.web3);
+    this.setToken = new SetTokenWrapper(this.web3);
   }
 
   /**

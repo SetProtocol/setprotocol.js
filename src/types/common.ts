@@ -43,6 +43,39 @@ export interface SetDetails {
   components: Component[];
 }
 
+export interface RebalancingProposalDetails {
+  proposedAt: BigNumber;
+  nextSetAddress: Address;
+  startingPrice: BigNumber;
+  pricingLibraryAddress: Address;
+  priceCurveCoefficient: BigNumber;
+  priceDivisor: BigNumber;
+}
+
+export interface RebalancingProgressDetails {
+  rebalancingStartedAt: BigNumber;
+  nextSetAddress: Address;
+  startingPrice: BigNumber;
+  pricingLibraryAddress: Address;
+  priceCurveCoefficient: BigNumber;
+  priceDivisor: BigNumber;
+  remainingCurrentSet: BigNumber;
+}
+
+export interface RebalancingSetDetails {
+  address: Address;
+  factoryAddress: Address;
+  managerAddress: Address;
+  currentSetAddress: Address;
+  unitShares: BigNumber;
+  naturalUnit: BigNumber;
+  state: string;
+  lastRebalancedAt: BigNumber;
+  supply: BigNumber;
+  name: string;
+  symbol: string;
+}
+
 export interface TxData {
   from: Address;
   gas?: UInt;
