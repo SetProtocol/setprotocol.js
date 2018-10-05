@@ -490,7 +490,7 @@ describe('SetTokenWrapper', () => {
       );
     }
 
-    test('it fetches the set token properties correctly', async () => {
+    test('it fetches the correct token flow arrays', async () => {
       const returnedTokenFlowArrays = await subject();
 
       const expectedTokenFlowArrays = await constructInflowOutflowArraysAsync(

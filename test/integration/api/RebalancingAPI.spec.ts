@@ -72,7 +72,7 @@ import {
   transitionToProposeAsync,
   transitionToRebalanceAsync
 } from '@test/helpers';
-import { Address, Component, SetDetails } from '@src/types/common';
+import { Address, Component, SetDetails, TokenFlowArrays } from '@src/types/common';
 
 ChaiSetup.configure();
 const { expect } = chai;
@@ -874,6 +874,229 @@ describe('RebalancingAPI', () => {
 
         when required balance is ${inflowArray[2]} at token address ${components[2]}.
       `
+          );
+        });
+      });
+    });
+  });
+
+  describe('updateManagerAsync', async () => {
+    let currentSetToken: SetTokenContract;
+    let nextSetToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let managerAddress: Address;
+
+    let subjectRebalancingSetTokenAddress: Address;
+    let subjectNewManager: Address;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 2;
+      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      const proposalPeriod = ONE_DAY_IN_SECONDS;
+      managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
+      subjectNewManager = ACCOUNTS[2].address;
+      subjectCaller = managerAddress;
+    });
+
+    async function subject(): Promise<string> {
+      return await rebalancingAPI.updateManagerAsync(
+        subjectRebalancingSetTokenAddress,
+        subjectNewManager,
+        { from: subjectCaller }
+      );
+    }
+
+    test('it changes the set manager correctly', async () => {
+      await subject();
+
+      const returnedManager = await rebalancingSetTokenWrapper.manager(subjectRebalancingSetTokenAddress);
+      expect(returnedManager).to.eql(subjectNewManager);
+    });
+
+    describe('when the updateManager is not called by the manager', async () => {
+      beforeEach(async () => {
+        subjectCaller = ACCOUNTS[2].address;
+      });
+
+      test('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Caller ${subjectCaller} is not the manager of this Rebalancing Set Token.`
+        );
+      });
+    });
+  });
+
+  describe('getBidPriceAsync', async () => {
+    let currentSetToken: SetTokenContract;
+    let nextSetToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let proposalPeriod: BigNumber;
+    let managerAddress: Address;
+    let priceCurve: ConstantAuctionPriceCurveContract;
+    let setAuctionPriceDivisor: BigNumber;
+
+    let rebalancingSetQuantityToIssue: BigNumber;
+
+    let subjectRebalancingSetTokenAddress: Address;
+    let subjectBidQuantity: BigNumber;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 2;
+      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      proposalPeriod = ONE_DAY_IN_SECONDS;
+      managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      // Issue currentSetToken
+      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
+      // Deploy price curve used in auction
+      priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
+
+      subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
+      subjectBidQuantity = rebalancingSetQuantityToIssue;
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<TokenFlowArrays> {
+      return await rebalancingAPI.getBidPriceAsync(
+        subjectRebalancingSetTokenAddress,
+        subjectBidQuantity,
+        { from: subjectCaller }
+      );
+    }
+
+    describe('when the Rebalancing Set Token is in Default state', async () => {
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Rebalance state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Proposal state', async () => {
+      beforeEach(async () => {
+        const setNextSet = nextSetToken.address;
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setCurveCoefficient = new BigNumber(1);
+        const setAuctionStartPrice = new BigNumber(500);
+        setAuctionPriceDivisor = new BigNumber(1000);
+        await transitionToProposeAsync(
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setCurveCoefficient,
+          setAuctionStartPrice,
+          setAuctionPriceDivisor
+        );
+      });
+
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Rebalance state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Rebalance state', async () => {
+      beforeEach(async () => {
+        const setNextSet = nextSetToken.address;
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setCurveCoefficient = new BigNumber(1);
+        const setAuctionStartPrice = new BigNumber(500);
+        setAuctionPriceDivisor = new BigNumber(1000);
+        await transitionToRebalanceAsync(
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setCurveCoefficient,
+          setAuctionStartPrice,
+          setAuctionPriceDivisor
+        );
+      });
+
+      test('it fetches the correct token flow arrays', async () => {
+        const returnedTokenFlowArrays = await subject();
+
+        const expectedTokenFlowArrays = await constructInflowOutflowArraysAsync(
+          rebalancingSetToken,
+          subjectBidQuantity,
+          DEFAULT_CONSTANT_AUCTION_PRICE
+        );
+
+        const returnedInflowArray = JSON.stringify(returnedTokenFlowArrays['inflow']);
+        const expectedInflowArray = JSON.stringify(expectedTokenFlowArrays['inflow']);
+        expect(returnedInflowArray).to.eql(expectedInflowArray);
+
+        const returnedOutflowArray = JSON.stringify(returnedTokenFlowArrays['outflow']);
+        const expectedOutflowArray = JSON.stringify(expectedTokenFlowArrays['outflow']);
+        expect(returnedOutflowArray).to.eql(expectedOutflowArray);
+      });
+
+      describe('and the bid amount is greater than remaining current sets', async () => {
+        beforeEach(async () => {
+          subjectBidQuantity = ether(10);
+        });
+
+        it('throw', async () => {
+          const remainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+
+          return expect(subject()).to.be.rejectedWith(
+            `The submitted bid quantity, ${subjectBidQuantity}, exceeds the remaining current sets,` +
+              ` ${remainingCurrentSets}.`
+          );
+        });
+      });
+
+      describe('and the bid amount is not a multiple of the minimumBid', async () => {
+        let minimumBid: BigNumber;
+
+        beforeEach(async () => {
+          minimumBid = await rebalancingSetToken.minimumBid.callAsync();
+          subjectBidQuantity = minimumBid.mul(1.5);
+        });
+
+        test('throw', async () => {
+          const remainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+
+          return expect(subject()).to.be.rejectedWith(
+            `The submitted bid quantity, ${subjectBidQuantity}, must be a multiple of the minimumBid, ${minimumBid}.`
           );
         });
       });

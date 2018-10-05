@@ -25,7 +25,7 @@ import { coreAPIErrors, setTokenAssertionsErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { ERC20Wrapper, SetTokenWrapper, RebalancingSetTokenWrapper, CoreWrapper } from '../wrappers';
 import { BigNumber, calculatePartialAmount } from '../util';
-import { Address, Component, SetDetails, TxData, } from '../types/common';
+import { Address, Component, SetDetails, TxData, TokenFlowArrays } from '../types/common';
 
 /**
  * @title RebalancingAPI
@@ -162,6 +162,56 @@ export class RebalancingAPI {
     );
   }
 
+  /**
+   * Allows current manager to change manager address to a new address
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  newManager                     Address of the new manager
+   * @param  txOpts                         Transaction options
+   * @return                                Transaction hash
+   */
+  public async updateManagerAsync(
+    rebalancingSetTokenAddress: Address,
+    newManager: Address,
+    txOpts: TxData,
+  ): Promise<string> {
+    await this.assertUpdateManager(
+      rebalancingSetTokenAddress,
+      newManager,
+      txOpts
+    );
+
+    return await this.rebalancingSetToken.setManager(
+      rebalancingSetTokenAddress,
+      newManager,
+      txOpts
+    );
+  }
+
+  /**
+   * Fetches the current token inflows and outflows for a submitted bid
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
+   * @param  txOpts                         Transaction options
+   * @return                                Transaction hash
+   */
+  public async getBidPriceAsync(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    txOpts: TxData,
+  ): Promise<TokenFlowArrays> {
+    await this.assertGetBidPrice(
+      rebalancingSetTokenAddress,
+      bidQuantity,
+    );
+
+    return await this.rebalancingSetToken.getBidPrice(
+      rebalancingSetTokenAddress,
+      bidQuantity,
+    );
+  }
+
   /* ============ Private Assertions ============ */
 
   private async assertPropose(
@@ -230,5 +280,24 @@ export class RebalancingAPI {
       txOpts.from,
       bidQuantity
     );
+  }
+
+  private async assertUpdateManager(rebalancingSetTokenAddress: Address, newManager: Address, txOpts: TxData) {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+    this.assert.schema.isValidAddress('newManager', newManager);
+
+    await this.assert.rebalancing.isManager(rebalancingSetTokenAddress, txOpts.from);
+  }
+
+  private async assertGetBidPrice(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber) {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+    this.assert.common.greaterThanZero(
+      bidQuantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(bidQuantity)
+    );
+
+    await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
+    await this.assert.rebalancing.bidAmountLessThanRemainingSets(rebalancingSetTokenAddress, bidQuantity);
+    await this.assert.rebalancing.bidIsMultipleOfMinimumBid(rebalancingSetTokenAddress, bidQuantity);
   }
 }
