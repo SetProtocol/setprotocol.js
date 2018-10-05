@@ -62,14 +62,14 @@ export class CommonAssertions {
     }
   }
 
-  public isEqualString(string1: string, string2: string, errorMessage: string) {
-    if (string1 !== string2) {
+  public isEqualAddress(address1: string, address2: string, errorMessage: string) {
+    if (address1.toLowerCase() !== address2.toLowerCase()) {
       throw new Error(errorMessage);
     }
   }
 
-  public isDifferentString(string1: string, string2: string, errorMessage: string) {
-    if (string1 == string2) {
+  public isDifferentAddress(address1: string, address2: string, errorMessage: string) {
+    if (address1.toLowerCase() == address2.toLowerCase()) {
       throw new Error(errorMessage);
     }
   }

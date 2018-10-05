@@ -1098,7 +1098,6 @@ describe('OrderAPI', () => {
       beforeEach(async () => {
         nonComponentToken = await deployTokenAsync(provider, issuanceOrderMaker);
         kyberTrade.destinationToken = nonComponentToken.address;
-        subjectOrders[1] = zeroExOrder;
       });
 
       test('throws', async () => {
@@ -1154,7 +1153,6 @@ describe('OrderAPI', () => {
       beforeEach(async () => {
         nonComponentToken = await deployTokenAsync(provider, issuanceOrderMaker);
         zeroExOrder.makerAssetData = SetUtils.encodeAddressAsAssetData(nonComponentToken.address);
-        subjectOrders[1] = zeroExOrder;
       });
 
       test('throws', async () => {
@@ -1199,13 +1197,29 @@ describe('OrderAPI', () => {
       });
     });
 
+    describe('when addresses are cased differently', async () => {
+      beforeEach(async () => {
+        const makerTokenAddress = subjectSignedIssuanceOrder.makerToken;
+        const identifier = makerTokenAddress.slice(2, makerTokenAddress.length);
+
+        const upperCasedMakerTokenAddress = '0x' + identifier.toUpperCase();
+        subjectSignedIssuanceOrder.makerToken = upperCasedMakerTokenAddress;
+
+        const lowerCasedMakerTokenAddress = '0x' + identifier.toLowerCase();
+        zeroExOrder.takerAssetData = SetUtils.encodeAddressAsAssetData(lowerCasedMakerTokenAddress);
+      });
+
+      test('does not throw', async () => {
+        await subject();
+      });
+    });
+
     describe('when the taker wallet order taker asset is not a component of the Set', async () => {
       let nonComponentToken: StandardTokenMockContract;
 
       beforeEach(async () => {
         nonComponentToken = await deployTokenAsync(provider, issuanceOrderMaker);
         takerWalletOrder.takerTokenAddress = nonComponentToken.address;
-        subjectOrders[0] = takerWalletOrder;
       });
 
       test('throws', async () => {
@@ -1259,7 +1273,6 @@ describe('OrderAPI', () => {
       beforeEach(async () => {
         const takerWalletOrder = subjectOrders[0] as TakerWalletOrder;
         takerWalletOrder.takerTokenAmount = takerWalletOrder.takerTokenAmount.sub(1);
-        subjectOrders[0] = takerWalletOrder;
       });
 
       test('throws', async () => {

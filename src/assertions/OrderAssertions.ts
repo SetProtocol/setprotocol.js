@@ -357,14 +357,14 @@ export class OrderAssertions {
     );
 
     // Kyber trade source token is equivalent to the issuance order maker token
-    this.commonAssertions.isEqualString(
+    this.commonAssertions.isEqualAddress(
       issuanceOrder.makerToken,
       trade.sourceToken,
       orderErrors.MAKER_TOKEN_AND_KYBER_SOURCE_TOKEN_MISMATCH(),
     );
 
     // Kyber trade destination token is not the issuance order maker token
-    this.commonAssertions.isDifferentString(
+    this.commonAssertions.isDifferentAddress(
       issuanceOrder.makerToken,
       trade.destinationToken,
       orderErrors.MAKER_TOKEN_AND_KYBER_DESTINATION_TOKEN_MISMATCH(),
@@ -397,7 +397,7 @@ export class OrderAssertions {
     );
 
     // 0x taker token is equivalent to the issuance order maker token
-    this.commonAssertions.isEqualString(
+    this.commonAssertions.isEqualAddress(
       issuanceOrder.makerToken,
       SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.takerAssetData),
       orderErrors.MAKER_TOKEN_AND_ZERO_EX_TAKER_TOKEN_MISMATCH(),
