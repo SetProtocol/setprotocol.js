@@ -42,8 +42,8 @@ export class SetTokenAPI {
   /**
    * Instantiates a new SetTokenAPI instance that contains methods for interacting with SetToken contracts
    *
-   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
-   *                      the Ethereum network
+   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
+   *                      with the Ethereum network
    * @param assertions  An instance of the Assertion library
    */
   constructor(web3: Web3, assertions: Assertions) {
@@ -81,8 +81,8 @@ export class SetTokenAPI {
    *
    * @param  setAddress     Address of the Set
    * @param  quantity       Quantity of Set to issue or redeem
-   * @return                List of objects conforming to `Component` interface with addresses and amounts required
-   *                          for issuance or redemption
+   * @return                List of objects conforming to `Component` interface with addresses and amounts required for
+   *                          issuance or redemption
    */
   public async calculateComponentAmountsForIssuanceAsync(
     setAddress: Address,

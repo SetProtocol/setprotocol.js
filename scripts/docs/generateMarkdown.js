@@ -43,6 +43,10 @@ const classes = [
 		name: 'SetTokenAPI',
 		apiPath: 'setProtocol.setToken',
 	},
+	{
+		name: 'RebalancingAPI',
+		apiPath: 'setProtocol.rebalancing',
+	},
 ]
 
 /**

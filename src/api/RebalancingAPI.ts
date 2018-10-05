@@ -70,15 +70,19 @@ export class RebalancingAPI {
   }
 
   /**
-   * Proposes rebalance, can only be called by manager
+   * Proposes rebalance a new Set to rebalance to. Can only be called by the manager. Users will have the
+   * RebalancingSetToken's designated proposal period to withdraw their Sets if they want to
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
-   * @param  nextSetAddress                 Set to rebalance into
-   * @param  auctionLibrary                 Address of auction price curve to use
+   * @param  nextSetAddress                 Address of new Set to rebalance into after proposal period
+   * @param  auctionLibrary                 Address of auction price curve to use. See deployed contracts for addresses
+   *                                          of existing libraries
    * @param  curveCoefficient               Set auction price curve coefficient
-   * @param  auctionStartPrice              Used with auctionPriceDivisor, define auction start price
+   * @param  auctionStartPrice              Starting price of the rebalancing auction, denoting the rating. Used with
+   *                                          auctionPriceDivisor and library
    * @param  auctionPriceDivisor            Parameter to control how fast price moves
-   * @param  txOpts                         Transaction options
+   * @param  txOpts                         Transaction options object conforming to `TxData` with signer, gas, and
+   *                                          gasPrice data
    * @return                                Transaction hash
    */
   public async proposeAsync(
@@ -115,7 +119,8 @@ export class RebalancingAPI {
    * Initiates rebalance after proposal period has passed
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
-   * @param  txOpts                         Transaction options
+   * @param  txOpts                         Transaction options object conforming to `TxData` with signer, gas, and
+   *                                          gasPrice data
    * @return                                Transaction hash
    */
   public async rebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: TxData): Promise<string> {
@@ -128,7 +133,8 @@ export class RebalancingAPI {
    * Settles rebalance after auction has been completed
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
-   * @param  txOpts                         Transaction options
+   * @param  txOpts                         Transaction options object conforming to `TxData` with signer, gas, and
+   *                                          gasPrice data
    * @return                                Transaction hash
    */
   public async settleRebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: TxData): Promise<string> {
@@ -142,7 +148,8 @@ export class RebalancingAPI {
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
    * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
-   * @param  txOpts                         Transaction options
+   * @param  txOpts                         Transaction options object conforming to `TxData` with signer, gas, and
+   *                                          gasPrice data
    * @return                                Transaction hash
    */
   public async bidAsync(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: TxData): Promise<string> {
@@ -156,7 +163,8 @@ export class RebalancingAPI {
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
    * @param  newManager                     Address of the new manager
-   * @param  txOpts                         Transaction options
+   * @param  txOpts                         Transaction options object conforming to `TxData` with signer, gas, and
+   *                                          gasPrice data
    * @return                                Transaction hash
    */
   public async updateManagerAsync(
@@ -174,23 +182,12 @@ export class RebalancingAPI {
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
    * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
-   * @param  txOpts                         Transaction options
    * @return                                Transaction hash
    */
-  public async getBidPriceAsync(
-    rebalancingSetTokenAddress: Address,
-    bidQuantity: BigNumber,
-    txOpts: TxData,
-  ): Promise<TokenFlows> {
-    await this.assertGetBidPrice(
-      rebalancingSetTokenAddress,
-      bidQuantity,
-    );
+  public async getBidPriceAsync(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber): Promise<TokenFlows> {
+    await this.assertGetBidPrice(rebalancingSetTokenAddress, bidQuantity);
 
-    return await this.rebalancingSetToken.getBidPrice(
-      rebalancingSetTokenAddress,
-      bidQuantity,
-    );
+    return await this.rebalancingSetToken.getBidPrice(rebalancingSetTokenAddress, bidQuantity);
   }
 
   /**
@@ -280,7 +277,7 @@ export class RebalancingAPI {
 
   /**
    * Fetches details of the current rebalancing event. This information can be used to confirm the elapsed time
-   * of the rebalance, the next set, and the remaining quantity of the old set to rebalance.
+   * of the rebalance, the next set, and the remaining quantity of the old set to rebalance
    *
    * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
    * @return                               Object conforming to `RebalancingProgressDetails` interface

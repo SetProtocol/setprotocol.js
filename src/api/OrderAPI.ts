@@ -140,7 +140,10 @@ export class OrderAPI {
    * @param  signedIssuanceOrder    Object conforming to `SignedIssuanceOrder` interface to be validated
    * @param  fillQuantity           Fill quantity to check if fillable
    */
-  public async validateOrderFillableOrThrowAsync(signedIssuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber) {
+  public async validateOrderFillableOrThrowAsync(
+    signedIssuanceOrder: SignedIssuanceOrder,
+    fillQuantity: BigNumber
+  ): Promise<void> {
     await this.assert.order.isIssuanceOrderFillable(signedIssuanceOrder, fillQuantity);
   }
 
@@ -252,14 +255,12 @@ export class OrderAPI {
    * sources, either other exchange orders that can be exchanged using the specified maker token in the issuance order,
    * or from the taker's own wallet
    *
-   * @param  signedIssuanceOrder    Object conforming to `SignedIssuanceOrder` to fill
-   * @param  quantity               Amount of Set to fill in this call
-   * @param  orders                 Array of liquidity source objects conforming to `KyberTrade` or `TakerWalletOrder`
-   *                                  or `ZeroExSignedFillOrder` types that will collateralize the Set in the issuance
-   *                                  order
-   * @param  txOpts                 Transaction options object conforming to `TxData` with signer, gas, and gasPrice
-   *                                  data
-   * @return                        Transaction hash
+   * @param  signedIssuanceOrder  Object conforming to `SignedIssuanceOrder` to fill
+   * @param  quantity             Amount of Set to fill in this call
+   * @param  orders               Array of liquidity source objects conforming to `KyberTrade` or `TakerWalletOrder`
+   *                                or `ZeroExSignedFillOrder` types that will collateralize the Set components
+   * @param  txOpts               Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @return                      Transaction hash
    */
   public async fillOrderAsync(
     signedIssuanceOrder: SignedIssuanceOrder,

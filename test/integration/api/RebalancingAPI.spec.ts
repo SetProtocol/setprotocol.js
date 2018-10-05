@@ -1003,11 +1003,7 @@ describe('RebalancingAPI', () => {
     });
 
     async function subject(): Promise<TokenFlows> {
-      return await rebalancingAPI.getBidPriceAsync(
-        subjectRebalancingSetTokenAddress,
-        subjectBidQuantity,
-        { from: subjectCaller }
-      );
+      return await rebalancingAPI.getBidPriceAsync(subjectRebalancingSetTokenAddress, subjectBidQuantity);
     }
 
     describe('when the Rebalancing Set Token is in Default state', async () => {
