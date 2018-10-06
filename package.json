@@ -1,6 +1,6 @@
 {
   "name": "setprotocol.js",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A javascript library for interacting with the Set protocol",
   "keywords": [
     "setProtocol.js",
@@ -43,8 +43,6 @@
     "husky": "^0.14.3",
     "jest": "^22.1.4",
     "lint-staged": "^7.2.1",
-    "moment": "^2.22.2",
-    "timekeeper": "^2.1.2",
     "ts-jest": "^22.0.1",
     "tslint": "^5.9.1",
     "tslint-eslint-rules": "^5.3.1",
@@ -70,8 +68,10 @@
     "jsonschema": "^1.2.4",
     "lodash": "^4.17.4",
     "lodash.compact": "^3.0.1",
+    "moment": "^2.22.2",
     "set-protocol-contracts": "0.3.9",
     "set-protocol-utils": "0.3.40",
+    "timekeeper": "^2.1.2",
     "tiny-promisify": "^1.0.0",
     "truffle-contract": "^3.0.1",
     "truffle-hdwallet-provider": "0.0.3",
