@@ -2,7 +2,7 @@
 
 SET_PROTOCOL_JS=`pwd`/node_modules/setprotocol.js
 
-rm -rf blockchain && cp -r snapshots/set_protocol blockchain
+rm -rf blockchain && cp -r snapshots/set-protocol blockchain
 
 BLOCKCHAIN="${SET_PROTOCOL_JS}/blockchain"
 
