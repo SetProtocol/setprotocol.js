@@ -21,7 +21,7 @@ import * as Web3 from 'web3';
 import { StandardTokenMockContract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
 import { SetProtocolUtils } from 'set-protocol-utils';
 
-import { DEFAULT_REBALANCING_NATURAL_UNIT, E18, ONE_DAY_IN_SECONDS, UINT256, ZERO } from '../constants';
+import { DEFAULT_REBALANCING_NATURAL_UNIT, E18, UINT256, ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { CoreWrapper, ERC20Wrapper } from '../wrappers';
@@ -386,10 +386,6 @@ export class FactoryAPI {
     this.assert.schema.isValidAddress('initialSet', initialSetAddress);
     this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY('name'));
     this.assert.common.isValidString(symbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY('symbol'));
-    this.assert.common.isGreaterOrEqualThan(proposalPeriod, ONE_DAY_IN_SECONDS,
-       `Parameter proposalPeriod: ${proposalPeriod} must be greater than or equal to ${ONE_DAY_IN_SECONDS}.`);
-    this.assert.common.isGreaterOrEqualThan(rebalanceInterval, ONE_DAY_IN_SECONDS,
-       `Parameter rebalanceInterval: ${rebalanceInterval} must be greater than or equal to ${ONE_DAY_IN_SECONDS}.`);
     this.assert.common.greaterThanZero(initialUnitShares,
       `Parameter initialUnitShares: ${initialUnitShares} must be greater than 0.`);
 
