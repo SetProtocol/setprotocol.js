@@ -1,20 +1,20 @@
 export {
-  deployTransferProxyContract,
-  deployVaultContract,
+  addAuthorizationAsync,
+  approveForTransferAsync,
+  deployBaseContracts,
   deployCoreContract,
   deployNoDecimalTokenAsync,
   deployRebalancingSetTokenFactoryContract,
+  deploySetTokenAsync,
   deploySetTokenFactoryContract,
   deployTokenAsync,
   deployTokensAsync,
   deployTokensSpecifyingDecimals,
-  deploySetTokenAsync,
-  registerExchange,
-  approveForTransferAsync,
-  addAuthorizationAsync,
+  deployTransferProxyContract,
+  deployVaultContract,
   getTokenBalances,
+  registerExchange,
   tokenDeployedOnSnapshot,
-  deployBaseContracts
 } from './coreHelpers';
 
 export {
