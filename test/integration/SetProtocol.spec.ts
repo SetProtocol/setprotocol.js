@@ -60,19 +60,14 @@ import { SetProtocolConfig } from '@src/SetProtocol';
 import { ERC20Wrapper } from '@src/wrappers/ERC20Wrapper';
 import { Address, Log, SetUnits } from '@src/types/common';
 import {
-  addAuthorizationAsync,
   approveForTransferAsync,
-  deployCoreContract,
+  deployBaseContracts,
   deployNoDecimalTokenAsync,
-  deployRebalancingSetTokenFactoryContract,
   deploySetTokenAsync,
-  deploySetTokenFactoryContract,
   deploySetTokensAsync,
   deployTokenAsync,
   deployTokensAsync,
   deployTokensSpecifyingDecimals,
-  deployTransferProxyContract,
-  deployVaultContract,
   getVaultBalances,
 } from '@test/helpers';
 import { ether, getFormattedLogsFromReceipt } from '@src/util';
@@ -112,14 +107,7 @@ describe('SetProtocol', async () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    transferProxy = await deployTransferProxyContract(provider);
-    vault = await deployVaultContract(provider);
-    core = await deployCoreContract(provider, transferProxy.address, vault.address);
-    setTokenFactory = await deploySetTokenFactoryContract(provider, core);
-    rebalancingSetTokenFactory = await deployRebalancingSetTokenFactoryContract(provider, core);
-
-    await addAuthorizationAsync(vault, core.address);
-    await addAuthorizationAsync(transferProxy, core.address);
+    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(provider);
 
     setProtocol = new SetProtocol(
       provider,

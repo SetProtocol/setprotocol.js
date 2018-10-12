@@ -55,17 +55,12 @@ import {
   ZERO,
 } from '@src/constants';
 import {
-  addAuthorizationAsync,
-  deployCoreContract,
+  deployBaseContracts,
   deployNoDecimalTokenAsync,
   deploySetTokensAsync,
   deployTokenAsync,
   deployTokensAsync,
   deployTokensSpecifyingDecimals,
-  deployRebalancingSetTokenFactoryContract,
-  deploySetTokenFactoryContract,
-  deployTransferProxyContract,
-  deployVaultContract,
 } from '@test/helpers';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { ether } from '@src/util/units';
@@ -98,8 +93,6 @@ describe('FactoryAPI', () => {
   let factoryAPI: FactoryAPI;
   let assertions: Assertions;
 
-  let componentTokens: StandardTokenMockContract[];
-
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
   });
@@ -111,16 +104,7 @@ describe('FactoryAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    transferProxy = await deployTransferProxyContract(provider);
-    vault = await deployVaultContract(provider);
-    core = await deployCoreContract(provider, transferProxy.address, vault.address);
-    setTokenFactory = await deploySetTokenFactoryContract(provider, core);
-    rebalancingSetTokenFactory = await deployRebalancingSetTokenFactoryContract(provider, core);
-
-    await addAuthorizationAsync(vault, core.address);
-    await addAuthorizationAsync(transferProxy, core.address);
-
-    assertions = new Assertions(web3, coreWrapper);
+    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(provider);
 
     config = {
       coreAddress: core.address,
@@ -130,9 +114,8 @@ describe('FactoryAPI', () => {
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
     };
     coreWrapper = new CoreWrapper(web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
+    assertions = new Assertions(web3, coreWrapper);
     factoryAPI = new FactoryAPI(web3, coreWrapper, assertions, config);
-
-    componentTokens = await deployTokensAsync(3, provider);
   });
 
   afterEach(async () => {
@@ -147,7 +130,11 @@ describe('FactoryAPI', () => {
     let subjectSymbol: string;
     let subjectCaller: Address;
 
+    let componentTokens: StandardTokenMockContract[];
+
     beforeEach(async () => {
+      componentTokens = await deployTokensAsync(3, provider);
+
       subjectComponents = componentTokens.map(component => component.address);
       subjectUnits = subjectComponents.map(component => ether(4));
       subjectNaturalUnit = ether(2);

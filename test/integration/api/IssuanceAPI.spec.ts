@@ -43,20 +43,12 @@ import { IssuanceAPI } from '@src/api';
 import { BigNumber } from '@src/util';
 import { CoreWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
+import { DEPLOYED_TOKEN_QUANTITY, TX_DEFAULTS, ZERO } from '@src/constants';
 import {
-  DEPLOYED_TOKEN_QUANTITY,
-  TX_DEFAULTS,
-  ZERO
-} from '@src/constants';
-import {
-  addAuthorizationAsync,
   approveForTransferAsync,
-  deployCoreContract,
+  deployBaseContracts,
   deploySetTokenAsync,
   deployTokensAsync,
-  deploySetTokenFactoryContract,
-  deployTransferProxyContract,
-  deployVaultContract,
   getTokenBalances,
 } from '@test/helpers/coreHelpers';
 import { Assertions } from '@src/assertions';
@@ -82,7 +74,6 @@ describe('IssuanceAPI', () => {
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
-  let coreWrapper: CoreWrapper;
   let issuanceAPI: IssuanceAPI;
 
   let componentTokens: StandardTokenMockContract[];
@@ -102,15 +93,9 @@ describe('IssuanceAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    transferProxy = await deployTransferProxyContract(provider);
-    vault = await deployVaultContract(provider);
-    core = await deployCoreContract(provider, transferProxy.address, vault.address);
-    setTokenFactory = await deploySetTokenFactoryContract(provider, core);
+    [core, transferProxy, vault, setTokenFactory] = await deployBaseContracts(provider);
 
-    await addAuthorizationAsync(vault, core.address);
-    await addAuthorizationAsync(transferProxy, core.address);
-
-    coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+    const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
     issuanceAPI = new IssuanceAPI(web3, coreWrapper, assertions);
 

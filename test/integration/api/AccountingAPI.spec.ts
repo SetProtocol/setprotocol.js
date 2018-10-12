@@ -37,15 +37,7 @@ import { Assertions } from '@src/assertions';
 import { CoreWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { TX_DEFAULTS, ZERO } from '@src/constants';
-import {
-  addAuthorizationAsync,
-  approveForTransferAsync,
-  deployCoreContract,
-  deployTokensAsync,
-  deployTransferProxyContract,
-  deployVaultContract,
-  getVaultBalances
-} from '@test/helpers';
+import { approveForTransferAsync, deployBaseContracts, deployTokensAsync, getVaultBalances } from '@test/helpers';
 import { testSets, TestSet } from '../../testSets';
 import { Web3Utils } from '@src/util/Web3Utils';
 
@@ -70,15 +62,9 @@ describe('AccountingAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    transferProxy = await deployTransferProxyContract(provider);
-    vault = await deployVaultContract(provider);
-    core = await deployCoreContract(provider, transferProxy.address, vault.address);
-
-    await addAuthorizationAsync(vault, core.address);
-    await addAuthorizationAsync(transferProxy, core.address);
+    [core, transferProxy, vault] = await deployBaseContracts(provider);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
-
     const assertions = new Assertions(web3, coreWrapper);
     accountingAPI = new AccountingAPI(web3, coreWrapper, assertions);
 

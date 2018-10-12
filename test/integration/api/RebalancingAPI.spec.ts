@@ -59,20 +59,16 @@ import {
   approveForTransferAsync,
   constructInflowOutflowArraysAsync,
   createDefaultRebalancingSetTokenAsync,
+  deployBaseContracts,
   deployConstantAuctionPriceCurveAsync,
-  deployCoreContract,
-  deployRebalancingSetTokenFactoryContract,
   deploySetTokenAsync,
   deploySetTokensAsync,
-  deploySetTokenFactoryContract,
-  deployVaultContract,
-  deployTransferProxyContract,
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync,
   getVaultBalances,
   increaseChainTimeAsync,
   transitionToProposeAsync,
-  transitionToRebalanceAsync
+  transitionToRebalanceAsync,
 } from '@test/helpers';
 import {
   Address,
@@ -111,19 +107,12 @@ describe('RebalancingAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    transferProxy = await deployTransferProxyContract(provider);
-    vault = await deployVaultContract(provider);
-    core = await deployCoreContract(provider, transferProxy.address, vault.address);
-    setTokenFactory = await deploySetTokenFactoryContract(provider, core);
-    rebalancingSetTokenFactory = await deployRebalancingSetTokenFactoryContract(provider, core);
+    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(provider);
 
-    await addAuthorizationAsync(vault, core.address);
-    await addAuthorizationAsync(transferProxy, core.address);
+    rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
 
     const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
-
-    rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
     rebalancingAPI = new RebalancingAPI(web3, assertions, coreWrapper);
   });
 

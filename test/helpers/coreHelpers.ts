@@ -181,6 +181,32 @@ export const deployRebalancingSetTokenFactoryContract = async (
   return rebalancingSetTokenFactoryContract;
 };
 
+export const deployBaseContracts = async (
+  provider: Provider,
+): Promise<[
+  CoreContract,
+  TransferProxyContract,
+  VaultContract,
+  SetTokenFactoryContract,
+  RebalancingSetTokenFactoryContract
+]> => {
+  const [transferProxy, vault] = await Promise.all([
+    deployTransferProxyContract(provider),
+    deployVaultContract(provider),
+  ]);
+
+  const core = await deployCoreContract(provider, transferProxy.address, vault.address);
+
+  const [setTokenFactory, rebalancingSetTokenFactory] = await Promise.all([
+    deploySetTokenFactoryContract(provider, core),
+    deployRebalancingSetTokenFactoryContract(provider, core),
+    addAuthorizationAsync(vault, core.address),
+    addAuthorizationAsync(transferProxy, core.address),
+  ]);
+
+  return [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory];
+};
+
 export const deployTokenAsync = async (
   provider: Provider,
   owner: Address = DEFAULT_ACCOUNT,

@@ -14,6 +14,7 @@ export {
   addAuthorizationAsync,
   getTokenBalances,
   tokenDeployedOnSnapshot,
+  deployBaseContracts
 } from './coreHelpers';
 
 export {

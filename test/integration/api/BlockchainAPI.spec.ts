@@ -39,12 +39,7 @@ import { Assertions } from '@src/assertions';
 import { BigNumber, getFormattedLogsFromReceipt } from '@src/util';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { TX_DEFAULTS, ZERO } from '@src/constants';
-import {
-  deployTokenAsync,
-  deployVaultContract,
-  deployTransferProxyContract,
-  deployCoreContract
-} from '@test/helpers';
+import { deployBaseContracts, deployTokenAsync } from '@test/helpers';
 import { getVaultBalances } from '@test/helpers/vaultHelpers';
 import { testSets, TestSet } from '../../testSets';
 import { Web3Utils } from '@src/util/Web3Utils';
@@ -79,12 +74,10 @@ describe('BlockchainAPI', () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
     standardToken = await deployTokenAsync(provider);
-    const transferProxy = await deployTransferProxyContract(provider);
-    const vault = await deployVaultContract(provider);
-    const core = await deployCoreContract(provider, transferProxy.address, vault.address);
+
+    const [core, transferProxy, vault] = await deployBaseContracts(provider);
     const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
-
     blockchainAPI = new BlockchainAPI(web3, assertions);
   });
 
