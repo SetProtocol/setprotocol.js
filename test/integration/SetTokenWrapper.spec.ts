@@ -26,6 +26,7 @@ import * as chai from 'chai';
 import * as Web3 from 'web3';
 import {
   CoreContract,
+  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -38,16 +39,7 @@ import { CoreWrapper, SetTokenWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
 import { BigNumber, Web3Utils } from '@src/util';
 import { ether } from '@src/util/units';
-import {
-  addAuthorizationAsync,
-  approveForTransferAsync,
-  deployCoreContract,
-  deploySetTokenAsync,
-  deploySetTokenFactoryContract,
-  deployVaultContract,
-  deployTokensAsync,
-  deployTransferProxyContract
-} from '@test/helpers';
+import { approveForTransferAsync, deployBaseContracts, deploySetTokenAsync, deployTokensAsync } from '@test/helpers';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
@@ -65,19 +57,14 @@ describe('SetTokenWrapper', () => {
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
 
   let setTokenWrapper: SetTokenWrapper;
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    transferProxy = await deployTransferProxyContract(provider);
-    vault = await deployVaultContract(provider);
-    core = await deployCoreContract(provider, transferProxy.address, vault.address);
-    setTokenFactory = await deploySetTokenFactoryContract(provider, core);
-
-    await addAuthorizationAsync(vault, core.address);
-    await addAuthorizationAsync(transferProxy, core.address);
+    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(provider);
 
     setTokenWrapper = new SetTokenWrapper(web3);
   });

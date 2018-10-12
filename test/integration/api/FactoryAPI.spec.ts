@@ -55,17 +55,12 @@ import {
   ZERO,
 } from '@src/constants';
 import {
-  addAuthorizationAsync,
-  deployCoreContract,
+  deployBaseContracts,
   deployNoDecimalTokenAsync,
   deploySetTokensAsync,
   deployTokenAsync,
   deployTokensAsync,
   deployTokensSpecifyingDecimals,
-  deployRebalancingSetTokenFactoryContract,
-  deploySetTokenFactoryContract,
-  deployTransferProxyContract,
-  deployVaultContract,
 } from '@test/helpers';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { ether } from '@src/util/units';
@@ -98,8 +93,6 @@ describe('FactoryAPI', () => {
   let factoryAPI: FactoryAPI;
   let assertions: Assertions;
 
-  let componentTokens: StandardTokenMockContract[];
-
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
   });
@@ -111,16 +104,7 @@ describe('FactoryAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    transferProxy = await deployTransferProxyContract(provider);
-    vault = await deployVaultContract(provider);
-    core = await deployCoreContract(provider, transferProxy.address, vault.address);
-    setTokenFactory = await deploySetTokenFactoryContract(provider, core);
-    rebalancingSetTokenFactory = await deployRebalancingSetTokenFactoryContract(provider, core);
-
-    await addAuthorizationAsync(vault, core.address);
-    await addAuthorizationAsync(transferProxy, core.address);
-
-    assertions = new Assertions(web3, coreWrapper);
+    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(provider);
 
     config = {
       coreAddress: core.address,
@@ -130,9 +114,8 @@ describe('FactoryAPI', () => {
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
     };
     coreWrapper = new CoreWrapper(web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
+    assertions = new Assertions(web3, coreWrapper);
     factoryAPI = new FactoryAPI(web3, coreWrapper, assertions, config);
-
-    componentTokens = await deployTokensAsync(3, provider);
   });
 
   afterEach(async () => {
@@ -147,7 +130,11 @@ describe('FactoryAPI', () => {
     let subjectSymbol: string;
     let subjectCaller: Address;
 
+    let componentTokens: StandardTokenMockContract[];
+
     beforeEach(async () => {
+      componentTokens = await deployTokensAsync(3, provider);
+
       subjectComponents = componentTokens.map(component => component.address);
       subjectUnits = subjectComponents.map(component => ether(4));
       subjectNaturalUnit = ether(2);
@@ -450,6 +437,30 @@ describe('FactoryAPI', () => {
       });
     });
 
+    describe('when the proposal period is less than one day in seconds', async () => {
+      beforeEach(async () => {
+        subjectProposalPeriod = ONE_DAY_IN_SECONDS.sub(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Parameter proposalPeriod: ${subjectProposalPeriod} must be greater than or equal to 86400.`
+        );
+      });
+    });
+
+    describe('when the rebalance interval is less than one day in seconds', async () => {
+      beforeEach(async () => {
+        subjectRebalanceInterval = ONE_DAY_IN_SECONDS.sub(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Parameter rebalanceInterval: ${subjectRebalanceInterval} must be greater than or equal to 86400.`
+        );
+      });
+    });
+
     describe('when the init shares ratio is zero', async () => {
       beforeEach(async () => {
         subjectInitialUnitShares = ZERO;
@@ -592,7 +603,7 @@ describe('FactoryAPI', () => {
     });
   });
 
-  describe('calculateComponentAllocation', async () => {
+  describe('calculateSetUnitsAsync', async () => {
     let subjectComponentAddresses: Address[];
     let subjectComponentPrices: BigNumber[];
     let subjectComponentAllocations: BigNumber[];

@@ -53,22 +53,18 @@ import {
 } from '@src/constants';
 import { Assertions } from '@src/assertions';
 import {
-  addAuthorizationAsync,
   approveForTransferAsync,
   constructInflowOutflowArraysAsync,
   createDefaultRebalancingSetTokenAsync,
+  deployBaseContracts,
   deployConstantAuctionPriceCurveAsync,
   deployCoreContract,
   deployKyberNetworkWrapperContract,
-  deployRebalancingSetTokenFactoryContract,
   deploySetTokenAsync,
   deploySetTokensAsync,
-  deploySetTokenFactoryContract,
   deployTakerWalletWrapperContract,
   deployTokenAsync,
   deployTokensAsync,
-  deployTransferProxyContract,
-  deployVaultContract,
   deployZeroExExchangeWrapperContract,
   getVaultBalances,
   tokenDeployedOnSnapshot,
@@ -116,7 +112,6 @@ describe('CoreWrapper', () => {
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
 
   let coreWrapper: CoreWrapper;
-  let assertions: Assertions;
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -129,18 +124,9 @@ describe('CoreWrapper', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    transferProxy = await deployTransferProxyContract(provider);
-    vault = await deployVaultContract(provider);
-    core = await deployCoreContract(provider, transferProxy.address, vault.address);
-    setTokenFactory = await deploySetTokenFactoryContract(provider, core);
-    rebalancingSetTokenFactory = await deployRebalancingSetTokenFactoryContract(provider, core);
-
-    await addAuthorizationAsync(vault, core.address);
-    await addAuthorizationAsync(transferProxy, core.address);
+    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(provider);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
-
-    assertions = new Assertions(web3, coreWrapper);
   });
 
   afterEach(async () => {
@@ -544,7 +530,6 @@ describe('CoreWrapper', () => {
   });
 
   describe('fillOrder', async () => {
-    let ordersAPI: OrderAPI;
     let issuanceOrderMaker: Address;
     let issuanceOrderQuantity: BigNumber;
     let setToken: SetTokenContract;
@@ -555,7 +540,8 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
+      const assertions = new Assertions(web3, coreWrapper);
+      const ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
 
       await deployTakerWalletWrapperContract(transferProxy, core, provider);
       await deployZeroExExchangeWrapperContract(
@@ -696,14 +682,13 @@ describe('CoreWrapper', () => {
   });
 
   describe('cancelOrder', async () => {
-    let ordersAPI: OrderAPI;
-
     let subjectSignedIssuanceOrder: SignedIssuanceOrder;
     let subjectCancelQuantity: BigNumber;
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
+      const assertions = new Assertions(web3, coreWrapper);
+      const ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
 
       const issuanceOrderTaker = ACCOUNTS[0].address;
       const issuanceOrderMaker = ACCOUNTS[1].address;
@@ -951,8 +936,7 @@ describe('CoreWrapper', () => {
       const factoryAddresses = await coreWrapper.getFactories();
 
       expect(factoryAddresses.length).to.equal(2);
-      expect(factoryAddresses[0]).to.equal(setTokenFactory.address);
-      expect(factoryAddresses[1]).to.equal(rebalancingSetTokenFactory.address);
+      expect(factoryAddresses).to.include.members([setTokenFactory.address, rebalancingSetTokenFactory.address]);
     });
 
     test('gets Set addresses', async () => {

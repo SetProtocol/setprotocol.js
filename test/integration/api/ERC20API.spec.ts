@@ -35,13 +35,7 @@ import { ERC20API } from '@src/api';
 import { DEFAULT_ACCOUNT, DEPLOYED_TOKEN_QUANTITY, TX_DEFAULTS } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber, ether, Web3Utils } from '@src/util';
-import {
-  addAuthorizationAsync,
-  deployTokenAsync,
-  deployVaultContract,
-  deployTransferProxyContract,
-  deployCoreContract
-} from '@test/helpers';
+import { deployBaseContracts, deployTokenAsync } from '@test/helpers';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
@@ -59,12 +53,10 @@ describe('ERC20API', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    const transferProxy = await deployTransferProxyContract(provider);
-    const vault = await deployVaultContract(provider);
-    const core = await deployCoreContract(provider, transferProxy.address, vault.address);
+    const [core, transferProxy, vault] = await deployBaseContracts(provider);
+
     const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
-
     erc20API = new ERC20API(web3, assertions);
   });
 

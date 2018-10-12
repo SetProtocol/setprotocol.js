@@ -41,15 +41,12 @@ import { Assertions } from '@src/assertions';
 import { CoreWrapper } from '@src/wrappers';
 import ChaiSetup from '@test/helpers/chaiSetup';
 import {
-  addAuthorizationAsync,
   approveForTransferAsync,
+  deployBaseContracts,
   deployCoreContract,
   deploySetTokenAsync,
-  deploySetTokenFactoryContract,
-  deployVaultContract,
   deployTokensAsync,
   deployTokensSpecifyingDecimals,
-  deployTransferProxyContract
 } from '@test/helpers';
 import { Component, SetDetails } from '@src/types/common';
 
@@ -74,17 +71,10 @@ describe('SetTokenAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    transferProxy = await deployTransferProxyContract(provider);
-    vault = await deployVaultContract(provider);
-    core = await deployCoreContract(provider, transferProxy.address, vault.address);
-    setTokenFactory = await deploySetTokenFactoryContract(provider, core);
-
-    await addAuthorizationAsync(vault, core.address);
-    await addAuthorizationAsync(transferProxy, core.address);
+    [core, transferProxy, vault, setTokenFactory] = await deployBaseContracts(provider);
 
     const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
-
     setTokenAPI = new SetTokenAPI(web3, assertions);
   });
 

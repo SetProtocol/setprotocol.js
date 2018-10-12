@@ -49,23 +49,18 @@ import { BigNumber, Web3Utils } from '@src/util';
 import { Address } from '@src/types/common';
 import { ether } from '@src/util/units';
 import {
-  addAuthorizationAsync,
   approveForTransferAsync,
   constructInflowOutflowArraysAsync,
   createDefaultRebalancingSetTokenAsync,
+  deployBaseContracts,
   deployConstantAuctionPriceCurveAsync,
-  deployCoreContract,
-  deployRebalancingSetTokenFactoryContract,
-  deploySetTokenFactoryContract,
   deploySetTokensAsync,
-  deployVaultContract,
   deployTokensAsync,
-  deployTransferProxyContract,
+  getAuctionSetUpOutputsAsync,
+  getExpectedUnitSharesAsync,
   increaseChainTimeAsync,
   transitionToProposeAsync,
   transitionToRebalanceAsync,
-  getAuctionSetUpOutputsAsync,
-  getExpectedUnitSharesAsync
 } from '@test/helpers';
 import { TokenFlows } from '@src/types/common';
 
@@ -91,14 +86,7 @@ describe('SetTokenWrapper', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    transferProxy = await deployTransferProxyContract(provider);
-    vault = await deployVaultContract(provider);
-    core = await deployCoreContract(provider, transferProxy.address, vault.address);
-    setTokenFactory = await deploySetTokenFactoryContract(provider, core);
-    rebalancingSetTokenFactory = await deployRebalancingSetTokenFactoryContract(provider, core);
-
-    await addAuthorizationAsync(vault, core.address);
-    await addAuthorizationAsync(transferProxy, core.address);
+    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(provider);
 
     rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
   });

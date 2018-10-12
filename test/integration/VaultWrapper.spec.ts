@@ -24,25 +24,13 @@ jest.setTimeout(30000);
 
 import * as chai from 'chai';
 import * as Web3 from 'web3';
-import {
-  CoreContract,
-  StandardTokenMockContract,
-  TransferProxyContract,
-  VaultContract
-} from 'set-protocol-contracts';
+import { CoreContract, StandardTokenMockContract, TransferProxyContract, VaultContract } from 'set-protocol-contracts';
 import { Address } from 'set-protocol-utils';
 
 import { CoreWrapper, VaultWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
 import { BigNumber, Web3Utils } from '@src/util';
-import {
-  addAuthorizationAsync,
-  approveForTransferAsync,
-  deployCoreContract,
-  deployVaultContract,
-  deployTokenAsync,
-  deployTransferProxyContract
-} from '@test/helpers';
+import { approveForTransferAsync, deployTokenAsync, deployBaseContracts } from '@test/helpers';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
@@ -66,12 +54,7 @@ describe('VaultWrapper', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    transferProxy = await deployTransferProxyContract(provider);
-    vault = await deployVaultContract(provider);
-    core = await deployCoreContract(provider, transferProxy.address, vault.address);
-
-    await addAuthorizationAsync(vault, core.address);
-    await addAuthorizationAsync(transferProxy, core.address);
+    [core, transferProxy, vault] = await deployBaseContracts(provider);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     vaultWrapper = new VaultWrapper(web3, vault.address);

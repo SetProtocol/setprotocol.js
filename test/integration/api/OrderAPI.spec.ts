@@ -41,7 +41,7 @@ import {
 
 import { BigNumber, SignatureUtils } from '@src/util';
 import ChaiSetup from '@test/helpers/chaiSetup';
-import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from '@src/wrappers';
+import { CoreWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { OrderAPI } from '@src/api';
 import {
@@ -59,17 +59,13 @@ import { ZERO } from '@src/constants';
 import { Assertions } from '@src/assertions';
 import { ether, Web3Utils, generateFutureTimestamp, calculatePartialAmount } from '@src/util';
 import {
-  addAuthorizationAsync,
   approveForTransferAsync,
-  deployCoreContract,
+  deployBaseContracts,
   deployKyberNetworkWrapperContract,
   deploySetTokenAsync,
-  deploySetTokenFactoryContract,
   deployTakerWalletWrapperContract,
   deployTokenAsync,
   deployTokensAsync,
-  deployTransferProxyContract,
-  deployVaultContract,
   deployZeroExExchangeWrapperContract,
   tokenDeployedOnSnapshot,
 } from '@test/helpers';
@@ -93,26 +89,14 @@ describe('OrderAPI', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let coreWrapper: CoreWrapper;
-  let erc20Wrapper: ERC20Wrapper;
-  let setTokenWrapper: SetTokenWrapper;
-  let vaultWrapper: VaultWrapper;
   let ordersAPI: OrderAPI;
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    transferProxy = await deployTransferProxyContract(provider);
-    vault = await deployVaultContract(provider);
-    core = await deployCoreContract(provider, transferProxy.address, vault.address);
-    setTokenFactory = await deploySetTokenFactoryContract(provider, core);
-
-    await addAuthorizationAsync(vault, core.address);
-    await addAuthorizationAsync(transferProxy, core.address);
+    [core, transferProxy, vault, setTokenFactory] = await deployBaseContracts(provider);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
-    erc20Wrapper = new ERC20Wrapper(web3);
-    setTokenWrapper = new SetTokenWrapper(web3);
-    vaultWrapper = new VaultWrapper(web3, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
     ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
   });
