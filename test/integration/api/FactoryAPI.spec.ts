@@ -450,6 +450,30 @@ describe('FactoryAPI', () => {
       });
     });
 
+    describe('when the proposal period is less than one day in seconds', async () => {
+      beforeEach(async () => {
+        subjectProposalPeriod = ONE_DAY_IN_SECONDS.sub(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Parameter proposalPeriod: ${subjectProposalPeriod} must be greater than or equal to 86400.`
+        );
+      });
+    });
+
+    describe('when the rebalance interval is less than one day in seconds', async () => {
+      beforeEach(async () => {
+        subjectRebalanceInterval = ONE_DAY_IN_SECONDS.sub(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Parameter rebalanceInterval: ${subjectRebalanceInterval} must be greater than or equal to 86400.`
+        );
+      });
+    });
+
     describe('when the init shares ratio is zero', async () => {
       beforeEach(async () => {
         subjectInitialUnitShares = ZERO;
@@ -592,7 +616,7 @@ describe('FactoryAPI', () => {
     });
   });
 
-  describe('calculateComponentAllocation', async () => {
+  describe('calculateSetUnitsAsync', async () => {
     let subjectComponentAddresses: Address[];
     let subjectComponentPrices: BigNumber[];
     let subjectComponentAllocations: BigNumber[];
