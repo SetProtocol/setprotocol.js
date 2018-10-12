@@ -26,11 +26,11 @@ import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
-import { TransactionReceipt } from 'ethereum-types';
 import * as Web3 from 'web3';
 import { Address, Log } from 'set-protocol-utils';
-import { StandardTokenMock } from 'set-protocol-contracts';
 import { CoreContract, StandardTokenMockContract, VaultContract } from 'set-protocol-contracts';
+import { StandardTokenMock } from 'set-protocol-contracts';
+import { TransactionReceipt } from 'ethereum-types';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { BlockchainAPI } from '@src/api';

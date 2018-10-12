@@ -22,46 +22,60 @@
 jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
-import * as chai from 'chai';
 import * as _ from 'lodash';
-import * as Web3 from 'web3';
 import * as ABIDecoder from 'abi-decoder';
-import { Core } from 'set-protocol-contracts';
+import * as chai from 'chai';
+import * as Web3 from 'web3';
+import { Core, StandardTokenMock } from 'set-protocol-contracts';
+import { TransactionReceipt } from 'ethereum-types';
 import {
   CoreContract,
+  NoDecimalTokenMock,
+  NoDecimalTokenMockContract,
+  RebalancingSetTokenContract,
+  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
-  NoDecimalTokenMock,
-  NoDecimalTokenMockContract,
 } from 'set-protocol-contracts';
 import { SetProtocolUtils } from 'set-protocol-utils';
 
 import ChaiSetup from '../helpers/chaiSetup';
-import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
+import { ACCOUNTS, DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import SetProtocol from '@src/SetProtocol';
-import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT, NULL_ADDRESS, TX_DEFAULTS } from '@src/constants';
+import {
+  DEFAULT_GAS_PRICE,
+  DEFAULT_GAS_LIMIT,
+  DEFAULT_UNIT_SHARES,
+  NULL_ADDRESS,
+  ONE_DAY_IN_SECONDS,
+  TX_DEFAULTS
+} from '@src/constants';
 import { Web3Utils } from '@src/util/Web3Utils';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { BigNumber } from '@src/util';
 import { SetProtocolConfig } from '@src/SetProtocol';
 import { ERC20Wrapper } from '@src/wrappers/ERC20Wrapper';
-import { Address, SetUnits } from '@src/types/common';
+import { Address, Log, SetUnits } from '@src/types/common';
 import {
   addAuthorizationAsync,
   approveForTransferAsync,
   deployCoreContract,
   deployNoDecimalTokenAsync,
+  deployRebalancingSetTokenFactoryContract,
   deploySetTokenAsync,
   deploySetTokenFactoryContract,
+  deploySetTokensAsync,
+  deployTokenAsync,
   deployTokensAsync,
   deployTokensSpecifyingDecimals,
   deployTransferProxyContract,
   deployVaultContract,
+  getVaultBalances,
 } from '@test/helpers';
-import { ether } from '@src/util/units';
+import { ether, getFormattedLogsFromReceipt } from '@src/util';
 
 ChaiSetup.configure();
 const { expect } = chai;
@@ -83,6 +97,7 @@ describe('SetProtocol', async () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let setTokenFactory: SetTokenFactoryContract;
   let setProtocol: SetProtocol;
 
@@ -101,6 +116,7 @@ describe('SetProtocol', async () => {
     vault = await deployVaultContract(provider);
     core = await deployCoreContract(provider, transferProxy.address, vault.address);
     setTokenFactory = await deploySetTokenFactoryContract(provider, core);
+    rebalancingSetTokenFactory = await deployRebalancingSetTokenFactoryContract(provider, core);
 
     await addAuthorizationAsync(vault, core.address);
     await addAuthorizationAsync(transferProxy, core.address);
@@ -112,6 +128,7 @@ describe('SetProtocol', async () => {
         transferProxyAddress: transferProxy.address,
         vaultAddress: vault.address,
         setTokenFactoryAddress: setTokenFactory.address,
+        rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
       } as SetProtocolConfig,
     );
   });
@@ -166,7 +183,7 @@ describe('SetProtocol', async () => {
     });
   });
 
-  describe('calculateComponentAllocation', async () => {
+  describe('calculateSetUnitsAsync', async () => {
     let subjectComponentAddresses: Address[];
     let subjectComponentPrices: BigNumber[];
     let subjectComponentAllocations: BigNumber[];
@@ -287,6 +304,268 @@ describe('SetProtocol', async () => {
     });
   });
 
+  describe('createRebalancingSetTokenAsync', async () => {
+    let subjectManager: Address;
+    let subjectInitialSet: Address;
+    let subjectInitialUnitShares: BigNumber;
+    let subjectProposalPeriod: BigNumber;
+    let subjectRebalanceInterval: BigNumber;
+    let subjectName: string;
+    let subjectSymbol: string;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 1;
+      const [setToken] = await deploySetTokensAsync(
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      subjectManager = ACCOUNTS[1].address;
+      subjectInitialSet = setToken.address;
+      subjectInitialUnitShares = DEFAULT_UNIT_SHARES;
+      subjectProposalPeriod = ONE_DAY_IN_SECONDS;
+      subjectRebalanceInterval = ONE_DAY_IN_SECONDS;
+      subjectName = 'My Set';
+      subjectSymbol = 'SET';
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await setProtocol.createRebalancingSetTokenAsync(
+        subjectManager,
+        subjectInitialSet,
+        subjectInitialUnitShares,
+        subjectProposalPeriod,
+        subjectRebalanceInterval,
+        subjectName,
+        subjectSymbol,
+        { from: subjectCaller }
+      );
+    }
+
+    test('deploys a new SetToken contract', async () => {
+      const createRebalancingSetTransactionHash = await subject();
+
+      const logs = await getFormattedLogsFromTxHash(web3, createRebalancingSetTransactionHash);
+      const deployedRebalancingSetTokenAddress = extractNewSetTokenAddressFromLogs(logs);
+      const rebalancingSetTokenContract = await RebalancingSetTokenContract.at(
+        deployedRebalancingSetTokenAddress,
+        web3,
+        TX_DEFAULTS
+      );
+
+      const currentSetAddress = await rebalancingSetTokenContract.currentSet.callAsync();
+      expect(currentSetAddress).to.eql(subjectInitialSet);
+
+      const manager = await rebalancingSetTokenContract.manager.callAsync();
+      expect(manager).to.eql(subjectManager);
+
+      const proposalPeriod = await rebalancingSetTokenContract.proposalPeriod.callAsync();
+      expect(proposalPeriod).to.bignumber.equal(subjectProposalPeriod);
+
+      const rebalanceInterval = await rebalancingSetTokenContract.rebalanceInterval.callAsync();
+      expect(rebalanceInterval).to.bignumber.equal(subjectRebalanceInterval);
+
+      const name = await rebalancingSetTokenContract.name.callAsync();
+      expect(name).to.eql(subjectName);
+
+      const symbol = await rebalancingSetTokenContract.symbol.callAsync();
+      expect(symbol).to.eql(subjectSymbol);
+    });
+  });
+
+  describe('issueAsync', () => {
+    let subjectSetToIssue: Address;
+    let subjectQuantitytoIssue: BigNumber;
+    let subjectCaller: Address;
+
+    let setToken: SetTokenContract;
+
+    beforeEach(async () => {
+      const componentTokens = await deployTokensAsync(3, provider);
+      const setComponentUnit = ether(4);
+      const componentUnits = componentTokens.map(() => setComponentUnit);
+      const naturalUnit = ether(2);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentTokens.map(token => token.address),
+        componentUnits,
+        naturalUnit,
+      );
+
+      await approveForTransferAsync(componentTokens, transferProxy.address);
+
+      subjectSetToIssue = setToken.address;
+      subjectQuantitytoIssue = ether(2);
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await setProtocol.issueAsync(
+        subjectSetToIssue,
+        subjectQuantitytoIssue,
+        { from: subjectCaller }
+      );
+    }
+
+    test('updates the set balance of the user by the issue quantity', async () => {
+      const existingSetUserBalance = await setToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+
+      await subject();
+
+      const expectedSetUserBalance = existingSetUserBalance.add(subjectQuantitytoIssue);
+      const newSetUserBalance = await setToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+      expect(newSetUserBalance).to.eql(expectedSetUserBalance);
+    });
+  });
+
+  describe('redeemAsync', () => {
+    let subjectSetToRedeem: Address;
+    let subjectQuantityToRedeem: BigNumber;
+    let subjectShouldWithdraw: boolean;
+    let subjectTokensToExclude: Address[];
+    let subjectCaller: Address;
+
+    let setToken: SetTokenContract;
+
+    beforeEach(async () => {
+      const componentTokens = await deployTokensAsync(3, provider);
+      const setComponentUnit = ether(4);
+      const componentUnits = componentTokens.map(() => setComponentUnit);
+      const naturalUnit = ether(2);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentTokens.map(token => token.address),
+        componentUnits,
+        naturalUnit,
+      );
+
+      await approveForTransferAsync(componentTokens, transferProxy.address);
+
+      await core.issue.sendTransactionAsync(
+        setToken.address,
+        ether(2),
+        TX_DEFAULTS
+      );
+
+      subjectSetToRedeem = setToken.address;
+      subjectQuantityToRedeem = ether(2);
+      subjectShouldWithdraw = false;
+      subjectTokensToExclude = [];
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await setProtocol.redeemAsync(
+        subjectSetToRedeem,
+        subjectQuantityToRedeem,
+        subjectShouldWithdraw,
+        subjectTokensToExclude,
+        { from: subjectCaller }
+      );
+    }
+
+    test('updates the set balance of the user by the redeem quantity', async () => {
+      const existingSetUserBalance = await setToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+
+      await subject();
+
+      const expectedSetUserBalance = existingSetUserBalance.sub(subjectQuantityToRedeem);
+      const newSetUserBalance = await setToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+      expect(newSetUserBalance).to.eql(expectedSetUserBalance);
+    });
+  });
+
+  describe('depositAsync', () => {
+    let subjectTokenAddressesToDeposit: Address[];
+    let subjectQuantitiesToDeposit: BigNumber[];
+    let subjectCaller: Address;
+
+    let tokens: StandardTokenMockContract[];
+    let depositQuantity: BigNumber;
+
+    beforeEach(async () => {
+      tokens = await deployTokensAsync(3, provider);
+      await approveForTransferAsync(tokens, transferProxy.address);
+
+      depositQuantity = new BigNumber(100);
+
+      subjectTokenAddressesToDeposit = tokens.map(token => token.address);
+      subjectQuantitiesToDeposit = tokens.map(() => depositQuantity);
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await setProtocol.depositAsync(
+        subjectTokenAddressesToDeposit,
+        subjectQuantitiesToDeposit,
+        { from: subjectCaller },
+      );
+    }
+
+    test('correctly updates the vault balances', async () => {
+      const existingVaultOwnerBalances = await getVaultBalances(vault, subjectTokenAddressesToDeposit, subjectCaller);
+
+      await subject();
+
+      const expectedVaultOwnerBalances = _.map(existingVaultOwnerBalances, balance => balance.add(depositQuantity));
+      const newOwnerVaultBalances = await getVaultBalances(vault, subjectTokenAddressesToDeposit, subjectCaller);
+      expect(newOwnerVaultBalances).to.eql(expectedVaultOwnerBalances);
+    });
+  });
+
+  describe('withdrawAsync', () => {
+    let subjectTokenAddressesToWithdraw: Address[];
+    let subjectQuantitiesToWithdraw: BigNumber[];
+    let subjectCaller: Address;
+
+    let tokens: StandardTokenMockContract[];
+    let withdrawQuantity: BigNumber;
+
+    beforeEach(async () => {
+      tokens = await deployTokensAsync(3, provider);
+      await approveForTransferAsync(tokens, transferProxy.address);
+
+      withdrawQuantity = new BigNumber(100);
+      subjectTokenAddressesToWithdraw = tokens.map(token => token.address);
+
+      const quantitiesToDeposit = subjectTokenAddressesToWithdraw.map(() => withdrawQuantity);
+      await setProtocol.depositAsync(
+        subjectTokenAddressesToWithdraw,
+        quantitiesToDeposit,
+        { from: DEFAULT_ACCOUNT },
+      );
+
+      subjectQuantitiesToWithdraw = quantitiesToDeposit;
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await setProtocol.withdrawAsync(
+        subjectTokenAddressesToWithdraw,
+        subjectQuantitiesToWithdraw,
+        { from: subjectCaller },
+      );
+    }
+
+    test('correctly updates the vault balances', async () => {
+      const existingVaultOwnerBalances = await getVaultBalances(vault, subjectTokenAddressesToWithdraw, subjectCaller);
+
+      await subject();
+
+      const expectedVaultOwnerBalances = _.map(existingVaultOwnerBalances, balance => balance.sub(withdrawQuantity));
+      const newOwnerVaultBalances = await getVaultBalances(vault, subjectTokenAddressesToWithdraw, subjectCaller);
+      expect(newOwnerVaultBalances).to.eql(expectedVaultOwnerBalances);
+    });
+  });
+
   describe('setTransferProxyAllowanceAsync', async () => {
     let token: StandardTokenMockContract;
     let subjectCaller: Address;
@@ -342,6 +621,57 @@ describe('SetProtocol', async () => {
 
       const newAllowance = await token.allowance.callAsync(subjectCaller, transferProxy.address);
       expect(newAllowance).to.bignumber.equal(UNLIMITED_ALLOWANCE_IN_BASE_UNITS);
+    });
+  });
+
+  describe('awaitTransactionMinedAsync', async () => {
+    let subjectTxHash: string;
+
+    const standardTokenContract = contract(StandardTokenMock);
+    let transactionToken: StandardTokenMockContract;
+    let transactionCaller: Address;
+    let transactionSpender: Address;
+    let transactionQuantity: BigNumber;
+
+    beforeAll(() => {
+      ABIDecoder.addABI(standardTokenContract.abi);
+    });
+
+    beforeEach(async () => {
+      transactionToken = await deployTokenAsync(provider);
+
+      transactionCaller = DEFAULT_ACCOUNT;
+      transactionSpender = ACCOUNTS[0].address;
+      transactionQuantity = new BigNumber(1);
+
+      subjectTxHash = await transactionToken.approve.sendTransactionAsync(
+        transactionSpender,
+        transactionQuantity,
+        { from: transactionCaller},
+      );
+    });
+
+    afterAll(() => {
+      ABIDecoder.removeABI(standardTokenContract.abi);
+    });
+
+    async function subject(): Promise<TransactionReceipt> {
+      return await setProtocol.awaitTransactionMinedAsync(
+        subjectTxHash,
+      );
+    }
+
+    test('returns transaction receipt with the correct logs', async () => {
+      const receipt = await subject();
+
+      const formattedLogs: Log[] = getFormattedLogsFromReceipt(receipt);
+      const [approvalLog] = formattedLogs;
+      const { owner, spender, value } = approvalLog.args;
+
+      expect(approvalLog.address).to.equal(transactionToken.address);
+      expect(owner).to.equal(transactionCaller);
+      expect(spender).to.equal(transactionSpender);
+      expect(value).to.bignumber.equal(transactionQuantity);
     });
   });
 
