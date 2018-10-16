@@ -27,7 +27,6 @@ import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
 import * as setProtocolUtils from 'set-protocol-utils';
-import * as Web3 from 'web3';
 import compact = require('lodash.compact');
 import {
   CoreContract,
@@ -69,17 +68,13 @@ import {
   deployZeroExExchangeWrapperContract,
   tokenDeployedOnSnapshot,
 } from '@test/helpers';
+import { getWeb3 } from '@test/helpers';
 
 ChaiSetup.configure();
 const { expect } = chai;
-const contract = require('truffle-contract');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
-const {
-  SetProtocolTestUtils: SetTestUtils,
-  SetProtocolUtils: SetUtils,
-  Web3Utils,
-} = setProtocolUtils;
+const Web3 = require('web3');
+const web3 = new Web3('http://localhost:8545');
+const { SetProtocolTestUtils: SetTestUtils, SetProtocolUtils: SetUtils, Web3Utils } = setProtocolUtils;
 const web3Utils = new Web3Utils(web3);
 const setUtils = new SetUtils(web3);
 const { NULL_ADDRESS } = SetUtils.CONSTANTS;
@@ -98,7 +93,7 @@ describe('OrderAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory] = await deployBaseContracts(provider);
+    [core, transferProxy, vault, setTokenFactory] = await deployBaseContracts(web3.currentProvider);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
@@ -254,10 +249,10 @@ describe('OrderAPI', () => {
       const relayerAddress = ACCOUNTS[2].address;
       const zeroExOrderMaker = ACCOUNTS[3].address;
 
-      const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
-      const secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
-      makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
-      const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      const firstComponent = await deployTokenAsync(web3.currentProvider, issuanceOrderTaker);
+      const secondComponent = await deployTokenAsync(web3.currentProvider, zeroExOrderMaker);
+      makerToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
+      const relayerToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
 
       const componentTokens = [firstComponent, secondComponent];
       const setComponentUnit = ether(4);
@@ -414,7 +409,7 @@ describe('OrderAPI', () => {
     let componentRecipient = makerAccount;
 
     beforeEach(async () => {
-      setComponents = await deployTokensAsync(2, provider, componentRecipient);
+      setComponents = await deployTokensAsync(2, web3.currentProvider, componentRecipient);
 
       // Deploy Set with those tokens
       const setComponentUnit = ether(4);
@@ -597,7 +592,7 @@ describe('OrderAPI', () => {
     let subjectSalt: BigNumber;
 
     beforeEach(async () => {
-      componentTokens = await deployTokensAsync(4, provider);
+      componentTokens = await deployTokensAsync(4, web3.currentProvider);
       const firstComponentAddress = componentTokens[0].address;
       const secondComponentAddress = componentTokens[1].address;
       const makerTokenAddress = componentTokens[2].address;
@@ -840,7 +835,7 @@ describe('OrderAPI', () => {
       let invalidComponentAddress: Address;
 
       beforeEach(async () => {
-        const [invalidComponent] = await deployTokensAsync(1, provider);
+        const [invalidComponent] = await deployTokensAsync(1, web3.currentProvider);
 
         invalidComponentAddress = invalidComponent.address;
         subjectRequiredComponents[0] = invalidComponentAddress;
@@ -903,19 +898,20 @@ describe('OrderAPI', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      await deployTakerWalletWrapperContract(transferProxy, core, provider);
+      await deployTakerWalletWrapperContract(transferProxy, core, web3.currentProvider);
       await deployZeroExExchangeWrapperContract(
         SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
         SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        SetTestUtils.ZERO_EX_TOKEN_ADDRESS,
         transferProxy,
         core,
-        provider,
+        web3.currentProvider,
       );
       await deployKyberNetworkWrapperContract(
         SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
         transferProxy,
         core,
-        provider,
+        web3.currentProvider,
       );
 
       const relayerAddress = ACCOUNTS[0].address;
@@ -923,11 +919,11 @@ describe('OrderAPI', () => {
       const issuanceOrderTaker = ACCOUNTS[2].address;
       issuanceOrderMaker = ACCOUNTS[3].address;
 
-      firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
-      secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
+      firstComponent = await deployTokenAsync(web3.currentProvider, issuanceOrderTaker);
+      secondComponent = await deployTokenAsync(web3.currentProvider, zeroExOrderMaker);
       thirdComponent = await tokenDeployedOnSnapshot(web3, SetTestUtils.KYBER_RESERVE_DESTINATION_TOKEN_ADDRESS);
       makerToken = await tokenDeployedOnSnapshot(web3, SetTestUtils.KYBER_RESERVE_SOURCE_TOKEN_ADDRESS);
-      const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      const relayerToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
 
       const componentTokens = [firstComponent, secondComponent, thirdComponent];
       const setComponentUnit = ether(4);
@@ -1084,7 +1080,7 @@ describe('OrderAPI', () => {
       let nonComponentToken: StandardTokenMockContract;
 
       beforeEach(async () => {
-        nonComponentToken = await deployTokenAsync(provider, issuanceOrderMaker);
+        nonComponentToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
         kyberTrade.destinationToken = nonComponentToken.address;
       });
 
@@ -1098,7 +1094,7 @@ describe('OrderAPI', () => {
 
     describe('when the Kyber trade source token is not the maker token of the issuance order', async () => {
       beforeEach(async () => {
-        const incorrectMakerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+        const incorrectMakerToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
         kyberTrade.sourceToken = incorrectMakerToken.address;
       });
 
@@ -1139,13 +1135,13 @@ describe('OrderAPI', () => {
       let nonComponentToken: StandardTokenMockContract;
 
       beforeEach(async () => {
-        nonComponentToken = await deployTokenAsync(provider, issuanceOrderMaker);
+        nonComponentToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
         zeroExOrder.makerAssetData = SetUtils.encodeAddressAsAssetData(nonComponentToken.address);
       });
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `Token address at ${nonComponentToken.address} is not a component ` +
+          `Token address at ${nonComponentToken.address.toLowerCase()} is not a component ` +
           `of the Set Token at ${subjectSignedIssuanceOrder.setAddress}.`
         );
       });
@@ -1153,7 +1149,7 @@ describe('OrderAPI', () => {
 
     describe('when the 0x taker token is not the maker token of the issuance order', async () => {
       beforeEach(async () => {
-        const incorrectMakerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+        const incorrectMakerToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
         zeroExOrder.takerAssetData = SetUtils.encodeAddressAsAssetData(incorrectMakerToken.address);
       });
 
@@ -1179,7 +1175,8 @@ describe('OrderAPI', () => {
       `
         User: ${zeroExOrderMaker} has balance of ${ZERO}
 
-        when required balance is ${takerWalletOrder.takerTokenAmount} at token address ${secondComponent.address}.
+        when required balance is ${takerWalletOrder.takerTokenAmount} at token address ` +
+        `${secondComponent.address.toLowerCase()}.
       `
         );
       });
@@ -1206,7 +1203,7 @@ describe('OrderAPI', () => {
       let nonComponentToken: StandardTokenMockContract;
 
       beforeEach(async () => {
-        nonComponentToken = await deployTokenAsync(provider, issuanceOrderMaker);
+        nonComponentToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
         takerWalletOrder.takerTokenAddress = nonComponentToken.address;
       });
 
@@ -1290,9 +1287,9 @@ describe('OrderAPI', () => {
           );
 
         return expect(subject()).to.be.rejectedWith(
-          `Token amount of ${takerTokenAddress} from liquidity sources, ${desiredComponentFillAmount.toString()}, ` +
-          `do not match up to the desired component fill amount of issuance order ` +
-          `${takerTokenAmount.toString()}.`
+          `Token amount of ${takerTokenAddress.toLowerCase()} from liquidity sources, ` +
+          `${desiredComponentFillAmount.toString()}, do not match up to the desired ` +
+          `component fill amount of issuance order ${takerTokenAmount.toString()}.`
         );
       });
     });
@@ -1309,10 +1306,10 @@ describe('OrderAPI', () => {
       const relayerAddress = ACCOUNTS[2].address;
       const zeroExOrderMaker = ACCOUNTS[3].address;
 
-      const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
-      const secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
-      const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
-      const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      const firstComponent = await deployTokenAsync(web3.currentProvider, issuanceOrderTaker);
+      const secondComponent = await deployTokenAsync(web3.currentProvider, zeroExOrderMaker);
+      const makerToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
+      const relayerToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
 
       const componentTokens = [firstComponent, secondComponent];
       const setComponentUnit = ether(4);
@@ -1402,23 +1399,24 @@ describe('OrderAPI', () => {
       let orders: (TakerWalletOrder | ZeroExSignedFillOrder)[];
       let caller: Address;
 
-      await deployTakerWalletWrapperContract(transferProxy, core, provider);
+      await deployTakerWalletWrapperContract(transferProxy, core, web3.currentProvider);
       await deployZeroExExchangeWrapperContract(
         SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
         SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        SetTestUtils.ZERO_EX_TOKEN_ADDRESS,
         transferProxy,
         core,
-        provider,
+        web3.currentProvider,
       );
 
       const issuanceOrderTaker = ACCOUNTS[0].address;
       issuanceOrderMaker = ACCOUNTS[1].address;
       const relayerAddress = ACCOUNTS[2].address;
 
-      const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
-      const secondComponent = await deployTokenAsync(provider, issuanceOrderTaker);
-      const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
-      const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      const firstComponent = await deployTokenAsync(web3.currentProvider, issuanceOrderTaker);
+      const secondComponent = await deployTokenAsync(web3.currentProvider, issuanceOrderTaker);
+      const makerToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
+      const relayerToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
 
       const componentTokens = [firstComponent, secondComponent];
       const setComponentUnit = ether(4);
@@ -1508,9 +1506,9 @@ describe('OrderAPI', () => {
       const issuanceOrderMaker = ACCOUNTS[1].address;
       const relayerAddress = ACCOUNTS[2].address;
 
-      const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
-      const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
-      const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      const firstComponent = await deployTokenAsync(web3.currentProvider, issuanceOrderTaker);
+      const makerToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
+      const relayerToken = await deployTokenAsync(web3.currentProvider, issuanceOrderMaker);
 
       const componentTokens = [firstComponent];
       const setComponentUnit = ether(4);

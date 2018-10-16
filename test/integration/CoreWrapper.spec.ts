@@ -91,11 +91,7 @@ const { expect } = chai;
 const contract = require('truffle-contract');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
-const {
-  SetProtocolTestUtils: SetTestUtils,
-  SetProtocolUtils: SetUtils,
-  Web3Utils,
-} = setProtocolUtils;
+const { SetProtocolTestUtils: SetTestUtils, SetProtocolUtils: SetUtils, Web3Utils } = setProtocolUtils;
 const web3Utils = new Web3Utils(web3);
 const setUtils = new SetUtils(web3);
 const setTestUtils = new SetTestUtils(web3);
