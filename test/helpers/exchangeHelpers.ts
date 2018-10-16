@@ -13,7 +13,7 @@ import {
   ZeroExExchangeWrapper,
   ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
-import { Address, SetProtocolUtils } from 'set-protocol-utils';
+import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
 import { BigNumber } from '@src/util';
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { TX_DEFAULTS } from '@src/constants';
@@ -62,6 +62,7 @@ export const deployTakerWalletWrapperContract = async (
 export const deployZeroExExchangeWrapperContract = async (
   zeroExExchangeAddress: Address,
   zeroExProxyAddress: Address,
+  zeroExTokenAddress: Address,
   transferProxy: TransferProxyContract,
   core: CoreContract,
   provider: Provider,
@@ -84,10 +85,10 @@ export const deployZeroExExchangeWrapperContract = async (
   const deployedZeroExExchangeWrapper = await truffleZeroExExchangeWrapperContract.new(
     zeroExExchangeAddress,
     zeroExProxyAddress,
+    zeroExTokenAddress,
     transferProxy.address,
     TX_DEFAULTS,
   );
-
   const zeroExExchangeWrapperContract = await ZeroExExchangeWrapperContract.at(
     deployedZeroExExchangeWrapper.address,
     web3,
