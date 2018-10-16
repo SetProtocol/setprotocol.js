@@ -127,15 +127,15 @@ export class RebalancingAssertions {
 
     const currentSetAddress = await rebalancingSetTokenInstance.currentSet.callAsync();
     const currentSetInstance = await SetTokenContract.at(currentSetAddress, this.web3, {});
-    const nextSetInstance = await SetTokenContract.at(currentSetAddress, this.web3, {});
+    const nextSetInstance = await SetTokenContract.at(nextSetAddress, this.web3, {});
 
     const currentSetNaturalUnit  = await currentSetInstance.naturalUnit.callAsync();
-    const nextSetNaturalUnit  = await currentSetInstance.naturalUnit.callAsync();
+    const nextSetNaturalUnit  = await nextSetInstance.naturalUnit.callAsync();
 
     const maxNaturalUnit = BigNumber.max(currentSetNaturalUnit, nextSetNaturalUnit);
     const minNaturalUnit = BigNumber.min(currentSetNaturalUnit, nextSetNaturalUnit);
 
-    if (maxNaturalUnit.mod(minNaturalUnit).isZero()) {
+    if (!maxNaturalUnit.mod(minNaturalUnit).isZero()) {
       throw new Error(rebalancingErrors.PROPOSED_SET_NATURAL_UNIT_IS_NOT_MULTIPLE_OF_CURRENT_SET(
         currentSetAddress,
         nextSetAddress
