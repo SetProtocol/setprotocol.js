@@ -73,6 +73,14 @@ export const deployZeroExExchangeWrapperContract = async (
   truffleZeroExExchangeWrapperContract.setNetwork(50);
   truffleZeroExExchangeWrapperContract.defaults(TX_DEFAULTS);
 
+  const truffleERC20WrapperContract = contract(ERC20Wrapper);
+  truffleERC20WrapperContract.setProvider(provider);
+  truffleERC20WrapperContract.setNetwork(50);
+  truffleERC20WrapperContract.defaults(TX_DEFAULTS);
+
+  const deployedERC20Wrapper = await truffleERC20WrapperContract.new();
+  await truffleZeroExExchangeWrapperContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
+
   const deployedZeroExExchangeWrapper = await truffleZeroExExchangeWrapperContract.new(
     zeroExExchangeAddress,
     zeroExProxyAddress,
