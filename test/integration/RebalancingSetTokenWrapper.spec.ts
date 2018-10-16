@@ -34,6 +34,7 @@ import {
   TransferProxyContract,
   VaultContract
 } from 'set-protocol-contracts';
+import { Web3Utils } from 'set-protocol-utils';
 
 import { CoreWrapper, RebalancingSetTokenWrapper } from '@src/wrappers';
 import {
@@ -45,7 +46,7 @@ import {
   DEFAULT_CONSTANT_AUCTION_PRICE
 } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
-import { BigNumber, Web3Utils } from '@src/util';
+import { BigNumber } from '@src/util';
 import { Address } from '@src/types/common';
 import { ether } from '@src/util/units';
 import {

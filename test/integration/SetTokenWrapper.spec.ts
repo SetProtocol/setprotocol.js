@@ -33,11 +33,11 @@ import {
   TransferProxyContract,
   VaultContract
 } from 'set-protocol-contracts';
-import { Address } from 'set-protocol-utils';
+import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { CoreWrapper, SetTokenWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
-import { BigNumber, Web3Utils } from '@src/util';
+import { BigNumber } from '@src/util';
 import { ether } from '@src/util/units';
 import { approveForTransferAsync, deployBaseContracts, deploySetTokenAsync, deployTokensAsync } from '@test/helpers';
 

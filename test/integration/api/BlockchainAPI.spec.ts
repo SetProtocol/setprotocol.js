@@ -27,7 +27,7 @@ import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
 import * as Web3 from 'web3';
-import { Address, Log } from 'set-protocol-utils';
+import { Address, Log, Web3Utils } from 'set-protocol-utils';
 import { CoreContract, StandardTokenMockContract, VaultContract } from 'set-protocol-contracts';
 import { StandardTokenMock } from 'set-protocol-contracts';
 import { TransactionReceipt } from 'ethereum-types';
@@ -42,7 +42,6 @@ import { TX_DEFAULTS, ZERO } from '@src/constants';
 import { deployBaseContracts, deployTokenAsync } from '@test/helpers';
 import { getVaultBalances } from '@test/helpers/vaultHelpers';
 import { testSets, TestSet } from '../../testSets';
-import { Web3Utils } from '@src/util/Web3Utils';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');

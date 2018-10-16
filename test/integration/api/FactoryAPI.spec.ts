@@ -39,6 +39,7 @@ import {
   TransferProxyContract,
   VaultContract
 } from 'set-protocol-contracts';
+import { Web3Utils } from 'set-protocol-utils';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { FactoryAPI } from '@src/api';
@@ -64,7 +65,6 @@ import {
 } from '@test/helpers';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { ether } from '@src/util/units';
-import { Web3Utils } from '@src/util/Web3Utils';
 import { SetUnits } from '@src/types/common';
 import { SetProtocolConfig } from '../../../src/SetProtocol';
 

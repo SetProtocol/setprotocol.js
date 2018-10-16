@@ -32,11 +32,11 @@ import {
   TransferProxyContract,
   VaultContract
 } from 'set-protocol-contracts';
-import { Address } from 'set-protocol-utils';
+import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { SetTokenAPI } from '@src/api';
 import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
-import { BigNumber, ether, Web3Utils } from '@src/util';
+import { BigNumber, ether } from '@src/util';
 import { Assertions } from '@src/assertions';
 import { CoreWrapper } from '@src/wrappers';
 import ChaiSetup from '@test/helpers/chaiSetup';

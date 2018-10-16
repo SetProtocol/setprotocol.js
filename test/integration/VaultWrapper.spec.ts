@@ -24,12 +24,17 @@ jest.setTimeout(30000);
 
 import * as chai from 'chai';
 import * as Web3 from 'web3';
-import { CoreContract, StandardTokenMockContract, TransferProxyContract, VaultContract } from 'set-protocol-contracts';
-import { Address } from 'set-protocol-utils';
+import {
+  CoreContract,
+  StandardTokenMockContract,
+  TransferProxyContract,
+  VaultContract,
+} from 'set-protocol-contracts';
+import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { CoreWrapper, VaultWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
-import { BigNumber, Web3Utils } from '@src/util';
+import { BigNumber } from '@src/util';
 import { approveForTransferAsync, deployTokenAsync, deployBaseContracts } from '@test/helpers';
 
 const chaiBigNumber = require('chai-bignumber');

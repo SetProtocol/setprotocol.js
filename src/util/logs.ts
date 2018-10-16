@@ -2,10 +2,9 @@ import * as ABIDecoder from 'abi-decoder';
 import * as _ from 'lodash';
 import * as Web3 from 'web3';
 import { BigNumber } from 'bignumber.js';
-import { Address, Log } from 'set-protocol-utils';
+import { Address, Log, Web3Utils } from 'set-protocol-utils';
 import { TransactionReceipt } from 'ethereum-types';
 import { CreateLogArgs } from '../types/common';
-import { Web3Utils } from './Web3Utils';
 import { awaitTx } from './transactionUtils';
 import { Core } from 'set-protocol-contracts';
 

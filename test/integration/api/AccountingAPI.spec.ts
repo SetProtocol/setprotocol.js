@@ -26,7 +26,7 @@ import * as _ from 'lodash';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
 import * as Web3 from 'web3';
-import { Address } from 'set-protocol-utils';
+import { Address, Web3Utils } from 'set-protocol-utils';
 import { Core } from 'set-protocol-contracts';
 import { CoreContract, StandardTokenMockContract, TransferProxyContract, VaultContract } from 'set-protocol-contracts';
 
@@ -39,7 +39,6 @@ import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { TX_DEFAULTS, ZERO } from '@src/constants';
 import { approveForTransferAsync, deployBaseContracts, deployTokensAsync, getVaultBalances } from '@test/helpers';
 import { testSets, TestSet } from '../../testSets';
-import { Web3Utils } from '@src/util/Web3Utils';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');

@@ -245,7 +245,7 @@ export const deployTokensSpecifyingDecimals = async (
       owner,
       DEPLOYED_TOKEN_QUANTITY,
       `Component ${index}`,
-      index,
+      index.toString(),
       decimalsList[index],
       TX_DEFAULTS,
     )
@@ -254,7 +254,7 @@ export const deployTokensSpecifyingDecimals = async (
   await Promise.all(mockTokenPromises).then(tokenMock => {
     _.each(tokenMock, standardToken => {
       mockTokens.push(new StandardTokenMockContract(
-        web3.eth.contract(standardToken.abi).at(standardToken.address),
+        new web3.eth.Contract(standardToken.abi, standardToken.address),
         TX_DEFAULTS,
       ));
     });
@@ -288,17 +288,20 @@ export const deploySetTokenAsync = async(
   componentAddresses: Address[],
   componentUnits: BigNumber[],
   naturalUnit: BigNumber,
-  name: string = 'Default Set',
+  name: string = 'Set Token',
   symbol: string = 'SET',
 ): Promise<SetTokenContract> => {
+  const encodedName = SetProtocolUtils.stringToBytes(name);
+  const encodedSymbol = SetProtocolUtils.stringToBytes(symbol);
+
   const createSetTokenTransactionHash = await core.create.sendTransactionAsync(
     setTokenFactoryAddress,
     componentAddresses,
     componentUnits,
     naturalUnit,
-    name,
-    symbol,
-    '',
+    encodedName,
+    encodedSymbol,
+    '0x0',
     TX_DEFAULTS
   );
 

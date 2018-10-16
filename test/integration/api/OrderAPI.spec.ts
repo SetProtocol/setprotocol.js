@@ -57,7 +57,7 @@ import {
 } from '@src/types/common';
 import { ZERO } from '@src/constants';
 import { Assertions } from '@src/assertions';
-import { ether, Web3Utils, generateFutureTimestamp, calculatePartialAmount } from '@src/util';
+import { ether, generateFutureTimestamp, calculatePartialAmount } from '@src/util';
 import {
   approveForTransferAsync,
   deployBaseContracts,
@@ -75,8 +75,12 @@ const { expect } = chai;
 const contract = require('truffle-contract');
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 const web3 = new Web3(provider);
+const {
+  SetProtocolTestUtils: SetTestUtils,
+  SetProtocolUtils: SetUtils,
+  Web3Utils,
+} = setProtocolUtils;
 const web3Utils = new Web3Utils(web3);
-const { SetProtocolTestUtils: SetTestUtils, SetProtocolUtils: SetUtils } = setProtocolUtils;
 const setUtils = new SetUtils(web3);
 const { NULL_ADDRESS } = SetUtils.CONSTANTS;
 

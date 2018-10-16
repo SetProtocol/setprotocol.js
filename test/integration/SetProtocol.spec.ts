@@ -40,7 +40,7 @@ import {
   TransferProxyContract,
   VaultContract,
 } from 'set-protocol-contracts';
-import { SetProtocolUtils } from 'set-protocol-utils';
+import { SetProtocolUtils, Web3Utils } from 'set-protocol-utils';
 
 import ChaiSetup from '../helpers/chaiSetup';
 import { ACCOUNTS, DEFAULT_ACCOUNT } from '@src/constants/accounts';
@@ -51,9 +51,8 @@ import {
   DEFAULT_UNIT_SHARES,
   NULL_ADDRESS,
   ONE_DAY_IN_SECONDS,
-  TX_DEFAULTS
+  TX_DEFAULTS,
 } from '@src/constants';
-import { Web3Utils } from '@src/util/Web3Utils';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { BigNumber } from '@src/util';
 import { SetProtocolConfig } from '@src/SetProtocol';

@@ -232,7 +232,7 @@ const sendJSONRpcRequestAsync = async(
   method: string,
   params: any[],
 ): Promise<any> => {
-  return promisify(web3.currentProvider.sendAsync, {
+  return promisify(web3.currentProvider.send, {
     context: web3.currentProvider,
   })({
     jsonrpc: '2.0',

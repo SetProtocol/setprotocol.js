@@ -37,6 +37,7 @@ import {
   TransferProxyContract,
   VaultContract,
 } from 'set-protocol-contracts';
+import { Web3Utils } from 'set-protocol-utils';
 
 import { RebalancingAPI } from '@src/api';
 import { RebalancingSetTokenWrapper, CoreWrapper } from '@src/wrappers';
@@ -51,7 +52,7 @@ import {
   ZERO,
 } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
-import { BigNumber, ether, Web3Utils } from '@src/util';
+import { BigNumber, ether } from '@src/util';
 import { Assertions } from '@src/assertions';
 import ChaiSetup from '@test/helpers/chaiSetup';
 import {
