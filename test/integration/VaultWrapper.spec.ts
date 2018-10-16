@@ -23,13 +23,8 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as chai from 'chai';
-import * as Web3 from 'web3';
-import {
-  CoreContract,
-  StandardTokenMockContract,
-  TransferProxyContract,
-  VaultContract,
-} from 'set-protocol-contracts';
+import Web3 from 'web3';
+import { CoreContract, StandardTokenMockContract, TransferProxyContract, VaultContract } from 'set-protocol-contracts';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { CoreWrapper, VaultWrapper } from '@src/wrappers';
@@ -40,9 +35,7 @@ import { approveForTransferAsync, deployTokenAsync, deployBaseContracts } from '
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
-const contract = require('truffle-contract');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
+const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 
 let currentSnapshotId: number;
@@ -59,7 +52,7 @@ describe('VaultWrapper', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault] = await deployBaseContracts(provider);
+    [core, transferProxy, vault] = await deployBaseContracts(web3);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     vaultWrapper = new VaultWrapper(web3, vault.address);
@@ -77,7 +70,7 @@ describe('VaultWrapper', () => {
     let subjectTokenOwner: Address;
 
     beforeEach(async () => {
-      token = await deployTokenAsync(provider);
+      token = await deployTokenAsync(web3);
       await approveForTransferAsync([token], transferProxy.address);
 
       vaultBalance = new BigNumber(100);

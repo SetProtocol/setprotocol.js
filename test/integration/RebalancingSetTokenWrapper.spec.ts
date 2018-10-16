@@ -23,7 +23,7 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as chai from 'chai';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import {
   CoreContract,
   RebalancingSetTokenContract,
@@ -68,9 +68,7 @@ import { TokenFlows } from '@src/types/common';
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
-const contract = require('truffle-contract');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
+const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 
 let currentSnapshotId: number;
@@ -87,7 +85,7 @@ describe('SetTokenWrapper', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(provider);
+    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(web3);
 
     rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
   });
@@ -109,6 +107,7 @@ describe('SetTokenWrapper', () => {
 
     beforeEach(async () => {
       const setTokens = await deploySetTokensAsync(
+        web3,
         core,
         setTokenFactory.address,
         transferProxy.address,
@@ -121,6 +120,7 @@ describe('SetTokenWrapper', () => {
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
         core,
         rebalancingSetTokenFactory.address,
         managerAddress,
@@ -200,11 +200,13 @@ describe('SetTokenWrapper', () => {
     let subjectRebalancingSetTokenAddress: Address;
 
     beforeEach(async () => {
+      const setTokensToDeploy = 2;
       const setTokens = await deploySetTokensAsync(
+        web3,
         core,
         setTokenFactory.address,
         transferProxy.address,
-        2,
+        setTokensToDeploy,
       );
 
       currentSetToken = setTokens[0];
@@ -213,6 +215,7 @@ describe('SetTokenWrapper', () => {
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
         core,
         rebalancingSetTokenFactory.address,
         managerAddress,
@@ -226,6 +229,7 @@ describe('SetTokenWrapper', () => {
       setAuctionStartPrice = new BigNumber(500);
       setAuctionPriceDivisor = new BigNumber(1000);
       await transitionToProposeAsync(
+        web3,
         rebalancingSetToken,
         managerAddress,
         nextSetToken.address,
@@ -303,11 +307,13 @@ describe('SetTokenWrapper', () => {
     let subjectRebalancingSetTokenAddress: Address;
 
     beforeEach(async () => {
+      const setTokensToDeploy = 2;
       const setTokens = await deploySetTokensAsync(
+        web3,
         core,
         setTokenFactory.address,
         transferProxy.address,
-        2,
+        setTokensToDeploy,
       );
 
       currentSetToken = setTokens[0];
@@ -316,6 +322,7 @@ describe('SetTokenWrapper', () => {
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
         core,
         rebalancingSetTokenFactory.address,
         managerAddress,
@@ -337,6 +344,7 @@ describe('SetTokenWrapper', () => {
       const setAuctionStartPrice = new BigNumber(500);
       setAuctionPriceDivisor = new BigNumber(1000);
       await transitionToRebalanceAsync(
+        web3,
         rebalancingSetToken,
         managerAddress,
         nextSetToken.address,
@@ -431,11 +439,13 @@ describe('SetTokenWrapper', () => {
     let subjectBidQuantity: BigNumber;
 
     beforeEach(async () => {
+      const setTokensToDeploy = 2;
       const setTokens = await deploySetTokensAsync(
+        web3,
         core,
         setTokenFactory.address,
         transferProxy.address,
-        2,
+        setTokensToDeploy,
       );
 
       currentSetToken = setTokens[0];
@@ -444,6 +454,7 @@ describe('SetTokenWrapper', () => {
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
         core,
         rebalancingSetTokenFactory.address,
         managerAddress,
@@ -452,7 +463,7 @@ describe('SetTokenWrapper', () => {
       );
 
       // Deploy price curve used in auction
-      const priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
+      const priceCurve = await deployConstantAuctionPriceCurveAsync(web3, DEFAULT_CONSTANT_AUCTION_PRICE);
 
       // Transition to proposal state
       const auctionPriceCurveAddress = priceCurve.address;
@@ -460,6 +471,7 @@ describe('SetTokenWrapper', () => {
       const setAuctionStartPrice = new BigNumber(500);
       setAuctionPriceDivisor = new BigNumber(1000);
       await transitionToRebalanceAsync(
+        web3,
         rebalancingSetToken,
         managerAddress,
         nextSetToken.address,
@@ -515,11 +527,13 @@ describe('SetTokenWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
+      const setTokensToDeploy = 2;
       const setTokens = await deploySetTokensAsync(
+        web3,
         core,
         setTokenFactory.address,
         transferProxy.address,
-        2,
+        setTokensToDeploy,
       );
 
       currentSetToken = setTokens[0];
@@ -528,6 +542,7 @@ describe('SetTokenWrapper', () => {
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
         core,
         rebalancingSetTokenFactory.address,
         managerAddress,
@@ -536,10 +551,10 @@ describe('SetTokenWrapper', () => {
       );
 
       // Deploy price curve used in auction
-      const priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
+      const priceCurve = await deployConstantAuctionPriceCurveAsync(web3, DEFAULT_CONSTANT_AUCTION_PRICE);
 
       // Fast forward to allow propose to be called
-      increaseChainTimeAsync(proposalPeriod.add(1));
+      increaseChainTimeAsync(web3, proposalPeriod.add(1));
 
       subjectNextSet = nextSetToken.address;
       subjectAuctionPriceCurveAddress = priceCurve.address;
@@ -600,11 +615,13 @@ describe('SetTokenWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
+      const setTokensToDeploy = 2;
       const setTokens = await deploySetTokensAsync(
+        web3,
         core,
         setTokenFactory.address,
         transferProxy.address,
-        2,
+        setTokensToDeploy,
       );
 
       currentSetToken = setTokens[0];
@@ -613,6 +630,7 @@ describe('SetTokenWrapper', () => {
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       const managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
         core,
         rebalancingSetTokenFactory.address,
         managerAddress,
@@ -629,7 +647,7 @@ describe('SetTokenWrapper', () => {
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
 
       // Deploy price curve used in auction
-      const priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
+      const priceCurve = await deployConstantAuctionPriceCurveAsync(web3, DEFAULT_CONSTANT_AUCTION_PRICE);
 
       // Transition to proposal state
       const auctionPriceCurveAddress = priceCurve.address;
@@ -637,6 +655,7 @@ describe('SetTokenWrapper', () => {
       const setAuctionStartPrice = new BigNumber(500);
       setAuctionPriceDivisor = new BigNumber(1000);
       await transitionToProposeAsync(
+        web3,
         rebalancingSetToken,
         managerAddress,
         nextSetToken.address,
@@ -647,7 +666,7 @@ describe('SetTokenWrapper', () => {
       );
 
       // Fast forward to allow propose to be called
-      increaseChainTimeAsync(proposalPeriod.add(1));
+      increaseChainTimeAsync(web3, proposalPeriod.add(1));
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
       subjectCaller = managerAddress;
@@ -717,11 +736,13 @@ describe('SetTokenWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
+      const setTokensToDeploy = 2;
       const setTokens = await deploySetTokensAsync(
+        web3,
         core,
         setTokenFactory.address,
         transferProxy.address,
-        2,
+        setTokensToDeploy,
       );
 
       currentSetToken = setTokens[0];
@@ -730,6 +751,7 @@ describe('SetTokenWrapper', () => {
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       const managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
         core,
         rebalancingSetTokenFactory.address,
         managerAddress,
@@ -746,7 +768,7 @@ describe('SetTokenWrapper', () => {
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
 
       // Deploy price curve used in auction
-      const priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
+      const priceCurve = await deployConstantAuctionPriceCurveAsync(web3, DEFAULT_CONSTANT_AUCTION_PRICE);
 
       // Transition to rebalance state
       const auctionPriceCurveAddress = priceCurve.address;
@@ -754,6 +776,7 @@ describe('SetTokenWrapper', () => {
       const setAuctionStartPrice = new BigNumber(500);
       setAuctionPriceDivisor = new BigNumber(1000);
       await transitionToRebalanceAsync(
+        web3,
         rebalancingSetToken,
         managerAddress,
         nextSetToken.address,
@@ -818,11 +841,13 @@ describe('SetTokenWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
+      const setTokensToDeploy = 1;
       const setTokens = await deploySetTokensAsync(
+        web3,
         core,
         setTokenFactory.address,
         transferProxy.address,
-        1,
+        setTokensToDeploy,
       );
 
       currentSetToken = setTokens[0];
@@ -830,6 +855,7 @@ describe('SetTokenWrapper', () => {
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       const managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
         core,
         rebalancingSetTokenFactory.address,
         managerAddress,

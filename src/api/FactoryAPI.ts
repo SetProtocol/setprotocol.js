@@ -17,7 +17,7 @@
 'use strict';
 
 import * as _ from 'lodash';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import { StandardTokenMockContract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
 import { SetProtocolUtils } from 'set-protocol-utils';
 
@@ -189,7 +189,7 @@ export class FactoryAPI {
       naturalUnit,
       name,
       symbol,
-      '',
+      '0x0',
       txOpts
     );
   }

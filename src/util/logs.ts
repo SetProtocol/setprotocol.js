@@ -1,6 +1,6 @@
 import * as ABIDecoder from 'abi-decoder';
 import * as _ from 'lodash';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import { BigNumber } from 'bignumber.js';
 import { Address, Log, Web3Utils } from 'set-protocol-utils';
 import { TransactionReceipt } from 'ethereum-types';

@@ -17,7 +17,7 @@
 'use strict';
 
 // External
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 
 import { CoreWrapper } from '../wrappers';
 

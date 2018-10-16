@@ -25,7 +25,7 @@ jest.setTimeout(30000);
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import { Core, StandardTokenMock } from 'set-protocol-contracts';
 import { TransactionReceipt } from 'ethereum-types';
 import {
@@ -75,13 +75,12 @@ ChaiSetup.configure();
 const { expect } = chai;
 const { UNLIMITED_ALLOWANCE_IN_BASE_UNITS } = SetProtocolUtils.CONSTANTS;
 const contract = require('truffle-contract');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
+const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 const erc20Wrapper = new ERC20Wrapper(web3);
 
 const coreContract = contract(Core);
-coreContract.setProvider(provider);
+coreContract.setProvider(web3.currentProvider);
 coreContract.defaults(TX_DEFAULTS);
 
 let currentSnapshotId: number;
@@ -106,10 +105,10 @@ describe('SetProtocol', async () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(provider);
+    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(web3);
 
     setProtocol = new SetProtocol(
-      provider,
+      web3.currentProvider,
       {
         coreAddress: core.address,
         transferProxyAddress: transferProxy.address,
@@ -130,8 +129,8 @@ describe('SetProtocol', async () => {
     let subjectComponents: Address[];
 
     beforeEach(async () => {
-      mockNoDecimalToken = await deployNoDecimalTokenAsync(provider);
-      mockTokens = await deployTokensAsync(3, provider);
+      mockNoDecimalToken = await deployNoDecimalTokenAsync(web3);
+      mockTokens = await deployTokensAsync(3, web3);
     });
 
     async function subject(): Promise<BigNumber> {
@@ -180,7 +179,7 @@ describe('SetProtocol', async () => {
     beforeEach(async () => {
       const tokenCount = 2;
       const decimalsList = [18, 18];
-      const components = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+      const components = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
 
       subjectComponentAddresses = _.map(components, component => component.address);
       subjectComponentPrices = [new BigNumber(2), new BigNumber(2)];
@@ -246,7 +245,7 @@ describe('SetProtocol', async () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      componentTokens = await deployTokensAsync(3, provider);
+      componentTokens = await deployTokensAsync(3, web3);
 
       subjectComponents = componentTokens.map(component => component.address);
       subjectUnits = subjectComponents.map(component => ether(4));
@@ -304,6 +303,7 @@ describe('SetProtocol', async () => {
     beforeEach(async () => {
       const setTokensToDeploy = 1;
       const [setToken] = await deploySetTokensAsync(
+        web3,
         core,
         setTokenFactory.address,
         transferProxy.address,
@@ -372,7 +372,7 @@ describe('SetProtocol', async () => {
     let setToken: SetTokenContract;
 
     beforeEach(async () => {
-      const componentTokens = await deployTokensAsync(3, provider);
+      const componentTokens = await deployTokensAsync(3, web3);
       const setComponentUnit = ether(4);
       const componentUnits = componentTokens.map(() => setComponentUnit);
       const naturalUnit = ether(2);
@@ -421,7 +421,7 @@ describe('SetProtocol', async () => {
     let setToken: SetTokenContract;
 
     beforeEach(async () => {
-      const componentTokens = await deployTokensAsync(3, provider);
+      const componentTokens = await deployTokensAsync(3, web3);
       const setComponentUnit = ether(4);
       const componentUnits = componentTokens.map(() => setComponentUnit);
       const naturalUnit = ether(2);
@@ -479,7 +479,7 @@ describe('SetProtocol', async () => {
     let depositQuantity: BigNumber;
 
     beforeEach(async () => {
-      tokens = await deployTokensAsync(3, provider);
+      tokens = await deployTokensAsync(3, web3);
       await approveForTransferAsync(tokens, transferProxy.address);
 
       depositQuantity = new BigNumber(100);
@@ -517,7 +517,7 @@ describe('SetProtocol', async () => {
     let withdrawQuantity: BigNumber;
 
     beforeEach(async () => {
-      tokens = await deployTokensAsync(3, provider);
+      tokens = await deployTokensAsync(3, web3);
       await approveForTransferAsync(tokens, transferProxy.address);
 
       withdrawQuantity = new BigNumber(100);
@@ -559,7 +559,7 @@ describe('SetProtocol', async () => {
     let subjectQuantity: BigNumber;
 
     beforeEach(async () => {
-      const tokenContracts = await deployTokensAsync(1, provider);
+      const tokenContracts = await deployTokensAsync(1, web3);
       token = tokenContracts[0];
 
       subjectCaller = DEFAULT_ACCOUNT;
@@ -590,7 +590,7 @@ describe('SetProtocol', async () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const tokenContracts = await deployTokensAsync(1, provider);
+      const tokenContracts = await deployTokensAsync(1, web3);
       token = tokenContracts[0];
 
       subjectCaller = DEFAULT_ACCOUNT;
@@ -625,7 +625,7 @@ describe('SetProtocol', async () => {
     });
 
     beforeEach(async () => {
-      transactionToken = await deployTokenAsync(provider);
+      transactionToken = await deployTokenAsync(web3);
 
       transactionCaller = DEFAULT_ACCOUNT;
       transactionSpender = ACCOUNTS[0].address;
@@ -668,7 +668,7 @@ describe('SetProtocol', async () => {
     let setToken: SetTokenContract;
 
     beforeEach(async () => {
-      const componentTokens = await deployTokensAsync(3, provider);
+      const componentTokens = await deployTokensAsync(3, web3);
       const setComponentUnit = ether(4);
       const naturalUnit = ether(2);
       setToken = await deploySetTokenAsync(

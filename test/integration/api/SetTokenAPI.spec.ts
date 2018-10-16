@@ -23,7 +23,7 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as chai from 'chai';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import {
   CoreContract,
   SetTokenContract,
@@ -52,9 +52,7 @@ import { Component, SetDetails } from '@src/types/common';
 
 ChaiSetup.configure();
 const { expect } = chai;
-const contract = require('truffle-contract');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
+const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 
 let currentSnapshotId: number;
@@ -71,7 +69,7 @@ describe('SetTokenAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory] = await deployBaseContracts(provider);
+    [core, transferProxy, vault, setTokenFactory] = await deployBaseContracts(web3);
 
     const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
@@ -92,7 +90,7 @@ describe('SetTokenAPI', () => {
     let subjectSetTokenAddress: Address;
 
     beforeEach(async () => {
-      componentTokens = await deployTokensAsync(3, provider);
+      componentTokens = await deployTokensAsync(3, web3);
       componentTokenAddresses = componentTokens.map(token => token.address);
       componentTokenUnits = componentTokens.map(token => ether(4));
       naturalUnit = ether(2);
@@ -139,7 +137,7 @@ describe('SetTokenAPI', () => {
     let subjectSetTokenAddress: Address;
 
     beforeEach(async () => {
-      componentTokens = await deployTokensAsync(3, provider);
+      componentTokens = await deployTokensAsync(3, web3);
       componentTokenAddresses = componentTokens.map(token => token.address);
       componentTokenUnits = componentTokens.map(token => ether(4));
       naturalUnit = ether(2);
@@ -152,6 +150,8 @@ describe('SetTokenAPI', () => {
         componentTokenAddresses,
         componentTokenUnits,
         naturalUnit,
+        name,
+        symbol,
       );
 
       subjectSetTokenAddress = setToken.address;
@@ -183,7 +183,7 @@ describe('SetTokenAPI', () => {
     let subjectQuantity: BigNumber;
 
     beforeEach(async () => {
-      const componentTokens = await deployTokensAsync(3, provider);
+      const componentTokens = await deployTokensAsync(3, web3);
       const componentTokenAddresses = componentTokens.map(token => token.address);
       const componentTokenUnits = componentTokens.map(token => ether(4));
       const naturalUnit = ether(2);
@@ -238,7 +238,7 @@ describe('SetTokenAPI', () => {
       const tokenCount = 2;
       const decimalsList = [18, 8];
       const tokenUnits = [ether(2), ether(4)];
-      componentTokens = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+      componentTokens = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
 
       componentTokenAddresses = componentTokens.map(token => token.address);
       componentTokenUnits = tokenUnits;
@@ -313,7 +313,7 @@ describe('SetTokenAPI', () => {
       const tokenCount = 2;
       const decimalsList = [18, 8];
       const tokenUnits = [ether(2), ether(4)];
-      componentTokens = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+      componentTokens = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
 
       componentTokenAddresses = componentTokens.map(token => token.address);
       componentTokenUnits = tokenUnits;

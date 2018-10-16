@@ -19,7 +19,8 @@
       "@src/*": [ "src/*" ],
       "@test/*": [ "test/*" ],
     },
-    "declarationDir": "dist/types"
+    "declarationDir": "dist/types",
+    "esModuleInterop": true
   },
   "include": [
     "src/**/*",

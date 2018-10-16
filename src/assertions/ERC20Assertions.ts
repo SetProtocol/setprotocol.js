@@ -18,9 +18,10 @@
 
 import { Address } from 'set-protocol-utils';
 import { DetailedERC20Contract } from 'set-protocol-contracts';
+import Web3 from 'web3';
+
 import { erc20AssertionErrors } from '../errors';
 import { BigNumber } from '../util';
-import * as Web3 from 'web3';
 
 export class ERC20Assertions {
   private web3: Web3;

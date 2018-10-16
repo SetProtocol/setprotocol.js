@@ -26,7 +26,7 @@ import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import { Address, Web3Utils } from 'set-protocol-utils';
 import { Core } from 'set-protocol-contracts';
 import {
@@ -56,13 +56,12 @@ import { ether } from '@src/util/units';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
+const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 const { expect } = chai;
 
 const coreContract = contract(Core);
-coreContract.setProvider(provider);
+coreContract.setProvider(web3.currentProvider);
 coreContract.defaults(TX_DEFAULTS);
 
 let currentSnapshotId: number;
@@ -92,13 +91,13 @@ describe('IssuanceAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory] = await deployBaseContracts(provider);
+    [core, transferProxy, vault, setTokenFactory] = await deployBaseContracts(web3);
 
     const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
     issuanceAPI = new IssuanceAPI(web3, coreWrapper, assertions);
 
-    componentTokens = await deployTokensAsync(3, provider);
+    componentTokens = await deployTokensAsync(3, web3);
     setComponentUnit = ether(4);
     componentUnits = componentTokens.map(() => setComponentUnit);
     naturalUnit = ether(2);

@@ -17,7 +17,7 @@
 'use strict';
 
 import * as _ from 'lodash';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';

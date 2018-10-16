@@ -1,4 +1,3 @@
-
 import { BigNumber } from '../util';
 import { Address, UInt } from 'set-protocol-utils';
 
@@ -100,14 +99,6 @@ export interface CreateLogArgs {
   _naturalUnit: BigNumber;
   _name: string;
   _symbol: string;
-}
-
-/**
- * Do not create your own provider. Use an existing provider from a Web3 or ProviderEngine library
- * Read more about Providers in the 0x wiki.
- */
-export interface Provider {
-    sendAsync(payload: JSONRPCRequestPayload, callback: JSONRPCErrorCallback): void;
 }
 
 export interface JSONRPCRequestPayload {

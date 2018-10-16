@@ -1,4 +1,4 @@
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import { UInt, Web3Utils } from 'set-protocol-utils';
 
 import { TxData } from '../types/common';

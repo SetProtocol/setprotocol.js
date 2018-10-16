@@ -18,7 +18,7 @@
 
 import * as _ from 'lodash';
 import * as ethUtil from 'ethereumjs-util';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import { Address, ECSig, IssuanceOrder, SetProtocolUtils } from 'set-protocol-utils';
 import { CoreContract } from 'set-protocol-contracts';
 import { coreAPIErrors, coreAssertionErrors } from '../errors';

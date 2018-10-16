@@ -17,7 +17,7 @@
 'use strict';
 
 import * as _ from 'lodash';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import { SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
 
 import { erc20AssertionErrors, coreAPIErrors, orderErrors, setTokenAssertionsErrors } from '../errors';
@@ -30,7 +30,8 @@ import { SetTokenAssertions } from './SetTokenAssertions';
 import { CoreWrapper } from '../wrappers';
 import { NULL_ADDRESS, ZERO } from '../constants';
 import { BigNumber, calculatePartialAmount } from '../util';
-import { Address,
+import {
+  Address,
   IssuanceOrder,
   KyberTrade,
   SignedIssuanceOrder,

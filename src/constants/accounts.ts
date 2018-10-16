@@ -13,11 +13,11 @@ const ACCOUNTS: Account[] = [
     privateKey: '0xf2f48ee19680706196e2e339e5da3491186e0c4c5030670656b0e0164837257d',
   },
   {
-    address: '0x6ecbe1db9ef729cbe972c83fb886247691fb6beb',
+    address: '0x6Ecbe1DB9EF729CBe972C83Fb886247691Fb6beb',
     privateKey: '0x5d862464fe9303452126c8bc94274b8c5f9874cbd219789b3eb2128075a76f72',
   },
   {
-    address: '0xe36ea790bc9d7ab70c55260c66d52b1eca985f84',
+    address: '0xE36Ea790bc9d7AB70C55260C66D52b1eca985f84',
     privateKey: '0xdf02719c4df8b9b8ac7f551fcb5d9ef48fa27eef7a66453879f4d8fdc6e78fb1',
   },
   {

@@ -16,8 +16,8 @@
 
 'use strict';
 
-import * as Web3 from 'web3';
 import * as _ from 'lodash';
+import Web3 from 'web3';
 import { SetProtocolUtils } from 'set-protocol-utils';
 
 import { Assertions } from '../assertions';

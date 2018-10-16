@@ -16,8 +16,8 @@
 
 'use strict';
 
-import { Schema, Validator, ValidatorResult } from 'jsonschema';
 import * as _ from 'lodash';
+import { Schema, Validator, ValidatorResult } from 'jsonschema';
 
 import { schemas } from './schemas';
 import { bigNumberFormat, wholeBigNumberFormat } from './customFormats';

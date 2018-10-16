@@ -26,9 +26,9 @@ import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
-import * as Web3 from 'web3';
-import { Core, Vault } from 'set-protocol-contracts';
 import * as setProtocolUtils from 'set-protocol-utils';
+import Web3 from 'web3';
+import { Core, Vault } from 'set-protocol-contracts';
 import {
   CoreContract,
   RebalancingSetTokenContract,
@@ -44,13 +44,7 @@ import {
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { CoreWrapper } from '@src/wrappers';
 import { OrderAPI } from '@src/api';
-import {
-  NULL_ADDRESS,
-  TX_DEFAULTS,
-  ZERO,
-  ONE_DAY_IN_SECONDS,
-  DEFAULT_CONSTANT_AUCTION_PRICE,
-} from '@src/constants';
+import { NULL_ADDRESS, TX_DEFAULTS, ZERO, ONE_DAY_IN_SECONDS, DEFAULT_CONSTANT_AUCTION_PRICE } from '@src/constants';
 import { Assertions } from '@src/assertions';
 import {
   approveForTransferAsync,
@@ -77,27 +71,20 @@ import {
   generateFutureTimestamp,
   getFormattedLogsFromTxHash,
 } from '@src/util';
-import {
-  Address,
-  SignedIssuanceOrder,
-  KyberTrade,
-  TakerWalletOrder,
-  ZeroExSignedFillOrder,
-} from '@src/types/common';
+import { Address, SignedIssuanceOrder, KyberTrade, TakerWalletOrder, ZeroExSignedFillOrder } from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
 const contract = require('truffle-contract');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
+const web3 = new Web3('http://localhost:8545');
 const { SetProtocolTestUtils: SetTestUtils, SetProtocolUtils: SetUtils, Web3Utils } = setProtocolUtils;
 const web3Utils = new Web3Utils(web3);
 const setUtils = new SetUtils(web3);
 const setTestUtils = new SetTestUtils(web3);
 
 const coreContract = contract(Core);
-coreContract.setProvider(provider);
+coreContract.setProvider(web3.currentProvider);
 coreContract.defaults(TX_DEFAULTS);
 
 let currentSnapshotId: number;
@@ -123,7 +110,7 @@ describe('CoreWrapper', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(provider);
+    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(web3);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
   });
@@ -145,14 +132,14 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      componentTokens = await deployTokensAsync(3, provider);
+      componentTokens = await deployTokensAsync(3, web3);
 
       subjectComponents = componentTokens.map(component => component.address);
       subjectUnits = subjectComponents.map(component => ether(4));
       subjectNaturalUnit = ether(2);
       subjectName = 'My Set';
       subjectSymbol = 'SET';
-      subjectCallData = '';
+      subjectCallData = '0x0';
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
@@ -207,7 +194,7 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const componentTokens = await deployTokensAsync(3, provider);
+      const componentTokens = await deployTokensAsync(3, web3);
       const setComponentUnit = ether(4);
       const naturalUnit = ether(2);
       setToken = await deploySetTokenAsync(
@@ -253,7 +240,7 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const componentTokens = await deployTokensAsync(3, provider);
+      const componentTokens = await deployTokensAsync(3, web3);
       const setComponentUnit = ether(4);
       const naturalUnit = ether(2);
       setToken = await deploySetTokenAsync(
@@ -306,7 +293,7 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const componentTokens = await deployTokensAsync(3, provider);
+      const componentTokens = await deployTokensAsync(3, web3);
       const setComponentUnit = ether(4);
       const naturalUnit = ether(2);
       setToken = await deploySetTokenAsync(
@@ -361,7 +348,7 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      token = await deployTokenAsync(provider);
+      token = await deployTokenAsync(web3);
       await approveForTransferAsync([token], transferProxy.address);
       subjectTokenAddressToDeposit = token.address;
 
@@ -405,7 +392,7 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      tokens = await deployTokensAsync(3, provider);
+      tokens = await deployTokensAsync(3, web3);
       await approveForTransferAsync(tokens, transferProxy.address);
       subjectTokenAddressesToDeposit = tokens.map(token => token.address);
 
@@ -443,7 +430,7 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      token = await deployTokenAsync(provider);
+      token = await deployTokenAsync(web3);
       await approveForTransferAsync([token], transferProxy.address);
       subjectTokenAddressToWithdraw = token.address;
 
@@ -492,7 +479,7 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      tokens = await deployTokensAsync(3, provider);
+      tokens = await deployTokensAsync(3, web3);
       await approveForTransferAsync(tokens, transferProxy.address);
       const tokenAddresses = tokens.map(token => token.address);
 
@@ -542,19 +529,20 @@ describe('CoreWrapper', () => {
       const assertions = new Assertions(web3, coreWrapper);
       const ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
 
-      await deployTakerWalletWrapperContract(transferProxy, core, provider);
+      await deployTakerWalletWrapperContract(web3, transferProxy, core);
       await deployZeroExExchangeWrapperContract(
+        web3,
         SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
         SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        SetTestUtils.ZERO_EX_TOKEN_ADDRESS,
         transferProxy,
         core,
-        provider,
       );
       await deployKyberNetworkWrapperContract(
+        web3,
         SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
         transferProxy,
         core,
-        provider,
       );
 
       const relayerAddress = ACCOUNTS[0].address;
@@ -562,11 +550,11 @@ describe('CoreWrapper', () => {
       const issuanceOrderTaker = ACCOUNTS[2].address;
       issuanceOrderMaker = ACCOUNTS[3].address;
 
-      const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
-      const secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
+      const firstComponent = await deployTokenAsync(web3, issuanceOrderTaker);
+      const secondComponent = await deployTokenAsync(web3, zeroExOrderMaker);
       const thirdComponent = await tokenDeployedOnSnapshot(web3, SetTestUtils.KYBER_RESERVE_DESTINATION_TOKEN_ADDRESS);
       const makerToken = await tokenDeployedOnSnapshot(web3, SetTestUtils.KYBER_RESERVE_SOURCE_TOKEN_ADDRESS);
-      const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      const relayerToken = await deployTokenAsync(web3, issuanceOrderMaker);
 
       const componentTokens = [firstComponent, secondComponent, thirdComponent];
       const setComponentUnit = ether(4);
@@ -694,10 +682,10 @@ describe('CoreWrapper', () => {
       const relayerAddress = ACCOUNTS[2].address;
       const zeroExOrderMaker = ACCOUNTS[3].address;
 
-      const firstComponent = await deployTokenAsync(provider, issuanceOrderTaker);
-      const secondComponent = await deployTokenAsync(provider, zeroExOrderMaker);
-      const makerToken = await deployTokenAsync(provider, issuanceOrderMaker);
-      const relayerToken = await deployTokenAsync(provider, issuanceOrderMaker);
+      const firstComponent = await deployTokenAsync(web3, issuanceOrderTaker);
+      const secondComponent = await deployTokenAsync(web3, zeroExOrderMaker);
+      const makerToken = await deployTokenAsync(web3, issuanceOrderMaker);
+      const relayerToken = await deployTokenAsync(web3, issuanceOrderMaker);
 
       const componentTokens = [firstComponent, secondComponent];
       const setComponentUnit = ether(4);
@@ -770,6 +758,7 @@ describe('CoreWrapper', () => {
 
     beforeEach(async () => {
       const setTokens = await deploySetTokensAsync(
+        web3,
         core,
         setTokenFactory.address,
         transferProxy.address,
@@ -782,6 +771,7 @@ describe('CoreWrapper', () => {
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       const managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
         core,
         rebalancingSetTokenFactory.address,
         managerAddress,
@@ -798,7 +788,7 @@ describe('CoreWrapper', () => {
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
 
       // Deploy price curve used in auction
-      const priceCurve = await deployConstantAuctionPriceCurveAsync(provider, DEFAULT_CONSTANT_AUCTION_PRICE);
+      const priceCurve = await deployConstantAuctionPriceCurveAsync(web3, DEFAULT_CONSTANT_AUCTION_PRICE);
 
       // Transition to proposal state
       const auctionPriceCurveAddress = priceCurve.address;
@@ -806,6 +796,7 @@ describe('CoreWrapper', () => {
       const setAuctionStartPrice = new BigNumber(500);
       const setAuctionPriceDivisor = new BigNumber(1000);
       await transitionToRebalanceAsync(
+        web3,
         rebalancingSetToken,
         managerAddress,
         nextSetToken.address,
@@ -899,7 +890,7 @@ describe('CoreWrapper', () => {
     let setToken: SetTokenContract;
 
     beforeEach(async () => {
-      const componentTokens = await deployTokensAsync(3, provider);
+      const componentTokens = await deployTokensAsync(3, web3);
       setComponentUnit = ether(4);
       const naturalUnit = ether(2);
       setToken = await deploySetTokenAsync(
@@ -913,7 +904,7 @@ describe('CoreWrapper', () => {
     });
 
     test('gets exchange address', async () => {
-      const takerWalletWrapper = await deployTakerWalletWrapperContract(transferProxy, core, provider);
+      const takerWalletWrapper = await deployTakerWalletWrapperContract(web3, transferProxy, core);
       const exchangeAddress = await coreWrapper.getExchangeAddress(SetUtils.EXCHANGES.TAKER_WALLET);
 
       expect(exchangeAddress).to.equal(takerWalletWrapper.address);

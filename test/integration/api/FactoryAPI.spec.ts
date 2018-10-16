@@ -26,7 +26,7 @@ import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
@@ -39,7 +39,7 @@ import {
   TransferProxyContract,
   VaultContract
 } from 'set-protocol-contracts';
-import { Web3Utils } from 'set-protocol-utils';
+import { SetProtocolUtils, Web3Utils } from 'set-protocol-utils';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { FactoryAPI } from '@src/api';
@@ -48,13 +48,7 @@ import { Assertions } from '@src/assertions';
 import { CoreWrapper } from '@src/wrappers';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { Address } from '@src/types/common';
-import {
-  DEFAULT_ACCOUNT,
-  DEFAULT_UNIT_SHARES,
-  ONE_DAY_IN_SECONDS,
-  TX_DEFAULTS,
-  ZERO,
-} from '@src/constants';
+import { DEFAULT_ACCOUNT, DEFAULT_UNIT_SHARES, ONE_DAY_IN_SECONDS, TX_DEFAULTS, ZERO } from '@src/constants';
 import {
   deployBaseContracts,
   deployNoDecimalTokenAsync,
@@ -70,13 +64,12 @@ import { SetProtocolConfig } from '../../../src/SetProtocol';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
+const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 const { expect } = chai;
 
 const coreContract = contract(Core);
-coreContract.setProvider(provider);
+coreContract.setProvider(web3.currentProvider);
 coreContract.defaults(TX_DEFAULTS);
 
 let currentSnapshotId: number;
@@ -104,7 +97,7 @@ describe('FactoryAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(provider);
+    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(web3);
 
     config = {
       coreAddress: core.address,
@@ -133,7 +126,7 @@ describe('FactoryAPI', () => {
     let componentTokens: StandardTokenMockContract[];
 
     beforeEach(async () => {
-      componentTokens = await deployTokensAsync(3, provider);
+      componentTokens = await deployTokensAsync(3, web3);
 
       subjectComponents = componentTokens.map(component => component.address);
       subjectUnits = subjectComponents.map(component => ether(4));
@@ -365,6 +358,7 @@ describe('FactoryAPI', () => {
     beforeEach(async () => {
       const setTokensToDeploy = 1;
       const [setToken] = await deploySetTokensAsync(
+        web3,
         core,
         setTokenFactory.address,
         transferProxy.address,
@@ -426,7 +420,7 @@ describe('FactoryAPI', () => {
 
     describe('when the initialSet is not an address of a Set', async () => {
       beforeEach(async () => {
-        const token = await deployTokenAsync(provider);
+        const token = await deployTokenAsync(web3);
         subjectInitialSet = token.address;
       });
 
@@ -478,7 +472,7 @@ describe('FactoryAPI', () => {
     let subjectTxHash: string;
 
     beforeEach(async () => {
-      const componentTokens = await deployTokensAsync(3, provider);
+      const componentTokens = await deployTokensAsync(3, web3);
       const setComponentUnit = ether(4);
       const naturalUnit = ether(2);
 
@@ -487,9 +481,9 @@ describe('FactoryAPI', () => {
         componentTokens.map(token => token.address),
         componentTokens.map(token => setComponentUnit),
         naturalUnit,
-        'Set',
-        'SET',
-        '',
+        SetProtocolUtils.stringToBytes('set'),
+        SetProtocolUtils.stringToBytes('SET'),
+        '0x0',
         TX_DEFAULTS
       );
     });
@@ -541,7 +535,7 @@ describe('FactoryAPI', () => {
       beforeAll(async () => {
         const tokenCount = 2;
         const decimalsList = [18, 18];
-        componentInstances = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+        componentInstances = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
       });
 
       afterAll(async () => {
@@ -559,8 +553,8 @@ describe('FactoryAPI', () => {
 
     describe('when a component does not implement decimals', async () => {
       beforeAll(async () => {
-        const [standardToken] = await deployTokensSpecifyingDecimals(1, [18], provider);
-        const nonDecimalComponent = await deployNoDecimalTokenAsync(provider);
+        const [standardToken] = await deployTokensSpecifyingDecimals(1, [18], web3);
+        const nonDecimalComponent = await deployNoDecimalTokenAsync(web3);
 
         componentInstances = [standardToken, nonDecimalComponent];
       });
@@ -586,7 +580,7 @@ describe('FactoryAPI', () => {
       beforeAll(async () => {
         const tokenCount = 2;
         decimalsList = [largerDecimal, smallerDecimal];
-        componentInstances = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+        componentInstances = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
       });
 
       afterAll(async () => {
@@ -613,7 +607,7 @@ describe('FactoryAPI', () => {
     beforeEach(async () => {
       const tokenCount = 2;
       const decimalsList = [18, 18];
-      const components = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+      const components = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
 
       subjectComponentAddresses = _.map(components, component => component.address);
       subjectComponentPrices = [new BigNumber(2), new BigNumber(2)];
@@ -682,7 +676,7 @@ describe('FactoryAPI', () => {
       beforeEach(async () => {
         const tokenCount = 10;
         const decimalsList = [18, 18, 18, 18, 12, 18, 18, 8, 18, 18];
-        const decimalSpecificComponents = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+        const decimalSpecificComponents = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
 
         subjectComponentAddresses = _.map(decimalSpecificComponents, component => component.address);
         subjectComponentPrices = [
@@ -773,7 +767,7 @@ describe('FactoryAPI', () => {
       beforeEach(async () => {
         const tokenCount = 2;
         const decimalsList = [18, 12];
-        const decimalSpecificComponents = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, provider);
+        const decimalSpecificComponents = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
 
         subjectComponentAddresses = _.map(decimalSpecificComponents, component => component.address);
         subjectComponentPrices = [new BigNumber(0.627), new BigNumber(0.0342)];
