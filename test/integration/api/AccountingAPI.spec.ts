@@ -97,7 +97,7 @@ describe('AccountingAPI', () => {
       );
     }
 
-    test.only('correctly updates the vault balances', async () => {
+    test('correctly updates the vault balances', async () => {
       const existingVaultOwnerBalances = await getVaultBalances(vault, subjectTokenAddressesToDeposit, subjectCaller);
 
       await subject();
