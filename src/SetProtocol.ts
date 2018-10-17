@@ -16,7 +16,8 @@
 
 'use strict';
 
-import * as Web3 from 'web3';
+import Web3 from 'web3';
+import { Provider } from 'web3/providers';
 import { TransactionReceipt } from 'ethereum-types';
 
 import {
@@ -32,7 +33,7 @@ import {
 import { CoreWrapper, VaultWrapper } from './wrappers';
 import { Assertions } from './assertions';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
-import { Address, Bytes, SetUnits, Provider, TxData } from './types/common';
+import { Address, Bytes, SetUnits, TxData } from './types/common';
 import { NULL_ADDRESS, UNLIMITED_ALLOWANCE_IN_BASE_UNITS } from './constants';
 
 export interface SetProtocolConfig {

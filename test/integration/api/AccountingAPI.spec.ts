@@ -25,8 +25,8 @@ jest.setTimeout(30000);
 import * as _ from 'lodash';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
-import * as Web3 from 'web3';
-import { Address } from 'set-protocol-utils';
+import Web3 from 'web3';
+import { Address, Web3Utils } from 'set-protocol-utils';
 import { Core } from 'set-protocol-contracts';
 import { CoreContract, StandardTokenMockContract, TransferProxyContract, VaultContract } from 'set-protocol-contracts';
 
@@ -39,12 +39,9 @@ import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { TX_DEFAULTS, ZERO } from '@src/constants';
 import { approveForTransferAsync, deployBaseContracts, deployTokensAsync, getVaultBalances } from '@test/helpers';
 import { testSets, TestSet } from '../../testSets';
-import { Web3Utils } from '@src/util/Web3Utils';
 
 ChaiSetup.configure();
-const contract = require('truffle-contract');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
+const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 const { expect } = chai;
 
@@ -62,13 +59,13 @@ describe('AccountingAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault] = await deployBaseContracts(provider);
+    [core, transferProxy, vault] = await deployBaseContracts(web3);
 
     coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
     accountingAPI = new AccountingAPI(web3, coreWrapper, assertions);
 
-    tokens = await deployTokensAsync(3, provider);
+    tokens = await deployTokensAsync(3, web3);
     await approveForTransferAsync(tokens, transferProxy.address);
   });
 

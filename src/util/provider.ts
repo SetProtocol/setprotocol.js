@@ -1,5 +1,5 @@
-import * as Web3 from 'web3';
-import { Provider } from '../types/common';
+import Web3 from 'web3';
+import { Provider } from 'web3/providers';
 
 // This function has basically been copied vertabim from the amazing Dharma repo
 export const instantiateWeb3 = (provider: Provider): Web3 => {

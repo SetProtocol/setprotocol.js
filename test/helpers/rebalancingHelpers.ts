@@ -1,12 +1,8 @@
-import * as Web3 from 'web3';
-import * as promisify from 'tiny-promisify';
 import * as _ from 'lodash';
-import { Provider } from 'ethereum-types';
+import promisify from 'tiny-promisify';
+import Web3 from 'web3';
 import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
-import {
-  RebalancingSetToken,
-  ConstantAuctionPriceCurve,
-} from 'set-protocol-contracts';
+import { RebalancingSetToken, ConstantAuctionPriceCurve } from 'set-protocol-contracts';
 import {
   ConstantAuctionPriceCurveContract,
   CoreContract,
@@ -14,33 +10,26 @@ import {
   SetTokenContract,
   VaultContract
 } from 'set-protocol-contracts';
+
 import { TokenFlows } from '@src/types/common';
-
 import {
-  TX_DEFAULTS,
-  DEFAULT_GAS_LIMIT,
-  ONE_DAY_IN_SECONDS,
-  DEFAULT_UNIT_SHARES,
-  DEFAULT_REBALANCING_NATURAL_UNIT,
   DEFAULT_AUCTION_PRICE_DIVISOR,
-  UNLIMITED_ALLOWANCE_IN_BASE_UNITS
+  DEFAULT_GAS_LIMIT,
+  DEFAULT_REBALANCING_NATURAL_UNIT,
+  DEFAULT_UNIT_SHARES,
+  ONE_DAY_IN_SECONDS,
+  TX_DEFAULTS,
+  UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+  ZERO,
 } from '@src/constants';
-
-import {
-  deployTokensAsync,
-  deploySetTokenAsync,
-  approveForTransferAsync
-} from './coreHelpers';
+import { deployTokensAsync, deploySetTokenAsync, approveForTransferAsync } from '@test/helpers';
 import { BigNumber, getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util';
 import { CoreWrapper } from '@src/wrappers';
-
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
-const setTestUtils = new SetProtocolTestUtils(web3);
 
 const contract = require('truffle-contract');
 
 export const deploySetTokensAsync = async(
+  web3: Web3,
   core: CoreContract,
   factory: Address,
   transferProxy: Address,
@@ -50,7 +39,7 @@ export const deploySetTokensAsync = async(
   let naturalUnit: BigNumber;
   const setTokenArray: SetTokenContract[] = [];
 
-  const components = await deployTokensAsync(tokenCount + 1, provider);
+  const components = await deployTokensAsync(tokenCount + 1, web3);
   await approveForTransferAsync(components, transferProxy);
 
   const indexArray = _.times(tokenCount, Number);
@@ -94,13 +83,11 @@ export const deploySetTokensAsync = async(
 };
 
 export const deployConstantAuctionPriceCurveAsync = async(
-  provider: Provider,
+  web3: Web3,
   price: BigNumber,
 ): Promise<ConstantAuctionPriceCurveContract> => {
-  const web3 = new Web3(provider);
-
   const truffleConstantAuctionPriceCurveContract = contract(ConstantAuctionPriceCurve);
-  truffleConstantAuctionPriceCurveContract.setProvider(provider);
+  truffleConstantAuctionPriceCurveContract.setProvider(web3.currentProvider);
   truffleConstantAuctionPriceCurveContract.setNetwork(50);
   truffleConstantAuctionPriceCurveContract.defaults(TX_DEFAULTS);
 
@@ -114,6 +101,7 @@ export const deployConstantAuctionPriceCurveAsync = async(
 };
 
 export const createRebalancingSetTokenAsync = async(
+  web3: Web3,
   core: CoreContract,
   factory: Address,
   componentAddresses: Address[],
@@ -137,6 +125,7 @@ export const createRebalancingSetTokenAsync = async(
     TX_DEFAULTS,
   );
 
+  const setTestUtils = new SetProtocolTestUtils(web3);
   const logs = await setTestUtils.getLogsFromTxHash(txHash);
   const setAddress = extractNewSetTokenAddressFromLogs(logs);
 
@@ -148,6 +137,7 @@ export const createRebalancingSetTokenAsync = async(
 };
 
 export const createDefaultRebalancingSetTokenAsync = async(
+  web3: Web3,
   core: CoreContract,
   factory: Address,
   manager: Address,
@@ -165,6 +155,7 @@ export const createDefaultRebalancingSetTokenAsync = async(
 
   // Create rebalancingSetToken
   return await createRebalancingSetTokenAsync(
+    web3,
     core,
     factory,
     [initialSet],
@@ -175,6 +166,7 @@ export const createDefaultRebalancingSetTokenAsync = async(
 };
 
 export const transitionToProposeAsync = async(
+  web3: Web3,
   rebalancingSetToken: RebalancingSetTokenContract,
   manager: Address,
   nextSetToken: Address,
@@ -184,7 +176,7 @@ export const transitionToProposeAsync = async(
   auctionPriceDivisor: BigNumber,
 ): Promise<void> => {
   // Transition to propose
-  await increaseChainTimeAsync(ONE_DAY_IN_SECONDS.add(1));
+  await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS.add(1));
   await rebalancingSetToken.propose.sendTransactionAsync(
     nextSetToken,
     auctionPriceCurve,
@@ -196,6 +188,7 @@ export const transitionToProposeAsync = async(
 };
 
 export const transitionToRebalanceAsync = async(
+  web3: Web3,
   rebalancingSetToken: RebalancingSetTokenContract,
   manager: Address,
   nextSetToken: Address,
@@ -206,6 +199,7 @@ export const transitionToRebalanceAsync = async(
 ): Promise<void> => {
   // Transition to propose
   await transitionToProposeAsync(
+    web3,
     rebalancingSetToken,
     manager,
     nextSetToken,
@@ -216,23 +210,25 @@ export const transitionToRebalanceAsync = async(
   );
 
   // Transition to rebalance
-  await increaseChainTimeAsync(ONE_DAY_IN_SECONDS.add(1));
+  await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS.add(1));
   await rebalancingSetToken.rebalance.sendTransactionAsync(
     TX_DEFAULTS
   );
 };
 
 export const increaseChainTimeAsync = async(
+  web3: Web3,
   duration: BigNumber
 ): Promise<void> => {
-  await sendJSONRpcRequestAsync('evm_increaseTime', [duration.toNumber()]);
+  await sendJSONRpcRequestAsync(web3, 'evm_increaseTime', [duration.toNumber()]);
 };
 
 const sendJSONRpcRequestAsync = async(
+  web3: Web3,
   method: string,
   params: any[],
 ): Promise<any> => {
-  return promisify(web3.currentProvider.sendAsync, {
+  return promisify(web3.currentProvider.send, {
     context: web3.currentProvider,
   })({
     jsonrpc: '2.0',
@@ -265,7 +261,7 @@ export const constructCombinedUnitArrayAsync = async(
       const totalTokenAmount = setTokenUnits[index].mul(maxNaturalUnit).div(targetSetNaturalUnit);
       combinedSetTokenUnits.push(totalTokenAmount);
     } else {
-      combinedSetTokenUnits.push(new BigNumber(0));
+      combinedSetTokenUnits.push(ZERO);
     }
   });
   return combinedSetTokenUnits;
@@ -327,14 +323,18 @@ export const constructInflowOutflowArraysAsync = async(
 
   for (let i = 0; i < combinedCurrentUnits.length; i++) {
     const flow = combinedRebalanceUnits[i].mul(priceDivisor).sub(combinedCurrentUnits[i].mul(priceNumerator));
-    if (flow.greaterThan(0)) {
+    if (flow.greaterThan(ZERO)) {
       inflowArray.push(effectiveQuantity.mul(flow).div(coefficient).round(0, 3).div(priceDivisor).round(0, 3));
-      outflowArray.push(new BigNumber(0));
+      outflowArray.push(ZERO);
     } else {
-      outflowArray.push(
-        flow.mul(effectiveQuantity).div(coefficient).round(0, 3).div(priceDivisor).round(0, 3).mul(new BigNumber(-1))
-      );
-      inflowArray.push(new BigNumber(0));
+      let outflow = flow.mul(effectiveQuantity).div(coefficient).round(0, 3).div(priceDivisor).round(0, 3);
+      if (!outflow.isZero()) {
+        // We do this because this produces a negative 0
+        outflow = outflow.mul(new BigNumber(-1));
+      }
+
+      outflowArray.push(outflow);
+      inflowArray.push(ZERO);
     }
   }
   return { inflow: inflowArray, outflow: outflowArray };

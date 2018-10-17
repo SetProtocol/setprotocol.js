@@ -1,6 +1,5 @@
-import * as Web3 from 'web3';
 import * as _ from 'lodash';
-import { Provider } from 'ethereum-types';
+import Web3 from 'web3';
 import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
 import {
   Core,
@@ -39,18 +38,16 @@ import { CoreWrapper } from '@src/wrappers';
 const contract = require('truffle-contract');
 
 export const deployTransferProxyContract = async (
-  provider: Provider
+  web3: Web3,
 ): Promise<TransferProxyContract> => {
-  const web3 = new Web3(provider);
-
   const truffleTransferProxyContract = contract(TransferProxy);
-  truffleTransferProxyContract.setProvider(provider);
+  truffleTransferProxyContract.setProvider(web3.currentProvider);
   truffleTransferProxyContract.setNetwork(50);
   truffleTransferProxyContract.defaults(TX_DEFAULTS);
 
   // Deploy ERC20Wrapper dependency
   const truffleERC20WrapperContract = contract(ERC20Wrapper);
-  truffleERC20WrapperContract.setProvider(provider);
+  truffleERC20WrapperContract.setProvider(web3.currentProvider);
   truffleERC20WrapperContract.setNetwork(50);
   truffleERC20WrapperContract.defaults(TX_DEFAULTS);
 
@@ -67,18 +64,16 @@ export const deployTransferProxyContract = async (
 };
 
 export const deployVaultContract = async (
-  provider: Provider,
+  web3: Web3
 ): Promise<VaultContract> => {
-  const web3 = new Web3(provider);
-
   const truffleVaultContract = contract(Vault);
-  truffleVaultContract.setProvider(provider);
+  truffleVaultContract.setProvider(web3.currentProvider);
   truffleVaultContract.setNetwork(50);
   truffleVaultContract.defaults(TX_DEFAULTS);
 
   // Deploy ERC20Wrapper dependency
   const truffleErc20WrapperContract = contract(ERC20Wrapper);
-  truffleErc20WrapperContract.setProvider(provider);
+  truffleErc20WrapperContract.setProvider(web3.currentProvider);
   truffleErc20WrapperContract.setNetwork(50);
   truffleErc20WrapperContract.defaults(TX_DEFAULTS);
 
@@ -95,19 +90,17 @@ export const deployVaultContract = async (
 };
 
 export const deployCoreContract = async (
-  provider: Provider,
+  web3: Web3,
   transferProxyAddress: Address,
   vaultAddress: Address,
 ): Promise<CoreContract> => {
-  const web3 = new Web3(provider);
-
   const truffleCoreContract = contract(Core);
-  truffleCoreContract.setProvider(provider);
+  truffleCoreContract.setProvider(web3.currentProvider);
   truffleCoreContract.setNetwork(50);
   truffleCoreContract.defaults(TX_DEFAULTS);
 
   const truffleOrderLibraryContract = contract(OrderLibrary);
-  truffleOrderLibraryContract.setProvider(provider);
+  truffleOrderLibraryContract.setProvider(web3.currentProvider);
   truffleOrderLibraryContract.setNetwork(50);
   truffleOrderLibraryContract.defaults(TX_DEFAULTS);
 
@@ -126,14 +119,12 @@ export const deployCoreContract = async (
 };
 
 export const deploySetTokenFactoryContract = async (
-  provider: Provider,
+  web3: Web3,
   core: CoreContract
 ): Promise<SetTokenFactoryContract> => {
-  const web3 = new Web3(provider);
-
   // Deploy SetTokenFactory contract
   const truffleSetTokenFactoryContract = contract(SetTokenFactory);
-  truffleSetTokenFactoryContract.setProvider(provider);
+  truffleSetTokenFactoryContract.setProvider(web3.currentProvider);
   truffleSetTokenFactoryContract.defaults(TX_DEFAULTS);
   const deployedSetTokenFactory = await truffleSetTokenFactoryContract.new(core.address);
 
@@ -154,14 +145,12 @@ export const deploySetTokenFactoryContract = async (
 };
 
 export const deployRebalancingSetTokenFactoryContract = async (
-  provider: Provider,
+  web3: Web3,
   core: CoreContract
 ): Promise<SetTokenFactoryContract> => {
-  const web3 = new Web3(provider);
-
   // Deploy SetTokenFactory contract
   const truffleRebalancingSetTokenFactoryContract = contract(RebalancingSetTokenFactory);
-  truffleRebalancingSetTokenFactoryContract.setProvider(provider);
+  truffleRebalancingSetTokenFactoryContract.setProvider(web3.currentProvider);
   truffleRebalancingSetTokenFactoryContract.defaults(TX_DEFAULTS);
   const deployedRebalancingSetTokenFactory = await truffleRebalancingSetTokenFactoryContract.new(core.address);
 
@@ -182,7 +171,7 @@ export const deployRebalancingSetTokenFactoryContract = async (
 };
 
 export const deployBaseContracts = async (
-  provider: Provider,
+  web3: Web3
 ): Promise<[
   CoreContract,
   TransferProxyContract,
@@ -191,15 +180,15 @@ export const deployBaseContracts = async (
   RebalancingSetTokenFactoryContract
 ]> => {
   const [transferProxy, vault] = await Promise.all([
-    deployTransferProxyContract(provider),
-    deployVaultContract(provider),
+    deployTransferProxyContract(web3),
+    deployVaultContract(web3),
   ]);
 
-  const core = await deployCoreContract(provider, transferProxy.address, vault.address);
+  const core = await deployCoreContract(web3, transferProxy.address, vault.address);
 
   const [setTokenFactory, rebalancingSetTokenFactory] = await Promise.all([
-    deploySetTokenFactoryContract(provider, core),
-    deployRebalancingSetTokenFactoryContract(provider, core),
+    deploySetTokenFactoryContract(web3, core),
+    deployRebalancingSetTokenFactoryContract(web3, core),
     addAuthorizationAsync(vault, core.address),
     addAuthorizationAsync(transferProxy, core.address),
   ]);
@@ -208,35 +197,33 @@ export const deployBaseContracts = async (
 };
 
 export const deployTokenAsync = async (
-  provider: Provider,
+  web3: Web3,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<StandardTokenMockContract> => {
-  const tokens = await deployTokensAsync(1, provider, owner);
+  const tokens = await deployTokensAsync(1, web3, owner);
 
   return tokens[0];
 };
 
 export const deployTokensAsync = async (
   tokenCount: number,
-  provider: Provider,
+  web3: Web3,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<StandardTokenMockContract[]> => {
   const decimals: number[] = [];
   _.times(tokenCount, () => decimals.push(_.random(4, 18)));
 
-  return deployTokensSpecifyingDecimals(tokenCount, decimals, provider, owner);
+  return deployTokensSpecifyingDecimals(tokenCount, decimals, web3, owner);
 };
 
 export const deployTokensSpecifyingDecimals = async (
   tokenCount: number,
   decimalsList: number[],
-  provider: Provider,
+  web3: Web3,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<StandardTokenMockContract[]> => {
-  const web3 = new Web3(provider);
-
   const standardTokenMockContract = contract(StandardTokenMock);
-  standardTokenMockContract.setProvider(provider);
+  standardTokenMockContract.setProvider(web3.currentProvider);
   standardTokenMockContract.defaults(TX_DEFAULTS);
   const mockTokens: StandardTokenMockContract[] = [];
 
@@ -245,7 +232,7 @@ export const deployTokensSpecifyingDecimals = async (
       owner,
       DEPLOYED_TOKEN_QUANTITY,
       `Component ${index}`,
-      index,
+      index.toString(),
       decimalsList[index],
       TX_DEFAULTS,
     )
@@ -254,7 +241,7 @@ export const deployTokensSpecifyingDecimals = async (
   await Promise.all(mockTokenPromises).then(tokenMock => {
     _.each(tokenMock, standardToken => {
       mockTokens.push(new StandardTokenMockContract(
-        web3.eth.contract(standardToken.abi).at(standardToken.address),
+        new web3.eth.Contract(standardToken.abi, standardToken.address),
         TX_DEFAULTS,
       ));
     });
@@ -264,11 +251,11 @@ export const deployTokensSpecifyingDecimals = async (
 };
 
 export const deployNoDecimalTokenAsync = async (
-  provider: Provider,
+  web3: Web3,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<NoDecimalTokenMockContract> => {
   const noDecimalTokenMockContract = contract(NoDecimalTokenMock);
-  noDecimalTokenMockContract.setProvider(provider);
+  noDecimalTokenMockContract.setProvider(web3.currentProvider);
   noDecimalTokenMockContract.defaults(TX_DEFAULTS);
 
   const mockToken = await noDecimalTokenMockContract.new(
@@ -288,17 +275,20 @@ export const deploySetTokenAsync = async(
   componentAddresses: Address[],
   componentUnits: BigNumber[],
   naturalUnit: BigNumber,
-  name: string = 'Default Set',
+  name: string = 'Set Token',
   symbol: string = 'SET',
 ): Promise<SetTokenContract> => {
+  const encodedName = SetProtocolUtils.stringToBytes(name);
+  const encodedSymbol = SetProtocolUtils.stringToBytes(symbol);
+
   const createSetTokenTransactionHash = await core.create.sendTransactionAsync(
     setTokenFactoryAddress,
     componentAddresses,
     componentUnits,
     naturalUnit,
-    name,
-    symbol,
-    '',
+    encodedName,
+    encodedSymbol,
+    '0x0',
     TX_DEFAULTS
   );
 

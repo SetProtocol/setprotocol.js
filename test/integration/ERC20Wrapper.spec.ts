@@ -23,15 +23,15 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as chai from 'chai';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import { StandardTokenMock } from 'set-protocol-contracts';
 import { StandardTokenMockContract } from 'set-protocol-contracts';
-import { Address } from 'set-protocol-utils';
+import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { ERC20Wrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, DEPLOYED_TOKEN_QUANTITY, TX_DEFAULTS } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
-import { BigNumber, Web3Utils } from '@src/util';
+import { BigNumber } from '@src/util';
 import { ether } from '@src/util/units';
 import { addAuthorizationAsync, deployTokenAsync } from '@test/helpers';
 
@@ -39,8 +39,7 @@ const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
 const contract = require('truffle-contract');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
+const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 
 let currentSnapshotId: number;
@@ -69,7 +68,7 @@ describe('ERC20Wrapper', () => {
 
     beforeEach(async () => {
       const truffleStandardTokenMockContract = contract(StandardTokenMock);
-      truffleStandardTokenMockContract.setProvider(provider);
+      truffleStandardTokenMockContract.setProvider(web3.currentProvider);
       truffleStandardTokenMockContract.defaults(TX_DEFAULTS);
 
       tokenSupply = new BigNumber(100);
@@ -113,7 +112,7 @@ describe('ERC20Wrapper', () => {
     let subjectTokenOwner: Address;
 
     beforeEach(async () => {
-      token = await deployTokenAsync(provider);
+      token = await deployTokenAsync(web3);
 
       subjectTokenAddress = token.address;
       subjectTokenOwner = DEFAULT_ACCOUNT;
@@ -143,7 +142,7 @@ describe('ERC20Wrapper', () => {
 
     beforeEach(async () => {
       approveAllowance = new BigNumber(1000);
-      token = await deployTokenAsync(provider);
+      token = await deployTokenAsync(web3);
 
       subjectTokenOwner = DEFAULT_ACCOUNT;
       subjectTokenAddress = token.address;
@@ -181,7 +180,7 @@ describe('ERC20Wrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      token = await deployTokenAsync(provider);
+      token = await deployTokenAsync(web3);
 
       subjectTokenAddress = token.address;
       subjectSpenderAddress = ACCOUNTS[1].address;
@@ -217,7 +216,7 @@ describe('ERC20Wrapper', () => {
 
     beforeEach(async () => {
       approveAllowance = new BigNumber(1000);
-      token = await deployTokenAsync(provider);
+      token = await deployTokenAsync(web3);
 
       subjectTokenOwner = DEFAULT_ACCOUNT;
       subjectTokenAddress = token.address;
@@ -262,7 +261,7 @@ describe('ERC20Wrapper', () => {
     let subjectTransferAmount: BigNumber;
 
     beforeEach(async () => {
-      token = await deployTokenAsync(provider);
+      token = await deployTokenAsync(web3);
 
       subjectTokenOwner = DEFAULT_ACCOUNT;
       subjectTokenReceiver = ACCOUNTS[1].address;

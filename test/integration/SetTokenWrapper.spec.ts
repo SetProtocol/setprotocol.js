@@ -23,7 +23,7 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as chai from 'chai';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import {
   CoreContract,
   RebalancingSetTokenFactoryContract,
@@ -33,11 +33,11 @@ import {
   TransferProxyContract,
   VaultContract
 } from 'set-protocol-contracts';
-import { Address } from 'set-protocol-utils';
+import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { CoreWrapper, SetTokenWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
-import { BigNumber, Web3Utils } from '@src/util';
+import { BigNumber } from '@src/util';
 import { ether } from '@src/util/units';
 import { approveForTransferAsync, deployBaseContracts, deploySetTokenAsync, deployTokensAsync } from '@test/helpers';
 
@@ -45,8 +45,7 @@ const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
 const contract = require('truffle-contract');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
+const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 
 let currentSnapshotId: number;
@@ -64,7 +63,7 @@ describe('SetTokenWrapper', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(provider);
+    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(web3);
 
     setTokenWrapper = new SetTokenWrapper(web3);
   });
@@ -83,7 +82,7 @@ describe('SetTokenWrapper', () => {
     let subjectSetTokenAddress: Address;
 
     beforeEach(async () => {
-      componentTokens = await deployTokensAsync(3, provider);
+      componentTokens = await deployTokensAsync(3, web3);
       componentTokenAddresses = componentTokens.map(token => token.address);
       componentTokenUnits = componentTokens.map(token => ether(4));
       naturalUnit = ether(2);

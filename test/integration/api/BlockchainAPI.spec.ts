@@ -26,8 +26,8 @@ import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
-import * as Web3 from 'web3';
-import { Address, Log } from 'set-protocol-utils';
+import Web3 from 'web3';
+import { Address, Log, Web3Utils } from 'set-protocol-utils';
 import { CoreContract, StandardTokenMockContract, VaultContract } from 'set-protocol-contracts';
 import { StandardTokenMock } from 'set-protocol-contracts';
 import { TransactionReceipt } from 'ethereum-types';
@@ -42,17 +42,15 @@ import { TX_DEFAULTS, ZERO } from '@src/constants';
 import { deployBaseContracts, deployTokenAsync } from '@test/helpers';
 import { getVaultBalances } from '@test/helpers/vaultHelpers';
 import { testSets, TestSet } from '../../testSets';
-import { Web3Utils } from '@src/util/Web3Utils';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
-const provider = new Web3.providers.HttpProvider('http://localhost:8545');
-const web3 = new Web3(provider);
+const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 const { expect } = chai;
 
 const standardTokenContract = contract(StandardTokenMock);
-standardTokenContract.setProvider(provider);
+standardTokenContract.setProvider(web3);
 standardTokenContract.defaults(TX_DEFAULTS);
 
 let currentSnapshotId: number;
@@ -73,9 +71,9 @@ describe('BlockchainAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    standardToken = await deployTokenAsync(provider);
+    standardToken = await deployTokenAsync(web3);
 
-    const [core, transferProxy, vault] = await deployBaseContracts(provider);
+    const [core, transferProxy, vault] = await deployBaseContracts(web3);
     const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
     blockchainAPI = new BlockchainAPI(web3, assertions);

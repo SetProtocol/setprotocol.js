@@ -28,4 +28,3 @@ export { getFormattedLogsFromReceipt } from './logs';
 export { generateFutureTimestamp } from './timeStampUtils';
 export { generateTxOpts } from './transactionUtils';
 export { ether } from './units';
-export { Web3Utils } from './Web3Utils';

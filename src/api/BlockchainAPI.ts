@@ -17,11 +17,12 @@
 'use strict';
 
 import * as _ from 'lodash';
-import * as Web3 from 'web3';
+import Web3 from 'web3';
 import { TransactionReceipt } from 'ethereum-types';
+import { Web3Utils } from 'set-protocol-utils';
 
 import { Assertions } from '../assertions';
-import { IntervalManager, Web3Utils } from '../util';
+import { IntervalManager } from '../util';
 
 export const BlockchainAPIErrors = {
   AWAIT_MINE_TX_TIMED_OUT: (txHash: string) =>
