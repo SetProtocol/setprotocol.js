@@ -34,15 +34,6 @@ $ yarn add setprotocol.js@^1.1.0-rc.1
 $ npm i --save setprotocol.js@^1.1.0-rc.1
 ```
 
-### web3 & bignumber
-We also need `web3@0.20.6` and `bignumber.js@^4.1.0`.
-
-`web3 ^1.0.0` and `bignumber.js@^5.0.0` introduce breaking changes that don’t work with the current version of setprotocol.js at the moment. You can install the dependencies like this:
-```shell
-yarn add web3@0.20.6
-yarn add bignumber.js@^4.1.0
-```
-
 ##### Setup
 For the most up to date steps on how to initialize and use `setProtocol.js`, please refer to our [installation guide](https://docs.setprotocol.com/getting-started#installation).
 
