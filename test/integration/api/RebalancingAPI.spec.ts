@@ -124,7 +124,7 @@ describe('RebalancingAPI', () => {
   describe('proposeAsync', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
-    let setNaturalUnits: BigNumber[] = [];
+    let deployedSetTokenNaturalUnits: BigNumber[] = [];
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
     let managerAddress: Address;
@@ -145,7 +145,7 @@ describe('RebalancingAPI', () => {
         setTokenFactory.address,
         transferProxy.address,
         setTokensToDeploy,
-        setNaturalUnits,
+        deployedSetTokenNaturalUnits,
       );
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
@@ -284,11 +284,11 @@ describe('RebalancingAPI', () => {
 
     describe('when the proposed set natural unit is not a multiple of the current set', async () => {
       beforeAll(async () => {
-        setNaturalUnits = [ether(.01), ether(.015)];
+        deployedSetTokenNaturalUnits = [ether(.01), ether(.015)];
       });
 
       afterAll(async () => {
-        setNaturalUnits = [];
+        deployedSetTokenNaturalUnits = [];
       });
 
       test('throws', async () => {
