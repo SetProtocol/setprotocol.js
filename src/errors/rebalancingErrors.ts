@@ -23,6 +23,8 @@ export const rebalancingErrors = {
   NOT_REBALANCING_MANAGER: (caller: string) => `Caller ${caller} is not the manager of this Rebalancing Set Token.`,
   INSUFFICIENT_TIME_PASSED: (nextAvailableRebalance: string) => `Attempting to rebalance too soon. Rebalancing next ` +
     `available on ${nextAvailableRebalance}`,
+  PROPOSED_SET_NATURAL_UNIT_IS_NOT_MULTIPLE_OF_CURRENT_SET: (currentSetAddress: string, nextSetAddress: string) =>
+  `${nextSetAddress} must be a multiple of ${currentSetAddress}, or vice versa to propose a valid rebalance.`,
   INCORRECT_STATE: (rebalancingSetAddress: string, requiredState: string) => `Rebalancing token at ` +
     `${rebalancingSetAddress} must be in ${requiredState} state to call that function.`,
   NOT_ENOUGH_SETS_REBALANCED: (nextAvailableRebalance: string, minimumBid: string, remainingCurrentSets: string) =>

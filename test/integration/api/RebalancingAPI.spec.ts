@@ -124,6 +124,7 @@ describe('RebalancingAPI', () => {
   describe('proposeAsync', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
+    let deployedSetTokenNaturalUnits: BigNumber[] = [];
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
     let managerAddress: Address;
@@ -144,6 +145,7 @@ describe('RebalancingAPI', () => {
         setTokenFactory.address,
         transferProxy.address,
         setTokensToDeploy,
+        deployedSetTokenNaturalUnits,
       );
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
@@ -276,6 +278,23 @@ describe('RebalancingAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `Contract at ${subjectNextSet} is not a valid Set token address.`
+        );
+      });
+    });
+
+    describe('when the proposed set natural unit is not a multiple of the current set', async () => {
+      beforeAll(async () => {
+        deployedSetTokenNaturalUnits = [ether(.01), ether(.015)];
+      });
+
+      afterAll(async () => {
+        deployedSetTokenNaturalUnits = [];
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `${nextSetToken.address} must be a multiple of ${currentSetToken.address},` +
+          ` or vice versa to propose a valid rebalance.`
         );
       });
     });

@@ -345,6 +345,7 @@ export class RebalancingAPI {
     await this.assert.rebalancing.isManager(rebalancingSetTokenAddress, txOpts.from);
     await this.assert.rebalancing.sufficientTimeBetweenRebalance(rebalancingSetTokenAddress);
     await this.assert.setToken.isValidSetToken(this.core.coreAddress, nextSetAddress);
+    await this.assert.rebalancing.nextSetIsMultiple(rebalancingSetTokenAddress, nextSetAddress);
   }
 
   private async assertRebalance(rebalancingSetTokenAddress: Address) {
