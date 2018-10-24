@@ -213,23 +213,6 @@ describe('RebalancingAPI', () => {
       expect(rebalanceState).to.eql('Proposal');
     });
 
-    describe("when the rebalance interval hasn't elapsed since the last rebalance", async () => {
-      let nextRebalanceFormattedDate: string;
-
-      beforeEach(async () => {
-        const nextAvailableRebalanceMSeconds = nextRebalanceAvailableAtSeconds * 1000;
-        nextRebalanceFormattedDate = moment(nextAvailableRebalanceMSeconds).format('dddd, MMMM Do YYYY, h:mm:ss a');
-
-        timeKeeper.freeze(nextAvailableRebalanceMSeconds - 1);
-      });
-
-      it('throw', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `Attempting to rebalance too soon. Rebalancing next available on ${nextRebalanceFormattedDate}`
-        );
-      });
-    });
-
     describe('when the caller is not the manager', async () => {
       beforeEach(async () => {
         const invalidCallerAddress = ACCOUNTS[0].address;
@@ -427,26 +410,6 @@ describe('RebalancingAPI', () => {
         expect(returnedCombinedNextSetUnits).to.equal(expectedCombinedNextSetUnits);
 
         expect(returnedRebalanceState).to.eql('Rebalance');
-      });
-
-      describe('but not enough time has passed in the proposal period', async () => {
-        let nextRebalanceFormattedDate: string;
-
-        beforeEach(async () => {
-          const nextAvailableRebalanceMSeconds = nextRebalanceAvailableAtSeconds * 1000;
-          nextRebalanceFormattedDate = moment(nextAvailableRebalanceMSeconds).format('dddd, MMMM Do YYYY, h:mm:ss a');
-
-          // Rewind time to create error
-          const proposalStartTimeSeconds = await rebalancingSetToken.proposalStartTime.callAsync();
-          const proposalStartTimeMSeconds = 1000 * proposalStartTimeSeconds.toNumber();
-          timeKeeper.freeze(proposalStartTimeMSeconds);
-        });
-
-        it('throw', async () => {
-          return expect(subject()).to.be.rejectedWith(
-            `Attempting to rebalance too soon. Rebalancing next available on ${nextRebalanceFormattedDate}`
-          );
-        });
       });
     });
 
