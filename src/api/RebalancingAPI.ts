@@ -343,7 +343,6 @@ export class RebalancingAPI {
 
     await this.assert.rebalancing.isNotInRebalanceState(rebalancingSetTokenAddress);
     await this.assert.rebalancing.isManager(rebalancingSetTokenAddress, txOpts.from);
-    await this.assert.rebalancing.sufficientTimeBetweenRebalance(rebalancingSetTokenAddress);
     await this.assert.setToken.isValidSetToken(this.core.coreAddress, nextSetAddress);
     await this.assert.rebalancing.nextSetIsMultiple(rebalancingSetTokenAddress, nextSetAddress);
   }
@@ -352,7 +351,6 @@ export class RebalancingAPI {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
 
     await this.assert.rebalancing.isInProposalState(rebalancingSetTokenAddress);
-    await this.assert.rebalancing.sufficientTimeInProposalState(rebalancingSetTokenAddress);
   }
 
   private async assertSettleRebalance(rebalancingSetTokenAddress: Address) {

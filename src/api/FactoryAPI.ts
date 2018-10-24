@@ -396,10 +396,6 @@ export class FactoryAPI {
     this.assert.schema.isValidAddress('initialSet', initialSetAddress);
     this.assert.common.isValidString(name, coreAPIErrors.STRING_CANNOT_BE_EMPTY('name'));
     this.assert.common.isValidString(symbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY('symbol'));
-    this.assert.common.isGreaterOrEqualThan(proposalPeriod, ONE_DAY_IN_SECONDS,
-       `Parameter proposalPeriod: ${proposalPeriod} must be greater than or equal to ${ONE_DAY_IN_SECONDS}.`);
-    this.assert.common.isGreaterOrEqualThan(rebalanceInterval, ONE_DAY_IN_SECONDS,
-       `Parameter rebalanceInterval: ${rebalanceInterval} must be greater than or equal to ${ONE_DAY_IN_SECONDS}.`);
     this.assert.common.greaterThanZero(initialUnitShares,
       `Parameter initialUnitShares: ${initialUnitShares} must be greater than 0.`);
 
