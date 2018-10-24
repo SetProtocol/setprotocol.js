@@ -1,6 +1,8 @@
-import { BigNumber } from '../util';
 import { Address, UInt } from 'set-protocol-utils';
+import { BigNumber } from '../util';
 
+export { TransactionReceipt } from 'ethereum-types';
+export { Tx } from 'web3/eth/types';
 export {
   Address,
   Bytes,
@@ -73,17 +75,6 @@ export interface RebalancingSetDetails {
   supply: BigNumber;
   name: string;
   symbol: string;
-}
-
-export interface TxData {
-  from: Address;
-  gas?: UInt;
-  gasPrice?: UInt;
-  nonce?: number;
-}
-
-export interface TxDataPayable extends TxData {
-  value?: BigNumber;
 }
 
 export interface TokenFlows {

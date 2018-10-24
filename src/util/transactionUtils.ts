@@ -1,7 +1,7 @@
 import Web3 from 'web3';
 import { UInt, Web3Utils } from 'set-protocol-utils';
 
-import { TxData } from '../types/common';
+import { Tx } from '../types/common';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../constants';
 
 export interface TransactionMiningOpts {
@@ -11,8 +11,8 @@ export interface TransactionMiningOpts {
 
 export async function generateTxOpts(
   web3: Web3,
-  txOpts?: TxData,
-): Promise<TxData> {
+  txOpts?: Tx,
+): Promise<Tx> {
   const web3Utils = new Web3Utils(web3);
   const accounts = await web3Utils.getAvailableAddressesAsync();
 

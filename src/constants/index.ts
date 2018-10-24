@@ -21,12 +21,13 @@ import { SetProtocolUtils } from 'set-protocol-utils';
 import { BigNumber } from '../util';
 import { ether } from '../util/units';
 import { DEFAULT_ACCOUNT } from './accounts';
+import { Tx } from '../types/common';
 
 export { DEFAULT_ACCOUNT };
 export const DEFAULT_AUCTION_PRICE_DIVISOR = new BigNumber(1000);
 export const DEFAULT_CONSTANT_AUCTION_PRICE = new BigNumber(2000);
-export const DEFAULT_GAS_LIMIT: BigNumber = new BigNumber(6712390); // default of 6.7 million gas
-export const DEFAULT_GAS_PRICE: BigNumber = new BigNumber(6000000000); // 6 gwei
+export const DEFAULT_GAS_LIMIT: number = 6712390; // default of 6.7 million gas
+export const DEFAULT_GAS_PRICE: number = 6000000000; // 6 gwei
 export const DEFAULT_REBALANCING_NATURAL_UNIT = new BigNumber(10 ** 10);
 export const DEFAULT_UNIT_SHARES = new BigNumber(10 ** 10);
 export const DEPLOYED_TOKEN_QUANTITY: BigNumber = ether(100000000000);
@@ -45,7 +46,7 @@ export function UINT256(value: number): BigNumber {
   return new BigNumber(value);
 }
 
-export const TX_DEFAULTS = {
+export const TX_DEFAULTS: Tx = {
   from: DEFAULT_ACCOUNT,
   gasPrice: DEFAULT_GAS_PRICE,
   gas: DEFAULT_GAS_LIMIT,

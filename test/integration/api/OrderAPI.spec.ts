@@ -1091,19 +1091,6 @@ describe('OrderAPI', () => {
       });
     });
 
-    describe('when the Kyber trade source token is not the maker token of the issuance order', async () => {
-      beforeEach(async () => {
-        const incorrectMakerToken = await deployTokenAsync(web3, issuanceOrderMaker);
-        kyberTrade.sourceToken = incorrectMakerToken.address;
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          'Kyber trade source token needs to be the same as the issuance order maker token.'
-        );
-      });
-    });
-
     describe('when the Kyber trade destination token is equal to the maker token of the issuance order', async () => {
       beforeEach(async () => {
         kyberTrade.destinationToken = makerToken.address;

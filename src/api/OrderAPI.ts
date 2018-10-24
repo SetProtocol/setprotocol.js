@@ -34,7 +34,7 @@ import {
   KyberTrade,
   SignedIssuanceOrder,
   TakerWalletOrder,
-  TxData,
+  Tx,
   ZeroExSignedFillOrder,
 } from '../types/common';
 
@@ -120,12 +120,12 @@ export class OrderAPI {
    * If none is provided, it will use the first account from the provider
    *
    * @param  issuanceOrder         Issuance Order
-   * @param  txOpts                Transaction options object conforming to TxData with signer, gas, and gasPrice data
+   * @param  txOpts                Transaction options object conforming to Tx with signer, gas, and gasPrice data
    * @return                       Object conforming to ECSignature containing elliptic curve signature components
    */
   public async signOrderAsync(
     issuanceOrder: IssuanceOrder,
-    txOpts: TxData
+    txOpts: Tx
   ): Promise<ECSig> {
     this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
@@ -259,14 +259,14 @@ export class OrderAPI {
    * @param  quantity             Amount of Set to fill in this call
    * @param  orders               Array of liquidity source objects conforming to `KyberTrade` or `TakerWalletOrder`
    *                                or `ZeroExSignedFillOrder` types that will collateralize the Set components
-   * @param  txOpts               Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts               Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                      Transaction hash
    */
   public async fillOrderAsync(
     signedIssuanceOrder: SignedIssuanceOrder,
     quantity: BigNumber,
     orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
-    txOpts: TxData,
+    txOpts: Tx,
   ): Promise<string> {
     await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantity, orders);
     const orderData = await this.setProtocolUtils.generateSerializedOrders(orders);
@@ -280,13 +280,13 @@ export class OrderAPI {
    *
    * @param  issuanceOrder    Object conforming to `IssuanceOrder` to cancel
    * @param  quantity         Amount of the issuance order's quantity to cancel
-   * @param  txOpts           Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts           Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                  Transaction hash
    */
   public async cancelOrderAsync(
     issuanceOrder: IssuanceOrder,
     quantity: BigNumber,
-    txOpts: TxData,
+    txOpts: Tx,
   ): Promise<string> {
     await this.assertCancelOrder(txOpts.from, issuanceOrder, quantity);
 

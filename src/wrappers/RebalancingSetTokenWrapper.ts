@@ -17,7 +17,7 @@
 'use strict';
 
 import Web3 from 'web3';
-import { Address, TokenFlows, TxData } from '../types/common';
+import { Address, TokenFlows, Tx } from '../types/common';
 
 import { ContractWrapper } from '.';
 import { BigNumber } from '../util';
@@ -59,7 +59,7 @@ export class RebalancingSetTokenWrapper {
     curveCoefficient: BigNumber,
     auctionStartPrice: BigNumber,
     auctionPriceDivisor: BigNumber,
-    txOpts: TxData
+    txOpts: Tx
   ): Promise<string> {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 
@@ -82,7 +82,7 @@ export class RebalancingSetTokenWrapper {
    */
   public async rebalance(
     rebalancingSetAddress: Address,
-    txOpts: TxData
+    txOpts: Tx
   ): Promise<string> {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 
@@ -100,7 +100,7 @@ export class RebalancingSetTokenWrapper {
    */
   public async settleRebalance(
     rebalancingSetAddress: Address,
-    txOpts: TxData
+    txOpts: Tx
   ): Promise<string> {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 
@@ -120,7 +120,7 @@ export class RebalancingSetTokenWrapper {
   public async setManager(
     rebalancingSetAddress: Address,
     newManager: Address,
-    txOpts: TxData
+    txOpts: Tx
   ): Promise<string> {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 

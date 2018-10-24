@@ -24,7 +24,7 @@ import { ZERO } from '../constants';
 import { Assertions } from '../assertions';
 import { ERC20Wrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { Address, TxData } from '../types/common';
+import { Address, Tx } from '../types/common';
 
 /**
  * @title ERC20API
@@ -136,14 +136,14 @@ export class ERC20API {
    * @param  tokenAddress    Address of the token to transfer
    * @param  to              Address of the receiver
    * @param  value           Amount being transferred
-   * @param  txOpts          Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts          Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                 Transaction hash
    */
   public async transferAsync(
     tokenAddress: Address,
     to: Address,
     value: BigNumber,
-    txOpts: TxData,
+    txOpts: Tx,
   ): Promise<string> {
     this.assertTransfer(tokenAddress, to);
 
@@ -159,7 +159,7 @@ export class ERC20API {
    * @param  from            Token owner
    * @param  to              Address of the receiver
    * @param  value           Amount to be transferred
-   * @param  txOpts          Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts          Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                 Transaction hash
    */
   public async transferFromAsync(
@@ -167,7 +167,7 @@ export class ERC20API {
     from: Address,
     to: Address,
     value: BigNumber,
-    txOpts: TxData,
+    txOpts: Tx,
   ): Promise<string> {
     this.assertTransferFrom(tokenAddress, from, to);
 
@@ -180,14 +180,14 @@ export class ERC20API {
    * @param  tokenAddress      Address of the token being used
    * @param  spenderAddress    Address to approve allowance to
    * @param  value             Amount of allowance to grant
-   * @param  txOpts            Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts            Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                   Transaction hash
    */
   public async approveAsync(
     tokenAddress: Address,
     spenderAddress: Address,
     value: BigNumber,
-    txOpts: TxData,
+    txOpts: Tx,
   ): Promise<string> {
     this.assertApprove(tokenAddress, spenderAddress);
 
