@@ -1004,7 +1004,6 @@ describe('OrderAPI', () => {
                                                           .mul(kyberConversionRatePower)
                                                           .round();
       kyberTrade = {
-        sourceToken: makerToken.address,
         destinationToken: thirdComponent.address,
         sourceTokenQuantity: sourceTokenQuantity,
         minimumConversionRate: minimumConversionRate,
@@ -1087,19 +1086,6 @@ describe('OrderAPI', () => {
         return expect(subject()).to.be.rejectedWith(
           `Token address at ${nonComponentToken.address} is not a component ` +
           `of the Set Token at ${subjectSignedIssuanceOrder.setAddress}.`
-        );
-      });
-    });
-
-    describe('when the Kyber trade source token is not the maker token of the issuance order', async () => {
-      beforeEach(async () => {
-        const incorrectMakerToken = await deployTokenAsync(web3, issuanceOrderMaker);
-        kyberTrade.sourceToken = incorrectMakerToken.address;
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          'Kyber trade source token needs to be the same as the issuance order maker token.'
         );
       });
     });

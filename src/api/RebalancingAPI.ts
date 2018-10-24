@@ -32,7 +32,7 @@ import {
   RebalancingProposalDetails,
   RebalancingSetDetails,
   SetDetails,
-  TxData,
+  Tx,
   TokenFlows
 } from '../types/common';
 
@@ -81,7 +81,7 @@ export class RebalancingAPI {
    * @param  auctionStartPrice              Starting price of the rebalancing auction, denoting the rating. Used with
    *                                          auctionPriceDivisor and library
    * @param  auctionPriceDivisor            Parameter to control how fast price moves
-   * @param  txOpts                         Transaction options object conforming to `TxData` with signer, gas, and
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
    *                                          gasPrice data
    * @return                                Transaction hash
    */
@@ -92,7 +92,7 @@ export class RebalancingAPI {
     curveCoefficient: BigNumber,
     auctionStartPrice: BigNumber,
     auctionPriceDivisor: BigNumber,
-    txOpts: TxData,
+    txOpts: Tx,
   ): Promise<string> {
     await this.assertPropose(
       rebalancingSetTokenAddress,
@@ -119,11 +119,11 @@ export class RebalancingAPI {
    * Initiates rebalance after proposal period has passed
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
-   * @param  txOpts                         Transaction options object conforming to `TxData` with signer, gas, and
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
    *                                          gasPrice data
    * @return                                Transaction hash
    */
-  public async rebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: TxData): Promise<string> {
+  public async rebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: Tx): Promise<string> {
     await this.assertRebalance(rebalancingSetTokenAddress);
 
     return await this.rebalancingSetToken.rebalance(rebalancingSetTokenAddress, txOpts);
@@ -133,11 +133,11 @@ export class RebalancingAPI {
    * Settles rebalance after auction has been completed
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
-   * @param  txOpts                         Transaction options object conforming to `TxData` with signer, gas, and
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
    *                                          gasPrice data
    * @return                                Transaction hash
    */
-  public async settleRebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: TxData): Promise<string> {
+  public async settleRebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: Tx): Promise<string> {
     await this.assertSettleRebalance(rebalancingSetTokenAddress);
 
     return await this.rebalancingSetToken.settleRebalance(rebalancingSetTokenAddress, txOpts);
@@ -148,11 +148,11 @@ export class RebalancingAPI {
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
    * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
-   * @param  txOpts                         Transaction options object conforming to `TxData` with signer, gas, and
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
    *                                          gasPrice data
    * @return                                Transaction hash
    */
-  public async bidAsync(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: TxData): Promise<string> {
+  public async bidAsync(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: Tx): Promise<string> {
     await this.assertBid(rebalancingSetTokenAddress, bidQuantity, txOpts);
 
     return await this.core.bid(rebalancingSetTokenAddress, bidQuantity, txOpts);
@@ -163,14 +163,14 @@ export class RebalancingAPI {
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
    * @param  newManager                     Address of the new manager
-   * @param  txOpts                         Transaction options object conforming to `TxData` with signer, gas, and
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
    *                                          gasPrice data
    * @return                                Transaction hash
    */
   public async updateManagerAsync(
     rebalancingSetTokenAddress: Address,
     newManager: Address,
-    txOpts: TxData,
+    txOpts: Tx,
   ): Promise<string> {
     await this.assertUpdateManager(rebalancingSetTokenAddress, newManager, txOpts);
 
@@ -323,7 +323,7 @@ export class RebalancingAPI {
     curveCoefficient: BigNumber,
     auctionStartPrice: BigNumber,
     auctionPriceDivisor: BigNumber,
-    txOpts: TxData,
+    txOpts: Tx,
   ) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
     this.assert.schema.isValidAddress('nextSetAddress', nextSetAddress);
@@ -362,7 +362,7 @@ export class RebalancingAPI {
     await this.assert.rebalancing.enoughSetsRebalanced(rebalancingSetTokenAddress);
   }
 
-  private async assertBid(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: TxData) {
+  private async assertBid(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: Tx) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
     this.assert.common.greaterThanZero(
       bidQuantity,
@@ -385,7 +385,7 @@ export class RebalancingAPI {
     );
   }
 
-  private async assertUpdateManager(rebalancingSetTokenAddress: Address, newManager: Address, txOpts: TxData) {
+  private async assertUpdateManager(rebalancingSetTokenAddress: Address, newManager: Address, txOpts: Tx) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
     this.assert.schema.isValidAddress('newManager', newManager);
 

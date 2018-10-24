@@ -34,7 +34,7 @@ import {
   getFormattedLogsFromTxHash,
 } from '../util';
 import { SetProtocolConfig } from '../SetProtocol';
-import { Address, SetUnits, TxData } from '../types/common';
+import { Address, SetUnits, Tx } from '../types/common';
 
 /**
  * @title FactoryAPI
@@ -169,7 +169,7 @@ export class FactoryAPI {
    * @param  naturalUnit    Lowest common denominator for the Set
    * @param  name           Name for Set, i.e. "DEX Set"
    * @param  symbol         Symbol for Set, i.e. "DEX"
-   * @param  txOpts         Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts         Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                Transaction hash
    */
   public async createSetAsync(
@@ -178,7 +178,7 @@ export class FactoryAPI {
     naturalUnit: BigNumber,
     name: string,
     symbol: string,
-    txOpts: TxData,
+    txOpts: Tx,
   ): Promise<string> {
     await this.assertCreateSet(txOpts.from, this.setTokenFactoryAddress, components, units, naturalUnit, name, symbol);
 
@@ -209,9 +209,11 @@ export class FactoryAPI {
    *                                denominated in seconds
    * @param  rebalanceInterval    Duration after a rebalance is completed when the manager cannot initiate a new
    *                                Rebalance event
+   * @param  entranceFee          Entrance fee as a percentage of initialSet when minting the Rebalancing Set
+   * @param  rebalanceFee         Rebalance fee as a percentage of the nextSet when rebalance is settled
    * @param  name                 Name for RebalancingSet, i.e. "Top 10"
    * @param  symbol               Symbol for Set, i.e. "TOP10"
-   * @param  txOpts               Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts               Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                      Transaction hash
    */
   public async createRebalancingSetTokenAsync(
@@ -220,9 +222,11 @@ export class FactoryAPI {
     initialUnitShares: BigNumber,
     proposalPeriod: BigNumber,
     rebalanceInterval: BigNumber,
+    entranceFee: BigNumber,
+    rebalanceFee: BigNumber,
     name: string,
     symbol: string,
-    txOpts: TxData,
+    txOpts: Tx,
   ): Promise<string> {
     await this.assertCreateRebalancingSet(
       txOpts.from,
@@ -235,7 +239,13 @@ export class FactoryAPI {
       symbol,
     );
 
-    const callData = SetProtocolUtils.generateRebalancingSetTokenCallData(manager, proposalPeriod, rebalanceInterval);
+    const callData = SetProtocolUtils.generateRebalancingSetTokenCallData(
+      manager,
+      proposalPeriod,
+      rebalanceInterval,
+      entranceFee,
+      rebalanceFee,
+    );
 
     return await this.core.create(
       this.rebalancingSetTokenFactoryAddress,

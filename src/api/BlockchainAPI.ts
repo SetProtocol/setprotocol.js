@@ -18,9 +18,9 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { TransactionReceipt } from 'ethereum-types';
 import { Web3Utils } from 'set-protocol-utils';
 
+import { TransactionReceipt } from '../types/common';
 import { Assertions } from '../assertions';
 import { IntervalManager } from '../util';
 

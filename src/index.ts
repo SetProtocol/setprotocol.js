@@ -13,7 +13,8 @@ export {
   SignedIssuanceOrder,
   SolidityTypes,
   TakerWalletOrder,
-  TxData,
+  TransactionReceipt,
+  Tx,
   UInt,
   ZeroExSignedFillOrder,
 } from './types/common';

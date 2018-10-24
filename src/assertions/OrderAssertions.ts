@@ -356,13 +356,6 @@ export class OrderAssertions {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(trade.sourceTokenQuantity),
     );
 
-    // Kyber trade source token is equivalent to the issuance order maker token
-    this.commonAssertions.isEqualAddress(
-      issuanceOrder.makerToken,
-      trade.sourceToken,
-      orderErrors.MAKER_TOKEN_AND_KYBER_SOURCE_TOKEN_MISMATCH(),
-    );
-
     // Kyber trade destination token is not the issuance order maker token
     this.commonAssertions.isDifferentAddress(
       issuanceOrder.makerToken,

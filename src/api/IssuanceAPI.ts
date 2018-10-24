@@ -25,7 +25,7 @@ import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../er
 import { Assertions } from '../assertions';
 import { CoreWrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { Address, TxData } from '../types/common';
+import { Address, Tx } from '../types/common';
 
 /**
  * @title IssuanceAPI
@@ -59,10 +59,10 @@ export class IssuanceAPI {
    *
    * @param  setAddress    Address Set to issue
    * @param  quantity      Amount of Set to issue. Must be multiple of the natural unit of the Set
-   * @param  txOpts        Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
-  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxData): Promise<string> {
+  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: Tx): Promise<string> {
     await this.assertIssue(txOpts.from, setAddress, quantity);
 
     return await this.core.issue(setAddress, quantity, txOpts);
@@ -77,7 +77,7 @@ export class IssuanceAPI {
    * @param  quantity           Amount of Set to redeem. Must be multiple of the natural unit of the Set
    * @param  withdraw           Boolean to withdraw back to signer's wallet or leave in vault. Defaults to true
    * @param  tokensToExclude    Token addresses to exclude from withdrawal
-   * @param  txOpts             Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts             Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                    Transaction hash
    */
   public async redeemAsync(
@@ -85,7 +85,7 @@ export class IssuanceAPI {
     quantity: BigNumber,
     withdraw: boolean,
     tokensToExclude: Address[],
-    txOpts: TxData
+    txOpts: Tx
   ) {
     await this.assertRedeem(txOpts.from, setAddress, quantity, withdraw, tokensToExclude);
 

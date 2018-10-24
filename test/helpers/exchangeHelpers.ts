@@ -39,14 +39,17 @@ export const deployTakerWalletWrapperContract = async (
   const deployedERC20Wrapper = await truffleERC20WrapperContract.new();
   await truffleTakerWalletWrapperContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
 
-  const deployedTakerWalletWrapper = await truffleTakerWalletWrapperContract.new(transferProxy.address, TX_DEFAULTS);
+  const deployedTakerWalletWrapper = await truffleTakerWalletWrapperContract.new(
+    core.address,
+    transferProxy.address,
+    TX_DEFAULTS
+  );
   const takerWalletWrapperContract = await TakerWalletWrapperContract.at(
     deployedTakerWalletWrapper.address,
     web3,
     TX_DEFAULTS,
   );
 
-  await takerWalletWrapperContract.addAuthorizedAddress.sendTransactionAsync(core.address, TX_DEFAULTS);
   await transferProxy.addAuthorizedAddress.sendTransactionAsync(deployedTakerWalletWrapper.address, TX_DEFAULTS);
   await core.registerExchange.sendTransactionAsync(
     SetProtocolUtils.EXCHANGES.TAKER_WALLET,
@@ -79,6 +82,7 @@ export const deployZeroExExchangeWrapperContract = async (
   await truffleZeroExExchangeWrapperContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
 
   const deployedZeroExExchangeWrapper = await truffleZeroExExchangeWrapperContract.new(
+    core.address,
     zeroExExchangeAddress,
     zeroExProxyAddress,
     zeroExTokenAddress,
@@ -91,7 +95,6 @@ export const deployZeroExExchangeWrapperContract = async (
     TX_DEFAULTS,
   );
 
-  await zeroExExchangeWrapperContract.addAuthorizedAddress.sendTransactionAsync(core.address, TX_DEFAULTS);
   await core.registerExchange.sendTransactionAsync(
     SetProtocolUtils.EXCHANGES.ZERO_EX,
     zeroExExchangeWrapperContract.address,
@@ -121,6 +124,7 @@ export const deployKyberNetworkWrapperContract = async (
   await truffleKyberNetworkWrapperContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
 
   const deployedKyberNetworkWrapper = await truffleKyberNetworkWrapperContract.new(
+    core.address,
     kyberNetworkProxyAddress,
     transferProxy.address,
     TX_DEFAULTS
@@ -131,7 +135,6 @@ export const deployKyberNetworkWrapperContract = async (
     TX_DEFAULTS,
   );
 
-  await kyberNetworkWrapper.addAuthorizedAddress.sendTransactionAsync(core.address, TX_DEFAULTS);
   await core.registerExchange.sendTransactionAsync(
     SetProtocolUtils.EXCHANGES.KYBER,
     kyberNetworkWrapper.address,

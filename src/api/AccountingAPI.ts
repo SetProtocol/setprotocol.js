@@ -23,7 +23,7 @@ import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../er
 import { Assertions } from '../assertions';
 import { CoreWrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { Address, TxData } from '../types/common';
+import { Address, Tx } from '../types/common';
 
 /**
  * @title AccountingAPI
@@ -56,13 +56,13 @@ export class AccountingAPI {
    *
    * @param  tokenAddresses    Addresses of ERC20 tokens to deposit into the vault
    * @param  quantities        Amount of each token to deposit into the vault in index order with `tokenAddresses`
-   * @param  txOpts            Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts            Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                   Transaction hash
    */
   public async depositAsync(
     tokenAddresses: Address[],
     quantities: BigNumber[],
-    txOpts: TxData
+    txOpts: Tx
   ): Promise<string> {
     await this.assertDeposit(txOpts.from, tokenAddresses, quantities);
 
@@ -79,13 +79,13 @@ export class AccountingAPI {
    *
    * @param  tokenAddresses    Addresses of ERC20 tokens to withdraw from the vault
    * @param  quantities        Amount of each token token to withdraw from vault in index order with `tokenAddresses`
-   * @param  txOpts            Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts            Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                   Transaction hash
    */
   public async withdrawAsync(
     tokenAddresses: Address[],
     quantities: BigNumber[],
-    txOpts: TxData
+    txOpts: Tx
   ): Promise<string> {
     await this.assertWithdraw(txOpts.from, tokenAddresses, quantities);
 

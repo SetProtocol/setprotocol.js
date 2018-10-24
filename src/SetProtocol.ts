@@ -18,7 +18,6 @@
 
 import Web3 from 'web3';
 import { Provider } from 'web3/providers';
-import { TransactionReceipt } from 'ethereum-types';
 
 import {
   AccountingAPI,
@@ -33,7 +32,7 @@ import {
 import { CoreWrapper, VaultWrapper } from './wrappers';
 import { Assertions } from './assertions';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
-import { Address, Bytes, SetUnits, TxData } from './types/common';
+import { Address, Bytes, SetUnits, TransactionReceipt, Tx } from './types/common';
 import { NULL_ADDRESS, UNLIMITED_ALLOWANCE_IN_BASE_UNITS } from './constants';
 
 export interface SetProtocolConfig {
@@ -168,7 +167,7 @@ class SetProtocol {
    * @param  naturalUnit    Lowest common denominator for the Set
    * @param  name           Name for Set, i.e. "DEX Set"
    * @param  symbol         Symbol for Set, i.e. "DEX"
-   * @param  txOpts         Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts         Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                Transaction hash
    */
   public async createSetAsync(
@@ -177,7 +176,7 @@ class SetProtocol {
     naturalUnit: BigNumber,
     name: string,
     symbol: string,
-    txOpts: TxData,
+    txOpts: Tx,
   ): Promise<string> {
     return await this.factory.createSetAsync(components, units, naturalUnit, name, symbol, txOpts);
   }
@@ -197,9 +196,11 @@ class SetProtocol {
    *                                denominated in seconds
    * @param  rebalanceInterval    Duration after a rebalance is completed when the manager cannot initiate a new
    *                                Rebalance event
+   * @param  entranceFee          Entrance fee as a percentage of initialSet when minting the Rebalancing Set
+   * @param  rebalanceFee         Rebalance fee as a percentage of the nextSet when rebalance is settled
    * @param  name                 Name for RebalancingSet, i.e. "Top 10"
    * @param  symbol               Symbol for Set, i.e. "TOP10"
-   * @param  txOpts               Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts               Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                      Transaction hash
    */
   public async createRebalancingSetTokenAsync(
@@ -208,9 +209,11 @@ class SetProtocol {
     initialUnitShares: BigNumber,
     proposalPeriod: BigNumber,
     rebalanceInterval: BigNumber,
+    entranceFee: BigNumber,
+    rebalanceFee: BigNumber,
     name: string,
     symbol: string,
-    txOpts: TxData,
+    txOpts: Tx,
   ): Promise<string> {
     return await this.factory.createRebalancingSetTokenAsync(
       manager,
@@ -218,6 +221,8 @@ class SetProtocol {
       initialUnitShares,
       proposalPeriod,
       rebalanceInterval,
+      entranceFee,
+      rebalanceFee,
       name,
       symbol,
       txOpts,
@@ -231,10 +236,10 @@ class SetProtocol {
    *
    * @param  setAddress    Address Set to issue
    * @param  quantity      Amount of Set to issue. Must be multiple of the natural unit of the Set
-   * @param  txOpts        Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
-  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: TxData): Promise<string> {
+  public async issueAsync(setAddress: Address, quantity: BigNumber, txOpts: Tx): Promise<string> {
     return await this.issuance.issueAsync(setAddress, quantity, txOpts);
   }
 
@@ -247,7 +252,7 @@ class SetProtocol {
    * @param  quantity           Amount of Set to redeem. Must be multiple of the natural unit of the Set
    * @param  withdraw           Boolean to withdraw back to signer's wallet or leave in vault. Defaults to true
    * @param  tokensToExclude    Token addresses to exclude from withdrawal
-   * @param  txOpts             Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts             Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                    Transaction hash
    */
   public async redeemAsync(
@@ -255,7 +260,7 @@ class SetProtocol {
     quantity: BigNumber,
     withdraw: boolean = true,
     tokensToExclude: Address[],
-    txOpts: TxData,
+    txOpts: Tx,
   ): Promise<string> {
     return await this.issuance.redeemAsync(setAddress, quantity, withdraw, tokensToExclude, txOpts);
   }
@@ -265,13 +270,13 @@ class SetProtocol {
    *
    * @param  tokenAddresses    Addresses of ERC20 tokens to deposit into the vault
    * @param  quantities        Amount of each token to deposit into the vault in index order with `tokenAddresses`
-   * @param  txOpts            Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts            Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                   Transaction hash
    */
   public async depositAsync(
     tokenAddresses: Address[],
     quantities: BigNumber[],
-    txOpts: TxData
+    txOpts: Tx
   ): Promise<string> {
     return await this.accounting.depositAsync(tokenAddresses, quantities, txOpts);
   }
@@ -281,13 +286,13 @@ class SetProtocol {
    *
    * @param  tokenAddresses    Addresses of ERC20 tokens to withdraw from the vault
    * @param  quantities        Amount of each token token to withdraw from vault in index order with `tokenAddresses`
-   * @param  txOpts            Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts            Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                   Transaction hash
    */
   public async withdrawAsync(
     tokenAddresses: Address[],
     quantities: BigNumber[],
-    txOpts: TxData
+    txOpts: Tx
   ): Promise<string> {
     return await this.accounting.withdrawAsync(tokenAddresses, quantities, txOpts);
   }
@@ -298,13 +303,13 @@ class SetProtocol {
    *
    * @param   tokenAddress    Address of token contract to approve (typically SetToken or ERC20)
    * @param   quantity        Allowance quantity
-   * @param   txOpts          Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param   txOpts          Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                  Transaction hash
    */
   public async setTransferProxyAllowanceAsync(
       tokenAddress: string,
       quantity: BigNumber,
-      txOpts: TxData,
+      txOpts: Tx,
   ): Promise<string> {
     return await this.erc20.approveAsync(
       tokenAddress,
@@ -319,10 +324,10 @@ class SetProtocol {
    * required for issuing, redeeming, and filling issuance orders
    *
    * @param  tokenAddress    Address of contract to approve (typically SetToken or ERC20)
-   * @param  txOpts          Transaction options object conforming to `TxData` with signer, gas, and gasPrice data
+   * @param  txOpts          Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                 Transaction hash
    */
-  public async setUnlimitedTransferProxyAllowanceAsync(tokenAddress: string, txOpts: TxData): Promise<string> {
+  public async setUnlimitedTransferProxyAllowanceAsync(tokenAddress: string, txOpts: Tx): Promise<string> {
     return await this.setTransferProxyAllowanceAsync(
       tokenAddress,
       UNLIMITED_ALLOWANCE_IN_BASE_UNITS,

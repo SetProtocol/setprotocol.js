@@ -19,7 +19,7 @@
 import Web3 from 'web3';
 
 import { ContractWrapper } from '.';
-import { Address, TxData } from '../types/common';
+import { Address, Tx } from '../types/common';
 import { BigNumber, generateTxOpts } from '../util';
 
 /**
@@ -124,7 +124,7 @@ export class ERC20Wrapper {
    * @param  txOpts         Any parameters necessary to modify the transaction.
    * @return                The hash of the resulting transaction.
    */
-  public async transfer(tokenAddress: Address, to: Address, value: BigNumber, txOpts?: TxData): Promise<string> {
+  public async transfer(tokenAddress: Address, to: Address, value: BigNumber, txOpts?: Tx): Promise<string> {
     const txOptions = await generateTxOpts(this.web3, txOpts);
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
 
@@ -148,7 +148,7 @@ export class ERC20Wrapper {
     from: Address,
     to: Address,
     value: BigNumber,
-    txOpts?: TxData,
+    txOpts?: Tx,
   ): Promise<string> {
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);
     const txOptions = await generateTxOpts(this.web3, txOpts);
@@ -169,7 +169,7 @@ export class ERC20Wrapper {
     tokenAddress: Address,
     spenderAddress: Address,
     value: BigNumber,
-    txOpts?: TxData,
+    txOpts?: Tx,
   ): Promise<string> {
     const txOptions = await generateTxOpts(this.web3, txOpts);
     const tokenInstance = await this.contracts.loadERC20TokenAsync(tokenAddress);

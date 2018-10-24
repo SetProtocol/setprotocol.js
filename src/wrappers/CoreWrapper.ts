@@ -22,7 +22,7 @@ import { SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
 
 import { ContractWrapper } from '.';
 import { ZERO } from '../constants';
-import { Address, Bytes, IssuanceOrder, SignedIssuanceOrder, TxData } from '../types/common';
+import { Address, Bytes, IssuanceOrder, SignedIssuanceOrder, Tx } from '../types/common';
 import { DetailedERC20Contract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
 import { BigNumber, generateTxOpts } from '../util';
 
@@ -78,7 +78,7 @@ export class CoreWrapper {
     name: string,
     symbol: string,
     callData: string,
-    txOpts?: TxData,
+    txOpts?: Tx,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
@@ -103,7 +103,7 @@ export class CoreWrapper {
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up
    */
-  public async issue(setAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
+  public async issue(setAddress: Address, quantity: BigNumber, txOpts?: Tx): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -122,7 +122,7 @@ export class CoreWrapper {
    * @param  txOpts         The options for executing the transaction
    * @return                A transaction hash to then later look up
    */
-  public async redeem(setAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
+  public async redeem(setAddress: Address, quantity: BigNumber, txOpts?: Tx): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -151,7 +151,7 @@ export class CoreWrapper {
     setAddress: Address,
     quantity: BigNumber,
     toExclude: BigNumber,
-    txOpts?: TxData,
+    txOpts?: Tx,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
@@ -172,7 +172,7 @@ export class CoreWrapper {
    * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
-  public async deposit(tokenAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
+  public async deposit(tokenAddress: Address, quantity: BigNumber, txOpts?: Tx): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -191,7 +191,7 @@ export class CoreWrapper {
    * @param  txOpts        The options for executing the transaction
    * @return               A transaction hash
    */
-  public async withdraw(tokenAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
+  public async withdraw(tokenAddress: Address, quantity: BigNumber, txOpts?: Tx): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -210,7 +210,7 @@ export class CoreWrapper {
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
-  public async batchDeposit(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
+  public async batchDeposit(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: Tx): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -229,7 +229,7 @@ export class CoreWrapper {
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash
    */
-  public async batchWithdraw(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: TxData): Promise<string> {
+  public async batchWithdraw(tokenAddresses: Address[], quantities: BigNumber[], txOpts?: Tx): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -254,7 +254,7 @@ export class CoreWrapper {
     signedIssuanceOrder: SignedIssuanceOrder,
     fillAmount: BigNumber,
     orderData: string,
-    txOpts?: TxData,
+    txOpts?: Tx,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
@@ -297,7 +297,7 @@ export class CoreWrapper {
    * @param  txOpts                    The options for executing the transaction
    * @return                           A transaction hash
    */
-  public async cancelOrder(issuanceOrder: IssuanceOrder, cancelAmount: BigNumber, txOpts?: TxData): Promise<string> {
+  public async cancelOrder(issuanceOrder: IssuanceOrder, cancelAmount: BigNumber, txOpts?: Tx): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
@@ -335,7 +335,7 @@ export class CoreWrapper {
    * @param  txOpts                        The options for executing the transaction
    * @return                               A transaction hash
    */
-  public async bid(rebalancingSetTokenAddress: Address, quantity: BigNumber, txOpts?: TxData): Promise<string> {
+  public async bid(rebalancingSetTokenAddress: Address, quantity: BigNumber, txOpts?: Tx): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
