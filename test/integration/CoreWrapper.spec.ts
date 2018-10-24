@@ -636,7 +636,6 @@ describe('CoreWrapper', () => {
                                                           .mul(kyberConversionRatePower)
                                                           .round();
       const kyberTrade = {
-        sourceToken: makerToken.address,
         destinationToken: thirdComponent.address,
         sourceTokenQuantity: sourceTokenQuantity,
         minimumConversionRate: minimumConversionRate,

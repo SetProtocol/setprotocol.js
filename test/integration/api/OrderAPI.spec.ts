@@ -1004,7 +1004,6 @@ describe('OrderAPI', () => {
                                                           .mul(kyberConversionRatePower)
                                                           .round();
       kyberTrade = {
-        sourceToken: makerToken.address,
         destinationToken: thirdComponent.address,
         sourceTokenQuantity: sourceTokenQuantity,
         minimumConversionRate: minimumConversionRate,

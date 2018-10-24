@@ -5858,7 +5858,38 @@ set-protocol-contracts@1.1.0-beta.2:
     web3-utils "1.0.0-beta.36"
     zeppelin-solidity "^1.10.0"
 
-set-protocol-utils@1.0.0-beta.13, set-protocol-utils@^1.0.0-beta.13:
+set-protocol-utils@1.0.0-beta.14:
+  version "1.0.0-beta.14"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-1.0.0-beta.14.tgz#6f7033f7a96da2b691fe748172fc68d81c283587"
+  dependencies:
+    "@0xproject/base-contract" "^1.0.4"
+    "@0xproject/order-utils" "^1.0.1-rc.2"
+    "@0xproject/types" "^1.0.1-rc.3"
+    "@0xproject/web3-wrapper" "^1.1.2"
+    "@types/lodash" "4.14.104"
+    "@types/node" "^8.5.1"
+    "@types/web3" "^1.0.10"
+    abi-decoder "^1.0.9"
+    bignumber.js "~4.1.0"
+    bn-chai "^1.0.1"
+    bn.js "^4.11.8"
+    chai "^4.1.2"
+    chai-as-promised "^7.1.1"
+    chai-bignumber "^2.0.2"
+    ethereum-types "^1.0.0"
+    ethereumjs-util "^5.1.1"
+    ethers "3.0.22"
+    husky "^0.14.3"
+    js-sha3 "^0.7.0"
+    lint-staged "^7.2.0"
+    lodash "^4.17.4"
+    tiny-promisify "^1.0.0"
+    tslint-eslint-rules "^5.3.1"
+    types-bn "^0.0.1"
+    web3 "1.0.0-beta.36"
+    web3-utils "1.0.0-beta.36"
+
+set-protocol-utils@^1.0.0-beta.13:
   version "1.0.0-beta.13"
   resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-1.0.0-beta.13.tgz#7cb17fef0b66c683cebf14356be074786da6813e"
   dependencies:
