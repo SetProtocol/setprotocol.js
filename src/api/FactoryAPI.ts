@@ -138,7 +138,9 @@ export class FactoryAPI {
           .ceil();
       });
 
-      const impliedSetPrice = this.calculateImpliedSetPrice(formattedComponentUnits, naturalUnit, prices);
+      const decimals = await this.getComponentsDecimals(components);
+
+      const impliedSetPrice = this.calculateImpliedSetPrice(formattedComponentUnits, naturalUnit, prices, decimals);
       errorPercentage = calculatePercentDifference(impliedSetPrice, targetPrice);
 
       // Only continue to experiment with improvements if the following conditions are met:
@@ -296,6 +298,16 @@ export class FactoryAPI {
     return Promise.all(componentAmountRequiredPromises);
   }
 
+  private async getComponentsDecimals(componentAddresses: Address[]): Promise<number[]> {
+    const componentDecimalPromises = _.map(componentAddresses, async componentAddress => {
+      const componentDecimals: number = await this.getComponentDecimals(componentAddress);
+
+      return componentDecimals;
+    });
+
+    return Promise.all(componentDecimalPromises);
+  }
+
   private async getComponentDecimals(componentAddress: Address): Promise<number> {
     let componentDecimals: number;
     try {
@@ -320,12 +332,13 @@ export class FactoryAPI {
     componentUnits: BigNumber[],
     naturalUnit: BigNumber,
     prices: BigNumber[],
+    decimals: number[],
   ): BigNumber {
     const quantity = E18.div(naturalUnit);
     return _.reduce(componentUnits, (sum, componentUnit, index) => {
-      const componentPrice = componentUnit.mul(quantity).mul(prices[index]);
+      const componentPrice = componentUnit.mul(quantity).mul(prices[index]).div(10 ** decimals[index]);
       return sum.add(componentPrice);
-    }, ZERO).div(E18);
+    }, ZERO);
   }
 
   /* ============ Private Assertions ============ */
