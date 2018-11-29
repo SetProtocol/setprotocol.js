@@ -139,7 +139,6 @@ export class FactoryAPI {
       });
 
       const decimals = await this.getComponentsDecimals(components);
-
       const impliedSetPrice = this.calculateImpliedSetPrice(formattedComponentUnits, naturalUnit, prices, decimals);
       errorPercentage = calculatePercentDifference(impliedSetPrice, targetPrice);
 

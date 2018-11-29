@@ -18,7 +18,6 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { Web3Utils } from 'set-protocol-utils';
 
 import { TransactionReceipt } from '../types/common';
 import { Assertions } from '../assertions';
@@ -47,7 +46,6 @@ export class BlockchainAPI {
   private web3: Web3;
   private assert: Assertions;
   private intervalManager: IntervalManager;
-  private web3Utils: Web3Utils;
 
   /**
    * Instantiates a new BlockchainAPI instance that contains methods for miscellaneous blockchain functionality
@@ -61,7 +59,6 @@ export class BlockchainAPI {
     this.assert = assertions;
 
     this.intervalManager = new IntervalManager();
-    this.web3Utils = new Web3Utils(this.web3);
   }
 
   /**
@@ -81,13 +78,12 @@ export class BlockchainAPI {
     this.assert.schema.isValidBytes32('txHash', txHash);
 
     const intervalManager = this.intervalManager;
-    const web3Utils = this.web3Utils;
     return new Promise<TransactionReceipt>((resolve, reject) => {
       intervalManager.setInterval(
         txHash,
         async (): Promise<boolean> => {
           try {
-            const receipt = await web3Utils.getTransactionReceiptAsync(txHash);
+            const receipt: any = await this.web3.eth.getTransactionReceipt(txHash);
             if (receipt) {
               resolve(receipt);
               // Stop the interval.
