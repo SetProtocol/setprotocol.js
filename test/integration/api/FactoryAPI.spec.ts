@@ -579,7 +579,7 @@ describe('FactoryAPI', () => {
     });
   });
 
-  describe.only('calculateSetUnitsAsync', async () => {
+  describe('calculateSetUnitsAsync', async () => {
     let subjectComponentAddresses: Address[];
     let subjectComponentPrices: BigNumber[];
     let subjectComponentAllocations: BigNumber[];
@@ -772,7 +772,7 @@ describe('FactoryAPI', () => {
       });
     });
 
-    describe.only('when $1 StableSet composed of Stably, TUSD, DAI with 40/30/30 split', async() => {
+    describe('when $1 StableSet composed of Stably, TUSD, DAI with 40/30/30 split', async() => {
       beforeEach(async () => {
         const tokenCount = 3;
         const decimalsList = [6, 18, 18];
@@ -780,14 +780,14 @@ describe('FactoryAPI', () => {
 
         subjectComponentAddresses = _.map(decimalSpecificComponents, component => component.address);
         subjectComponentPrices = [new BigNumber(1), new BigNumber(1), new BigNumber(1)];
-        subjectComponentAllocations = [new BigNumber(0.34), new BigNumber(0.33), new BigNumber(0.33)];
+        subjectComponentAllocations = [new BigNumber(0.4), new BigNumber(0.3), new BigNumber(0.3)];
         subjectTargetSetPrice = new BigNumber(1);
       });
 
       test('should calculate the correct required component units', async () => {
         const { units } = await subject();
 
-        const expectedResult = [new BigNumber('34'), new BigNumber('33000000000000'), new BigNumber('33000000000000')];
+        const expectedResult = [new BigNumber('4'), new BigNumber('3000000000000'), new BigNumber('3000000000000')];
         expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
       });
 
