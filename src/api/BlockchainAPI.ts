@@ -18,7 +18,6 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import * as Web3Utils from 'web3-utils';
 
 import { TransactionReceipt } from '../types/common';
 import { Assertions } from '../assertions';
@@ -84,7 +83,7 @@ export class BlockchainAPI {
         txHash,
         async (): Promise<boolean> => {
           try {
-            const receipt = await Web3Utils.getTransactionReceiptAsync(txHash);
+            const receipt: any = await this.web3.eth.getTransactionReceipt(txHash);
             if (receipt) {
               resolve(receipt);
               // Stop the interval.
