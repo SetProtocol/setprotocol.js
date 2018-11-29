@@ -20,6 +20,7 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
+import { CommonAssertions } from './CommonAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
 import { RebalancingSetTokenContract, DetailedERC20Contract, SetTokenContract } from 'set-protocol-contracts';
 import { coreAPIErrors, rebalancingErrors } from '../errors';
@@ -32,9 +33,11 @@ const moment = require('moment');
 export class RebalancingAssertions {
   private web3: Web3;
   private erc20Assertions: ERC20Assertions;
+  private commonAssertions: CommonAssertions;
 
   constructor(web3: Web3) {
     this.web3 = web3;
+    this.commonAssertions = new CommonAssertions();
     this.erc20Assertions = new ERC20Assertions(this.web3);
   }
 
@@ -89,10 +92,11 @@ export class RebalancingAssertions {
     const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
 
     const manager = await rebalancingSetTokenInstance.manager.callAsync();
-
-    if (manager != caller) {
-      throw new Error(rebalancingErrors.NOT_REBALANCING_MANAGER(caller));
-    }
+    this.commonAssertions.isEqualAddress(
+      manager,
+      caller,
+      rebalancingErrors.NOT_REBALANCING_MANAGER(caller)
+    );
   }
 
   /**
