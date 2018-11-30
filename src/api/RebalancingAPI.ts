@@ -293,6 +293,7 @@ export class RebalancingAPI {
       priceCurveCoefficient,
       priceDivisor,
       remainingCurrentSet,
+      minimumBid,
     ] = await Promise.all([
       this.rebalancingSetToken.auctionStartTime(rebalancingSetTokenAddress),
       this.rebalancingSetToken.nextSet(rebalancingSetTokenAddress),
@@ -301,6 +302,7 @@ export class RebalancingAPI {
       this.rebalancingSetToken.curveCoefficient(rebalancingSetTokenAddress),
       this.rebalancingSetToken.auctionPriceDivisor(rebalancingSetTokenAddress),
       this.rebalancingSetToken.remainingCurrentSets(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.minimumBid(rebalancingSetTokenAddress),
     ]);
 
     return {
@@ -311,6 +313,7 @@ export class RebalancingAPI {
       priceCurveCoefficient,
       priceDivisor,
       remainingCurrentSet,
+      minimumBid,
     } as RebalancingProgressDetails;
   }
 
