@@ -1416,6 +1416,9 @@ describe('RebalancingAPI', () => {
         const remainingCurrentSet = await rebalancingSetToken.remainingCurrentSets.callAsync();
         expect(rebalanceDetails.remainingCurrentSet).to.bignumber.equal(remainingCurrentSet);
 
+        const minimumBid = await rebalancingSetToken.minimumBid.callAsync();
+        expect(rebalanceDetails.minimumBid).to.bignumber.equal(minimumBid);
+
         expect(rebalanceDetails.nextSetAddress).eql(nextSetToken.address);
         expect(rebalanceDetails.startingPrice).to.bignumber.equal(setAuctionStartPrice);
         expect(rebalanceDetails.pricingLibraryAddress).eql(setAuctionPriceCurveAddress);

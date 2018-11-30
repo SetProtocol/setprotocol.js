@@ -61,6 +61,7 @@ export interface RebalancingProgressDetails {
   priceCurveCoefficient: BigNumber;
   priceDivisor: BigNumber;
   remainingCurrentSet: BigNumber;
+  minimumBid: BigNumber;
 }
 
 export interface RebalancingSetDetails {
