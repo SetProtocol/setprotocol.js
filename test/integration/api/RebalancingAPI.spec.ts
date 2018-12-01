@@ -78,7 +78,7 @@ import {
   RebalancingProposalDetails,
   RebalancingSetDetails,
   SetDetails,
-  TokenFlows
+  TokenFlowsDetails,
 } from '@src/types/common';
 
 ChaiSetup.configure();
@@ -992,7 +992,7 @@ describe('RebalancingAPI', () => {
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
-    async function subject(): Promise<TokenFlows> {
+    async function subject(): Promise<TokenFlowsDetails> {
       return await rebalancingAPI.getBidPriceAsync(subjectRebalancingSetTokenAddress, subjectBidQuantity);
     }
 
@@ -1058,12 +1058,36 @@ describe('RebalancingAPI', () => {
           DEFAULT_CONSTANT_AUCTION_PRICE
         );
 
+        const expectedTokenAddresses = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+        const expectedInflowAddressArray = expectedTokenFlowArrays['inflow'].reduce((acc, unit, index) => {
+          const bigNumberUnit = new BigNumber(unit);
+          if (bigNumberUnit.gt(0)) {
+            acc.push({
+              address: expectedTokenAddresses[index],
+              unit,
+            });
+          }
+          return acc;
+        }, []);
+
+        const expectedOutflowAddressArray = expectedTokenFlowArrays['outflow'].reduce((acc, unit, index) => {
+          const bigNumberUnit = new BigNumber(unit);
+          if (bigNumberUnit.gt(0)) {
+            acc.push({
+              address: expectedTokenAddresses[index],
+              unit,
+            });
+          }
+          return acc;
+        }, []);
+
         const returnedInflowArray = JSON.stringify(returnedTokenFlowArrays['inflow']);
-        const expectedInflowArray = JSON.stringify(expectedTokenFlowArrays['inflow']);
+        const expectedInflowArray = JSON.stringify(expectedInflowAddressArray);
         expect(returnedInflowArray).to.eql(expectedInflowArray);
 
         const returnedOutflowArray = JSON.stringify(returnedTokenFlowArrays['outflow']);
-        const expectedOutflowArray = JSON.stringify(expectedTokenFlowArrays['outflow']);
+        const expectedOutflowArray = JSON.stringify(expectedOutflowAddressArray);
         expect(returnedOutflowArray).to.eql(expectedOutflowArray);
       });
 
