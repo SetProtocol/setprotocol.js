@@ -1072,6 +1072,9 @@ describe('RebalancingAPI', () => {
       });
 
       test('it filters out components with zero units from token flows', async () => {
+        const expectedOutflowDetailsZeroCount = 2;
+        const expectedInflowDetailsZeroCount = 2;
+
         const returnedTokenFlowDetailsArrays = await subject();
 
         // Get Token Flow bid units not filtered for 0s and count of 0 units
@@ -1119,9 +1122,9 @@ describe('RebalancingAPI', () => {
           return accumulator;
         }, 0);
 
-        // Ensure there are inflow / outflow components greater than 0
-        expect(returnedInflowZeroCount).to.greaterThan(0);
-        expect(returnedOutflowZeroCount).to.greaterThan(0);
+        // Ensure there are inflow / outflow components with zero amounts
+        expect(returnedInflowZeroCount).to.eql(expectedInflowDetailsZeroCount);
+        expect(returnedOutflowZeroCount).to.eql(expectedOutflowDetailsZeroCount);
 
         // Expect subject to filter out 0s
         expect(returnedInflowDetailsZeroCount).to.eql(0);
