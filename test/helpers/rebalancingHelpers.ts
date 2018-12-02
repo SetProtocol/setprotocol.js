@@ -11,7 +11,7 @@ import {
   VaultContract
 } from 'set-protocol-contracts';
 
-import { TokenFlows } from '@src/types/common';
+import { TokenFlows, TokenFlowsDetails, Component } from '@src/types/common';
 import {
   DEFAULT_AUCTION_PRICE_DIVISOR,
   DEFAULT_GAS_LIMIT,
@@ -335,6 +335,50 @@ export const constructInflowOutflowArraysAsync = async(
 
       outflowArray.push(outflow);
       inflowArray.push(ZERO);
+    }
+  }
+  return { inflow: inflowArray, outflow: outflowArray };
+};
+
+export const constructInflowOutflowAddressesArraysAsync = async(
+  rebalancingSetToken: RebalancingSetTokenContract,
+  quantity: BigNumber,
+  priceNumerator: BigNumber,
+  combinedTokenArray: Address[],
+): Promise<TokenFlowsDetails> => {
+  const inflowArray: Component[] = [];
+  const outflowArray: Component[] = [];
+
+  // Get unit arrays
+  const combinedCurrentUnits = await rebalancingSetToken.getCombinedCurrentUnits.callAsync();
+  const combinedRebalanceUnits = await rebalancingSetToken.getCombinedNextSetUnits.callAsync();
+
+  // Define price
+  const priceDivisor = DEFAULT_AUCTION_PRICE_DIVISOR;
+
+  // Calculate the inflows and outflow arrays
+  const minimumBid = await rebalancingSetToken.minimumBid.callAsync();
+  const coefficient = minimumBid.div(priceDivisor);
+  const effectiveQuantity = quantity.mul(priceDivisor).div(priceNumerator);
+
+  for (let i = 0; i < combinedCurrentUnits.length; i++) {
+    const flow = combinedRebalanceUnits[i].mul(priceDivisor).sub(combinedCurrentUnits[i].mul(priceNumerator));
+    if (flow.greaterThan(ZERO)) {
+      inflowArray.push({
+        address: combinedTokenArray[i],
+        unit: effectiveQuantity.mul(flow).div(coefficient).round(0, 3).div(priceDivisor).round(0, 3),
+      });
+    } else if (flow.lessThan(ZERO)) {
+      let outflow = flow.mul(effectiveQuantity).div(coefficient).round(0, 3).div(priceDivisor).round(0, 3);
+      if (!outflow.isZero()) {
+        // We do this because this produces a negative 0
+        outflow = outflow.mul(new BigNumber(-1));
+      }
+
+      outflowArray.push({
+        address: combinedTokenArray[i],
+        unit: outflow,
+      });
     }
   }
   return { inflow: inflowArray, outflow: outflowArray };

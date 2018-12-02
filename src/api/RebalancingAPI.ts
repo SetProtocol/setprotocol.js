@@ -33,7 +33,7 @@ import {
   RebalancingSetDetails,
   SetDetails,
   Tx,
-  TokenFlows
+  TokenFlowsDetails,
 } from '../types/common';
 
 /**
@@ -184,10 +184,41 @@ export class RebalancingAPI {
    * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
    * @return                                Transaction hash
    */
-  public async getBidPriceAsync(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber): Promise<TokenFlows> {
+  public async getBidPriceAsync(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+  ): Promise<TokenFlowsDetails> {
     await this.assertGetBidPrice(rebalancingSetTokenAddress, bidQuantity);
 
-    return await this.rebalancingSetToken.getBidPrice(rebalancingSetTokenAddress, bidQuantity);
+    const tokenFlowComponents = await this.rebalancingSetToken.getBidPrice(rebalancingSetTokenAddress, bidQuantity);
+    const tokenAddresses = await this.rebalancingSetToken.getCombinedTokenArray(rebalancingSetTokenAddress);
+
+    const inflow = tokenFlowComponents.inflow.reduce((accumulator, unit, index) => {
+      const bigNumberUnit = new BigNumber(unit);
+      if (bigNumberUnit.gt(0)) {
+        accumulator.push({
+          address: tokenAddresses[index],
+          unit,
+        });
+      }
+      return accumulator;
+    }, []);
+
+    const outflow = tokenFlowComponents.outflow.reduce((accumulator, unit, index) => {
+      const bigNumberUnit = new BigNumber(unit);
+      if (bigNumberUnit.gt(0)) {
+        accumulator.push({
+          address: tokenAddresses[index],
+          unit,
+        });
+      }
+      return accumulator;
+    }, []);
+
+    return {
+      inflow,
+      outflow,
+    };
   }
 
   /**

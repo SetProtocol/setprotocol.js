@@ -83,6 +83,11 @@ export interface TokenFlows {
   outflow: BigNumber[];
 }
 
+export interface TokenFlowsDetails {
+  inflow: Component[];
+  outflow: Component[];
+}
+
 export interface CreateLogArgs {
   _setTokenAddress: Address;
   _factoryAddress: Address;
