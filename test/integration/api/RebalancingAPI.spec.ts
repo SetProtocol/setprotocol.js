@@ -941,7 +941,7 @@ describe('RebalancingAPI', () => {
     });
   });
 
-  describe.only('getBidPriceAsync', async () => {
+  describe('getBidPriceAsync', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
@@ -1074,14 +1074,7 @@ describe('RebalancingAPI', () => {
       test('it filters out components with zero units from token flows', async () => {
         const returnedTokenFlowDetailsArrays = await subject();
 
-        const expectedTokenAddresses = await rebalancingSetToken.getCombinedTokenArray.callAsync();
-        const expectedTokenFlowArrays = await constructInflowOutflowArraysAsync(
-          rebalancingSetToken,
-          subjectBidQuantity,
-          DEFAULT_CONSTANT_AUCTION_PRICE,
-        );
-
-        // Get unfiltered bid units and get count
+        // Get Token Flow bid units not filtered for 0s and count of 0 units
         const [
           returnedInflowArray,
           returnedOutflowArray,
@@ -1103,20 +1096,7 @@ describe('RebalancingAPI', () => {
           return accumulator;
         }, 0);
 
-        const expectedInflowZeroCount = expectedTokenFlowArrays.inflow.reduce((accumulator, unit) => {
-          if (unit.eq(0)) {
-            accumulator++;
-          }
-          return accumulator;
-        }, 0);
-
-        const expectedOutflowZeroCount = expectedTokenFlowArrays.outflow.reduce((accumulator, unit) => {
-          if (unit.eq(0)) {
-            accumulator++;
-          }
-          return accumulator;
-        }, 0);
-
+        // Get Token Flow Details which should filter for 0s and count of 0 units
         const returnedInflowDetailsZeroCount = returnedTokenFlowDetailsArrays.inflow.reduce((
           accumulator,
           component
@@ -1139,8 +1119,11 @@ describe('RebalancingAPI', () => {
           return accumulator;
         }, 0);
 
-        expect(returnedInflowZeroCount).to.eql(expectedInflowZeroCount);
-        expect(returnedOutflowZeroCount).to.eql(expectedOutflowZeroCount);
+        // Ensure there are inflow / outflow components greater than 0
+        expect(returnedInflowZeroCount).to.greaterThan(0);
+        expect(returnedOutflowZeroCount).to.greaterThan(0);
+
+        // Expect subject to filter out 0s
         expect(returnedInflowDetailsZeroCount).to.eql(0);
         expect(returnedOutflowDetailsZeroCount).to.eql(0);
       });
