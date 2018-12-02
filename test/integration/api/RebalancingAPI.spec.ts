@@ -59,6 +59,7 @@ import {
   addAuthorizationAsync,
   approveForTransferAsync,
   constructInflowOutflowArraysAsync,
+  constructInflowOutflowAddressesArraysAsync,
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
   deployConstantAuctionPriceCurveAsync,
@@ -940,7 +941,7 @@ describe('RebalancingAPI', () => {
     });
   });
 
-  describe('getBidPriceAsync', async () => {
+  describe.only('getBidPriceAsync', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
@@ -1049,46 +1050,99 @@ describe('RebalancingAPI', () => {
         );
       });
 
-      test('it fetches the correct token flow arrays', async () => {
-        const returnedTokenFlowArrays = await subject();
-
-        const expectedTokenFlowArrays = await constructInflowOutflowArraysAsync(
-          rebalancingSetToken,
-          subjectBidQuantity,
-          DEFAULT_CONSTANT_AUCTION_PRICE
-        );
+      test('it fetches the correct token flow details arrays', async () => {
+        const returnedTokenFlowDetailsArrays = await subject();
 
         const expectedTokenAddresses = await rebalancingSetToken.getCombinedTokenArray.callAsync();
 
-        const expectedInflowAddressArray = expectedTokenFlowArrays['inflow'].reduce((acc, unit, index) => {
-          const bigNumberUnit = new BigNumber(unit);
-          if (bigNumberUnit.gt(0)) {
-            acc.push({
-              address: expectedTokenAddresses[index],
-              unit,
-            });
-          }
-          return acc;
-        }, []);
+        const expectedTokenFlowDetailsArrays = await constructInflowOutflowAddressesArraysAsync(
+          rebalancingSetToken,
+          subjectBidQuantity,
+          DEFAULT_CONSTANT_AUCTION_PRICE,
+          expectedTokenAddresses,
+        );
 
-        const expectedOutflowAddressArray = expectedTokenFlowArrays['outflow'].reduce((acc, unit, index) => {
-          const bigNumberUnit = new BigNumber(unit);
-          if (bigNumberUnit.gt(0)) {
-            acc.push({
-              address: expectedTokenAddresses[index],
-              unit,
-            });
-          }
-          return acc;
-        }, []);
-
-        const returnedInflowArray = JSON.stringify(returnedTokenFlowArrays['inflow']);
-        const expectedInflowArray = JSON.stringify(expectedInflowAddressArray);
+        const returnedInflowArray = JSON.stringify(returnedTokenFlowDetailsArrays['inflow']);
+        const expectedInflowArray = JSON.stringify(expectedTokenFlowDetailsArrays['inflow']);
         expect(returnedInflowArray).to.eql(expectedInflowArray);
 
-        const returnedOutflowArray = JSON.stringify(returnedTokenFlowArrays['outflow']);
-        const expectedOutflowArray = JSON.stringify(expectedOutflowAddressArray);
+        const returnedOutflowArray = JSON.stringify(returnedTokenFlowDetailsArrays['outflow']);
+        const expectedOutflowArray = JSON.stringify(expectedTokenFlowDetailsArrays['outflow']);
         expect(returnedOutflowArray).to.eql(expectedOutflowArray);
+      });
+
+      test('it filters out components with zero units from token flows', async () => {
+        const returnedTokenFlowDetailsArrays = await subject();
+
+        const expectedTokenAddresses = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+        const expectedTokenFlowArrays = await constructInflowOutflowArraysAsync(
+          rebalancingSetToken,
+          subjectBidQuantity,
+          DEFAULT_CONSTANT_AUCTION_PRICE,
+        );
+
+        // Get unfiltered bid units and get count
+        const [
+          returnedInflowArray,
+          returnedOutflowArray,
+        ] = await rebalancingSetToken.getBidPrice.callAsync(subjectBidQuantity);
+
+        const returnedInflowZeroCount = returnedInflowArray.reduce((accumulator, unit) => {
+          const bigNumberUnit = new BigNumber(unit);
+          if (bigNumberUnit.eq(0)) {
+            accumulator++;
+          }
+          return accumulator;
+        }, 0);
+
+        const returnedOutflowZeroCount = returnedOutflowArray.reduce((accumulator, unit) => {
+          const bigNumberUnit = new BigNumber(unit);
+          if (bigNumberUnit.eq(0)) {
+            accumulator++;
+          }
+          return accumulator;
+        }, 0);
+
+        const expectedInflowZeroCount = expectedTokenFlowArrays.inflow.reduce((accumulator, unit) => {
+          if (unit.eq(0)) {
+            accumulator++;
+          }
+          return accumulator;
+        }, 0);
+
+        const expectedOutflowZeroCount = expectedTokenFlowArrays.outflow.reduce((accumulator, unit) => {
+          if (unit.eq(0)) {
+            accumulator++;
+          }
+          return accumulator;
+        }, 0);
+
+        const returnedInflowDetailsZeroCount = returnedTokenFlowDetailsArrays.inflow.reduce((
+          accumulator,
+          component
+          ) => {
+          const bigNumberUnit = new BigNumber(component.unit);
+          if (bigNumberUnit.eq(0)) {
+            accumulator++;
+          }
+          return accumulator;
+        }, 0);
+
+        const returnedOutflowDetailsZeroCount = returnedTokenFlowDetailsArrays.outflow.reduce((
+          accumulator,
+          component
+          ) => {
+          const bigNumberUnit = new BigNumber(component.unit);
+          if (bigNumberUnit.eq(0)) {
+            accumulator++;
+          }
+          return accumulator;
+        }, 0);
+
+        expect(returnedInflowZeroCount).to.eql(expectedInflowZeroCount);
+        expect(returnedOutflowZeroCount).to.eql(expectedOutflowZeroCount);
+        expect(returnedInflowDetailsZeroCount).to.eql(0);
+        expect(returnedOutflowDetailsZeroCount).to.eql(0);
       });
 
       describe('and the bid amount is greater than remaining current sets', async () => {

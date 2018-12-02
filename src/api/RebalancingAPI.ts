@@ -193,26 +193,26 @@ export class RebalancingAPI {
     const tokenFlowComponents = await this.rebalancingSetToken.getBidPrice(rebalancingSetTokenAddress, bidQuantity);
     const tokenAddresses = await this.rebalancingSetToken.getCombinedTokenArray(rebalancingSetTokenAddress);
 
-    const inflow = tokenFlowComponents.inflow.reduce((acc, unit, index) => {
+    const inflow = tokenFlowComponents.inflow.reduce((accumulator, unit, index) => {
       const bigNumberUnit = new BigNumber(unit);
       if (bigNumberUnit.gt(0)) {
-        acc.push({
+        accumulator.push({
           address: tokenAddresses[index],
           unit,
         });
       }
-      return acc;
+      return accumulator;
     }, []);
 
-    const outflow = tokenFlowComponents.outflow.reduce((acc, unit, index) => {
+    const outflow = tokenFlowComponents.outflow.reduce((accumulator, unit, index) => {
       const bigNumberUnit = new BigNumber(unit);
       if (bigNumberUnit.gt(0)) {
-        acc.push({
+        accumulator.push({
           address: tokenAddresses[index],
           unit,
         });
       }
-      return acc;
+      return accumulator;
     }, []);
 
     return {

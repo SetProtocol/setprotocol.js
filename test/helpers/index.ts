@@ -25,6 +25,7 @@ export {
 
 export {
   constructInflowOutflowArraysAsync,
+  constructInflowOutflowAddressesArraysAsync,
   createDefaultRebalancingSetTokenAsync,
   deployConstantAuctionPriceCurveAsync,
   deploySetTokensAsync,
