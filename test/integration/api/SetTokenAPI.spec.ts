@@ -125,7 +125,7 @@ describe('SetTokenAPI', () => {
     });
   });
 
-  describe('getDetails', async () => {
+  describe('getDetailsAsync', async () => {
     let componentTokens: StandardTokenMockContract[];
     let componentTokenAddresses: Address[];
     let componentTokenUnits: BigNumber[];
@@ -158,7 +158,7 @@ describe('SetTokenAPI', () => {
     });
 
     async function subject(): Promise<SetDetails> {
-      return await setTokenAPI.getDetails(subjectSetTokenAddress);
+      return await setTokenAPI.getDetailsAsync(subjectSetTokenAddress);
     }
 
     test('it fetchs the set token properties correctly', async () => {
