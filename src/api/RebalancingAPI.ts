@@ -219,7 +219,7 @@ export class RebalancingAPI {
     return {
       inflow,
       outflow,
-    };
+    } as TokenFlowsDetails;
   }
 
   /**
