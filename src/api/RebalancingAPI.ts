@@ -178,11 +178,12 @@ export class RebalancingAPI {
   }
 
   /**
-   * Fetches the current token inflows and outflows for a submitted bid
+   * Fetches the current token inflows and outflows for a given bid quantity, returns `Component`
+   * objects reflecting token inflows and outflows. Tokens flows of 0 are omitted
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
    * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
-   * @return                                Transaction hash
+   * @return                                Object conforming to `TokenFlowsDetails` interface
    */
   public async getBidPriceAsync(
     rebalancingSetTokenAddress: Address,
@@ -228,7 +229,7 @@ export class RebalancingAPI {
    * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
    * @return                               Object conforming to `RebalancingSetDetails` interface
    */
-  public async getDetails(rebalancingSetTokenAddress: Address): Promise<RebalancingSetDetails> {
+  public async getDetailsAsync(rebalancingSetTokenAddress: Address): Promise<RebalancingSetDetails> {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
 
     const [
@@ -277,7 +278,7 @@ export class RebalancingAPI {
    * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
    * @return                               Object conforming to `RebalancingProposalDetails` interface
    */
-  public async getProposalDetails(rebalancingSetTokenAddress: Address): Promise<RebalancingProposalDetails> {
+  public async getProposalDetailsAsync(rebalancingSetTokenAddress: Address): Promise<RebalancingProposalDetails> {
     await this.assertGetProposalDetails(rebalancingSetTokenAddress);
 
     const [
@@ -313,7 +314,7 @@ export class RebalancingAPI {
    * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
    * @return                               Object conforming to `RebalancingProgressDetails` interface
    */
-  public async getRebalanceDetails(rebalancingSetTokenAddress: Address): Promise<RebalancingProgressDetails> {
+  public async getRebalanceDetailsAsync(rebalancingSetTokenAddress: Address): Promise<RebalancingProgressDetails> {
     await this.assertGetRebalanceDetails(rebalancingSetTokenAddress);
 
     const [

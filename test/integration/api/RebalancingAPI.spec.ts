@@ -1165,7 +1165,7 @@ describe('RebalancingAPI', () => {
     });
   });
 
-  describe('getProposalDetails', async () => {
+  describe('getDetailsAsync', async () => {
     let currentSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
@@ -1211,7 +1211,7 @@ describe('RebalancingAPI', () => {
     });
 
     async function subject(): Promise<RebalancingSetDetails> {
-      return await rebalancingAPI.getDetails(subjectRebalancingSetTokenAddress);
+      return await rebalancingAPI.getDetailsAsync(subjectRebalancingSetTokenAddress);
     }
 
     it('returns the rebalancing token properties', async () => {
@@ -1233,7 +1233,7 @@ describe('RebalancingAPI', () => {
     });
   });
 
-  describe('getProposalDetails', async () => {
+  describe('getProposalDetailsAsync', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
@@ -1281,7 +1281,7 @@ describe('RebalancingAPI', () => {
     });
 
     async function subject(): Promise<RebalancingProposalDetails> {
-      return await rebalancingAPI.getProposalDetails(subjectRebalancingSetTokenAddress);
+      return await rebalancingAPI.getProposalDetailsAsync(subjectRebalancingSetTokenAddress);
     }
 
     describe('when the Rebalancing Set Token is in Default state', async () => {
@@ -1357,7 +1357,7 @@ describe('RebalancingAPI', () => {
     });
   });
 
-  describe('getRebalanceDetails', async () => {
+  describe('getRebalanceDetailsAsync', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
@@ -1405,7 +1405,7 @@ describe('RebalancingAPI', () => {
     });
 
     async function subject(): Promise<RebalancingProgressDetails> {
-      return await rebalancingAPI.getRebalanceDetails(subjectRebalancingSetTokenAddress);
+      return await rebalancingAPI.getRebalanceDetailsAsync(subjectRebalancingSetTokenAddress);
     }
 
     describe('when the Rebalancing Set Token is in Default state', async () => {

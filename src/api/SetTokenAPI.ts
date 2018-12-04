@@ -160,7 +160,7 @@ export class SetTokenAPI {
    * @param  setAddress    Address of the Set
    * @return               Object conforming to `SetDetails` interface
    */
-  public async getDetails(setAddress: Address): Promise<SetDetails> {
+  public async getDetailsAsync(setAddress: Address): Promise<SetDetails> {
     this.assert.schema.isValidAddress('setAddress', setAddress);
 
     const [factoryAddress, naturalUnit, componentAddresses, componentUnits, name, symbol] = await Promise.all([
