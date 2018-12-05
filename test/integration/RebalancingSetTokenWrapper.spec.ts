@@ -26,6 +26,8 @@ import * as chai from 'chai';
 import Web3 from 'web3';
 import {
   CoreContract,
+  IssuanceOrderModuleContract,
+  RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
@@ -79,13 +81,23 @@ describe('SetTokenWrapper', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
+  let issuanceOrderModule: IssuanceOrderModuleContract;
+  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(web3);
+    [
+      core,
+      transferProxy,
+      vault,
+      setTokenFactory,
+      rebalancingSetTokenFactory,
+      rebalanceAuctionModule,
+      issuanceOrderModule,
+    ] = await deployBaseContracts(web3);
 
     rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
   });
@@ -787,7 +799,7 @@ describe('SetTokenWrapper', () => {
       );
 
       // Bid to rebalance the outstanding amount of currentSetToken
-      await core.bid.sendTransactionAsync(
+      await rebalanceAuctionModule.bid.sendTransactionAsync(
         rebalancingSetToken.address,
         rebalancingSetQuantityToIssue
       );

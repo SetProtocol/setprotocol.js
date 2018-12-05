@@ -20,7 +20,9 @@ import Web3 from 'web3';
 import {
   BaseContract,
   CoreContract,
-  DetailedERC20Contract,
+  ERC20DetailedContract,
+  IssuanceOrderModuleContract,
+  RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   SetTokenContract,
   VaultContract,
@@ -133,13 +135,13 @@ export class ContractWrapper {
   public async loadERC20TokenAsync(
     tokenAddress: Address,
     transactionOptions: object = {},
-  ): Promise<DetailedERC20Contract> {
+  ): Promise<ERC20DetailedContract> {
     const cacheKey = this.getERC20TokenCacheKey(tokenAddress);
 
     if (cacheKey in this.cache) {
-      return this.cache[cacheKey] as DetailedERC20Contract;
+      return this.cache[cacheKey] as ERC20DetailedContract;
     } else {
-      const erc20TokenContract = await DetailedERC20Contract.at(
+      const erc20TokenContract = await ERC20DetailedContract.at(
         tokenAddress,
         this.web3,
         transactionOptions,
@@ -168,6 +170,58 @@ export class ContractWrapper {
       const vaultContract = await VaultContract.at(vaultAddress, this.web3, transactionOptions);
       this.cache[cacheKey] = vaultContract;
       return vaultContract;
+    }
+  }
+
+  /**
+   * Load Rebalance Auction Module contract
+   *
+   * @param  rebalanceAuctionModuleAddress       Address of the Rebalance Auction Module contract
+   * @param  transactionOptions                  Options sent into the contract deployed method
+   * @return                                     The Rebalance Auction Module Contract
+   */
+  public async loadRebalanceAuctionModuleAsync(
+    rebalanceAuctionModuleAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<RebalanceAuctionModuleContract> {
+    const cacheKey = this.getRebalanceAuctionModuleCacheKey(rebalanceAuctionModuleAddress);
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as RebalanceAuctionModuleContract;
+    } else {
+      const rebalanceAuctionModuleContract = await RebalanceAuctionModuleContract.at(
+        rebalanceAuctionModuleAddress,
+        this.web3,
+        transactionOptions
+      );
+      this.cache[cacheKey] = rebalanceAuctionModuleContract;
+      return rebalanceAuctionModuleContract;
+    }
+  }
+
+  /**
+   * Load Issuance Order Module contract
+   *
+   * @param  issuanceOrderModuleAddress          Address of the Issuance Order Module contract
+   * @param  transactionOptions                  Options sent into the contract deployed method
+   * @return                                     The Issuance Order Module Contract
+   */
+  public async loadIssuanceOrderModuleAsync(
+    issuanceOrderModuleAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<IssuanceOrderModuleContract> {
+    const cacheKey = this.getIssuanceOrderModuleCacheKey(issuanceOrderModuleAddress);
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as IssuanceOrderModuleContract;
+    } else {
+      const issuanceOrderModuleContract = await IssuanceOrderModuleContract.at(
+        issuanceOrderModuleAddress,
+        this.web3,
+        transactionOptions
+      );
+      this.cache[cacheKey] = issuanceOrderModuleContract;
+      return issuanceOrderModuleContract;
     }
   }
 
@@ -219,5 +273,25 @@ export class ContractWrapper {
    */
   private getVaultCacheKey(vaultAddress: Address): string {
     return `Vault_${vaultAddress}`;
+  }
+
+  /**
+   * Creates a string used for accessing values in the issuance order module cache
+   *
+   * @param  issuanceOrderModuleAddress Address of the Vault contract to use
+   * @return                            The cache key
+   */
+  private getIssuanceOrderModuleCacheKey(issuanceOrderModuleAddress: Address): string {
+    return `IssuanceOrderModule_${issuanceOrderModuleAddress}`;
+  }
+
+  /**
+   * Creates a string used for accessing values in the rebalance auction module cache
+   *
+   * @param  rebalanceAuctionModuleAddress Address of the Vault contract to use
+   * @return                               The cache key
+   */
+  private getRebalanceAuctionModuleCacheKey(rebalanceAuctionModuleAddress: Address): string {
+    return `RebalanceAuctionModule_${rebalanceAuctionModuleAddress}`;
   }
 }

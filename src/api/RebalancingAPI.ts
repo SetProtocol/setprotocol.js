@@ -284,26 +284,22 @@ export class RebalancingAPI {
     const [
       proposedAt,
       nextSetAddress,
-      startingPrice,
       pricingLibraryAddress,
-      priceCurveCoefficient,
-      priceDivisor,
+      auctionParameters,
     ] = await Promise.all([
       this.rebalancingSetToken.proposalStartTime(rebalancingSetTokenAddress),
       this.rebalancingSetToken.nextSet(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.auctionStartPrice(rebalancingSetTokenAddress),
       this.rebalancingSetToken.auctionLibrary(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.curveCoefficient(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.auctionPriceDivisor(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.auctionParameters(rebalancingSetTokenAddress),
     ]);
 
     return {
       proposedAt,
       nextSetAddress,
-      startingPrice,
       pricingLibraryAddress,
-      priceCurveCoefficient,
-      priceDivisor,
+      timeToPivot: auctionParameters[1],
+      startingPrice: auctionParameters[2],
+      auctionPivotPrice: auctionParameters[3],
     } as RebalancingProposalDetails;
   }
 
@@ -318,32 +314,26 @@ export class RebalancingAPI {
     await this.assertGetRebalanceDetails(rebalancingSetTokenAddress);
 
     const [
-      rebalancingStartedAt,
       nextSetAddress,
-      startingPrice,
       pricingLibraryAddress,
-      priceCurveCoefficient,
-      priceDivisor,
+      auctionParameters,
       remainingCurrentSet,
       minimumBid,
     ] = await Promise.all([
-      this.rebalancingSetToken.auctionStartTime(rebalancingSetTokenAddress),
       this.rebalancingSetToken.nextSet(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.auctionStartPrice(rebalancingSetTokenAddress),
       this.rebalancingSetToken.auctionLibrary(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.curveCoefficient(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.auctionPriceDivisor(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.auctionParameters(rebalancingSetTokenAddress),
       this.rebalancingSetToken.remainingCurrentSets(rebalancingSetTokenAddress),
       this.rebalancingSetToken.minimumBid(rebalancingSetTokenAddress),
     ]);
 
     return {
-      rebalancingStartedAt,
+      rebalancingStartedAt: auctionParameters[0],
       nextSetAddress,
-      startingPrice,
       pricingLibraryAddress,
-      priceCurveCoefficient,
-      priceDivisor,
+      timeToPivot: auctionParameters[1],
+      startingPrice: auctionParameters[2],
+      auctionPivotPrice: auctionParameters[3],
       remainingCurrentSet,
       minimumBid,
     } as RebalancingProgressDetails;

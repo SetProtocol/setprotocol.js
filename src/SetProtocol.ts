@@ -39,6 +39,8 @@ export interface SetProtocolConfig {
   coreAddress: Address;
   transferProxyAddress: Address;
   vaultAddress: Address;
+  rebalanceAuctionModuleAddress: Address;
+  issuanceOrderModuleAddress: Address;
   setTokenFactoryAddress: Address;
   rebalancingSetTokenFactoryAddress: Address;
 }
@@ -96,7 +98,14 @@ class SetProtocol {
   constructor(provider: Provider, config: SetProtocolConfig) {
     this.web3 = instantiateWeb3(provider);
 
-    this.core = new CoreWrapper(this.web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
+    this.core = new CoreWrapper(
+      this.web3,
+      config.coreAddress,
+      config.transferProxyAddress,
+      config.vaultAddress,
+      config.rebalanceAuctionModuleAddress,
+      config.issuanceOrderModuleAddress
+    );
     this.vault = new VaultWrapper(this.web3, config.vaultAddress);
 
     const assertions = new Assertions(this.web3, this.core);

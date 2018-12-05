@@ -4616,9 +4616,10 @@ merge-stream@^1.0.1:
   dependencies:
     readable-stream "^2.0.1"
 
-merge@^1.2.1:
+merge@^1.2.0:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/merge/-/merge-1.2.1.tgz#38bebf80c3220a8a487b6fcfb3941bb11720c145"
+  integrity sha512-VjFo4P5Whtj4vsLzsYBu5ayHhoHJ0UqNm7ibvShmbmoz7tGi0vXaoJbGdB+GmDMLUdg8DpQXEIeVDAe8MaABvQ==
 
 merkle-patricia-tree@^2.1.2:
   version "2.3.2"
@@ -5915,9 +5916,10 @@ set-immediate-shim@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/set-immediate-shim/-/set-immediate-shim-1.0.1.tgz#4b2b1b27eb808a9f8dcc481a58e5e56f599f3f61"
 
-set-protocol-contracts@1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.0.tgz#938a56b3c0e09ead1994f3ec1a7dea31b3a1e3ae"
+set-protocol-contracts@1.2.1-beta.1:
+  version "1.2.1-beta.1"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.1-beta.1.tgz#79f4ef0d2a36af987dd2a0a3467943a3f3e7df4a"
+  integrity sha512-xNzAdYP34BQgPH+auTnumZZAN0jtIH1Efurp3MHkZAG/Tudum+YC/PRPMGQxbV9O6q9V7WnvJ9I7OoxrGScLYA==
   dependencies:
     bn-chai "^1.0.1"
     eth-gas-reporter "^0.1.10"

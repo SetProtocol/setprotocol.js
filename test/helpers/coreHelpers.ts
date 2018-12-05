@@ -4,8 +4,10 @@ import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-ut
 import {
   Core,
   ERC20Wrapper,
+  IssuanceOrderModule,
   NoDecimalTokenMock,
   OrderLibrary,
+  RebalanceAuctionModule,
   RebalancingSetTokenFactory,
   SetTokenFactory,
   SetToken,
@@ -17,7 +19,9 @@ import {
   AuthorizableContract,
   BaseContract,
   CoreContract,
+  IssuanceOrderModuleContract,
   NoDecimalTokenMockContract,
+  RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
@@ -136,7 +140,7 @@ export const deploySetTokenFactoryContract = async (
   );
 
   // Enable factory for provided core
-  await core.enableFactory.sendTransactionAsync(
+  await core.addFactory.sendTransactionAsync(
     setTokenFactoryContract.address,
     TX_DEFAULTS
   );
@@ -147,7 +151,7 @@ export const deploySetTokenFactoryContract = async (
 export const deployRebalancingSetTokenFactoryContract = async (
   web3: Web3,
   core: CoreContract
-): Promise<SetTokenFactoryContract> => {
+): Promise<RebalancingSetTokenFactoryContract> => {
   // Deploy SetTokenFactory contract
   const truffleRebalancingSetTokenFactoryContract = contract(RebalancingSetTokenFactory);
   truffleRebalancingSetTokenFactoryContract.setProvider(web3.currentProvider);
@@ -162,12 +166,69 @@ export const deployRebalancingSetTokenFactoryContract = async (
   );
 
   // Enable factory for provided core
-  await core.enableFactory.sendTransactionAsync(
+  await core.addFactory.sendTransactionAsync(
     rebalancingSetTokenFactoryContract.address,
     TX_DEFAULTS
   );
 
   return rebalancingSetTokenFactoryContract;
+};
+
+export const deployIssuanceOrderModuleContract = async (
+  web3: Web3,
+  core: CoreContract,
+  transferProxy: TransferProxyContract,
+  vault: VaultContract,
+): Promise<IssuanceOrderModuleContract> => {
+  const truffleIssuanceOrderModuleContract = contract(IssuanceOrderModule);
+  truffleIssuanceOrderModuleContract.setProvider(web3.currentProvider);
+  truffleIssuanceOrderModuleContract.setNetwork(50);
+  truffleIssuanceOrderModuleContract.defaults(TX_DEFAULTS);
+
+  const deployedIssuanceOrderModule = await truffleIssuanceOrderModuleContract.new(
+    core.address,
+    transferProxy.address,
+    vault.address,
+    TX_DEFAULTS
+  );
+  const issuanceOrderModuleContract = await IssuanceOrderModuleContract.at(
+    deployedIssuanceOrderModule.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  await core.addModule.sendTransactionAsync(deployedIssuanceOrderModule.address, TX_DEFAULTS);
+  await transferProxy.addAuthorizedAddress.sendTransactionAsync(deployedIssuanceOrderModule.address, TX_DEFAULTS);
+  await vault.addAuthorizedAddress.sendTransactionAsync(deployedIssuanceOrderModule.address, TX_DEFAULTS);
+
+  return issuanceOrderModuleContract;
+};
+
+export const deployRebalanceAuctionModuleContract = async (
+  web3: Web3,
+  core: CoreContract,
+  vault: VaultContract,
+): Promise<RebalanceAuctionModuleContract> => {
+  const truffleRebalanceAuctionModuleContract = contract(RebalanceAuctionModule);
+  truffleRebalanceAuctionModuleContract.setProvider(web3.currentProvider);
+  truffleRebalanceAuctionModuleContract.setNetwork(50);
+  truffleRebalanceAuctionModuleContract.defaults(TX_DEFAULTS);
+
+  const deployedRebalanceAuctionModule = await truffleRebalanceAuctionModuleContract.new(
+    core.address,
+    vault.address,
+    TX_DEFAULTS
+  );
+  const rebalanceAuctionModuleContract = await RebalanceAuctionModuleContract.at(
+    deployedRebalanceAuctionModule.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  await core.addModule.sendTransactionAsync(deployedRebalanceAuctionModule.address, TX_DEFAULTS);
+  await vault.addAuthorizedAddress.sendTransactionAsync(deployedRebalanceAuctionModule.address, TX_DEFAULTS);
+
+  return rebalanceAuctionModuleContract;
 };
 
 export const deployBaseContracts = async (
@@ -177,7 +238,9 @@ export const deployBaseContracts = async (
   TransferProxyContract,
   VaultContract,
   SetTokenFactoryContract,
-  RebalancingSetTokenFactoryContract
+  RebalancingSetTokenFactoryContract,
+  RebalanceAuctionModuleContract,
+  IssuanceOrderModuleContract
 ]> => {
   const [transferProxy, vault] = await Promise.all([
     deployTransferProxyContract(web3),
@@ -193,7 +256,20 @@ export const deployBaseContracts = async (
     addAuthorizationAsync(transferProxy, core.address),
   ]);
 
-  return [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory];
+  const [rebalanceAuctionModule, issuanceOrderModule] = await Promise.all([
+    deployRebalanceAuctionModuleContract(web3, core, vault),
+    deployIssuanceOrderModuleContract(web3, core, transferProxy, vault),
+  ]);
+
+  return [
+    core,
+    transferProxy,
+    vault,
+    setTokenFactory,
+    rebalancingSetTokenFactory,
+    rebalanceAuctionModule,
+    issuanceOrderModule,
+  ];
 };
 
 export const deployTokenAsync = async (
@@ -325,7 +401,7 @@ export const registerExchange = async (
     TX_DEFAULTS,
   );
 
-  await coreWrapper.registerExchange.sendTransactionAsync(
+  await coreWrapper.addExchange.sendTransactionAsync(
     exchangeId,
     exchangeAddress,
     TX_DEFAULTS,

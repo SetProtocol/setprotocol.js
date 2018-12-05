@@ -48,10 +48,6 @@ const { expect } = chai;
 let currentSnapshotId: number;
 
 describe('AccountingAPI', () => {
-  let transferProxy: TransferProxyContract;
-  let vault: VaultContract;
-  let core: CoreContract;
-  let coreWrapper: CoreWrapper;
   let accountingAPI: AccountingAPI;
 
   let tokens: StandardTokenMockContract[];
@@ -59,9 +55,24 @@ describe('AccountingAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault] = await deployBaseContracts(web3);
+    const [
+      core,
+      transferProxy,
+      vault,
+      setTokenFactory,
+      rebalancingSetTokenFactory,
+      rebalanceAuctionModule,
+      issuanceOrderModule,
+    ] = await deployBaseContracts(web3);
 
-    coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+    const coreWrapper = new CoreWrapper(
+      web3,
+      core.address,
+      transferProxy.address,
+      vault.address,
+      rebalanceAuctionModule.address,
+      issuanceOrderModule.address
+    );
     const assertions = new Assertions(web3, coreWrapper);
     accountingAPI = new AccountingAPI(web3, coreWrapper, assertions);
 

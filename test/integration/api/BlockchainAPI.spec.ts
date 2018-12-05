@@ -73,8 +73,24 @@ describe('BlockchainAPI', () => {
 
     standardToken = await deployTokenAsync(web3);
 
-    const [core, transferProxy, vault] = await deployBaseContracts(web3);
-    const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+    const [
+      core,
+      transferProxy,
+      vault,
+      setTokenFactory,
+      rebalancingSetTokenFactory,
+      rebalanceAuctionModule,
+      issuanceOrderModule,
+    ] = await deployBaseContracts(web3);
+
+    const coreWrapper = new CoreWrapper(
+      web3,
+      core.address,
+      transferProxy.address,
+      vault.address,
+      rebalanceAuctionModule.address,
+      issuanceOrderModule.address
+    );
     const assertions = new Assertions(web3, coreWrapper);
     blockchainAPI = new BlockchainAPI(web3, assertions);
   });

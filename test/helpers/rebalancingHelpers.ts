@@ -211,7 +211,7 @@ export const transitionToRebalanceAsync = async(
 
   // Transition to rebalance
   await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS.add(1));
-  await rebalancingSetToken.rebalance.sendTransactionAsync(
+  await rebalancingSetToken.startRebalance.sendTransactionAsync(
     TX_DEFAULTS
   );
 };

@@ -30,7 +30,9 @@ import Web3 from 'web3';
 import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
+  IssuanceOrderModuleContract,
   NoDecimalTokenMockContract,
+  RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
@@ -79,8 +81,11 @@ describe('FactoryAPI', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
-  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let setTokenFactory: SetTokenFactoryContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
+  let issuanceOrderModule: IssuanceOrderModuleContract;
+  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
+
   let config: SetProtocolConfig;
   let coreWrapper: CoreWrapper;
   let factoryAPI: FactoryAPI;
@@ -97,7 +102,15 @@ describe('FactoryAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(web3);
+    [
+      core,
+      transferProxy,
+      vault,
+      setTokenFactory,
+      rebalancingSetTokenFactory,
+      rebalanceAuctionModule,
+      issuanceOrderModule,
+    ] = await deployBaseContracts(web3);
 
     config = {
       coreAddress: core.address,
@@ -105,8 +118,17 @@ describe('FactoryAPI', () => {
       vaultAddress: vault.address,
       setTokenFactoryAddress: setTokenFactory.address,
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
+      rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
+      issuanceOrderModuleAddress: issuanceOrderModule.address,
     };
-    coreWrapper = new CoreWrapper(web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
+    coreWrapper = new CoreWrapper(
+      web3,
+      config.coreAddress,
+      config.transferProxyAddress,
+      config.vaultAddress,
+      config.rebalanceAuctionModuleAddress,
+      config.issuanceOrderModuleAddress,
+    );
     assertions = new Assertions(web3, coreWrapper);
     factoryAPI = new FactoryAPI(web3, coreWrapper, assertions, config);
   });

@@ -52,9 +52,24 @@ describe('ERC20API', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    const [core, transferProxy, vault] = await deployBaseContracts(web3);
+    const [
+      core,
+      transferProxy,
+      vault,
+      setTokenFactory,
+      rebalancingSetTokenFactory,
+      rebalanceAuctionModule,
+      issuanceOrderModule,
+    ] = await deployBaseContracts(web3);
 
-    const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+    const coreWrapper = new CoreWrapper(
+      web3,
+      core.address,
+      transferProxy.address,
+      vault.address,
+      rebalanceAuctionModule.address,
+      issuanceOrderModule.address
+    );
     const assertions = new Assertions(web3, coreWrapper);
     erc20API = new ERC20API(web3, assertions);
   });

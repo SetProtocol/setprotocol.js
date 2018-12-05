@@ -28,7 +28,9 @@ import Web3 from 'web3';
 import {
   ConstantAuctionPriceCurveContract,
   CoreContract,
-  DetailedERC20Contract,
+  ERC20DetailedContract,
+  IssuanceOrderModuleContract,
+  RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
@@ -100,6 +102,8 @@ describe('RebalancingAPI', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
+  let issuanceOrderModule: IssuanceOrderModuleContract;
+  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
   let rebalancingAPI: RebalancingAPI;
@@ -107,11 +111,27 @@ describe('RebalancingAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(web3);
+    [
+      core,
+      transferProxy,
+      vault,
+      setTokenFactory,
+      rebalancingSetTokenFactory,
+      rebalanceAuctionModule,
+      issuanceOrderModule,
+    ] = await deployBaseContracts(web3);
+
+    const coreWrapper = new CoreWrapper(
+      web3,
+      core.address,
+      transferProxy.address,
+      vault.address,
+      rebalanceAuctionModule.address,
+      issuanceOrderModule.address
+    );
 
     rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
 
-    const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
     const assertions = new Assertions(web3, coreWrapper);
     rebalancingAPI = new RebalancingAPI(web3, assertions, coreWrapper);
   });
@@ -550,7 +570,7 @@ describe('RebalancingAPI', () => {
           setAuctionPriceDivisor
         );
 
-        await core.bid.sendTransactionAsync(
+        await rebalanceAuctionModule.bid.sendTransactionAsync(
           rebalancingSetToken.address,
           rebalancingSetQuantityToIssue
         );
@@ -853,7 +873,7 @@ describe('RebalancingAPI', () => {
         beforeEach(async () => {
           subjectCaller = ACCOUNTS[3].address;
           const components = await rebalancingSetToken.getCombinedTokenArray.callAsync();
-          const approvalToken: DetailedERC20Contract = await DetailedERC20Contract.at(components[2], web3, {});
+          const approvalToken: ERC20DetailedContract = await ERC20DetailedContract.at(components[2], web3, {});
           await approvalToken.approve.sendTransactionAsync(
             transferProxy.address,
             UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
@@ -1474,7 +1494,8 @@ describe('RebalancingAPI', () => {
       it('returns the proper rebalancing details', async () => {
         const rebalanceDetails = await subject();
 
-        const rebalancingStartedAt = await rebalancingSetToken.auctionStartTime.callAsync();
+        const auctionParameters = await rebalancingSetToken.auctionParameters.callAsync();
+        const rebalancingStartedAt = auctionParameters[0];
         expect(rebalanceDetails.rebalancingStartedAt).to.bignumber.equal(rebalancingStartedAt);
 
         const remainingCurrentSet = await rebalancingSetToken.remainingCurrentSets.callAsync();
