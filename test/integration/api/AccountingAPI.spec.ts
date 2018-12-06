@@ -28,7 +28,16 @@ import * as ethUtil from 'ethereumjs-util';
 import Web3 from 'web3';
 import { Address, Web3Utils } from 'set-protocol-utils';
 import { Core } from 'set-protocol-contracts';
-import { CoreContract, StandardTokenMockContract, TransferProxyContract, VaultContract } from 'set-protocol-contracts';
+import {
+  CoreContract,
+  IssuanceOrderModuleContract,
+  RebalanceAuctionModuleContract,
+  RebalancingSetTokenFactoryContract,
+  SetTokenFactoryContract,
+  StandardTokenMockContract,
+  TransferProxyContract,
+  VaultContract,
+} from 'set-protocol-contracts';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { AccountingAPI } from '@src/api';
@@ -48,6 +57,15 @@ const { expect } = chai;
 let currentSnapshotId: number;
 
 describe('AccountingAPI', () => {
+  let transferProxy: TransferProxyContract;
+  let vault: VaultContract;
+  let core: CoreContract;
+  let setTokenFactory: SetTokenFactoryContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
+  let issuanceOrderModule: IssuanceOrderModuleContract;
+  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
+
+  let coreWrapper: CoreWrapper;
   let accountingAPI: AccountingAPI;
 
   let tokens: StandardTokenMockContract[];
@@ -55,7 +73,7 @@ describe('AccountingAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    const [
+    [
       core,
       transferProxy,
       vault,
@@ -65,7 +83,7 @@ describe('AccountingAPI', () => {
       issuanceOrderModule,
     ] = await deployBaseContracts(web3);
 
-    const coreWrapper = new CoreWrapper(
+    coreWrapper = new CoreWrapper(
       web3,
       core.address,
       transferProxy.address,

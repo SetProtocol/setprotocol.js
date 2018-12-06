@@ -93,6 +93,7 @@ describe('SetTokenAPI', () => {
       rebalanceAuctionModule.address,
       issuanceOrderModule.address
     );
+
     const assertions = new Assertions(web3, coreWrapper);
     setTokenAPI = new SetTokenAPI(web3, assertions);
   });
