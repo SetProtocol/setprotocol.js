@@ -267,42 +267,13 @@ export class CoreWrapper {
       this.issuanceOrderModuleAddress
     );
 
-    const {
-      setAddress,
-      makerAddress,
-      makerToken,
-      relayerAddress,
-      relayerToken,
-      quantity,
-      makerTokenAmount,
-      expiration,
-      makerRelayerFee,
-      takerRelayerFee,
-      salt,
-      requiredComponents,
-      requiredComponentAmounts,
-    } = signedIssuanceOrder;
-
-    const issuanceOrder = {
-      setAddress,
-      makerAddress,
-      makerToken,
-      relayerAddress,
-      relayerToken,
-      quantity,
-      makerTokenAmount,
-      expiration,
-      makerRelayerFee,
-      takerRelayerFee,
-      salt,
-      requiredComponents,
-      requiredComponentAmounts,
-    };
+    const {signature, ...issuanceOrder} = signedIssuanceOrder;
+    const bytesSignature = this.setProtocolUtils.convertSigToHex(signature);
 
     return await issuanceOrderModuleInstance.fillOrder.sendTransactionAsync(
       issuanceOrder,
       fillAmount,
-      signedIssuanceOrder.signature.r,
+      bytesSignature,
       orderData,
       txSettings,
     );
@@ -322,22 +293,6 @@ export class CoreWrapper {
       this.issuanceOrderModuleAddress
     );
 
-    const {
-      setAddress,
-      makerAddress,
-      makerToken,
-      relayerAddress,
-      relayerToken,
-      quantity,
-      makerTokenAmount,
-      expiration,
-      makerRelayerFee,
-      takerRelayerFee,
-      salt,
-      requiredComponents,
-      requiredComponentAmounts,
-    } = issuanceOrder;
-
     return await issuanceOrderModuleInstance.cancelOrder.sendTransactionAsync(
       issuanceOrder,
       cancelAmount,
@@ -355,7 +310,9 @@ export class CoreWrapper {
    */
   public async bid(rebalancingSetTokenAddress: Address, quantity: BigNumber, txOpts?: Tx): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-    const rebalanceAuctionModuleInstance = await this.contracts.loadRebalanceAuctionModuleAsync(this.coreAddress);
+    const rebalanceAuctionModuleInstance = await this.contracts.loadRebalanceAuctionModuleAsync(
+      this.rebalanceAuctionModuleAddress
+    );
 
     return await rebalanceAuctionModuleInstance.bid.sendTransactionAsync(
       rebalancingSetTokenAddress,
