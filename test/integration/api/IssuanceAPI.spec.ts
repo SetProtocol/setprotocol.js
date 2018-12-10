@@ -31,6 +31,9 @@ import { Address, Web3Utils } from 'set-protocol-utils';
 import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
+  IssuanceOrderModuleContract,
+  RebalanceAuctionModuleContract,
+  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -72,6 +75,10 @@ describe('IssuanceAPI', () => {
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
+  let issuanceOrderModule: IssuanceOrderModuleContract;
+  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
+
   let issuanceAPI: IssuanceAPI;
 
   let componentTokens: StandardTokenMockContract[];
@@ -91,9 +98,24 @@ describe('IssuanceAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory] = await deployBaseContracts(web3);
+    [
+      core,
+      transferProxy,
+      vault,
+      setTokenFactory,
+      rebalancingSetTokenFactory,
+      rebalanceAuctionModule,
+      issuanceOrderModule,
+    ] = await deployBaseContracts(web3);
 
-    const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+    const coreWrapper = new CoreWrapper(
+      web3,
+      core.address,
+      transferProxy.address,
+      vault.address,
+      rebalanceAuctionModule.address,
+      issuanceOrderModule.address
+    );
     const assertions = new Assertions(web3, coreWrapper);
     issuanceAPI = new IssuanceAPI(web3, coreWrapper, assertions);
 

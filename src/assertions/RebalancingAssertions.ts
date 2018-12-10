@@ -22,7 +22,7 @@ import { Address } from 'set-protocol-utils';
 
 import { CommonAssertions } from './CommonAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
-import { RebalancingSetTokenContract, DetailedERC20Contract, SetTokenContract } from 'set-protocol-contracts';
+import { RebalancingSetTokenContract, ERC20DetailedContract, SetTokenContract } from 'set-protocol-contracts';
 import { coreAPIErrors, rebalancingErrors } from '../errors';
 import { BigNumber } from '../util';
 import { RebalancingState } from '../types/common';
@@ -250,7 +250,7 @@ export class RebalancingAssertions {
     const componentInstancePromises = _.map(
       components,
       async component =>
-        await DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
+        await ERC20DetailedContract.at(component, this.web3, { from: ownerAddress }),
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 
@@ -293,7 +293,7 @@ export class RebalancingAssertions {
     const componentInstancePromises = _.map(
       components,
       async component =>
-        await DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
+        await ERC20DetailedContract.at(component, this.web3, { from: ownerAddress }),
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 

@@ -4,11 +4,14 @@ import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-ut
 import {
   Core,
   ERC20Wrapper,
+  IssuanceOrderModule,
   NoDecimalTokenMock,
   OrderLibrary,
+  RebalanceAuctionModule,
   RebalancingSetTokenFactory,
   SetTokenFactory,
   SetToken,
+  SignatureValidatorContract,
   StandardTokenMock,
   TransferProxy,
   Vault,
@@ -17,10 +20,13 @@ import {
   AuthorizableContract,
   BaseContract,
   CoreContract,
+  IssuanceOrderModuleContract,
   NoDecimalTokenMockContract,
+  RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
+  SignatureValidator,
   StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
@@ -30,7 +36,9 @@ import {
   DEFAULT_ACCOUNT,
   DEPLOYED_TOKEN_QUANTITY,
   TX_DEFAULTS,
-  UNLIMITED_ALLOWANCE_IN_BASE_UNITS
+  UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+  ONE_DAY_IN_SECONDS,
+  ONE_WEEK_IN_SECONDS,
 } from '@src/constants';
 import { BigNumber, getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util';
 import { CoreWrapper } from '@src/wrappers';
@@ -93,22 +101,19 @@ export const deployCoreContract = async (
   web3: Web3,
   transferProxyAddress: Address,
   vaultAddress: Address,
+  signatureValidatorAddress: Address,
 ): Promise<CoreContract> => {
   const truffleCoreContract = contract(Core);
   truffleCoreContract.setProvider(web3.currentProvider);
   truffleCoreContract.setNetwork(50);
   truffleCoreContract.defaults(TX_DEFAULTS);
 
-  const truffleOrderLibraryContract = contract(OrderLibrary);
-  truffleOrderLibraryContract.setProvider(web3.currentProvider);
-  truffleOrderLibraryContract.setNetwork(50);
-  truffleOrderLibraryContract.defaults(TX_DEFAULTS);
-
-  const orderLibrary = await truffleOrderLibraryContract.new(transferProxyAddress, vaultAddress);
-  await truffleCoreContract.link('OrderLibrary', orderLibrary.address);
-
   // Deploy Core
-  const deployedCoreInstance = await truffleCoreContract.new(transferProxyAddress, vaultAddress);
+  const deployedCoreInstance = await truffleCoreContract.new(
+    transferProxyAddress,
+    vaultAddress,
+    signatureValidatorAddress
+  );
 
   // Initialize typed contract class
   return await CoreContract.at(
@@ -136,7 +141,7 @@ export const deploySetTokenFactoryContract = async (
   );
 
   // Enable factory for provided core
-  await core.enableFactory.sendTransactionAsync(
+  await core.addFactory.sendTransactionAsync(
     setTokenFactoryContract.address,
     TX_DEFAULTS
   );
@@ -147,12 +152,16 @@ export const deploySetTokenFactoryContract = async (
 export const deployRebalancingSetTokenFactoryContract = async (
   web3: Web3,
   core: CoreContract
-): Promise<SetTokenFactoryContract> => {
+): Promise<RebalancingSetTokenFactoryContract> => {
   // Deploy SetTokenFactory contract
   const truffleRebalancingSetTokenFactoryContract = contract(RebalancingSetTokenFactory);
   truffleRebalancingSetTokenFactoryContract.setProvider(web3.currentProvider);
   truffleRebalancingSetTokenFactoryContract.defaults(TX_DEFAULTS);
-  const deployedRebalancingSetTokenFactory = await truffleRebalancingSetTokenFactoryContract.new(core.address);
+  const deployedRebalancingSetTokenFactory = await truffleRebalancingSetTokenFactoryContract.new(
+    core.address,
+    ONE_DAY_IN_SECONDS,
+    ONE_DAY_IN_SECONDS,
+  );
 
   // Initialize typed contract class
   const rebalancingSetTokenFactoryContract = await RebalancingSetTokenFactoryContract.at(
@@ -162,12 +171,97 @@ export const deployRebalancingSetTokenFactoryContract = async (
   );
 
   // Enable factory for provided core
-  await core.enableFactory.sendTransactionAsync(
+  await core.addFactory.sendTransactionAsync(
     rebalancingSetTokenFactoryContract.address,
     TX_DEFAULTS
   );
 
   return rebalancingSetTokenFactoryContract;
+};
+
+export const deployIssuanceOrderModuleContract = async (
+  web3: Web3,
+  core: CoreContract,
+  transferProxy: TransferProxyContract,
+  vault: VaultContract,
+): Promise<IssuanceOrderModuleContract> => {
+  const truffleIssuanceOrderModuleContract = contract(IssuanceOrderModule);
+  truffleIssuanceOrderModuleContract.setProvider(web3.currentProvider);
+  truffleIssuanceOrderModuleContract.setNetwork(50);
+  truffleIssuanceOrderModuleContract.defaults(TX_DEFAULTS);
+
+  const truffleOrderLibraryContract = contract(OrderLibrary);
+  truffleOrderLibraryContract.setProvider(web3.currentProvider);
+  truffleOrderLibraryContract.setNetwork(50);
+  truffleOrderLibraryContract.defaults(TX_DEFAULTS);
+
+  const orderLibrary = await truffleOrderLibraryContract.new(transferProxy.address, vault.address);
+  await truffleIssuanceOrderModuleContract.link('OrderLibrary', orderLibrary.address);
+
+  const deployedIssuanceOrderModule = await truffleIssuanceOrderModuleContract.new(
+    core.address,
+    transferProxy.address,
+    vault.address,
+    TX_DEFAULTS
+  );
+  const issuanceOrderModuleContract = await IssuanceOrderModuleContract.at(
+    deployedIssuanceOrderModule.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  await core.addModule.sendTransactionAsync(deployedIssuanceOrderModule.address, TX_DEFAULTS);
+  await transferProxy.addAuthorizedAddress.sendTransactionAsync(deployedIssuanceOrderModule.address, TX_DEFAULTS);
+  await vault.addAuthorizedAddress.sendTransactionAsync(deployedIssuanceOrderModule.address, TX_DEFAULTS);
+
+  return issuanceOrderModuleContract;
+};
+
+export const deployRebalanceAuctionModuleContract = async (
+  web3: Web3,
+  core: CoreContract,
+  vault: VaultContract,
+): Promise<RebalanceAuctionModuleContract> => {
+  const truffleRebalanceAuctionModuleContract = contract(RebalanceAuctionModule);
+  truffleRebalanceAuctionModuleContract.setProvider(web3.currentProvider);
+  truffleRebalanceAuctionModuleContract.setNetwork(50);
+  truffleRebalanceAuctionModuleContract.defaults(TX_DEFAULTS);
+
+  const deployedRebalanceAuctionModule = await truffleRebalanceAuctionModuleContract.new(
+    core.address,
+    vault.address,
+    TX_DEFAULTS
+  );
+  const rebalanceAuctionModuleContract = await RebalanceAuctionModuleContract.at(
+    deployedRebalanceAuctionModule.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  await core.addModule.sendTransactionAsync(deployedRebalanceAuctionModule.address, TX_DEFAULTS);
+  await vault.addAuthorizedAddress.sendTransactionAsync(deployedRebalanceAuctionModule.address, TX_DEFAULTS);
+
+  return rebalanceAuctionModuleContract;
+};
+
+export const deploySignatureValidatorContract = async (
+  web3: Web3,
+): Promise<SignatureValidatorContract> => {
+  const truffleSignatureValidatorContract = contract(SignatureValidator);
+  truffleSignatureValidatorContract.setProvider(web3.currentProvider);
+  truffleSignatureValidatorContract.setNetwork(50);
+  truffleSignatureValidatorContract.defaults(TX_DEFAULTS);
+
+  const deployedSignatureValidator = await truffleSignatureValidatorContract.new(
+    TX_DEFAULTS
+  );
+  const signatureValidatorContract = await SignatureValidatorContract.at(
+    deployedSignatureValidator.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  return signatureValidatorContract;
 };
 
 export const deployBaseContracts = async (
@@ -177,14 +271,17 @@ export const deployBaseContracts = async (
   TransferProxyContract,
   VaultContract,
   SetTokenFactoryContract,
-  RebalancingSetTokenFactoryContract
+  RebalancingSetTokenFactoryContract,
+  RebalanceAuctionModuleContract,
+  IssuanceOrderModuleContract
 ]> => {
-  const [transferProxy, vault] = await Promise.all([
+  const [transferProxy, vault, signatureValidator] = await Promise.all([
     deployTransferProxyContract(web3),
     deployVaultContract(web3),
+    deploySignatureValidatorContract(web3),
   ]);
 
-  const core = await deployCoreContract(web3, transferProxy.address, vault.address);
+  const core = await deployCoreContract(web3, transferProxy.address, vault.address, signatureValidator.address);
 
   const [setTokenFactory, rebalancingSetTokenFactory] = await Promise.all([
     deploySetTokenFactoryContract(web3, core),
@@ -193,7 +290,20 @@ export const deployBaseContracts = async (
     addAuthorizationAsync(transferProxy, core.address),
   ]);
 
-  return [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory];
+  const [rebalanceAuctionModule, issuanceOrderModule] = await Promise.all([
+    deployRebalanceAuctionModuleContract(web3, core, vault),
+    deployIssuanceOrderModuleContract(web3, core, transferProxy, vault),
+  ]);
+
+  return [
+    core,
+    transferProxy,
+    vault,
+    setTokenFactory,
+    rebalancingSetTokenFactory,
+    rebalanceAuctionModule,
+    issuanceOrderModule,
+  ];
 };
 
 export const deployTokenAsync = async (
@@ -325,7 +435,7 @@ export const registerExchange = async (
     TX_DEFAULTS,
   );
 
-  await coreWrapper.registerExchange.sendTransactionAsync(
+  await coreWrapper.addExchange.sendTransactionAsync(
     exchangeId,
     exchangeAddress,
     TX_DEFAULTS,

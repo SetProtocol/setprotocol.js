@@ -86,7 +86,7 @@ export class RebalancingSetTokenWrapper {
   ): Promise<string> {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 
-    return await rebalancingSetTokenInstance.rebalance.sendTransactionAsync(
+    return await rebalancingSetTokenInstance.startRebalance.sendTransactionAsync(
       txOpts
     );
   }
@@ -246,18 +246,6 @@ export class RebalancingSetTokenWrapper {
   }
 
   /**
-   * Gets start time of rebalance period for the Rebalancing Set Token
-   *
-   * @param  rebalancingSetAddress   Address of the Set
-   * @return                         The auctionStartTime of the RebalancingSetToken
-   */
-  public async auctionStartTime(rebalancingSetAddress: Address): Promise<BigNumber> {
-    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
-
-    return await rebalancingSetTokenInstance.auctionStartTime.callAsync();
-  }
-
-  /**
    * Gets nextSet for the Rebalancing Set Token
    *
    * @param  rebalancingSetAddress   Address of the Set
@@ -282,39 +270,15 @@ export class RebalancingSetTokenWrapper {
   }
 
   /**
-   * Gets auctionPriceDivisor for the Rebalancing Set Token
+   * Gets auctionParameters struct for the Rebalancing Set Token
    *
    * @param  rebalancingSetAddress   Address of the Set
-   * @return                         The auctionPriceDivisor of the RebalancingSetToken
+   * @return                         The auctionLibrary address of the RebalancingSetToken
    */
-  public async auctionPriceDivisor(rebalancingSetAddress: Address): Promise<BigNumber> {
+  public async auctionParameters(rebalancingSetAddress: Address): Promise<BigNumber[]> {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 
-    return await rebalancingSetTokenInstance.auctionPriceDivisor.callAsync();
-  }
-
-  /**
-   * Gets auctionStartPrice for the Rebalancing Set Token
-   *
-   * @param  rebalancingSetAddress   Address of the Set
-   * @return                         The auctionStartPrice of the RebalancingSetToken
-   */
-  public async auctionStartPrice(rebalancingSetAddress: Address): Promise<BigNumber> {
-    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
-
-    return await rebalancingSetTokenInstance.auctionStartPrice.callAsync();
-  }
-
-  /**
-   * Gets curveCoefficient for the Rebalancing Set Token
-   *
-   * @param  rebalancingSetAddress   Address of the Set
-   * @return                         The curveCoefficient of the RebalancingSetToken
-   */
-  public async curveCoefficient(rebalancingSetAddress: Address): Promise<BigNumber> {
-    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
-
-    return await rebalancingSetTokenInstance.curveCoefficient.callAsync();
+    return await rebalancingSetTokenInstance.auctionParameters.callAsync();
   }
 
   /**

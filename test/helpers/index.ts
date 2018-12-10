@@ -24,6 +24,7 @@ export {
 } from './exchangeHelpers';
 
 export {
+  addPriceCurveToCoreAsync,
   constructInflowOutflowArraysAsync,
   constructInflowOutflowAddressesArraysAsync,
   createDefaultRebalancingSetTokenAsync,

@@ -31,6 +31,9 @@ import Web3 from 'web3';
 import compact = require('lodash.compact');
 import {
   CoreContract,
+  IssuanceOrderModuleContract,
+  RebalanceAuctionModuleContract,
+  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -86,15 +89,34 @@ describe('OrderAPI', () => {
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
+  let issuanceOrderModule: IssuanceOrderModuleContract;
+  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
+
   let coreWrapper: CoreWrapper;
   let ordersAPI: OrderAPI;
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory] = await deployBaseContracts(web3);
+    [
+      core,
+      transferProxy,
+      vault,
+      setTokenFactory,
+      rebalancingSetTokenFactory,
+      rebalanceAuctionModule,
+      issuanceOrderModule,
+    ] = await deployBaseContracts(web3);
 
-    coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+    coreWrapper = new CoreWrapper(
+      web3,
+      core.address,
+      transferProxy.address,
+      vault.address,
+      rebalanceAuctionModule.address,
+      issuanceOrderModule.address
+    );
     const assertions = new Assertions(web3, coreWrapper);
     ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
   });
@@ -1346,12 +1368,12 @@ describe('OrderAPI', () => {
     test('updates the cancel amount for the order', async () => {
       const { signature, ...issuanceOrder } = subjectSignedIssuanceOrder;
       const orderHash = SetUtils.hashOrderHex(issuanceOrder);
-      const existingCancelAmount = await core.orderCancels.callAsync(orderHash);
+      const existingCancelAmount = await issuanceOrderModule.orderCancels.callAsync(orderHash);
 
       await subject();
 
       const expectedCancelAmounts = existingCancelAmount.add(subjectCancelQuantity);
-      const newCancelAmount = await core.orderCancels.callAsync(orderHash);
+      const newCancelAmount = await issuanceOrderModule.orderCancels.callAsync(orderHash);
       expect(newCancelAmount).to.bignumber.equal(expectedCancelAmounts);
     });
 

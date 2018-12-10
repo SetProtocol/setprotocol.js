@@ -13,7 +13,7 @@ import {
 
 import { TokenFlows, TokenFlowsDetails, Component } from '@src/types/common';
 import {
-  DEFAULT_AUCTION_PRICE_DIVISOR,
+  DEFAULT_AUCTION_PRICE_DENOMINATOR,
   DEFAULT_GAS_LIMIT,
   DEFAULT_REBALANCING_NATURAL_UNIT,
   DEFAULT_UNIT_SHARES,
@@ -84,7 +84,8 @@ export const deploySetTokensAsync = async(
 
 export const deployConstantAuctionPriceCurveAsync = async(
   web3: Web3,
-  price: BigNumber,
+  priceNumerator: BigNumber,
+  priceDenominator: BigNumber,
 ): Promise<ConstantAuctionPriceCurveContract> => {
   const truffleConstantAuctionPriceCurveContract = contract(ConstantAuctionPriceCurve);
   truffleConstantAuctionPriceCurveContract.setProvider(web3.currentProvider);
@@ -92,11 +93,23 @@ export const deployConstantAuctionPriceCurveAsync = async(
   truffleConstantAuctionPriceCurveContract.defaults(TX_DEFAULTS);
 
   // Deploy ConstantAuctionPriceCurve
-  const deployedConstantAuctionPriceCurveInstance = await truffleConstantAuctionPriceCurveContract.new(price);
+  const deployedConstantAuctionPriceCurveInstance = await truffleConstantAuctionPriceCurveContract.new(
+    priceNumerator,
+    priceDenominator,
+  );
   return await ConstantAuctionPriceCurveContract.at(
     deployedConstantAuctionPriceCurveInstance.address,
     web3,
     TX_DEFAULTS,
+  );
+};
+
+export const addPriceCurveToCoreAsync = async(
+  core: CoreContract,
+  priceCurveAddress: Address,
+): Promise<void> => {
+  core.addPriceLibrary.sendTransactionAsync(
+    priceCurveAddress,
   );
 };
 
@@ -171,18 +184,18 @@ export const transitionToProposeAsync = async(
   manager: Address,
   nextSetToken: Address,
   auctionPriceCurve: Address,
-  curveCoefficient: BigNumber,
+  auctionTimeToPivot: BigNumber,
   auctionStartPrice: BigNumber,
-  auctionPriceDivisor: BigNumber,
+  auctionPivotPrice: BigNumber,
 ): Promise<void> => {
   // Transition to propose
   await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS.add(1));
   await rebalancingSetToken.propose.sendTransactionAsync(
     nextSetToken,
     auctionPriceCurve,
-    curveCoefficient,
+    auctionTimeToPivot,
     auctionStartPrice,
-    auctionPriceDivisor,
+    auctionPivotPrice,
     { from: manager, gas: DEFAULT_GAS_LIMIT}
   );
 };
@@ -193,9 +206,9 @@ export const transitionToRebalanceAsync = async(
   manager: Address,
   nextSetToken: Address,
   auctionPriceCurve: Address,
-  curveCoefficient: BigNumber,
+  auctionTimeToPivot: BigNumber,
   auctionStartPrice: BigNumber,
-  auctionPriceDivisor: BigNumber,
+  auctionPivotPrice: BigNumber,
 ): Promise<void> => {
   // Transition to propose
   await transitionToProposeAsync(
@@ -204,14 +217,14 @@ export const transitionToRebalanceAsync = async(
     manager,
     nextSetToken,
     auctionPriceCurve,
-    curveCoefficient,
+    auctionTimeToPivot,
     auctionStartPrice,
-    auctionPriceDivisor
+    auctionPivotPrice
   );
 
   // Transition to rebalance
   await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS.add(1));
-  await rebalancingSetToken.rebalance.sendTransactionAsync(
+  await rebalancingSetToken.startRebalance.sendTransactionAsync(
     TX_DEFAULTS
   );
 };
@@ -314,7 +327,7 @@ export const constructInflowOutflowArraysAsync = async(
   const combinedRebalanceUnits = await rebalancingSetToken.getCombinedNextSetUnits.callAsync();
 
   // Define price
-  const priceDivisor = DEFAULT_AUCTION_PRICE_DIVISOR;
+  const priceDivisor = DEFAULT_AUCTION_PRICE_DENOMINATOR;
 
   // Calculate the inflows and outflow arrays
   const minimumBid = await rebalancingSetToken.minimumBid.callAsync();
@@ -354,7 +367,7 @@ export const constructInflowOutflowAddressesArraysAsync = async(
   const combinedRebalanceUnits = await rebalancingSetToken.getCombinedNextSetUnits.callAsync();
 
   // Define price
-  const priceDivisor = DEFAULT_AUCTION_PRICE_DIVISOR;
+  const priceDivisor = DEFAULT_AUCTION_PRICE_DENOMINATOR;
 
   // Calculate the inflows and outflow arrays
   const minimumBid = await rebalancingSetToken.minimumBid.callAsync();

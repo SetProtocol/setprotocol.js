@@ -17,7 +17,7 @@
 'use strict';
 
 import { Address } from 'set-protocol-utils';
-import { DetailedERC20Contract } from 'set-protocol-contracts';
+import { ERC20DetailedContract } from 'set-protocol-contracts';
 import Web3 from 'web3';
 
 import { erc20AssertionErrors } from '../errors';
@@ -34,7 +34,7 @@ export class ERC20Assertions {
    * Throws if the given contract address does not respond to some methods from the ERC20 interface
    */
   public async implementsERC20(tokenAddress: Address): Promise<void> {
-    const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+    const tokenContract = await ERC20DetailedContract.at(tokenAddress, this.web3, {});
 
     try {
       await Promise.all([
@@ -52,7 +52,7 @@ export class ERC20Assertions {
     userAddress: Address,
     requiredBalance: BigNumber,
   ): Promise<void> {
-    const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+    const tokenContract = await ERC20DetailedContract.at(tokenAddress, this.web3, {});
 
     const userBalance = await tokenContract.balanceOf.callAsync(userAddress);
 
@@ -72,7 +72,7 @@ export class ERC20Assertions {
     spenderAddress: Address,
     requiredAllowance: BigNumber,
   ): Promise<void> {
-    const tokenContract = await DetailedERC20Contract.at(tokenAddress, this.web3, {});
+    const tokenContract = await ERC20DetailedContract.at(tokenAddress, this.web3, {});
 
     const payerAllowance = await tokenContract.allowance.callAsync(ownerAddress, spenderAddress);
 

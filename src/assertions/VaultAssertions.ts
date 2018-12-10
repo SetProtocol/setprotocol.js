@@ -22,7 +22,7 @@ import { Address } from 'set-protocol-utils';
 
 import { vaultAssertionErrors } from '../errors';
 import { BigNumber } from '../util';
-import { DetailedERC20Contract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
+import { ERC20DetailedContract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
 export class VaultAssertions {
   private web3: Web3;
@@ -82,7 +82,7 @@ export class VaultAssertions {
     const componentInstancePromises = _.map(
       components,
       async component =>
-        await DetailedERC20Contract.at(component, this.web3, { from: setAddress }),
+        await ERC20DetailedContract.at(component, this.web3, { from: setAddress }),
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 

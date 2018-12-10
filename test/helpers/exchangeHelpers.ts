@@ -9,6 +9,7 @@ import {
   TakerWalletWrapper,
   TakerWalletWrapperContract,
   TransferProxyContract,
+  VaultContract,
   ZeroExExchangeWrapper,
   ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
@@ -19,7 +20,6 @@ import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { TX_DEFAULTS } from '@src/constants';
 
 const contract = require('truffle-contract');
-
 
 export const deployTakerWalletWrapperContract = async (
   web3: Web3,
@@ -51,7 +51,7 @@ export const deployTakerWalletWrapperContract = async (
   );
 
   await transferProxy.addAuthorizedAddress.sendTransactionAsync(deployedTakerWalletWrapper.address, TX_DEFAULTS);
-  await core.registerExchange.sendTransactionAsync(
+  await core.addExchange.sendTransactionAsync(
     SetProtocolUtils.EXCHANGES.TAKER_WALLET,
     takerWalletWrapperContract.address,
     TX_DEFAULTS
@@ -95,7 +95,7 @@ export const deployZeroExExchangeWrapperContract = async (
     TX_DEFAULTS,
   );
 
-  await core.registerExchange.sendTransactionAsync(
+  await core.addExchange.sendTransactionAsync(
     SetProtocolUtils.EXCHANGES.ZERO_EX,
     zeroExExchangeWrapperContract.address,
     TX_DEFAULTS
@@ -135,7 +135,7 @@ export const deployKyberNetworkWrapperContract = async (
     TX_DEFAULTS,
   );
 
-  await core.registerExchange.sendTransactionAsync(
+  await core.addExchange.sendTransactionAsync(
     SetProtocolUtils.EXCHANGES.KYBER,
     kyberNetworkWrapper.address,
     TX_DEFAULTS

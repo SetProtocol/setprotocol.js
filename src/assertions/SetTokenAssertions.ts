@@ -21,7 +21,7 @@ import Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 
 import { ERC20Assertions } from './ERC20Assertions';
-import { SetTokenContract, DetailedERC20Contract, CoreContract } from 'set-protocol-contracts';
+import { SetTokenContract, ERC20DetailedContract, CoreContract } from 'set-protocol-contracts';
 import { coreAPIErrors, setTokenAssertionsErrors, erc20AssertionErrors } from '../errors';
 import { BigNumber } from '../util';
 import { ZERO } from '../constants';
@@ -78,7 +78,7 @@ export class SetTokenAssertions {
     const componentInstancePromises = _.map(
       components,
       async component =>
-        await DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
+        await ERC20DetailedContract.at(component, this.web3, { from: ownerAddress }),
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 
@@ -120,7 +120,7 @@ export class SetTokenAssertions {
     const componentInstancePromises = _.map(
       components,
       async component =>
-        await DetailedERC20Contract.at(component, this.web3, { from: ownerAddress }),
+        await ERC20DetailedContract.at(component, this.web3, { from: ownerAddress }),
     );
     const componentInstances = await Promise.all(componentInstancePromises);
 

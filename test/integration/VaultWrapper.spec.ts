@@ -24,7 +24,16 @@ jest.setTimeout(30000);
 
 import * as chai from 'chai';
 import Web3 from 'web3';
-import { CoreContract, StandardTokenMockContract, TransferProxyContract, VaultContract } from 'set-protocol-contracts';
+import {
+  CoreContract,
+  IssuanceOrderModuleContract,
+  RebalanceAuctionModuleContract,
+  RebalancingSetTokenFactoryContract,
+  SetTokenFactoryContract,
+  StandardTokenMockContract,
+  TransferProxyContract,
+  VaultContract
+} from 'set-protocol-contracts';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { CoreWrapper, VaultWrapper } from '@src/wrappers';
@@ -45,6 +54,10 @@ describe('VaultWrapper', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
+  let setTokenFactory: SetTokenFactoryContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
+  let issuanceOrderModule: IssuanceOrderModuleContract;
+  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let coreWrapper: CoreWrapper;
   let vaultWrapper: VaultWrapper;
@@ -52,9 +65,24 @@ describe('VaultWrapper', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault] = await deployBaseContracts(web3);
+    [
+      core,
+      transferProxy,
+      vault,
+      setTokenFactory,
+      rebalancingSetTokenFactory,
+      rebalanceAuctionModule,
+      issuanceOrderModule,
+    ] = await deployBaseContracts(web3);
 
-    coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+    coreWrapper = new CoreWrapper(
+      web3,
+      core.address,
+      transferProxy.address,
+      vault.address,
+      rebalanceAuctionModule.address,
+      issuanceOrderModule.address
+    );
     vaultWrapper = new VaultWrapper(web3, vault.address);
   });
 

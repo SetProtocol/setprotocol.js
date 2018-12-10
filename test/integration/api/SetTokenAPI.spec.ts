@@ -26,6 +26,9 @@ import * as chai from 'chai';
 import Web3 from 'web3';
 import {
   CoreContract,
+  IssuanceOrderModuleContract,
+  RebalanceAuctionModuleContract,
+  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -63,15 +66,34 @@ describe('SetTokenAPI', () => {
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
+  let issuanceOrderModule: IssuanceOrderModuleContract;
+  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let setTokenAPI: SetTokenAPI;
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory] = await deployBaseContracts(web3);
+    [
+      core,
+      transferProxy,
+      vault,
+      setTokenFactory,
+      rebalancingSetTokenFactory,
+      rebalanceAuctionModule,
+      issuanceOrderModule,
+    ] = await deployBaseContracts(web3);
 
-    const coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+    const coreWrapper = new CoreWrapper(
+      web3,
+      core.address,
+      transferProxy.address,
+      vault.address,
+      rebalanceAuctionModule.address,
+      issuanceOrderModule.address
+    );
+
     const assertions = new Assertions(web3, coreWrapper);
     setTokenAPI = new SetTokenAPI(web3, assertions);
   });

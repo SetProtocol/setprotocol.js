@@ -23,7 +23,7 @@ import { SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
 import { ContractWrapper } from '.';
 import { ZERO } from '../constants';
 import { Address, Bytes, IssuanceOrder, SignedIssuanceOrder, Tx } from '../types/common';
-import { DetailedERC20Contract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
+import { ERC20DetailedContract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
 import { BigNumber, generateTxOpts } from '../util';
 
 /**
@@ -41,12 +41,16 @@ export class CoreWrapper {
   public coreAddress: Address;
   public transferProxyAddress: Address;
   public vaultAddress: Address;
+  public rebalanceAuctionModuleAddress: Address;
+  public issuanceOrderModuleAddress: Address;
 
   public constructor(
     web3: Web3,
     coreAddress: Address,
     transferProxyAddress: Address,
     vaultAddress: Address,
+    rebalanceAuctionModule: Address,
+    issuanceOrderModule: Address,
   ) {
     this.web3 = web3;
     this.contracts = new ContractWrapper(this.web3);
@@ -55,6 +59,8 @@ export class CoreWrapper {
     this.coreAddress = coreAddress;
     this.transferProxyAddress = transferProxyAddress;
     this.vaultAddress = vaultAddress;
+    this.rebalanceAuctionModuleAddress = rebalanceAuctionModule;
+    this.issuanceOrderModuleAddress = issuanceOrderModule;
   }
 
   /**
@@ -257,33 +263,17 @@ export class CoreWrapper {
     txOpts?: Tx,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const issuanceOrderModuleInstance = await this.contracts.loadIssuanceOrderModuleAsync(
+      this.issuanceOrderModuleAddress
+    );
 
-    const {
-      setAddress,
-      makerAddress,
-      makerToken,
-      relayerAddress,
-      relayerToken,
-      quantity,
-      makerTokenAmount,
-      expiration,
-      makerRelayerFee,
-      takerRelayerFee,
-      requiredComponents,
-      requiredComponentAmounts,
-      salt,
-      signature,
-    } = signedIssuanceOrder;
+    const {signature, ...issuanceOrder} = signedIssuanceOrder;
+    const bytesSignature = this.setProtocolUtils.convertSigToHex(signature);
 
-    return await coreInstance.fillOrder.sendTransactionAsync(
-      [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
-      [quantity, makerTokenAmount, expiration, makerRelayerFee, takerRelayerFee, salt],
-      requiredComponents,
-      requiredComponentAmounts,
+    return await issuanceOrderModuleInstance.fillOrder.sendTransactionAsync(
+      issuanceOrder,
       fillAmount,
-      signature.v,
-      [signature.r, signature.s],
+      bytesSignature,
       orderData,
       txSettings,
     );
@@ -299,29 +289,12 @@ export class CoreWrapper {
    */
   public async cancelOrder(issuanceOrder: IssuanceOrder, cancelAmount: BigNumber, txOpts?: Tx): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const issuanceOrderModuleInstance = await this.contracts.loadIssuanceOrderModuleAsync(
+      this.issuanceOrderModuleAddress
+    );
 
-    const {
-      setAddress,
-      makerAddress,
-      makerToken,
-      relayerAddress,
-      relayerToken,
-      quantity,
-      makerTokenAmount,
-      expiration,
-      makerRelayerFee,
-      takerRelayerFee,
-      requiredComponents,
-      requiredComponentAmounts,
-      salt,
-    } = issuanceOrder;
-
-    return await coreInstance.cancelOrder.sendTransactionAsync(
-      [setAddress, makerAddress, makerToken, relayerAddress, relayerToken],
-      [quantity, makerTokenAmount, expiration, makerRelayerFee, takerRelayerFee, salt],
-      requiredComponents,
-      requiredComponentAmounts,
+    return await issuanceOrderModuleInstance.cancelOrder.sendTransactionAsync(
+      issuanceOrder,
       cancelAmount,
       txSettings,
     );
@@ -337,9 +310,11 @@ export class CoreWrapper {
    */
   public async bid(rebalancingSetTokenAddress: Address, quantity: BigNumber, txOpts?: Tx): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const rebalanceAuctionModuleInstance = await this.contracts.loadRebalanceAuctionModuleAsync(
+      this.rebalanceAuctionModuleAddress
+    );
 
-    return await coreInstance.bid.sendTransactionAsync(
+    return await rebalanceAuctionModuleInstance.bid.sendTransactionAsync(
       rebalancingSetTokenAddress,
       quantity,
       txSettings,
@@ -381,18 +356,6 @@ export class CoreWrapper {
     const vaultAddress = await coreInstance.vault.callAsync();
 
     return vaultAddress;
-  }
-
-  /**
-   * Asynchronously gets factory addresses
-   *
-   * @return Array of factory addresses
-   */
-  public async getFactories(): Promise<Address[]> {
-    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-    const factoryAddresses = await coreInstance.factories.callAsync();
-
-    return factoryAddresses;
   }
 
   /**
@@ -442,8 +405,10 @@ export class CoreWrapper {
    * @return            Quantity of Issuance Order filled
    */
   public async orderFills(orderHash: Bytes): Promise<BigNumber> {
-    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-    const orderFills = await coreInstance.orderFills.callAsync(orderHash);
+    const issuanceOrderModuleInstance = await this.contracts.loadIssuanceOrderModuleAsync(
+      this.issuanceOrderModuleAddress
+    );
+    const orderFills = await issuanceOrderModuleInstance.orderFills.callAsync(orderHash);
 
     return orderFills;
   }
@@ -455,8 +420,10 @@ export class CoreWrapper {
    * @return            Quantity of Issuance Order cancelled
    */
   public async orderCancels(orderHash: Bytes): Promise<BigNumber> {
-    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-    const orderCancels = await coreInstance.orderCancels.callAsync(orderHash);
+    const issuanceOrderModuleInstance = await this.contracts.loadIssuanceOrderModuleAsync(
+      this.issuanceOrderModuleAddress
+    );
+    const orderCancels = await issuanceOrderModuleInstance.orderCancels.callAsync(orderHash);
 
     return orderCancels;
   }

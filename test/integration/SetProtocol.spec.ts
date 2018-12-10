@@ -30,8 +30,10 @@ import { Core, StandardTokenMock } from 'set-protocol-contracts';
 import { TransactionReceipt } from 'ethereum-types';
 import {
   CoreContract,
+  IssuanceOrderModuleContract,
   NoDecimalTokenMock,
   NoDecimalTokenMockContract,
+  RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
@@ -91,8 +93,9 @@ describe('SetProtocol', async () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
-  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let setTokenFactory: SetTokenFactoryContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
+
   let setProtocol: SetProtocol;
 
   beforeAll(() => {

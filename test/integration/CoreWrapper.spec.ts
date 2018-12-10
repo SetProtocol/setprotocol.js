@@ -31,6 +31,8 @@ import Web3 from 'web3';
 import { Core, Vault } from 'set-protocol-contracts';
 import {
   CoreContract,
+  IssuanceOrderModuleContract,
+  RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
@@ -44,9 +46,17 @@ import {
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { CoreWrapper } from '@src/wrappers';
 import { OrderAPI } from '@src/api';
-import { NULL_ADDRESS, TX_DEFAULTS, ZERO, ONE_DAY_IN_SECONDS, DEFAULT_CONSTANT_AUCTION_PRICE } from '@src/constants';
+import {
+  NULL_ADDRESS,
+  TX_DEFAULTS,
+  ZERO,
+  ONE_DAY_IN_SECONDS,
+  DEFAULT_AUCTION_PRICE_NUMERATOR,
+  DEFAULT_AUCTION_PRICE_DENOMINATOR,
+} from '@src/constants';
 import { Assertions } from '@src/assertions';
 import {
+  addPriceCurveToCoreAsync,
   approveForTransferAsync,
   constructInflowOutflowArraysAsync,
   createDefaultRebalancingSetTokenAsync,
@@ -96,6 +106,8 @@ describe('CoreWrapper', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
+  let issuanceOrderModule: IssuanceOrderModuleContract;
+  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let coreWrapper: CoreWrapper;
 
@@ -110,9 +122,24 @@ describe('CoreWrapper', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, vault, setTokenFactory, rebalancingSetTokenFactory] = await deployBaseContracts(web3);
+    [
+      core,
+      transferProxy,
+      vault,
+      setTokenFactory,
+      rebalancingSetTokenFactory,
+      rebalanceAuctionModule,
+      issuanceOrderModule,
+    ] = await deployBaseContracts(web3);
 
-    coreWrapper = new CoreWrapper(web3, core.address, transferProxy.address, vault.address);
+    coreWrapper = new CoreWrapper(
+      web3,
+      core.address,
+      transferProxy.address,
+      vault.address,
+      rebalanceAuctionModule.address,
+      issuanceOrderModule.address
+    );
   });
 
   afterEach(async () => {
@@ -736,12 +763,12 @@ describe('CoreWrapper', () => {
     test('updates the cancel amount for the order', async () => {
       const { signature, ...issuanceOrder } = subjectSignedIssuanceOrder;
       const orderHash = SetUtils.hashOrderHex(issuanceOrder);
-      const existingCancelAmount = await core.orderCancels.callAsync(orderHash);
+      const existingCancelAmount = await issuanceOrderModule.orderCancels.callAsync(orderHash);
 
       await subject();
 
       const expectedCancelAmounts = existingCancelAmount.add(subjectCancelQuantity);
-      const newCancelAmount = await core.orderCancels.callAsync(orderHash);
+      const newCancelAmount = await issuanceOrderModule.orderCancels.callAsync(orderHash);
       expect(newCancelAmount).to.bignumber.equal(expectedCancelAmounts);
     });
   });
@@ -787,22 +814,31 @@ describe('CoreWrapper', () => {
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
 
       // Deploy price curve used in auction
-      const priceCurve = await deployConstantAuctionPriceCurveAsync(web3, DEFAULT_CONSTANT_AUCTION_PRICE);
+      const priceCurve = await deployConstantAuctionPriceCurveAsync(
+        web3,
+        DEFAULT_AUCTION_PRICE_NUMERATOR,
+        DEFAULT_AUCTION_PRICE_DENOMINATOR
+      );
+
+      addPriceCurveToCoreAsync(
+        core,
+        priceCurve.address
+      );
 
       // Transition to proposal state
       const auctionPriceCurveAddress = priceCurve.address;
-      const setCurveCoefficient = new BigNumber(1);
+      const setAuctionTimeToPivot = new BigNumber(100000);
       const setAuctionStartPrice = new BigNumber(500);
-      const setAuctionPriceDivisor = new BigNumber(1000);
+      const setAuctionPivotPrice = new BigNumber(1000);
       await transitionToRebalanceAsync(
         web3,
         rebalancingSetToken,
         managerAddress,
         nextSetToken.address,
         auctionPriceCurveAddress,
-        setCurveCoefficient,
+        setAuctionTimeToPivot,
         setAuctionStartPrice,
-        setAuctionPriceDivisor
+        setAuctionPivotPrice,
       );
 
       subjectRebalancingSetToken = rebalancingSetToken.address;
@@ -832,7 +868,7 @@ describe('CoreWrapper', () => {
       const expectedTokenFlows = await constructInflowOutflowArraysAsync(
         rebalancingSetToken,
         subjectBidQuantity,
-        DEFAULT_CONSTANT_AUCTION_PRICE
+        DEFAULT_AUCTION_PRICE_NUMERATOR,
       );
       const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
 
@@ -859,7 +895,7 @@ describe('CoreWrapper', () => {
       const expectedTokenFlows = await constructInflowOutflowArraysAsync(
         rebalancingSetToken,
         subjectBidQuantity,
-        DEFAULT_CONSTANT_AUCTION_PRICE
+        DEFAULT_AUCTION_PRICE_NUMERATOR,
       );
       const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
 
@@ -919,13 +955,6 @@ describe('CoreWrapper', () => {
       const vaultAddress = await coreWrapper.getVaultAddress();
 
       expect(coreWrapper.vaultAddress).to.equal(vaultAddress);
-    });
-
-    test('gets factory addresses', async () => {
-      const factoryAddresses = await coreWrapper.getFactories();
-
-      expect(factoryAddresses.length).to.equal(2);
-      expect(factoryAddresses).to.include.members([setTokenFactory.address, rebalancingSetTokenFactory.address]);
     });
 
     test('gets Set addresses', async () => {

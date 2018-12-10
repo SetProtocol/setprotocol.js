@@ -47,19 +47,19 @@ export interface SetDetails {
 export interface RebalancingProposalDetails {
   proposedAt: BigNumber;
   nextSetAddress: Address;
-  startingPrice: BigNumber;
   pricingLibraryAddress: Address;
-  priceCurveCoefficient: BigNumber;
-  priceDivisor: BigNumber;
+  timeToPivot: BigNumber;
+  startingPrice: BigNumber;
+  auctionPivotPrice: BigNumber;
 }
 
 export interface RebalancingProgressDetails {
   rebalancingStartedAt: BigNumber;
   nextSetAddress: Address;
-  startingPrice: BigNumber;
   pricingLibraryAddress: Address;
-  priceCurveCoefficient: BigNumber;
-  priceDivisor: BigNumber;
+  timeToPivot: BigNumber;
+  startingPrice: BigNumber;
+  auctionPivotPrice: BigNumber;
   remainingCurrentSet: BigNumber;
   minimumBid: BigNumber;
 }
