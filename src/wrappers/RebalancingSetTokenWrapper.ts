@@ -46,9 +46,9 @@ export class RebalancingSetTokenWrapper {
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
    * @param  nextSetAddress                 Set to rebalance into
    * @param  auctionLibrary                 Address of auction price curve to use
-   * @param  curveCoefficient               Set auction price curve coefficient
-   * @param  auctionStartPrice              Used with auctionPriceDivisor, define auction start price
-   * @param  auctionPriceDivisor            Parameter to control how fast price moves
+   * @param  auctionTimeToPivot             Amount of time until curve hits pivot
+   * @param  auctionStartPrice              Used with priceNumerator, define auction start price
+   * @param  auctionPivotPrice              Used with priceNumerator, price curve pivots at
    * @param  txOpts                         Transaction options
    * @return                                Transaction hash
    */
@@ -56,9 +56,9 @@ export class RebalancingSetTokenWrapper {
     rebalancingSetAddress: Address,
     nextSet: Address,
     auctionLibrary: Address,
-    curveCoefficient: BigNumber,
+    auctionTimeToPivot: BigNumber,
     auctionStartPrice: BigNumber,
-    auctionPriceDivisor: BigNumber,
+    auctionPivotPrice: BigNumber,
     txOpts: Tx
   ): Promise<string> {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
@@ -66,9 +66,9 @@ export class RebalancingSetTokenWrapper {
     return await rebalancingSetTokenInstance.propose.sendTransactionAsync(
       nextSet,
       auctionLibrary,
-      curveCoefficient,
+      auctionTimeToPivot,
       auctionStartPrice,
-      auctionPriceDivisor,
+      auctionPivotPrice,
       txOpts
     );
   }
@@ -80,7 +80,7 @@ export class RebalancingSetTokenWrapper {
    * @param  txOpts                  Transaction options
    * @return                         Transaction hash
    */
-  public async rebalance(
+  public async startRebalance(
     rebalancingSetAddress: Address,
     txOpts: Tx
   ): Promise<string> {
@@ -140,12 +140,28 @@ export class RebalancingSetTokenWrapper {
    */
   public async getBidPrice(
     rebalancingSetAddress: Address,
-    quantity: BigNumber
+    quantity: BigNumber,
   ): Promise<TokenFlows> {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 
     const tokenFlows = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
     return { inflow: tokenFlows[0], outflow: tokenFlows[1] } as TokenFlows;
+  }
+
+  /**
+   * Returns if passed Set is collateralizing the Rebalancing Set
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @param  component               Address of collateral component
+   * @return                         Boolean if component collateralizing Rebalancing Set
+   */
+  public async tokenIsComponent(
+    rebalancingSetAddress: Address,
+    component: Address,
+  ): Promise<boolean> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    return await rebalancingSetTokenInstance.tokenIsComponent.callAsync(component);
   }
 
   /**
