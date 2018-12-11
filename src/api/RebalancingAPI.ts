@@ -123,8 +123,8 @@ export class RebalancingAPI {
    *                                          gasPrice data
    * @return                                Transaction hash
    */
-  public async startRebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: Tx): Promise<string> {
-    await this.assertRebalance(rebalancingSetTokenAddress);
+  public async rebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: Tx): Promise<string> {
+    await this.assertStartRebalance(rebalancingSetTokenAddress);
 
     return await this.rebalancingSetToken.startRebalance(rebalancingSetTokenAddress, txOpts);
   }
@@ -345,9 +345,9 @@ export class RebalancingAPI {
     rebalancingSetTokenAddress: Address,
     nextSetAddress: Address,
     auctionLibrary: Address,
-    curveCoefficient: BigNumber,
+    auctionTimeToPivot: BigNumber,
     auctionStartPrice: BigNumber,
-    auctionPriceDivisor: BigNumber,
+    auctionPivotPrice: BigNumber,
     txOpts: Tx,
   ) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
@@ -355,11 +355,11 @@ export class RebalancingAPI {
     this.assert.schema.isValidAddress('auctionLibrary', auctionLibrary);
 
     this.assert.common.greaterThanZero(
-      curveCoefficient,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(curveCoefficient)
+      auctionTimeToPivot,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(auctionTimeToPivot)
     );
-    this.assert.common.greaterThanZero(auctionPriceDivisor,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(auctionPriceDivisor)
+    this.assert.common.greaterThanZero(auctionPivotPrice,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(auctionPivotPrice)
     );
     this.assert.common.greaterThanZero(
       auctionStartPrice,
@@ -370,12 +370,15 @@ export class RebalancingAPI {
     await this.assert.rebalancing.isManager(rebalancingSetTokenAddress, txOpts.from);
     await this.assert.setToken.isValidSetToken(this.core.coreAddress, nextSetAddress);
     await this.assert.rebalancing.nextSetIsMultiple(rebalancingSetTokenAddress, nextSetAddress);
+    await this.assert.rebalancing.isValidPriceCurve(auctionLibrary, this.core.coreAddress);
+    await this.assert.rebalancing.sufficientTimeBetweenRebalance(rebalancingSetTokenAddress);
   }
 
-  private async assertRebalance(rebalancingSetTokenAddress: Address) {
+  private async assertStartRebalance(rebalancingSetTokenAddress: Address) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
 
     await this.assert.rebalancing.isInProposalState(rebalancingSetTokenAddress);
+    await this.assert.rebalancing.sufficientTimeInProposalState(rebalancingSetTokenAddress);
   }
 
   private async assertSettleRebalance(rebalancingSetTokenAddress: Address) {
@@ -392,6 +395,7 @@ export class RebalancingAPI {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(bidQuantity)
     );
 
+    await this.assert.setToken.isValidSetToken(this.core.coreAddress, rebalancingSetTokenAddress);
     await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
     await this.assert.rebalancing.bidAmountLessThanRemainingSets(rebalancingSetTokenAddress, bidQuantity);
     await this.assert.rebalancing.bidIsMultipleOfMinimumBid(rebalancingSetTokenAddress, bidQuantity);

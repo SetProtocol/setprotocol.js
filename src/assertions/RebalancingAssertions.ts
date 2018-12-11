@@ -22,7 +22,12 @@ import { Address } from 'set-protocol-utils';
 
 import { CommonAssertions } from './CommonAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
-import { RebalancingSetTokenContract, ERC20DetailedContract, SetTokenContract } from 'set-protocol-contracts';
+import {
+  RebalancingSetTokenContract,
+  ERC20DetailedContract,
+  SetTokenContract,
+  CoreContract,
+} from 'set-protocol-contracts';
 import { coreAPIErrors, rebalancingErrors } from '../errors';
 import { BigNumber } from '../util';
 import { RebalancingState } from '../types/common';
@@ -113,9 +118,8 @@ export class RebalancingAssertions {
     const currentTimeStamp = new BigNumber(Date.now());
 
     if (nextAvailableRebalance.greaterThan(currentTimeStamp)) {
-      const nextRebalanceFormattedDate = moment(
-        nextAvailableRebalance.toNumber()).format('dddd, MMMM Do YYYY, h:mm:ss a'
-      );
+      const nextRebalanceFormattedDate = moment(nextAvailableRebalance.toNumber())
+        .format('dddd, MMMM Do YYYY, h:mm:ss a');
       throw new Error(rebalancingErrors.INSUFFICIENT_TIME_PASSED(nextRebalanceFormattedDate));
     }
   }
@@ -224,6 +228,20 @@ export class RebalancingAssertions {
         bidQuantity.toString(),
         minimumBid.toString()
       ));
+    }
+  }
+
+  /**
+   * Throws if given price curve is not approved in Core
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   */
+  public async isValidPriceCurve(priceCurve: Address, coreAddress: Address): Promise<void> {
+    const coreInstance = await CoreContract.at(coreAddress, this.web3, {});
+
+    const isValidCurve = await coreInstance.validPriceLibraries.callAsync(priceCurve);
+    if (! isValidCurve) {
+      throw new Error(rebalancingErrors.NOT_VALID_PRICE_CURVE(priceCurve));
     }
   }
 
