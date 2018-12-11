@@ -238,6 +238,74 @@ describe('SetProtocol', async () => {
     });
   });
 
+    describe('calculateSetUnits', async () => {
+    let subjectComponentAddresses: Address[];
+    let subjectDecimals: number[];
+    let subjectComponentPrices: BigNumber[];
+    let subjectComponentAllocations: BigNumber[];
+    let subjectTargetSetPrice: BigNumber;
+    let subjectPercentError: number;
+
+    beforeEach(async () => {
+      const tokenCount = 2;
+      const decimalsList = [18, 18];
+      const components = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
+
+      subjectComponentAddresses = _.map(components, component => component.address);
+      subjectDecimals = decimalsList;
+      subjectComponentPrices = [new BigNumber(2), new BigNumber(2)];
+      subjectComponentAllocations = [new BigNumber(0.5), new BigNumber(0.5)];
+      subjectTargetSetPrice = new BigNumber(10);
+      subjectPercentError = 10;
+    });
+
+    function subject(): SetUnits {
+      return setProtocol.calculateSetUnits(
+        subjectComponentAddresses,
+        subjectDecimals,
+        subjectComponentPrices,
+        subjectComponentAllocations,
+        subjectTargetSetPrice,
+        subjectPercentError,
+      );
+    }
+
+    test('should calculate the correct required component units', async () => {
+      const { units } = await subject();
+
+      const expectedResult = [new BigNumber(25), new BigNumber(25)];
+      expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
+    });
+
+    test('should calculate the correct natural units', async () => {
+      const { naturalUnit } = await subject();
+
+      const expectedResult = new BigNumber(10);
+      expect(naturalUnit).to.bignumber.equal(expectedResult);
+    });
+
+    describe('when the percent error is not pass in', async () => {
+      async function subject(): Promise<SetUnits> {
+        return await setProtocol.calculateSetUnitsAsync(
+          subjectComponentAddresses,
+          subjectComponentPrices,
+          subjectComponentAllocations,
+          subjectTargetSetPrice
+        );
+      }
+
+      test('it defaults to 10%', async () => {
+        const { units, naturalUnit } = await subject();
+
+        const expectedComponentUnit = [new BigNumber(25), new BigNumber(25)];
+        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedComponentUnit));
+
+        const expectedNaturalUnit = new BigNumber(10);
+        expect(naturalUnit).to.bignumber.equal(expectedNaturalUnit);
+      });
+    });
+  });
+
   describe('createSetAsync', async () => {
     let componentTokens: StandardTokenMockContract[];
 

@@ -133,8 +133,9 @@ class SetProtocol {
   }
 
   /**
-   * Calculates unit and naturalUnit inputs for `createSetAsync` for a given list of ERC20 token addreses, proportions
-   * of each, current token prices, and target Set price
+   * Helper for `calculateSetUnits` when a list of decimals is not available and needs to be fetched. Calculates unit
+   * and naturalUnit inputs for `createSetAsync` for a given list of ERC20 token addreses, proportions of each, current
+   * token prices, and target Set price
    *
    * Note: the target price may not be achievable with the lowest viable natural unit. Precision is achieved by
    * increasing the magnitude of natural unit up to `10 ** 18` and recalculating the component units. Defaults to
@@ -157,6 +158,37 @@ class SetProtocol {
   ): Promise<SetUnits> {
     return await this.factory.calculateSetUnitsAsync(
       components,
+      prices,
+      proportions,
+      targetPrice,
+      percentError,
+    );
+  }
+
+  /**
+   * Calculates unit and naturalUnit inputs for `createSetAsync` for a given list of ERC20 token addreses, their
+   * decimals, proportions of each, current token prices, and target Set price
+   *
+   * @param components      List of ERC20 token addresses to use for Set creation
+   * @param decimals        List of decimals for the components in index order
+   * @param prices          List of current prices for the components in index order
+   * @param proportions     Decimal-formatted allocations in index order. Must add up to 1
+   * @param targetPrice     Target fiat-denominated price of a single natural unit of the Set
+   * @param percentError    Allowable price error percentage of resulting Set price from the target price input
+   * @return                Object conforming to `SetUnits` containing a list of component units in index order and a
+   *                          valid natural unit. These properties can be passed directly into `createSetAsync`
+   */
+  public calculateSetUnits(
+    components: Address[],
+    decimals: number[],
+    prices: BigNumber[],
+    proportions: BigNumber[],
+    targetPrice: BigNumber,
+    percentError?: number,
+  ): SetUnits {
+    return this.factory.calculateSetUnits(
+      components,
+      decimals,
       prices,
       proportions,
       targetPrice,

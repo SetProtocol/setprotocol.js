@@ -85,12 +85,13 @@ export class FactoryAPI {
       minimumDecimal = ZERO;
     }
 
-    return new BigNumber(10 ** (18 - minimumDecimal.toNumber()));
+    return this.calculateNaturalUnit(minimumDecimal);
   }
 
   /**
-   * Calculates unit and naturalUnit inputs for `createSetAsync` for a given list of ERC20 token addreses, proportions
-   * of each, current token prices, and target Set price
+   * Helper for `calculateSetUnits` when a list of decimals is not available and needs to be fetched. Calculates unit
+   * and naturalUnit inputs for `createSetAsync` for a given list of ERC20 token addreses, proportions of each, current
+   * token prices, and target Set price
    *
    * @param components      List of ERC20 token addresses to use for Set creation
    * @param prices          List of current prices for the components in index order
@@ -107,10 +108,37 @@ export class FactoryAPI {
     targetPrice: BigNumber,
     percentError: number = 10,
   ): Promise<SetUnits> {
-    await this.assertCalculateCreateUnitInputs(components, prices, proportions);
+    const decimals = await this.getComponentsDecimalsAsync(components);
 
-    const requiredComponentUnits = await this.calculateRequiredComponentUnits(
+    return this.calculateSetUnits(components, decimals, prices, proportions, targetPrice, percentError);
+  }
+
+  /**
+   * Calculates unit and naturalUnit inputs for `createSetAsync` for a given list of ERC20 token addreses, their
+   * decimals, proportions of each, current token prices, and target Set price
+   *
+   * @param components      List of ERC20 token addresses to use for Set creation
+   * @param decimals        List of decimals for the components in index order
+   * @param prices          List of current prices for the components in index order
+   * @param proportions     Decimal-formatted allocations in index order. Must add up to 1
+   * @param targetPrice     Target fiat-denominated price of a single natural unit of the Set
+   * @param percentError    Allowable price error percentage of resulting Set price from the target price
+   * @return                Object conforming to `SetUnits` containing a list of component units in index order and a
+   *                          valid natural unit. These properties can be passed directly into `createSetAsync`
+   */
+  public calculateSetUnits(
+    components: Address[],
+    decimals: number[],
+    prices: BigNumber[],
+    proportions: BigNumber[],
+    targetPrice: BigNumber,
+    percentError: number = 10,
+  ): SetUnits {
+    this.assertCalculateCreateUnitInputs(components, prices, proportions);
+
+    const requiredComponentUnits = this.calculateRequiredComponentUnits(
       components,
+      decimals,
       prices,
       proportions,
       targetPrice,
@@ -120,7 +148,8 @@ export class FactoryAPI {
     const naturalUnitExponent = UINT256(18).sub(minimumUnitExponent);
     const derivedNaturalUnit = UINT256(10).pow(naturalUnitExponent.toNumber());
 
-    const minimumNaturalUnit = await this.calculateMinimumNaturalUnitAsync(components);
+    const minimumDecimal = BigNumber.min(decimals);
+    const minimumNaturalUnit = this.calculateNaturalUnit(minimumDecimal);
 
     let naturalUnit = BigNumber.max(minimumNaturalUnit, derivedNaturalUnit);
     let formattedComponentUnits: BigNumber[];
@@ -138,8 +167,7 @@ export class FactoryAPI {
           .ceil();
       });
 
-      const decimals = await this.getComponentsDecimals(components);
-      const impliedSetPrice = this.calculateImpliedSetPrice(formattedComponentUnits, naturalUnit, prices, decimals);
+      const impliedSetPrice = this.calculateSetPrice(formattedComponentUnits, naturalUnit, prices, decimals);
       errorPercentage = calculatePercentDifference(impliedSetPrice, targetPrice);
 
       // Only continue to experiment with improvements if the following conditions are met:
@@ -275,29 +303,13 @@ export class FactoryAPI {
 
   /* ============ Private Function ============ */
 
-  private async calculateRequiredComponentUnits(
-    components: Address[],
-    prices: BigNumber[],
-    proportions: BigNumber[],
-    targetPrice: BigNumber,
-  ): Promise<BigNumber[]> {
-    const targetComponentValues = this.calculateTargetComponentValues(proportions, targetPrice);
-
-    // Calculate the target amount of tokens required by dividing the target component price
-    // with the price of a component and then multiply by the token's base unit amount
-    // (10 ** componentDecimal) to get it in base units.
-    const componentAmountRequiredPromises = _.map(targetComponentValues, async(targetComponentValue, i) => {
-      const componentDecimals: number = await this.getComponentDecimals(components[i]);
-      const numComponentsRequired = targetComponentValue.div(prices[i]);
-      const standardComponentUnit = new BigNumber(10).pow(componentDecimals);
-
-      return numComponentsRequired.mul(standardComponentUnit);
-    });
-
-    return Promise.all(componentAmountRequiredPromises);
-  }
-
-  private async getComponentsDecimals(componentAddresses: Address[]): Promise<number[]> {
+  /**
+   * Fetch the component decimals from the chain
+   *
+   * @param componentAddresses    List of ERC20 token addresses
+   * @return                      List of component decimals
+   */
+  private async getComponentsDecimalsAsync(componentAddresses: Address[]): Promise<number[]> {
     const componentDecimalPromises = _.map(componentAddresses, async componentAddress => {
       const componentDecimals: number = await this.getComponentDecimals(componentAddress);
 
@@ -307,6 +319,12 @@ export class FactoryAPI {
     return Promise.all(componentDecimalPromises);
   }
 
+  /**
+   * Fetch the decimals for one ERC20 token
+   *
+   * @param componentAddress    ERC20 token addresses
+   * @return                    Token decimals
+   */
   private async getComponentDecimals(componentAddress: Address): Promise<number> {
     let componentDecimals: number;
     try {
@@ -318,16 +336,49 @@ export class FactoryAPI {
     return componentDecimals;
   }
 
-  private calculateTargetComponentValues(
+  /**
+   * Calculates the target amount of tokens required for a Set with a target price
+   *
+   * @param components     List of ERC20 token addresses to use for Set creation
+   * @param decimals       List of decimals for the components in index order
+   * @param prices         List of current prices for the components in index order
+   * @param proportions    Decimal-formatted allocations in index order. Must add up to 1
+   * @param targetPrice    Target fiat-denominated price of a single natural unit of the Set
+   * @return               Returns array of BigNumbers representing the minimum required units
+   */
+  private calculateRequiredComponentUnits(
+    components: Address[],
+    decimals: number[],
+    prices: BigNumber[],
     proportions: BigNumber[],
     targetPrice: BigNumber,
   ): BigNumber[] {
-    return proportions.map(decimalAllocation => {
+    const targetComponentValues = proportions.map(decimalAllocation => {
       return decimalAllocation.mul(targetPrice);
+    });
+
+    // Dividing the target component price with the price of a component and then multiply by
+    // the token's base unit amount (10 ** componentDecimal) to get it in base units.
+    return _.map(targetComponentValues, (targetComponentValue, i) => {
+      const componentDecimals: number = decimals[i];
+      const numComponentsRequired = targetComponentValue.div(prices[i]);
+      const standardComponentUnit = new BigNumber(10).pow(componentDecimals);
+
+      return numComponentsRequired.mul(standardComponentUnit);
     });
   }
 
-  private calculateImpliedSetPrice(
+  /**
+   * Calculate a Set price for given component and Set properties. This is used to verify the total Set price
+   * when assigning a natural unit to a list of components
+   *
+   * @param componentUnits    List of ERC20 token addresses to use for Set creation in index order
+   * @param naturalUnit       Proposed natural unit for the component units
+   * @param prices            Current price of the component tokens in index order
+   * @param targetPrice       Target fiat-denominated price of a single natural unit of the Set
+   * @return                  Returns the calculcated price from all of the component and Set data
+   */
+  private calculateSetPrice(
     componentUnits: BigNumber[],
     naturalUnit: BigNumber,
     prices: BigNumber[],
@@ -340,9 +391,19 @@ export class FactoryAPI {
     }, ZERO);
   }
 
+  /**
+   * Calculates the natural unit from the smallest decimal in a list of token component decimals
+   *
+   * @param decimal           Smallest decimal for a list of component token decimals
+   * @return                  Natural unit
+   */
+  public calculateNaturalUnit(decimal: BigNumber): BigNumber {
+    return new BigNumber(10 ** (18 - decimal.toNumber()));
+  }
+
   /* ============ Private Assertions ============ */
 
-  private async assertCalculateCreateUnitInputs(components: Address[], prices: BigNumber[], proportions: BigNumber[]) {
+  private assertCalculateCreateUnitInputs(components: Address[], prices: BigNumber[], proportions: BigNumber[]) {
     this.assert.common.verifyProportionsSumToOne(proportions, coreAPIErrors.PROPORTIONS_DONT_ADD_UP_TO_1());
     this.assert.common.isEqualLength(
       prices,
