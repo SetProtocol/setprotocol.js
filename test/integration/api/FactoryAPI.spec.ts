@@ -523,7 +523,7 @@ describe('FactoryAPI', () => {
     });
   });
 
-  describe('calculateMinimumNaturalUnit', async () => {
+  describe('calculateMinimumNaturalUnitAsync', async () => {
     let componentInstances: (StandardTokenMockContract | NoDecimalTokenMockContract)[];
     let subjectComponents: Address[];
 
@@ -663,14 +663,81 @@ describe('FactoryAPI', () => {
         expect(naturalUnit).to.bignumber.equal(expectedResult);
       });
     });
+  });
 
-    describe('when the allocation inputs do not sum up to 1', async () => {
+  describe('calculateSetUnits', async () => {
+    let subjectComponentAddresses: Address[];
+    let subjectDecimals: number[];
+    let subjectComponentPrices: BigNumber[];
+    let subjectComponentAllocations: BigNumber[];
+    let subjectTargetSetPrice: BigNumber;
+    let percentError: number;
+
+    beforeEach(async () => {
+      const tokenCount = 2;
+      const decimalsList = [18, 18];
+      const components = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
+
+      subjectComponentAddresses = _.map(components, component => component.address);
+      subjectDecimals = decimalsList;
+      subjectComponentPrices = [new BigNumber(2), new BigNumber(2)];
+      subjectComponentAllocations = [new BigNumber(0.5), new BigNumber(0.5)];
+      subjectTargetSetPrice = new BigNumber(10);
+      percentError = 10;
+    });
+
+    function subject(): SetUnits {
+      return factoryAPI.calculateSetUnits(
+        subjectComponentAddresses,
+        subjectDecimals,
+        subjectComponentPrices,
+        subjectComponentAllocations,
+        subjectTargetSetPrice,
+        percentError,
+      );
+    }
+
+    test('should calculate the correct required component units', async () => {
+      const { units } = await subject();
+
+      const expectedResult = [new BigNumber(25), new BigNumber(25)];
+      expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
+    });
+
+    test('should calculate the correct natural units', async () => {
+      const { naturalUnit } = await subject();
+
+      const expectedResult = new BigNumber(10);
+      expect(naturalUnit).to.bignumber.equal(expectedResult);
+    });
+
+    describe('when the max percent error is set to 1%', async () => {
+      beforeEach(async () => {
+        percentError = 1;
+      });
+
+      test('should calculate the correct required component units', async () => {
+        const { units } = await subject();
+
+        const expectedResult = [new BigNumber(25), new BigNumber(25)];
+        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedResult));
+      });
+
+      test('should calculate the correct natural units', async () => {
+        const { naturalUnit } = await subject();
+
+        const expectedResult = new BigNumber(10);
+        expect(naturalUnit).to.bignumber.equal(expectedResult);
+      });
+    });
+
+    describe('when the allocation inputs do not sum up to 1', () => {
       beforeEach(async () => {
         subjectComponentAllocations = [new BigNumber(0.5), new BigNumber(0.49)];
       });
 
       test('it should throw', async () => {
-        return expect(subject()).to.be.rejectedWith(`The component percentages inputted do not add up to 1`);
+        expect(() => subject()).to.throw(`The component percentages inputted do not add up to 1`);
       });
     });
 
@@ -683,6 +750,7 @@ describe('FactoryAPI', () => {
         const decimalSpecificComponents = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
 
         subjectComponentAddresses = _.map(decimalSpecificComponents, component => component.address);
+        subjectDecimals = decimalsList;
         subjectComponentPrices = [
           new BigNumber(3.5300),
           new BigNumber(2.6600),
@@ -774,6 +842,7 @@ describe('FactoryAPI', () => {
         const decimalSpecificComponents = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
 
         subjectComponentAddresses = _.map(decimalSpecificComponents, component => component.address);
+        subjectDecimals = decimalsList;
         subjectComponentPrices = [new BigNumber(0.627), new BigNumber(0.0342)];
         subjectComponentAllocations = [new BigNumber(0.5), new BigNumber(0.5)];
         subjectTargetSetPrice = new BigNumber(100);
@@ -801,6 +870,7 @@ describe('FactoryAPI', () => {
         const decimalSpecificComponents = await deployTokensSpecifyingDecimals(tokenCount, decimalsList, web3);
 
         subjectComponentAddresses = _.map(decimalSpecificComponents, component => component.address);
+        subjectDecimals = decimalsList;
         subjectComponentPrices = [new BigNumber(1), new BigNumber(1), new BigNumber(1)];
         subjectComponentAllocations = [new BigNumber(0.4), new BigNumber(0.3), new BigNumber(0.3)];
         subjectTargetSetPrice = new BigNumber(1);
@@ -819,7 +889,6 @@ describe('FactoryAPI', () => {
         const expectedResult = new BigNumber(10 ** 13);
         expect(naturalUnit).to.bignumber.equal(expectedResult);
       });
-
     });
   });
 });
