@@ -116,7 +116,7 @@ class SetProtocol {
     this.erc20 = new ERC20API(this.web3, assertions);
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
-    this.orders = new OrderAPI(this.web3, this.core, assertions);
+    this.orders = new OrderAPI(this.web3, this.core, assertions, config.kyberNetworkWrapperAddress);
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core);
     this.setToken = new SetTokenAPI(this.web3, assertions);
   }

@@ -120,7 +120,7 @@ describe('FactoryAPI', () => {
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
       rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
       issuanceOrderModuleAddress: issuanceOrderModule.address,
-    };
+    } as SetProtocolConfig;
     coreWrapper = new CoreWrapper(
       web3,
       config.coreAddress,
