@@ -41,6 +41,7 @@ export interface SetProtocolConfig {
   vaultAddress: Address;
   rebalanceAuctionModuleAddress: Address;
   issuanceOrderModuleAddress: Address;
+  kyberNetworkWrapperAddress: Address;
   setTokenFactoryAddress: Address;
   rebalancingSetTokenFactoryAddress: Address;
 }

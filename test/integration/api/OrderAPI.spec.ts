@@ -32,6 +32,7 @@ import compact = require('lodash.compact');
 import {
   CoreContract,
   IssuanceOrderModuleContract,
+  KyberNetworkWrapperContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
@@ -91,6 +92,7 @@ describe('OrderAPI', () => {
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let issuanceOrderModule: IssuanceOrderModuleContract;
+  let kyberNetworkWrapper: KyberNetworkWrapperContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let coreWrapper: CoreWrapper;
@@ -109,6 +111,13 @@ describe('OrderAPI', () => {
       issuanceOrderModule,
     ] = await deployBaseContracts(web3);
 
+    kyberNetworkWrapper = await deployKyberNetworkWrapperContract(
+      web3,
+      SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
+      transferProxy,
+      core,
+    );
+
     coreWrapper = new CoreWrapper(
       web3,
       core.address,
@@ -118,7 +127,7 @@ describe('OrderAPI', () => {
       issuanceOrderModule.address
     );
     const assertions = new Assertions(web3, coreWrapper);
-    ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
+    ordersAPI = new OrderAPI(web3, coreWrapper, assertions, kyberNetworkWrapper.address);
   });
 
   afterEach(async () => {
@@ -156,6 +165,33 @@ describe('OrderAPI', () => {
       const currentTime = new BigNumber(Math.floor((Date.now()) / 1000));
       const expectedTimestamp = currentTime.add(secondsInFuture);
       expect(timestamp).to.bignumber.equal(expectedTimestamp);
+    });
+  });
+
+  describe('getKyberConversionRate', async () => {
+    let subjectMakerTokenAddress: Address;
+    let subjectComponentTokenAddress: Address;
+    let subjectQuantity: BigNumber;
+
+    async function subject(): Promise<[BigNumber, BigNumber]> {
+      return ordersAPI.getKyberConversionRate(
+        subjectMakerTokenAddress,
+        subjectComponentTokenAddress,
+        subjectQuantity
+      );
+    }
+
+    beforeEach(async () => {
+      subjectMakerTokenAddress = SetTestUtils.KYBER_RESERVE_SOURCE_TOKEN_ADDRESS;
+      subjectComponentTokenAddress = SetTestUtils.KYBER_RESERVE_DESTINATION_TOKEN_ADDRESS;
+      subjectQuantity = new BigNumber(100000);
+    });
+
+    it('returns a conversion rate and slip rate', async () => {
+      const [conversionRate, slipRate] = await subject();
+
+      expect(conversionRate).to.bignumber.equal(321550000000000000);
+      expect(slipRate).to.bignumber.equal(319942250000000000);
     });
   });
 
@@ -925,12 +961,6 @@ describe('OrderAPI', () => {
         SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
         SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
         SetTestUtils.ZERO_EX_TOKEN_ADDRESS,
-        transferProxy,
-        core,
-      );
-      await deployKyberNetworkWrapperContract(
-        web3,
-        SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
         transferProxy,
         core,
       );

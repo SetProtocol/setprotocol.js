@@ -19,8 +19,17 @@
 import { ContractWrapper } from './ContractWrapper';
 import { CoreWrapper } from './CoreWrapper';
 import { ERC20Wrapper } from './ERC20Wrapper';
+import { KyberNetworkWrapper } from './KyberNetworkWrapper';
 import { RebalancingSetTokenWrapper } from './RebalancingSetTokenWrapper';
 import { SetTokenWrapper } from './SetTokenWrapper';
 import { VaultWrapper } from './VaultWrapper';
 
-export { ContractWrapper, CoreWrapper, ERC20Wrapper, RebalancingSetTokenWrapper, SetTokenWrapper, VaultWrapper };
+export {
+  ContractWrapper,
+  CoreWrapper,
+  ERC20Wrapper,
+  KyberNetworkWrapper,
+  RebalancingSetTokenWrapper,
+  SetTokenWrapper,
+  VaultWrapper
+};
