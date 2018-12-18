@@ -701,8 +701,15 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
+      const kyberNetworkWrapper = await deployKyberNetworkWrapperContract(
+        web3,
+        SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
+        transferProxy,
+        core,
+      );
+
       const assertions = new Assertions(web3, coreWrapper);
-      const ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
+      const ordersAPI = new OrderAPI(web3, coreWrapper, assertions, kyberNetworkWrapper.address);
 
       const issuanceOrderTaker = ACCOUNTS[0].address;
       const issuanceOrderMaker = ACCOUNTS[1].address;
