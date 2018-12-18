@@ -553,8 +553,15 @@ describe('CoreWrapper', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
+      const kyberNetworkWrapper = await deployKyberNetworkWrapperContract(
+        web3,
+        SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
+        transferProxy,
+        core,
+      );
+
       const assertions = new Assertions(web3, coreWrapper);
-      const ordersAPI = new OrderAPI(web3, coreWrapper, assertions);
+      const ordersAPI = new OrderAPI(web3, coreWrapper, assertions, kyberNetworkWrapper.address);
 
       await deployTakerWalletWrapperContract(web3, transferProxy, core);
       await deployZeroExExchangeWrapperContract(
@@ -562,12 +569,6 @@ describe('CoreWrapper', () => {
         SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
         SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
         SetTestUtils.ZERO_EX_TOKEN_ADDRESS,
-        transferProxy,
-        core,
-      );
-      await deployKyberNetworkWrapperContract(
-        web3,
-        SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
         transferProxy,
         core,
       );
