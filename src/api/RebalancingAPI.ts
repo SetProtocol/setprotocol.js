@@ -123,7 +123,7 @@ export class RebalancingAPI {
    *                                          gasPrice data
    * @return                                Transaction hash
    */
-  public async rebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: Tx): Promise<string> {
+  public async startRebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: Tx): Promise<string> {
     await this.assertStartRebalance(rebalancingSetTokenAddress);
 
     return await this.rebalancingSetToken.startRebalance(rebalancingSetTokenAddress, txOpts);
