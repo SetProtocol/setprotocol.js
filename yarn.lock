@@ -5873,10 +5873,10 @@ set-immediate-shim@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/set-immediate-shim/-/set-immediate-shim-1.0.1.tgz#4b2b1b27eb808a9f8dcc481a58e5e56f599f3f61"
 
-set-protocol-contracts@1.2.1-beta.1:
-  version "1.2.1-beta.1"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.1-beta.1.tgz#79f4ef0d2a36af987dd2a0a3467943a3f3e7df4a"
-  integrity sha512-xNzAdYP34BQgPH+auTnumZZAN0jtIH1Efurp3MHkZAG/Tudum+YC/PRPMGQxbV9O6q9V7WnvJ9I7OoxrGScLYA==
+set-protocol-contracts@1.2.1-beta.2:
+  version "1.2.1-beta.2"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.1-beta.2.tgz#0934aeecd64ce7855f6f4b34583654173adbfbc4"
+  integrity sha512-4j2MhIbRnM6VV3eJqQcFbxeJmLS2ePrvDRJSU4QG6im4t9hOj9Y1UkvpkSBVh8IfByIFnGVqhfcTtk8DbpyaQA==
   dependencies:
     bn-chai "^1.0.1"
     eth-gas-reporter "^0.1.10"

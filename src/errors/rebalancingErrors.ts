@@ -21,6 +21,7 @@ export const rebalancingErrors = {
   REBALANCE_IN_PROGRESS: (rebalancingSetAddress: string) => `Rebalancing token at ${rebalancingSetAddress} is ` +
     `currently in rebalancing state. Issue, Redeem, and propose functionality is not available during this time`,
   NOT_REBALANCING_MANAGER: (caller: string) => `Caller ${caller} is not the manager of this Rebalancing Set Token.`,
+  NOT_VALID_PRICE_CURVE: (priceCurve: string) => `Proposed ${priceCurve} is not recognized by Core.`,
   INSUFFICIENT_TIME_PASSED: (nextAvailableRebalance: string) => `Attempting to rebalance too soon. Rebalancing next ` +
     `available on ${nextAvailableRebalance}`,
   PROPOSED_SET_NATURAL_UNIT_IS_NOT_MULTIPLE_OF_CURRENT_SET: (currentSetAddress: string, nextSetAddress: string) =>
