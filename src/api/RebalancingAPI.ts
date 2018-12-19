@@ -77,10 +77,10 @@ export class RebalancingAPI {
    * @param  nextSetAddress                 Address of new Set to rebalance into after proposal period
    * @param  auctionLibrary                 Address of auction price curve to use. See deployed contracts for addresses
    *                                          of existing libraries
-   * @param  curveCoefficient               Set auction price curve coefficient
-   * @param  auctionStartPrice              Starting price of the rebalancing auction, denoting the rating. Used with
-   *                                          auctionPriceDivisor and library
-   * @param  auctionPriceDivisor            Parameter to control how fast price moves
+   * @param  auctionTimeToPivot             Amount of time until curve pivots and protocol takes over price curve
+   * @param  auctionStartPrice              Starting price of the rebalancing auction, depending on library may not be
+   *                                          used
+   * @param  auctionPivotPrice              Price to pivot from user-defined to protocol-defined curve
    * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
    *                                          gasPrice data
    * @return                                Transaction hash
@@ -89,18 +89,18 @@ export class RebalancingAPI {
     rebalancingSetTokenAddress: Address,
     nextSetAddress: Address,
     auctionLibrary: Address,
-    curveCoefficient: BigNumber,
+    auctionTimeToPivot: BigNumber,
     auctionStartPrice: BigNumber,
-    auctionPriceDivisor: BigNumber,
+    auctionPivotPrice: BigNumber,
     txOpts: Tx,
   ): Promise<string> {
     await this.assertPropose(
       rebalancingSetTokenAddress,
       nextSetAddress,
       auctionLibrary,
-      curveCoefficient,
+      auctionTimeToPivot,
       auctionStartPrice,
-      auctionPriceDivisor,
+      auctionPivotPrice,
       txOpts
     );
 
@@ -108,9 +108,9 @@ export class RebalancingAPI {
       rebalancingSetTokenAddress,
       nextSetAddress,
       auctionLibrary,
-      curveCoefficient,
+      auctionTimeToPivot,
       auctionStartPrice,
-      auctionPriceDivisor,
+      auctionPivotPrice,
       txOpts
     );
   }
@@ -123,10 +123,10 @@ export class RebalancingAPI {
    *                                          gasPrice data
    * @return                                Transaction hash
    */
-  public async rebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: Tx): Promise<string> {
+  public async startRebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: Tx): Promise<string> {
     await this.assertRebalance(rebalancingSetTokenAddress);
 
-    return await this.rebalancingSetToken.rebalance(rebalancingSetTokenAddress, txOpts);
+    return await this.rebalancingSetToken.startRebalance(rebalancingSetTokenAddress, txOpts);
   }
 
   /**

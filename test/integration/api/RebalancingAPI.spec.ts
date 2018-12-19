@@ -307,7 +307,7 @@ describe('RebalancingAPI', () => {
     });
   });
 
-  describe('rebalanceAsync', async () => {
+  describe('startRebalanceAsync', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
@@ -358,7 +358,7 @@ describe('RebalancingAPI', () => {
     });
 
     async function subject(): Promise<string> {
-      return await rebalancingAPI.rebalanceAsync(
+      return await rebalancingAPI.startRebalanceAsync(
         subjectRebalancingSetTokenAddress,
         { from: subjectCaller }
       );

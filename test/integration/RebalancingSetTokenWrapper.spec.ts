@@ -648,7 +648,7 @@ describe('SetTokenWrapper', () => {
     });
   });
 
-  describe('rebalance', async () => {
+  describe('startRebalance', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
@@ -726,7 +726,7 @@ describe('SetTokenWrapper', () => {
     });
 
     async function subject(): Promise<any> {
-      return await rebalancingSetTokenWrapper.rebalance(
+      return await rebalancingSetTokenWrapper.startRebalance(
         subjectRebalancingSetTokenAddress,
         { from: subjectCaller }
       );
@@ -942,6 +942,66 @@ describe('SetTokenWrapper', () => {
 
       const returnedManager = await rebalancingSetTokenWrapper.manager(subjectRebalancingSetTokenAddress);
       expect(returnedManager).to.eql(subjectNewManager);
+    });
+  });
+
+  describe('tokenIsComponent', async () => {
+    let currentSetToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+
+    let subjectRebalancingSetTokenAddress: Address;
+    let subjectComponent: Address;
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 1;
+      const setTokens = await deploySetTokensAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      currentSetToken = setTokens[0];
+
+      const proposalPeriod = ONE_DAY_IN_SECONDS;
+      const managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      subjectComponent = currentSetToken.address;
+      subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
+    });
+
+    async function subject(): Promise<any> {
+      return await rebalancingSetTokenWrapper.tokenIsComponent(
+        subjectRebalancingSetTokenAddress,
+        subjectComponent,
+      );
+    }
+
+    test('it returns true', async () => {
+      const isComponent = await subject();
+
+      expect(isComponent).to.be.true;
+    });
+
+    describe('when the Rebalancing Set Token is in Rebalance state', async () => {
+      beforeEach(async () => {
+        subjectComponent = ACCOUNTS[3].address;
+      });
+
+      it('returns the proper rebalancing details', async () => {
+      const isComponent = await subject();
+
+      expect(isComponent).to.be.false;
+      });
     });
   });
 });
