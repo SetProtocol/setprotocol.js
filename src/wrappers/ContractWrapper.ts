@@ -22,6 +22,7 @@ import {
   CoreContract,
   ERC20DetailedContract,
   IssuanceOrderModuleContract,
+  KyberNetworkWrapperContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   SetTokenContract,
@@ -58,7 +59,7 @@ export class ContractWrapper {
     coreAddress: Address,
     transactionOptions: object = {},
   ): Promise<CoreContract> {
-    const cacheKey = this.getCoreCacheKey(coreAddress);
+    const cacheKey = `Core_${coreAddress}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as CoreContract;
@@ -84,7 +85,7 @@ export class ContractWrapper {
     setTokenAddress: Address,
     transactionOptions: object = {},
   ): Promise<SetTokenContract> {
-    const cacheKey = this.getSetTokenCacheKey(setTokenAddress);
+    const cacheKey = `SetToken_${setTokenAddress}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as SetTokenContract;
@@ -110,7 +111,7 @@ export class ContractWrapper {
     rebalancingSetTokenAddress: Address,
     transactionOptions: object = {},
   ): Promise<RebalancingSetTokenContract> {
-    const cacheKey = this.getRebalancingSetTokenCacheKey(rebalancingSetTokenAddress);
+    const cacheKey = `RebalancingSetToken_${rebalancingSetTokenAddress}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as RebalancingSetTokenContract;
@@ -136,7 +137,7 @@ export class ContractWrapper {
     tokenAddress: Address,
     transactionOptions: object = {},
   ): Promise<ERC20DetailedContract> {
-    const cacheKey = this.getERC20TokenCacheKey(tokenAddress);
+    const cacheKey = `ERC20Token_${tokenAddress}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as ERC20DetailedContract;
@@ -162,7 +163,7 @@ export class ContractWrapper {
     vaultAddress: Address,
     transactionOptions: object = {},
   ): Promise<VaultContract> {
-    const cacheKey = this.getVaultCacheKey(vaultAddress);
+    const cacheKey = `Vault_${vaultAddress}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as VaultContract;
@@ -184,7 +185,7 @@ export class ContractWrapper {
     rebalanceAuctionModuleAddress: Address,
     transactionOptions: object = {},
   ): Promise<RebalanceAuctionModuleContract> {
-    const cacheKey = this.getRebalanceAuctionModuleCacheKey(rebalanceAuctionModuleAddress);
+    const cacheKey = `RebalanceAuctionModule_${rebalanceAuctionModuleAddress}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as RebalanceAuctionModuleContract;
@@ -200,6 +201,32 @@ export class ContractWrapper {
   }
 
   /**
+   * Load Kyber Network Wrapper contract
+   *
+   * @param  kyberNetworkWrapperAddress          Address of the Kyber Network Wrapper contract
+   * @param  transactionOptions                  Options sent into the contract deployed method
+   * @return                                     The Kyber Network Wrapper Contract
+   */
+  public async loadKyberNetworkWrapperAsync(
+    kyberNetworkWrapperAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<KyberNetworkWrapperContract> {
+    const cacheKey = `KyberNetworkWrapper_${kyberNetworkWrapperAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as KyberNetworkWrapperContract;
+    } else {
+      const kyberNetworkWrapperContract = await KyberNetworkWrapperContract.at(
+        kyberNetworkWrapperAddress,
+        this.web3,
+        transactionOptions
+      );
+      this.cache[cacheKey] = kyberNetworkWrapperContract;
+      return kyberNetworkWrapperContract;
+    }
+  }
+
+  /**
    * Load Issuance Order Module contract
    *
    * @param  issuanceOrderModuleAddress          Address of the Issuance Order Module contract
@@ -210,7 +237,7 @@ export class ContractWrapper {
     issuanceOrderModuleAddress: Address,
     transactionOptions: object = {},
   ): Promise<IssuanceOrderModuleContract> {
-    const cacheKey = this.getIssuanceOrderModuleCacheKey(issuanceOrderModuleAddress);
+    const cacheKey = `IssuanceOrderModule_${issuanceOrderModuleAddress}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as IssuanceOrderModuleContract;
@@ -223,75 +250,5 @@ export class ContractWrapper {
       this.cache[cacheKey] = issuanceOrderModuleContract;
       return issuanceOrderModuleContract;
     }
-  }
-
-  /**
-   * Creates a string used for accessing values in the core cache
-   *
-   * @param  coreAddress Address of the Core contract to use
-   * @return             The cache key
-   */
-  private getCoreCacheKey(coreAddress: Address): string {
-    return `Core_${coreAddress}`;
-  }
-
-  /**
-   * Creates a string used for accessing values in the set token cache
-   *
-   * @param  setTokenAddress Address of the Set Token contract to use
-   * @return                 The cache key
-   */
-  private getSetTokenCacheKey(setTokenAddress: Address): string {
-    return `SetToken_${setTokenAddress}`;
-  }
-
-  /**
-   * Creates a string used for accessing values in the rebalancing set token cache
-   *
-   * @param  rebalancingSetTokenAddress Address of the Set Token contract to use
-   * @return                            The cache key
-   */
-  private getRebalancingSetTokenCacheKey(rebalancingSetTokenAddress: Address): string {
-    return `RebalancingSetToken_${rebalancingSetTokenAddress}`;
-  }
-
-  /**
-   * Creates a string used for accessing values in the ERC20 token cache
-   *
-   * @param  tokenAddress Address of the ERC20 Token contract to use
-   * @return                 The cache key
-   */
-  private getERC20TokenCacheKey(tokenAddress: Address): string {
-    return `ERC20Token_${tokenAddress}`;
-  }
-
-  /**
-   * Creates a string used for accessing values in the vault cache
-   *
-   * @param  vaultAddress Address of the Vault contract to use
-   * @return              The cache key
-   */
-  private getVaultCacheKey(vaultAddress: Address): string {
-    return `Vault_${vaultAddress}`;
-  }
-
-  /**
-   * Creates a string used for accessing values in the issuance order module cache
-   *
-   * @param  issuanceOrderModuleAddress Address of the Vault contract to use
-   * @return                            The cache key
-   */
-  private getIssuanceOrderModuleCacheKey(issuanceOrderModuleAddress: Address): string {
-    return `IssuanceOrderModule_${issuanceOrderModuleAddress}`;
-  }
-
-  /**
-   * Creates a string used for accessing values in the rebalance auction module cache
-   *
-   * @param  rebalanceAuctionModuleAddress Address of the Vault contract to use
-   * @return                               The cache key
-   */
-  private getRebalanceAuctionModuleCacheKey(rebalanceAuctionModuleAddress: Address): string {
-    return `RebalanceAuctionModule_${rebalanceAuctionModuleAddress}`;
   }
 }
