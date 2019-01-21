@@ -330,7 +330,7 @@ export const constructInflowOutflowArraysAsync = async(
   const priceDivisor = DEFAULT_AUCTION_PRICE_DENOMINATOR;
 
   // Calculate the inflows and outflow arrays
-  const minimumBid = await rebalancingSetToken.minimumBid.callAsync();
+  const [minimumBid] = await rebalancingSetToken.biddingParameters.callAsync();
   const coefficient = minimumBid.div(priceDivisor);
   const effectiveQuantity = quantity.mul(priceDivisor).div(priceNumerator);
 
@@ -370,7 +370,7 @@ export const constructInflowOutflowAddressesArraysAsync = async(
   const priceDivisor = DEFAULT_AUCTION_PRICE_DENOMINATOR;
 
   // Calculate the inflows and outflow arrays
-  const minimumBid = await rebalancingSetToken.minimumBid.callAsync();
+  const [minimumBid] = await rebalancingSetToken.biddingParameters.callAsync();
   const coefficient = minimumBid.div(priceDivisor);
   const effectiveQuantity = quantity.mul(priceDivisor).div(priceNumerator);
 

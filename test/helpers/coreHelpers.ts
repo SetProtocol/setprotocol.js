@@ -101,7 +101,6 @@ export const deployCoreContract = async (
   web3: Web3,
   transferProxyAddress: Address,
   vaultAddress: Address,
-  signatureValidatorAddress: Address,
 ): Promise<CoreContract> => {
   const truffleCoreContract = contract(Core);
   truffleCoreContract.setProvider(web3.currentProvider);
@@ -112,7 +111,6 @@ export const deployCoreContract = async (
   const deployedCoreInstance = await truffleCoreContract.new(
     transferProxyAddress,
     vaultAddress,
-    signatureValidatorAddress
   );
 
   // Initialize typed contract class
@@ -275,13 +273,12 @@ export const deployBaseContracts = async (
   RebalanceAuctionModuleContract,
   IssuanceOrderModuleContract
 ]> => {
-  const [transferProxy, vault, signatureValidator] = await Promise.all([
+  const [transferProxy, vault] = await Promise.all([
     deployTransferProxyContract(web3),
     deployVaultContract(web3),
-    deploySignatureValidatorContract(web3),
   ]);
 
-  const core = await deployCoreContract(web3, transferProxy.address, vault.address, signatureValidator.address);
+  const core = await deployCoreContract(web3, transferProxy.address, vault.address);
 
   const [setTokenFactory, rebalancingSetTokenFactory] = await Promise.all([
     deploySetTokenFactoryContract(web3, core),

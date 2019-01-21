@@ -697,8 +697,7 @@ describe('RebalancingAPI', () => {
         );
       });
       it('throw', async () => {
-        const minimumBid = await rebalancingSetToken.minimumBid.callAsync();
-        const remainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+        const [minimumBid, remainingCurrentSets] = await rebalancingSetToken.biddingParameters.callAsync();
 
         return expect(subject()).to.be.rejectedWith(
           `In order to settle rebalance there must be less than current ${minimumBid} sets remaining ` +
@@ -830,12 +829,12 @@ describe('RebalancingAPI', () => {
       });
 
       test('subtract correct amount from remainingCurrentSets', async () => {
-        const existingRemainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+        const [, existingRemainingCurrentSets] = await rebalancingSetToken.biddingParameters.callAsync();
 
         await subject();
 
         const expectedRemainingCurrentSets = existingRemainingCurrentSets.sub(subjectBidQuantity);
-        const newRemainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+        const [, newRemainingCurrentSets] = await rebalancingSetToken.biddingParameters.callAsync();
         expect(newRemainingCurrentSets).to.eql(expectedRemainingCurrentSets);
       });
 
@@ -912,7 +911,7 @@ describe('RebalancingAPI', () => {
         });
 
         it('throw', async () => {
-          const remainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+          const [, remainingCurrentSets] = await rebalancingSetToken.biddingParameters.callAsync();
 
           return expect(subject()).to.be.rejectedWith(
             `The submitted bid quantity, ${subjectBidQuantity}, exceeds the remaining current sets,` +
@@ -925,12 +924,12 @@ describe('RebalancingAPI', () => {
         let minimumBid: BigNumber;
 
         beforeEach(async () => {
-          minimumBid = await rebalancingSetToken.minimumBid.callAsync();
+          [minimumBid] = await rebalancingSetToken.biddingParameters.callAsync();
           subjectBidQuantity = minimumBid.mul(1.5);
         });
 
         test('throw', async () => {
-          const remainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+          const [, remainingCurrentSets] = await rebalancingSetToken.biddingParameters.callAsync();
 
           return expect(subject()).to.be.rejectedWith(
             `The submitted bid quantity, ${subjectBidQuantity}, must be a multiple of the minimumBid, ${minimumBid}.`
@@ -1255,7 +1254,7 @@ describe('RebalancingAPI', () => {
         });
 
         it('throw', async () => {
-          const remainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+          const [, remainingCurrentSets] = await rebalancingSetToken.biddingParameters.callAsync();
 
           return expect(subject()).to.be.rejectedWith(
             `The submitted bid quantity, ${subjectBidQuantity}, exceeds the remaining current sets,` +
@@ -1268,12 +1267,12 @@ describe('RebalancingAPI', () => {
         let minimumBid: BigNumber;
 
         beforeEach(async () => {
-          minimumBid = await rebalancingSetToken.minimumBid.callAsync();
+          [minimumBid] = await rebalancingSetToken.biddingParameters.callAsync();
           subjectBidQuantity = minimumBid.mul(1.5);
         });
 
         test('throw', async () => {
-          const remainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+          const [, remainingCurrentSets] = await rebalancingSetToken.biddingParameters.callAsync();
 
           return expect(subject()).to.be.rejectedWith(
             `The submitted bid quantity, ${subjectBidQuantity}, must be a multiple of the minimumBid, ${minimumBid}.`
@@ -1624,10 +1623,8 @@ describe('RebalancingAPI', () => {
         const rebalancingStartedAt = auctionParameters[0];
         expect(rebalanceDetails.rebalancingStartedAt).to.bignumber.equal(rebalancingStartedAt);
 
-        const remainingCurrentSet = await rebalancingSetToken.remainingCurrentSets.callAsync();
-        expect(rebalanceDetails.remainingCurrentSet).to.bignumber.equal(remainingCurrentSet);
-
-        const minimumBid = await rebalancingSetToken.minimumBid.callAsync();
+        const [minimumBid, remainingCurrentSets] = await rebalancingSetToken.biddingParameters.callAsync();
+        expect(rebalanceDetails.remainingCurrentSet).to.bignumber.equal(remainingCurrentSets);
         expect(rebalanceDetails.minimumBid).to.bignumber.equal(minimumBid);
 
         expect(rebalanceDetails.nextSetAddress).eql(nextSetToken.address);

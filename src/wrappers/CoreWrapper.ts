@@ -153,7 +153,7 @@ export class CoreWrapper {
    * @param  txOpts            The options for executing the transaction
    * @return                   A transaction hash to then later look up
    */
-  public async redeemAndWithdraw(
+  public async redeemAndWithdrawTo(
     setAddress: Address,
     quantity: BigNumber,
     toExclude: BigNumber,
@@ -162,8 +162,9 @@ export class CoreWrapper {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    return await coreInstance.redeemAndWithdraw.sendTransactionAsync(
+    return await coreInstance.redeemAndWithdrawTo.sendTransactionAsync(
       setAddress,
+      txSettings.from,
       quantity,
       toExclude,
       txSettings,

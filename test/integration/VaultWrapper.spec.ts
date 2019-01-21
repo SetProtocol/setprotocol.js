@@ -75,6 +75,8 @@ describe('VaultWrapper', () => {
       issuanceOrderModule,
     ] = await deployBaseContracts(web3);
 
+    console.log('transferProxy', transferProxy);
+
     coreWrapper = new CoreWrapper(
       web3,
       core.address,

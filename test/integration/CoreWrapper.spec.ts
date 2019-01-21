@@ -347,7 +347,7 @@ describe('CoreWrapper', () => {
     });
 
     async function subject(): Promise<string> {
-      return await coreWrapper.redeemAndWithdraw(
+      return await coreWrapper.redeemAndWithdrawTo(
         subjectSetToRedeem,
         subjectQuantityToRedeem,
         subjectTokensToExcludeBitmask,
@@ -863,12 +863,12 @@ describe('CoreWrapper', () => {
     }
 
     test('subtract correct amount from remainingCurrentSets', async () => {
-      const existingRemainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+      const [, existingRemainingCurrentSets] = await rebalancingSetToken.biddingParameters.callAsync();
 
       await subject();
 
       const expectedRemainingCurrentSets = existingRemainingCurrentSets.sub(subjectBidQuantity);
-      const newRemainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+      const [, newRemainingCurrentSets] = await rebalancingSetToken.biddingParameters.callAsync();
       expect(newRemainingCurrentSets).to.eql(expectedRemainingCurrentSets);
     });
 
