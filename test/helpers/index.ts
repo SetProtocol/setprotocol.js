@@ -1,5 +1,6 @@
 export {
   addAuthorizationAsync,
+  addWhiteListedTokenAsync,
   approveForTransferAsync,
   deployBaseContracts,
   deployCoreContract,

@@ -193,8 +193,7 @@ export class RebalancingAssertions {
    */
   public async enoughSetsRebalanced(rebalancingSetTokenAddress: Address): Promise<void> {
     const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
-    const minimumBid = await rebalancingSetTokenInstance.minimumBid.callAsync();
-    const remainingCurrentSets = await rebalancingSetTokenInstance.remainingCurrentSets.callAsync();
+    const [minimumBid, remainingCurrentSets] = await rebalancingSetTokenInstance.getBiddingParameters.callAsync();
 
     if (remainingCurrentSets.greaterThanOrEqualTo(minimumBid)) {
       throw new Error(rebalancingErrors.NOT_ENOUGH_SETS_REBALANCED(
@@ -217,7 +216,7 @@ export class RebalancingAssertions {
     bidQuantity: BigNumber
   ): Promise<void> {
     const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
-    const remainingCurrentSets = await rebalancingSetTokenInstance.remainingCurrentSets.callAsync();
+    const [, remainingCurrentSets] = await rebalancingSetTokenInstance.getBiddingParameters.callAsync();
 
     if (bidQuantity.greaterThan(remainingCurrentSets)) {
       throw new Error(rebalancingErrors.BID_AMOUNT_EXCEEDS_REMAINING_CURRENT_SETS(
@@ -235,7 +234,7 @@ export class RebalancingAssertions {
    */
   public async bidIsMultipleOfMinimumBid(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber): Promise<void> {
     const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
-    const minimumBid = await rebalancingSetTokenInstance.minimumBid.callAsync();
+    const [ minimumBid ] = await rebalancingSetTokenInstance.getBiddingParameters.callAsync();
 
     if (!bidQuantity.modulo(minimumBid).isZero()) {
       throw new Error(rebalancingErrors.BID_AMOUNT_NOT_MULTIPLE_OF_MINIMUM_BID(

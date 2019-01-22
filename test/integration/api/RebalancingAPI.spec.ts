@@ -38,6 +38,7 @@ import {
   StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
+  WhiteListContract,
 } from 'set-protocol-contracts';
 import { Web3Utils } from 'set-protocol-utils';
 
@@ -60,6 +61,7 @@ import { Assertions } from '@src/assertions';
 import ChaiSetup from '@test/helpers/chaiSetup';
 import {
   addAuthorizationAsync,
+  addWhiteListedTokenAsync,
   addPriceCurveToCoreAsync,
   approveForTransferAsync,
   constructInflowOutflowArraysAsync,
@@ -106,6 +108,7 @@ describe('RebalancingAPI', () => {
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
+  let whitelist: WhiteListContract;
 
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
   let rebalancingAPI: RebalancingAPI;
@@ -121,6 +124,7 @@ describe('RebalancingAPI', () => {
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
       issuanceOrderModule,
+      whitelist,
     ] = await deployBaseContracts(web3);
 
     const coreWrapper = new CoreWrapper(
@@ -171,6 +175,11 @@ describe('RebalancingAPI', () => {
         setTokensToDeploy,
         deployedSetTokenNaturalUnits,
       );
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
 
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       rebalanceInterval = ONE_DAY_IN_SECONDS;
@@ -365,6 +374,11 @@ describe('RebalancingAPI', () => {
         setTokensToDeploy,
       );
 
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
@@ -546,6 +560,11 @@ describe('RebalancingAPI', () => {
         setTokensToDeploy,
       );
 
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
@@ -697,8 +716,7 @@ describe('RebalancingAPI', () => {
         );
       });
       it('throw', async () => {
-        const minimumBid = await rebalancingSetToken.minimumBid.callAsync();
-        const remainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+        const [minimumBid, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
 
         return expect(subject()).to.be.rejectedWith(
           `In order to settle rebalance there must be less than current ${minimumBid} sets remaining ` +
@@ -731,6 +749,11 @@ describe('RebalancingAPI', () => {
         transferProxy.address,
         setTokensToDeploy,
       );
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -830,12 +853,12 @@ describe('RebalancingAPI', () => {
       });
 
       test('subtract correct amount from remainingCurrentSets', async () => {
-        const existingRemainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+        const [, existingRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
 
         await subject();
 
         const expectedRemainingCurrentSets = existingRemainingCurrentSets.sub(subjectBidQuantity);
-        const newRemainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+        const [, newRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
         expect(newRemainingCurrentSets).to.eql(expectedRemainingCurrentSets);
       });
 
@@ -912,7 +935,7 @@ describe('RebalancingAPI', () => {
         });
 
         it('throw', async () => {
-          const remainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+          const [, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
 
           return expect(subject()).to.be.rejectedWith(
             `The submitted bid quantity, ${subjectBidQuantity}, exceeds the remaining current sets,` +
@@ -925,12 +948,12 @@ describe('RebalancingAPI', () => {
         let minimumBid: BigNumber;
 
         beforeEach(async () => {
-          minimumBid = await rebalancingSetToken.minimumBid.callAsync();
+          [minimumBid] = await rebalancingSetToken.getBiddingParameters.callAsync();
           subjectBidQuantity = minimumBid.mul(1.5);
         });
 
         test('throw', async () => {
-          const remainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+          const [, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
 
           return expect(subject()).to.be.rejectedWith(
             `The submitted bid quantity, ${subjectBidQuantity}, must be a multiple of the minimumBid, ${minimumBid}.`
@@ -1074,6 +1097,11 @@ describe('RebalancingAPI', () => {
         transferProxy.address,
         setTokensToDeploy,
       );
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -1255,7 +1283,7 @@ describe('RebalancingAPI', () => {
         });
 
         it('throw', async () => {
-          const remainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+          const [, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
 
           return expect(subject()).to.be.rejectedWith(
             `The submitted bid quantity, ${subjectBidQuantity}, exceeds the remaining current sets,` +
@@ -1268,12 +1296,12 @@ describe('RebalancingAPI', () => {
         let minimumBid: BigNumber;
 
         beforeEach(async () => {
-          minimumBid = await rebalancingSetToken.minimumBid.callAsync();
+          [minimumBid] = await rebalancingSetToken.getBiddingParameters.callAsync();
           subjectBidQuantity = minimumBid.mul(1.5);
         });
 
         test('throw', async () => {
-          const remainingCurrentSets = await rebalancingSetToken.remainingCurrentSets.callAsync();
+          const [, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
 
           return expect(subject()).to.be.rejectedWith(
             `The submitted bid quantity, ${subjectBidQuantity}, must be a multiple of the minimumBid, ${minimumBid}.`
@@ -1380,6 +1408,11 @@ describe('RebalancingAPI', () => {
         transferProxy.address,
         setTokensToDeploy,
       );
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -1514,6 +1547,11 @@ describe('RebalancingAPI', () => {
         setTokensToDeploy,
       );
 
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
@@ -1620,14 +1658,11 @@ describe('RebalancingAPI', () => {
       it('returns the proper rebalancing details', async () => {
         const rebalanceDetails = await subject();
 
-        const auctionParameters = await rebalancingSetToken.auctionParameters.callAsync();
-        const rebalancingStartedAt = auctionParameters[0];
+        const [rebalancingStartedAt] = await rebalancingSetToken.getAuctionParameters.callAsync();
         expect(rebalanceDetails.rebalancingStartedAt).to.bignumber.equal(rebalancingStartedAt);
 
-        const remainingCurrentSet = await rebalancingSetToken.remainingCurrentSets.callAsync();
-        expect(rebalanceDetails.remainingCurrentSet).to.bignumber.equal(remainingCurrentSet);
-
-        const minimumBid = await rebalancingSetToken.minimumBid.callAsync();
+        const [minimumBid, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
+        expect(rebalanceDetails.remainingCurrentSet).to.bignumber.equal(remainingCurrentSets);
         expect(rebalanceDetails.minimumBid).to.bignumber.equal(minimumBid);
 
         expect(rebalanceDetails.nextSetAddress).eql(nextSetToken.address);

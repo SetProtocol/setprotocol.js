@@ -100,7 +100,7 @@ export class IssuanceAPI {
         }
       });
 
-      return await this.core.redeemAndWithdraw(setAddress, quantity, toExclude, txOpts);
+      return await this.core.redeemAndWithdrawTo(setAddress, quantity, toExclude, txOpts);
     } else {
       return await this.core.redeem(setAddress, quantity, txOpts);
     }

@@ -306,7 +306,9 @@ export class RebalancingSetTokenWrapper {
   public async minimumBid(rebalancingSetAddress: Address): Promise<BigNumber> {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 
-    return await rebalancingSetTokenInstance.minimumBid.callAsync();
+    const [minimumBid] = await rebalancingSetTokenInstance.biddingParameters.callAsync();
+
+    return minimumBid;
   }
 
   /**
@@ -354,7 +356,9 @@ export class RebalancingSetTokenWrapper {
   public async remainingCurrentSets(rebalancingSetAddress: Address): Promise<BigNumber> {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 
-    return await rebalancingSetTokenInstance.remainingCurrentSets.callAsync();
+    const [, remainingCurrentSets] = await rebalancingSetTokenInstance.biddingParameters.callAsync();
+
+    return remainingCurrentSets;
   }
 
   private parseState(stateNumber: BigNumber): string {
