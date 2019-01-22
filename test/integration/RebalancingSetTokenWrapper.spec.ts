@@ -483,7 +483,7 @@ describe('SetTokenWrapper', () => {
       expect(auctionStartPrice).to.be.bignumber.equal(setAuctionStartPrice);
     });
 
-    it('fetches the correct auctionStartPrice', async () => {
+    it('fetches the correct auctionPivotPrice', async () => {
       const auctionPivotPrice = await rebalancingSetTokenWrapper.auctionPivotPrice(subjectRebalancingSetTokenAddress);
       expect(auctionPivotPrice).to.be.bignumber.equal(setAuctionPivotPrice);
     });
