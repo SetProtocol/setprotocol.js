@@ -246,9 +246,6 @@ describe('RebalancingAPI', () => {
       const auctionLibrary = await rebalancingSetTokenWrapper.auctionLibrary(subjectRebalancingSetTokenAddress);
       expect(auctionLibrary).to.eql(subjectAuctionPriceCurveAddress);
 
-      const auctionParameters = await rebalancingSetTokenWrapper.auctionParameters(subjectRebalancingSetTokenAddress);
-
-
       const rebalanceState = await rebalancingSetTokenWrapper.rebalanceState(subjectRebalancingSetTokenAddress);
       expect(rebalanceState).to.eql('Proposal');
     });

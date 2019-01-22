@@ -328,7 +328,10 @@ describe('SetTokenWrapper', () => {
 
     let managerAddress: Address;
 
-    let auctionStartTimestamp: BigNumber;
+    let setAuctionStartTimestamp: BigNumber;
+    let setAuctionTimeToPivot: BigNumber;
+    let setAuctionStartPrice: BigNumber;
+    let setAuctionPivotPrice: BigNumber;
     let rebalancingSetQuantityToIssue: BigNumber;
 
     let subjectRebalancingSetTokenAddress: Address;
@@ -383,9 +386,9 @@ describe('SetTokenWrapper', () => {
       );
 
       // Transition to proposal state
-      const setAuctionTimeToPivot = new BigNumber(100000);
-      const setAuctionStartPrice = new BigNumber(500);
-      const setAuctionPivotPrice = new BigNumber(1000);
+      setAuctionTimeToPivot = new BigNumber(100000);
+      setAuctionStartPrice = new BigNumber(500);
+      setAuctionPivotPrice = new BigNumber(1000);
       await transitionToRebalanceAsync(
         web3,
         rebalancingSetToken,
@@ -398,15 +401,12 @@ describe('SetTokenWrapper', () => {
       );
 
       const lastBlock = await web3.eth.getBlock('latest');
-      auctionStartTimestamp = new BigNumber(lastBlock.timestamp);
+      setAuctionStartTimestamp = new BigNumber(lastBlock.timestamp);
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
     });
 
     async function subject(): Promise<any> {
-      const auctionParameters = await rebalancingSetTokenWrapper.auctionParameters(subjectRebalancingSetTokenAddress);
-      const auctionStartTime = auctionParameters[0];
-
       const minimumBid = await rebalancingSetTokenWrapper.minimumBid(subjectRebalancingSetTokenAddress);
       const remainingCurrentSets = await rebalancingSetTokenWrapper.remainingCurrentSets(
         subjectRebalancingSetTokenAddress
@@ -423,7 +423,6 @@ describe('SetTokenWrapper', () => {
       const rebalanceState = await rebalancingSetTokenWrapper.rebalanceState(subjectRebalancingSetTokenAddress);
 
       return {
-        auctionStartTime,
         rebalanceState,
         minimumBid,
         remainingCurrentSets,
@@ -435,7 +434,6 @@ describe('SetTokenWrapper', () => {
 
     test('it fetches the set token properties correctly', async () => {
       const {
-        auctionStartTime,
         rebalanceState,
         minimumBid,
         remainingCurrentSets,
@@ -450,8 +448,6 @@ describe('SetTokenWrapper', () => {
         nextSetToken,
         DEFAULT_AUCTION_PRICE_DENOMINATOR,
       );
-
-      expect(auctionStartTime).to.be.bignumber.equal(auctionStartTimestamp);
 
       expect(minimumBid).to.be.bignumber.equal(auctionSetUpOutputs['expectedMinimumBid']);
 
@@ -470,6 +466,26 @@ describe('SetTokenWrapper', () => {
       expect(returnedCombinedNextSetUnits).to.equal(expectedCombinedNextSetUnits);
 
       expect(rebalanceState).to.eql('Rebalance');
+    });
+
+    it('fetches the correct auctionStartTime', async () => {
+      const auctionStartTime = await rebalancingSetTokenWrapper.auctionStartTime(subjectRebalancingSetTokenAddress);
+      expect(auctionStartTime).to.be.bignumber.equal(setAuctionStartTimestamp);
+    });
+
+    it('fetches the correct auctionStartTime', async () => {
+      const auctionTimeToPivot = await rebalancingSetTokenWrapper.auctionTimeToPivot(subjectRebalancingSetTokenAddress);
+      expect(auctionTimeToPivot).to.be.bignumber.equal(setAuctionTimeToPivot);
+    });
+
+    it('fetches the correct auctionStartPrice', async () => {
+      const auctionStartPrice = await rebalancingSetTokenWrapper.auctionStartPrice(subjectRebalancingSetTokenAddress);
+      expect(auctionStartPrice).to.be.bignumber.equal(setAuctionStartPrice);
+    });
+
+    it('fetches the correct auctionStartPrice', async () => {
+      const auctionPivotPrice = await rebalancingSetTokenWrapper.auctionPivotPrice(subjectRebalancingSetTokenAddress);
+      expect(auctionPivotPrice).to.be.bignumber.equal(setAuctionStartPrice);
     });
   });
 
