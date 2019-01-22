@@ -40,6 +40,7 @@ import {
   StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
+  WhiteListContract,
   ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
 
@@ -57,6 +58,7 @@ import {
 import { Assertions } from '@src/assertions';
 import {
   addPriceCurveToCoreAsync,
+  addWhiteListedTokenAsync,
   approveForTransferAsync,
   constructInflowOutflowArraysAsync,
   createDefaultRebalancingSetTokenAsync,
@@ -108,6 +110,7 @@ describe('CoreWrapper', () => {
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
+  let whitelist: WhiteListContract;
 
   let coreWrapper: CoreWrapper;
 
@@ -130,6 +133,7 @@ describe('CoreWrapper', () => {
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
       issuanceOrderModule,
+      whitelist,
     ] = await deployBaseContracts(web3);
 
     coreWrapper = new CoreWrapper(
@@ -821,6 +825,11 @@ describe('CoreWrapper', () => {
       const rebalancingSetQuantityToIssue = ether(7);
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
 
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
       // Deploy price curve used in auction
       const priceCurve = await deployConstantAuctionPriceCurveAsync(
         web3,
@@ -863,12 +872,12 @@ describe('CoreWrapper', () => {
     }
 
     test('subtract correct amount from remainingCurrentSets', async () => {
-      const [, existingRemainingCurrentSets] = await rebalancingSetToken.biddingParameters.callAsync();
+      const [, existingRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
 
       await subject();
 
       const expectedRemainingCurrentSets = existingRemainingCurrentSets.sub(subjectBidQuantity);
-      const [, newRemainingCurrentSets] = await rebalancingSetToken.biddingParameters.callAsync();
+      const [, newRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
       expect(newRemainingCurrentSets).to.eql(expectedRemainingCurrentSets);
     });
 

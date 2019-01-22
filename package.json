@@ -51,7 +51,7 @@
     "typescript": "^3.1.2"
   },
   "dependencies": {
-    "@0xproject/types": "^1.0.1-rc.4",
+    "@0xproject/types": "^1.0.1-rc.5",
     "@0xproject/typescript-typings": "^1.0.4",
     "@0xproject/utils": "^2.0.2",
     "@types/jest": "^22.0.1",
@@ -68,7 +68,7 @@
     "lodash": "^4.17.4",
     "lodash.compact": "^3.0.1",
     "moment": "^2.22.2",
-    "set-protocol-contracts": "1.2.1-beta.4",
+    "set-protocol-contracts": "1.2.1-beta.5",
     "set-protocol-utils": "1.0.0-beta.26",
     "timekeeper": "^2.1.2",
     "tiny-promisify": "^1.0.0",

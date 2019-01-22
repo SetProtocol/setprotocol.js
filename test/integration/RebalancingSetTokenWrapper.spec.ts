@@ -34,7 +34,8 @@ import {
   SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
-  VaultContract
+  VaultContract,
+  WhiteListContract,
 } from 'set-protocol-contracts';
 import { Web3Utils } from 'set-protocol-utils';
 
@@ -54,6 +55,7 @@ import { Address } from '@src/types/common';
 import { ether } from '@src/util/units';
 import {
   addPriceCurveToCoreAsync,
+  addWhiteListedTokenAsync,
   approveForTransferAsync,
   constructInflowOutflowArraysAsync,
   createDefaultRebalancingSetTokenAsync,
@@ -85,6 +87,7 @@ describe('SetTokenWrapper', () => {
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
+  let whitelist: WhiteListContract;
 
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
 
@@ -99,6 +102,7 @@ describe('SetTokenWrapper', () => {
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
       issuanceOrderModule,
+      whitelist,
     ] = await deployBaseContracts(web3);
 
     rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
@@ -249,6 +253,11 @@ describe('SetTokenWrapper', () => {
         priceCurve.address
       );
 
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
       // Transition to proposal state
       auctionPriceCurveAddress = priceCurve.address;
       setAuctionTimeToPivot = new BigNumber(100000);
@@ -336,6 +345,11 @@ describe('SetTokenWrapper', () => {
 
       currentSetToken = setTokens[0];
       nextSetToken = setTokens[1];
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
 
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -482,6 +496,11 @@ describe('SetTokenWrapper', () => {
       currentSetToken = setTokens[0];
       nextSetToken = setTokens[1];
 
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
@@ -579,6 +598,11 @@ describe('SetTokenWrapper', () => {
       currentSetToken = setTokens[0];
       nextSetToken = setTokens[1];
 
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
@@ -670,6 +694,11 @@ describe('SetTokenWrapper', () => {
 
       currentSetToken = setTokens[0];
       nextSetToken = setTokens[1];
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
 
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       const managerAddress = ACCOUNTS[1].address;
@@ -799,6 +828,11 @@ describe('SetTokenWrapper', () => {
 
       currentSetToken = setTokens[0];
       nextSetToken = setTokens[1];
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
 
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       const managerAddress = ACCOUNTS[1].address;

@@ -15,6 +15,7 @@ import {
   StandardTokenMock,
   TransferProxy,
   Vault,
+  WhiteList,
 } from 'set-protocol-contracts';
 import {
   AuthorizableContract,
@@ -30,6 +31,7 @@ import {
   StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
+  WhiteListContract,
 } from 'set-protocol-contracts';
 
 import {
@@ -46,7 +48,7 @@ import { CoreWrapper } from '@src/wrappers';
 const contract = require('truffle-contract');
 
 export const deployTransferProxyContract = async (
-  web3: Web3,
+web3: Web3,
 ): Promise<TransferProxyContract> => {
   const truffleTransferProxyContract = contract(TransferProxy);
   truffleTransferProxyContract.setProvider(web3.currentProvider);
@@ -149,7 +151,8 @@ export const deploySetTokenFactoryContract = async (
 
 export const deployRebalancingSetTokenFactoryContract = async (
   web3: Web3,
-  core: CoreContract
+  core: CoreContract,
+  whitelist: WhiteListContract,
 ): Promise<RebalancingSetTokenFactoryContract> => {
   // Deploy SetTokenFactory contract
   const truffleRebalancingSetTokenFactoryContract = contract(RebalancingSetTokenFactory);
@@ -157,6 +160,7 @@ export const deployRebalancingSetTokenFactoryContract = async (
   truffleRebalancingSetTokenFactoryContract.defaults(TX_DEFAULTS);
   const deployedRebalancingSetTokenFactory = await truffleRebalancingSetTokenFactoryContract.new(
     core.address,
+    whitelist.address,
     ONE_DAY_IN_SECONDS,
     ONE_DAY_IN_SECONDS,
   );
@@ -178,6 +182,7 @@ export const deployRebalancingSetTokenFactoryContract = async (
 };
 
 export const deployIssuanceOrderModuleContract = async (
+  signatureValidator: SignatureValidatorContract,
   web3: Web3,
   core: CoreContract,
   transferProxy: TransferProxyContract,
@@ -200,6 +205,7 @@ export const deployIssuanceOrderModuleContract = async (
     core.address,
     transferProxy.address,
     vault.address,
+    signatureValidator.address,
     TX_DEFAULTS
   );
   const issuanceOrderModuleContract = await IssuanceOrderModuleContract.at(
@@ -271,7 +277,8 @@ export const deployBaseContracts = async (
   SetTokenFactoryContract,
   RebalancingSetTokenFactoryContract,
   RebalanceAuctionModuleContract,
-  IssuanceOrderModuleContract
+  IssuanceOrderModuleContract,
+  WhiteListContract
 ]> => {
   const [transferProxy, vault] = await Promise.all([
     deployTransferProxyContract(web3),
@@ -280,16 +287,20 @@ export const deployBaseContracts = async (
 
   const core = await deployCoreContract(web3, transferProxy.address, vault.address);
 
+  const whitelist = await deployWhitelistContract([], web3, core);
+
   const [setTokenFactory, rebalancingSetTokenFactory] = await Promise.all([
     deploySetTokenFactoryContract(web3, core),
-    deployRebalancingSetTokenFactoryContract(web3, core),
+    deployRebalancingSetTokenFactoryContract(web3, core, whitelist),
     addAuthorizationAsync(vault, core.address),
     addAuthorizationAsync(transferProxy, core.address),
   ]);
 
+  const signatureValidator = await deploySignatureValidatorContract(web3);
+
   const [rebalanceAuctionModule, issuanceOrderModule] = await Promise.all([
     deployRebalanceAuctionModuleContract(web3, core, vault),
-    deployIssuanceOrderModuleContract(web3, core, transferProxy, vault),
+    deployIssuanceOrderModuleContract(signatureValidator, web3, core, transferProxy, vault),
   ]);
 
   return [
@@ -300,7 +311,31 @@ export const deployBaseContracts = async (
     rebalancingSetTokenFactory,
     rebalanceAuctionModule,
     issuanceOrderModule,
+    whitelist,
   ];
+};
+
+export const deployWhitelistContract = async (
+  initialAddresses: Address[],
+  web3: Web3,
+  core: CoreContract,
+): Promise<WhiteListContract> => {
+  // Deploy WhitelistContract contract
+  const truffleWhitelistContract = contract(WhiteList);
+  truffleWhitelistContract.setProvider(web3.currentProvider);
+  truffleWhitelistContract.defaults(TX_DEFAULTS);
+  const deployedWhitelistContract = await truffleWhitelistContract.new(
+    initialAddresses,
+  );
+
+  // Initialize typed contract class
+  const whitelistContract = await WhiteListContract.at(
+    deployedWhitelistContract.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  return whitelistContract;
 };
 
 export const deployTokenAsync = async (
@@ -457,13 +492,24 @@ export const approveForTransferAsync = async (
 
 export const addAuthorizationAsync = async (
   contract: AuthorizableContract,
-  toAuthorize: Address
+  toAuthorize: Address,
 ) => {
   await contract.addAuthorizedAddress.sendTransactionAsync(
     toAuthorize,
     TX_DEFAULTS,
   );
 };
+
+export const addWhiteListedTokenAsync = async (
+  whitelist: WhiteListContract,
+  toAdd: Address,
+) => {
+  await whitelist.addAddress.sendTransactionAsync(
+    toAdd,
+    TX_DEFAULTS,
+  );
+};
+
 
 export const getTokenBalances = async (
   tokens: StandardTokenMockContract[],
