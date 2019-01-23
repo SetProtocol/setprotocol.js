@@ -500,6 +500,26 @@ export const addAuthorizationAsync = async (
   );
 };
 
+export const addModuleAsync = async (
+  core: CoreContract,
+  moduleAddress: Address,
+) => {
+  await core.addModule.sendTransactionAsync(
+    moduleAddress,
+    TX_DEFAULTS,
+  );
+};
+
+export const addPriceLibraryAsync = async (
+  core: CoreContract,
+  priceLibrary: Address,
+) => {
+  await core.addPriceLibrary.sendTransactionAsync(
+    priceLibrary,
+    TX_DEFAULTS,
+  );
+};
+
 export const addWhiteListedTokenAsync = async (
   whitelist: WhiteListContract,
   toAdd: Address,

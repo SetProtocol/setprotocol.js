@@ -1,9 +1,12 @@
 export {
   addAuthorizationAsync,
+  addModuleAsync,
+  addPriceLibraryAsync,
   addWhiteListedTokenAsync,
   approveForTransferAsync,
   deployBaseContracts,
   deployCoreContract,
+  deployIssuanceOrderModuleContract,
   deployNoDecimalTokenAsync,
   deployRebalancingSetTokenFactoryContract,
   deploySetTokenAsync,

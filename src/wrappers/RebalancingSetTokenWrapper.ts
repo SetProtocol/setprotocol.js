@@ -361,6 +361,62 @@ export class RebalancingSetTokenWrapper {
     return remainingCurrentSets;
   }
 
+  /**
+   * Gets auctionStartTime for the Rebalancing Set Token
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @return                         The auctionStartTime of the RebalancingSetToken
+   */
+  public async auctionStartTime(rebalancingSetAddress: Address): Promise<BigNumber> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    const [auctionStartTime] = await rebalancingSetTokenInstance.getAuctionParameters.callAsync();
+
+    return auctionStartTime;
+  }
+
+  /**
+   * Gets auctionTimeToPivot for the Rebalancing Set Token
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @return                         The auctionTimeToPivot of the RebalancingSetToken
+   */
+  public async auctionTimeToPivot(rebalancingSetAddress: Address): Promise<BigNumber> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    const [, auctionTimeToPivot] = await rebalancingSetTokenInstance.getAuctionParameters.callAsync();
+
+    return auctionTimeToPivot;
+  }
+
+  /**
+   * Gets auctionStartPrice for the Rebalancing Set Token
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @return                         The auctionStartPrice of the RebalancingSetToken
+   */
+  public async auctionStartPrice(rebalancingSetAddress: Address): Promise<BigNumber> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    const [, , auctionStartPrice] = await rebalancingSetTokenInstance.getAuctionParameters.callAsync();
+
+    return auctionStartPrice;
+  }
+
+  /**
+   * Gets auctionPivotPrice for the Rebalancing Set Token
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @return                         The auctionPivotPrice of the RebalancingSetToken
+   */
+  public async auctionPivotPrice(rebalancingSetAddress: Address): Promise<BigNumber> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    const [, , , auctionPivotPrice] = await rebalancingSetTokenInstance.getAuctionParameters.callAsync();
+
+    return auctionPivotPrice;
+  }
+
   private parseState(stateNumber: BigNumber): string {
     if (stateNumber.eq(new BigNumber(0))) {
       return 'Default';

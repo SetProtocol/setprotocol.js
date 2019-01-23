@@ -81,7 +81,6 @@ describe('VaultWrapper', () => {
       transferProxy.address,
       vault.address,
       rebalanceAuctionModule.address,
-      issuanceOrderModule.address
     );
     vaultWrapper = new VaultWrapper(web3, vault.address);
   });
