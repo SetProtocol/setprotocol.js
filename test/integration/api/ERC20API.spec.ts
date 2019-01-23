@@ -68,9 +68,8 @@ describe('ERC20API', () => {
       transferProxy.address,
       vault.address,
       rebalanceAuctionModule.address,
-      issuanceOrderModule.address
     );
-    const assertions = new Assertions(web3, coreWrapper);
+    const assertions = new Assertions(web3);
     erc20API = new ERC20API(web3, assertions);
   });
 

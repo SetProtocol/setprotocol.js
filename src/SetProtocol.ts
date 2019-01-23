@@ -29,7 +29,7 @@ import {
   RebalancingAPI,
   SetTokenAPI
 } from './api';
-import { CoreWrapper, VaultWrapper } from './wrappers';
+import { CoreWrapper, IssuanceOrderModuleWrapper, RebalancingAuctionModuleWrapper, VaultWrapper } from './wrappers';
 import { Assertions } from './assertions';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
 import { Address, Bytes, SetUnits, TransactionReceipt, Tx } from './types/common';
@@ -105,19 +105,35 @@ class SetProtocol {
       config.transferProxyAddress,
       config.vaultAddress,
       config.rebalanceAuctionModuleAddress,
-      config.issuanceOrderModuleAddress
     );
+
     this.vault = new VaultWrapper(this.web3, config.vaultAddress);
 
-    const assertions = new Assertions(this.web3, this.core);
+    const issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(
+      this.web3,
+      config.issuanceOrderModuleAddress,
+    );
+    const assertions = new Assertions(this.web3);
+    assertions.setOrderAssertions(this.web3, this.core, issuanceOrderModuleWrapper);
 
     this.accounting = new AccountingAPI(this.web3, this.core, assertions);
     this.blockchain = new BlockchainAPI(this.web3, assertions);
     this.erc20 = new ERC20API(this.web3, assertions);
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
-    this.orders = new OrderAPI(this.web3, this.core, assertions, config.kyberNetworkWrapperAddress);
-    this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core);
+    this.orders = new OrderAPI(
+      this.web3,
+      assertions,
+      config.issuanceOrderModuleAddress,
+      config.kyberNetworkWrapperAddress,
+      config.vaultAddress
+    );
+
+    const rebalanceAuctionModule = new RebalancingAuctionModuleWrapper(
+      this.web3,
+      config.rebalanceAuctionModuleAddress,
+    );
+    this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, rebalanceAuctionModule);
     this.setToken = new SetTokenAPI(this.web3, assertions);
   }
 

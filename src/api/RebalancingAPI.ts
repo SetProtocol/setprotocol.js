@@ -23,7 +23,13 @@ import { RebalancingSetTokenContract, SetTokenContract, VaultContract } from 'se
 import { ZERO } from '../constants';
 import { coreAPIErrors, setTokenAssertionsErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { ERC20Wrapper, SetTokenWrapper, RebalancingSetTokenWrapper, CoreWrapper } from '../wrappers';
+import {
+  ERC20Wrapper,
+  SetTokenWrapper,
+  RebalancingAuctionModuleWrapper,
+  RebalancingSetTokenWrapper,
+  CoreWrapper,
+} from '../wrappers';
 import { BigNumber, calculatePartialAmount } from '../util';
 import {
   Address,
@@ -49,6 +55,7 @@ export class RebalancingAPI {
   private core: CoreWrapper;
   private erc20: ERC20Wrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
+  private rebalancingAuctionModule: RebalancingAuctionModuleWrapper;
   private setToken: SetTokenWrapper;
 
   /**
@@ -59,10 +66,16 @@ export class RebalancingAPI {
    *                      the Ethereum network
    * @param assertions  An instance of the Assertion library
    */
-  constructor(web3: Web3, assertions: Assertions, core: CoreWrapper) {
+  constructor(
+    web3: Web3,
+    assertions: Assertions,
+    core: CoreWrapper,
+    rebalancingAuctionModule: RebalancingAuctionModuleWrapper,
+  ) {
     this.web3 = web3;
     this.assert = assertions;
     this.core = core;
+    this.rebalancingAuctionModule = rebalancingAuctionModule;
 
     this.erc20 = new ERC20Wrapper(this.web3);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
@@ -155,7 +168,7 @@ export class RebalancingAPI {
   public async bidAsync(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: Tx): Promise<string> {
     await this.assertBid(rebalancingSetTokenAddress, bidQuantity, txOpts);
 
-    return await this.core.bid(rebalancingSetTokenAddress, bidQuantity, txOpts);
+    return await this.rebalancingAuctionModule.bid(rebalancingSetTokenAddress, bidQuantity, txOpts);
   }
 
   /**

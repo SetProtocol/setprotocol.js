@@ -89,9 +89,8 @@ describe('BlockchainAPI', () => {
       transferProxy.address,
       vault.address,
       rebalanceAuctionModule.address,
-      issuanceOrderModule.address
     );
-    const assertions = new Assertions(web3, coreWrapper);
+    const assertions = new Assertions(web3);
     blockchainAPI = new BlockchainAPI(web3, assertions);
   });
 

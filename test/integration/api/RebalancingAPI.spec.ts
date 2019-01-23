@@ -43,7 +43,7 @@ import {
 import { Web3Utils } from 'set-protocol-utils';
 
 import { RebalancingAPI } from '@src/api';
-import { RebalancingSetTokenWrapper, CoreWrapper } from '@src/wrappers';
+import { RebalancingAuctionModuleWrapper, RebalancingSetTokenWrapper, CoreWrapper } from '@src/wrappers';
 import {
   DEFAULT_ACCOUNT,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
@@ -110,6 +110,7 @@ describe('RebalancingAPI', () => {
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
   let whitelist: WhiteListContract;
 
+  let rebalancingAuctionModuleWrapper: RebalancingAuctionModuleWrapper;
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
   let rebalancingAPI: RebalancingAPI;
 
@@ -133,13 +134,16 @@ describe('RebalancingAPI', () => {
       transferProxy.address,
       vault.address,
       rebalanceAuctionModule.address,
-      issuanceOrderModule.address
     );
 
+    rebalancingAuctionModuleWrapper = new RebalancingAuctionModuleWrapper(
+      web3,
+      rebalanceAuctionModule.address,
+    );
     rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
 
-    const assertions = new Assertions(web3, coreWrapper);
-    rebalancingAPI = new RebalancingAPI(web3, assertions, coreWrapper);
+    const assertions = new Assertions(web3);
+    rebalancingAPI = new RebalancingAPI(web3, assertions, coreWrapper, rebalancingAuctionModuleWrapper);
   });
 
   afterEach(async () => {

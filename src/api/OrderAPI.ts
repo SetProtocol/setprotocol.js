@@ -22,7 +22,13 @@ import { SetProtocolUtils } from 'set-protocol-utils';
 
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
-import { CoreWrapper, ERC20Wrapper, KyberNetworkWrapper, SetTokenWrapper, VaultWrapper } from '../wrappers';
+import {
+  ERC20Wrapper,
+  IssuanceOrderModuleWrapper,
+  KyberNetworkWrapper,
+  SetTokenWrapper,
+  VaultWrapper,
+} from '../wrappers';
 import { NULL_ADDRESS, ZERO } from '../constants';
 import { BigNumber, generateFutureTimestamp,  } from '../util';
 import {
@@ -49,9 +55,9 @@ import { SetProtocolConfig } from '../SetProtocol';
 export class OrderAPI {
   private web3: Web3;
   private assert: Assertions;
-  private core: CoreWrapper;
   private setToken: SetTokenWrapper;
   private erc20: ERC20Wrapper;
+  private issuanceOrderModule: IssuanceOrderModuleWrapper;
   private vault: VaultWrapper;
   private kyberNetworkWrapper: KyberNetworkWrapper;
   private setProtocolUtils: SetProtocolUtils;
@@ -61,18 +67,25 @@ export class OrderAPI {
    *
    * @param web3                        Web3.js Provider instance you would like the SetProtocol.js library to use for
    *                                      interacting with the Ethereum network
-   * @param core                        An instance of CoreWrapper to interact with the deployed Core contract
    * @param assertions                  An instance of the Assertion library
+   * @param issuanceOrderModuleAddress  Address of the issuanceOrderModule
    * @param kyberNetworkWrapperAddress  Address for kyber network wrapper
+   * @param vaultAddress                Address for the vault
    */
-  constructor(web3: Web3, core: CoreWrapper, assertions: Assertions, kyberNetworkWrapperAddress: Address) {
+  constructor(
+    web3: Web3,
+    assertions: Assertions,
+    issuanceOrderModuleAddress: Address,
+    kyberNetworkWrapperAddress: Address,
+    vaultAddress: Address,
+  ) {
     this.web3 = web3;
-    this.core = core;
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
     this.erc20 = new ERC20Wrapper(this.web3);
+    this.issuanceOrderModule = new IssuanceOrderModuleWrapper(this.web3, issuanceOrderModuleAddress);
     this.kyberNetworkWrapper = new KyberNetworkWrapper(this.web3, kyberNetworkWrapperAddress);
     this.setToken = new SetTokenWrapper(this.web3);
-    this.vault = new VaultWrapper(this.web3, this.core.vaultAddress);
+    this.vault = new VaultWrapper(this.web3, vaultAddress);
     this.assert = assertions;
   }
 
@@ -275,7 +288,7 @@ export class OrderAPI {
     await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantity, orders);
     const orderData = await this.setProtocolUtils.generateSerializedOrders(orders);
 
-    return await this.core.fillOrder(signedIssuanceOrder, quantity, orderData, txOpts);
+    return await this.issuanceOrderModule.fillOrder(signedIssuanceOrder, quantity, orderData, txOpts);
   }
 
   /**
@@ -294,7 +307,7 @@ export class OrderAPI {
   ): Promise<string> {
     await this.assertCancelOrder(txOpts.from, issuanceOrder, quantity);
 
-    return await this.core.cancelOrder(issuanceOrder, quantity, txOpts);
+    return await this.issuanceOrderModule.cancelOrder(issuanceOrder, quantity, txOpts);
   }
 
   /**
@@ -306,7 +319,7 @@ export class OrderAPI {
   public async getOrderFillsAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
-    return await this.core.orderFills(orderHash);
+    return await this.issuanceOrderModule.orderFills(orderHash);
   }
 
   /**
@@ -318,7 +331,7 @@ export class OrderAPI {
   public async getOrderCancelledAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
     const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
 
-    return await this.core.orderCancels(orderHash);
+    return await this.issuanceOrderModule.orderCancels(orderHash);
   }
 
   /**

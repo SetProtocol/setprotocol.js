@@ -22,7 +22,7 @@ import { SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
 
 import { ContractWrapper } from '.';
 import { ZERO } from '../constants';
-import { Address, Bytes, IssuanceOrder, SignedIssuanceOrder, Tx } from '../types/common';
+import { Address, Bytes, Tx } from '../types/common';
 import { ERC20DetailedContract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
 import { BigNumber, generateTxOpts } from '../util';
 
@@ -41,8 +41,6 @@ export class CoreWrapper {
   public coreAddress: Address;
   public transferProxyAddress: Address;
   public vaultAddress: Address;
-  public rebalanceAuctionModuleAddress: Address;
-  public issuanceOrderModuleAddress: Address;
 
   public constructor(
     web3: Web3,
@@ -50,7 +48,6 @@ export class CoreWrapper {
     transferProxyAddress: Address,
     vaultAddress: Address,
     rebalanceAuctionModule: Address,
-    issuanceOrderModule: Address,
   ) {
     this.web3 = web3;
     this.contracts = new ContractWrapper(this.web3);
@@ -59,8 +56,6 @@ export class CoreWrapper {
     this.coreAddress = coreAddress;
     this.transferProxyAddress = transferProxyAddress;
     this.vaultAddress = vaultAddress;
-    this.rebalanceAuctionModuleAddress = rebalanceAuctionModule;
-    this.issuanceOrderModuleAddress = issuanceOrderModule;
   }
 
   /**
@@ -248,81 +243,6 @@ export class CoreWrapper {
   }
 
   /**
-   * Fills an Issuance Order
-   *
-   * @param  signedIssuanceOrder       Signed issuance order to fill
-   * @param  signature                 Signature of the order
-   * @param  fillAmount                Number of Sets to fill in this call in base units
-   * @param  orderData                 Bytes representation of orders used to fill issuance order
-   * @param  txOpts                    The options for executing the transaction
-   * @return                           A transaction hash
-   */
-  public async fillOrder(
-    signedIssuanceOrder: SignedIssuanceOrder,
-    fillAmount: BigNumber,
-    orderData: string,
-    txOpts?: Tx,
-  ): Promise<string> {
-    const txSettings = await generateTxOpts(this.web3, txOpts);
-    const issuanceOrderModuleInstance = await this.contracts.loadIssuanceOrderModuleAsync(
-      this.issuanceOrderModuleAddress
-    );
-
-    const {signature, ...issuanceOrder} = signedIssuanceOrder;
-    const bytesSignature = this.setProtocolUtils.convertSigToHex(signature);
-
-    return await issuanceOrderModuleInstance.fillOrder.sendTransactionAsync(
-      issuanceOrder,
-      fillAmount,
-      bytesSignature,
-      orderData,
-      txSettings,
-    );
-  }
-
-  /**
-   * Cancels an Issuance Order
-   *
-   * @param  issuanceOrder             Issuance order to cancel
-   * @param  cancelAmount              Number of Sets to cancel in this call in base units
-   * @param  txOpts                    The options for executing the transaction
-   * @return                           A transaction hash
-   */
-  public async cancelOrder(issuanceOrder: IssuanceOrder, cancelAmount: BigNumber, txOpts?: Tx): Promise<string> {
-    const txSettings = await generateTxOpts(this.web3, txOpts);
-    const issuanceOrderModuleInstance = await this.contracts.loadIssuanceOrderModuleAsync(
-      this.issuanceOrderModuleAddress
-    );
-
-    return await issuanceOrderModuleInstance.cancelOrder.sendTransactionAsync(
-      issuanceOrder,
-      cancelAmount,
-      txSettings,
-    );
-  }
-
-  /**
-   * Asynchronously submit a bid for a rebalancing auction on a rebalancingSetToken
-   *
-   * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
-   * @param  quantity                      Amount of currentSetToken the bidder wants to rebalance
-   * @param  txOpts                        The options for executing the transaction
-   * @return                               A transaction hash
-   */
-  public async bid(rebalancingSetTokenAddress: Address, quantity: BigNumber, txOpts?: Tx): Promise<string> {
-    const txSettings = await generateTxOpts(this.web3, txOpts);
-    const rebalanceAuctionModuleInstance = await this.contracts.loadRebalanceAuctionModuleAsync(
-      this.rebalanceAuctionModuleAddress
-    );
-
-    return await rebalanceAuctionModuleInstance.bid.sendTransactionAsync(
-      rebalancingSetTokenAddress,
-      quantity,
-      txSettings,
-    );
-  }
-
-  /**
    * Asynchronously gets the exchange address for a given exhange id
    *
    * @param  exchangeId Enum id of the exchange
@@ -373,6 +293,44 @@ export class CoreWrapper {
   }
 
   /**
+   * Fetch the current Operation State of the protocol
+   *
+   * @return Operation state of the protocol
+   */
+  public async getOperationState(): Promise<BigNumber> {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const operationState = await coreInstance.operationState.callAsync();
+
+    return operationState;
+  }
+
+  /**
+   * Verifies that the provided Module is enabled
+   *
+   * @param  moduleAddress  Address of the module contract
+   * @return                Whether the module contract is enabled
+   */
+  public async validModules(moduleAddress: Address): Promise<boolean> {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const isValidModule = await coreInstance.validModules.callAsync(moduleAddress);
+
+    return isValidModule;
+  }
+
+  /**
+   * Verifies that the provided price library is enabled
+   *
+   * @param  priceLibraryAddress  Address of the price library contract
+   * @return                Whether the price library contract is enabled
+   */
+  public async validPriceLibrary(priceLibraryAddress: Address): Promise<boolean> {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const isValidPriceLibrary = await coreInstance.validPriceLibraries.callAsync(priceLibraryAddress);
+
+    return isValidPriceLibrary;
+  }
+
+  /**
    * Verifies that the provided SetToken factory is enabled for creating a new SetToken
    *
    * @param  factoryAddress Address of the factory contract
@@ -397,35 +355,5 @@ export class CoreWrapper {
     const isValidSetAddress = await coreInstance.validSets.callAsync(setAddress);
 
     return isValidSetAddress;
-  }
-
-  /**
-   * Asynchronously gets the quantity of the Issuance Order filled
-   *
-   * @param  orderHash  Bytes32 hash of the issuance order
-   * @return            Quantity of Issuance Order filled
-   */
-  public async orderFills(orderHash: Bytes): Promise<BigNumber> {
-    const issuanceOrderModuleInstance = await this.contracts.loadIssuanceOrderModuleAsync(
-      this.issuanceOrderModuleAddress
-    );
-    const orderFills = await issuanceOrderModuleInstance.orderFills.callAsync(orderHash);
-
-    return orderFills;
-  }
-
-  /**
-   * Asynchronously gets the quantity of the Issuance Order cancelled
-   *
-   * @param  orderHash  Bytes32 hash of the Issuance Order
-   * @return            Quantity of Issuance Order cancelled
-   */
-  public async orderCancels(orderHash: Bytes): Promise<BigNumber> {
-    const issuanceOrderModuleInstance = await this.contracts.loadIssuanceOrderModuleAsync(
-      this.issuanceOrderModuleAddress
-    );
-    const orderCancels = await issuanceOrderModuleInstance.orderCancels.callAsync(orderHash);
-
-    return orderCancels;
   }
 }

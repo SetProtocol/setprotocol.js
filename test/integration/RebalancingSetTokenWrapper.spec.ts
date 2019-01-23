@@ -473,7 +473,7 @@ describe('SetTokenWrapper', () => {
       expect(auctionStartTime).to.be.bignumber.equal(setAuctionStartTimestamp);
     });
 
-    it('fetches the correct auctionStartTime', async () => {
+    it('fetches the correct auctionTimeToPivot', async () => {
       const auctionTimeToPivot = await rebalancingSetTokenWrapper.auctionTimeToPivot(subjectRebalancingSetTokenAddress);
       expect(auctionTimeToPivot).to.be.bignumber.equal(setAuctionTimeToPivot);
     });
@@ -485,7 +485,7 @@ describe('SetTokenWrapper', () => {
 
     it('fetches the correct auctionStartPrice', async () => {
       const auctionPivotPrice = await rebalancingSetTokenWrapper.auctionPivotPrice(subjectRebalancingSetTokenAddress);
-      expect(auctionPivotPrice).to.be.bignumber.equal(setAuctionStartPrice);
+      expect(auctionPivotPrice).to.be.bignumber.equal(setAuctionPivotPrice);
     });
   });
 

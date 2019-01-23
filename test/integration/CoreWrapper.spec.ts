@@ -57,7 +57,9 @@ import {
 } from '@src/constants';
 import { Assertions } from '@src/assertions';
 import {
+  addModuleAsync,
   addPriceCurveToCoreAsync,
+  addPriceLibraryAsync,
   addWhiteListedTokenAsync,
   approveForTransferAsync,
   constructInflowOutflowArraysAsync,
@@ -142,7 +144,6 @@ describe('CoreWrapper', () => {
       transferProxy.address,
       vault.address,
       rebalanceAuctionModule.address,
-      issuanceOrderModule.address
     );
   });
 
@@ -546,399 +547,10 @@ describe('CoreWrapper', () => {
     });
   });
 
-  describe('fillOrder', async () => {
-    let issuanceOrderMaker: Address;
-    let issuanceOrderQuantity: BigNumber;
-    let setToken: SetTokenContract;
-
-    let subjectSignedIssuanceOrder: SignedIssuanceOrder;
-    let subjectQuantityToFill: BigNumber;
-    let subjectOrdersData: string;
-    let subjectCaller: Address;
-
-    beforeEach(async () => {
-      const kyberNetworkWrapper = await deployKyberNetworkWrapperContract(
-        web3,
-        SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
-        transferProxy,
-        core,
-      );
-
-      const assertions = new Assertions(web3, coreWrapper);
-      const ordersAPI = new OrderAPI(web3, coreWrapper, assertions, kyberNetworkWrapper.address);
-
-      await deployTakerWalletWrapperContract(web3, transferProxy, core);
-      await deployZeroExExchangeWrapperContract(
-        web3,
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
-        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
-        SetTestUtils.ZERO_EX_TOKEN_ADDRESS,
-        transferProxy,
-        core,
-      );
-
-      const relayerAddress = ACCOUNTS[0].address;
-      const zeroExOrderMaker = ACCOUNTS[1].address;
-      const issuanceOrderTaker = ACCOUNTS[2].address;
-      issuanceOrderMaker = ACCOUNTS[3].address;
-
-      const firstComponent = await deployTokenAsync(web3, issuanceOrderTaker);
-      const secondComponent = await deployTokenAsync(web3, zeroExOrderMaker);
-      const thirdComponent = await tokenDeployedOnSnapshot(web3, SetTestUtils.KYBER_RESERVE_DESTINATION_TOKEN_ADDRESS);
-      const makerToken = await tokenDeployedOnSnapshot(web3, SetTestUtils.KYBER_RESERVE_SOURCE_TOKEN_ADDRESS);
-      const relayerToken = await deployTokenAsync(web3, issuanceOrderMaker);
-
-      const componentTokens = [firstComponent, secondComponent, thirdComponent];
-      const setComponentUnit = ether(4);
-      const componentAddresses = componentTokens.map(token => token.address);
-      const componentUnits = componentTokens.map(token => setComponentUnit);
-      const naturalUnit = ether(2);
-      setToken = await deploySetTokenAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        componentAddresses,
-        componentUnits,
-        naturalUnit,
-      );
-
-      await approveForTransferAsync([makerToken, relayerToken], transferProxy.address, issuanceOrderMaker);
-      await approveForTransferAsync([firstComponent, relayerToken], transferProxy.address, issuanceOrderTaker);
-      await approveForTransferAsync(
-        [secondComponent],
-        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
-        zeroExOrderMaker
-      );
-
-      // Create issuance order, submitting ether(30) makerToken for ether(4) of the Set with 3 components
-      issuanceOrderQuantity = ether(4);
-      const issuanceOrderMakerTokenAmount = ether(30);
-      const issuanceOrderExpiration = generateFutureTimestamp(10000);
-      const requiredComponents = [firstComponent.address, secondComponent.address, thirdComponent.address];
-      const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
-      const issuanceOrderMakerRelayerFee = ZERO;
-      const issuanceOrderTakerRelayerFee = ZERO;
-      subjectSignedIssuanceOrder = await ordersAPI.createSignedOrderAsync(
-        setToken.address,
-        issuanceOrderQuantity,
-        requiredComponents,
-        requredComponentAmounts,
-        issuanceOrderMaker,
-        makerToken.address,
-        issuanceOrderMakerTokenAmount,
-        issuanceOrderExpiration,
-        relayerAddress,
-        relayerToken.address,
-        issuanceOrderMakerRelayerFee,
-        issuanceOrderTakerRelayerFee,
-      );
-
-      // Create Taker Wallet transfer for the first component
-      const takerWalletOrder = {
-        takerTokenAddress: firstComponent.address,
-        takerTokenAmount: requredComponentAmounts[0],
-      } as TakerWalletOrder;
-
-      // Create 0x order for the second component, using ether(4) makerToken
-      const zeroExOrderTakerAssetAmount = ether(4);
-      const zeroExOrder: ZeroExSignedFillOrder = await setUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                                  // senderAddress
-        zeroExOrderMaker,                              // makerAddress
-        NULL_ADDRESS,                                  // takerAddress
-        ZERO,                                          // makerFee
-        ZERO,                                          // takerFee
-        requredComponentAmounts[1],                    // makerAssetAmount
-        zeroExOrderTakerAssetAmount,                   // takerAssetAmount
-        secondComponent.address,                       // makerAssetAddress
-        makerToken.address,                            // takerAssetAddress
-        SetUtils.generateSalt(),                       // salt
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,         // exchangeAddress
-        NULL_ADDRESS,                                  // feeRecipientAddress
-        generateFutureTimestamp(10000),                // expirationTimeSeconds
-        zeroExOrderTakerAssetAmount,                   // amount of zeroExOrder to fill
-      );
-
-      // Create Kyber trade for the third component, using ether(25) makerToken. Conversion rate pre set on snapshot
-      const sourceTokenQuantity = ether(25);
-      const maxDestinationQuantity = requredComponentAmounts[2];
-      const componentTokenDecimals = (await thirdComponent.decimals.callAsync()).toNumber();
-      const sourceTokenDecimals = (await makerToken.decimals.callAsync()).toNumber();
-      const kyberConversionRatePower = new BigNumber(10).pow(18 + sourceTokenDecimals - componentTokenDecimals);
-      const minimumConversionRate = maxDestinationQuantity.div(sourceTokenQuantity)
-                                                          .mul(kyberConversionRatePower)
-                                                          .round();
-      const kyberTrade = {
-        destinationToken: thirdComponent.address,
-        sourceTokenQuantity: sourceTokenQuantity,
-        minimumConversionRate: minimumConversionRate,
-        maxDestinationQuantity: maxDestinationQuantity,
-      } as KyberTrade;
-
-      subjectOrdersData = await setUtils.generateSerializedOrders([takerWalletOrder, zeroExOrder, kyberTrade]);
-      subjectQuantityToFill = issuanceOrderQuantity;
-      subjectCaller = issuanceOrderTaker;
-    });
-
-    async function subject(): Promise<string> {
-      return await coreWrapper.fillOrder(
-        subjectSignedIssuanceOrder,
-        subjectQuantityToFill,
-        subjectOrdersData,
-        { from: subjectCaller }
-      );
-    }
-
-    test('issues the set to the order maker', async () => {
-      const existingUserSetTokenBalance = await setToken.balanceOf.callAsync(issuanceOrderMaker);
-
-      await subject();
-
-      const expectedUserSetTokenBalance = existingUserSetTokenBalance.add(issuanceOrderQuantity);
-      const newUserSetTokenBalance = await setToken.balanceOf.callAsync(issuanceOrderMaker);
-      expect(newUserSetTokenBalance).to.eql(expectedUserSetTokenBalance);
-    });
-  });
-
-  describe('cancelOrder', async () => {
-    let subjectSignedIssuanceOrder: SignedIssuanceOrder;
-    let subjectCancelQuantity: BigNumber;
-    let subjectCaller: Address;
-
-    beforeEach(async () => {
-      const kyberNetworkWrapper = await deployKyberNetworkWrapperContract(
-        web3,
-        SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
-        transferProxy,
-        core,
-      );
-
-      const assertions = new Assertions(web3, coreWrapper);
-      const ordersAPI = new OrderAPI(web3, coreWrapper, assertions, kyberNetworkWrapper.address);
-
-      const issuanceOrderTaker = ACCOUNTS[0].address;
-      const issuanceOrderMaker = ACCOUNTS[1].address;
-      const relayerAddress = ACCOUNTS[2].address;
-      const zeroExOrderMaker = ACCOUNTS[3].address;
-
-      const firstComponent = await deployTokenAsync(web3, issuanceOrderTaker);
-      const secondComponent = await deployTokenAsync(web3, zeroExOrderMaker);
-      const makerToken = await deployTokenAsync(web3, issuanceOrderMaker);
-      const relayerToken = await deployTokenAsync(web3, issuanceOrderMaker);
-
-      const componentTokens = [firstComponent, secondComponent];
-      const setComponentUnit = ether(4);
-      const componentAddresses = componentTokens.map(token => token.address);
-      const componentUnits = componentTokens.map(token => setComponentUnit);
-      const naturalUnit = ether(2);
-      const setToken = await deploySetTokenAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        componentAddresses,
-        componentUnits,
-        naturalUnit,
-      );
-
-      const issuanceOrderQuantity = ether(4);
-      const issuanceOrderMakerTokenAmount = ether(10);
-      const issuanceOrderExpiration = generateFutureTimestamp(10000);
-      const requiredComponents = [firstComponent.address, secondComponent.address];
-      const requredComponentAmounts = _.map(componentUnits, unit => unit.mul(issuanceOrderQuantity).div(naturalUnit));
-      const issuanceOrderMakerRelayerFee = ZERO;
-      const issuanceOrderTakerRelayerFee = ZERO;
-      subjectSignedIssuanceOrder = await ordersAPI.createSignedOrderAsync(
-        setToken.address,
-        issuanceOrderQuantity,
-        requiredComponents,
-        requredComponentAmounts,
-        issuanceOrderMaker,
-        makerToken.address,
-        issuanceOrderMakerTokenAmount,
-        issuanceOrderExpiration,
-        relayerAddress,
-        relayerToken.address,
-        issuanceOrderMakerRelayerFee,
-        issuanceOrderTakerRelayerFee,
-      );
-      subjectCancelQuantity = issuanceOrderQuantity;
-      subjectCaller = issuanceOrderMaker;
-    });
-
-    async function subject(): Promise<string> {
-      return await coreWrapper.cancelOrder(
-        subjectSignedIssuanceOrder,
-        subjectCancelQuantity,
-        { from: subjectCaller }
-      );
-    }
-
-    test('updates the cancel amount for the order', async () => {
-      const { signature, ...issuanceOrder } = subjectSignedIssuanceOrder;
-      const orderHash = SetUtils.hashOrderHex(issuanceOrder);
-      const existingCancelAmount = await issuanceOrderModule.orderCancels.callAsync(orderHash);
-
-      await subject();
-
-      const expectedCancelAmounts = existingCancelAmount.add(subjectCancelQuantity);
-      const newCancelAmount = await issuanceOrderModule.orderCancels.callAsync(orderHash);
-      expect(newCancelAmount).to.bignumber.equal(expectedCancelAmounts);
-    });
-  });
-
-  describe('bid', async () => {
-    let rebalancingSetToken: RebalancingSetTokenContract;
-    let currentSetToken: SetTokenContract;
-    let nextSetToken: SetTokenContract;
-
-    let subjectRebalancingSetToken: Address;
-    let subjectBidQuantity: BigNumber;
-    let subjectCaller: Address;
-
-    beforeEach(async () => {
-      const setTokens = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        2,
-      );
-
-      currentSetToken = setTokens[0];
-      nextSetToken = setTokens[1];
-
-      const proposalPeriod = ONE_DAY_IN_SECONDS;
-      const managerAddress = ACCOUNTS[1].address;
-      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
-        web3,
-        core,
-        rebalancingSetTokenFactory.address,
-        managerAddress,
-        currentSetToken.address,
-        proposalPeriod
-      );
-
-      // Issue currentSetToken
-      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
-      await approveForTransferAsync([currentSetToken], transferProxy.address);
-
-      // Use issued currentSetToken to issue rebalancingSetToken
-      const rebalancingSetQuantityToIssue = ether(7);
-      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
-
-      // Deploy price curve used in auction
-      const priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
-
-      // Transition to proposal state
-      const auctionPriceCurveAddress = priceCurve.address;
-      const setAuctionTimeToPivot = new BigNumber(100000);
-      const setAuctionStartPrice = new BigNumber(500);
-      const setAuctionPivotPrice = new BigNumber(1000);
-      await transitionToRebalanceAsync(
-        web3,
-        rebalancingSetToken,
-        managerAddress,
-        nextSetToken.address,
-        auctionPriceCurveAddress,
-        setAuctionTimeToPivot,
-        setAuctionStartPrice,
-        setAuctionPivotPrice,
-      );
-
-      subjectRebalancingSetToken = rebalancingSetToken.address;
-      subjectBidQuantity = ether(2);
-      subjectCaller = DEFAULT_ACCOUNT;
-    });
-
-    async function subject(): Promise<string> {
-      return await coreWrapper.bid(
-        subjectRebalancingSetToken,
-        subjectBidQuantity,
-        { from: subjectCaller },
-      );
-    }
-
-    test('subtract correct amount from remainingCurrentSets', async () => {
-      const [, existingRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
-
-      await subject();
-
-      const expectedRemainingCurrentSets = existingRemainingCurrentSets.sub(subjectBidQuantity);
-      const [, newRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
-      expect(newRemainingCurrentSets).to.eql(expectedRemainingCurrentSets);
-    });
-
-    test('transfers the correct amount of tokens from the bidder to the rebalancing token in Vault', async () => {
-      const expectedTokenFlows = await constructInflowOutflowArraysAsync(
-        rebalancingSetToken,
-        subjectBidQuantity,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-      );
-      const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
-
-      const oldSenderBalances = await getVaultBalances(
-        vault,
-        combinedTokenArray,
-        rebalancingSetToken.address
-      );
-
-      await subject();
-
-      const newSenderBalances = await getVaultBalances(
-        vault,
-        combinedTokenArray,
-        rebalancingSetToken.address
-      );
-      const expectedSenderBalances = _.map(oldSenderBalances, (balance, index) =>
-        balance.add(expectedTokenFlows['inflow'][index]).sub(expectedTokenFlows['outflow'][index])
-      );
-      expect(JSON.stringify(newSenderBalances)).to.equal(JSON.stringify(expectedSenderBalances));
-    });
-
-    it('transfers the correct amount of tokens to the bidder in the Vault', async () => {
-      const expectedTokenFlows = await constructInflowOutflowArraysAsync(
-        rebalancingSetToken,
-        subjectBidQuantity,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-      );
-      const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
-
-      const oldReceiverBalances = await getVaultBalances(
-        vault,
-        combinedTokenArray,
-        DEFAULT_ACCOUNT
-      );
-
-      await subject();
-
-      const newReceiverBalances = await getVaultBalances(
-        vault,
-        combinedTokenArray,
-        DEFAULT_ACCOUNT
-      );
-      const expectedReceiverBalances = _.map(oldReceiverBalances, (balance, index) =>
-        balance.add(expectedTokenFlows['outflow'][index])
-      );
-
-      expect(JSON.stringify(newReceiverBalances)).to.equal(JSON.stringify(expectedReceiverBalances));
-    });
-  });
-
   describe('Core State Getters', async () => {
     let setComponentUnit: BigNumber;
+    let moduleAddress: Address;
+    let priceLibraryAddress: Address;
     let setToken: SetTokenContract;
 
     beforeEach(async () => {
@@ -953,6 +565,12 @@ describe('CoreWrapper', () => {
         componentTokens.map(token => setComponentUnit),
         naturalUnit,
       );
+
+      moduleAddress = ACCOUNTS[2].address;
+      priceLibraryAddress = ACCOUNTS[3].address;
+
+      await addModuleAsync(core, moduleAddress);
+      await addPriceLibraryAsync(core, priceLibraryAddress);
     });
 
     test('gets exchange address', async () => {
@@ -995,6 +613,29 @@ describe('CoreWrapper', () => {
 
       isValidSetAddress = await coreWrapper.validSets(NULL_ADDRESS);
       expect(isValidSetAddress).to.equal(false);
+    });
+
+    test('gets is valid module', async () => {
+      let isValidModule = await coreWrapper.validModules(moduleAddress);
+      expect(isValidModule).to.equal(true);
+
+      isValidModule = await coreWrapper.validModules(NULL_ADDRESS);
+      expect(isValidModule).to.equal(false);
+    });
+
+    test('gets is valid price library', async () => {
+      let isValidPriceLibrary = await coreWrapper.validPriceLibrary(priceLibraryAddress);
+      expect(isValidPriceLibrary).to.equal(true);
+
+      isValidPriceLibrary = await coreWrapper.validPriceLibrary(NULL_ADDRESS);
+      expect(isValidPriceLibrary).to.equal(false);
+    });
+
+    test('gets operation state', async () => {
+      const operationalState = new BigNumber(0);
+
+      const operationState = await coreWrapper.getOperationState();
+      expect(operationState).to.bignumber.equal(operationalState);
     });
   });
 });

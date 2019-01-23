@@ -127,9 +127,8 @@ describe('FactoryAPI', () => {
       config.transferProxyAddress,
       config.vaultAddress,
       config.rebalanceAuctionModuleAddress,
-      config.issuanceOrderModuleAddress,
     );
-    assertions = new Assertions(web3, coreWrapper);
+    assertions = new Assertions(web3);
     factoryAPI = new FactoryAPI(web3, coreWrapper, assertions, config);
   });
 
