@@ -19,15 +19,15 @@
 import Web3 from 'web3';
 
 import { ContractWrapper } from '.';
-import { BigNumber } from '../util';
-import { Address } from '../types/common';
+import { BigNumber, generateTxOpts } from '../util';
+import { Address, Tx } from '../types/common';
 import { Bytes, ExchangeIssueParams } from 'set-protocol-utils';
 
 /**
  * @title  PayableExchangeIssueWrapper
  * @author Set Protocol
  *
- * The Vault API handles all functions on the Vault smart contract.
+ * The PayableExchangeIssueWrapper handles all functions on the Payable Exchange Issue smart contract.
  *
  */
 export class PayableExchangeIssueWrapper {
@@ -48,20 +48,24 @@ export class PayableExchangeIssueWrapper {
    * @param  rebalancingSetAddress    Address of the rebalancing Set to issue
    * @param  exchangeIssueData        Struct containing data around the base Set issuance
    * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
+   * @param  txOpts                    The options for executing the transaction
    */
   public async issueRebalancingSetWithEther(
     rebalancingSetAddress: Address,
     exchangeIssueParams: ExchangeIssueParams,
     orderData: Bytes,
-  ): Promise<void> {
+    txOpts?: Tx,
+  ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
     const payableExchangeIssueInstance = await this.contracts.loadPayableExchangeIssueAsync(
       this.payableExchangeIssue
     );
 
-    await payableExchangeIssueInstance.issueRebalancingSetWithEther.sendTransactionAsync(
+    return await payableExchangeIssueInstance.issueRebalancingSetWithEther.sendTransactionAsync(
       rebalancingSetAddress,
       exchangeIssueParams,
-      orderData
+      orderData,
+      txSettings,
     );
   }
 }
