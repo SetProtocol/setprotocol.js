@@ -21,6 +21,7 @@ import { CoreWrapper } from './CoreWrapper';
 import { ERC20Wrapper } from './ERC20Wrapper';
 import { IssuanceOrderModuleWrapper } from './IssuanceOrderModuleWrapper';
 import { KyberNetworkWrapper } from './KyberNetworkWrapper';
+import { PayableExchangeIssueWrapper } from './PayableExchangeIssueWrapper';
 import { RebalancingAuctionModuleWrapper } from './RebalancingAuctionModuleWrapper';
 import { RebalancingSetTokenWrapper } from './RebalancingSetTokenWrapper';
 import { SetTokenWrapper } from './SetTokenWrapper';
@@ -32,6 +33,7 @@ export {
   ERC20Wrapper,
   IssuanceOrderModuleWrapper,
   KyberNetworkWrapper,
+  PayableExchangeIssueWrapper,
   RebalancingAuctionModuleWrapper,
   RebalancingSetTokenWrapper,
   SetTokenWrapper,
