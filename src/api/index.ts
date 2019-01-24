@@ -22,6 +22,7 @@ import { ERC20API } from './ERC20API';
 import { FactoryAPI } from './FactoryAPI';
 import { IssuanceAPI } from './IssuanceAPI';
 import { OrderAPI } from './OrderAPI';
+import { PayableExchangeIssueAPI } from './PayableExchangeIssueAPI';
 import { RebalancingAPI } from './RebalancingAPI';
 import { SetTokenAPI } from './SetTokenAPI';
 
@@ -32,6 +33,7 @@ export {
   FactoryAPI,
   IssuanceAPI,
   OrderAPI,
+  PayableExchangeIssueAPI,
   RebalancingAPI,
   SetTokenAPI
 };
