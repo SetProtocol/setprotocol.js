@@ -23,6 +23,7 @@ import {
   ERC20DetailedContract,
   IssuanceOrderModuleContract,
   KyberNetworkWrapperContract,
+  PayableExchangeIssueContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   SetTokenContract,
@@ -249,6 +250,32 @@ export class ContractWrapper {
       );
       this.cache[cacheKey] = issuanceOrderModuleContract;
       return issuanceOrderModuleContract;
+    }
+  }
+
+  /**
+   * Load PayableExchangeIssue contract
+   *
+   * @param  payableExchangeIssueAddress    Address of the PayableExchangeIssue contract
+   * @param  transactionOptions             Options sent into the contract deployed method
+   * @return                                The PayableExchangeIssue Contract
+   */
+  public async loadPayableExchangeIssueAsync(
+    payableExchangeIssueAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<PayableExchangeIssueContract> {
+    const cacheKey = `PayableExchangeIssue_${payableExchangeIssueAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as PayableExchangeIssueContract;
+    } else {
+      const payableExchangeIssueContract = await PayableExchangeIssueContract.at(
+        payableExchangeIssueAddress,
+        this.web3,
+        transactionOptions
+      );
+      this.cache[cacheKey] = payableExchangeIssueContract;
+      return payableExchangeIssueContract;
     }
   }
 }

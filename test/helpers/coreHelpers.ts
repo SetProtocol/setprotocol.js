@@ -4,25 +4,30 @@ import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-ut
 import {
   Core,
   ERC20Wrapper,
-  IssuanceOrderModule,
+  ExchangeIssueModule,
   NoDecimalTokenMock,
   OrderLibrary,
+  PayableExchangeIssue,
   RebalanceAuctionModule,
   RebalancingSetTokenFactory,
-  SetTokenFactory,
   SetToken,
+  SetTokenFactory,
   SignatureValidatorContract,
   StandardTokenMock,
   TransferProxy,
   Vault,
+  WethMock,
   WhiteList,
 } from 'set-protocol-contracts';
 import {
   AuthorizableContract,
   BaseContract,
   CoreContract,
+  ExchangeIssueModuleContract,
+  IssuanceOrderModule,
   IssuanceOrderModuleContract,
   NoDecimalTokenMockContract,
+  PayableExchangeIssueContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
@@ -31,6 +36,7 @@ import {
   StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
+  WethMockContract,
   WhiteListContract,
 } from 'set-protocol-contracts';
 
@@ -336,6 +342,96 @@ export const deployWhitelistContract = async (
   );
 
   return whitelistContract;
+};
+
+export const deployExchangeIssueModuleAsync = async (
+  web3: Web3,
+  core: CoreContract,
+  transferProxy: TransferProxyContract,
+  vault: VaultContract,
+  owner: Address = DEFAULT_ACCOUNT,
+): Promise<ExchangeIssueModuleContract> => {
+  const truffleExchangeIssueModuleContract = contract(ExchangeIssueModule);
+  truffleExchangeIssueModuleContract.setProvider(web3.currentProvider);
+  truffleExchangeIssueModuleContract.defaults(TX_DEFAULTS);
+  const deployedExchangeIssueModuleContract = await truffleExchangeIssueModuleContract.new(
+    core.address,
+    transferProxy.address,
+    vault.address,
+  );
+
+  // Initialize typed contract class
+  const exchangeIssueModule = await ExchangeIssueModuleContract.at(
+    deployedExchangeIssueModuleContract.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  return exchangeIssueModule;
+};
+
+export const deployPayableExchangeIssueAsync = async (
+  web3: Web3,
+  core: CoreContract,
+  transferProxy: TransferProxyContract,
+  exchangeIssueModule: ExchangeIssueModuleContract,
+  wrappedEther: WethMockContract,
+  owner: Address = DEFAULT_ACCOUNT,
+): Promise<PayableExchangeIssueContract> => {
+
+
+  const trufflePayableExchangeIssueContract = contract(PayableExchangeIssue);
+  trufflePayableExchangeIssueContract.setProvider(web3.currentProvider);
+  trufflePayableExchangeIssueContract.setNetwork(50);
+  trufflePayableExchangeIssueContract.defaults(TX_DEFAULTS);
+
+  const truffleERC20WrapperContract = contract(ERC20Wrapper);
+  truffleERC20WrapperContract.setProvider(web3.currentProvider);
+  truffleERC20WrapperContract.setNetwork(50);
+  truffleERC20WrapperContract.defaults(TX_DEFAULTS);
+
+  const deployedERC20Wrapper = await truffleERC20WrapperContract.new();
+  await trufflePayableExchangeIssueContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
+
+  const deployedPayableExchangeIssueContract = await trufflePayableExchangeIssueContract.new(
+    core.address,
+    transferProxy.address,
+    exchangeIssueModule.address,
+    wrappedEther.address,
+  );
+
+  // Initialize typed contract class
+  const payableExchangeIssue = await PayableExchangeIssueContract.at(
+    deployedPayableExchangeIssueContract.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  return payableExchangeIssue;
+};
+
+export const deployWethMockAsync = async (
+  web3: Web3,
+  initialAccount: Address,
+  initialBalance: BigNumber,
+  owner: Address = DEFAULT_ACCOUNT,
+): Promise<WethMockContract> => {
+  const truffleWethMockContract = contract(WethMock);
+  truffleWethMockContract.setProvider(web3.currentProvider);
+  truffleWethMockContract.defaults(TX_DEFAULTS);
+  const deployedWethMockContract = await truffleWethMockContract.new(
+    initialAccount,
+    initialBalance,
+  );
+
+  // Initialize typed contract class
+  const wethMock = await WethMockContract.at(
+    deployedWethMockContract.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  return wethMock;
 };
 
 export const deployTokenAsync = async (
