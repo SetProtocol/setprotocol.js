@@ -24,7 +24,7 @@ import { Bytes, ExchangeIssueParams, SetProtocolUtils } from 'set-protocol-utils
 import { WBTC_DECIMALS, WETH_DECIMALS, ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { CoreWrapper, PayableExchangeIssueWrapper, RebalancingSetTokenWrapper } from '../wrappers';
+import { CoreWrapper, PayableExchangeIssueWrapper } from '../wrappers';
 import { BigNumber } from '../util';
 import {
   Address,
@@ -43,7 +43,6 @@ export class PayableExchangeIssueAPI {
   private web3: Web3;
   private assert: Assertions;
   private core: CoreWrapper;
-  private rebalancingSetToken: RebalancingSetTokenWrapper;
   private payableExchangeIssue: PayableExchangeIssueWrapper;
   private setProtocolUtils: SetProtocolUtils;
   private wrappedEther: Address;
@@ -71,7 +70,6 @@ export class PayableExchangeIssueAPI {
     this.assert = assertions;
     this.payableExchangeIssue = payableExchangeIssue;
     this.wrappedEther = wrappedEtherAddress;
-    this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
   }
 
   /**
@@ -115,7 +113,7 @@ export class PayableExchangeIssueAPI {
    * @param  rebalancingSetNaturalUnit  Natural Unit of the Rebalancing Set
    * @return                            The value in units of BTCETH issuable
    */
-  public getBtcEthValueFromEth(
+  public getBtcEthQuantityFromEth(
     etherQuantity: BigNumber,
     btcEthPriceRatio: BigNumber,
     allocationPercentages: BigNumber[],
@@ -126,14 +124,12 @@ export class PayableExchangeIssueAPI {
   ): BigNumber {
     const [wrappedBtcPercent, wrappedEthPercent] = allocationPercentages;
     const [wrappedBtcUnits, wrappedEthUnits] = baseSetUnits;
-
-    const maxSetIssuable: BigNumber[] = [];
-
     const decimalDifference = WETH_DECIMALS - WBTC_DECIMALS;
+    const decimalDifferenceExponentiated = new BigNumber(10 ** decimalDifference);
 
     // Calculate the maximum base Set based on Btc
     const wrappedBtcInUnits = etherQuantity.mul(wrappedBtcPercent);
-    const maxWBtcAcquirable = wrappedBtcInUnits.mul(btcEthPriceRatio).div(10 ** decimalDifference);
+    const maxWBtcAcquirable = wrappedBtcInUnits.div(decimalDifferenceExponentiated).div(btcEthPriceRatio);
     const maxBaseSetIssuableWBtc = maxWBtcAcquirable.mul(baseSetNaturalUnit).div(wrappedBtcUnits);
 
     // Calculate the maximum base Set based on Eth
@@ -147,5 +143,41 @@ export class PayableExchangeIssueAPI {
     const maxBtcEthIssuable = maxBaseSetIssuable.mul(rebalancingSetNaturalUnit).div(rebalancingSetUnitShares);
 
     return maxBtcEthIssuable;
+  }
+
+  /**
+   * Calculates the maximum amount of Ether required to issue a particular quantity of Rebalancing BTCETH Set.
+   * The Ether would be used to acquire WBTC at the btcEth price ratio.
+   *
+   * @param  btcEthQuantity             Quantity of Ether to pay with
+   * @param  btcEthUnitShares           Unit Shares of BTC ETH Set
+   * @param  btcEthNaturalUnit          Natural Unit of the Rebalancing Set
+   * @param  btcEthPriceRatio           Value representing the price of Btc / price of Eth in any denomination
+   * @param  baseSetUnits               A list of the base Set units with BTC followed by ETH Example: [BTC, ETH];
+   * @param  baseSetNaturalUnit         Natural Unit of the base Set
+   * @return                            The value in units of BTCETH issuable in Eth quantity
+   */
+  public getEthValueFromBtcEth(
+    btcEthQuantity: BigNumber,
+    btcEthUnitShares: BigNumber,
+    btcEthNaturalUnit: BigNumber,
+    btcEthPriceRatio: BigNumber,
+    baseSetUnits: BigNumber[],
+    baseSetNaturalUnit: BigNumber,
+  ): BigNumber {
+    const baseSetIssuable = btcEthQuantity.div(btcEthNaturalUnit).mul(btcEthUnitShares);
+
+    const [btcUnits, ethUnits] = baseSetUnits;
+    const decimalDifference = WETH_DECIMALS - WBTC_DECIMALS;
+    const decimalDifferenceExponentiated = new BigNumber(10 ** decimalDifference);
+
+    const requiredWbtc = baseSetIssuable.mul(btcUnits).div(baseSetNaturalUnit);
+    const requiredWbtcInEth = requiredWbtc.mul(btcEthPriceRatio).mul(decimalDifferenceExponentiated);
+
+    const requiredWeth = baseSetIssuable.mul(ethUnits).div(baseSetNaturalUnit);
+
+    const totalRequiredWeth = requiredWeth.plus(requiredWbtcInEth);
+
+    return totalRequiredWeth;
   }
 }

@@ -314,8 +314,8 @@ describe('PayableExchangeIssueAPI', () => {
     });
   });
 
-  describe('getBtcEthValueFromEth', async () => {
-    let subjectEtherValue: BigNumber;
+  describe('getBtcEthQuantityFromEth', async () => {
+    let subjectEtherQuantity: BigNumber;
     let subjectBtcEthPriceRatio: BigNumber;
     let subjectAllocation: BigNumber[];
     let subjectBaseSetUnits: BigNumber[];
@@ -338,24 +338,24 @@ describe('PayableExchangeIssueAPI', () => {
 
       const percentAllocation = [new BigNumber(0.5), new BigNumber(0.5)]; // 50/50 Mix
 
-      subjectEtherValue = new BigNumber(10 ** 18);
+      subjectEtherQuantity = new BigNumber(10 ** 18);
       subjectBtcEthPriceRatio = btcToEthRatio;
       subjectAllocation = percentAllocation;
       subjectBaseSetUnits = [baseSetBtcUnit, baseSetEthUnit];
       subjectBaseSetNaturalUnit = new BigNumber(10 ** 10);
-      subjectRebalancingSetNaturalUnit = new BigNumber(10 ** 10);
       subjectRebalancingSetUnitShares = new BigNumber(1.35 * 10 ** 6);
+      subjectRebalancingSetNaturalUnit = new BigNumber(10 ** 10);
     });
 
     function subject(): BigNumber {
-      return payableExchangeIssueAPI.getBtcEthValueFromEth(
-        subjectEtherValue,
+      return payableExchangeIssueAPI.getBtcEthQuantityFromEth(
+        subjectEtherQuantity,
         subjectBtcEthPriceRatio,
         subjectAllocation,
         subjectBaseSetUnits,
         subjectBaseSetNaturalUnit,
-        subjectRebalancingSetNaturalUnit,
         subjectRebalancingSetUnitShares,
+        subjectRebalancingSetNaturalUnit,
       );
     }
 
@@ -372,6 +372,54 @@ describe('PayableExchangeIssueAPI', () => {
       expect(result).to.bignumber.greaterThan(minAnswer);
       expect(result).to.bignumber.lessThan(maxAnswer);
     });
+  });
 
+  describe('getEthValueFromBtcEth', async () => {
+    let subjectBtcEthQuantity: BigNumber;
+    let subjectBtcEthUnitShares: BigNumber;
+    let subjectBtcEthNaturalUnit: BigNumber;
+    let subjectBtcEthPriceRatio: BigNumber;
+    let subjectBaseSetUnits: BigNumber[];
+    let subjectBaseSetNaturalUnit: BigNumber;
+
+    beforeEach(async () => {
+      const btcPrice = new BigNumber(3.71 * 10 ** 21);
+      const etherPrice = new BigNumber(1.28 * 10 ** 20);
+      const btcToEthRatio = btcPrice.div(etherPrice);
+
+      const btcDecimals = 8;
+      const ethDecimals = 18;
+      const decimalDifference = ethDecimals - btcDecimals;
+      const decimalDifferenceExponentiated = new BigNumber(10 ** decimalDifference);
+
+      const baseSetBtcUnit = new BigNumber(1);
+      const baseSetEthUnit = btcToEthRatio.mul(decimalDifferenceExponentiated).mul(baseSetBtcUnit);
+
+      subjectBtcEthQuantity = new BigNumber(10 ** 18);
+      subjectBtcEthUnitShares = new BigNumber(1.35 * 10 ** 6);
+      subjectBtcEthNaturalUnit = new BigNumber(10 ** 10);
+      subjectBtcEthPriceRatio = btcToEthRatio;
+      subjectBaseSetUnits = [baseSetBtcUnit, baseSetEthUnit];
+      subjectBaseSetNaturalUnit = new BigNumber(10 ** 10);
+    });
+
+    function subject(): BigNumber {
+      return payableExchangeIssueAPI.getEthValueFromBtcEth(
+        subjectBtcEthQuantity,
+        subjectBtcEthUnitShares,
+        subjectBtcEthNaturalUnit,
+        subjectBtcEthPriceRatio,
+        subjectBaseSetUnits,
+        subjectBaseSetNaturalUnit,
+      );
+    }
+
+    test('calculates the correct ether value', () => {
+      const answer = new BigNumber(7.83 * 10 ** 15);
+
+      const result = subject();
+
+      expect(result.toPrecision(3)).to.bignumber.equal(answer.toPrecision(3));
+    });
   });
 });
