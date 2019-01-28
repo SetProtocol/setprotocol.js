@@ -21,10 +21,10 @@ import Web3 from 'web3';
 import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 import { Bytes, ExchangeIssueParams, SetProtocolUtils } from 'set-protocol-utils';
 
-import { ZERO } from '../constants';
+import { WBTC_DECIMALS, WETH_DECIMALS, ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { CoreWrapper, PayableExchangeIssueWrapper } from '../wrappers';
+import { CoreWrapper, PayableExchangeIssueWrapper, RebalancingSetTokenWrapper } from '../wrappers';
 import { BigNumber } from '../util';
 import {
   Address,
@@ -43,6 +43,7 @@ export class PayableExchangeIssueAPI {
   private web3: Web3;
   private assert: Assertions;
   private core: CoreWrapper;
+  private rebalancingSetToken: RebalancingSetTokenWrapper;
   private payableExchangeIssue: PayableExchangeIssueWrapper;
   private setProtocolUtils: SetProtocolUtils;
   private wrappedEther: Address;
@@ -70,6 +71,7 @@ export class PayableExchangeIssueAPI {
     this.assert = assertions;
     this.payableExchangeIssue = payableExchangeIssue;
     this.wrappedEther = wrappedEtherAddress;
+    this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
   }
 
   /**
@@ -98,5 +100,52 @@ export class PayableExchangeIssueAPI {
       orderData,
       txOpts,
     );
+  }
+
+  /**
+   * Calculates the maximum amount of Rebalancing BTCETH Set issuable based on an Ether and acquisition
+   * of WBTC using WETH.
+   *
+   * @param  etherQuantity              Quantity of Ether to pay with
+   * @param  btcEthPriceRatio           Value representing the price of Btc / price of Eth in any denomination
+   * @param  allocationPercentages      The desired percentages in decimals of BTC and Eth (e.g. [0.49, 0.51])
+   * @param  baseSetUnits               A list of the base Set units with BTC followed by ETH Example: [BTC, ETH];
+   * @param  baseSetNaturalUnit         Natural Unit of the base Set
+   * @param  rebalancingSetUnitShares   Unit Shares of the rebalancing Set
+   * @param  rebalancingSetNaturalUnit  Natural Unit of the Rebalancing Set
+   * @return                            The value in units of BTCETH issuable
+   */
+  public getBtcEthValueFromEth(
+    etherQuantity: BigNumber,
+    btcEthPriceRatio: BigNumber,
+    allocationPercentages: BigNumber[],
+    baseSetUnits: BigNumber[],
+    baseSetNaturalUnit: BigNumber,
+    rebalancingSetUnitShares: BigNumber,
+    rebalancingSetNaturalUnit: BigNumber,
+  ): BigNumber {
+    const [wrappedBtcPercent, wrappedEthPercent] = allocationPercentages;
+    const [wrappedBtcUnits, wrappedEthUnits] = baseSetUnits;
+
+    const maxSetIssuable: BigNumber[] = [];
+
+    const decimalDifference = WETH_DECIMALS - WBTC_DECIMALS;
+
+    // Calculate the maximum base Set based on Btc
+    const wrappedBtcInUnits = etherQuantity.mul(wrappedBtcPercent);
+    const maxWBtcAcquirable = wrappedBtcInUnits.mul(btcEthPriceRatio).div(10 ** decimalDifference);
+    const maxBaseSetIssuableWBtc = maxWBtcAcquirable.mul(baseSetNaturalUnit).div(wrappedBtcUnits);
+
+    // Calculate the maximum base Set based on Eth
+    const wrappedEtherInUnits = etherQuantity.mul(wrappedEthPercent);
+    const maxBaseSetIssuableWrappedEther = wrappedEtherInUnits.mul(baseSetNaturalUnit).div(wrappedEthUnits);
+
+    // Calculate the maximum base Set issuable
+    const maxBaseSetIssuable = BigNumber.min(maxBaseSetIssuableWBtc, maxBaseSetIssuableWrappedEther);
+
+    // Calculate the maximum BTCEth Issuable
+    const maxBtcEthIssuable = maxBaseSetIssuable.mul(rebalancingSetNaturalUnit).div(rebalancingSetUnitShares);
+
+    return maxBtcEthIssuable;
   }
 }

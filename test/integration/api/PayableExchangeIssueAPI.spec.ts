@@ -313,4 +313,65 @@ describe('PayableExchangeIssueAPI', () => {
       expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
     });
   });
+
+  describe('getBtcEthValueFromEth', async () => {
+    let subjectEtherValue: BigNumber;
+    let subjectBtcEthPriceRatio: BigNumber;
+    let subjectAllocation: BigNumber[];
+    let subjectBaseSetUnits: BigNumber[];
+    let subjectBaseSetNaturalUnit: BigNumber;
+    let subjectRebalancingSetNaturalUnit: BigNumber;
+    let subjectRebalancingSetUnitShares: BigNumber;
+
+    beforeEach(async () => {
+      const btcPrice = new BigNumber(3.71 * 10 ** 21);
+      const etherPrice = new BigNumber(1.28 * 10 ** 20);
+      const btcToEthRatio = btcPrice.div(etherPrice);
+
+      const btcDecimals = 8;
+      const ethDecimals = 18;
+      const decimalDifference = ethDecimals - btcDecimals;
+      const decimalDifferenceExponentiated = new BigNumber(10 ** decimalDifference);
+
+      const baseSetBtcUnit = new BigNumber(1);
+      const baseSetEthUnit = btcToEthRatio.mul(decimalDifferenceExponentiated).mul(baseSetBtcUnit);
+
+      const percentAllocation = [new BigNumber(0.5), new BigNumber(0.5)]; // 50/50 Mix
+
+      subjectEtherValue = new BigNumber(10 ** 18);
+      subjectBtcEthPriceRatio = btcToEthRatio;
+      subjectAllocation = percentAllocation;
+      subjectBaseSetUnits = [baseSetBtcUnit, baseSetEthUnit];
+      subjectBaseSetNaturalUnit = new BigNumber(10 ** 10);
+      subjectRebalancingSetNaturalUnit = new BigNumber(10 ** 10);
+      subjectRebalancingSetUnitShares = new BigNumber(1.35 * 10 ** 6);
+    });
+
+    function subject(): BigNumber {
+      return payableExchangeIssueAPI.getBtcEthValueFromEth(
+        subjectEtherValue,
+        subjectBtcEthPriceRatio,
+        subjectAllocation,
+        subjectBaseSetUnits,
+        subjectBaseSetNaturalUnit,
+        subjectRebalancingSetNaturalUnit,
+        subjectRebalancingSetUnitShares,
+      );
+    }
+
+    test('calculates the correct max btc eth issuable', () => {
+      const minAnswer = new BigNumber(1.27 * 10 ** 20);
+      const maxAnswer = new BigNumber(1.28 * 10 ** 20);
+
+      const answer = new BigNumber(1.2775 * 10 ** 20);
+
+      const result = subject();
+
+      expect(result.toPrecision(3)).to.bignumber.equal(answer.toPrecision(3));
+
+      expect(result).to.bignumber.greaterThan(minAnswer);
+      expect(result).to.bignumber.lessThan(maxAnswer);
+    });
+
+  });
 });

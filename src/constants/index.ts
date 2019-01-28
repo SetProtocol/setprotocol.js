@@ -40,6 +40,8 @@ export const STANDARD_SUPPLY: BigNumber = new BigNumber(100000000000000000000); 
 export const STANDARD_TRANSFER_VALUE: BigNumber = new BigNumber(1000000000000000000); // 1 Ether
 export const UNLIMITED_ALLOWANCE_IN_BASE_UNITS: BigNumber =
   SetProtocolUtils.CONSTANTS.UNLIMITED_ALLOWANCE_IN_BASE_UNITS; // 2 ** 256 - 1
+export const WBTC_DECIMALS = 8;
+export const WETH_DECIMALS = 18;
 export const ZERO: BigNumber = SetProtocolUtils.CONSTANTS.ZERO;
 
 // Returns a big number that can be passed in as a smart contract parameter
