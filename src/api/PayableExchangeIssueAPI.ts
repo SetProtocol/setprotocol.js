@@ -106,7 +106,6 @@ export class PayableExchangeIssueAPI {
    *
    * @param  etherQuantity              Quantity of Ether to pay with
    * @param  btcEthPriceRatio           Value representing the price of Btc / price of Eth in any denomination
-   * @param  allocationPercentages      The desired percentages in decimals of BTC and Eth (e.g. [0.49, 0.51])
    * @param  baseSetUnits               A list of the base Set units with BTC followed by ETH Example: [BTC, ETH];
    * @param  baseSetNaturalUnit         Natural Unit of the base Set
    * @param  rebalancingSetUnitShares   Unit Shares of the rebalancing Set
@@ -116,16 +115,20 @@ export class PayableExchangeIssueAPI {
   public getBtcEthQuantityFromEth(
     etherQuantity: BigNumber,
     btcEthPriceRatio: BigNumber,
-    allocationPercentages: BigNumber[],
     baseSetUnits: BigNumber[],
     baseSetNaturalUnit: BigNumber,
     rebalancingSetUnitShares: BigNumber,
     rebalancingSetNaturalUnit: BigNumber,
   ): BigNumber {
-    const [wrappedBtcPercent, wrappedEthPercent] = allocationPercentages;
     const [wrappedBtcUnits, wrappedEthUnits] = baseSetUnits;
     const decimalDifference = WETH_DECIMALS - WBTC_DECIMALS;
     const decimalDifferenceExponentiated = new BigNumber(10 ** decimalDifference);
+
+    const wrappedBtcValueInEth = wrappedBtcUnits.mul(btcEthPriceRatio).mul(decimalDifferenceExponentiated);
+    const totalValueInEth = wrappedBtcValueInEth.plus(wrappedEthUnits);
+
+    const wrappedBtcPercent = wrappedBtcValueInEth.div(totalValueInEth);
+    const wrappedEthPercent = wrappedEthUnits.div(totalValueInEth);
 
     // Calculate the maximum base Set based on Btc
     const wrappedBtcInUnits = etherQuantity.mul(wrappedBtcPercent);

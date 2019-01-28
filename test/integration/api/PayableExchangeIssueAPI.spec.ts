@@ -317,7 +317,6 @@ describe('PayableExchangeIssueAPI', () => {
   describe('getBtcEthQuantityFromEth', async () => {
     let subjectEtherQuantity: BigNumber;
     let subjectBtcEthPriceRatio: BigNumber;
-    let subjectAllocation: BigNumber[];
     let subjectBaseSetUnits: BigNumber[];
     let subjectBaseSetNaturalUnit: BigNumber;
     let subjectRebalancingSetNaturalUnit: BigNumber;
@@ -336,11 +335,8 @@ describe('PayableExchangeIssueAPI', () => {
       const baseSetBtcUnit = new BigNumber(1);
       const baseSetEthUnit = btcToEthRatio.mul(decimalDifferenceExponentiated).mul(baseSetBtcUnit);
 
-      const percentAllocation = [new BigNumber(0.5), new BigNumber(0.5)]; // 50/50 Mix
-
       subjectEtherQuantity = new BigNumber(10 ** 18);
       subjectBtcEthPriceRatio = btcToEthRatio;
-      subjectAllocation = percentAllocation;
       subjectBaseSetUnits = [baseSetBtcUnit, baseSetEthUnit];
       subjectBaseSetNaturalUnit = new BigNumber(10 ** 10);
       subjectRebalancingSetUnitShares = new BigNumber(1.35 * 10 ** 6);
@@ -351,7 +347,6 @@ describe('PayableExchangeIssueAPI', () => {
       return payableExchangeIssueAPI.getBtcEthQuantityFromEth(
         subjectEtherQuantity,
         subjectBtcEthPriceRatio,
-        subjectAllocation,
         subjectBaseSetUnits,
         subjectBaseSetNaturalUnit,
         subjectRebalancingSetUnitShares,
