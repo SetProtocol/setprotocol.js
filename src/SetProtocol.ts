@@ -139,6 +139,12 @@ class SetProtocol {
     );
     this.setToken = new SetTokenAPI(this.web3, assertions);
 
+    const rebalanceAuctionModule = new RebalancingAuctionModuleWrapper(
+    this.web3,
+      config.rebalanceAuctionModuleAddress,
+    );
+    this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, rebalanceAuctionModule);
+
     if (config.issuanceOrderModuleAddress) {
       const issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(
         this.web3,
@@ -148,15 +154,7 @@ class SetProtocol {
       assertions.setOrderAssertions(this.web3, this.core, issuanceOrderModuleWrapper);
     }
 
-    if (config.rebalanceAuctionModuleAddress) {
-      const rebalanceAuctionModule = new RebalancingAuctionModuleWrapper(
-        this.web3,
-        config.rebalanceAuctionModuleAddress,
-      );
-      this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, rebalanceAuctionModule);
-    }
-
-    if (config.payableExchangeIssue) {
+    if (config.payableExchangeIssue && config.wrappedEtherAddress) {
       const payableExchangeIssueWrapper = new PayableExchangeIssueWrapper(
         this.web3,
         config.payableExchangeIssue
