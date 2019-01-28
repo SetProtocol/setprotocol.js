@@ -124,9 +124,9 @@ export class PayableExchangeIssueAPI {
     const decimalDifference = WETH_DECIMALS - WBTC_DECIMALS;
     const decimalDifferenceExponentiated = new BigNumber(10 ** decimalDifference);
 
+    // Calculate the percentage values of BTC and ETH based on the btc eth ratio
     const wrappedBtcValueInEth = wrappedBtcUnits.mul(btcEthPriceRatio).mul(decimalDifferenceExponentiated);
     const totalValueInEth = wrappedBtcValueInEth.plus(wrappedEthUnits);
-
     const wrappedBtcPercent = wrappedBtcValueInEth.div(totalValueInEth);
     const wrappedEthPercent = wrappedEthUnits.div(totalValueInEth);
 
