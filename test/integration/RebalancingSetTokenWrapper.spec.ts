@@ -332,6 +332,7 @@ describe('SetTokenWrapper', () => {
     let setAuctionTimeToPivot: BigNumber;
     let setAuctionStartPrice: BigNumber;
     let setAuctionPivotPrice: BigNumber;
+    let setStartingCurrentSetAmount: BigNumber;
     let rebalancingSetQuantityToIssue: BigNumber;
 
     let subjectRebalancingSetTokenAddress: Address;
@@ -366,7 +367,8 @@ describe('SetTokenWrapper', () => {
       );
 
       // Issue currentSetToken
-      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
+      const baseSetIssueQuantity = ether(9);
+      await core.issue.sendTransactionAsync(currentSetToken.address, baseSetIssueQuantity, TX_DEFAULTS);
       await approveForTransferAsync([currentSetToken], transferProxy.address);
 
       // Use issued currentSetToken to issue rebalancingSetToken
@@ -399,6 +401,8 @@ describe('SetTokenWrapper', () => {
         setAuctionStartPrice,
         setAuctionPivotPrice
       );
+
+      setStartingCurrentSetAmount = baseSetIssueQuantity;
 
       const lastBlock = await web3.eth.getBlock('latest');
       setAuctionStartTimestamp = new BigNumber(lastBlock.timestamp);
@@ -481,6 +485,13 @@ describe('SetTokenWrapper', () => {
     it('fetches the correct auctionStartPrice', async () => {
       const auctionStartPrice = await rebalancingSetTokenWrapper.auctionStartPrice(subjectRebalancingSetTokenAddress);
       expect(auctionStartPrice).to.be.bignumber.equal(setAuctionStartPrice);
+    });
+
+    it.only('fetches the correct startingCurrentSetAmount', async () => {
+      const startingCurrentSetAmount = await rebalancingSetTokenWrapper.startingCurrentSetAmount(
+        subjectRebalancingSetTokenAddress
+      );
+      expect(startingCurrentSetAmount).to.be.bignumber.equal(setStartingCurrentSetAmount);
     });
 
     it('fetches the correct auctionPivotPrice', async () => {
