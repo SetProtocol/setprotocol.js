@@ -140,7 +140,7 @@ class SetProtocol {
     this.setToken = new SetTokenAPI(this.web3, assertions);
 
     const rebalanceAuctionModule = new RebalancingAuctionModuleWrapper(
-    this.web3,
+      this.web3,
       config.rebalanceAuctionModuleAddress,
     );
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, rebalanceAuctionModule);
