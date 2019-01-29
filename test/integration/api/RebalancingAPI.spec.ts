@@ -1535,6 +1535,7 @@ describe('RebalancingAPI', () => {
     let managerAddress: Address;
     let priceCurve: ConstantAuctionPriceCurveContract;
     let rebalancingSetQuantityToIssue: BigNumber;
+    let currentSetStartingQuantity: BigNumber;
 
     let subjectRebalancingSetTokenAddress: Address;
 
@@ -1565,7 +1566,8 @@ describe('RebalancingAPI', () => {
       );
 
       // Issue currentSetToken
-      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
+      currentSetStartingQuantity = ether(7);
+      await core.issue.sendTransactionAsync(currentSetToken.address, currentSetStartingQuantity, TX_DEFAULTS);
       await approveForTransferAsync([currentSetToken], transferProxy.address);
 
       // Use issued currentSetToken to issue rebalancingSetToken
@@ -1637,8 +1639,10 @@ describe('RebalancingAPI', () => {
       let setAuctionTimeToPivot: BigNumber;
       let setAuctionStartPrice: BigNumber;
       let setAuctionPivotPrice: BigNumber;
+      let setCurrentSetStartingQuantity: BigNumber;
 
       beforeEach(async () => {
+        setCurrentSetStartingQuantity = currentSetStartingQuantity;
         setNextSet = nextSetToken.address;
         setAuctionPriceCurveAddress = priceCurve.address;
         setAuctionTimeToPivot = new BigNumber(100000);
@@ -1671,6 +1675,7 @@ describe('RebalancingAPI', () => {
         expect(rebalanceDetails.pricingLibraryAddress).eql(setAuctionPriceCurveAddress);
         expect(rebalanceDetails.timeToPivot).to.bignumber.equal(setAuctionTimeToPivot);
         expect(rebalanceDetails.auctionPivotPrice).to.bignumber.equal(setAuctionPivotPrice);
+        expect(rebalanceDetails.startingCurrentSetAmount).to.bignumber.equal(setCurrentSetStartingQuantity);
       });
     });
   });

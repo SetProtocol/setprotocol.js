@@ -286,6 +286,18 @@ export class RebalancingSetTokenWrapper {
   }
 
   /**
+   * Gets startingCurrentSetAmount for the Rebalancing Set Token.
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @return                         The starting Current Set AMount of the RebalancingSetToken
+   */
+  public async startingCurrentSetAmount(rebalancingSetAddress: Address): Promise<BigNumber> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    return await rebalancingSetTokenInstance.startingCurrentSetAmount.callAsync();
+  }
+
+  /**
    * Gets auctionParameters struct for the Rebalancing Set Token
    *
    * @param  rebalancingSetAddress   Address of the Set

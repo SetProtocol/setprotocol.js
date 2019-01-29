@@ -62,6 +62,7 @@ export interface RebalancingProgressDetails {
   auctionPivotPrice: BigNumber;
   remainingCurrentSet: BigNumber;
   minimumBid: BigNumber;
+  startingCurrentSetAmount: BigNumber;
 }
 
 export interface RebalancingSetDetails {
