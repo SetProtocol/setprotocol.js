@@ -16,11 +16,10 @@
 
 'use strict';
 
-export { coreAPIErrors, coreAssertionErrors } from './coreErrors';
-export { erc20AssertionErrors } from './erc20Errors';
-export { exchangeIssueErrors } from './exchangeIssueErrors';
-export { orderErrors } from './orderErrors';
-export { rebalancingErrors } from './rebalancingErrors';
-export { schemaAssertionsError } from './schemaErrors';
-export { setTokenAssertionsErrors } from './setTokenErrors';
-export { vaultAssertionErrors } from './vaultErrors';
+
+export const exchangeIssueErrors = {
+  PAYMENT_TOKEN_NOT_WETH: (paymentToken: string, wethAddress: string) => `Payment token at ${paymentToken} is ` +
+    `not the expected wrapped ether token at ${wethAddress}`,
+  ISSUING_SET_NOT_BASE_SET: (setAddress: string, currentSet: string) => `Set token at ${setAddress} is ` +
+    `not the expected rebalancing set token current Set at ${currentSet}`,
+};

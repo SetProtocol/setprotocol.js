@@ -22,9 +22,9 @@ import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 import { Bytes, ExchangeIssueParams, SetProtocolUtils } from 'set-protocol-utils';
 
 import { ZERO } from '../constants';
-import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
+import { coreAPIErrors, erc20AssertionErrors, exchangeIssueErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { CoreWrapper, PayableExchangeIssueWrapper } from '../wrappers';
+import { CoreWrapper, PayableExchangeIssueWrapper, RebalancingSetTokenWrapper } from '../wrappers';
 import { BigNumber } from '../util';
 import {
   Address,
@@ -44,6 +44,7 @@ export class PayableExchangeIssueAPI {
   private assert: Assertions;
   private core: CoreWrapper;
   private payableExchangeIssue: PayableExchangeIssueWrapper;
+  private rebalancingSetToken: RebalancingSetTokenWrapper;
   private setProtocolUtils: SetProtocolUtils;
   private wrappedEther: Address;
 
@@ -69,6 +70,7 @@ export class PayableExchangeIssueAPI {
     this.core = core;
     this.assert = assertions;
     this.payableExchangeIssue = payableExchangeIssue;
+    this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
     this.wrappedEther = wrappedEtherAddress;
   }
 
@@ -89,7 +91,12 @@ export class PayableExchangeIssueAPI {
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
     txOpts: Tx
   ): Promise<string> {
-
+    await this.assertIssueRebalancingSetWithEtherAsync(
+      rebalancingSetAddress,
+      exchangeIssueParams,
+      orders,
+      txOpts.from,
+    );
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
 
     return this.payableExchangeIssue.issueRebalancingSetWithEther(
@@ -97,6 +104,88 @@ export class PayableExchangeIssueAPI {
       exchangeIssueParams,
       orderData,
       txOpts,
+    );
+  }
+
+
+  /* ============ Private Assertions ============ */
+  private async assertIssueRebalancingSetWithEtherAsync(
+    rebalancingSetAddress: Address,
+    exchangeIssueParams: ExchangeIssueParams,
+    orders: (KyberTrade | ZeroExSignedFillOrder)[],
+    transactionCaller: Address,
+  ) {
+    const {
+      setAddress,
+      paymentToken,
+      paymentTokenAmount,
+      quantity,
+      requiredComponents,
+      requiredComponentAmounts,
+    } = exchangeIssueParams;
+
+
+    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
+    this.assert.schema.isValidAddress('rebalancingSetAddress', rebalancingSetAddress);
+    this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
+
+    const baseSetAddress = await this.rebalancingSetToken.currentSet(rebalancingSetAddress);
+
+    // Assert the set address is the rebalancing set address's current set
+    this.assert.common.isEqualAddress(
+      setAddress,
+      baseSetAddress,
+      exchangeIssueErrors.ISSUING_SET_NOT_BASE_SET(setAddress, baseSetAddress)
+    );
+
+    // Assert payment token is wrapped ether
+    this.assert.common.isEqualAddress(
+      paymentToken,
+      this.wrappedEther,
+      exchangeIssueErrors.PAYMENT_TOKEN_NOT_WETH(paymentToken, this.wrappedEther)
+    );
+
+    await this.assert.order.assertExchangeIssueOrdersValidity(
+      exchangeIssueParams,
+      orders,
+    );
+  }
+
+  private async assertExchangeIssueParams(
+    rebalancingSetAddress: Address,
+    exchangeIssueParams: ExchangeIssueParams,
+  ) {
+    const {
+      setAddress,
+      paymentToken,
+      paymentTokenAmount,
+      quantity,
+      requiredComponents,
+      requiredComponentAmounts,
+    } = exchangeIssueParams;
+
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('paymentToken', paymentToken);
+    this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
+    this.assert.common.greaterThanZero(
+      paymentTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(paymentTokenAmount)
+    );
+    this.assert.common.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+    await this.assert.order.assertRequiredComponentsAndAmounts(
+      requiredComponents,
+      requiredComponentAmounts,
+      setAddress,
+    );
+
+    await this.assert.setToken.isMultipleOfNaturalUnit(
+      setAddress,
+      quantity,
+      `Quantity of Exchange issue Params`,
     );
   }
 }

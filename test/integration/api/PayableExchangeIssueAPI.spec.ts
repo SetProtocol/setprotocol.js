@@ -50,7 +50,7 @@ import {
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
-import { CoreWrapper, PayableExchangeIssueWrapper } from '@src/wrappers';
+import { CoreWrapper, IssuanceOrderModuleWrapper, PayableExchangeIssueWrapper } from '@src/wrappers';
 import { PayableExchangeIssueAPI } from '@src/api';
 import {
   NULL_ADDRESS,
@@ -174,7 +174,13 @@ describe('PayableExchangeIssueAPI', () => {
       payableExchangeIssue.address,
     );
 
+    const issuanceOrderWrapper = new IssuanceOrderModuleWrapper(
+      web3,
+      issuanceOrderModule.address,
+    );
+
     const assertions = new Assertions(web3);
+    assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderWrapper);
     payableExchangeIssueAPI = new PayableExchangeIssueAPI(
       web3,
       coreWrapper,
@@ -311,6 +317,34 @@ describe('PayableExchangeIssueAPI', () => {
 
       const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
       expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
+
+    describe('when the payment token is not wrapped ether', async () => {
+      const notWrappedEther = ACCOUNTS[3].address;
+
+      beforeEach(async () => {
+        subjectExchangeIssueData.paymentToken = notWrappedEther;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Payment token at ${notWrappedEther} is not the expected wrapped ether token at ${wrappedEtherMock.address}`
+        );
+      });
+    });
+
+    describe('when a set address is not rebalancing Sets current set address', async () => {
+      const notBaseSet = ACCOUNTS[3].address;
+
+      beforeEach(async () => {
+        subjectExchangeIssueData.setAddress = notBaseSet;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Set token at ${notBaseSet} is not the expected rebalancing set token current Set at ${baseSetToken.address}`
+        );
+      });
     });
   });
 });
