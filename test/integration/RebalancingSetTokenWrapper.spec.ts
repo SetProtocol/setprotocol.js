@@ -367,7 +367,7 @@ describe('SetTokenWrapper', () => {
       );
 
       // Issue currentSetToken
-      const baseSetIssueQuantity = ether(9);
+      const baseSetIssueQuantity = ether(7);
       await core.issue.sendTransactionAsync(currentSetToken.address, baseSetIssueQuantity, TX_DEFAULTS);
       await approveForTransferAsync([currentSetToken], transferProxy.address);
 
@@ -739,7 +739,7 @@ describe('SetTokenWrapper', () => {
       );
 
       // Issue currentSetToken
-      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
+      await core.issue.sendTransactionAsync(currentSetToken.address, ether(7), TX_DEFAULTS);
       await approveForTransferAsync([currentSetToken], transferProxy.address);
 
       // Use issued currentSetToken to issue rebalancingSetToken
@@ -873,7 +873,7 @@ describe('SetTokenWrapper', () => {
       );
 
       // Issue currentSetToken
-      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
+      await core.issue.sendTransactionAsync(currentSetToken.address, ether(7), TX_DEFAULTS);
       await approveForTransferAsync([currentSetToken], transferProxy.address);
 
       // Use issued currentSetToken to issue rebalancingSetToken

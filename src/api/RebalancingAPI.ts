@@ -332,12 +332,14 @@ export class RebalancingAPI {
       auctionParameters,
       remainingCurrentSet,
       minimumBid,
+      startingCurrentSetAmount,
     ] = await Promise.all([
       this.rebalancingSetToken.nextSet(rebalancingSetTokenAddress),
       this.rebalancingSetToken.auctionLibrary(rebalancingSetTokenAddress),
       this.rebalancingSetToken.auctionParameters(rebalancingSetTokenAddress),
       this.rebalancingSetToken.remainingCurrentSets(rebalancingSetTokenAddress),
       this.rebalancingSetToken.minimumBid(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.startingCurrentSetAmount(rebalancingSetTokenAddress),
     ]);
 
     return {
@@ -347,6 +349,7 @@ export class RebalancingAPI {
       timeToPivot: auctionParameters[1],
       startingPrice: auctionParameters[2],
       auctionPivotPrice: auctionParameters[3],
+      startingCurrentSetAmount,
       remainingCurrentSet,
       minimumBid,
     } as RebalancingProgressDetails;
