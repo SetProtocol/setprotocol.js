@@ -9,10 +9,16 @@ import {
   OrderLibrary,
   PayableExchangeIssue,
   RebalanceAuctionModule,
+  RebalancingHelperLibrary,
   RebalancingSetTokenFactory,
   SetToken,
   SetTokenFactory,
   SignatureValidatorContract,
+  StandardFailAuctionLibrary,
+  StandardPlaceBidLibrary,
+  StandardProposeLibrary,
+  StandardSettleRebalanceLibrary,
+  StandardStartRebalanceLibrary,
   StandardTokenMock,
   TransferProxy,
   Vault,
@@ -163,7 +169,9 @@ export const deployRebalancingSetTokenFactoryContract = async (
   // Deploy SetTokenFactory contract
   const truffleRebalancingSetTokenFactoryContract = contract(RebalancingSetTokenFactory);
   truffleRebalancingSetTokenFactoryContract.setProvider(web3.currentProvider);
+  truffleRebalancingSetTokenFactoryContract.setNetwork(50);
   truffleRebalancingSetTokenFactoryContract.defaults(TX_DEFAULTS);
+  await linkRebalancingLibrariesAsync(truffleRebalancingSetTokenFactoryContract, web3);
   const deployedRebalancingSetTokenFactory = await truffleRebalancingSetTokenFactoryContract.new(
     core.address,
     whitelist.address,
@@ -185,6 +193,92 @@ export const deployRebalancingSetTokenFactoryContract = async (
   );
 
   return rebalancingSetTokenFactoryContract;
+};
+
+const linkRebalancingLibrariesAsync = async (
+    contractToLink: any,
+    web3: Web3,
+  ): Promise<void> => {
+  const truffleRebalancingHelperLibraryContract = contract(RebalancingHelperLibrary);
+  truffleRebalancingHelperLibraryContract.setProvider(web3.currentProvider);
+  truffleRebalancingHelperLibraryContract.setNetwork(50);
+  truffleRebalancingHelperLibraryContract.defaults(TX_DEFAULTS);
+  const truffleRebalancingHelperLibrary = await truffleRebalancingHelperLibraryContract.new();
+
+  const truffleStandardProposeLibraryContract = contract(StandardProposeLibrary);
+  truffleStandardProposeLibraryContract.setProvider(web3.currentProvider);
+  truffleStandardProposeLibraryContract.setNetwork(50);
+  truffleStandardProposeLibraryContract.defaults(TX_DEFAULTS);
+  await truffleStandardProposeLibraryContract.link(
+    'RebalancingHelperLibrary',
+    truffleRebalancingHelperLibrary.address
+  );
+  const truffleStandardProposeLibrary = await truffleStandardProposeLibraryContract.new();
+
+  const truffleStandardStartRebalanceLibraryContract = contract(StandardStartRebalanceLibrary);
+  truffleStandardStartRebalanceLibraryContract.setProvider(web3.currentProvider);
+  truffleStandardStartRebalanceLibraryContract.setNetwork(50);
+  truffleStandardStartRebalanceLibraryContract.defaults(TX_DEFAULTS);
+  await truffleStandardStartRebalanceLibraryContract.link(
+    'RebalancingHelperLibrary',
+    truffleRebalancingHelperLibrary.address
+  );
+  const truffleStandardStartRebalanceLibrary = await truffleStandardStartRebalanceLibraryContract.new();
+
+  const truffleStandardPlaceBidLibraryContract = contract(StandardPlaceBidLibrary);
+  truffleStandardPlaceBidLibraryContract.setProvider(web3.currentProvider);
+  truffleStandardPlaceBidLibraryContract.setNetwork(50);
+  truffleStandardPlaceBidLibraryContract.defaults(TX_DEFAULTS);
+  await truffleStandardPlaceBidLibraryContract.link(
+    'RebalancingHelperLibrary',
+    truffleRebalancingHelperLibrary.address
+  );
+  const truffleStandardPlaceBidLibrary = await truffleStandardPlaceBidLibraryContract.new();
+
+  const truffleStandardSettleRebalanceLibraryContract = contract(StandardSettleRebalanceLibrary);
+  truffleStandardSettleRebalanceLibraryContract.setProvider(web3.currentProvider);
+  truffleStandardSettleRebalanceLibraryContract.setNetwork(50);
+  truffleStandardSettleRebalanceLibraryContract.defaults(TX_DEFAULTS);
+  await truffleStandardSettleRebalanceLibraryContract.link(
+    'RebalancingHelperLibrary',
+    truffleRebalancingHelperLibrary.address
+  );
+  const truffleStandardSettleRebalanceLibrary = await truffleStandardSettleRebalanceLibraryContract.new();
+
+  const truffleStandardFailAuctionLibraryContract = contract(StandardFailAuctionLibrary);
+  truffleStandardFailAuctionLibraryContract.setProvider(web3.currentProvider);
+  truffleStandardFailAuctionLibraryContract.setNetwork(50);
+  truffleStandardFailAuctionLibraryContract.defaults(TX_DEFAULTS);
+  await truffleStandardFailAuctionLibraryContract.link(
+    'RebalancingHelperLibrary',
+    truffleRebalancingHelperLibrary.address
+  );
+  const truffleStandardFailAuctionLibrary = await truffleStandardFailAuctionLibraryContract.new();
+
+  await contractToLink.link(
+    'RebalancingHelperLibrary',
+    truffleRebalancingHelperLibrary.address
+  );
+  await contractToLink.link(
+    'StandardProposeLibrary',
+    truffleStandardProposeLibrary.address
+  );
+  await contractToLink.link(
+    'StandardStartRebalanceLibrary',
+    truffleStandardStartRebalanceLibrary.address
+  );
+  await contractToLink.link(
+    'StandardPlaceBidLibrary',
+    truffleStandardPlaceBidLibrary.address
+  );
+  await contractToLink.link(
+    'StandardSettleRebalanceLibrary',
+    truffleStandardSettleRebalanceLibrary.address
+  );
+  await contractToLink.link(
+    'StandardFailAuctionLibrary',
+    truffleStandardFailAuctionLibrary.address
+  );
 };
 
 export const deployIssuanceOrderModuleContract = async (
