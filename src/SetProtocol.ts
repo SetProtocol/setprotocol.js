@@ -26,10 +26,17 @@ import {
   FactoryAPI,
   IssuanceAPI,
   OrderAPI,
+  PayableExchangeIssueAPI,
   RebalancingAPI,
   SetTokenAPI
 } from './api';
-import { CoreWrapper, IssuanceOrderModuleWrapper, RebalancingAuctionModuleWrapper, VaultWrapper } from './wrappers';
+import {
+  CoreWrapper,
+  IssuanceOrderModuleWrapper,
+  PayableExchangeIssueWrapper,
+  RebalancingAuctionModuleWrapper,
+  VaultWrapper,
+} from './wrappers';
 import { Assertions } from './assertions';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
 import { Address, Bytes, SetUnits, TransactionReceipt, Tx } from './types/common';
@@ -40,10 +47,12 @@ export interface SetProtocolConfig {
   transferProxyAddress: Address;
   vaultAddress: Address;
   rebalanceAuctionModuleAddress: Address;
-  issuanceOrderModuleAddress: Address;
   kyberNetworkWrapperAddress: Address;
   setTokenFactoryAddress: Address;
   rebalancingSetTokenFactoryAddress: Address;
+  issuanceOrderModuleAddress?: Address;
+  payableExchangeIssue?: Address;
+  wrappedEtherAddress?: Address;
 }
 
 /**
@@ -90,6 +99,11 @@ class SetProtocol {
   public setToken: SetTokenAPI;
 
   /**
+   * An instance of the SetTokenAPI class containing methods for interacting with PayableExchangeIssue contracts
+   */
+  public payableExchangeIssue: PayableExchangeIssueAPI;
+
+  /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library
    *
    * @param provider    Provider instance you would like the SetProtocol.js library to use for interacting with the
@@ -98,6 +112,8 @@ class SetProtocol {
    */
   constructor(provider: Provider, config: SetProtocolConfig) {
     this.web3 = instantiateWeb3(provider);
+
+    const assertions = new Assertions(this.web3);
 
     this.core = new CoreWrapper(
       this.web3,
@@ -108,13 +124,6 @@ class SetProtocol {
     );
 
     this.vault = new VaultWrapper(this.web3, config.vaultAddress);
-
-    const issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(
-      this.web3,
-      config.issuanceOrderModuleAddress,
-    );
-    const assertions = new Assertions(this.web3);
-    assertions.setOrderAssertions(this.web3, this.core, issuanceOrderModuleWrapper);
 
     this.accounting = new AccountingAPI(this.web3, this.core, assertions);
     this.blockchain = new BlockchainAPI(this.web3, assertions);
@@ -128,13 +137,37 @@ class SetProtocol {
       config.kyberNetworkWrapperAddress,
       config.vaultAddress
     );
+    this.setToken = new SetTokenAPI(this.web3, assertions);
 
     const rebalanceAuctionModule = new RebalancingAuctionModuleWrapper(
-      this.web3,
+    this.web3,
       config.rebalanceAuctionModuleAddress,
     );
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, rebalanceAuctionModule);
-    this.setToken = new SetTokenAPI(this.web3, assertions);
+
+    if (config.issuanceOrderModuleAddress) {
+      const issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(
+        this.web3,
+        config.issuanceOrderModuleAddress,
+      );
+
+      assertions.setOrderAssertions(this.web3, this.core, issuanceOrderModuleWrapper);
+    }
+
+    if (config.payableExchangeIssue && config.wrappedEtherAddress) {
+      const payableExchangeIssueWrapper = new PayableExchangeIssueWrapper(
+        this.web3,
+        config.payableExchangeIssue
+      );
+
+      this.payableExchangeIssue = new PayableExchangeIssueAPI(
+        this.web3,
+        this.core,
+        assertions,
+        payableExchangeIssueWrapper,
+        config.wrappedEtherAddress,
+      );
+    }
   }
 
   /**

@@ -88,7 +88,7 @@
     ethers "4.0.0-beta.14"
     lodash "^4.17.5"
 
-"@0xproject/types@^1.0.1-rc.4", "@0xproject/types@^1.0.7", "@0xproject/types@^1.1.4":
+"@0xproject/types@^1.0.1-rc.5", "@0xproject/types@^1.0.7", "@0xproject/types@^1.1.4":
   version "1.1.4"
   resolved "https://registry.yarnpkg.com/@0xproject/types/-/types-1.1.4.tgz#3ffd65e670d6a21dab19ee0ffd5fad0056291b8e"
   integrity sha512-kPVXvVDDoHhi/q3PSe3F5NbBFiIT8FfPG73J2WrLrXptf54vTSffbK3D+NMpwb12tk/q0KgdEPwNz6nhY1+xmw==
@@ -6778,10 +6778,10 @@ set-immediate-shim@^1.0.1:
   resolved "https://registry.yarnpkg.com/set-immediate-shim/-/set-immediate-shim-1.0.1.tgz#4b2b1b27eb808a9f8dcc481a58e5e56f599f3f61"
   integrity sha1-SysbJ+uAip+NzEgaWOXlb1mfP2E=
 
-set-protocol-contracts@1.2.1-beta.4:
-  version "1.2.1-beta.4"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.1-beta.4.tgz#aed0f994c533d41b112b709d0e8bf22ee068844a"
-  integrity sha512-eloUqTvHrGVsXRYvSfJp0g/W6Rf3LaZo78/RPS5+ZcCURbcpRLZrenuFPwaNJhusSyUzmIl84+imlBlpdx7yeQ==
+set-protocol-contracts@1.2.1-beta.7:
+  version "1.2.1-beta.7"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.1-beta.7.tgz#de2bea82ba3f2c52efdcdf9962d70d20eb4ebad0"
+  integrity sha512-WyoG5R2JwYvOL6B6izh68NauDs4hjmYQRuoHs/ylLzsaazXE5xQvcxsl1lzaSaRGMbSy2Q/JFqQV12wsqd+Aeg==
   dependencies:
     bn-chai "^1.0.1"
     canonical-weth "1.2.0"
