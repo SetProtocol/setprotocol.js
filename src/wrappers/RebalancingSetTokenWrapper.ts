@@ -285,7 +285,7 @@ export class RebalancingSetTokenWrapper {
     return await rebalancingSetTokenInstance.auctionLibrary.callAsync();
   }
 
-   /**
+  /**
    * Gets startingCurrentSetAmount for the Rebalancing Set Token.
    *
    * @param  rebalancingSetAddress   Address of the Set
