@@ -487,7 +487,7 @@ describe('SetTokenWrapper', () => {
       expect(auctionStartPrice).to.be.bignumber.equal(setAuctionStartPrice);
     });
 
-    it.only('fetches the correct startingCurrentSetAmount', async () => {
+    it('fetches the correct startingCurrentSetAmount', async () => {
       const startingCurrentSetAmount = await rebalancingSetTokenWrapper.startingCurrentSetAmount(
         subjectRebalancingSetTokenAddress
       );
