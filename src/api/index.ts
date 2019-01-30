@@ -25,6 +25,7 @@ import { OrderAPI } from './OrderAPI';
 import { PayableExchangeIssueAPI } from './PayableExchangeIssueAPI';
 import { RebalancingAPI } from './RebalancingAPI';
 import { SetTokenAPI } from './SetTokenAPI';
+import { SystemAPI } from './SystemAPI';
 
 export {
   AccountingAPI,
@@ -35,5 +36,6 @@ export {
   OrderAPI,
   PayableExchangeIssueAPI,
   RebalancingAPI,
-  SetTokenAPI
+  SetTokenAPI,
+  SystemAPI,
 };

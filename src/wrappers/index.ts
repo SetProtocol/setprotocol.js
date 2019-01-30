@@ -16,6 +16,7 @@
 
 'use strict';
 
+import { AuthorizableWrapper } from './AuthorizableWrapper';
 import { ContractWrapper } from './ContractWrapper';
 import { CoreWrapper } from './CoreWrapper';
 import { ERC20Wrapper } from './ERC20Wrapper';
@@ -25,9 +26,11 @@ import { PayableExchangeIssueWrapper } from './PayableExchangeIssueWrapper';
 import { RebalancingAuctionModuleWrapper } from './RebalancingAuctionModuleWrapper';
 import { RebalancingSetTokenWrapper } from './RebalancingSetTokenWrapper';
 import { SetTokenWrapper } from './SetTokenWrapper';
+import { TimeLockUpgradeWrapper } from './TimeLockUpgradeWrapper';
 import { VaultWrapper } from './VaultWrapper';
 
 export {
+  AuthorizableWrapper,
   ContractWrapper,
   CoreWrapper,
   ERC20Wrapper,
@@ -37,5 +40,6 @@ export {
   RebalancingAuctionModuleWrapper,
   RebalancingSetTokenWrapper,
   SetTokenWrapper,
+  TimeLockUpgradeWrapper,
   VaultWrapper
 };

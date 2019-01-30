@@ -18,6 +18,7 @@
 
 import Web3 from 'web3';
 import {
+  AuthorizableContract,
   BaseContract,
   CoreContract,
   ERC20DetailedContract,
@@ -27,6 +28,7 @@ import {
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   SetTokenContract,
+  TimeLockUpgradeContract,
   VaultContract,
 } from 'set-protocol-contracts';
 
@@ -276,6 +278,58 @@ export class ContractWrapper {
       );
       this.cache[cacheKey] = payableExchangeIssueContract;
       return payableExchangeIssueContract;
+    }
+  }
+
+  /**
+   * Load an Authorizable contract
+   *
+   * @param  authorizableAddress    Address of the Authorizable contract
+   * @param  transactionOptions     Options sent into the contract deployed method
+   * @return                        The Authorizable Contract
+   */
+  public async loadAuthorizableAsync(
+    authorizableAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<AuthorizableContract> {
+    const cacheKey = `SetToken_${authorizableAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as AuthorizableContract;
+    } else {
+      const setTokenContract = await AuthorizableContract.at(
+        authorizableAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = setTokenContract;
+      return setTokenContract;
+    }
+  }
+
+  /**
+   * Load a TimeLockUpgrade contract
+   *
+   * @param  timeLockUpgradeAddress Address of the TimeLockUpgrade contract
+   * @param  transactionOptions     Options sent into the contract deployed method
+   * @return                        The Authorizable Contract
+   */
+  public async loadTimeLockUpgradeAsync(
+    timeLockUpgradeAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<TimeLockUpgradeContract> {
+    const cacheKey = `SetToken_${timeLockUpgradeAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as TimeLockUpgradeContract;
+    } else {
+      const setTokenContract = await TimeLockUpgradeContract.at(
+        timeLockUpgradeAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = setTokenContract;
+      return setTokenContract;
     }
   }
 }

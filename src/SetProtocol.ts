@@ -28,7 +28,8 @@ import {
   OrderAPI,
   PayableExchangeIssueAPI,
   RebalancingAPI,
-  SetTokenAPI
+  SetTokenAPI,
+  SystemAPI,
 } from './api';
 import {
   CoreWrapper,
@@ -39,21 +40,8 @@ import {
 } from './wrappers';
 import { Assertions } from './assertions';
 import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
-import { Address, Bytes, SetUnits, TransactionReceipt, Tx } from './types/common';
+import { Address, Bytes, SetProtocolConfig, SetUnits, TransactionReceipt, Tx } from './types/common';
 import { NULL_ADDRESS, UNLIMITED_ALLOWANCE_IN_BASE_UNITS } from './constants';
-
-export interface SetProtocolConfig {
-  coreAddress: Address;
-  transferProxyAddress: Address;
-  vaultAddress: Address;
-  rebalanceAuctionModuleAddress: Address;
-  kyberNetworkWrapperAddress: Address;
-  setTokenFactoryAddress: Address;
-  rebalancingSetTokenFactoryAddress: Address;
-  issuanceOrderModuleAddress?: Address;
-  payableExchangeIssue?: Address;
-  wrappedEtherAddress?: Address;
-}
 
 /**
  * @title SetProtocol
@@ -89,6 +77,12 @@ class SetProtocol {
   public orders: OrderAPI;
 
   /**
+   * An instance of the PayableExchangeIssueAPI class containing methods for interacting 
+   * with PayableExchangeIssue contracts
+   */
+  public payableExchangeIssue: PayableExchangeIssueAPI;
+
+  /**
    * An instance of the RebalancingAPI class containing methods for rebalancing Sets
    */
   public rebalancing: RebalancingAPI;
@@ -98,10 +92,11 @@ class SetProtocol {
    */
   public setToken: SetTokenAPI;
 
-  /**
-   * An instance of the SetTokenAPI class containing methods for interacting with PayableExchangeIssue contracts
+/**
+   * An instance of the SystemAPI class containing methods for interacting with system state
    */
-  public payableExchangeIssue: PayableExchangeIssueAPI;
+  public system: SystemAPI;
+
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library
@@ -138,6 +133,7 @@ class SetProtocol {
       config.vaultAddress
     );
     this.setToken = new SetTokenAPI(this.web3, assertions);
+    this.system = new SystemAPI(this.web3, this.core, config);
 
     const rebalanceAuctionModule = new RebalancingAuctionModuleWrapper(
       this.web3,
