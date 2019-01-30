@@ -89,14 +89,21 @@ export interface SetProtocolConfig {
   kyberNetworkWrapperAddress: Address;
   setTokenFactoryAddress: Address;
   rebalancingSetTokenFactoryAddress: Address;
-  issuanceOrderModuleAddress?: Address;
+  issuanceOrderModuleAddress: Address;
   payableExchangeIssue?: Address;
   wrappedEtherAddress?: Address;
 }
 
-export interface SystemAuthorizableAddresses {
+export interface SystemAuthorizableState {
   transferProxy: Address[];
   vault: Address[];
+}
+
+export interface SystemOwnableState {
+  core: Address;
+  vault: Address;
+  transferProxy: Address;
+  issuanceOrderModule: Address;
 }
 
 export interface TokenFlows {

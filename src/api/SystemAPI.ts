@@ -23,9 +23,16 @@ import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 import { ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { AuthorizableWrapper, CoreWrapper } from '../wrappers';
+import { AuthorizableWrapper, ContractWrapper, CoreWrapper, TimeLockUpgradeWrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { Address, SetProtocolConfig, SystemAuthorizableAddresses, Tx } from '../types/common';
+import {
+  Address,
+  Bytes,
+  SetProtocolConfig,
+  SystemOwnableState,
+  SystemAuthorizableState,
+  Tx,
+} from '../types/common';
 
 /**
  * @title SystemAPI
@@ -36,9 +43,11 @@ import { Address, SetProtocolConfig, SystemAuthorizableAddresses, Tx } from '../
 export class SystemAPI {
   private web3: Web3;
   private assert: Assertions;
+  private contract: ContractWrapper;
   private config: SetProtocolConfig;
   private core: CoreWrapper;
   private authorizable: AuthorizableWrapper;
+  private timeLockUpgrade: TimeLockUpgradeWrapper;
 
   /**
    * Instantiates a new SystemAPI instance that contains methods for viewing the system-related state of
@@ -49,11 +58,14 @@ export class SystemAPI {
    * @param core        An instance of CoreWrapper to interact with the deployed Core contract
    * @param assertions  An instance of the Assertion library
    */
-  constructor(web3: Web3, core: CoreWrapper, config: SetProtocolConfig) {
+  constructor(web3: Web3, core: CoreWrapper, assert: Assertions, config: SetProtocolConfig) {
     this.web3 = web3;
     this.core = core;
+    this.contract = new ContractWrapper(web3);
     this.config = config;
+    this.assert = assert;
     this.authorizable = new AuthorizableWrapper(web3);
+    this.timeLockUpgrade = new TimeLockUpgradeWrapper(web3);
   }
 
   /**
@@ -66,16 +78,16 @@ export class SystemAPI {
    * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
-  public async getOperationState(): Promise<BigNumber> {
+  public async getOperationStateAsync(): Promise<BigNumber> {
     return await this.core.getOperationState();
   }
 
-  public async getSetAddresses(): Promise<Address[]> {
+  public async getSetAddressesAsync(): Promise<Address[]> {
     return await this.core.getSetAddresses();
   }
 
   // Get the authorizable addresses of all contracts that have authorizability
-  public async getSystemAuthorizableAddreses(): Promise<SystemAuthorizableAddresses> {
+  public async getSystemAuthorizableStateAsync(): Promise<SystemAuthorizableState> {
     const [
       transferProxyAuthorizable,
       vaultAuthorizable,
@@ -95,13 +107,62 @@ export class SystemAPI {
     // Find all the contracts that have time lock and put them here
   }
 
-  // Get time lock upgrade hash based on transaciton hash
-  // Call timeLockedUpgrades
+  // Get time lock upgrade hash based on transaction hash
+  public async getTimeLockUpgradeHashAsync(transactionHash: string): Promise<Bytes> {
+    const { input } = await this.web3.eth.getTransaction(transactionHash);
+
+    const subjectTimeLockUpgradeHash = this.web3.utils.soliditySha3(input);
+
+    return subjectTimeLockUpgradeHash;
+  }
+
+  // Get time lock upgrade status based on contract address and hash
+  public async getTimeLockedUpgradeInitializationAsync(
+    contractAddress: Address,
+    timeLockUpgradeHash: Bytes
+    ): Promise<BigNumber> {
+      return await this.timeLockUpgrade.timeLockedUpgrades(contractAddress, timeLockUpgradeHash);
+  }
+
+  // Get System owners
+    // Find all the ownable contracts and list their owners
+  public async getSystemOwners(): Promise<SystemOwnableState> {
+    const [
+      coreInstance,
+      vaultInstance,
+      transferProxyInstance,
+      issuanceOrderModuleInstance,
+    ] = await Promise.all([
+      this.contract.loadCoreAsync(this.config.transferProxyAddress),
+      this.contract.loadVaultAsync(this.config.vaultAddress),
+      this.contract.loadTransferProxyAsync(this.config.transferProxyAddress),
+      this.contract.loadIssuanceOrderModuleAsync(this.config.issuanceOrderModuleAddress),
+    ]);
+
+    const [
+      coreOwner,
+      vaultOwner,
+      transferProxyOwner,
+      issuanceOrderModuleOwner,
+    ] = await Promise.all([
+      coreInstance.owner.callAsync(),
+      vaultInstance.owner.callAsync(),
+      transferProxyInstance.owner.callAsync(),
+      issuanceOrderModuleInstance.owner.callAsync(),
+    ]);
+
+    return {
+      core: coreOwner,
+      vault: vaultOwner,
+      transferProxy: transferProxyOwner,
+      issuanceOrderModule: issuanceOrderModuleOwner,
+    }
+  }
+
   // Get modules
   // getPriceLibraries
-    // Scrape through contract logs to get all the price libraries
+    // Scrape through contract logs to get all the price libraries or wait for brians list
   // getValidFactories
-    // Scrape through contract logs to get all the factories
-  // Get System owners
+    // Scrape through contract logs to get all the factories or wait for brians list
 }
 

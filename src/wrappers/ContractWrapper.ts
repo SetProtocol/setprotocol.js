@@ -29,6 +29,7 @@ import {
   RebalancingSetTokenContract,
   SetTokenContract,
   TimeLockUpgradeContract,
+  TransferProxyContract,
   VaultContract,
 } from 'set-protocol-contracts';
 
@@ -174,6 +175,28 @@ export class ContractWrapper {
       const vaultContract = await VaultContract.at(vaultAddress, this.web3, transactionOptions);
       this.cache[cacheKey] = vaultContract;
       return vaultContract;
+    }
+  }
+
+  /**
+   * Load TransferProxy contract
+   *
+   * @param  transferProxyAddress       Address of the TransferProxy contract
+   * @param  transactionOptions Options sent into the contract deployed method
+   * @return                    The TransferProxy Contract
+   */
+  public async loadTransferProxyAsync(
+    transferProxyAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<TransferProxyContract> {
+    const cacheKey = `Vault_${transferProxyAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as TransferProxyContract;
+    } else {
+      const transferProxyContract = await TransferProxyContract.at(transferProxyAddress, this.web3, transactionOptions);
+      this.cache[cacheKey] = transferProxyContract;
+      return transferProxyContract;
     }
   }
 
