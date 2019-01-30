@@ -73,6 +73,8 @@ export interface RebalancingSetDetails {
   unitShares: BigNumber;
   naturalUnit: BigNumber;
   state: string;
+  proposalPeriod: BigNumber;
+  rebalanceInterval: BigNumber;
   lastRebalancedAt: BigNumber;
   supply: BigNumber;
   name: string;

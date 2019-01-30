@@ -1322,6 +1322,8 @@ describe('RebalancingAPI', () => {
 
     let subjectRebalancingSetTokenAddress: Address;
 
+    const standardRebalanceInterval = ONE_DAY_IN_SECONDS;
+
     beforeEach(async () => {
       const setTokensToDeploy = 1;
       [currentSetToken] = await deploySetTokensAsync(
@@ -1386,6 +1388,8 @@ describe('RebalancingAPI', () => {
       expect(details.supply).to.bignumber.equal(rebalancingSetQuantityToIssue);
       expect(details.name).to.eql('Rebalancing Set Token');
       expect(details.symbol).to.eql('RBSET');
+      expect(details.proposalPeriod).to.bignumber.equal(proposalPeriod);
+      expect(details.rebalanceInterval).to.bignumber.equal(standardRebalanceInterval);
     });
   });
 
