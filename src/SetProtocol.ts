@@ -77,7 +77,7 @@ class SetProtocol {
   public orders: OrderAPI;
 
   /**
-   * An instance of the PayableExchangeIssueAPI class containing methods for interacting 
+   * An instance of the PayableExchangeIssueAPI class containing methods for interacting
    * with PayableExchangeIssue contracts
    */
   public payableExchangeIssue: PayableExchangeIssueAPI;

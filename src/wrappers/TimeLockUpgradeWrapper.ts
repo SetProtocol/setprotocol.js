@@ -61,7 +61,7 @@ export class TimeLockUpgradeWrapper {
    * Fetches the timestamp in which a pending timelock upgrade has been initiated
    *
    * @param  timeLockUpgradeContract     Address of the contract
-   * @param  timeLockUpgradeHash         Hash of the call data 
+   * @param  timeLockUpgradeHash         Hash of the call data
    * @return                             Timestamp of the intiation of the upgrade
    */
   public async timeLockedUpgrades(timeLockUpgradeContract: Address, timeLockUpgradeHash: Bytes): Promise<BigNumber> {
