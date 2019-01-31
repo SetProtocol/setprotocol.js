@@ -205,11 +205,5 @@ export class SystemAPI {
       issuanceOrderModule: issuanceOrderModuleOwner,
     };
   }
-
-  // Get modules
-  // getPriceLibraries
-    // Scrape through contract logs to get all the price libraries or wait for brians list
-  // getValidFactories
-    // Scrape through contract logs to get all the factories or wait for brians list
 }
 
