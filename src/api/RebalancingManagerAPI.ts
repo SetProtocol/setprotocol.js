@@ -25,18 +25,17 @@ import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../er
 import { Assertions } from '../assertions';
 import { CoreWrapper, BTCETHRebalancingManagerWrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { Address, Tx } from '../types/common';
+import { Address, RebalancingManagerDetails, Tx } from '../types/common';
 
 /**
  * @title RebalancingManagerAPI
  * @author Set Protocol
  *
- * A library for issuing and redeeming Sets
+ * A library for interacting with Rebalancing Manager
  */
 export class RebalancingManagerAPI {
   private web3: Web3;
   private assert: Assertions;
-  private core: CoreWrapper;
   private btcEthRebalancingManager: BTCETHRebalancingManagerWrapper;
 
   /**
@@ -47,17 +46,16 @@ export class RebalancingManagerAPI {
    * @param core        An instance of CoreWrapper to interact with the deployed Core contract
    * @param assertions  An instance of the Assertion library
    */
-  constructor(web3: Web3, core: CoreWrapper, assertions: Assertions) {
+  constructor(web3: Web3, assertions: Assertions) {
     this.web3 = web3;
-    this.core = core;
     this.assert = assertions;
     this.btcEthRebalancingManager = new BTCETHRebalancingManagerWrapper(web3);
   }
 
   /**
-   * 
-   * 
-   * 
+   * Calls the propose function on a specified rebalancing manager and rebalancing set token.
+   * This function will generate a new set token using data from the btc and eth price feeds and ultimately generate
+   * a proposal on the rebalancing set token.
    *
    * @param  rebalancingManager    Address of the BTCETH Rebalancing Manager contract
    * @param  rebalancingSet        Rebalancing Set to call propose on
@@ -66,5 +64,44 @@ export class RebalancingManagerAPI {
    */
   public async proposeAsync(rebalancingManager: Address, rebalancingSet: Address, txOpts: Tx): Promise<string> {
     return await this.btcEthRebalancingManager.propose(rebalancingManager, rebalancingSet, txOpts);
+  }
+
+  public async getRebalancingManagerDetailsAsync(rebalancingManager: Address): Promise<RebalancingManagerDetails> {
+    const [
+      core,
+      btcPriceFeed,
+      ethPriceFeed,
+      btcAddress,
+      ethAddress,
+      setTokenFactory,
+      btcMultiplier,
+      ethMultiplier,
+      auctionLibrary,
+      auctionTimeToPivot,
+    ] = await Promise.all([
+      this.btcEthRebalancingManager.core(rebalancingManager),
+      this.btcEthRebalancingManager.btcPriceFeed(rebalancingManager),
+      this.btcEthRebalancingManager.ethPriceFeed(rebalancingManager),
+      this.btcEthRebalancingManager.btcAddress(rebalancingManager),
+      this.btcEthRebalancingManager.ethAddress(rebalancingManager),
+      this.btcEthRebalancingManager.setTokenFactory(rebalancingManager),
+      this.btcEthRebalancingManager.btcMultiplier(rebalancingManager),
+      this.btcEthRebalancingManager.ethMultiplier(rebalancingManager),
+      this.btcEthRebalancingManager.auctionLibrary(rebalancingManager),
+      this.btcEthRebalancingManager.auctionTimeToPivot(rebalancingManager),
+    ]);
+
+    return {
+      core,
+      btcPriceFeed,
+      ethPriceFeed,
+      btcAddress,
+      ethAddress,
+      setTokenFactory,
+      btcMultiplier,
+      ethMultiplier,
+      auctionLibrary,
+      auctionTimeToPivot,
+    } as RebalancingManagerDetails;
   }
 }

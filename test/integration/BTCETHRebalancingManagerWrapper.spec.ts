@@ -111,8 +111,6 @@ let currentSnapshotId: number;
 
 
 describe('BTCETHRebalancingManagerWrapper', () => {
-  let rebalancingSetToken: RebalancingSetTokenContract;
-
   let core: CoreContract;
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
@@ -120,7 +118,6 @@ describe('BTCETHRebalancingManagerWrapper', () => {
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
   let factory: SetTokenFactoryContract;
   let rebalancingFactory: RebalancingSetTokenFactoryContract;
-  let rebalancingComponentWhiteList: WhiteListContract;
   let constantAuctionPriceCurve: ConstantAuctionPriceCurveContract;
   let btcethRebalancingManager: BTCETHRebalancingManagerContract;
   let btcMedianizer: MedianContract;
@@ -131,6 +128,7 @@ describe('BTCETHRebalancingManagerWrapper', () => {
 
   let btcMultiplier: BigNumber;
   let ethMultiplier: BigNumber;
+  let auctionTimeToPivot: BigNumber;
 
   let btcEthManagerWrapper: BTCETHRebalancingManagerWrapper;
 
@@ -188,6 +186,7 @@ describe('BTCETHRebalancingManagerWrapper', () => {
 
     btcMultiplier = new BigNumber(1);
     ethMultiplier = new BigNumber(1);
+    auctionTimeToPivot = ONE_DAY_IN_SECONDS;
 
     btcethRebalancingManager = await deployBtcEthManagerContractAsync(
       web3,
@@ -198,7 +197,7 @@ describe('BTCETHRebalancingManagerWrapper', () => {
       wrappedETH.address,
       factory.address,
       constantAuctionPriceCurve.address,
-      ONE_DAY_IN_SECONDS,
+      auctionTimeToPivot,
       btcMultiplier,
       ethMultiplier,
     );
@@ -210,6 +209,198 @@ describe('BTCETHRebalancingManagerWrapper', () => {
 
   afterEach(async () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
+  });
+
+  describe('core', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = btcethRebalancingManager.address;
+    });
+
+    async function subject(): Promise<Address> {
+      return await btcEthManagerWrapper.core(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct core', async () => {
+      const address = await subject();
+      expect(address).to.equal(core.address);
+    });
+  });
+
+   describe('btcPriceFeed', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = btcethRebalancingManager.address;
+    });
+
+    async function subject(): Promise<Address> {
+      return await btcEthManagerWrapper.btcPriceFeed(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct btcPriceFeed', async () => {
+      const address = await subject();
+      expect(address).to.equal(btcMedianizer.address);
+    });
+  });
+
+  describe('ethPriceFeed', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = btcethRebalancingManager.address;
+    });
+
+    async function subject(): Promise<Address> {
+      return await btcEthManagerWrapper.ethPriceFeed(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct ethPriceFeed', async () => {
+      const address = await subject();
+      expect(address).to.equal(ethMedianizer.address);
+    });
+  });
+
+  describe('btcAddress', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = btcethRebalancingManager.address;
+    });
+
+    async function subject(): Promise<Address> {
+      return await btcEthManagerWrapper.btcAddress(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct btcAddress', async () => {
+      const address = await subject();
+      expect(address).to.equal(wrappedBTC.address);
+    });
+  });
+
+  describe('ethAddress', async () => {
+    let subjectManagerAddress: Address;
+
+
+    beforeEach(async () => {
+      subjectManagerAddress = btcethRebalancingManager.address;
+    });
+
+    async function subject(): Promise<Address> {
+      return await btcEthManagerWrapper.ethAddress(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct ethAddress', async () => {
+      const address = await subject();
+      expect(address).to.equal(wrappedETH.address);
+    });
+  });
+
+  describe('setTokenFactory', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = btcethRebalancingManager.address;
+    });
+
+    async function subject(): Promise<Address> {
+      return await btcEthManagerWrapper.setTokenFactory(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct setTokenFactory', async () => {
+      const address = await subject();
+      expect(address).to.equal(factory.address);
+    });
+  });
+
+  describe('btcMultiplier', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = btcethRebalancingManager.address;
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await btcEthManagerWrapper.btcMultiplier(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct btcMultiplier', async () => {
+      const address = await subject();
+      expect(address).to.bignumber.equal(btcMultiplier);
+    });
+  });
+
+  describe('ethMultiplier', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = btcethRebalancingManager.address;
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await btcEthManagerWrapper.ethMultiplier(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct ethMultiplier', async () => {
+      const address = await subject();
+      expect(address).to.bignumber.equal(ethMultiplier);
+    });
+  });
+
+  describe('auctionLibrary', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = btcethRebalancingManager.address;
+    });
+
+    async function subject(): Promise<Address> {
+      return await btcEthManagerWrapper.auctionLibrary(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct auctionLibrary', async () => {
+      const address = await subject();
+      expect(address).to.equal(constantAuctionPriceCurve.address);
+    });
+  });
+
+  describe('auctionTimeToPivot', async () => {
+    let subjectManagerAddress: Address;
+
+
+    beforeEach(async () => {
+      subjectManagerAddress = btcethRebalancingManager.address;
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await btcEthManagerWrapper.auctionTimeToPivot(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct auctionTimeToPivot', async () => {
+      const address = await subject();
+      expect(address).to.bignumber.equal(auctionTimeToPivot);
+    });
   });
 
   describe('propose', async () => {

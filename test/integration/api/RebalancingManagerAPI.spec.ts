@@ -91,7 +91,14 @@ import {
   generateFutureTimestamp,
   getFormattedLogsFromTxHash,
 } from '@src/util';
-import { Address, SignedIssuanceOrder, KyberTrade, TakerWalletOrder, ZeroExSignedFillOrder } from '@src/types/common';
+import {
+  Address,
+  SignedIssuanceOrder,
+  KyberTrade,
+  RebalancingManagerDetails,
+  TakerWalletOrder,
+  ZeroExSignedFillOrder,
+} from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
@@ -111,8 +118,6 @@ let currentSnapshotId: number;
 
 
 describe('RebalancingManagerAPI', () => {
-  let rebalancingSetToken: RebalancingSetTokenContract;
-
   let core: CoreContract;
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
@@ -120,7 +125,6 @@ describe('RebalancingManagerAPI', () => {
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
   let factory: SetTokenFactoryContract;
   let rebalancingFactory: RebalancingSetTokenFactoryContract;
-  let rebalancingComponentWhiteList: WhiteListContract;
   let constantAuctionPriceCurve: ConstantAuctionPriceCurveContract;
   let btcethRebalancingManager: BTCETHRebalancingManagerContract;
   let btcMedianizer: MedianContract;
@@ -131,8 +135,10 @@ describe('RebalancingManagerAPI', () => {
 
   let btcMultiplier: BigNumber;
   let ethMultiplier: BigNumber;
+  let auctionTimeToPivot: BigNumber;
 
   let rebalancingManagerAPI: RebalancingManagerAPI;
+  let assertions: Assertions;
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -188,6 +194,7 @@ describe('RebalancingManagerAPI', () => {
 
     btcMultiplier = new BigNumber(1);
     ethMultiplier = new BigNumber(1);
+    auctionTimeToPivot = ONE_DAY_IN_SECONDS;
 
     btcethRebalancingManager = await deployBtcEthManagerContractAsync(
       web3,
@@ -198,18 +205,84 @@ describe('RebalancingManagerAPI', () => {
       wrappedETH.address,
       factory.address,
       constantAuctionPriceCurve.address,
-      ONE_DAY_IN_SECONDS,
+      auctionTimeToPivot,
       btcMultiplier,
       ethMultiplier,
     );
 
+    assertions = new Assertions(web3);
     rebalancingManagerAPI = new RebalancingManagerAPI(
       web3,
+      assertions
     );
   });
 
   afterEach(async () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
+  });
+
+  describe('getRebalancingManagerDetailsAsync', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = btcethRebalancingManager.address;
+    });
+
+    async function subject(): Promise<RebalancingManagerDetails> {
+      return await rebalancingManagerAPI.getRebalancingManagerDetailsAsync(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct core address', async () => {
+      const details = await subject();
+      expect(details.core).to.equal(core.address);
+    });
+
+    test('gets the correct btcPriceFeed address', async () => {
+      const details = await subject();
+      expect(details.btcPriceFeed).to.equal(btcMedianizer.address);
+    });
+
+    test('gets the correct ethPriceFeed address', async () => {
+      const details = await subject();
+      expect(details.ethPriceFeed).to.equal(ethMedianizer.address);
+    });
+
+    test('gets the correct btcAddress address', async () => {
+      const details = await subject();
+      expect(details.btcAddress).to.equal(wrappedBTC.address);
+    });
+
+    test('gets the correct ethAddress address', async () => {
+      const details = await subject();
+      expect(details.ethAddress).to.equal(wrappedETH.address);
+    });
+
+    test('gets the correct setTokenFactory address', async () => {
+      const details = await subject();
+      expect(details.setTokenFactory).to.equal(factory.address);
+    });
+
+    test('gets the correct btcMultiplier address', async () => {
+      const details = await subject();
+      expect(details.btcMultiplier).to.bignumber.equal(btcMultiplier);
+    });
+
+    test('gets the correct ethMultiplier address', async () => {
+      const details = await subject();
+      expect(details.ethMultiplier).to.bignumber.equal(ethMultiplier);
+    });
+
+    test('gets the correct auctionLibrary address', async () => {
+      const details = await subject();
+      expect(details.auctionLibrary).to.equal(constantAuctionPriceCurve.address);
+    });
+
+    test('gets the correct auctionTimeToPivot address', async () => {
+      const details = await subject();
+      expect(details.auctionTimeToPivot).to.bignumber.equal(auctionTimeToPivot);
+    });
   });
 
   describe('proposeAsync', async () => {
