@@ -51,19 +51,20 @@ export class RebalancingManagerAPI {
     this.web3 = web3;
     this.core = core;
     this.assert = assertions;
+    this.btcEthRebalancingManager = new BTCETHRebalancingManagerWrapper(web3);
   }
 
   /**
-   * Issues a Set to the transaction signer. Must have component tokens in the correct quantites in either
-   * the vault or in the signer's wallet. Component tokens must be approved to the Transfer
-   * Proxy contract via setTransferProxyAllowanceAsync
+   * 
+   * 
+   * 
    *
-   * @param  setAddress    Address Set to issue
-   * @param  quantity      Amount of Set to issue. Must be multiple of the natural unit of the Set
+   * @param  rebalancingManager    Address of the BTCETH Rebalancing Manager contract
+   * @param  rebalancingSet        Rebalancing Set to call propose on
    * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
-  public async proposeAsync(rebalancingManagerAddress: Address, rebalancingSetAddress: Address, txOpts: Tx): Promise<string> {
-    return await this.core.issue(setAddress, quantity, txOpts);
+  public async proposeAsync(rebalancingManager: Address, rebalancingSet: Address, txOpts: Tx): Promise<string> {
+    return await this.btcEthRebalancingManager.propose(rebalancingManager, rebalancingSet, txOpts);
   }
 }

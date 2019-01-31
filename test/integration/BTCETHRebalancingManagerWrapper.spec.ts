@@ -214,7 +214,7 @@ describe('BTCETHRebalancingManagerWrapper', () => {
 
   describe('propose', async () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
-    
+
     let proposalPeriod: BigNumber;
     let btcPrice: BigNumber;
     let ethPrice: BigNumber;

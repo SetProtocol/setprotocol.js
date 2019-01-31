@@ -33,6 +33,7 @@ import {
   BTCETHRebalancingManagerContract,
   CoreContract,
   ConstantAuctionPriceCurveContract,
+  IssuanceOrderModuleContract,
   MedianContract,
   SetTokenContract,
   RebalanceAuctionModuleContract,
@@ -46,7 +47,7 @@ import {
 } from 'set-protocol-contracts';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
-import { BTCETHRebalancingManagerWrapper } from '@src/wrappers';
+import { RebalancingManagerAPI } from '@src/api';
 import { OrderAPI } from '@src/api';
 import {
   NULL_ADDRESS,
@@ -59,21 +60,27 @@ import {
 import { Assertions } from '@src/assertions';
 import {
   addPriceCurveToCoreAsync,
+  addPriceFeedOwnerToMedianizer,
   addWhiteListedTokenAsync,
   approveForTransferAsync,
   constructInflowOutflowArraysAsync,
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
+  deployBtcEthManagerContractAsync,
   deployConstantAuctionPriceCurveAsync,
   deployCoreContract,
   deployKyberNetworkWrapperContract,
   deploySetTokenAsync,
+  deployMedianizerAsync,
   deploySetTokensAsync,
   deployTakerWalletWrapperContract,
   deployTokenAsync,
   deployTokensAsync,
+  deployTokensSpecifyingDecimals,
   deployZeroExExchangeWrapperContract,
   getVaultBalances,
+  increaseChainTimeAsync,
+  updateMedianizerPriceAsync,
   tokenDeployedOnSnapshot,
   transitionToRebalanceAsync,
 } from '@test/helpers';
@@ -103,12 +110,13 @@ coreContract.defaults(TX_DEFAULTS);
 let currentSnapshotId: number;
 
 
-describe('BTCETHRebalancingManagerWrapper', () => {
+describe('RebalancingManagerAPI', () => {
   let rebalancingSetToken: RebalancingSetTokenContract;
 
   let core: CoreContract;
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
+  let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
   let factory: SetTokenFactoryContract;
   let rebalancingFactory: RebalancingSetTokenFactoryContract;
@@ -119,6 +127,12 @@ describe('BTCETHRebalancingManagerWrapper', () => {
   let ethMedianizer: MedianContract;
   let wrappedBTC: StandardTokenMockContract;
   let wrappedETH: StandardTokenMockContract;
+  let whitelist: WhiteListContract;
+
+  let btcMultiplier: BigNumber;
+  let ethMultiplier: BigNumber;
+
+  let rebalancingManagerAPI: RebalancingManagerAPI;
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -135,30 +149,61 @@ describe('BTCETHRebalancingManagerWrapper', () => {
       core,
       transferProxy,
       vault,
-      setTokenFactory,
-      rebalancingSetTokenFactory,
+      factory,
+      rebalancingFactory,
       rebalanceAuctionModule,
       issuanceOrderModule,
       whitelist,
     ] = await deployBaseContracts(web3);
 
-    btcMedianizer = await deployMedianizerAsync();
-    await addPriceFeedOwnerToMedianizer(btcMedianizer, deployerAccount);
-    ethMedianizer = await deployMedianizerAsync();
-    await addPriceFeedOwnerToMedianizer(ethMedianizer, deployerAccount);
+    btcMedianizer = await deployMedianizerAsync(web3);
+    await addPriceFeedOwnerToMedianizer(btcMedianizer, DEFAULT_ACCOUNT);
+    ethMedianizer = await deployMedianizerAsync(web3);
+    await addPriceFeedOwnerToMedianizer(ethMedianizer, DEFAULT_ACCOUNT);
 
-    wrappedBTC = await erc20Wrapper.deployTokenAsync(deployerAccount, 8);
-    wrappedETH = await erc20Wrapper.deployTokenAsync(deployerAccount, 18);
-    await erc20Wrapper.approveTransfersAsync(
+    [wrappedBTC, wrappedETH] = await deployTokensSpecifyingDecimals(2, [8, 18], web3, DEFAULT_ACCOUNT);
+    await approveForTransferAsync(
       [wrappedBTC, wrappedETH],
       transferProxy.address
     );
-    await coreWrapper.addTokensToWhiteList(
-      [wrappedBTC.address, wrappedETH.address],
-      rebalancingComponentWhiteList
+    await addWhiteListedTokenAsync(
+      whitelist,
+      wrappedBTC.address,
+    );
+    await addWhiteListedTokenAsync(
+      whitelist,
+      wrappedETH.address,
     );
 
-    btcEthManagerWrapper = new BTCETHRebalancingManagerWrapper(
+    constantAuctionPriceCurve = await deployConstantAuctionPriceCurveAsync(
+      web3,
+      DEFAULT_AUCTION_PRICE_NUMERATOR,
+      DEFAULT_AUCTION_PRICE_DENOMINATOR,
+    );
+
+    addPriceCurveToCoreAsync(
+      core,
+      constantAuctionPriceCurve.address,
+    );
+
+    btcMultiplier = new BigNumber(1);
+    ethMultiplier = new BigNumber(1);
+
+    btcethRebalancingManager = await deployBtcEthManagerContractAsync(
+      web3,
+      core.address,
+      btcMedianizer.address,
+      ethMedianizer.address,
+      wrappedBTC.address,
+      wrappedETH.address,
+      factory.address,
+      constantAuctionPriceCurve.address,
+      ONE_DAY_IN_SECONDS,
+      btcMultiplier,
+      ethMultiplier,
+    );
+
+    rebalancingManagerAPI = new RebalancingManagerAPI(
       web3,
     );
   });
@@ -167,80 +212,78 @@ describe('BTCETHRebalancingManagerWrapper', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  // describe('propose', async () => {
-  //   let rebalancingSetToken: RebalancingSetTokenContract;
-  //   let currentSetToken: SetTokenContract;
-  //   let nextSetToken: SetTokenContract;
+  describe('proposeAsync', async () => {
+    let rebalancingSetToken: RebalancingSetTokenContract;
 
-  //   let subjectRebalancingSetToken: Address;
-  //   let subjectBidQuantity: BigNumber;
-  //   let subjectCaller: Address;
+    let proposalPeriod: BigNumber;
+    let btcPrice: BigNumber;
+    let ethPrice: BigNumber;
+    let ethUnit: BigNumber;
 
-  //   beforeEach(async () => {
-  //     const setTokens = await deploySetTokensAsync(
-  //       web3,
-  //       core,
-  //       setTokenFactory.address,
-  //       transferProxy.address,
-  //       2,
-  //     );
+    let initialAllocationToken: SetTokenContract;
+    let timeFastForward: BigNumber;
 
-  //     currentSetToken = setTokens[0];
-  //     nextSetToken = setTokens[1];
+    let subjectRebalancingSetToken: Address;
+    let subjectManagerAddress: Address;
+    let subjectCaller: Address;
 
-  //     const proposalPeriod = ONE_DAY_IN_SECONDS;
-  //     const managerAddress = ACCOUNTS[1].address;
-  //     rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
-  //       web3,
-  //       core,
-  //       rebalancingSetTokenFactory.address,
-  //       managerAddress,
-  //       currentSetToken.address,
-  //       proposalPeriod
-  //     );
+    beforeAll(async () => {
+      btcPrice = new BigNumber(4082 * 10 ** 18);
+      ethPrice = new BigNumber(128 * 10 ** 18);
+      ethUnit = new BigNumber(28.999 * 10 ** 10);
+    });
 
-  //     // Issue currentSetToken
-  //     await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
-  //     await approveForTransferAsync([currentSetToken], transferProxy.address);
+    beforeEach(async () => {
+      initialAllocationToken = await deploySetTokenAsync(
+        web3,
+        core,
+        factory.address,
+        [wrappedBTC.address, wrappedETH.address],
+        [new BigNumber(1).mul(btcMultiplier), ethUnit.mul(ethMultiplier)],
+        new BigNumber(10 ** 10),
+      );
 
-  //     // Use issued currentSetToken to issue rebalancingSetToken
-  //     const rebalancingSetQuantityToIssue = ether(7);
-  //     await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+      proposalPeriod = ONE_DAY_IN_SECONDS;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingFactory.address,
+        btcethRebalancingManager.address,
+        initialAllocationToken.address,
+        proposalPeriod
+      );
 
-  //     // Approve proposed Set's components to the whitelist;
-  //     const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-  //     await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-  //     await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+      timeFastForward = ONE_DAY_IN_SECONDS.add(1);
+      await updateMedianizerPriceAsync(
+        web3,
+        btcMedianizer,
+        btcPrice,
+        SetTestUtils.generateTimestamp(1000),
+      );
 
-  //     // Deploy price curve used in auction
-  //     const priceCurve = await deployConstantAuctionPriceCurveAsync(
-  //       web3,
-  //       DEFAULT_AUCTION_PRICE_NUMERATOR,
-  //       DEFAULT_AUCTION_PRICE_DENOMINATOR
-  //     );
+      await updateMedianizerPriceAsync(
+        web3,
+        ethMedianizer,
+        ethPrice,
+        SetTestUtils.generateTimestamp(1000),
+      );
 
-  //     addPriceCurveToCoreAsync(
-  //       core,
-  //       priceCurve.address
-  //     );
+      subjectManagerAddress = btcethRebalancingManager.address;
+      subjectRebalancingSetToken = rebalancingSetToken.address;
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
 
+    async function subject(): Promise<string> {
+      await increaseChainTimeAsync(web3, timeFastForward);
+      return await rebalancingManagerAPI.proposeAsync(
+        subjectManagerAddress,
+        subjectRebalancingSetToken,
+        { from: subjectCaller },
+      );
+    }
 
-
-  //     subjectRebalancingSetToken = rebalancingSetToken.address;
-  //     subjectBidQuantity = ether(2);
-  //     subjectCaller = DEFAULT_ACCOUNT;
-  //   });
-
-  //   async function subject(): Promise<string> {
-  //     return await btcEthManagerWrapper.propose(
-  //       'wrapper contract address',
-  //       subjectRebalancingSetToken,
-  //       { from: subjectCaller },
-  //     );
-  //   }
-
-  //   test('successfully proposes', async () => {
-  //     await subject();
-  //   });
-  // });
+    test('successfully proposes', async () => {
+      await subject();
+    });
+  });
 });

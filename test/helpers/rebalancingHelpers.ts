@@ -164,7 +164,7 @@ export const deployMedianizerAsync = async(
     web3,
     TX_DEFAULTS,
   );
-}
+};
 
 export const addPriceFeedOwnerToMedianizer = async(
     medianizer: MedianContract,
@@ -173,7 +173,7 @@ export const addPriceFeedOwnerToMedianizer = async(
   return await medianizer.lift.sendTransactionAsync(
     priceFeedSigner,
   );
-}
+};
 
 export const updateMedianizerPriceAsync = async(
     web3: Web3,
@@ -193,7 +193,7 @@ export const updateMedianizerPriceAsync = async(
       [ecSignature.r],
       [ecSignature.s],
     );
-}
+};
 
 export const addPriceCurveToCoreAsync = async(
   core: CoreContract,
