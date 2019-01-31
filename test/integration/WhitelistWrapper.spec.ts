@@ -75,10 +75,7 @@ describe('WhitelistWrapper', () => {
     }
 
     test('gets the correct valid addresses', async () => {
-      let whitelistAddresses = await subject();
-
-      whitelistAddresses = whitelistAddresses.map(address => address.toLowerCase());
-
+      const whitelistAddresses = await subject();
       expect(JSON.stringify(whitelistAddresses)).to.equal(JSON.stringify(initializedWhitelistAddresses));
     });
   });

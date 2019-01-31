@@ -734,7 +734,7 @@ describe('SetProtocol', async () => {
 
       expect(approvalLog.address).to.equal(transactionToken.address);
       expect(owner).to.equal(transactionCaller.toLowerCase());
-      expect(spender).to.equal(transactionSpender);
+      expect(spender).to.equal(transactionSpender.toLowerCase());
       expect(value).to.bignumber.equal(transactionQuantity);
     });
   });
