@@ -130,8 +130,8 @@ describe('BlockchainAPI', () => {
       const { owner, spender, value } = approvalLog.args;
 
       expect(approvalLog.address).to.equal(standardToken.address);
-      expect(owner).to.equal(subjectCaller);
-      expect(spender).to.equal(subjectSpender);
+      expect(owner).to.equal(subjectCaller.toLowerCase());
+      expect(spender).to.equal(subjectSpender.toLowerCase());
       expect(value).to.bignumber.equal(subjectQuantity);
     });
   });
