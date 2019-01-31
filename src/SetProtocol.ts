@@ -28,8 +28,9 @@ import {
   OrderAPI,
   PayableExchangeIssueAPI,
   RebalancingAPI,
-  SetTokenAPI,
+  RebalancingManagerAPI,
   SystemAPI,
+  SetTokenAPI,
 } from './api';
 import {
   CoreWrapper,
@@ -88,6 +89,11 @@ class SetProtocol {
   public rebalancing: RebalancingAPI;
 
   /**
+   * An instance of the RebalancingManagerAPI class containing methods for interacting with Rebalancing Manager
+   */
+  public rebalancingManager: RebalancingManagerAPI;
+
+  /**
    * An instance of the SetTokenAPI class containing methods for interacting with SetToken contracts
    */
   public setToken: SetTokenAPI;
@@ -140,6 +146,7 @@ class SetProtocol {
       config.rebalanceAuctionModuleAddress,
     );
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, rebalanceAuctionModule);
+    this.rebalancingManager = new RebalancingManagerAPI(this.web3, assertions);
 
     const issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(
       this.web3,

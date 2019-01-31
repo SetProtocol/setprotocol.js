@@ -33,14 +33,18 @@ export {
 
 export {
   addPriceCurveToCoreAsync,
+  addPriceFeedOwnerToMedianizer,
   constructInflowOutflowArraysAsync,
   constructInflowOutflowAddressesArraysAsync,
   createDefaultRebalancingSetTokenAsync,
   deployConstantAuctionPriceCurveAsync,
+  deployBtcEthManagerContractAsync,
+  deployMedianizerAsync,
   deploySetTokensAsync,
   increaseChainTimeAsync,
   transitionToProposeAsync,
   transitionToRebalanceAsync,
+  updateMedianizerPriceAsync,
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync,
 } from './rebalancingHelpers';

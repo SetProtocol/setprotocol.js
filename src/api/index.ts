@@ -24,6 +24,7 @@ import { IssuanceAPI } from './IssuanceAPI';
 import { OrderAPI } from './OrderAPI';
 import { PayableExchangeIssueAPI } from './PayableExchangeIssueAPI';
 import { RebalancingAPI } from './RebalancingAPI';
+import { RebalancingManagerAPI } from './RebalancingManagerAPI';
 import { SetTokenAPI } from './SetTokenAPI';
 import { SystemAPI } from './SystemAPI';
 
@@ -36,6 +37,7 @@ export {
   OrderAPI,
   PayableExchangeIssueAPI,
   RebalancingAPI,
-  SetTokenAPI,
   SystemAPI,
+  RebalancingManagerAPI,
+  SetTokenAPI
 };

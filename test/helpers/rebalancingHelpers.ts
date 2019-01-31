@@ -2,10 +2,17 @@ import * as _ from 'lodash';
 import promisify from 'tiny-promisify';
 import Web3 from 'web3';
 import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
-import { RebalancingSetToken, ConstantAuctionPriceCurve } from 'set-protocol-contracts';
 import {
+  RebalancingSetToken,
+  BTCETHRebalancingManager,
+  ConstantAuctionPriceCurve,
+  Median,
+} from 'set-protocol-contracts';
+import {
+  BTCETHRebalancingManagerContract,
   ConstantAuctionPriceCurveContract,
   CoreContract,
+  MedianContract,
   RebalancingSetTokenContract,
   SetTokenContract,
   VaultContract
@@ -102,6 +109,90 @@ export const deployConstantAuctionPriceCurveAsync = async(
     web3,
     TX_DEFAULTS,
   );
+};
+
+export const deployBtcEthManagerContractAsync = async(
+  web3: Web3,
+  coreAddress: Address,
+  btcPriceFeedAddress: Address,
+  ethPriceFeedAddress: Address,
+  btcAddress: Address,
+  ethAddress: Address,
+  setTokenFactory: Address,
+  auctionLibrary: Address,
+  auctionTimeToPivot: BigNumber,
+  btcMultiplier: BigNumber,
+  ethMultiplier: BigNumber,
+): Promise<BTCETHRebalancingManagerContract> => {
+  const truffleBTCETHRebalancingManagerContract = contract(BTCETHRebalancingManager);
+  truffleBTCETHRebalancingManagerContract.setProvider(web3.currentProvider);
+  truffleBTCETHRebalancingManagerContract.setNetwork(50);
+  truffleBTCETHRebalancingManagerContract.defaults(TX_DEFAULTS);
+
+  // Deploy BTCETHRebalancingManager
+  const deployedBtcEthManagerInstance = await truffleBTCETHRebalancingManagerContract.new(
+    coreAddress,
+    btcPriceFeedAddress,
+    ethPriceFeedAddress,
+    btcAddress,
+    ethAddress,
+    setTokenFactory,
+    auctionLibrary,
+    auctionTimeToPivot,
+    btcMultiplier,
+    ethMultiplier,
+  );
+  return await BTCETHRebalancingManagerContract.at(
+    deployedBtcEthManagerInstance.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
+export const deployMedianizerAsync = async(
+  web3: Web3,
+): Promise<MedianContract> => {
+  const truffleMedianContract = contract(Median);
+  truffleMedianContract.setProvider(web3.currentProvider);
+  truffleMedianContract.setNetwork(50);
+  truffleMedianContract.defaults(TX_DEFAULTS);
+
+  // Deploy Median
+  const deployedMedianInstance = await truffleMedianContract.new();
+  return await MedianContract.at(
+    deployedMedianInstance.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
+export const addPriceFeedOwnerToMedianizer = async(
+    medianizer: MedianContract,
+    priceFeedSigner: Address,
+  ): Promise<string> => {
+  return await medianizer.lift.sendTransactionAsync(
+    priceFeedSigner,
+  );
+};
+
+export const updateMedianizerPriceAsync = async(
+    web3: Web3,
+    medianizer: MedianContract,
+    price: BigNumber,
+    timestamp: BigNumber,
+    from: Address = TX_DEFAULTS.from,
+  ): Promise<string> => {
+    const setUtils = new SetProtocolUtils(web3);
+    const standardSignature = SetProtocolUtils.hashPriceFeedHex(price, timestamp);
+    const ecSignature = await setUtils.signMessage(standardSignature, from);
+
+    return await medianizer.poke.sendTransactionAsync(
+      [price],
+      [timestamp],
+      [new BigNumber(ecSignature.v)],
+      [ecSignature.r],
+      [ecSignature.s],
+    );
 };
 
 export const addPriceCurveToCoreAsync = async(
