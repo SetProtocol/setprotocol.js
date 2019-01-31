@@ -36,6 +36,7 @@ import {
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
+  WhiteListContract,
   VaultContract,
 } from 'set-protocol-contracts';
 import { Core, StandardTokenMock } from 'set-protocol-contracts';
@@ -55,7 +56,7 @@ import {
   SystemOwnableState,
   SystemTimeLockPeriodState,
 } from '@src/types/common';
-import { deployBaseContracts, deploySetTokenAsync, deployTokensAsync } from '@test/helpers';
+import { deployBaseContracts, deploySetTokenAsync, deployTokensAsync, deployWhitelistContract } from '@test/helpers';
 import { getVaultBalances } from '@test/helpers/vaultHelpers';
 import { testSets, TestSet } from '../../testSets';
 
@@ -311,6 +312,33 @@ describe('SystemAPI', () => {
       expect(vault.toLowerCase()).to.equal(DEFAULT_ACCOUNT);
       expect(transferProxy.toLowerCase()).to.equal(DEFAULT_ACCOUNT);
       expect(issuanceOrderModule.toLowerCase()).to.equal(alternativeOwner);
+    });
+  });
+
+  describe('getWhitelistedAddresses', async () => {
+    let whitelistInstance: WhiteListContract;
+    let initializedWhitelistAddresses: Address[];
+
+    let subjectWhitelistContract: Address;
+
+    beforeEach(async () => {
+      initializedWhitelistAddresses = [DEFAULT_ACCOUNT];
+
+      whitelistInstance = await deployWhitelistContract(initializedWhitelistAddresses, web3);
+
+      subjectWhitelistContract = whitelistInstance.address;
+    });
+
+    async function subject(): Promise<Address[]> {
+      return await systemAPI.getWhitelistedAddresses(subjectWhitelistContract);
+    }
+
+    test('gets the correct valid addresses', async () => {
+      let whitelistAddresses = await subject();
+
+      whitelistAddresses = whitelistAddresses.map(address => address.toLowerCase());
+
+      expect(JSON.stringify(whitelistAddresses)).to.equal(JSON.stringify(initializedWhitelistAddresses));
     });
   });
 });

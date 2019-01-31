@@ -19,6 +19,7 @@ export {
   deployTransferProxyContract,
   deployVaultContract,
   deployWethMockAsync,
+  deployWhitelistContract,
   getTokenBalances,
   registerExchange,
   tokenDeployedOnSnapshot,

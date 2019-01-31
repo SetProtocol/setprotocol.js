@@ -387,7 +387,7 @@ export const deployBaseContracts = async (
 
   const core = await deployCoreContract(web3, transferProxy.address, vault.address);
 
-  const whitelist = await deployWhitelistContract([], web3, core);
+  const whitelist = await deployWhitelistContract([], web3);
 
   const [setTokenFactory, rebalancingSetTokenFactory] = await Promise.all([
     deploySetTokenFactoryContract(web3, core),
@@ -418,7 +418,6 @@ export const deployBaseContracts = async (
 export const deployWhitelistContract = async (
   initialAddresses: Address[],
   web3: Web3,
-  core: CoreContract,
 ): Promise<WhiteListContract> => {
   // Deploy WhitelistContract contract
   const truffleWhitelistContract = contract(WhiteList);

@@ -27,6 +27,7 @@ import { RebalancingAuctionModuleWrapper } from './RebalancingAuctionModuleWrapp
 import { RebalancingSetTokenWrapper } from './RebalancingSetTokenWrapper';
 import { SetTokenWrapper } from './SetTokenWrapper';
 import { TimeLockUpgradeWrapper } from './TimeLockUpgradeWrapper';
+import { WhitelistWrapper } from './WhitelistWrapper';
 import { VaultWrapper } from './VaultWrapper';
 
 export {
@@ -41,5 +42,6 @@ export {
   RebalancingSetTokenWrapper,
   SetTokenWrapper,
   TimeLockUpgradeWrapper,
+  WhitelistWrapper,
   VaultWrapper
 };

@@ -30,6 +30,7 @@ import {
   SetTokenContract,
   TimeLockUpgradeContract,
   TransferProxyContract,
+  WhiteListContract,
   VaultContract,
 } from 'set-protocol-contracts';
 
@@ -335,7 +336,7 @@ export class ContractWrapper {
    *
    * @param  timeLockUpgradeAddress Address of the TimeLockUpgrade contract
    * @param  transactionOptions     Options sent into the contract deployed method
-   * @return                        The Authorizable Contract
+   * @return                        The TimeLockUpgrade Contract
    */
   public async loadTimeLockUpgradeAsync(
     timeLockUpgradeAddress: Address,
@@ -353,6 +354,32 @@ export class ContractWrapper {
       );
       this.cache[cacheKey] = setTokenContract;
       return setTokenContract;
+    }
+  }
+
+  /**
+   * Load a Whitelist contract
+   *
+   * @param  whitelistAddress Address of the Whitelist contract
+   * @param  transactionOptions     Options sent into the contract deployed method
+   * @return                        The Whitelist Contract
+   */
+  public async loadWhitelistAsync(
+    whitelistAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<WhiteListContract> {
+    const cacheKey = `SetToken_${whitelistAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as WhiteListContract;
+    } else {
+      const whitelistContract = await WhiteListContract.at(
+        whitelistAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = whitelistContract;
+      return whitelistContract;
     }
   }
 }

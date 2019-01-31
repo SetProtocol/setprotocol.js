@@ -23,7 +23,13 @@ import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 import { ZERO } from '../constants';
 import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { AuthorizableWrapper, ContractWrapper, CoreWrapper, TimeLockUpgradeWrapper } from '../wrappers';
+import {
+  AuthorizableWrapper,
+  ContractWrapper,
+  CoreWrapper,
+  TimeLockUpgradeWrapper,
+  WhitelistWrapper,
+} from '../wrappers';
 import { BigNumber } from '../util';
 import {
   Address,
@@ -49,6 +55,8 @@ export class SystemAPI {
   private core: CoreWrapper;
   private authorizable: AuthorizableWrapper;
   private timeLockUpgrade: TimeLockUpgradeWrapper;
+  private whitelist: WhitelistWrapper;
+
 
   /**
    * Instantiates a new SystemAPI instance that contains methods for viewing the system-related state of
@@ -67,6 +75,7 @@ export class SystemAPI {
     this.assert = assert;
     this.authorizable = new AuthorizableWrapper(web3);
     this.timeLockUpgrade = new TimeLockUpgradeWrapper(web3);
+    this.whitelist = new WhitelistWrapper(web3);
   }
 
   /**
@@ -205,5 +214,16 @@ export class SystemAPI {
       issuanceOrderModule: issuanceOrderModuleOwner,
     };
   }
+
+  /**
+   * Fetches a list of whitelisted addresses on the whitelist contract.
+   *
+   * @param whitelistAddress    The address of the whitelist contract
+   * @return               An array of whitelisted addresses
+   */
+  public async getWhitelistedAddresses(whitelistAddress: Address): Promise<Address[]> {
+    return await this.whitelist.validAddresses(whitelistAddress);
+  }
+
 }
 
