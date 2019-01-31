@@ -447,7 +447,7 @@ class SetProtocol {
    * @return    Array of SetToken and RebalancingSetToken addresses
    */
   public async getSetAddressesAsync(): Promise<Address[]> {
-    return await this.core.getSetAddresses();
+    return await this.core.setTokens();
   }
 
   /**

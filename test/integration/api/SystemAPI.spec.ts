@@ -33,6 +33,7 @@ import {
   CoreContract,
   IssuanceOrderModuleContract,
   RebalanceAuctionModuleContract,
+  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -56,7 +57,14 @@ import {
   SystemOwnableState,
   SystemTimeLockPeriodState,
 } from '@src/types/common';
-import { deployBaseContracts, deploySetTokenAsync, deployTokensAsync, deployWhitelistContract } from '@test/helpers';
+import {
+  addPriceLibraryAsync,
+  deployBaseContracts,
+  deploySetTokenAsync,
+  deployTokensAsync,
+  deployWhitelistContract,
+  registerExchange,
+} from '@test/helpers';
 import { getVaultBalances } from '@test/helpers/vaultHelpers';
 import { testSets, TestSet } from '../../testSets';
 
@@ -81,6 +89,7 @@ describe('SystemAPI', () => {
   let setTokenFactoryInstance: SetTokenFactoryContract;
   let rebalanceAuctionModuleInstance: RebalanceAuctionModuleContract;
   let issuanceOrderModuleInstance: IssuanceOrderModuleContract;
+  let rebalancingSetTokenFactoryInstance: RebalancingSetTokenFactoryContract;
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -107,6 +116,7 @@ describe('SystemAPI', () => {
     setTokenFactoryInstance = setTokenFactory;
     issuanceOrderModuleInstance = issuanceOrderModule;
     rebalanceAuctionModuleInstance = rebalanceAuctionModule;
+    rebalancingSetTokenFactoryInstance = rebalancingSetTokenFactory;
 
     const coreWrapper = new CoreWrapper(
       web3,
@@ -196,7 +206,7 @@ describe('SystemAPI', () => {
     });
   });
 
-  describe('getSystemTimeLockPeriods', async () => {
+  describe('getSystemTimeLockPeriodsAsync', async () => {
     let alternativeTimeLockPeriod: BigNumber;
 
     beforeEach(async () => {
@@ -209,7 +219,7 @@ describe('SystemAPI', () => {
     });
 
     async function subject(): Promise<SystemTimeLockPeriodState> {
-      return await systemAPI.getSystemTimeLockPeriods();
+      return await systemAPI.getSystemTimeLockPeriodsAsync();
     }
 
     test('returns the correct timeLockPeriods', async () => {
@@ -290,11 +300,11 @@ describe('SystemAPI', () => {
     });
   });
 
-  describe('getSystemOwners', async () => {
+  describe('getSystemOwnersAsync', async () => {
     let alternativeOwner: Address;
 
     beforeEach(async () => {
-      alternativeOwner = SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS;
+      alternativeOwner = ACCOUNTS[2].address;
 
       await issuanceOrderModuleInstance.transferOwnership.sendTransactionAsync(
         alternativeOwner,
@@ -303,19 +313,19 @@ describe('SystemAPI', () => {
     });
 
     async function subject(): Promise<SystemOwnableState> {
-      return await systemAPI.getSystemOwners();
+      return await systemAPI.getSystemOwnersAsync();
     }
 
     test('returns the correct owners', async () => {
       const { core, vault, transferProxy, issuanceOrderModule} = await subject();
-      expect(core.toLowerCase()).to.equal(DEFAULT_ACCOUNT);
-      expect(vault.toLowerCase()).to.equal(DEFAULT_ACCOUNT);
-      expect(transferProxy.toLowerCase()).to.equal(DEFAULT_ACCOUNT);
-      expect(issuanceOrderModule.toLowerCase()).to.equal(alternativeOwner);
+      expect(core).to.equal(DEFAULT_ACCOUNT);
+      expect(vault).to.equal(DEFAULT_ACCOUNT);
+      expect(transferProxy).to.equal(DEFAULT_ACCOUNT);
+      expect(issuanceOrderModule).to.equal(alternativeOwner);
     });
   });
 
-  describe('getWhitelistedAddresses', async () => {
+  describe('getWhitelistedAddressesAsync', async () => {
     let whitelistInstance: WhiteListContract;
     let initializedWhitelistAddresses: Address[];
 
@@ -330,15 +340,85 @@ describe('SystemAPI', () => {
     });
 
     async function subject(): Promise<Address[]> {
-      return await systemAPI.getWhitelistedAddresses(subjectWhitelistContract);
+      return await systemAPI.getWhitelistedAddressesAsync(subjectWhitelistContract);
     }
 
     test('gets the correct valid addresses', async () => {
-      let whitelistAddresses = await subject();
+      const whitelistAddresses = await subject();
 
-      whitelistAddresses = whitelistAddresses.map(address => address.toLowerCase());
+      // whitelistAddresses = whitelistAddresses.map(address => address.toLowerCase());
 
       expect(JSON.stringify(whitelistAddresses)).to.equal(JSON.stringify(initializedWhitelistAddresses));
+    });
+  });
+
+  describe('getModulesAsync', async () => {
+    async function subject(): Promise<Address[]> {
+      return await systemAPI.getModulesAsync();
+    }
+
+     test('gets modules', async () => {
+      const modules = await subject();
+
+      const expectedModules = [
+        rebalanceAuctionModuleInstance.address,
+        issuanceOrderModuleInstance.address,
+      ];
+      expect(JSON.stringify(modules)).to.equal(JSON.stringify(expectedModules));
+    });
+  });
+
+  describe('getFactoriesAsync', async () => {
+    async function subject(): Promise<Address[]> {
+      return await systemAPI.getFactoriesAsync();
+    }
+
+    test('gets factories', async () => {
+      const factories = await subject();
+
+      const expectedFactories = [
+        setTokenFactoryInstance.address,
+        rebalancingSetTokenFactoryInstance.address,
+      ];
+      expect(JSON.stringify(factories)).to.equal(JSON.stringify(expectedFactories));
+    });
+  });
+
+  describe('getExchangesAsync', async () => {
+    beforeEach(async () => {
+      await registerExchange(web3, coreInstance.address, 1, DEFAULT_ACCOUNT);
+    });
+
+    async function subject(): Promise<Address[]> {
+      return await systemAPI.getExchangesAsync();
+    }
+
+    test('gets exchanges', async () => {
+      const exchanges = await subject();
+
+      const expectedExchanges = [
+        DEFAULT_ACCOUNT,
+      ];
+      expect(JSON.stringify(exchanges)).to.equal(JSON.stringify(expectedExchanges));
+    });
+  });
+
+  describe('getPriceLibrariesAsync', async () => {
+    beforeEach(async () => {
+      await addPriceLibraryAsync(coreInstance, DEFAULT_ACCOUNT);
+    });
+
+    async function subject(): Promise<Address[]> {
+      return await systemAPI.getPriceLibrariesAsync();
+    }
+
+    test('gets price libraries', async () => {
+      const priceLibraries = await subject();
+
+      const expectedPriceLibraries = [
+        DEFAULT_ACCOUNT,
+      ];
+      expect(JSON.stringify(priceLibraries)).to.equal(JSON.stringify(expectedPriceLibraries));
     });
   });
 });

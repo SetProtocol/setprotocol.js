@@ -733,7 +733,7 @@ describe('SetProtocol', async () => {
       const { owner, spender, value } = approvalLog.args;
 
       expect(approvalLog.address).to.equal(transactionToken.address);
-      expect(owner).to.equal(transactionCaller);
+      expect(owner).to.equal(transactionCaller.toLowerCase());
       expect(spender).to.equal(transactionSpender);
       expect(value).to.bignumber.equal(transactionQuantity);
     });

@@ -9,7 +9,7 @@ const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 const ACCOUNTS: Account[] = [
   {
-    address: '0x5409ed021d9299bf6814279a6a1411a7e866a631',
+    address: '0x5409ED021D9299bf6814279A6A1411A7e866A631',
     privateKey: '0xf2f48ee19680706196e2e339e5da3491186e0c4c5030670656b0e0164837257d',
   },
   {
@@ -21,7 +21,7 @@ const ACCOUNTS: Account[] = [
     privateKey: '0xdf02719c4df8b9b8ac7f551fcb5d9ef48fa27eef7a66453879f4d8fdc6e78fb1',
   },
   {
-    address: '0xe834ec434daba538cd1b9fe1582052b880bd7e63',
+    address: '0xE834EC434DABA538cd1b9Fe1582052B880BD7e63',
     privateKey: '0xff12e391b79415e941a94de3bf3a9aee577aed0731e297d5cfa0b8a1e02fa1d0',
   },
   {

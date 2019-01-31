@@ -248,9 +248,9 @@ export class CoreWrapper {
    * @param  exchangeId Enum id of the exchange
    * @return            An exchange address
    */
-  public async getExchangeAddress(exchangeId: number): Promise<Address> {
+  public async exchangeIds(exchangeId: number): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
-    const exchangeAddress = await coreInstance.exchanges.callAsync(exchangeId);
+    const exchangeAddress = await coreInstance.exchangeIds.callAsync(exchangeId);
 
     return exchangeAddress;
   }
@@ -260,7 +260,7 @@ export class CoreWrapper {
    *
    * @return Transfer proxy address
    */
-  public async getTransferProxyAddress(): Promise<Address> {
+  public async transferProxy(): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const transferProxyAddress = await coreInstance.transferProxy.callAsync();
 
@@ -272,7 +272,7 @@ export class CoreWrapper {
    *
    * @return Vault address
    */
-  public async getVaultAddress(): Promise<Address> {
+  public async vault(): Promise<Address> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const vaultAddress = await coreInstance.vault.callAsync();
 
@@ -285,7 +285,7 @@ export class CoreWrapper {
    *
    * @return Array of SetToken and RebalancingSetToken addresses
    */
-  public async getSetAddresses(): Promise<Address[]> {
+  public async setTokens(): Promise<Address[]> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const setAddresses = await coreInstance.setTokens.callAsync();
 
@@ -297,7 +297,7 @@ export class CoreWrapper {
    *
    * @return Operation state of the protocol
    */
-  public async getOperationState(): Promise<BigNumber> {
+  public async operationState(): Promise<BigNumber> {
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
     const operationState = await coreInstance.operationState.callAsync();
 
@@ -355,5 +355,53 @@ export class CoreWrapper {
     const isValidSetAddress = await coreInstance.validSets.callAsync(setAddress);
 
     return isValidSetAddress;
+  }
+
+  /**
+   * Fetch the addresses of Modules enabled in the system.
+   *
+   * @return            A list of the enabled modules
+   */
+  public async modules(): Promise<Address[]> {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const modules = await coreInstance.modules.callAsync();
+
+    return modules;
+  }
+
+  /**
+   * Fetch the addresses of Factories enabled in the system.
+   *
+   * @return            A list of the enabled Factories
+   */
+  public async factories(): Promise<Address[]> {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const factories = await coreInstance.factories.callAsync();
+
+    return factories;
+  }
+
+  /**
+   * Fetch the addresses of Exchanges enabled in the system.
+   *
+   * @return            A list of the enabled Exchanges
+   */
+  public async exchanges(): Promise<Address[]> {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const exchanges = await coreInstance.exchanges.callAsync();
+
+    return exchanges;
+  }
+
+  /**
+   * Fetch the addresses of PriceLibraries enabled in the system.
+   *
+   * @return            A list of the enabled PriceLibraries
+   */
+  public async priceLibraries(): Promise<Address[]> {
+    const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
+    const priceLibraries = await coreInstance.priceLibraries.callAsync();
+
+    return priceLibraries;
   }
 }

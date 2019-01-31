@@ -84,7 +84,7 @@ export class SystemAPI {
    * @return               Operational State represented as a number
    */
   public async getOperationStateAsync(): Promise<BigNumber> {
-    return await this.core.getOperationState();
+    return await this.core.operationState();
   }
 
   /**
@@ -113,7 +113,7 @@ export class SystemAPI {
    *
    * @return               Object containing the current time lock periods.
    */
-  public async getSystemTimeLockPeriods(): Promise<SystemTimeLockPeriodState> {
+  public async getSystemTimeLockPeriodsAsync(): Promise<SystemTimeLockPeriodState> {
     const [
       coreInstance,
       vaultInstance,
@@ -182,7 +182,7 @@ export class SystemAPI {
    *
    * @return               Object containing the contract owners.
    */
-  public async getSystemOwners(): Promise<SystemOwnableState> {
+  public async getSystemOwnersAsync(): Promise<SystemOwnableState> {
     const [
       coreInstance,
       vaultInstance,
@@ -221,9 +221,44 @@ export class SystemAPI {
    * @param whitelistAddress    The address of the whitelist contract
    * @return               An array of whitelisted addresses
    */
-  public async getWhitelistedAddresses(whitelistAddress: Address): Promise<Address[]> {
+  public async getWhitelistedAddressesAsync(whitelistAddress: Address): Promise<Address[]> {
     return await this.whitelist.validAddresses(whitelistAddress);
   }
 
+  /**
+   * Fetch the addresses of Modules enabled in the system.
+   *
+   * @return            A list of the enabled modules
+   */
+  public async getModulesAsync(): Promise<Address[]> {
+    return await this.core.modules();
+  }
+
+  /**
+   * Fetch the addresses of Factories enabled in the system.
+   *
+   * @return            A list of the enabled Factories
+   */
+  public async getFactoriesAsync(): Promise<Address[]> {
+    return await this.core.factories();
+  }
+
+  /*
+   * Fetch the addresses of Exchanges enabled in the system.
+   *
+   * @return            A list of the enabled Exchanges
+   */
+  public async getExchangesAsync(): Promise<Address[]> {
+    return await this.core.exchanges();
+  }
+
+  /**
+   * Fetch the addresses of PriceLibraries enabled in the system.
+   *
+   * @return            A list of the enabled PriceLibraries
+   */
+  public async getPriceLibrariesAsync(): Promise<Address[]> {
+    return await this.core.priceLibraries();
+  }
 }
 

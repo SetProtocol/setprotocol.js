@@ -742,7 +742,7 @@ describe('OrderAPI', () => {
       );
 
       const signerWalletAddress = ethUtil.bufferToHex(ethUtil.pubToAddress(signerPublicKey));
-      expect(signerWalletAddress).to.equal(DEFAULT_ACCOUNT);
+      expect(signerWalletAddress).to.equal(DEFAULT_ACCOUNT.toLowerCase());
     });
 
     describe('when the set address is invalid', async () => {
