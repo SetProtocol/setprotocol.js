@@ -106,6 +106,13 @@ export interface SystemOwnableState {
   issuanceOrderModule: Address;
 }
 
+export interface SystemTimeLockPeriodState {
+  core: BigNumber;
+  vault: BigNumber;
+  transferProxy: BigNumber;
+  issuanceOrderModule: BigNumber;
+}
+
 export interface TokenFlows {
   inflow: BigNumber[];
   outflow: BigNumber[];

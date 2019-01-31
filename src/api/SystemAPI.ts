@@ -29,8 +29,9 @@ import {
   Address,
   Bytes,
   SetProtocolConfig,
-  SystemOwnableState,
   SystemAuthorizableState,
+  SystemOwnableState,
+  SystemTimeLockPeriodState,
   Tx,
 } from '../types/common';
 
@@ -69,24 +70,19 @@ export class SystemAPI {
   }
 
   /**
-   * Issues a Set to the transaction signer. Must have component tokens in the correct quantites in either
-   * the vault or in the signer's wallet. Component tokens must be approved to the Transfer
-   * Proxy contract via setTransferProxyAllowanceAsync
+   * Fetches the operational state of Set Protocol. 0 is operational. 1 is shut down.
    *
-   * @param  setAddress    Address Set to issue
-   * @param  quantity      Amount of Set to issue. Must be multiple of the natural unit of the Set
-   * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
-   * @return               Transaction hash
+   * @return               Operational State represented as a number
    */
   public async getOperationStateAsync(): Promise<BigNumber> {
     return await this.core.getOperationState();
   }
 
-  public async getSetAddressesAsync(): Promise<Address[]> {
-    return await this.core.getSetAddresses();
-  }
-
-  // Get the authorizable addresses of all contracts that have authorizability
+  /**
+   * Fetches the authorizable addresses of the transfer proxy and vault.
+   *
+   * @return               System Authorizable state object
+   */
   public async getSystemAuthorizableStateAsync(): Promise<SystemAuthorizableState> {
     const [
       transferProxyAuthorizable,
@@ -102,12 +98,53 @@ export class SystemAPI {
     };
   }
 
-  // Get the time lock periods of all contracts that can be time locked
-  public async getSystemTimeLockPeriods(): Promise<void> {
-    // Find all the contracts that have time lock and put them here
+  /**
+   * Fetches the time lock periods of the contracts that have time lock upgrade functions.
+   * These contracts include core, vault, transfer proxy, and issuance order module.
+   *
+   * @return               Object containing the current time lock periods.
+   */
+  public async getSystemTimeLockPeriods(): Promise<SystemTimeLockPeriodState> {
+    const [
+      coreInstance,
+      vaultInstance,
+      transferProxyInstance,
+      issuanceOrderModuleInstance,
+    ] = await Promise.all([
+      this.contract.loadCoreAsync(this.config.transferProxyAddress),
+      this.contract.loadVaultAsync(this.config.vaultAddress),
+      this.contract.loadTransferProxyAsync(this.config.transferProxyAddress),
+      this.contract.loadIssuanceOrderModuleAsync(this.config.issuanceOrderModuleAddress),
+    ]);
+
+    const [
+      coreOwner,
+      vaultOwner,
+      transferProxyOwner,
+      issuanceOrderModuleOwner,
+    ] = await Promise.all([
+      coreInstance.timeLockPeriod.callAsync(),
+      vaultInstance.timeLockPeriod.callAsync(),
+      transferProxyInstance.timeLockPeriod.callAsync(),
+      issuanceOrderModuleInstance.timeLockPeriod.callAsync(),
+    ]);
+
+    return {
+      core: coreOwner,
+      vault: vaultOwner,
+      transferProxy: transferProxyOwner,
+      issuanceOrderModule: issuanceOrderModuleOwner,
+    };
   }
 
-  // Get time lock upgrade hash based on transaction hash
+  /**
+   * Fetches time lock upgrade hash given a transaction hash. The timelock upgrade hash
+   * is composed of the msg.data of a transaction. It is the first four bytes of the function
+   * appended with the call data.
+   *
+   * @param transactionHash    The hash of the upgrade proposal transaction
+   * @return               The hash of the time lock upgrade hash
+   */
   public async getTimeLockUpgradeHashAsync(transactionHash: string): Promise<Bytes> {
     const { input } = await this.web3.eth.getTransaction(transactionHash);
 
@@ -116,7 +153,13 @@ export class SystemAPI {
     return subjectTimeLockUpgradeHash;
   }
 
-  // Get time lock upgrade status based on contract address and hash
+  /**
+   * Fetches time lock upgrade initialization timestamp based on contract address and timelock upgrade hash.
+   *
+   * @param contractAddress        The hash of the upgrade proposal transaction
+   * @param timeLockUpgradeHash    The hash of the time lock upgrade hash
+   * @return               Timestamp that the upgrade was initiated
+   */
   public async getTimeLockedUpgradeInitializationAsync(
     contractAddress: Address,
     timeLockUpgradeHash: Bytes
@@ -124,8 +167,12 @@ export class SystemAPI {
       return await this.timeLockUpgrade.timeLockedUpgrades(contractAddress, timeLockUpgradeHash);
   }
 
-  // Get System owners
-    // Find all the ownable contracts and list their owners
+  /**
+   * Fetches the owners of the system.
+   * These contracts include core, vault, transfer proxy, and issuance order module.
+   *
+   * @return               Object containing the contract owners.
+   */
   public async getSystemOwners(): Promise<SystemOwnableState> {
     const [
       coreInstance,
@@ -156,7 +203,7 @@ export class SystemAPI {
       vault: vaultOwner,
       transferProxy: transferProxyOwner,
       issuanceOrderModule: issuanceOrderModuleOwner,
-    }
+    };
   }
 
   // Get modules

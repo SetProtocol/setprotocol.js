@@ -48,7 +48,13 @@ import { CoreWrapper } from '@src/wrappers';
 import { BigNumber, ether, getFormattedLogsFromReceipt } from '@src/util';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { TX_DEFAULTS, ZERO } from '@src/constants';
-import { Bytes, SetProtocolConfig, SystemAuthorizableAddresses } from '@src/types/common';
+import {
+  Bytes,
+  SetProtocolConfig,
+  SystemAuthorizableState,
+  SystemOwnableState,
+  SystemTimeLockPeriodState,
+} from '@src/types/common';
 import { deployBaseContracts, deploySetTokenAsync, deployTokensAsync } from '@test/helpers';
 import { getVaultBalances } from '@test/helpers/vaultHelpers';
 import { testSets, TestSet } from '../../testSets';
@@ -114,6 +120,7 @@ describe('SystemAPI', () => {
       transferProxyAddress: transferProxy.address,
       vaultAddress: vault.address,
       rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
+      issuanceOrderModuleAddress: issuanceOrderModule.address,
       kyberNetworkWrapperAddress: SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
       setTokenFactoryAddress: setTokenFactory.address,
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
@@ -159,45 +166,8 @@ describe('SystemAPI', () => {
     });
   });
 
-  describe('getSetAddressesAsync', async () => {
-    let expectedOperationState: BigNumber;
-    let setComponents: StandardTokenMockContract[];
-    let componentUnits: BigNumber[];
-    let setToken: SetTokenContract;
-    let naturalUnit: BigNumber;
-
-    beforeEach(async () => {
-      setComponents = await deployTokensAsync(2, web3, DEFAULT_ACCOUNT);
-
-      // Deploy Set with those tokens
-      const setComponentUnit = ether(4);
-      const componentAddresses = setComponents.map(token => token.address);
-      componentUnits = setComponents.map(token => setComponentUnit);
-      naturalUnit = ether(2);
-      setToken = await deploySetTokenAsync(
-        web3,
-        coreInstance,
-        setTokenFactoryInstance.address,
-        componentAddresses,
-        componentUnits,
-        naturalUnit,
-      );
-    });
-
-    async function subject(): Promise<Address[]> {
-      return await systemAPI.getSetAddressesAsync();
-    }
-
-    test('returns the correct set Addresses', async () => {
-      const setTokens = await subject();
-
-      const expectedSetTokens = [setToken.address];
-      expect(JSON.stringify(setTokens)).to.equal(JSON.stringify(expectedSetTokens));
-    });
-  });
-
-  describe('getSystemAuthorizableAddressesAsync', async () => {
-    let systemAuthorizableAddresses: SystemAuthorizableAddresses;
+  describe('getSystemAuthorizableStateAsync', async () => {
+    let systemAuthorizableAddresses: SystemAuthorizableState;
 
     beforeEach(async () => {
       systemAuthorizableAddresses = {
@@ -206,8 +176,8 @@ describe('SystemAPI', () => {
       };
     });
 
-    async function subject(): Promise<SystemAuthorizableAddresses> {
-      return await systemAPI.getSystemAuthorizableAddressesAsync();
+    async function subject(): Promise<SystemAuthorizableState> {
+      return await systemAPI.getSystemAuthorizableStateAsync();
     }
 
     test('returns the correct transferProxy authorized addresses', async () => {
@@ -225,10 +195,33 @@ describe('SystemAPI', () => {
     });
   });
 
+  describe('getSystemTimeLockPeriods', async () => {
+    let alternativeTimeLockPeriod: BigNumber;
+
+    beforeEach(async () => {
+      alternativeTimeLockPeriod = new BigNumber(100);
+
+      await issuanceOrderModuleInstance.setTimeLockPeriod.sendTransactionAsync(
+        alternativeTimeLockPeriod,
+        { from: DEFAULT_ACCOUNT}
+      );
+    });
+
+    async function subject(): Promise<SystemTimeLockPeriodState> {
+      return await systemAPI.getSystemTimeLockPeriods();
+    }
+
+    test('returns the correct timeLockPeriods', async () => {
+      const { core, vault, transferProxy, issuanceOrderModule} = await subject();
+      expect(core).to.bignumber.equal(ZERO);
+      expect(vault).to.bignumber.equal(ZERO);
+      expect(transferProxy).to.bignumber.equal(ZERO);
+      expect(issuanceOrderModule).to.bignumber.equal(alternativeTimeLockPeriod);
+    });
+  });
+
   describe('getTimeLockUpgradeHashAsync', async () => {
     let subjectTransactionHash: string;
-
-    let expectedTimeLockUpgradeHash: Bytes;
 
     beforeEach(async () => {
       // Set a positive timeLockUpgradePeriod
@@ -293,6 +286,31 @@ describe('SystemAPI', () => {
       const { timestamp } = await web3.eth.getBlock(blockNumber);
 
       expect(timeLockUpgradeTimestamp).to.bignumber.equal(timestamp);
+    });
+  });
+
+  describe('getSystemOwners', async () => {
+    let alternativeOwner: Address;
+
+    beforeEach(async () => {
+      alternativeOwner = SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS;
+
+      await issuanceOrderModuleInstance.transferOwnership.sendTransactionAsync(
+        alternativeOwner,
+        { from: DEFAULT_ACCOUNT}
+      );
+    });
+
+    async function subject(): Promise<SystemOwnableState> {
+      return await systemAPI.getSystemOwners();
+    }
+
+    test('returns the correct owners', async () => {
+      const { core, vault, transferProxy, issuanceOrderModule} = await subject();
+      expect(core.toLowerCase()).to.equal(DEFAULT_ACCOUNT);
+      expect(vault.toLowerCase()).to.equal(DEFAULT_ACCOUNT);
+      expect(transferProxy.toLowerCase()).to.equal(DEFAULT_ACCOUNT);
+      expect(issuanceOrderModule.toLowerCase()).to.equal(alternativeOwner);
     });
   });
 });
