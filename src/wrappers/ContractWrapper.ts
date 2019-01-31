@@ -384,7 +384,7 @@ export class ContractWrapper {
     }
   }
 
-  /**    
+  /**
    * Load BtcEthManagerContract contract
    *
    * @param  btcEthManagerAddress           Address of the BTCETHRebalancingManagerContract contract

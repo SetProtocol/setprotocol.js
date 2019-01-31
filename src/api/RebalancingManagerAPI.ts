@@ -66,6 +66,12 @@ export class RebalancingManagerAPI {
     return await this.btcEthRebalancingManager.propose(rebalancingManager, rebalancingSet, txOpts);
   }
 
+  /**
+   * Fetches the state variables of the Rebalancing Manager contract.
+   *
+   * @param  rebalancingManager    Address of the BTCETH Rebalancing Manager contract
+   * @return               Object containing the state information related to the rebalancing manager
+   */
   public async getRebalancingManagerDetailsAsync(rebalancingManager: Address): Promise<RebalancingManagerDetails> {
     const [
       core,
