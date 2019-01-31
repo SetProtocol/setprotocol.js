@@ -269,6 +269,15 @@ export class RebalancingAPI {
       this.erc20.symbol(rebalancingSetTokenAddress),
     ]);
 
+    // Unclear why Promise.all can accept more than 10 elements
+    const [
+      proposalPeriod,
+      rebalanceInterval,
+    ] = await Promise.all([
+      this.rebalancingSetToken.proposalPeriod(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.rebalanceInterval(rebalancingSetTokenAddress),
+    ]);
+
     return {
       address: rebalancingSetTokenAddress,
       factoryAddress,
@@ -281,6 +290,8 @@ export class RebalancingAPI {
       supply,
       name,
       symbol,
+      proposalPeriod,
+      rebalanceInterval,
     } as RebalancingSetDetails;
   }
 
