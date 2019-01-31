@@ -9,6 +9,7 @@ export {
   KyberTrade,
   Log,
   SetDetails,
+  SetProtocolConfig,
   SetUnits,
   SignedIssuanceOrder,
   SolidityTypes,
@@ -20,6 +21,4 @@ export {
 } from './types/common';
 
 import SetProtocol from './SetProtocol';
-
-export { SetProtocolConfig } from './SetProtocol';
 export default SetProtocol;

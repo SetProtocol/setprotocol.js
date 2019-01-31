@@ -33,8 +33,7 @@ import {
   generateTxOpts,
   getFormattedLogsFromTxHash,
 } from '../util';
-import { SetProtocolConfig } from '../SetProtocol';
-import { Address, SetUnits, Tx } from '../types/common';
+import { Address, SetProtocolConfig, SetUnits, Tx } from '../types/common';
 
 /**
  * @title FactoryAPI

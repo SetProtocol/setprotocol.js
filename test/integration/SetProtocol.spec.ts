@@ -58,9 +58,8 @@ import {
 } from '@src/constants';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { BigNumber } from '@src/util';
-import { SetProtocolConfig } from '@src/SetProtocol';
 import { ERC20Wrapper } from '@src/wrappers/ERC20Wrapper';
-import { Address, Log, SetUnits } from '@src/types/common';
+import { Address, Log, SetProtocolConfig, SetUnits } from '@src/types/common';
 import {
   approveForTransferAsync,
   deployBaseContracts,

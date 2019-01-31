@@ -92,7 +92,7 @@ class SetProtocol {
    */
   public setToken: SetTokenAPI;
 
-/**
+  /**
    * An instance of the SystemAPI class containing methods for interacting with system state
    */
   public system: SystemAPI;
