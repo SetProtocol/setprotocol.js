@@ -81,6 +81,38 @@ export interface RebalancingSetDetails {
   symbol: string;
 }
 
+export interface SetProtocolConfig {
+  coreAddress: Address;
+  transferProxyAddress: Address;
+  vaultAddress: Address;
+  rebalanceAuctionModuleAddress: Address;
+  kyberNetworkWrapperAddress: Address;
+  setTokenFactoryAddress: Address;
+  rebalancingSetTokenFactoryAddress: Address;
+  issuanceOrderModuleAddress: Address;
+  payableExchangeIssue?: Address;
+  wrappedEtherAddress?: Address;
+}
+
+export interface SystemAuthorizableState {
+  transferProxy: Address[];
+  vault: Address[];
+}
+
+export interface SystemOwnableState {
+  core: Address;
+  vault: Address;
+  transferProxy: Address;
+  issuanceOrderModule: Address;
+}
+
+export interface SystemTimeLockPeriodState {
+  core: BigNumber;
+  vault: BigNumber;
+  transferProxy: BigNumber;
+  issuanceOrderModule: BigNumber;
+}
+
 export interface TokenFlows {
   inflow: BigNumber[];
   outflow: BigNumber[];

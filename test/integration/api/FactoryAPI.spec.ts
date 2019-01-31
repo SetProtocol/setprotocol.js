@@ -61,8 +61,7 @@ import {
 } from '@test/helpers';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { ether } from '@src/util/units';
-import { SetUnits } from '@src/types/common';
-import { SetProtocolConfig } from '../../../src/SetProtocol';
+import { SetProtocolConfig, SetUnits } from '@src/types/common';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');

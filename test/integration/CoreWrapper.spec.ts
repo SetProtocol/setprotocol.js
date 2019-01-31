@@ -75,6 +75,7 @@ import {
   deployTokensAsync,
   deployZeroExExchangeWrapperContract,
   getVaultBalances,
+  registerExchange,
   tokenDeployedOnSnapshot,
   transitionToRebalanceAsync,
 } from '@test/helpers';
@@ -575,25 +576,25 @@ describe('CoreWrapper', () => {
 
     test('gets exchange address', async () => {
       const takerWalletWrapper = await deployTakerWalletWrapperContract(web3, transferProxy, core);
-      const exchangeAddress = await coreWrapper.getExchangeAddress(SetUtils.EXCHANGES.TAKER_WALLET);
+      const exchangeAddress = await coreWrapper.exchangeIds(SetUtils.EXCHANGES.TAKER_WALLET);
 
       expect(exchangeAddress).to.equal(takerWalletWrapper.address);
     });
 
     test('gets transfer proxy address', async () => {
-      const transferProxyAddress = await coreWrapper.getTransferProxyAddress();
+      const transferProxyAddress = await coreWrapper.transferProxy();
 
       expect(coreWrapper.transferProxyAddress).to.equal(transferProxyAddress);
     });
 
     test('gets vault address', async () => {
-      const vaultAddress = await coreWrapper.getVaultAddress();
+      const vaultAddress = await coreWrapper.vault();
 
       expect(coreWrapper.vaultAddress).to.equal(vaultAddress);
     });
 
     test('gets Set addresses', async () => {
-      const setAddresses = await coreWrapper.getSetAddresses();
+      const setAddresses = await coreWrapper.setTokens();
 
       expect(setAddresses.length).to.equal(1);
       expect(setAddresses[0]).to.equal(setToken.address);
@@ -634,8 +635,52 @@ describe('CoreWrapper', () => {
     test('gets operation state', async () => {
       const operationalState = new BigNumber(0);
 
-      const operationState = await coreWrapper.getOperationState();
+      const operationState = await coreWrapper.operationState();
       expect(operationState).to.bignumber.equal(operationalState);
+    });
+
+    test('gets modules', async () => {
+      const modules = await coreWrapper.modules();
+
+      const expectedModules = [
+        rebalanceAuctionModule.address,
+        issuanceOrderModule.address,
+        moduleAddress,
+      ];
+      expect(JSON.stringify(modules)).to.equal(JSON.stringify(expectedModules));
+    });
+
+    test('gets factories', async () => {
+      const factories = await coreWrapper.factories();
+
+      const expectedFactories = [
+        setTokenFactory.address,
+        rebalancingSetTokenFactory.address,
+      ];
+      expect(JSON.stringify(factories)).to.equal(JSON.stringify(expectedFactories));
+    });
+
+    test('gets exchanges', async () => {
+      await registerExchange(web3, core.address, 1, DEFAULT_ACCOUNT);
+
+      const exchanges = await coreWrapper.exchanges();
+
+      const expectedExchanges = [
+        DEFAULT_ACCOUNT,
+      ];
+      expect(JSON.stringify(exchanges)).to.equal(JSON.stringify(expectedExchanges));
+    });
+
+    test('gets price libraries', async () => {
+      await addPriceLibraryAsync(core, DEFAULT_ACCOUNT);
+
+      const priceLibraries = await coreWrapper.priceLibraries();
+
+      const expectedPriceLibraries = [
+        priceLibraryAddress,
+        DEFAULT_ACCOUNT,
+      ];
+      expect(JSON.stringify(priceLibraries)).to.equal(JSON.stringify(expectedPriceLibraries));
     });
   });
 });

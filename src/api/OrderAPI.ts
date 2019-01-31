@@ -38,12 +38,12 @@ import {
   ECSig,
   IssuanceOrder,
   KyberTrade,
+  SetProtocolConfig,
   SignedIssuanceOrder,
   TakerWalletOrder,
   Tx,
   ZeroExSignedFillOrder,
 } from '../types/common';
-import { SetProtocolConfig } from '../SetProtocol';
 
 
 /**

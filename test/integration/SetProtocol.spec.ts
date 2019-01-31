@@ -58,9 +58,8 @@ import {
 } from '@src/constants';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { BigNumber } from '@src/util';
-import { SetProtocolConfig } from '@src/SetProtocol';
 import { ERC20Wrapper } from '@src/wrappers/ERC20Wrapper';
-import { Address, Log, SetUnits } from '@src/types/common';
+import { Address, Log, SetProtocolConfig, SetUnits } from '@src/types/common';
 import {
   approveForTransferAsync,
   deployBaseContracts,
@@ -734,8 +733,8 @@ describe('SetProtocol', async () => {
       const { owner, spender, value } = approvalLog.args;
 
       expect(approvalLog.address).to.equal(transactionToken.address);
-      expect(owner).to.equal(transactionCaller);
-      expect(spender).to.equal(transactionSpender);
+      expect(owner).to.equal(transactionCaller.toLowerCase());
+      expect(spender).to.equal(transactionSpender.toLowerCase());
       expect(value).to.bignumber.equal(transactionQuantity);
     });
   });

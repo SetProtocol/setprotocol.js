@@ -18,6 +18,7 @@
 
 import Web3 from 'web3';
 import {
+  AuthorizableContract,
   BaseContract,
   CoreContract,
   ERC20DetailedContract,
@@ -27,6 +28,9 @@ import {
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   SetTokenContract,
+  TimeLockUpgradeContract,
+  TransferProxyContract,
+  WhiteListContract,
   VaultContract,
 } from 'set-protocol-contracts';
 
@@ -176,6 +180,28 @@ export class ContractWrapper {
   }
 
   /**
+   * Load TransferProxy contract
+   *
+   * @param  transferProxyAddress       Address of the TransferProxy contract
+   * @param  transactionOptions Options sent into the contract deployed method
+   * @return                    The TransferProxy Contract
+   */
+  public async loadTransferProxyAsync(
+    transferProxyAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<TransferProxyContract> {
+    const cacheKey = `Vault_${transferProxyAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as TransferProxyContract;
+    } else {
+      const transferProxyContract = await TransferProxyContract.at(transferProxyAddress, this.web3, transactionOptions);
+      this.cache[cacheKey] = transferProxyContract;
+      return transferProxyContract;
+    }
+  }
+
+  /**
    * Load Rebalance Auction Module contract
    *
    * @param  rebalanceAuctionModuleAddress       Address of the Rebalance Auction Module contract
@@ -276,6 +302,84 @@ export class ContractWrapper {
       );
       this.cache[cacheKey] = payableExchangeIssueContract;
       return payableExchangeIssueContract;
+    }
+  }
+
+  /**
+   * Load an Authorizable contract
+   *
+   * @param  authorizableAddress    Address of the Authorizable contract
+   * @param  transactionOptions     Options sent into the contract deployed method
+   * @return                        The Authorizable Contract
+   */
+  public async loadAuthorizableAsync(
+    authorizableAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<AuthorizableContract> {
+    const cacheKey = `SetToken_${authorizableAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as AuthorizableContract;
+    } else {
+      const setTokenContract = await AuthorizableContract.at(
+        authorizableAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = setTokenContract;
+      return setTokenContract;
+    }
+  }
+
+  /**
+   * Load a TimeLockUpgrade contract
+   *
+   * @param  timeLockUpgradeAddress Address of the TimeLockUpgrade contract
+   * @param  transactionOptions     Options sent into the contract deployed method
+   * @return                        The TimeLockUpgrade Contract
+   */
+  public async loadTimeLockUpgradeAsync(
+    timeLockUpgradeAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<TimeLockUpgradeContract> {
+    const cacheKey = `SetToken_${timeLockUpgradeAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as TimeLockUpgradeContract;
+    } else {
+      const setTokenContract = await TimeLockUpgradeContract.at(
+        timeLockUpgradeAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = setTokenContract;
+      return setTokenContract;
+    }
+  }
+
+  /**
+   * Load a Whitelist contract
+   *
+   * @param  whitelistAddress Address of the Whitelist contract
+   * @param  transactionOptions     Options sent into the contract deployed method
+   * @return                        The Whitelist Contract
+   */
+  public async loadWhitelistAsync(
+    whitelistAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<WhiteListContract> {
+    const cacheKey = `SetToken_${whitelistAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as WhiteListContract;
+    } else {
+      const whitelistContract = await WhiteListContract.at(
+        whitelistAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = whitelistContract;
+      return whitelistContract;
     }
   }
 }
