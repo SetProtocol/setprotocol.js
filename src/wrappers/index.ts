@@ -17,6 +17,7 @@
 'use strict';
 
 import { AuthorizableWrapper } from './AuthorizableWrapper';
+import { BTCETHRebalancingManagerWrapper } from './BTCETHRebalancingManagerWrapper';
 import { ContractWrapper } from './ContractWrapper';
 import { CoreWrapper } from './CoreWrapper';
 import { ERC20Wrapper } from './ERC20Wrapper';
@@ -32,6 +33,7 @@ import { VaultWrapper } from './VaultWrapper';
 
 export {
   AuthorizableWrapper,
+  BTCETHRebalancingManagerWrapper,
   ContractWrapper,
   CoreWrapper,
   ERC20Wrapper,
