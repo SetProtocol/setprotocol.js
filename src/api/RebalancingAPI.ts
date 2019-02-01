@@ -26,6 +26,7 @@ import {
   SetTokenWrapper,
   RebalancingAuctionModuleWrapper,
   RebalancingSetTokenWrapper,
+  RebalancingTokenIssuanceModuleWrapper,
   CoreWrapper,
 } from '../wrappers';
 import { BigNumber } from '../util';
@@ -34,6 +35,7 @@ import {
   RebalancingProgressDetails,
   RebalancingProposalDetails,
   RebalancingSetDetails,
+  SetProtocolConfig,
   Tx,
   TokenFlowsDetails,
 } from '../types/common';
@@ -52,6 +54,7 @@ export class RebalancingAPI {
   private erc20: ERC20Wrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private rebalancingAuctionModule: RebalancingAuctionModuleWrapper;
+  private rebalancingTokenIssuanceModule: RebalancingTokenIssuanceModuleWrapper;
   private setToken: SetTokenWrapper;
 
   /**
@@ -66,16 +69,45 @@ export class RebalancingAPI {
     web3: Web3,
     assertions: Assertions,
     core: CoreWrapper,
-    rebalancingAuctionModule: RebalancingAuctionModuleWrapper,
+    config: SetProtocolConfig,
   ) {
     this.web3 = web3;
     this.assert = assertions;
     this.core = core;
-    this.rebalancingAuctionModule = rebalancingAuctionModule;
+    this.rebalancingAuctionModule = new RebalancingAuctionModuleWrapper(
+      this.web3,
+      config.rebalanceAuctionModuleAddress,
+    );
 
     this.erc20 = new ERC20Wrapper(this.web3);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
     this.setToken = new SetTokenWrapper(this.web3);
+    this.rebalancingTokenIssuanceModule = new RebalancingTokenIssuanceModuleWrapper(
+      this.web3,
+      config.rebalancingTokenIssuanceModule
+    );
+  }
+
+  /**
+   * Redeems a Rebalancing Set into the base set's components
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  redeemQuantity                 Quantity of rebalancing Set to redeem
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
+   *                                          gasPrice data
+   * @return                                Transaction hash
+   */
+  public async redeemIntoBaseComponentsAsync(
+    rebalancingSetTokenAddress: Address,
+    redeemQuantity: BigNumber,
+    txOpts: Tx,
+  ): Promise<string> {
+    return await this.rebalancingTokenIssuanceModule.redeemRebalancingSetIntoBaseComponents(
+      rebalancingSetTokenAddress,
+      redeemQuantity,
+      new BigNumber(0),
+      txOpts
+    );
   }
 
   /**

@@ -377,7 +377,7 @@ export const deployBaseContracts = async (
   RebalanceAuctionModuleContract,
   IssuanceOrderModuleContract,
   WhiteListContract,
-  RebalancingTokenIssuanceModuleContract,
+  RebalancingTokenIssuanceModuleContract
 ]> => {
   const [transferProxy, vault] = await Promise.all([
     deployTransferProxyContract(web3),
