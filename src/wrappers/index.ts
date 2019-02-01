@@ -26,6 +26,7 @@ import { KyberNetworkWrapper } from './KyberNetworkWrapper';
 import { PayableExchangeIssueWrapper } from './PayableExchangeIssueWrapper';
 import { RebalancingAuctionModuleWrapper } from './RebalancingAuctionModuleWrapper';
 import { RebalancingSetTokenWrapper } from './RebalancingSetTokenWrapper';
+import { RebalancingTokenIssuanceModuleWrapper } from './RebalancingTokenIssuanceModuleWrapper';
 import { SetTokenWrapper } from './SetTokenWrapper';
 import { TimeLockUpgradeWrapper } from './TimeLockUpgradeWrapper';
 import { WhitelistWrapper } from './WhitelistWrapper';
@@ -42,6 +43,7 @@ export {
   PayableExchangeIssueWrapper,
   RebalancingAuctionModuleWrapper,
   RebalancingSetTokenWrapper,
+  RebalancingTokenIssuanceModuleWrapper,
   SetTokenWrapper,
   TimeLockUpgradeWrapper,
   WhitelistWrapper,
