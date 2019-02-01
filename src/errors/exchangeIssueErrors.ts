@@ -22,4 +22,7 @@ export const exchangeIssueErrors = {
     `not the expected wrapped ether token at ${wethAddress}`,
   ISSUING_SET_NOT_BASE_SET: (setAddress: string, currentSet: string) => `Set token at ${setAddress} is ` +
     `not the expected rebalancing set token current Set at ${currentSet}`,
+  COMPONENT_ADDRESS_MISMATCH: (componentAddress: string, expectedAddress: string) =>
+    `Component token at ${componentAddress} is ` +
+    `not the expected component at ${expectedAddress}`,
 };

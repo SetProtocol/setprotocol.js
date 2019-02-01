@@ -183,6 +183,7 @@ describe('PayableExchangeIssueAPI', () => {
     let rebalancingSetQuantity: BigNumber;
 
     let baseSetToken: SetTokenContract;
+    let baseSetComponentAddress: Address;
     let baseSetNaturalUnit: BigNumber;
     let rebalancingSetToken: RebalancingSetTokenContract;
     let rebalancingUnitShares: BigNumber;
@@ -200,9 +201,10 @@ describe('PayableExchangeIssueAPI', () => {
       // Create component token (owned by 0x order maker)
       zeroExOrderMaker = ACCOUNTS[2].address;
       const [baseSetComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, zeroExOrderMaker);
+      baseSetComponentAddress = baseSetComponent.address;
 
       // Create the Set (1 component)
-      const componentAddresses = [baseSetComponent.address];
+      const componentAddresses = [baseSetComponentAddress];
       const componentUnits = [new BigNumber(10 ** 10)];
       baseSetNaturalUnit = new BigNumber(10 ** 9);
       baseSetToken = await deploySetTokenAsync(
@@ -320,6 +322,176 @@ describe('PayableExchangeIssueAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `Set token at ${notBaseSet} is not the expected rebalancing set token current Set at ${baseSetToken.address}`
+        );
+      });
+    });
+  });
+
+  describe('generateBtcEthExchangeIssueParamsAsync', async () => {
+    let subjectRebalancingSetAddress: Address;
+    let subjectRebalancingSetIssueQuantity: BigNumber;
+    let subjectWrappedBitcoinAddress: Address;
+    let subjectEthAllocatedToWBtc: BigNumber;
+    let subjectEtherValue: BigNumber;
+
+    let baseSetToken: SetTokenContract;
+    let baseSetUnits: BigNumber[];
+    let baseSetNaturalUnit: BigNumber;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let rebalancingUnitShares: BigNumber;
+
+    let wrappedBitcoinAddress: Address;
+
+    let exchangeIssueSetAddress: Address;
+    let exchangeIssueQuantity: BigNumber;
+    let exchangeIssuePaymentToken: Address;
+    let exchangeIssuePaymentTokenAmount: BigNumber;
+    let exchangeIssueRequiredComponents: Address[];
+    let exchangeIssueRequiredComponentAmounts: BigNumber[];
+
+    beforeEach(async () => {
+      const [wrappedBitcoin] = await deployTokensSpecifyingDecimals(1, [8], web3, DEFAULT_ACCOUNT);
+      wrappedBitcoinAddress = wrappedBitcoin.address;
+
+      // Create the Set (1 component)
+      const componentAddresses = [wrappedBitcoin.address, wrappedEtherMock.address];
+      baseSetUnits = [new BigNumber(1), new BigNumber(10 ** 10)];
+      baseSetNaturalUnit = new BigNumber(10 ** 10);
+      baseSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        baseSetUnits,
+        baseSetNaturalUnit,
+      );
+
+      // Create the Rebalancing Set
+      rebalancingUnitShares = DEFAULT_UNIT_SHARES;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        DEFAULT_ACCOUNT,
+        baseSetToken.address,
+        ONE_DAY_IN_SECONDS,
+      );
+
+      subjectRebalancingSetAddress = rebalancingSetToken.address;
+      subjectRebalancingSetIssueQuantity = new BigNumber(10 ** 18);
+      subjectWrappedBitcoinAddress = wrappedBitcoin.address;
+      subjectEthAllocatedToWBtc = new BigNumber(10 ** 18).div(2);
+
+      const requiredWeth = subjectRebalancingSetIssueQuantity
+                                      .div(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                      .mul(DEFAULT_UNIT_SHARES)
+                                      .div(baseSetNaturalUnit)
+                                      .mul(new BigNumber(10 ** 10));
+      const totalRequiredEther = subjectEthAllocatedToWBtc.plus(requiredWeth);
+
+      subjectEtherValue = totalRequiredEther;
+    });
+
+    async function subject(): Promise<ExchangeIssueParams> {
+      return await payableExchangeIssueAPI.generateBtcEthExchangeIssueParamsAsync(
+        subjectRebalancingSetAddress,
+        subjectRebalancingSetIssueQuantity,
+        subjectWrappedBitcoinAddress,
+        subjectEthAllocatedToWBtc,
+        subjectEtherValue,
+      );
+    }
+
+    test('returns the correct issue Set Address', async () => {
+      exchangeIssueSetAddress = await rebalancingSetToken.currentSet.callAsync();
+
+      const exchangeIssueParams = await subject();
+
+      expect(exchangeIssueParams.setAddress).to.equal(exchangeIssueSetAddress);
+    });
+
+    test('returns the correct issue base Set Issue Quantity', async () => {
+      exchangeIssueQuantity = subjectRebalancingSetIssueQuantity
+                                      .div(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                      .mul(rebalancingUnitShares);
+
+      const exchangeIssueParams = await subject();
+
+      expect(exchangeIssueParams.quantity).to.bignumber.equal(exchangeIssueQuantity);
+    });
+
+    test('returns the correct payment token address', async () => {
+      exchangeIssuePaymentToken = wrappedEtherMock.address;
+
+      const exchangeIssueParams = await subject();
+
+      expect(exchangeIssueParams.paymentToken).to.equal(exchangeIssuePaymentToken);
+    });
+
+    test('returns the correct payment token address', async () => {
+      exchangeIssuePaymentTokenAmount = subjectEthAllocatedToWBtc;
+
+      const exchangeIssueParams = await subject();
+
+      expect(exchangeIssueParams.paymentTokenAmount).to.equal(exchangeIssuePaymentTokenAmount);
+    });
+
+    test('returns the correct payment token address', async () => {
+      exchangeIssueRequiredComponents = [wrappedBitcoinAddress];
+
+      const exchangeIssueParams = await subject();
+
+      expect(
+        JSON.stringify(exchangeIssueParams.requiredComponents)
+      ).to.equal(
+        JSON.stringify(exchangeIssueRequiredComponents)
+      );
+    });
+
+    test('returns the correct payment token address', async () => {
+      exchangeIssueRequiredComponentAmounts = [baseSetUnits[0].mul(exchangeIssueQuantity).div(baseSetNaturalUnit)];
+
+      const exchangeIssueParams = await subject();
+
+      expect(
+        JSON.stringify(exchangeIssueParams.requiredComponentAmounts)
+      ).to.equal(
+        JSON.stringify(exchangeIssueRequiredComponentAmounts)
+      );
+    });
+
+    describe('when the first component of the base Set is not the Bitcoin address', async () => {
+      beforeEach(async () => {
+        subjectWrappedBitcoinAddress = DEFAULT_ACCOUNT;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Component token at ${subjectWrappedBitcoinAddress} is ` +
+          `not the expected component at ${wrappedBitcoinAddress}`);
+      });
+    });
+
+    describe('when the second component of the base Set is not the wrapped Ether address', async () => {
+      beforeEach(async () => {
+        subjectWrappedBitcoinAddress = DEFAULT_ACCOUNT;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Component token at ${subjectWrappedBitcoinAddress} is ` +
+          `not the expected component at ${wrappedBitcoinAddress}`);
+      });
+    });
+
+    describe('when the inputted Ether is inadequate', async () => {
+      beforeEach(async () => {
+        subjectEtherValue = subjectEtherValue.minus(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `PayableExchangeIssueAPI: Total inputted ether must exceed required quantities`
         );
       });
     });

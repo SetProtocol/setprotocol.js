@@ -22,8 +22,9 @@ import { Bytes, ExchangeIssueParams, SetProtocolUtils } from 'set-protocol-utils
 
 import { coreAPIErrors, exchangeIssueErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { PayableExchangeIssueWrapper, RebalancingSetTokenWrapper } from '../wrappers';
+import { PayableExchangeIssueWrapper, RebalancingSetTokenWrapper, SetTokenWrapper } from '../wrappers';
 import { Address, KyberTrade, Tx, ZeroExSignedFillOrder } from '../types/common';
+import { BigNumber } from '@src/util';
 
 /**
  * @title PayableExchangeIssueAPI
@@ -36,6 +37,7 @@ export class PayableExchangeIssueAPI {
   private assert: Assertions;
   private payableExchangeIssue: PayableExchangeIssueWrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
+  private setToken: SetTokenWrapper;
   private setProtocolUtils: SetProtocolUtils;
   private wrappedEther: Address;
 
@@ -59,7 +61,90 @@ export class PayableExchangeIssueAPI {
     this.assert = assertions;
     this.payableExchangeIssue = payableExchangeIssue;
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
+    this.setToken = new SetTokenWrapper(this.web3);
     this.wrappedEther = wrappedEtherAddress;
+  }
+
+  public generateBtcEthKyberTrade(
+    wrappedBitcoinAddress: Address,
+    requiredWrappedBitcoin: BigNumber,
+    wethAllocatedToWBtc: BigNumber,
+  ): KyberTrade {
+    return {
+      destinationToken: wrappedBitcoinAddress,
+      sourceTokenQuantity: wethAllocatedToWBtc,
+      minimumConversionRate: wethAllocatedToWBtc.div(requiredWrappedBitcoin),
+      maxDestinationQuantity: requiredWrappedBitcoin,
+    };
+  }
+
+  public async generateBtcEthExchangeIssueParamsAsync(
+    rebalancingSetAddress: Address,
+    rebalancingSetIssueQuantity: BigNumber,
+    wBtcAddress: Address,
+    ethAllocatedToWBtc: BigNumber,
+    etherValue: BigNumber,
+  ): Promise<ExchangeIssueParams> {
+      this.assert.schema.isValidAddress('rebalancingSetAddress', rebalancingSetAddress);
+      this.assert.common.greaterThanZero(
+        rebalancingSetIssueQuantity,
+        coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(rebalancingSetIssueQuantity)
+      );
+      this.assert.schema.isValidAddress('wBtcAddress', wBtcAddress);
+      this.assert.common.greaterThanZero(
+        ethAllocatedToWBtc,
+        coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(ethAllocatedToWBtc)
+      );
+
+      const [
+        baseBtcEthSet,
+        rebalancingSetUnitShares,
+        rebalancingSetNaturalUnit,
+      ] = await Promise.all([
+        this.rebalancingSetToken.currentSet(rebalancingSetAddress),
+        this.rebalancingSetToken.unitShares(rebalancingSetAddress),
+        this.setToken.naturalUnit(rebalancingSetAddress),
+      ]);
+
+      const [
+        [wrappedBtcAddress, wrappedEtherAddress],
+        [wrappedBtcUnits, wrappedEthUnits],
+        baseSetNaturalUnit,
+      ] = await Promise.all([
+        this.setToken.getComponents(baseBtcEthSet),
+        this.setToken.getUnits(baseBtcEthSet),
+        this.setToken.naturalUnit(baseBtcEthSet),
+      ]);
+
+      const baseSetRequired = rebalancingSetIssueQuantity.mul(rebalancingSetUnitShares).div(rebalancingSetNaturalUnit);
+      const requiredBtc = baseSetRequired.mul(wrappedBtcUnits).div(baseSetNaturalUnit);
+      const requiredWeth = baseSetRequired.mul(wrappedEthUnits).div(baseSetNaturalUnit);
+
+      const totalWethRequired = ethAllocatedToWBtc.plus(requiredWeth);
+
+      await this.assertGenerateExchangeIssueParamsAsync(
+        rebalancingSetAddress,
+        rebalancingSetIssueQuantity,
+        wBtcAddress,
+        wrappedBtcAddress,
+        wrappedEtherAddress,
+        baseBtcEthSet,
+        baseSetRequired,
+        ethAllocatedToWBtc,
+        totalWethRequired,
+        etherValue,
+      );
+
+      const exchangeIssueData: ExchangeIssueParams = {
+        setAddress: baseBtcEthSet,
+        paymentToken: this.wrappedEther,
+        paymentTokenAmount: ethAllocatedToWBtc,
+        quantity: baseSetRequired,
+        requiredComponents: [wBtcAddress],
+        requiredComponentAmounts: [requiredBtc],
+      };
+
+      return exchangeIssueData;
   }
 
   /**
@@ -98,6 +183,46 @@ export class PayableExchangeIssueAPI {
 
 
   /* ============ Private Assertions ============ */
+
+  private async assertGenerateExchangeIssueParamsAsync(
+    rebalancingSetAddress: Address,
+    rebalancingSetIssueQuantity: BigNumber,
+    inputWrappedBitcoinAddress: Address,
+    retrievedWrappedBtcAddress: Address,
+    retrievedWrappedEthAddress: Address,
+    baseSetAddress: Address,
+    baseSetRequired: BigNumber,
+    ethAllocatedToWBtc: BigNumber,
+    totalWethRequired: BigNumber,
+    etherValue: BigNumber,
+  ) {
+    // Rebalancing Set Issue quantity is multiple of natural unit
+    await this.assert.setToken.isMultipleOfNaturalUnit(
+      rebalancingSetAddress,
+      rebalancingSetIssueQuantity,
+      'Rebalancing Set Issue quantity',
+    );
+
+    // Assert wBtc == bitcoin address passed in
+    this.assert.common.isEqualAddress(
+      inputWrappedBitcoinAddress,
+      retrievedWrappedBtcAddress,
+      exchangeIssueErrors.COMPONENT_ADDRESS_MISMATCH(inputWrappedBitcoinAddress, retrievedWrappedBtcAddress)
+    );
+
+    // Require wrappedEther == wrapped Ether from the units
+    this.assert.common.isEqualAddress(
+      this.wrappedEther,
+      retrievedWrappedEthAddress,
+      exchangeIssueErrors.COMPONENT_ADDRESS_MISMATCH(this.wrappedEther, retrievedWrappedEthAddress)
+    );
+
+    this.assert.common.isGreaterOrEqualThan(
+      etherValue,
+      totalWethRequired,
+      `PayableExchangeIssueAPI: Total inputted ether must exceed required quantities`,
+    );
+  }
 
   private async assertIssueRebalancingSetWithEtherAsync(
     rebalancingSetAddress: Address,
