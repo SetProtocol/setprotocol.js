@@ -85,8 +85,9 @@ export class PayableExchangeIssueAPI {
       orders,
       txOpts.from,
     );
-    const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
+    await this.assertExchangeIssueParams(rebalancingSetAddress, exchangeIssueParams);
 
+    const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
     return this.payableExchangeIssue.issueRebalancingSetWithEther(
       rebalancingSetAddress,
       exchangeIssueParams,
@@ -132,4 +133,43 @@ export class PayableExchangeIssueAPI {
       orders,
     );
   }
+
+  private async assertExchangeIssueParams(
+    rebalancingSetAddress: Address,
+    exchangeIssueParams: ExchangeIssueParams,
+  ) {
+    const {
+      setAddress,
+      paymentToken,
+      paymentTokenAmount,
+      quantity,
+      requiredComponents,
+      requiredComponentAmounts,
+    } = exchangeIssueParams;
+
+    this.assert.schema.isValidAddress('setAddress', setAddress);
+    this.assert.schema.isValidAddress('paymentToken', paymentToken);
+    this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
+    this.assert.common.greaterThanZero(
+      paymentTokenAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(paymentTokenAmount)
+    );
+    this.assert.common.isEqualLength(
+      requiredComponents,
+      requiredComponentAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+    );
+    await this.assert.order.assertRequiredComponentsAndAmounts(
+      requiredComponents,
+      requiredComponentAmounts,
+      setAddress,
+    );
+
+    await this.assert.setToken.isMultipleOfNaturalUnit(
+      setAddress,
+      quantity,
+      `Quantity of Exchange issue Params`,
+    );
+  }
+
 }
