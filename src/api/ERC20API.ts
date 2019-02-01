@@ -18,9 +18,7 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
-import { ZERO } from '../constants';
 import { Assertions } from '../assertions';
 import { ERC20Wrapper } from '../wrappers';
 import { BigNumber } from '../util';
@@ -33,7 +31,6 @@ import { Address, Tx } from '../types/common';
  * A library for interacting with ERC20 compliant token contracts
  */
 export class ERC20API {
-  private web3: Web3;
   private assert: Assertions;
   private erc20Wrapper: ERC20Wrapper;
 
@@ -45,7 +42,6 @@ export class ERC20API {
    * @param assertions  An instance of the Assertion library
    */
   constructor(web3: Web3, assertions: Assertions) {
-    this.web3 = web3;
     this.assert = assertions;
 
     this.erc20Wrapper = new ERC20Wrapper(web3);

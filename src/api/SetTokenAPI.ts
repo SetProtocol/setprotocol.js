@@ -18,7 +18,6 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
 import { ZERO } from '../constants';
 import { coreAPIErrors, setTokenAssertionsErrors } from '../errors';

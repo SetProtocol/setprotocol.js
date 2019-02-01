@@ -27,11 +27,10 @@ import Web3 from 'web3';
 import {
   WhiteListContract,
 } from 'set-protocol-contracts';
-import { Address, Bytes, Web3Utils } from 'set-protocol-utils';
+import { Address, Web3Utils } from 'set-protocol-utils';
 
-import { CoreWrapper, WhitelistWrapper } from '@src/wrappers';
-import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
-import { ACCOUNTS } from '@src/constants/accounts';
+import { WhitelistWrapper } from '@src/wrappers';
+import { DEFAULT_ACCOUNT } from '@src/constants';
 import { BigNumber } from '@src/util';
 import { deployWhitelistContract } from '@test/helpers';
 

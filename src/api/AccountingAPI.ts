@@ -17,9 +17,8 @@
 'use strict';
 
 import * as _ from 'lodash';
-import Web3 from 'web3';
 
-import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
+import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { CoreWrapper } from '../wrappers';
 import { BigNumber } from '../util';
@@ -32,20 +31,16 @@ import { Address, Tx } from '../types/common';
  * A library for managing ERC20 token and Set balances for users throughout the SetProtocol system
  */
 export class AccountingAPI {
-  private web3: Web3;
   private assert: Assertions;
   private core: CoreWrapper;
 
   /**
    * Instantiates a new AccountingAPI instance that contains methods for transferring balances in the vault
    *
-   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
-   *                      with the Ethereum network
    * @param core        An instance of CoreWrapper to interact with the deployed Core contract
    * @param assertions  An instance of the Assertion library
    */
-  constructor(web3: Web3, core: CoreWrapper, assertions: Assertions) {
-    this.web3 = web3;
+  constructor(core: CoreWrapper, assertions: Assertions) {
     this.core = core;
     this.assert = assertions;
   }

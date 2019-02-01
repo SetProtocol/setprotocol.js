@@ -18,12 +18,10 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
+import { SetProtocolUtils } from 'set-protocol-utils';
 
 import { ContractWrapper } from '.';
-import { ZERO } from '../constants';
 import { Address, Bytes, IssuanceOrder, SignedIssuanceOrder, Tx } from '../types/common';
-import { ERC20DetailedContract, SetTokenContract } from 'set-protocol-contracts';
 import { BigNumber, generateTxOpts } from '../util';
 
 /**

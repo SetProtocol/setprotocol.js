@@ -26,27 +26,19 @@ import * as chai from 'chai';
 import Web3 from 'web3';
 import {
   CoreContract,
-  IssuanceOrderModuleContract,
-  RebalanceAuctionModuleContract,
-  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
-  StandardTokenMockContract,
-  TransferProxyContract,
-  VaultContract
+  StandardTokenMockContract
 } from 'set-protocol-contracts';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { SetTokenAPI } from '@src/api';
-import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
+import { DEFAULT_ACCOUNT } from '@src/constants';
 import { BigNumber, ether } from '@src/util';
 import { Assertions } from '@src/assertions';
-import { CoreWrapper } from '@src/wrappers';
 import ChaiSetup from '@test/helpers/chaiSetup';
 import {
-  approveForTransferAsync,
   deployBaseContracts,
-  deployCoreContract,
   deploySetTokenAsync,
   deployTokensAsync,
   deployTokensSpecifyingDecimals,
@@ -62,13 +54,8 @@ let currentSnapshotId: number;
 
 
 describe('SetTokenAPI', () => {
-  let transferProxy: TransferProxyContract;
-  let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
-  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
-  let issuanceOrderModule: IssuanceOrderModuleContract;
-  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let setTokenAPI: SetTokenAPI;
 
@@ -76,22 +63,9 @@ describe('SetTokenAPI', () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
     [
-      core,
-      transferProxy,
-      vault,
-      setTokenFactory,
-      rebalancingSetTokenFactory,
-      rebalanceAuctionModule,
-      issuanceOrderModule,
+      core, , ,
+      setTokenFactory, , , ,
     ] = await deployBaseContracts(web3);
-
-    const coreWrapper = new CoreWrapper(
-      web3,
-      core.address,
-      transferProxy.address,
-      vault.address,
-      rebalanceAuctionModule.address,
-    );
 
     const assertions = new Assertions(web3);
     setTokenAPI = new SetTokenAPI(web3, assertions);

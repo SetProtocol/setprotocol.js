@@ -18,11 +18,10 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { StandardTokenMockContract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
 import { SetProtocolUtils } from 'set-protocol-utils';
 
-import { DEFAULT_REBALANCING_NATURAL_UNIT, E18, ONE_DAY_IN_SECONDS, UINT256, ZERO } from '../constants';
-import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
+import { DEFAULT_REBALANCING_NATURAL_UNIT, E18, UINT256, ZERO } from '../constants';
+import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { CoreWrapper, ERC20Wrapper } from '../wrappers';
 import {
@@ -30,7 +29,6 @@ import {
   ether,
   calculatePercentDifference,
   extractNewSetTokenAddressFromLogs,
-  generateTxOpts,
   getFormattedLogsFromTxHash,
 } from '../util';
 import { Address, SetProtocolConfig, SetUnits, Tx } from '../types/common';

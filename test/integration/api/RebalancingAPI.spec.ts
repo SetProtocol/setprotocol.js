@@ -29,13 +29,11 @@ import {
   ConstantAuctionPriceCurveContract,
   CoreContract,
   ERC20DetailedContract,
-  IssuanceOrderModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
-  StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
   WhiteListContract,
@@ -60,7 +58,6 @@ import { BigNumber, ether } from '@src/util';
 import { Assertions } from '@src/assertions';
 import ChaiSetup from '@test/helpers/chaiSetup';
 import {
-  addAuthorizationAsync,
   addWhiteListedTokenAsync,
   addPriceCurveToCoreAsync,
   approveForTransferAsync,
@@ -69,7 +66,6 @@ import {
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
   deployConstantAuctionPriceCurveAsync,
-  deploySetTokenAsync,
   deploySetTokensAsync,
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync,
@@ -80,11 +76,9 @@ import {
 } from '@test/helpers';
 import {
   Address,
-  Component,
   RebalancingProgressDetails,
   RebalancingProposalDetails,
   RebalancingSetDetails,
-  SetDetails,
   TokenFlowsDetails,
 } from '@src/types/common';
 
@@ -106,7 +100,6 @@ describe('RebalancingAPI', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
-  let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
   let whitelist: WhiteListContract;
 
@@ -124,7 +117,7 @@ describe('RebalancingAPI', () => {
       setTokenFactory,
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
-      issuanceOrderModule,
+      ,
       whitelist,
     ] = await deployBaseContracts(web3);
 
@@ -167,7 +160,6 @@ describe('RebalancingAPI', () => {
     let subjectAuctionStartPrice: BigNumber;
     let subjectAuctionPivotPrice: BigNumber;
     let subjectCaller: Address;
-    let subjectTimeFastForward: BigNumber;
 
     beforeEach(async () => {
       const setTokensToDeploy = 2;
@@ -222,7 +214,6 @@ describe('RebalancingAPI', () => {
       subjectAuctionPivotPrice = new BigNumber(1000);
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
       subjectCaller = managerAddress;
-      subjectTimeFastForward = rebalanceInterval.add(new BigNumber(1));
     });
 
     afterEach(async () => {
@@ -424,7 +415,6 @@ describe('RebalancingAPI', () => {
 
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
       beforeEach(async () => {
-        const setNextSet = nextSetToken.address;
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
         const setAuctionStartPrice = new BigNumber(500);
@@ -513,7 +503,6 @@ describe('RebalancingAPI', () => {
 
     describe('when the Rebalancing Set Token is in Default state', async () => {
       beforeEach(async () => {
-        const setNextSet = nextSetToken.address;
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
         const setAuctionStartPrice = new BigNumber(500);
@@ -618,7 +607,6 @@ describe('RebalancingAPI', () => {
 
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
       beforeEach(async () => {
-        const setNextSet = nextSetToken.address;
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
         const setAuctionStartPrice = new BigNumber(500);
@@ -644,7 +632,6 @@ describe('RebalancingAPI', () => {
 
     describe('when the Rebalancing Set Token is in Rebalance state and enough sets have been rebalanced', async () => {
       beforeEach(async () => {
-        const setNextSet = nextSetToken.address;
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
         const setAuctionStartPrice = new BigNumber(500);
@@ -700,7 +687,6 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Rebalance state but\
     not enough sets have been rebalanced', async () => {
       beforeEach(async () => {
-        const setNextSet = nextSetToken.address;
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
         const setAuctionStartPrice = new BigNumber(500);
@@ -810,7 +796,6 @@ describe('RebalancingAPI', () => {
 
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
       beforeEach(async () => {
-        const setNextSet = nextSetToken.address;
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
         const setAuctionStartPrice = new BigNumber(500);
@@ -836,7 +821,6 @@ describe('RebalancingAPI', () => {
 
     describe('when the Rebalancing Set Token is in Rebalance state', async () => {
       beforeEach(async () => {
-        const setNextSet = nextSetToken.address;
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
         const setAuctionStartPrice = new BigNumber(500);
@@ -954,8 +938,6 @@ describe('RebalancingAPI', () => {
         });
 
         test('throw', async () => {
-          const [, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
-
           return expect(subject()).to.be.rejectedWith(
             `The submitted bid quantity, ${subjectBidQuantity}, must be a multiple of the minimumBid, ${minimumBid}.`
           );
@@ -968,7 +950,7 @@ describe('RebalancingAPI', () => {
         });
 
         test('throw', async () => {
-          const [inflowArray, outflowArray] = await rebalancingSetToken.getBidPrice.callAsync(subjectBidQuantity);
+          const [inflowArray] = await rebalancingSetToken.getBidPrice.callAsync(subjectBidQuantity);
           const components = await rebalancingSetToken.getCombinedTokenArray.callAsync();
 
           return expect(subject()).to.be.rejectedWith(
@@ -996,7 +978,7 @@ describe('RebalancingAPI', () => {
         });
 
         test('throw', async () => {
-          const [inflowArray, outflowArray] = await rebalancingSetToken.getBidPrice.callAsync(subjectBidQuantity);
+          const [inflowArray] = await rebalancingSetToken.getBidPrice.callAsync(subjectBidQuantity);
           const components = await rebalancingSetToken.getCombinedTokenArray.callAsync();
 
           return expect(subject()).to.be.rejectedWith(
@@ -1013,7 +995,6 @@ describe('RebalancingAPI', () => {
 
   describe('updateManagerAsync', async () => {
     let currentSetToken: SetTokenContract;
-    let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
     let managerAddress: Address;
 
@@ -1023,7 +1004,7 @@ describe('RebalancingAPI', () => {
 
     beforeEach(async () => {
       const setTokensToDeploy = 2;
-      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
+      [currentSetToken] = await deploySetTokensAsync(
         web3,
         core,
         setTokenFactory.address,
@@ -1087,7 +1068,6 @@ describe('RebalancingAPI', () => {
 
     let subjectRebalancingSetTokenAddress: Address;
     let subjectBidQuantity: BigNumber;
-    let subjectCaller: Address;
 
     beforeEach(async () => {
       const setTokensToDeploy = 2;
@@ -1137,7 +1117,6 @@ describe('RebalancingAPI', () => {
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
       subjectBidQuantity = rebalancingSetQuantityToIssue;
-      subjectCaller = DEFAULT_ACCOUNT;
     });
 
     async function subject(): Promise<TokenFlowsDetails> {
@@ -1154,7 +1133,6 @@ describe('RebalancingAPI', () => {
 
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
       beforeEach(async () => {
-        const setNextSet = nextSetToken.address;
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
         const setAuctionStartPrice = new BigNumber(500);
@@ -1180,7 +1158,6 @@ describe('RebalancingAPI', () => {
 
     describe('when the Rebalancing Set Token is in Rebalance state', async () => {
       beforeEach(async () => {
-        const setNextSet = nextSetToken.address;
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
         const setAuctionStartPrice = new BigNumber(500);
@@ -1302,8 +1279,6 @@ describe('RebalancingAPI', () => {
         });
 
         test('throw', async () => {
-          const [, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
-
           return expect(subject()).to.be.rejectedWith(
             `The submitted bid quantity, ${subjectBidQuantity}, must be a multiple of the minimumBid, ${minimumBid}.`
           );
@@ -1466,14 +1441,12 @@ describe('RebalancingAPI', () => {
     });
 
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
-      let setNextSet: Address;
       let setAuctionPriceCurveAddress: Address;
       let setAuctionTimeToPivot: BigNumber;
       let setAuctionStartPrice: BigNumber;
       let setAuctionPivotPrice: BigNumber;
 
       beforeEach(async () => {
-        setNextSet = nextSetToken.address;
         setAuctionPriceCurveAddress = priceCurve.address;
         setAuctionTimeToPivot = new BigNumber(100000);
         setAuctionStartPrice = new BigNumber(500);
@@ -1506,7 +1479,6 @@ describe('RebalancingAPI', () => {
 
     describe('when the Rebalancing Set Token is in Rebalance state', async () => {
       beforeEach(async () => {
-        const setNextSet = nextSetToken.address;
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
         const setAuctionStartPrice = new BigNumber(500);
@@ -1606,14 +1578,12 @@ describe('RebalancingAPI', () => {
     });
 
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
-      let setNextSet: Address;
       let setAuctionPriceCurveAddress: Address;
       let setAuctionTimeToPivot: BigNumber;
       let setAuctionStartPrice: BigNumber;
       let setAuctionPivotPrice: BigNumber;
 
       beforeEach(async () => {
-        setNextSet = nextSetToken.address;
         setAuctionPriceCurveAddress = priceCurve.address;
         setAuctionTimeToPivot = new BigNumber(100000);
         setAuctionStartPrice = new BigNumber(500);
@@ -1638,7 +1608,6 @@ describe('RebalancingAPI', () => {
     });
 
     describe('when the Rebalancing Set Token is in Rebalance state', async () => {
-      let setNextSet: Address;
       let setAuctionPriceCurveAddress: Address;
       let setAuctionTimeToPivot: BigNumber;
       let setAuctionStartPrice: BigNumber;
@@ -1647,7 +1616,6 @@ describe('RebalancingAPI', () => {
 
       beforeEach(async () => {
         setCurrentSetStartingQuantity = currentSetStartingQuantity;
-        setNextSet = nextSetToken.address;
         setAuctionPriceCurveAddress = priceCurve.address;
         setAuctionTimeToPivot = new BigNumber(100000);
         setAuctionStartPrice = new BigNumber(500);

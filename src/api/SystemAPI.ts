@@ -18,11 +18,7 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
-import { ZERO } from '../constants';
-import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
-import { Assertions } from '../assertions';
 import {
   AuthorizableWrapper,
   ContractWrapper,
@@ -38,7 +34,6 @@ import {
   SystemAuthorizableState,
   SystemOwnableState,
   SystemTimeLockPeriodState,
-  Tx,
 } from '../types/common';
 
 /**
@@ -49,7 +44,6 @@ import {
  */
 export class SystemAPI {
   private web3: Web3;
-  private assert: Assertions;
   private contract: ContractWrapper;
   private config: SetProtocolConfig;
   private core: CoreWrapper;
@@ -65,14 +59,12 @@ export class SystemAPI {
    * @param web3        The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
    *                      with the Ethereum network
    * @param core        An instance of CoreWrapper to interact with the deployed Core contract
-   * @param assertions  An instance of the Assertion library
    */
-  constructor(web3: Web3, core: CoreWrapper, assert: Assertions, config: SetProtocolConfig) {
+  constructor(web3: Web3, core: CoreWrapper, config: SetProtocolConfig) {
     this.web3 = web3;
     this.core = core;
     this.contract = new ContractWrapper(web3);
     this.config = config;
-    this.assert = assert;
     this.authorizable = new AuthorizableWrapper(web3);
     this.timeLockUpgrade = new TimeLockUpgradeWrapper(web3);
     this.whitelist = new WhitelistWrapper(web3);

@@ -18,12 +18,10 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
+import { SetProtocolUtils } from 'set-protocol-utils';
 
 import { ContractWrapper } from '.';
-import { ZERO } from '../constants';
-import { Address, Bytes, Tx } from '../types/common';
-import { ERC20DetailedContract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
+import { Address, Tx } from '../types/common';
 import { BigNumber, generateTxOpts } from '../util';
 
 /**
@@ -36,7 +34,6 @@ import { BigNumber, generateTxOpts } from '../util';
 export class CoreWrapper {
   private web3: Web3;
   private contracts: ContractWrapper;
-  private setProtocolUtils: SetProtocolUtils;
 
   public coreAddress: Address;
   public transferProxyAddress: Address;
@@ -51,7 +48,6 @@ export class CoreWrapper {
   ) {
     this.web3 = web3;
     this.contracts = new ContractWrapper(this.web3);
-    this.setProtocolUtils = new SetProtocolUtils(this.web3);
 
     this.coreAddress = coreAddress;
     this.transferProxyAddress = transferProxyAddress;

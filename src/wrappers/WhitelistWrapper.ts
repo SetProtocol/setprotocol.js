@@ -18,12 +18,8 @@
 
 import Web3 from 'web3';
 
-import {
-  WhiteListContract,
-} from 'set-protocol-contracts';
 
 import { ContractWrapper } from '.';
-import { BigNumber } from '../util';
 import { Address } from '../types/common';
 
 /**

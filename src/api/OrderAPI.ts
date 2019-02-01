@@ -29,16 +29,14 @@ import {
   SetTokenWrapper,
   VaultWrapper,
 } from '../wrappers';
-import { NULL_ADDRESS, ZERO } from '../constants';
+import { ZERO } from '../constants';
 import { BigNumber, generateFutureTimestamp,  } from '../util';
 import {
   Address,
-  Bytes,
   Component,
   ECSig,
   IssuanceOrder,
   KyberTrade,
-  SetProtocolConfig,
   SignedIssuanceOrder,
   TakerWalletOrder,
   Tx,

@@ -25,23 +25,19 @@ jest.setTimeout(30000);
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
-import * as ethUtil from 'ethereumjs-util';
 import Web3 from 'web3';
 import { Address, Log, Web3Utils } from 'set-protocol-utils';
-import { CoreContract, StandardTokenMockContract, VaultContract } from 'set-protocol-contracts';
+import { StandardTokenMockContract } from 'set-protocol-contracts';
 import { StandardTokenMock } from 'set-protocol-contracts';
 import { TransactionReceipt } from 'ethereum-types';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { BlockchainAPI } from '@src/api';
-import { CoreWrapper } from '@src/wrappers';
 import { Assertions } from '@src/assertions';
 import { BigNumber, getFormattedLogsFromReceipt } from '@src/util';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
-import { TX_DEFAULTS, ZERO } from '@src/constants';
+import { TX_DEFAULTS } from '@src/constants';
 import { deployBaseContracts, deployTokenAsync } from '@test/helpers';
-import { getVaultBalances } from '@test/helpers/vaultHelpers';
-import { testSets, TestSet } from '../../testSets';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
@@ -73,23 +69,8 @@ describe('BlockchainAPI', () => {
 
     standardToken = await deployTokenAsync(web3);
 
-    const [
-      core,
-      transferProxy,
-      vault,
-      setTokenFactory,
-      rebalancingSetTokenFactory,
-      rebalanceAuctionModule,
-      issuanceOrderModule,
-    ] = await deployBaseContracts(web3);
+    await deployBaseContracts(web3);
 
-    const coreWrapper = new CoreWrapper(
-      web3,
-      core.address,
-      transferProxy.address,
-      vault.address,
-      rebalanceAuctionModule.address,
-    );
     const assertions = new Assertions(web3);
     blockchainAPI = new BlockchainAPI(web3, assertions);
   });

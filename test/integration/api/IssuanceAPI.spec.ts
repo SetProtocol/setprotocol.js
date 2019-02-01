@@ -25,15 +25,12 @@ jest.setTimeout(30000);
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
-import * as ethUtil from 'ethereumjs-util';
 import Web3 from 'web3';
 import { Address, Web3Utils } from 'set-protocol-utils';
 import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
-  IssuanceOrderModuleContract,
   RebalanceAuctionModuleContract,
-  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -45,7 +42,7 @@ import ChaiSetup from '@test/helpers/chaiSetup';
 import { IssuanceAPI } from '@src/api';
 import { BigNumber } from '@src/util';
 import { CoreWrapper } from '@src/wrappers';
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
+import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { DEPLOYED_TOKEN_QUANTITY, TX_DEFAULTS, ZERO } from '@src/constants';
 import {
   approveForTransferAsync,
@@ -75,8 +72,6 @@ describe('IssuanceAPI', () => {
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
-  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
-  let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let issuanceAPI: IssuanceAPI;
@@ -103,9 +98,9 @@ describe('IssuanceAPI', () => {
       transferProxy,
       vault,
       setTokenFactory,
-      rebalancingSetTokenFactory,
+      ,
       rebalanceAuctionModule,
-      issuanceOrderModule,
+      ,
     ] = await deployBaseContracts(web3);
 
     const coreWrapper = new CoreWrapper(
@@ -321,11 +316,9 @@ describe('IssuanceAPI', () => {
 
     describe('when withdrawing after redeeming', async () => {
       let componentToExclude: StandardTokenMockContract;
-      let componentToWithdraw: StandardTokenMockContract;
 
       beforeEach(async () => {
         componentToExclude = componentTokens[0];
-        componentToWithdraw = componentTokens[1];
 
         subjectShouldWithdraw = true;
         subjectTokensToExclude = [componentToExclude.address];

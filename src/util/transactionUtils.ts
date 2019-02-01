@@ -1,5 +1,5 @@
 import Web3 from 'web3';
-import { UInt, Web3Utils } from 'set-protocol-utils';
+import { Web3Utils } from 'set-protocol-utils';
 
 import { Tx } from '../types/common';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../constants';

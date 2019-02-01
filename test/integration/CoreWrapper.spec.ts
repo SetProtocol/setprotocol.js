@@ -25,78 +25,55 @@ jest.setTimeout(30000);
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
-import * as ethUtil from 'ethereumjs-util';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
-import { Core, Vault } from 'set-protocol-contracts';
+import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
   IssuanceOrderModuleContract,
   RebalanceAuctionModuleContract,
-  RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
-  WhiteListContract,
-  ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { CoreWrapper } from '@src/wrappers';
-import { OrderAPI } from '@src/api';
 import {
   NULL_ADDRESS,
   TX_DEFAULTS,
   ZERO,
-  ONE_DAY_IN_SECONDS,
-  DEFAULT_AUCTION_PRICE_NUMERATOR,
-  DEFAULT_AUCTION_PRICE_DENOMINATOR,
 } from '@src/constants';
-import { Assertions } from '@src/assertions';
 import {
   addModuleAsync,
-  addPriceCurveToCoreAsync,
   addPriceLibraryAsync,
-  addWhiteListedTokenAsync,
   approveForTransferAsync,
-  constructInflowOutflowArraysAsync,
-  createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
-  deployConstantAuctionPriceCurveAsync,
-  deployCoreContract,
-  deployKyberNetworkWrapperContract,
   deploySetTokenAsync,
-  deploySetTokensAsync,
   deployTakerWalletWrapperContract,
   deployTokenAsync,
   deployTokensAsync,
-  deployZeroExExchangeWrapperContract,
   getVaultBalances,
   registerExchange,
-  tokenDeployedOnSnapshot,
-  transitionToRebalanceAsync,
 } from '@test/helpers';
 import {
   BigNumber,
   ether,
   extractNewSetTokenAddressFromLogs,
-  generateFutureTimestamp,
   getFormattedLogsFromTxHash,
 } from '@src/util';
-import { Address, SignedIssuanceOrder, KyberTrade, TakerWalletOrder, ZeroExSignedFillOrder } from '@src/types/common';
+import { Address } from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
 const contract = require('truffle-contract');
 const web3 = new Web3('http://localhost:8545');
-const { SetProtocolTestUtils: SetTestUtils, SetProtocolUtils: SetUtils, Web3Utils } = setProtocolUtils;
+const { SetProtocolUtils: SetUtils, Web3Utils } = setProtocolUtils;
 const web3Utils = new Web3Utils(web3);
-const setUtils = new SetUtils(web3);
-const setTestUtils = new SetTestUtils(web3);
 
 const coreContract = contract(Core);
 coreContract.setProvider(web3.currentProvider);
@@ -113,7 +90,6 @@ describe('CoreWrapper', () => {
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
-  let whitelist: WhiteListContract;
 
   let coreWrapper: CoreWrapper;
 
@@ -136,7 +112,6 @@ describe('CoreWrapper', () => {
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
       issuanceOrderModule,
-      whitelist,
     ] = await deployBaseContracts(web3);
 
     coreWrapper = new CoreWrapper(

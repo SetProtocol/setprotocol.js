@@ -23,13 +23,10 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as _ from 'lodash';
-import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
-import * as ethUtil from 'ethereumjs-util';
 import * as setProtocolUtils from 'set-protocol-utils';
-import { Bytes, ExchangeIssueParams } from 'set-protocol-utils';
+import { ExchangeIssueParams } from 'set-protocol-utils';
 import Web3 from 'web3';
-import { Core, Vault } from 'set-protocol-contracts';
 import {
   CoreContract,
   ExchangeIssueModuleContract,
@@ -40,12 +37,9 @@ import {
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
-  StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
   WethMockContract,
-  WhiteListContract,
-  ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
@@ -54,11 +48,8 @@ import { CoreWrapper, IssuanceOrderModuleWrapper, PayableExchangeIssueWrapper } 
 import { PayableExchangeIssueAPI } from '@src/api';
 import {
   NULL_ADDRESS,
-  TX_DEFAULTS,
   ZERO,
   ONE_DAY_IN_SECONDS,
-  DEFAULT_AUCTION_PRICE_NUMERATOR,
-  DEFAULT_AUCTION_PRICE_DENOMINATOR,
   DEFAULT_UNIT_SHARES,
   DEFAULT_REBALANCING_NATURAL_UNIT,
 } from '@src/constants';
@@ -69,30 +60,19 @@ import {
   approveForTransferAsync,
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
-  deployCoreContract,
   deployExchangeIssueModuleAsync,
   deployPayableExchangeIssueAsync,
   deploySetTokenAsync,
-  deployTokenAsync,
-  deployTokensAsync,
   deployTokensSpecifyingDecimals,
   deployWethMockAsync,
   deployZeroExExchangeWrapperContract,
-  getVaultBalances,
-  tokenDeployedOnSnapshot,
-  transitionToRebalanceAsync,
 } from '@test/helpers';
 import {
   BigNumber,
-  ether,
-  extractNewSetTokenAddressFromLogs,
-  generateFutureTimestamp,
-  getFormattedLogsFromTxHash,
 } from '@src/util';
 import {
   Address,
   KyberTrade,
-  Tx,
   ZeroExSignedFillOrder,
 } from '@src/types/common';
 
@@ -116,7 +96,6 @@ describe('PayableExchangeIssueAPI', () => {
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
-  let whitelist: WhiteListContract;
   let payableExchangeIssue: PayableExchangeIssueContract;
   let wrappedEtherMock: WethMockContract;
   let exchangeIssueModule: ExchangeIssueModuleContract;
@@ -135,7 +114,6 @@ describe('PayableExchangeIssueAPI', () => {
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
       issuanceOrderModule,
-      whitelist,
     ] = await deployBaseContracts(web3);
 
     const coreWrapper = new CoreWrapper(
@@ -183,7 +161,6 @@ describe('PayableExchangeIssueAPI', () => {
     assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderWrapper);
     payableExchangeIssueAPI = new PayableExchangeIssueAPI(
       web3,
-      coreWrapper,
       assertions,
       payableExchangeIssueWrapper,
       wrappedEtherMock.address,

@@ -18,11 +18,9 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { ExchangeIssueParams, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
+import { ExchangeIssueParams, SetProtocolUtils } from 'set-protocol-utils';
 
-import { erc20AssertionErrors, coreAPIErrors, orderErrors, setTokenAssertionsErrors } from '../errors';
-import { SetTokenContract, CoreContract } from 'set-protocol-contracts';
-import { CoreAssertions } from './CoreAssertions';
+import { coreAPIErrors, orderErrors } from '../errors';
 import { CommonAssertions } from './CommonAssertions';
 import { SchemaAssertions } from './SchemaAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
@@ -40,22 +38,18 @@ import {
 } from '../types/common';
 
 export class OrderAssertions {
-  private web3: Web3;
   private core: CoreWrapper;
   private issuanceOrderModuleWrapper: IssuanceOrderModuleWrapper;
   private erc20Assertions: ERC20Assertions;
   private schemaAssertions: SchemaAssertions;
-  private coreAssertions: CoreAssertions;
   private commonAssertions: CommonAssertions;
   private setTokenAssertions: SetTokenAssertions;
 
   constructor(web3: Web3, coreWrapper: CoreWrapper, issuanceOrderModuleWrapper: IssuanceOrderModuleWrapper) {
-    this.web3 = web3;
     this.core = coreWrapper;
     this.issuanceOrderModuleWrapper = issuanceOrderModuleWrapper;
     this.erc20Assertions = new ERC20Assertions(web3);
     this.schemaAssertions = new SchemaAssertions();
-    this.coreAssertions = new CoreAssertions(web3);
     this.commonAssertions = new CommonAssertions();
     this.setTokenAssertions = new SetTokenAssertions(web3);
   }
@@ -97,12 +91,8 @@ export class OrderAssertions {
       relayerToken,
       quantity,
       makerTokenAmount,
-      expiration,
-      makerRelayerFee,
-      takerRelayerFee,
       requiredComponents,
       requiredComponentAmounts,
-      salt,
     } = issuanceOrder;
 
     this.schemaAssertions.isValidAddress('setAddress', setAddress);

@@ -26,26 +26,22 @@ import * as chai from 'chai';
 import Web3 from 'web3';
 import {
   CoreContract,
-  IssuanceOrderModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
-  StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
   WhiteListContract,
 } from 'set-protocol-contracts';
 import { Web3Utils } from 'set-protocol-utils';
 
-import { CoreWrapper, RebalancingSetTokenWrapper } from '@src/wrappers';
+import { RebalancingSetTokenWrapper } from '@src/wrappers';
 import {
-  DEFAULT_ACCOUNT,
   TX_DEFAULTS,
   ONE_DAY_IN_SECONDS,
   DEFAULT_UNIT_SHARES,
-  DEFAULT_REBALANCING_NATURAL_UNIT,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
   DEFAULT_AUCTION_PRICE_DENOMINATOR,
 } from '@src/constants';
@@ -62,7 +58,6 @@ import {
   deployBaseContracts,
   deployConstantAuctionPriceCurveAsync,
   deploySetTokensAsync,
-  deployTokensAsync,
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync,
   increaseChainTimeAsync,
@@ -85,7 +80,6 @@ describe('SetTokenWrapper', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
-  let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
   let whitelist: WhiteListContract;
 
@@ -100,8 +94,7 @@ describe('SetTokenWrapper', () => {
       vault,
       setTokenFactory,
       rebalancingSetTokenFactory,
-      rebalanceAuctionModule,
-      issuanceOrderModule,
+      rebalanceAuctionModule, ,
       whitelist,
     ] = await deployBaseContracts(web3);
 
@@ -115,7 +108,6 @@ describe('SetTokenWrapper', () => {
   describe('Default state variables: manager, rebalanceState, currentSet, unitShares,\
   lastRebalanceTimestamp, proposalPeriod, rebalanceInterval', async () => {
     let currentSetToken: SetTokenContract;
-    let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
 
     let managerAddress: Address;
@@ -133,7 +125,6 @@ describe('SetTokenWrapper', () => {
       );
 
       currentSetToken = setTokens[0];
-      nextSetToken = setTokens[1];
 
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;

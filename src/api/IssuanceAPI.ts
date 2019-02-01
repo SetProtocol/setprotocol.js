@@ -18,10 +18,10 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
+import { SetTokenContract } from 'set-protocol-contracts';
 
 import { ZERO } from '../constants';
-import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
+import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { CoreWrapper } from '../wrappers';
 import { BigNumber } from '../util';

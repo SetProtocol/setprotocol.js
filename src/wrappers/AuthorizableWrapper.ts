@@ -19,7 +19,6 @@
 import Web3 from 'web3';
 
 import { ContractWrapper } from '.';
-import { BigNumber } from '../util';
 import { Address } from '../types/common';
 
 /**
