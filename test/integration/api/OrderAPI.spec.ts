@@ -23,22 +23,18 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as _ from 'lodash';
-import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as ethUtil from 'ethereumjs-util';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
-import compact = require('lodash.compact');
 import {
   CoreContract,
   IssuanceOrderModuleContract,
   KyberNetworkWrapperContract,
   RebalanceAuctionModuleContract,
-  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
-  TakerWalletWrapperContract,
   TransferProxyContract,
   VaultContract
 } from 'set-protocol-contracts';
@@ -50,7 +46,6 @@ import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { OrderAPI } from '@src/api';
 import {
   Address,
-  Bytes,
   Component,
   ECSig,
   IssuanceOrder,
@@ -90,7 +85,6 @@ describe('OrderAPI', () => {
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
-  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let issuanceOrderModule: IssuanceOrderModuleContract;
   let kyberNetworkWrapper: KyberNetworkWrapperContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
@@ -106,8 +100,7 @@ describe('OrderAPI', () => {
       core,
       transferProxy,
       vault,
-      setTokenFactory,
-      rebalancingSetTokenFactory,
+      setTokenFactory, ,
       rebalanceAuctionModule,
       issuanceOrderModule,
     ] = await deployBaseContracts(web3);
@@ -447,7 +440,6 @@ describe('OrderAPI', () => {
 
         const makerTokenBalance = await makerToken.balanceOf.callAsync(makerAddress);
         await makerToken.transfer.sendTransactionAsync(burnAddress, makerTokenBalance, { from: makerAddress });
-        const makerTokenBalanceAfter = await makerToken.balanceOf.callAsync(makerAddress);
       });
 
       test('throws', async () => {

@@ -26,10 +26,7 @@ import * as chai from 'chai';
 import Web3 from 'web3';
 import {
   CoreContract,
-  IssuanceOrderModuleContract,
   RebalanceAuctionModuleContract,
-  RebalancingSetTokenFactoryContract,
-  SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
   VaultContract
@@ -37,7 +34,7 @@ import {
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { CoreWrapper, VaultWrapper } from '@src/wrappers';
-import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
+import { DEFAULT_ACCOUNT } from '@src/constants';
 import { BigNumber } from '@src/util';
 import { approveForTransferAsync, deployTokenAsync, deployBaseContracts } from '@test/helpers';
 
@@ -54,9 +51,6 @@ describe('VaultWrapper', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
-  let setTokenFactory: SetTokenFactoryContract;
-  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
-  let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let coreWrapper: CoreWrapper;
@@ -68,11 +62,8 @@ describe('VaultWrapper', () => {
     [
       core,
       transferProxy,
-      vault,
-      setTokenFactory,
-      rebalancingSetTokenFactory,
+      vault, , ,
       rebalanceAuctionModule,
-      issuanceOrderModule,
     ] = await deployBaseContracts(web3);
 
     coreWrapper = new CoreWrapper(

@@ -2,15 +2,16 @@ import * as ABIDecoder from 'abi-decoder';
 import * as _ from 'lodash';
 import Web3 from 'web3';
 import { BigNumber } from 'bignumber.js';
-import { Address, Log, Web3Utils } from 'set-protocol-utils';
+import { Address, Log } from 'set-protocol-utils';
 import { TransactionReceipt } from 'ethereum-types';
 import { CreateLogArgs } from '../types/common';
 import { awaitTx } from './transactionUtils';
 import { Core } from 'set-protocol-contracts';
 
+
 export async function getFormattedLogsFromTxHash(web3: Web3, txHash: string): Promise<Log[]> {
-  const coreContract = ABIDecoder.addABI(Core.abi);
-  const web3Utils = new Web3Utils(web3);
+  ABIDecoder.addABI(Core.abi);
+
   // We need to use the promisified version of getTransactionReceiptAsync
   const receipt: TransactionReceipt = await awaitTx(web3, txHash);
   return getFormattedLogsFromReceipt(receipt);

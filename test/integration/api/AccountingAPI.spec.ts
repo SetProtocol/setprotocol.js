@@ -24,16 +24,11 @@ jest.setTimeout(30000);
 
 import * as _ from 'lodash';
 import * as chai from 'chai';
-import * as ethUtil from 'ethereumjs-util';
 import Web3 from 'web3';
 import { Address, Web3Utils } from 'set-protocol-utils';
-import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
-  IssuanceOrderModuleContract,
   RebalanceAuctionModuleContract,
-  RebalancingSetTokenFactoryContract,
-  SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
@@ -45,9 +40,8 @@ import { BigNumber } from '@src/util';
 import { Assertions } from '@src/assertions';
 import { CoreWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
-import { TX_DEFAULTS, ZERO } from '@src/constants';
+import { TX_DEFAULTS } from '@src/constants';
 import { approveForTransferAsync, deployBaseContracts, deployTokensAsync, getVaultBalances } from '@test/helpers';
-import { testSets, TestSet } from '../../testSets';
 
 ChaiSetup.configure();
 const web3 = new Web3('http://localhost:8545');
@@ -60,9 +54,6 @@ describe('AccountingAPI', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
-  let setTokenFactory: SetTokenFactoryContract;
-  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
-  let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let coreWrapper: CoreWrapper;
@@ -76,11 +67,8 @@ describe('AccountingAPI', () => {
     [
       core,
       transferProxy,
-      vault,
-      setTokenFactory,
-      rebalancingSetTokenFactory,
+      vault, , ,
       rebalanceAuctionModule,
-      issuanceOrderModule,
     ] = await deployBaseContracts(web3);
 
     coreWrapper = new CoreWrapper(
@@ -91,7 +79,7 @@ describe('AccountingAPI', () => {
       rebalanceAuctionModule.address,
     );
     const assertions = new Assertions(web3);
-    accountingAPI = new AccountingAPI(web3, coreWrapper, assertions);
+    accountingAPI = new AccountingAPI(coreWrapper, assertions);
 
     tokens = await deployTokensAsync(3, web3);
     await approveForTransferAsync(tokens, transferProxy.address);

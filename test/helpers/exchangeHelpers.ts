@@ -1,6 +1,5 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { Provider } from 'ethereum-types';
 import {
   CoreContract,
   ERC20Wrapper,
@@ -9,14 +8,11 @@ import {
   TakerWalletWrapper,
   TakerWalletWrapperContract,
   TransferProxyContract,
-  VaultContract,
   ZeroExExchangeWrapper,
   ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
-import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
+import { Address, SetProtocolUtils } from 'set-protocol-utils';
 
-import { BigNumber } from '@src/util';
-import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { TX_DEFAULTS } from '@src/constants';
 
 const contract = require('truffle-contract');

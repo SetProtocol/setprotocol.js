@@ -25,79 +25,52 @@ jest.setTimeout(30000);
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
-import * as ethUtil from 'ethereumjs-util';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
-import { Core, Vault } from 'set-protocol-contracts';
+import { Core } from 'set-protocol-contracts';
 import {
   BTCETHRebalancingManagerContract,
   CoreContract,
   ConstantAuctionPriceCurveContract,
-  IssuanceOrderModuleContract,
   MedianContract,
   SetTokenContract,
-  RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
-  VaultContract,
   WhiteListContract,
 } from 'set-protocol-contracts';
 
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
+import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { RebalancingManagerAPI } from '@src/api';
-import { OrderAPI } from '@src/api';
 import {
-  NULL_ADDRESS,
   TX_DEFAULTS,
-  ZERO,
   ONE_DAY_IN_SECONDS,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
   DEFAULT_AUCTION_PRICE_DENOMINATOR,
 } from '@src/constants';
-import { Assertions } from '@src/assertions';
 import {
   addPriceCurveToCoreAsync,
   addPriceFeedOwnerToMedianizer,
   addWhiteListedTokenAsync,
   approveForTransferAsync,
-  constructInflowOutflowArraysAsync,
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
   deployBtcEthManagerContractAsync,
   deployConstantAuctionPriceCurveAsync,
-  deployCoreContract,
-  deployKyberNetworkWrapperContract,
   deploySetTokenAsync,
   deployMedianizerAsync,
-  deploySetTokensAsync,
-  deployTakerWalletWrapperContract,
-  deployTokenAsync,
-  deployTokensAsync,
   deployTokensSpecifyingDecimals,
-  deployZeroExExchangeWrapperContract,
-  getVaultBalances,
   increaseChainTimeAsync,
   updateMedianizerPriceAsync,
-  tokenDeployedOnSnapshot,
-  transitionToRebalanceAsync,
 } from '@test/helpers';
 import {
   BigNumber,
-  ether,
-  extractNewSetTokenAddressFromLogs,
-  generateFutureTimestamp,
-  getFormattedLogsFromTxHash,
 } from '@src/util';
 import {
   Address,
-  SignedIssuanceOrder,
-  KyberTrade,
   RebalancingManagerDetails,
-  TakerWalletOrder,
-  ZeroExSignedFillOrder,
 } from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
@@ -105,10 +78,8 @@ chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
 const contract = require('truffle-contract');
 const web3 = new Web3('http://localhost:8545');
-const { SetProtocolTestUtils: SetTestUtils, SetProtocolUtils: SetUtils, Web3Utils } = setProtocolUtils;
+const { SetProtocolTestUtils: SetTestUtils, Web3Utils } = setProtocolUtils;
 const web3Utils = new Web3Utils(web3);
-const setUtils = new SetUtils(web3);
-const setTestUtils = new SetTestUtils(web3);
 
 const coreContract = contract(Core);
 coreContract.setProvider(web3.currentProvider);
@@ -120,9 +91,6 @@ let currentSnapshotId: number;
 describe('RebalancingManagerAPI', () => {
   let core: CoreContract;
   let transferProxy: TransferProxyContract;
-  let vault: VaultContract;
-  let issuanceOrderModule: IssuanceOrderModuleContract;
-  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
   let factory: SetTokenFactoryContract;
   let rebalancingFactory: RebalancingSetTokenFactoryContract;
   let constantAuctionPriceCurve: ConstantAuctionPriceCurveContract;
@@ -138,7 +106,6 @@ describe('RebalancingManagerAPI', () => {
   let auctionTimeToPivot: BigNumber;
 
   let rebalancingManagerAPI: RebalancingManagerAPI;
-  let assertions: Assertions;
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -151,16 +118,7 @@ describe('RebalancingManagerAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [
-      core,
-      transferProxy,
-      vault,
-      factory,
-      rebalancingFactory,
-      rebalanceAuctionModule,
-      issuanceOrderModule,
-      whitelist,
-    ] = await deployBaseContracts(web3);
+    [core, transferProxy, , factory, rebalancingFactory, , , whitelist] = await deployBaseContracts(web3);
 
     btcMedianizer = await deployMedianizerAsync(web3);
     await addPriceFeedOwnerToMedianizer(btcMedianizer, DEFAULT_ACCOUNT);
@@ -210,11 +168,7 @@ describe('RebalancingManagerAPI', () => {
       ethMultiplier,
     );
 
-    assertions = new Assertions(web3);
-    rebalancingManagerAPI = new RebalancingManagerAPI(
-      web3,
-      assertions
-    );
+    rebalancingManagerAPI = new RebalancingManagerAPI(web3);
   });
 
   afterEach(async () => {

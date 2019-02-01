@@ -3,7 +3,6 @@ import promisify from 'tiny-promisify';
 import Web3 from 'web3';
 import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
 import {
-  RebalancingSetToken,
   BTCETHRebalancingManager,
   ConstantAuctionPriceCurve,
   Median,
@@ -30,8 +29,7 @@ import {
   ZERO,
 } from '@src/constants';
 import { deployTokensAsync, deploySetTokenAsync, approveForTransferAsync } from '@test/helpers';
-import { BigNumber, getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util';
-import { CoreWrapper } from '@src/wrappers';
+import { BigNumber, extractNewSetTokenAddressFromLogs } from '@src/util';
 
 const contract = require('truffle-contract');
 

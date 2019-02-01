@@ -28,10 +28,9 @@ import {
   RebalancingSetTokenContract,
   SetTokenContract,
 } from 'set-protocol-contracts';
-import { coreAPIErrors, rebalancingErrors } from '../errors';
+import { rebalancingErrors } from '../errors';
 import { BigNumber } from '../util';
 import { RebalancingState } from '../types/common';
-import { ZERO } from '../constants';
 
 const moment = require('moment');
 
@@ -260,7 +259,7 @@ export class RebalancingAssertions {
   ): Promise<void> {
     const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
 
-    const [inflowArray, outflowArray] = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
+    const [inflowArray] = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
     const components = await rebalancingSetTokenInstance.getCombinedTokenArray.callAsync();
 
     // Create component ERC20 token instances
@@ -303,7 +302,7 @@ export class RebalancingAssertions {
   ): Promise<void> {
     const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
 
-    const [inflowArray, outflowArray] = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
+    const [inflowArray] = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
     const components = await rebalancingSetTokenInstance.getCombinedTokenArray.callAsync();
 
     // Create component ERC20 token instances

@@ -18,13 +18,8 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
-import { ZERO } from '../constants';
-import { coreAPIErrors, erc20AssertionErrors, vaultAssertionErrors } from '../errors';
-import { Assertions } from '../assertions';
-import { CoreWrapper, BTCETHRebalancingManagerWrapper } from '../wrappers';
-import { BigNumber } from '../util';
+import { BTCETHRebalancingManagerWrapper } from '../wrappers';
 import { Address, RebalancingManagerDetails, Tx } from '../types/common';
 
 /**
@@ -34,8 +29,6 @@ import { Address, RebalancingManagerDetails, Tx } from '../types/common';
  * A library for interacting with Rebalancing Manager
  */
 export class RebalancingManagerAPI {
-  private web3: Web3;
-  private assert: Assertions;
   private btcEthRebalancingManager: BTCETHRebalancingManagerWrapper;
 
   /**
@@ -44,11 +37,8 @@ export class RebalancingManagerAPI {
    * @param web3        The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
    *                      with the Ethereum network
    * @param core        An instance of CoreWrapper to interact with the deployed Core contract
-   * @param assertions  An instance of the Assertion library
    */
-  constructor(web3: Web3, assertions: Assertions) {
-    this.web3 = web3;
-    this.assert = assertions;
+  constructor(web3: Web3) {
     this.btcEthRebalancingManager = new BTCETHRebalancingManagerWrapper(web3);
   }
 

@@ -25,13 +25,12 @@ jest.setTimeout(30000);
 import * as chai from 'chai';
 import Web3 from 'web3';
 import {
-  AuthorizableContract,
   TransferProxyContract,
 } from 'set-protocol-contracts';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
-import { CoreWrapper, AuthorizableWrapper } from '@src/wrappers';
-import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
+import { AuthorizableWrapper } from '@src/wrappers';
+import { DEFAULT_ACCOUNT } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber } from '@src/util';
 import { deployTransferProxyContract } from '@test/helpers';

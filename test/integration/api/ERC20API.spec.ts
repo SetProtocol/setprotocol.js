@@ -29,12 +29,11 @@ import { StandardTokenMockContract } from 'set-protocol-contracts';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
-import { CoreWrapper } from '@src/wrappers';
 import { Assertions } from '@src/assertions';
 import { ERC20API } from '@src/api';
 import { DEFAULT_ACCOUNT, DEPLOYED_TOKEN_QUANTITY, TX_DEFAULTS } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
-import { BigNumber, ether } from '@src/util';
+import { BigNumber } from '@src/util';
 import { deployBaseContracts, deployTokenAsync } from '@test/helpers';
 
 ChaiSetup.configure();
@@ -52,23 +51,8 @@ describe('ERC20API', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    const [
-      core,
-      transferProxy,
-      vault,
-      setTokenFactory,
-      rebalancingSetTokenFactory,
-      rebalanceAuctionModule,
-      issuanceOrderModule,
-    ] = await deployBaseContracts(web3);
+    await deployBaseContracts(web3);
 
-    const coreWrapper = new CoreWrapper(
-      web3,
-      core.address,
-      transferProxy.address,
-      vault.address,
-      rebalanceAuctionModule.address,
-    );
     const assertions = new Assertions(web3);
     erc20API = new ERC20API(web3, assertions);
   });

@@ -25,29 +25,23 @@ jest.setTimeout(30000);
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
-import * as ethUtil from 'ethereumjs-util';
 import Web3 from 'web3';
-import { Address, Log, Web3Utils } from 'set-protocol-utils';
+import { Address, Web3Utils } from 'set-protocol-utils';
 import * as setProtocolUtils from 'set-protocol-utils';
 import {
   CoreContract,
   IssuanceOrderModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
-  SetTokenContract,
   SetTokenFactoryContract,
-  StandardTokenMockContract,
   WhiteListContract,
-  VaultContract,
 } from 'set-protocol-contracts';
-import { Core, StandardTokenMock } from 'set-protocol-contracts';
-import { TransactionReceipt } from 'ethereum-types';
+import { Core } from 'set-protocol-contracts';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
-import { Assertions } from '@src/assertions';
 import { SystemAPI } from '@src/api';
 import { CoreWrapper } from '@src/wrappers';
-import { BigNumber, ether, getFormattedLogsFromReceipt } from '@src/util';
+import { BigNumber } from '@src/util';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { TX_DEFAULTS, ZERO } from '@src/constants';
 import {
@@ -57,16 +51,7 @@ import {
   SystemOwnableState,
   SystemTimeLockPeriodState,
 } from '@src/types/common';
-import {
-  addPriceLibraryAsync,
-  deployBaseContracts,
-  deploySetTokenAsync,
-  deployTokensAsync,
-  deployWhitelistContract,
-  registerExchange,
-} from '@test/helpers';
-import { getVaultBalances } from '@test/helpers/vaultHelpers';
-import { testSets, TestSet } from '../../testSets';
+import { addPriceLibraryAsync, deployBaseContracts, deployWhitelistContract, registerExchange } from '@test/helpers';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
@@ -76,7 +61,7 @@ const { expect } = chai;
 
 let currentSnapshotId: number;
 
-const { SetProtocolTestUtils: SetTestUtils, SetProtocolUtils: SetUtils } = setProtocolUtils;
+const { SetProtocolTestUtils: SetTestUtils } = setProtocolUtils;
 
 const coreContract = contract(Core);
 coreContract.setProvider(web3.currentProvider);
@@ -137,9 +122,7 @@ describe('SystemAPI', () => {
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
     };
 
-    const assertions = new Assertions(web3);
-
-    systemAPI = new SystemAPI(web3, coreWrapper, assertions, setProtocolConfig);
+    systemAPI = new SystemAPI(web3, coreWrapper, setProtocolConfig);
   });
 
   afterEach(async () => {
@@ -192,7 +175,7 @@ describe('SystemAPI', () => {
     }
 
     test('returns the correct transferProxy authorized addresses', async () => {
-      const { transferProxy, vault } = await subject();
+      const { transferProxy } = await subject();
 
       const expectedTransferProxyAuthorizable = JSON.stringify(systemAuthorizableAddresses.transferProxy);
       expect(JSON.stringify(transferProxy)).to.equal(expectedTransferProxyAuthorizable);

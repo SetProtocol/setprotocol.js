@@ -17,12 +17,11 @@
 'use strict';
 
 import * as _ from 'lodash';
-import * as ethUtil from 'ethereumjs-util';
 import Web3 from 'web3';
-import { Address, ECSig, IssuanceOrder, SetProtocolUtils } from 'set-protocol-utils';
+import { Address, ECSig } from 'set-protocol-utils';
 import { CoreContract } from 'set-protocol-contracts';
 import { coreAPIErrors, coreAssertionErrors } from '../errors';
-import { BigNumber, SignatureUtils } from '../util';
+import { SignatureUtils } from '../util';
 
 
 export class CoreAssertions {

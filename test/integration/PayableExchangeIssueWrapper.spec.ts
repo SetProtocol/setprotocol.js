@@ -25,68 +25,48 @@ jest.setTimeout(30000);
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
-import * as ethUtil from 'ethereumjs-util';
 import * as setProtocolUtils from 'set-protocol-utils';
 import { Bytes, ExchangeIssueParams } from 'set-protocol-utils';
 import Web3 from 'web3';
-import { Core, Vault } from 'set-protocol-contracts';
+import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
   ExchangeIssueModuleContract,
-  IssuanceOrderModuleContract,
   PayableExchangeIssueContract,
-  RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
-  StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
   WethMockContract,
-  WhiteListContract,
-  ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
-import { CoreWrapper, PayableExchangeIssueWrapper } from '@src/wrappers';
-import { OrderAPI } from '@src/api';
+import { PayableExchangeIssueWrapper } from '@src/wrappers';
 import {
   NULL_ADDRESS,
   TX_DEFAULTS,
   ZERO,
   ONE_DAY_IN_SECONDS,
-  DEFAULT_AUCTION_PRICE_NUMERATOR,
-  DEFAULT_AUCTION_PRICE_DENOMINATOR,
   DEFAULT_UNIT_SHARES,
   DEFAULT_REBALANCING_NATURAL_UNIT,
 } from '@src/constants';
-import { Assertions } from '@src/assertions';
 import {
   addAuthorizationAsync,
   addModuleAsync,
   approveForTransferAsync,
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
-  deployCoreContract,
   deployExchangeIssueModuleAsync,
   deployPayableExchangeIssueAsync,
   deploySetTokenAsync,
-  deployTokenAsync,
-  deployTokensAsync,
   deployTokensSpecifyingDecimals,
   deployWethMockAsync,
   deployZeroExExchangeWrapperContract,
-  getVaultBalances,
-  tokenDeployedOnSnapshot,
-  transitionToRebalanceAsync,
 } from '@test/helpers';
 import {
   BigNumber,
-  ether,
-  extractNewSetTokenAddressFromLogs,
-  generateFutureTimestamp,
-  getFormattedLogsFromTxHash,
 } from '@src/util';
 import {
   Address,
@@ -101,7 +81,6 @@ const web3 = new Web3('http://localhost:8545');
 const { SetProtocolTestUtils: SetTestUtils, SetProtocolUtils: SetUtils, Web3Utils } = setProtocolUtils;
 const web3Utils = new Web3Utils(web3);
 const setUtils = new SetUtils(web3);
-const setTestUtils = new SetTestUtils(web3);
 
 const coreContract = contract(Core);
 coreContract.setProvider(web3.currentProvider);
@@ -116,9 +95,6 @@ describe('PayableExchangeIssueWrapper', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
-  let issuanceOrderModule: IssuanceOrderModuleContract;
-  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
-  let whitelist: WhiteListContract;
   let payableExchangeIssue: PayableExchangeIssueContract;
   let wrappedEtherMock: WethMockContract;
   let exchangeIssueModule: ExchangeIssueModuleContract;
@@ -142,9 +118,6 @@ describe('PayableExchangeIssueWrapper', () => {
       vault,
       setTokenFactory,
       rebalancingSetTokenFactory,
-      rebalanceAuctionModule,
-      issuanceOrderModule,
-      whitelist,
     ] = await deployBaseContracts(web3);
 
     exchangeIssueModule = await deployExchangeIssueModuleAsync(web3, core, transferProxy, vault);

@@ -16,7 +16,6 @@
 
 'use strict';
 
-import { Address } from 'set-protocol-utils';
 
 import { BigNumber } from '../util';
 

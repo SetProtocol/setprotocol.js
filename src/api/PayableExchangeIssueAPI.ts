@@ -18,20 +18,12 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { SetTokenContract, VaultContract } from 'set-protocol-contracts';
 import { Bytes, ExchangeIssueParams, SetProtocolUtils } from 'set-protocol-utils';
 
-import { ZERO } from '../constants';
-import { coreAPIErrors, erc20AssertionErrors, exchangeIssueErrors } from '../errors';
+import { coreAPIErrors, exchangeIssueErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { CoreWrapper, PayableExchangeIssueWrapper, RebalancingSetTokenWrapper } from '../wrappers';
-import { BigNumber } from '../util';
-import {
-  Address,
-  KyberTrade,
-  Tx,
-  ZeroExSignedFillOrder,
-} from '../types/common';
+import { PayableExchangeIssueWrapper, RebalancingSetTokenWrapper } from '../wrappers';
+import { Address, KyberTrade, Tx, ZeroExSignedFillOrder } from '../types/common';
 
 /**
  * @title PayableExchangeIssueAPI
@@ -42,7 +34,6 @@ import {
 export class PayableExchangeIssueAPI {
   private web3: Web3;
   private assert: Assertions;
-  private core: CoreWrapper;
   private payableExchangeIssue: PayableExchangeIssueWrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private setProtocolUtils: SetProtocolUtils;
@@ -53,21 +44,18 @@ export class PayableExchangeIssueAPI {
    *
    * @param web3                  The Web3.js Provider instance you would like the SetProtocol.js library
    *                                to use for interacting with the Ethereum network
-   * @param core                  An instance of CoreWrapper to interact with the deployed Core contract
    * @param assertions            An instance of the Assertion library
    * @param payableExchangeIssue  An unstance if the PayableExchangeIssueWrapper Library
    * @param wrappedEtherAddress   Address of the deployed canonical wrapped ether contract
    */
   constructor(
     web3: Web3,
-    core: CoreWrapper,
     assertions: Assertions,
     payableExchangeIssue: PayableExchangeIssueWrapper,
     wrappedEtherAddress: Address,
   ) {
     this.web3 = web3;
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
-    this.core = core;
     this.assert = assertions;
     this.payableExchangeIssue = payableExchangeIssue;
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
@@ -109,20 +97,14 @@ export class PayableExchangeIssueAPI {
 
 
   /* ============ Private Assertions ============ */
+
   private async assertIssueRebalancingSetWithEtherAsync(
     rebalancingSetAddress: Address,
     exchangeIssueParams: ExchangeIssueParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
     transactionCaller: Address,
   ) {
-    const {
-      setAddress,
-      paymentToken,
-      paymentTokenAmount,
-      quantity,
-      requiredComponents,
-      requiredComponentAmounts,
-    } = exchangeIssueParams;
+    const { setAddress, paymentToken } = exchangeIssueParams;
 
 
     this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
@@ -148,44 +130,6 @@ export class PayableExchangeIssueAPI {
     await this.assert.order.assertExchangeIssueOrdersValidity(
       exchangeIssueParams,
       orders,
-    );
-  }
-
-  private async assertExchangeIssueParams(
-    rebalancingSetAddress: Address,
-    exchangeIssueParams: ExchangeIssueParams,
-  ) {
-    const {
-      setAddress,
-      paymentToken,
-      paymentTokenAmount,
-      quantity,
-      requiredComponents,
-      requiredComponentAmounts,
-    } = exchangeIssueParams;
-
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.schema.isValidAddress('paymentToken', paymentToken);
-    this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
-    this.assert.common.greaterThanZero(
-      paymentTokenAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(paymentTokenAmount)
-    );
-    this.assert.common.isEqualLength(
-      requiredComponents,
-      requiredComponentAmounts,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
-    );
-    await this.assert.order.assertRequiredComponentsAndAmounts(
-      requiredComponents,
-      requiredComponentAmounts,
-      setAddress,
-    );
-
-    await this.assert.setToken.isMultipleOfNaturalUnit(
-      setAddress,
-      quantity,
-      `Quantity of Exchange issue Params`,
     );
   }
 }

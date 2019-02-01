@@ -22,7 +22,7 @@ import { Address } from 'set-protocol-utils';
 
 import { ERC20Assertions } from './ERC20Assertions';
 import { SetTokenContract, ERC20DetailedContract, CoreContract } from 'set-protocol-contracts';
-import { coreAPIErrors, setTokenAssertionsErrors, erc20AssertionErrors } from '../errors';
+import { coreAPIErrors, setTokenAssertionsErrors } from '../errors';
 import { BigNumber } from '../util';
 import { ZERO } from '../constants';
 

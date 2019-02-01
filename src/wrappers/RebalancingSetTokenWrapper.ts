@@ -21,8 +21,6 @@ import { Address, TokenFlows, Tx } from '../types/common';
 
 import { ContractWrapper } from '.';
 import { BigNumber } from '../util';
-import { ZERO } from '../constants';
-import { coreAPIErrors } from '../errors';
 
 /**
  * @title  RebalancingSetTokenWrapper

@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
+import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import {
   Core,
   ERC20Wrapper,
@@ -11,7 +11,6 @@ import {
   RebalanceAuctionModule,
   RebalancingHelperLibrary,
   RebalancingSetTokenFactory,
-  SetToken,
   SetTokenFactory,
   SignatureValidatorContract,
   StandardFailAuctionLibrary,
@@ -27,7 +26,6 @@ import {
 } from 'set-protocol-contracts';
 import {
   AuthorizableContract,
-  BaseContract,
   CoreContract,
   ExchangeIssueModuleContract,
   IssuanceOrderModule,
@@ -52,10 +50,8 @@ import {
   TX_DEFAULTS,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
   ONE_DAY_IN_SECONDS,
-  ONE_WEEK_IN_SECONDS,
 } from '@src/constants';
 import { BigNumber, getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util';
-import { CoreWrapper } from '@src/wrappers';
 
 const contract = require('truffle-contract');
 

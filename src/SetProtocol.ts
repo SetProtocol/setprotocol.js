@@ -40,8 +40,8 @@ import {
   VaultWrapper,
 } from './wrappers';
 import { Assertions } from './assertions';
-import { BigNumber, IntervalManager, instantiateWeb3 } from './util';
-import { Address, Bytes, SetProtocolConfig, SetUnits, TransactionReceipt, Tx } from './types/common';
+import { BigNumber, instantiateWeb3 } from './util';
+import { Address, SetProtocolConfig, SetUnits, TransactionReceipt, Tx } from './types/common';
 import { NULL_ADDRESS, UNLIMITED_ALLOWANCE_IN_BASE_UNITS } from './constants';
 
 /**
@@ -126,7 +126,7 @@ class SetProtocol {
 
     this.vault = new VaultWrapper(this.web3, config.vaultAddress);
 
-    this.accounting = new AccountingAPI(this.web3, this.core, assertions);
+    this.accounting = new AccountingAPI(this.core, assertions);
     this.blockchain = new BlockchainAPI(this.web3, assertions);
     this.erc20 = new ERC20API(this.web3, assertions);
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config);
@@ -139,14 +139,14 @@ class SetProtocol {
       config.vaultAddress
     );
     this.setToken = new SetTokenAPI(this.web3, assertions);
-    this.system = new SystemAPI(this.web3, this.core, assertions, config);
+    this.system = new SystemAPI(this.web3, this.core, config);
 
     const rebalanceAuctionModule = new RebalancingAuctionModuleWrapper(
       this.web3,
       config.rebalanceAuctionModuleAddress,
     );
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, rebalanceAuctionModule);
-    this.rebalancingManager = new RebalancingManagerAPI(this.web3, assertions);
+    this.rebalancingManager = new RebalancingManagerAPI(this.web3);
 
     const issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(
       this.web3,
@@ -163,7 +163,6 @@ class SetProtocol {
 
       this.payableExchangeIssue = new PayableExchangeIssueAPI(
         this.web3,
-        this.core,
         assertions,
         payableExchangeIssueWrapper,
         config.wrappedEtherAddress,

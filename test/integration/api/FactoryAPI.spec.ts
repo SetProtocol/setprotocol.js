@@ -25,7 +25,6 @@ jest.setTimeout(30000);
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
-import * as ethUtil from 'ethereumjs-util';
 import Web3 from 'web3';
 import { Core } from 'set-protocol-contracts';
 import {
@@ -213,7 +212,7 @@ describe('FactoryAPI', () => {
 
       beforeEach(async () => {
         invalidSetFactoryAddress = 'invalidSetFactoryAddress';
-        config.setTokenFactoryAddress = 'invalidSetFactoryAddress';
+        config.setTokenFactoryAddress = invalidSetFactoryAddress;
 
         factoryAPI = new FactoryAPI(web3, coreWrapper, assertions, config);
       });

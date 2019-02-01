@@ -1,4 +1,4 @@
-import { Address, UInt } from 'set-protocol-utils';
+import { Address } from 'set-protocol-utils';
 import { BigNumber } from '../util';
 
 export { TransactionReceipt } from 'ethereum-types';

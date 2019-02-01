@@ -18,10 +18,6 @@
 
 import Web3 from 'web3';
 
-import {
-  TimeLockUpgradeContract,
-  TransferProxyContract,
-} from 'set-protocol-contracts';
 
 import { ContractWrapper } from '.';
 import { BigNumber } from '../util';

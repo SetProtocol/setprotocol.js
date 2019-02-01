@@ -35,7 +35,6 @@ import {
   VaultContract,
 } from 'set-protocol-contracts';
 
-import { CoreWrapper } from './CoreWrapper';
 import { Address } from '../types/common';
 
 /**

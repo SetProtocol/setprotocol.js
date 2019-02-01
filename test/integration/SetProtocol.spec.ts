@@ -30,10 +30,7 @@ import { Core, StandardTokenMock } from 'set-protocol-contracts';
 import { TransactionReceipt } from 'ethereum-types';
 import {
   CoreContract,
-  IssuanceOrderModuleContract,
-  NoDecimalTokenMock,
   NoDecimalTokenMockContract,
-  RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
@@ -48,8 +45,6 @@ import ChaiSetup from '../helpers/chaiSetup';
 import { ACCOUNTS, DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import SetProtocol from '@src/SetProtocol';
 import {
-  DEFAULT_GAS_PRICE,
-  DEFAULT_GAS_LIMIT,
   DEFAULT_UNIT_SHARES,
   NULL_ADDRESS,
   ONE_DAY_IN_SECONDS,
@@ -157,12 +152,6 @@ describe('SetProtocol', async () => {
     });
 
     test('returns max natural unit if one token does not have decimals', async () => {
-      const decimalPromises = _.map(mockTokens, mockToken => {
-        return erc20Wrapper.decimals(mockToken.address);
-      });
-      const decimals = await Promise.all(decimalPromises);
-      const minDecimal = BigNumber.min(decimals);
-
       subjectComponents = _.map(mockTokens, mockToken => mockToken.address);
       subjectComponents.push(mockNoDecimalToken.address);
 

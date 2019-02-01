@@ -25,13 +25,12 @@ jest.setTimeout(30000);
 import * as chai from 'chai';
 import Web3 from 'web3';
 import {
-  TimeLockUpgradeContract,
   TransferProxyContract,
 } from 'set-protocol-contracts';
 import { Address, Bytes, Web3Utils } from 'set-protocol-utils';
 
-import { CoreWrapper, TimeLockUpgradeWrapper } from '@src/wrappers';
-import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
+import { TimeLockUpgradeWrapper } from '@src/wrappers';
+import { DEFAULT_ACCOUNT } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber } from '@src/util';
 import { deployTransferProxyContract } from '@test/helpers';
@@ -65,10 +64,7 @@ describe('TimeLockUpgradeWrapper', () => {
     let subjectAuthorizableContract: Address;
     let timeLockPeriod: BigNumber;
 
-    let authorizedTarget: Address;
-
     beforeEach(async () => {
-      authorizedTarget = ACCOUNTS[1].address;
       timeLockPeriod = new BigNumber(100);
 
       // Set up timeLock

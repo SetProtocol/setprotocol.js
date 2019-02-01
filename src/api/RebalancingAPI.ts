@@ -18,10 +18,8 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { RebalancingSetTokenContract, SetTokenContract, VaultContract } from 'set-protocol-contracts';
 
-import { ZERO } from '../constants';
-import { coreAPIErrors, setTokenAssertionsErrors } from '../errors';
+import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
 import {
   ERC20Wrapper,
@@ -30,14 +28,12 @@ import {
   RebalancingSetTokenWrapper,
   CoreWrapper,
 } from '../wrappers';
-import { BigNumber, calculatePartialAmount } from '../util';
+import { BigNumber } from '../util';
 import {
   Address,
-  Component,
   RebalancingProgressDetails,
   RebalancingProposalDetails,
   RebalancingSetDetails,
-  SetDetails,
   Tx,
   TokenFlowsDetails,
 } from '../types/common';
