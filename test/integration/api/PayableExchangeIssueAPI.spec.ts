@@ -366,7 +366,6 @@ describe('PayableExchangeIssueAPI', () => {
       );
 
       // Create the Rebalancing Set
-      rebalancingUnitShares = DEFAULT_UNIT_SHARES;
       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
         web3,
         core,
