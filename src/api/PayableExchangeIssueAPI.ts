@@ -65,6 +65,14 @@ export class PayableExchangeIssueAPI {
     this.wrappedEther = wrappedEtherAddress;
   }
 
+  /**
+   * Generates the Kyber Trade struct used for issuance of BTC ETH Rebalancing Sets.
+   *
+   * @param  wrappedBitcoinAddress            Address of wrapped Bitcoin
+   * @param  requiredWrappedBitcoin           Quantity of wrapped Bitcoin required
+   * @param  ethAllocatedToWBtc               Value of Ether allocated to acquisition of Bitcoin
+   * @return                                  Kyber Trade object
+   */
   public generateBtcEthKyberTrade(
     wrappedBitcoinAddress: Address,
     requiredWrappedBitcoin: BigNumber,
@@ -78,10 +86,21 @@ export class PayableExchangeIssueAPI {
     };
   }
 
+  /**
+   * Generates the payableExchangeParams struct required for issueRebalancingSetWithEtherAsync specifically
+   * for the issuance of Rebalancing Sets with Bitcoin and Ether
+   *
+   * @param  rebalancingSetAddress            Address of the Rebalancing Set to issue
+   * @param  rebalancingSetIssueQuantity      Quantity of rebalancing Set to issue
+   * @param  wBtcAddress                      Address of wrapped Bitcoin
+   * @param  ethAllocatedToWBtc               Value of Ether allocated to acquisition of Bitcoin
+   * @param  etherValue                       Value of Ether to send in the issueRebalancingSetWithEther transaction
+   * @return                                  ExchangeIssueParams object
+   */
   public async generateBtcEthExchangeIssueParamsAsync(
     rebalancingSetAddress: Address,
     rebalancingSetIssueQuantity: BigNumber,
-    wBtcAddress: Address,
+    wrappedBitcoinAddress: Address,
     ethAllocatedToWBtc: BigNumber,
     etherValue: BigNumber,
   ): Promise<ExchangeIssueParams> {
@@ -90,7 +109,7 @@ export class PayableExchangeIssueAPI {
         rebalancingSetIssueQuantity,
         coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(rebalancingSetIssueQuantity)
       );
-      this.assert.schema.isValidAddress('wBtcAddress', wBtcAddress);
+      this.assert.schema.isValidAddress('wrappedBitcoinAddress', wrappedBitcoinAddress);
       this.assert.common.greaterThanZero(
         ethAllocatedToWBtc,
         coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(ethAllocatedToWBtc)
@@ -125,7 +144,7 @@ export class PayableExchangeIssueAPI {
       await this.assertGenerateExchangeIssueParamsAsync(
         rebalancingSetAddress,
         rebalancingSetIssueQuantity,
-        wBtcAddress,
+        wrappedBitcoinAddress,
         wrappedBtcAddress,
         wrappedEtherAddress,
         baseBtcEthSet,
@@ -140,7 +159,7 @@ export class PayableExchangeIssueAPI {
         paymentToken: this.wrappedEther,
         paymentTokenAmount: ethAllocatedToWBtc,
         quantity: baseSetRequired,
-        requiredComponents: [wBtcAddress],
+        requiredComponents: [wrappedBitcoinAddress],
         requiredComponentAmounts: [requiredBtc],
       };
 

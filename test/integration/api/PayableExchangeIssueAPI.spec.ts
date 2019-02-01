@@ -327,6 +327,125 @@ describe('PayableExchangeIssueAPI', () => {
     });
   });
 
+  describe('issueRebalancingSetWithEtherAsync with param generation', async () => {
+    let subjectRebalancingSetAddress: Address;
+    let subjectExchangeIssueData: ExchangeIssueParams;
+    let subjectExchangeOrder: (KyberTrade | ZeroExSignedFillOrder)[];
+    let subjectCaller: Address;
+    let subjectEtherValue: BigNumber;
+
+    let zeroExOrderMaker: Address;
+
+    let baseSetToken: SetTokenContract;
+    let baseSetUnits: BigNumber[];
+    let baseSetNaturalUnit: BigNumber;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+
+    let rebalancingSetQuantity: BigNumber;
+
+    let ethAllocatedToWBtc: BigNumber;
+
+    let zeroExOrder: ZeroExSignedFillOrder;
+
+    beforeEach(async () => {
+      zeroExOrderMaker = ACCOUNTS[2].address;
+
+      const [wrappedBitcoin] = await deployTokensSpecifyingDecimals(1, [8], web3, zeroExOrderMaker);
+
+      // Create the Set (1 component)
+      const componentAddresses = [wrappedBitcoin.address, wrappedEtherMock.address];
+      baseSetUnits = [new BigNumber(1), new BigNumber(10 ** 10)];
+      baseSetNaturalUnit = new BigNumber(10 ** 10);
+      baseSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        baseSetUnits,
+        baseSetNaturalUnit,
+      );
+
+      // Create the Rebalancing Set
+      rebalancingUnitShares = DEFAULT_UNIT_SHARES;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        DEFAULT_ACCOUNT,
+        baseSetToken.address,
+        ONE_DAY_IN_SECONDS,
+      );
+
+      rebalancingSetQuantity = new BigNumber(10 ** 18);
+      ethAllocatedToWBtc = new BigNumber(10 ** 18).div(2);
+
+      const requiredWeth = rebalancingSetQuantity
+                                      .div(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                      .mul(DEFAULT_UNIT_SHARES)
+                                      .div(baseSetNaturalUnit)
+                                      .mul(new BigNumber(10 ** 10));
+      const totalRequiredEther = ethAllocatedToWBtc.plus(requiredWeth);
+
+      subjectEtherValue = totalRequiredEther;
+
+      subjectExchangeIssueData = await payableExchangeIssueAPI.generateBtcEthExchangeIssueParamsAsync(
+        rebalancingSetToken.address,
+        rebalancingSetQuantity,
+        wrappedBitcoin.address,
+        ethAllocatedToWBtc,
+        subjectEtherValue,
+      );
+
+      await approveForTransferAsync(
+        [wrappedBitcoin],
+        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        zeroExOrderMaker
+      );
+
+      // Create 0x order for the component, using weth(4) paymentToken as default
+      zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
+        NULL_ADDRESS,                                     // senderAddress
+        zeroExOrderMaker,                                 // makerAddress
+        NULL_ADDRESS,                                     // takerAddress
+        ZERO,                                             // makerFee
+        ZERO,                                             // takerFee
+        subjectExchangeIssueData.requiredComponentAmounts[0],         // makerAssetAmount
+        ethAllocatedToWBtc,                  // takerAssetAmount
+        subjectExchangeIssueData.requiredComponents[0],               // makerAssetAddress
+        wrappedEtherMock.address,                        // takerAssetAddress
+        SetUtils.generateSalt(),                          // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,            // exchangeAddress
+        NULL_ADDRESS,                                     // feeRecipientAddress
+        SetTestUtils.generateTimestamp(10000),            // expirationTimeSeconds
+        ethAllocatedToWBtc,                  // amount of zeroExOrder to fill
+      );
+
+      subjectExchangeOrder = [zeroExOrder];
+      subjectCaller = ACCOUNTS[1].address;
+      subjectRebalancingSetAddress = rebalancingSetToken.address;
+    });
+
+    async function subject(): Promise<string> {
+      return await payableExchangeIssueAPI.issueRebalancingSetWithEtherAsync(
+        subjectRebalancingSetAddress,
+        subjectExchangeIssueData,
+        subjectExchangeOrder,
+        { from: subjectCaller, value: subjectEtherValue.toString() }
+      );
+    }
+
+    test('issues the rebalancing Set to the caller', async () => {
+      const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(rebalancingSetQuantity);
+
+      await subject();
+
+      const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
+
+  });
+
   describe('generateBtcEthExchangeIssueParamsAsync', async () => {
     let subjectRebalancingSetAddress: Address;
     let subjectRebalancingSetIssueQuantity: BigNumber;
@@ -494,6 +613,52 @@ describe('PayableExchangeIssueAPI', () => {
           `PayableExchangeIssueAPI: Total inputted ether must exceed required quantities`
         );
       });
+    });
+  });
+
+  describe('generateBtcEthKyberTrade', async () => {
+     let subjectWrappedBitcoinAddress: Address;
+     let subjectRequiredWrappedBitcoin: BigNumber;
+     let subjectWethAllocatedToWBtc: BigNumber;
+
+     beforeEach(() => {
+       subjectWrappedBitcoinAddress = wrappedEtherMock.address;
+       subjectRequiredWrappedBitcoin = new BigNumber(2);
+       subjectWethAllocatedToWBtc = new BigNumber(4);
+     });
+
+    function subject(): KyberTrade {
+      return payableExchangeIssueAPI.generateBtcEthKyberTrade(
+        subjectWrappedBitcoinAddress,
+        subjectRequiredWrappedBitcoin,
+        subjectWethAllocatedToWBtc,
+      );
+    }
+
+    test('should produce the correct destination token', async () => {
+      const { destinationToken } = subject();
+
+      expect(destinationToken).to.equal(subjectWrappedBitcoinAddress);
+    });
+
+    test('should produce the correct source token quantity', async () => {
+      const { sourceTokenQuantity } = subject();
+
+      expect(sourceTokenQuantity).to.bignumber.equal(subjectWethAllocatedToWBtc);
+    });
+
+    test('should produce the correct minimum conversion rate', async () => {
+      const { minimumConversionRate } = subject();
+
+      const expectedConversationRate = subjectWethAllocatedToWBtc.div(subjectRequiredWrappedBitcoin);
+
+      expect(minimumConversionRate).to.bignumber.equal(expectedConversationRate);
+    });
+
+    test('should produce the correct source token quantity', async () => {
+      const { maxDestinationQuantity } = subject();
+
+      expect(maxDestinationQuantity).to.bignumber.equal(subjectRequiredWrappedBitcoin);
     });
   });
 });
