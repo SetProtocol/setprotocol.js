@@ -19,7 +19,8 @@
 // External
 import Web3 from 'web3';
 
-import { CoreWrapper, IssuanceOrderModuleWrapper } from '../wrappers';
+import { CoreWrapper } from '../wrappers';
+import { Address } from '../types/common';
 
 // Assertions
 import { AccountAssertions } from './AccountAssertions';
@@ -57,7 +58,7 @@ export class Assertions {
   public setOrderAssertions(
     web3: Web3,
     coreWrapper: CoreWrapper,
-    issuanceOrderModuleWrapper: IssuanceOrderModuleWrapper,
+    issuanceOrderModuleWrapper: Address,
   ) {
     this.order = new OrderAssertions(web3, coreWrapper, issuanceOrderModuleWrapper);
   }

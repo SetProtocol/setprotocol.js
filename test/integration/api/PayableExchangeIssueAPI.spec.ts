@@ -44,7 +44,7 @@ import {
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
-import { CoreWrapper, IssuanceOrderModuleWrapper, PayableExchangeIssueWrapper } from '@src/wrappers';
+import { CoreWrapper } from '@src/wrappers';
 import { PayableExchangeIssueAPI } from '@src/api';
 import {
   NULL_ADDRESS,
@@ -99,7 +99,6 @@ describe('PayableExchangeIssueAPI', () => {
   let payableExchangeIssue: PayableExchangeIssueContract;
   let wrappedEtherMock: WethMockContract;
   let exchangeIssueModule: ExchangeIssueModuleContract;
-  let payableExchangeIssueWrapper: PayableExchangeIssueWrapper;
 
   let payableExchangeIssueAPI: PayableExchangeIssueAPI;
 
@@ -147,22 +146,12 @@ describe('PayableExchangeIssueAPI', () => {
       wrappedEtherMock,
     );
 
-    payableExchangeIssueWrapper = new PayableExchangeIssueWrapper(
-      web3,
-      payableExchangeIssue.address,
-    );
-
-    const issuanceOrderWrapper = new IssuanceOrderModuleWrapper(
-      web3,
-      issuanceOrderModule.address,
-    );
-
     const assertions = new Assertions(web3);
-    assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderWrapper);
+    assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderModule.address);
     payableExchangeIssueAPI = new PayableExchangeIssueAPI(
       web3,
       assertions,
-      payableExchangeIssueWrapper,
+      payableExchangeIssue.address,
       wrappedEtherMock.address,
     );
   });

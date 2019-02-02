@@ -45,9 +45,9 @@ export class OrderAssertions {
   private commonAssertions: CommonAssertions;
   private setTokenAssertions: SetTokenAssertions;
 
-  constructor(web3: Web3, coreWrapper: CoreWrapper, issuanceOrderModuleWrapper: IssuanceOrderModuleWrapper) {
+  constructor(web3: Web3, coreWrapper: CoreWrapper, issuanceOrderModuleWrapper: Address) {
     this.core = coreWrapper;
-    this.issuanceOrderModuleWrapper = issuanceOrderModuleWrapper;
+    this.issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(web3, issuanceOrderModuleWrapper);
     this.erc20Assertions = new ERC20Assertions(web3);
     this.schemaAssertions = new SchemaAssertions();
     this.commonAssertions = new CommonAssertions();
