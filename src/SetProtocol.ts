@@ -36,7 +36,6 @@ import {
   CoreWrapper,
   IssuanceOrderModuleWrapper,
   PayableExchangeIssueWrapper,
-  RebalancingAuctionModuleWrapper,
   VaultWrapper,
 } from './wrappers';
 import { Assertions } from './assertions';
@@ -140,12 +139,7 @@ class SetProtocol {
     );
     this.setToken = new SetTokenAPI(this.web3, assertions);
     this.system = new SystemAPI(this.web3, this.core, config);
-
-    const rebalanceAuctionModule = new RebalancingAuctionModuleWrapper(
-      this.web3,
-      config.rebalanceAuctionModuleAddress,
-    );
-    this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, rebalanceAuctionModule);
+    this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, config);
     this.rebalancingManager = new RebalancingManagerAPI(this.web3);
 
     const issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(

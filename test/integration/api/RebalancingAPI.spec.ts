@@ -32,6 +32,7 @@ import {
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
+  RebalancingTokenIssuanceModuleContract,
   SetTokenContract,
   SetTokenFactoryContract,
   TransferProxyContract,
@@ -41,7 +42,7 @@ import {
 import { Web3Utils } from 'set-protocol-utils';
 
 import { RebalancingAPI } from '@src/api';
-import { RebalancingAuctionModuleWrapper, RebalancingSetTokenWrapper, CoreWrapper } from '@src/wrappers';
+import { RebalancingSetTokenWrapper, CoreWrapper } from '@src/wrappers';
 import {
   DEFAULT_ACCOUNT,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
@@ -49,6 +50,7 @@ import {
   DEFAULT_REBALANCING_NATURAL_UNIT,
   DEFAULT_UNIT_SHARES,
   ONE_DAY_IN_SECONDS,
+  NULL_ADDRESS,
   TX_DEFAULTS,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
   ZERO,
@@ -58,6 +60,7 @@ import { BigNumber, ether } from '@src/util';
 import { Assertions } from '@src/assertions';
 import ChaiSetup from '@test/helpers/chaiSetup';
 import {
+  addModuleAsync,
   addWhiteListedTokenAsync,
   addPriceCurveToCoreAsync,
   approveForTransferAsync,
@@ -79,6 +82,7 @@ import {
   RebalancingProgressDetails,
   RebalancingProposalDetails,
   RebalancingSetDetails,
+  SetProtocolConfig,
   TokenFlowsDetails,
 } from '@src/types/common';
 
@@ -101,9 +105,10 @@ describe('RebalancingAPI', () => {
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
+  let rebalanceIssuanceModule: RebalancingTokenIssuanceModuleContract;
   let whitelist: WhiteListContract;
 
-  let rebalancingAuctionModuleWrapper: RebalancingAuctionModuleWrapper;
+  // let rebalancingAuctionModuleWrapper: RebalancingAuctionModuleWrapper;
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
   let rebalancingAPI: RebalancingAPI;
 
@@ -119,6 +124,7 @@ describe('RebalancingAPI', () => {
       rebalanceAuctionModule,
       ,
       whitelist,
+      rebalanceIssuanceModule,
     ] = await deployBaseContracts(web3);
 
     const coreWrapper = new CoreWrapper(
@@ -129,20 +135,92 @@ describe('RebalancingAPI', () => {
       rebalanceAuctionModule.address,
     );
 
-    rebalancingAuctionModuleWrapper = new RebalancingAuctionModuleWrapper(
-      web3,
-      rebalanceAuctionModule.address,
-    );
     rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
 
+    const setProtocolConfig: SetProtocolConfig = {
+      coreAddress: NULL_ADDRESS,
+      transferProxyAddress: NULL_ADDRESS,
+      vaultAddress: NULL_ADDRESS,
+      setTokenFactoryAddress: NULL_ADDRESS,
+      rebalancingSetTokenFactoryAddress: NULL_ADDRESS,
+      kyberNetworkWrapperAddress: NULL_ADDRESS,
+      rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
+      issuanceOrderModuleAddress: NULL_ADDRESS,
+      rebalancingTokenIssuanceModule: rebalanceIssuanceModule.address,
+    };
+
+    await addModuleAsync(core, rebalanceIssuanceModule.address);
+
     const assertions = new Assertions(web3);
-    rebalancingAPI = new RebalancingAPI(web3, assertions, coreWrapper, rebalancingAuctionModuleWrapper);
+    rebalancingAPI = new RebalancingAPI(web3, assertions, coreWrapper, setProtocolConfig);
   });
 
   afterEach(async () => {
     timeKeeper.reset();
 
     await web3Utils.revertToSnapshot(currentSnapshotId);
+  });
+
+  describe('redeemIntoBaseComponentsAsync', async () => {
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let currentSetToken: SetTokenContract;
+
+    let subjectRebalancingSetToken: Address;
+    let subjectRedeemQuantity: BigNumber;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const setTokens = await deploySetTokensAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        2,
+      );
+
+      currentSetToken = setTokens[0];
+
+      const proposalPeriod = ONE_DAY_IN_SECONDS;
+      const managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      // Issue currentSetToken
+      await core.issue.sendTransactionAsync(currentSetToken.address, ether(7), TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      const rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
+      subjectRebalancingSetToken = rebalancingSetToken.address;
+      subjectRedeemQuantity = ether(2);
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await rebalancingAPI.redeemIntoBaseComponentsAsync(
+        subjectRebalancingSetToken,
+        subjectRedeemQuantity,
+        { from: subjectCaller },
+      );
+    }
+
+    test('redeems the rebalancing Set', async () => {
+      const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.sub(subjectRedeemQuantity);
+
+      await subject();
+
+      const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
   });
 
   describe('proposeAsync', async () => {

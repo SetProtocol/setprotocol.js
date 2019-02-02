@@ -28,6 +28,7 @@ import {
   PayableExchangeIssueContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
+  RebalancingTokenIssuanceModuleContract,
   SetTokenContract,
   TimeLockUpgradeContract,
   TransferProxyContract,
@@ -406,6 +407,32 @@ export class ContractWrapper {
       );
       this.cache[cacheKey] = btcEthRebalancingManagerContract;
       return btcEthRebalancingManagerContract;
+    }
+  }
+
+  /**
+   * Load a RebalancingTokenIssuanceModule contract
+   *
+   * @param  rebalancingTokenIssuanceModuleAddress Address of the RebalancingTokenIssuanceModule contract
+   * @param  transactionOptions                    Options sent into the contract deployed method
+   * @return                                       The RebalancingTokenIssuanceModule Contract
+   */
+  public async loadRebalancingTokenIssuanceModuleAsync(
+    rebalancingTokenIssuanceModuleAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<RebalancingTokenIssuanceModuleContract> {
+    const cacheKey = `SetToken_${rebalancingTokenIssuanceModuleAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as RebalancingTokenIssuanceModuleContract;
+    } else {
+      const rebalancingTokenIssuanceModuleContract = await RebalancingTokenIssuanceModuleContract.at(
+        rebalancingTokenIssuanceModuleAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = rebalancingTokenIssuanceModuleContract;
+      return rebalancingTokenIssuanceModuleContract;
     }
   }
 }

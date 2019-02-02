@@ -34,6 +34,7 @@ import {
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
+  RebalancingTokenIssuanceModuleContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -83,6 +84,7 @@ describe('FactoryAPI', () => {
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
+  let rebalancingTokenIssuanceModule: RebalancingTokenIssuanceModuleContract;
 
   let config: SetProtocolConfig;
   let coreWrapper: CoreWrapper;
@@ -108,6 +110,8 @@ describe('FactoryAPI', () => {
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
       issuanceOrderModule,
+      ,
+      rebalancingTokenIssuanceModule,
     ] = await deployBaseContracts(web3);
 
     config = {
@@ -118,6 +122,7 @@ describe('FactoryAPI', () => {
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
       rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
       issuanceOrderModuleAddress: issuanceOrderModule.address,
+      rebalancingTokenIssuanceModule: rebalancingTokenIssuanceModule.address,
     } as SetProtocolConfig;
     coreWrapper = new CoreWrapper(
       web3,

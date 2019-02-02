@@ -34,6 +34,8 @@ import {
   PayableExchangeIssueContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
+  RebalancingTokenIssuanceModule,
+  RebalancingTokenIssuanceModuleContract,
   SetTokenContract,
   SetTokenFactoryContract,
   SignatureValidator,
@@ -374,7 +376,8 @@ export const deployBaseContracts = async (
   RebalancingSetTokenFactoryContract,
   RebalanceAuctionModuleContract,
   IssuanceOrderModuleContract,
-  WhiteListContract
+  WhiteListContract,
+  RebalancingTokenIssuanceModuleContract
 ]> => {
   const [transferProxy, vault] = await Promise.all([
     deployTransferProxyContract(web3),
@@ -394,9 +397,10 @@ export const deployBaseContracts = async (
 
   const signatureValidator = await deploySignatureValidatorContract(web3);
 
-  const [rebalanceAuctionModule, issuanceOrderModule] = await Promise.all([
+  const [rebalanceAuctionModule, issuanceOrderModule, rebalancingTokenIssuanceModule] = await Promise.all([
     deployRebalanceAuctionModuleContract(web3, core, vault),
     deployIssuanceOrderModuleContract(signatureValidator, web3, core, transferProxy, vault),
+    deployRebalancingTokenIssuanceModuleAsync(web3, core, transferProxy, vault),
   ]);
 
   return [
@@ -408,6 +412,7 @@ export const deployBaseContracts = async (
     rebalanceAuctionModule,
     issuanceOrderModule,
     whitelist,
+    rebalancingTokenIssuanceModule,
   ];
 };
 
@@ -457,6 +462,32 @@ export const deployExchangeIssueModuleAsync = async (
   );
 
   return exchangeIssueModule;
+};
+
+export const deployRebalancingTokenIssuanceModuleAsync = async (
+  web3: Web3,
+  core: CoreContract,
+  transferProxy: TransferProxyContract,
+  vault: VaultContract,
+  owner: Address = DEFAULT_ACCOUNT,
+): Promise<RebalancingTokenIssuanceModuleContract> => {
+  const truffleRebalancingTokenIssuanceModuleContract = contract(RebalancingTokenIssuanceModule);
+  truffleRebalancingTokenIssuanceModuleContract.setProvider(web3.currentProvider);
+  truffleRebalancingTokenIssuanceModuleContract.defaults(TX_DEFAULTS);
+  const deployedRebalancingTokenIssuanceModuleContract = await truffleRebalancingTokenIssuanceModuleContract.new(
+    core.address,
+    transferProxy.address,
+    vault.address,
+  );
+
+  // Initialize typed contract class
+  const rebalancingTokenIssuanceModule = await RebalancingTokenIssuanceModuleContract.at(
+    deployedRebalancingTokenIssuanceModuleContract.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  return rebalancingTokenIssuanceModule;
 };
 
 export const deployPayableExchangeIssueAsync = async (
