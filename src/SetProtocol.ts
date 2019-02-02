@@ -34,8 +34,6 @@ import {
 } from './api';
 import {
   CoreWrapper,
-  IssuanceOrderModuleWrapper,
-  PayableExchangeIssueWrapper,
   VaultWrapper,
 } from './wrappers';
 import { Assertions } from './assertions';
@@ -142,23 +140,13 @@ class SetProtocol {
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, config);
     this.rebalancingManager = new RebalancingManagerAPI(this.web3);
 
-    const issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(
-      this.web3,
-      config.issuanceOrderModuleAddress,
-    );
-
-    assertions.setOrderAssertions(this.web3, this.core, issuanceOrderModuleWrapper);
+    assertions.setOrderAssertions(this.web3, this.core, config.issuanceOrderModuleAddress);
 
     if (config.payableExchangeIssue && config.wrappedEtherAddress) {
-      const payableExchangeIssueWrapper = new PayableExchangeIssueWrapper(
-        this.web3,
-        config.payableExchangeIssue
-      );
-
       this.payableExchangeIssue = new PayableExchangeIssueAPI(
         this.web3,
         assertions,
-        payableExchangeIssueWrapper,
+        config.payableExchangeIssue,
         config.wrappedEtherAddress,
       );
     }

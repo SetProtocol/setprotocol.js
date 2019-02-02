@@ -150,7 +150,7 @@ describe('IssuanceOrderModuleWrapper', () => {
 
 
       const assertions = new Assertions(web3);
-      assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderModuleWrapper);
+      assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderModule.address);
       const ordersAPI = new OrderAPI(
         web3,
         assertions,
@@ -304,13 +304,8 @@ describe('IssuanceOrderModuleWrapper', () => {
         core,
       );
 
-      const issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(
-        web3,
-        issuanceOrderModule.address,
-      );
-
       const assertions = new Assertions(web3);
-      assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderModuleWrapper);
+      assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderModule.address);
       const ordersAPI = new OrderAPI(
         web3,
         assertions,

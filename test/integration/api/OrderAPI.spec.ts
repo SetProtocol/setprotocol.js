@@ -41,7 +41,7 @@ import {
 
 import { BigNumber, SignatureUtils } from '@src/util';
 import ChaiSetup from '@test/helpers/chaiSetup';
-import { CoreWrapper, IssuanceOrderModuleWrapper } from '@src/wrappers';
+import { CoreWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { OrderAPI } from '@src/api';
 import {
@@ -90,7 +90,6 @@ describe('OrderAPI', () => {
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let coreWrapper: CoreWrapper;
-  let issuanceOrderModuleWrapper: IssuanceOrderModuleWrapper;
   let ordersAPI: OrderAPI;
 
   beforeEach(async () => {
@@ -120,13 +119,8 @@ describe('OrderAPI', () => {
       rebalanceAuctionModule.address,
     );
 
-    issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(
-      web3,
-      issuanceOrderModule.address
-    );
-
     const assertions = new Assertions(web3);
-    assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderModuleWrapper);
+    assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderModule.address);
     ordersAPI = new OrderAPI(
       web3,
       assertions,

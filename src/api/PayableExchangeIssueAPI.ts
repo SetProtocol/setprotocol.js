@@ -42,22 +42,22 @@ export class PayableExchangeIssueAPI {
   /**
    * Instantiates a new PayableExchangeIssueAPI instance that contains methods for issuing and redeeming Sets
    *
-   * @param web3                  The Web3.js Provider instance you would like the SetProtocol.js library
-   *                                to use for interacting with the Ethereum network
-   * @param assertions            An instance of the Assertion library
-   * @param payableExchangeIssue  An unstance if the PayableExchangeIssueWrapper Library
-   * @param wrappedEtherAddress   Address of the deployed canonical wrapped ether contract
+   * @param web3                         The Web3.js Provider instance you would like the SetProtocol.js library
+   *                                      to use for interacting with the Ethereum network
+   * @param assertions                   An instance of the Assertion library
+   * @param payableExchangeIssueAddress  The address of the PayableExchangeIssueWrapper Library
+   * @param wrappedEtherAddress          Address of the deployed canonical wrapped ether contract
    */
   constructor(
     web3: Web3,
     assertions: Assertions,
-    payableExchangeIssue: PayableExchangeIssueWrapper,
+    payableExchangeIssueAddress: Address,
     wrappedEtherAddress: Address,
   ) {
     this.web3 = web3;
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
     this.assert = assertions;
-    this.payableExchangeIssue = payableExchangeIssue;
+    this.payableExchangeIssue = new PayableExchangeIssueWrapper(web3, payableExchangeIssueAddress);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
     this.wrappedEther = wrappedEtherAddress;
   }
