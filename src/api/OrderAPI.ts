@@ -159,7 +159,12 @@ export class OrderAPI {
     signedIssuanceOrder: SignedIssuanceOrder,
     fillQuantity: BigNumber
   ): Promise<void> {
-    await this.assert.order.isIssuanceOrderFillable(signedIssuanceOrder, fillQuantity);
+    const issuanceOrder: IssuanceOrder = _.omit(signedIssuanceOrder, 'signature');
+    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
+    const orderFills = await this.issuanceOrderModule.orderFills(orderHash);
+    const orderCancels = await this.issuanceOrderModule.orderCancels(orderHash);
+
+    await this.assert.order.isIssuanceOrderFillable(signedIssuanceOrder, fillQuantity, orderFills, orderCancels);
   }
 
   /**
@@ -369,9 +374,15 @@ export class OrderAPI {
     this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
+    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
+    const orderFills = await this.issuanceOrderModule.orderFills(orderHash);
+    const orderCancels = await this.issuanceOrderModule.orderCancels(orderHash);
+
     await this.assert.order.isIssuanceOrderFillable(
       signedIssuanceOrder,
       quantityToFill,
+      orderFills,
+      orderCancels,
     );
 
     await this.assert.order.assertLiquidityValidity(

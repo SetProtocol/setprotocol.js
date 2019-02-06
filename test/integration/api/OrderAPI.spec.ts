@@ -31,7 +31,6 @@ import {
   CoreContract,
   IssuanceOrderModuleContract,
   KyberNetworkWrapperContract,
-  RebalanceAuctionModuleContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -87,7 +86,6 @@ describe('OrderAPI', () => {
   let setTokenFactory: SetTokenFactoryContract;
   let issuanceOrderModule: IssuanceOrderModuleContract;
   let kyberNetworkWrapper: KyberNetworkWrapperContract;
-  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let coreWrapper: CoreWrapper;
   let ordersAPI: OrderAPI;
@@ -99,8 +97,7 @@ describe('OrderAPI', () => {
       core,
       transferProxy,
       vault,
-      setTokenFactory, ,
-      rebalanceAuctionModule,
+      setTokenFactory, , ,
       issuanceOrderModule,
     ] = await deployBaseContracts(web3);
 
@@ -116,11 +113,9 @@ describe('OrderAPI', () => {
       core.address,
       transferProxy.address,
       vault.address,
-      rebalanceAuctionModule.address,
     );
 
-    const assertions = new Assertions(web3);
-    assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderModule.address);
+    const assertions = new Assertions(web3, coreWrapper);
     ordersAPI = new OrderAPI(
       web3,
       assertions,

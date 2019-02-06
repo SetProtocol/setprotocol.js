@@ -36,7 +36,8 @@ import { BlockchainAPI } from '@src/api';
 import { Assertions } from '@src/assertions';
 import { BigNumber, getFormattedLogsFromReceipt } from '@src/util';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
-import { TX_DEFAULTS } from '@src/constants';
+import { NULL_ADDRESS, TX_DEFAULTS } from '@src/constants';
+import { CoreWrapper } from '@src/wrappers';
 import { deployBaseContracts, deployTokenAsync } from '@test/helpers';
 
 ChaiSetup.configure();
@@ -71,7 +72,14 @@ describe('BlockchainAPI', () => {
 
     await deployBaseContracts(web3);
 
-    const assertions = new Assertions(web3);
+    const coreWrapper = new CoreWrapper(
+      web3,
+      NULL_ADDRESS,
+      NULL_ADDRESS,
+      NULL_ADDRESS,
+    );
+
+    const assertions = new Assertions(web3, coreWrapper);
     blockchainAPI = new BlockchainAPI(web3, assertions);
   });
 

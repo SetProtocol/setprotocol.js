@@ -23,6 +23,7 @@ import {
   AccountingAPI,
   BlockchainAPI,
   ERC20API,
+  ExchangeIssueAPI,
   FactoryAPI,
   IssuanceAPI,
   OrderAPI,
@@ -70,6 +71,12 @@ class SetProtocol {
   public erc20: ERC20API;
 
   /**
+   * An instance of the ExchangeIssueAPI class containing methods for interacting
+   * with ExchangeIssue contracts
+   */
+  public exchangeIssue: ExchangeIssueAPI;
+
+  /**
    * An instance of the OrderAPI class containing methods for relaying issuance orders
    */
   public orders: OrderAPI;
@@ -111,15 +118,14 @@ class SetProtocol {
   constructor(provider: Provider, config: SetProtocolConfig) {
     this.web3 = instantiateWeb3(provider);
 
-    const assertions = new Assertions(this.web3);
-
     this.core = new CoreWrapper(
       this.web3,
       config.coreAddress,
       config.transferProxyAddress,
       config.vaultAddress,
-      config.rebalanceAuctionModuleAddress,
     );
+
+    const assertions = new Assertions(this.web3, this.core);
 
     this.vault = new VaultWrapper(this.web3, config.vaultAddress);
 
@@ -139,8 +145,7 @@ class SetProtocol {
     this.system = new SystemAPI(this.web3, this.core, config);
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, config);
     this.rebalancingManager = new RebalancingManagerAPI(this.web3);
-
-    assertions.setOrderAssertions(this.web3, this.core, config.issuanceOrderModuleAddress);
+    this.exchangeIssue = new ExchangeIssueAPI(this.web3, assertions, config.exchangeIssueModuleAddress);
 
     if (config.payableExchangeIssue && config.wrappedEtherAddress) {
       this.payableExchangeIssue = new PayableExchangeIssueAPI(

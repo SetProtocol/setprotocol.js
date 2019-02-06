@@ -44,7 +44,6 @@ export class CoreWrapper {
     coreAddress: Address,
     transferProxyAddress: Address,
     vaultAddress: Address,
-    rebalanceAuctionModule: Address,
   ) {
     this.web3 = web3;
     this.contracts = new ContractWrapper(this.web3);

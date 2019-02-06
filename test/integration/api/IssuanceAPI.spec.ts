@@ -30,7 +30,6 @@ import { Address, Web3Utils } from 'set-protocol-utils';
 import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
-  RebalanceAuctionModuleContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -72,7 +71,6 @@ describe('IssuanceAPI', () => {
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
-  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let issuanceAPI: IssuanceAPI;
 
@@ -99,7 +97,7 @@ describe('IssuanceAPI', () => {
       vault,
       setTokenFactory,
       ,
-      rebalanceAuctionModule,
+      ,
       ,
     ] = await deployBaseContracts(web3);
 
@@ -108,9 +106,8 @@ describe('IssuanceAPI', () => {
       core.address,
       transferProxy.address,
       vault.address,
-      rebalanceAuctionModule.address,
     );
-    const assertions = new Assertions(web3);
+    const assertions = new Assertions(web3, coreWrapper);
     issuanceAPI = new IssuanceAPI(web3, coreWrapper, assertions);
 
     componentTokens = await deployTokensAsync(3, web3);

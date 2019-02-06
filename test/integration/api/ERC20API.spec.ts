@@ -31,9 +31,10 @@ import { Address, Web3Utils } from 'set-protocol-utils';
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { Assertions } from '@src/assertions';
 import { ERC20API } from '@src/api';
-import { DEFAULT_ACCOUNT, DEPLOYED_TOKEN_QUANTITY, TX_DEFAULTS } from '@src/constants';
+import { DEFAULT_ACCOUNT, DEPLOYED_TOKEN_QUANTITY, NULL_ADDRESS, TX_DEFAULTS } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber } from '@src/util';
+import { CoreWrapper } from '@src/wrappers';
 import { deployBaseContracts, deployTokenAsync } from '@test/helpers';
 
 ChaiSetup.configure();
@@ -53,7 +54,13 @@ describe('ERC20API', () => {
 
     await deployBaseContracts(web3);
 
-    const assertions = new Assertions(web3);
+    const coreWrapper = new CoreWrapper(
+      web3,
+      NULL_ADDRESS,
+      NULL_ADDRESS,
+      NULL_ADDRESS,
+    );
+    const assertions = new Assertions(web3, coreWrapper);
     erc20API = new ERC20API(web3, assertions);
   });
 

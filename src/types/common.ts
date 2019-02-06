@@ -103,6 +103,7 @@ export interface SetProtocolConfig {
   kyberNetworkWrapperAddress: Address;
   setTokenFactoryAddress: Address;
   rebalancingSetTokenFactoryAddress: Address;
+  exchangeIssueModuleAddress: Address;
   issuanceOrderModuleAddress: Address;
   rebalancingTokenIssuanceModule: Address;
   payableExchangeIssue?: Address;

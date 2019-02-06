@@ -26,7 +26,6 @@ import * as chai from 'chai';
 import Web3 from 'web3';
 import {
   CoreContract,
-  RebalanceAuctionModuleContract,
   StandardTokenMockContract,
   TransferProxyContract,
   VaultContract
@@ -51,7 +50,6 @@ describe('VaultWrapper', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
-  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let coreWrapper: CoreWrapper;
   let vaultWrapper: VaultWrapper;
@@ -62,8 +60,7 @@ describe('VaultWrapper', () => {
     [
       core,
       transferProxy,
-      vault, , ,
-      rebalanceAuctionModule,
+      vault, , , ,
     ] = await deployBaseContracts(web3);
 
     coreWrapper = new CoreWrapper(
@@ -71,7 +68,6 @@ describe('VaultWrapper', () => {
       core.address,
       transferProxy.address,
       vault.address,
-      rebalanceAuctionModule.address,
     );
     vaultWrapper = new VaultWrapper(web3, vault.address);
   });

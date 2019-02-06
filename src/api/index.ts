@@ -19,6 +19,7 @@
 import { AccountingAPI } from './AccountingAPI';
 import { BlockchainAPI } from './BlockchainAPI';
 import { ERC20API } from './ERC20API';
+import { ExchangeIssueAPI } from './ExchangeIssueAPI';
 import { FactoryAPI } from './FactoryAPI';
 import { IssuanceAPI } from './IssuanceAPI';
 import { OrderAPI } from './OrderAPI';
@@ -32,6 +33,7 @@ export {
   AccountingAPI,
   BlockchainAPI,
   ERC20API,
+  ExchangeIssueAPI,
   FactoryAPI,
   IssuanceAPI,
   OrderAPI,

@@ -31,7 +31,6 @@ import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
   IssuanceOrderModuleContract,
-  RebalanceAuctionModuleContract,
   SetTokenContract,
   SetTokenFactoryContract,
   TransferProxyContract,
@@ -86,7 +85,6 @@ describe('IssuanceOrderModuleWrapper', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let issuanceOrderModule: IssuanceOrderModuleContract;
-  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let coreWrapper: CoreWrapper;
   let issuanceOrderModuleWrapper: IssuanceOrderModuleWrapper;
@@ -107,7 +105,7 @@ describe('IssuanceOrderModuleWrapper', () => {
       transferProxy,
       vault,
       setTokenFactory, ,
-      rebalanceAuctionModule,
+      ,
       issuanceOrderModule,
     ] = await deployBaseContracts(web3);
 
@@ -116,7 +114,6 @@ describe('IssuanceOrderModuleWrapper', () => {
       core.address,
       transferProxy.address,
       vault.address,
-      rebalanceAuctionModule.address,
     );
 
     issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(
@@ -147,10 +144,7 @@ describe('IssuanceOrderModuleWrapper', () => {
         core,
       );
 
-
-
-      const assertions = new Assertions(web3);
-      assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderModule.address);
+      const assertions = new Assertions(web3, coreWrapper);
       const ordersAPI = new OrderAPI(
         web3,
         assertions,
@@ -304,8 +298,7 @@ describe('IssuanceOrderModuleWrapper', () => {
         core,
       );
 
-      const assertions = new Assertions(web3);
-      assertions.setOrderAssertions(web3, coreWrapper, issuanceOrderModule.address);
+      const assertions = new Assertions(web3, coreWrapper);
       const ordersAPI = new OrderAPI(
         web3,
         assertions,
