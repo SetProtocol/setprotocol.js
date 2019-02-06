@@ -55,7 +55,7 @@ export class RebalancingAssertions {
 
     const currentState = await rebalancingSetTokenInstance.rebalanceState.callAsync();
     if (currentState.lt(RebalancingState.PROPOSAL)) {
-      throw new Error(rebalancingErrors.INCORRECT_STATE(rebalancingSetTokenAddress, 'Proposal Details'));
+      throw new Error(rebalancingErrors.INCORRECT_STATE(rebalancingSetTokenAddress, 'Proposal'));
     }
   }
 
@@ -69,7 +69,7 @@ export class RebalancingAssertions {
 
     const currentState = await rebalancingSetTokenInstance.rebalanceState.callAsync();
     if (currentState.lt(RebalancingState.REBALANCE)) {
-      throw new Error(rebalancingErrors.INCORRECT_STATE(rebalancingSetTokenAddress, 'Rebalance Details'));
+      throw new Error(rebalancingErrors.INCORRECT_STATE(rebalancingSetTokenAddress, 'Rebalance'));
     }
   }
 
