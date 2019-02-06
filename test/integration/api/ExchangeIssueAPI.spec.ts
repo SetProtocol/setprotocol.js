@@ -30,9 +30,6 @@ import Web3 from 'web3';
 import {
   CoreContract,
   ExchangeIssueModuleContract,
-  PayableExchangeIssueContract,
-  RebalancingSetTokenContract,
-  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   TransferProxyContract,
@@ -41,25 +38,20 @@ import {
 } from 'set-protocol-contracts';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
+import { ACCOUNTS } from '@src/constants/accounts';
 import { CoreWrapper } from '@src/wrappers';
-import { PayableExchangeIssueAPI } from '@src/api';
+import { ExchangeIssueAPI } from '@src/api';
 import {
   NULL_ADDRESS,
   ZERO,
-  ONE_DAY_IN_SECONDS,
-  DEFAULT_UNIT_SHARES,
-  DEFAULT_REBALANCING_NATURAL_UNIT,
 } from '@src/constants';
 import { Assertions } from '@src/assertions';
 import {
   addAuthorizationAsync,
   addModuleAsync,
   approveForTransferAsync,
-  createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
   deployExchangeIssueModuleAsync,
-  deployPayableExchangeIssueAsync,
   deploySetTokenAsync,
   deployTokensSpecifyingDecimals,
   deployWethMockAsync,
@@ -86,17 +78,15 @@ const web3Utils = new Web3Utils(web3);
 let currentSnapshotId: number;
 
 
-describe('PayableExchangeIssueAPI', () => {
+describe('ExchangeIssueAPI', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
-  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
-  let payableExchangeIssue: PayableExchangeIssueContract;
   let wrappedEtherMock: WethMockContract;
   let exchangeIssueModule: ExchangeIssueModuleContract;
 
-  let payableExchangeIssueAPI: PayableExchangeIssueAPI;
+  let exchangeIssueAPI: ExchangeIssueAPI;
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
@@ -106,7 +96,6 @@ describe('PayableExchangeIssueAPI', () => {
       transferProxy,
       vault,
       setTokenFactory,
-      rebalancingSetTokenFactory,
     ] = await deployBaseContracts(web3);
 
     const coreWrapper = new CoreWrapper(
@@ -131,20 +120,12 @@ describe('PayableExchangeIssueAPI', () => {
     );
 
     wrappedEtherMock = await deployWethMockAsync(web3, NULL_ADDRESS, ZERO);
-    payableExchangeIssue = await deployPayableExchangeIssueAsync(
-      web3,
-      core,
-      transferProxy,
-      exchangeIssueModule,
-      wrappedEtherMock,
-    );
 
     const assertions = new Assertions(web3, coreWrapper);
-    payableExchangeIssueAPI = new PayableExchangeIssueAPI(
+    exchangeIssueAPI = new ExchangeIssueAPI(
       web3,
       assertions,
-      payableExchangeIssue.address,
-      wrappedEtherMock.address,
+      exchangeIssueModule.address,
     );
   });
 
@@ -152,21 +133,15 @@ describe('PayableExchangeIssueAPI', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('issueRebalancingSetWithEther', async () => {
-    let subjectRebalancingSetAddress: Address;
+  describe('exchangeIssue', async () => {
     let subjectExchangeIssueData: ExchangeIssueParams;
     let subjectExchangeOrder: (KyberTrade | ZeroExSignedFillOrder)[];
     let subjectCaller: Address;
-    let subjectEther: BigNumber;
 
     let zeroExOrderMaker: Address;
 
-    let rebalancingSetQuantity: BigNumber;
-
     let baseSetToken: SetTokenContract;
     let baseSetNaturalUnit: BigNumber;
-    let rebalancingSetToken: RebalancingSetTokenContract;
-    let rebalancingUnitShares: BigNumber;
 
     let exchangeIssueSetAddress: Address;
     let exchangeIssueQuantity: BigNumber;
@@ -195,24 +170,11 @@ describe('PayableExchangeIssueAPI', () => {
         baseSetNaturalUnit,
       );
 
-      // Create the Rebalancing Set
-      rebalancingUnitShares = DEFAULT_UNIT_SHARES;
-      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
-        web3,
-        core,
-        rebalancingSetTokenFactory.address,
-        DEFAULT_ACCOUNT,
-        baseSetToken.address,
-        ONE_DAY_IN_SECONDS,
-      );
-
-      subjectEther = new BigNumber(10 ** 10);
-
       // Generate exchange issue data
       exchangeIssueSetAddress = baseSetToken.address;
       exchangeIssueQuantity = new BigNumber(10 ** 10);
       exchangeIssuePaymentToken = wrappedEtherMock.address;
-      exchangeIssuePaymentTokenAmount = subjectEther;
+      exchangeIssuePaymentTokenAmount = new BigNumber(10 ** 10);
       exchangeIssueRequiredComponents = componentAddresses;
       exchangeIssueRequiredComponentAmounts = componentUnits.map(
         unit => unit.mul(exchangeIssueQuantity).div(baseSetNaturalUnit)
@@ -252,57 +214,37 @@ describe('PayableExchangeIssueAPI', () => {
       );
 
       subjectExchangeOrder = [zeroExOrder];
-      subjectRebalancingSetAddress = rebalancingSetToken.address;
-      rebalancingSetQuantity = exchangeIssueQuantity.mul(DEFAULT_REBALANCING_NATURAL_UNIT).div(rebalancingUnitShares);
 
       subjectCaller = ACCOUNTS[1].address;
+
+       // Subject caller needs to wrap ether
+      await wrappedEtherMock.deposit.sendTransactionAsync(
+        { from: subjectCaller, value: exchangeIssuePaymentTokenAmount.toString() }
+      );
+
+      await wrappedEtherMock.approve.sendTransactionAsync(
+        transferProxy.address,
+        exchangeIssuePaymentTokenAmount,
+        { from: subjectCaller }
+      );
     });
 
     async function subject(): Promise<string> {
-      return await payableExchangeIssueAPI.issueRebalancingSetWithEtherAsync(
-        subjectRebalancingSetAddress,
+      return await exchangeIssueAPI.exchangeIssueAsync(
         subjectExchangeIssueData,
         subjectExchangeOrder,
-        { from: subjectCaller, value: subjectEther.toString() }
+        { from: subjectCaller }
       );
     }
 
-    test('issues the rebalancing Set to the caller', async () => {
-      const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
-      const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(rebalancingSetQuantity);
+    test('issues the Set to the caller', async () => {
+      const previousSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
+      const expectedSetTokenBalance = previousSetTokenBalance.add(exchangeIssueQuantity);
 
       await subject();
 
-      const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
-      expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
-    });
-
-    describe('when the payment token is not wrapped ether', async () => {
-      const notWrappedEther = ACCOUNTS[3].address;
-
-      beforeEach(async () => {
-        subjectExchangeIssueData.paymentToken = notWrappedEther;
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `Payment token at ${notWrappedEther} is not the expected wrapped ether token at ${wrappedEtherMock.address}`
-        );
-      });
-    });
-
-    describe('when a set address is not rebalancing Sets current set address', async () => {
-      const notBaseSet = ACCOUNTS[3].address;
-
-      beforeEach(async () => {
-        subjectExchangeIssueData.setAddress = notBaseSet;
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `Set token at ${notBaseSet} is not the expected rebalancing set token current Set at ${baseSetToken.address}`
-        );
-      });
+      const currentSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
+      expect(expectedSetTokenBalance).to.bignumber.equal(currentSetTokenBalance);
     });
   });
 });

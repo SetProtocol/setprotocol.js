@@ -132,7 +132,6 @@ describe('RebalancingAPI', () => {
       core.address,
       transferProxy.address,
       vault.address,
-      rebalanceAuctionModule.address,
     );
 
     rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
@@ -147,11 +146,12 @@ describe('RebalancingAPI', () => {
       rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
       issuanceOrderModuleAddress: NULL_ADDRESS,
       rebalancingTokenIssuanceModule: rebalanceIssuanceModule.address,
+      exchangeIssueModuleAddress: NULL_ADDRESS,
     };
 
     await addModuleAsync(core, rebalanceIssuanceModule.address);
 
-    const assertions = new Assertions(web3);
+    const assertions = new Assertions(web3, coreWrapper);
     rebalancingAPI = new RebalancingAPI(web3, assertions, coreWrapper, setProtocolConfig);
   });
 

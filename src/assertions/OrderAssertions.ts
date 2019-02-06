@@ -25,7 +25,7 @@ import { CommonAssertions } from './CommonAssertions';
 import { SchemaAssertions } from './SchemaAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
 import { SetTokenAssertions } from './SetTokenAssertions';
-import { CoreWrapper, IssuanceOrderModuleWrapper } from '../wrappers';
+import { CoreWrapper } from '../wrappers';
 import { NULL_ADDRESS, ZERO } from '../constants';
 import { BigNumber, calculatePartialAmount } from '../util';
 import {
@@ -39,22 +39,25 @@ import {
 
 export class OrderAssertions {
   private core: CoreWrapper;
-  private issuanceOrderModuleWrapper: IssuanceOrderModuleWrapper;
   private erc20Assertions: ERC20Assertions;
   private schemaAssertions: SchemaAssertions;
   private commonAssertions: CommonAssertions;
   private setTokenAssertions: SetTokenAssertions;
 
-  constructor(web3: Web3, coreWrapper: CoreWrapper, issuanceOrderModuleWrapper: Address) {
+  constructor(web3: Web3, coreWrapper: CoreWrapper) {
     this.core = coreWrapper;
-    this.issuanceOrderModuleWrapper = new IssuanceOrderModuleWrapper(web3, issuanceOrderModuleWrapper);
     this.erc20Assertions = new ERC20Assertions(web3);
     this.schemaAssertions = new SchemaAssertions();
     this.commonAssertions = new CommonAssertions();
     this.setTokenAssertions = new SetTokenAssertions(web3);
   }
 
-  public async isIssuanceOrderFillable(issuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber): Promise<void> {
+  public async isIssuanceOrderFillable(
+    issuanceOrder: SignedIssuanceOrder,
+    fillQuantity: BigNumber,
+    orderFills: BigNumber,
+    orderCancels: BigNumber,
+  ): Promise<void> {
     const {
       expiration,
       quantity,
@@ -65,7 +68,7 @@ export class OrderAssertions {
 
     this.commonAssertions.isValidExpiration(expiration, coreAPIErrors.EXPIRATION_PASSED());
 
-    await this.isValidFillQuantity(issuanceOrder, fillQuantity);
+    await this.isValidFillQuantity(issuanceOrder, fillQuantity, orderFills, orderCancels);
 
     await this.erc20Assertions.hasSufficientAllowanceAsync(
       makerToken,
@@ -191,8 +194,13 @@ export class OrderAssertions {
 
   /* ============ Private Helpers =============== */
 
-  private async isValidFillQuantity(issuanceOrder: SignedIssuanceOrder, fillQuantity: BigNumber) {
-    const fillableQuantity = await this.calculateFillableQuantity(issuanceOrder);
+  private async isValidFillQuantity(
+    issuanceOrder: SignedIssuanceOrder,
+    fillQuantity: BigNumber,
+    orderFills: BigNumber,
+    orderCancels: BigNumber,
+  ) {
+    const fillableQuantity = this.calculateFillableQuantity(issuanceOrder, orderFills, orderCancels);
     this.commonAssertions.isGreaterOrEqualThan(
       fillableQuantity,
       fillQuantity,
@@ -473,13 +481,12 @@ export class OrderAssertions {
     );
   }
 
-  private async calculateFillableQuantity(signedIssuanceOrder: SignedIssuanceOrder): Promise<BigNumber> {
-    const issuanceOrder: IssuanceOrder = _.omit(signedIssuanceOrder, 'signature');
-    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-    const filledAmount = await this.issuanceOrderModuleWrapper.orderFills(orderHash);
-    const cancelledAmount = await this.issuanceOrderModuleWrapper.orderCancels(orderHash);
-
-    return issuanceOrder.quantity.sub(filledAmount).sub(cancelledAmount);
+  private calculateFillableQuantity(
+    signedIssuanceOrder: SignedIssuanceOrder,
+    orderFills: BigNumber,
+    orderCancels: BigNumber,
+  ): BigNumber {
+    return signedIssuanceOrder.quantity.sub(orderFills).sub(orderCancels);
   }
 
   private calculateRequiredMakerToken(

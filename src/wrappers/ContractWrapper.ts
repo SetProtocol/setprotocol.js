@@ -23,6 +23,7 @@ import {
   BTCETHRebalancingManagerContract,
   CoreContract,
   ERC20DetailedContract,
+  ExchangeIssueModuleContract,
   IssuanceOrderModuleContract,
   KyberNetworkWrapperContract,
   PayableExchangeIssueContract,
@@ -428,6 +429,32 @@ export class ContractWrapper {
     } else {
       const rebalancingTokenIssuanceModuleContract = await RebalancingTokenIssuanceModuleContract.at(
         rebalancingTokenIssuanceModuleAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = rebalancingTokenIssuanceModuleContract;
+      return rebalancingTokenIssuanceModuleContract;
+    }
+  }
+
+  /**
+   * Load a ExchangeIssueModule contract
+   *
+   * @param  exchangeIssueModule                   Address of the ExchangeIssueModule contract
+   * @param  transactionOptions                    Options sent into the contract deployed method
+   * @return                                       The ExchangeIssueModule Contract
+   */
+  public async loadExchangeIssueModuleAsync(
+    exchangeIssueModule: Address,
+    transactionOptions: object = {},
+  ): Promise<ExchangeIssueModuleContract> {
+    const cacheKey = `SetToken_${exchangeIssueModule}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as ExchangeIssueModuleContract;
+    } else {
+      const rebalancingTokenIssuanceModuleContract = await ExchangeIssueModuleContract.at(
+        exchangeIssueModule,
         this.web3,
         transactionOptions,
       );

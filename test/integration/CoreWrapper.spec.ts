@@ -119,7 +119,6 @@ describe('CoreWrapper', () => {
       core.address,
       transferProxy.address,
       vault.address,
-      rebalanceAuctionModule.address,
     );
   });
 

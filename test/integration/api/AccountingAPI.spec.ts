@@ -28,7 +28,6 @@ import Web3 from 'web3';
 import { Address, Web3Utils } from 'set-protocol-utils';
 import {
   CoreContract,
-  RebalanceAuctionModuleContract,
   StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
@@ -54,7 +53,6 @@ describe('AccountingAPI', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
-  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let coreWrapper: CoreWrapper;
   let accountingAPI: AccountingAPI;
@@ -67,8 +65,7 @@ describe('AccountingAPI', () => {
     [
       core,
       transferProxy,
-      vault, , ,
-      rebalanceAuctionModule,
+      vault, , , ,
     ] = await deployBaseContracts(web3);
 
     coreWrapper = new CoreWrapper(
@@ -76,9 +73,8 @@ describe('AccountingAPI', () => {
       core.address,
       transferProxy.address,
       vault.address,
-      rebalanceAuctionModule.address,
     );
-    const assertions = new Assertions(web3);
+    const assertions = new Assertions(web3, coreWrapper);
     accountingAPI = new AccountingAPI(coreWrapper, assertions);
 
     tokens = await deployTokensAsync(3, web3);

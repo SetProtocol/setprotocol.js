@@ -43,7 +43,7 @@ import { SystemAPI } from '@src/api';
 import { CoreWrapper } from '@src/wrappers';
 import { BigNumber } from '@src/util';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
-import { TX_DEFAULTS, ZERO } from '@src/constants';
+import { NULL_ADDRESS, TX_DEFAULTS, ZERO } from '@src/constants';
 import {
   Bytes,
   SetProtocolConfig,
@@ -110,7 +110,6 @@ describe('SystemAPI', () => {
       core.address,
       transferProxy.address,
       vault.address,
-      rebalanceAuctionModule.address,
     );
 
     const setProtocolConfig: SetProtocolConfig = {
@@ -123,6 +122,7 @@ describe('SystemAPI', () => {
       setTokenFactoryAddress: setTokenFactory.address,
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
       rebalancingTokenIssuanceModule: rebalancingTokenIssuanceModule.address,
+      exchangeIssueModuleAddress: NULL_ADDRESS,
     };
 
     systemAPI = new SystemAPI(web3, coreWrapper, setProtocolConfig);

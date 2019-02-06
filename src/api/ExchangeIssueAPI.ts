@@ -20,74 +20,60 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Bytes, ExchangeIssueParams, SetProtocolUtils } from 'set-protocol-utils';
 
-import { coreAPIErrors, exchangeIssueErrors } from '../errors';
+import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { PayableExchangeIssueWrapper, RebalancingSetTokenWrapper } from '../wrappers';
+import { ExchangeIssueModuleWrapper } from '../wrappers';
 import { Address, KyberTrade, Tx, ZeroExSignedFillOrder } from '../types/common';
 
 /**
- * @title PayableExchangeIssueAPI
+ * @title ExchangeIssueAPI
  * @author Set Protocol
  *
  * A library for issuing RebalancingSets using Ether.
  */
-export class PayableExchangeIssueAPI {
+export class ExchangeIssueAPI {
   private web3: Web3;
   private assert: Assertions;
-  private payableExchangeIssue: PayableExchangeIssueWrapper;
-  private rebalancingSetToken: RebalancingSetTokenWrapper;
+  private exchangeIssue: ExchangeIssueModuleWrapper;
   private setProtocolUtils: SetProtocolUtils;
-  private wrappedEther: Address;
 
   /**
-   * Instantiates a new PayableExchangeIssueAPI instance that contains methods for issuing and redeeming Sets
+   * Instantiates a new ExchangeIssueAPI instance that contains methods for issuing and redeeming Sets
    *
    * @param web3                         The Web3.js Provider instance you would like the SetProtocol.js library
    *                                      to use for interacting with the Ethereum network
    * @param assertions                   An instance of the Assertion library
-   * @param payableExchangeIssueAddress  The address of the PayableExchangeIssueWrapper Library
-   * @param wrappedEtherAddress          Address of the deployed canonical wrapped ether contract
+   * @param exchangeIssueAddress  The address of the ExchangeIssueModuleWrapper Library
    */
   constructor(
     web3: Web3,
     assertions: Assertions,
-    payableExchangeIssueAddress: Address,
-    wrappedEtherAddress: Address,
+    exchangeIssueAddress: Address,
   ) {
     this.web3 = web3;
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
     this.assert = assertions;
-    this.payableExchangeIssue = new PayableExchangeIssueWrapper(web3, payableExchangeIssueAddress);
-    this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
-    this.wrappedEther = wrappedEtherAddress;
+    this.exchangeIssue = new ExchangeIssueModuleWrapper(web3, exchangeIssueAddress);
   }
 
   /**
-   * Issues a Set to the transaction signer using Ether as payment.
+   * Issues a Set to the transaction signer. Must have payment tokens in the correct quantites
+   * Payment tokens must be approved to the TransferProxy contract via setTransferProxyAllowanceAsync
    *
-   * @param  rebalancingSetAddress    Address of the Rebalancing Set to issue
    * @param  exchangeIssueParams      Parameters required to facilitate an exchange issue
    * @param  orders                   A list of signed 0x orders or kyber trades
    * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
-  public async issueRebalancingSetWithEtherAsync(
-    rebalancingSetAddress: Address,
+  public async exchangeIssueAsync(
     exchangeIssueParams: ExchangeIssueParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
     txOpts: Tx
   ): Promise<string> {
-    await this.assertIssueRebalancingSetWithEtherAsync(
-      rebalancingSetAddress,
-      exchangeIssueParams,
-      orders,
-      txOpts.from,
-    );
-    await this.assertExchangeIssueParams(rebalancingSetAddress, exchangeIssueParams);
+    await this.assertExchangeIssueParams(exchangeIssueParams, orders);
 
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
-    return this.payableExchangeIssue.issueRebalancingSetWithEther(
-      rebalancingSetAddress,
+    return this.exchangeIssue.exchangeIssue(
       exchangeIssueParams,
       orderData,
       txOpts,
@@ -97,44 +83,9 @@ export class PayableExchangeIssueAPI {
 
   /* ============ Private Assertions ============ */
 
-  private async assertIssueRebalancingSetWithEtherAsync(
-    rebalancingSetAddress: Address,
+  private async assertExchangeIssueParams(
     exchangeIssueParams: ExchangeIssueParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
-    transactionCaller: Address,
-  ) {
-    const { setAddress, paymentToken } = exchangeIssueParams;
-
-
-    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
-    this.assert.schema.isValidAddress('rebalancingSetAddress', rebalancingSetAddress);
-    this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
-
-    const baseSetAddress = await this.rebalancingSetToken.currentSet(rebalancingSetAddress);
-
-    // Assert the set address is the rebalancing set address's current set
-    this.assert.common.isEqualAddress(
-      setAddress,
-      baseSetAddress,
-      exchangeIssueErrors.ISSUING_SET_NOT_BASE_SET(setAddress, baseSetAddress)
-    );
-
-    // Assert payment token is wrapped ether
-    this.assert.common.isEqualAddress(
-      paymentToken,
-      this.wrappedEther,
-      exchangeIssueErrors.PAYMENT_TOKEN_NOT_WETH(paymentToken, this.wrappedEther)
-    );
-
-    await this.assert.order.assertExchangeIssueOrdersValidity(
-      exchangeIssueParams,
-      orders,
-    );
-  }
-
-  private async assertExchangeIssueParams(
-    rebalancingSetAddress: Address,
-    exchangeIssueParams: ExchangeIssueParams,
   ) {
     const {
       setAddress,
@@ -157,6 +108,8 @@ export class PayableExchangeIssueAPI {
       requiredComponentAmounts,
       coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
     );
+    this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
+
     await this.assert.order.assertRequiredComponentsAndAmounts(
       requiredComponents,
       requiredComponentAmounts,
@@ -168,6 +121,10 @@ export class PayableExchangeIssueAPI {
       quantity,
       `Quantity of Exchange issue Params`,
     );
-  }
 
+     await this.assert.order.assertExchangeIssueOrdersValidity(
+      exchangeIssueParams,
+      orders,
+    );
+  }
 }
