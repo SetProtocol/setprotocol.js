@@ -46,6 +46,34 @@ export class RebalancingAssertions {
   }
 
   /**
+   * Throws if the proposal details cannot be fetched
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   */
+  public async canFetchProposalDetails(rebalancingSetTokenAddress: Address): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+
+    const currentState = await rebalancingSetTokenInstance.rebalanceState.callAsync();
+    if (currentState.lt(RebalancingState.PROPOSAL)) {
+      throw new Error(rebalancingErrors.INCORRECT_STATE(rebalancingSetTokenAddress, 'Proposal Details'));
+    }
+  }
+
+  /**
+   * Throws if the retails details cannot be fetched
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   */
+  public async canFetchRebalanceState(rebalancingSetTokenAddress: Address): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+
+    const currentState = await rebalancingSetTokenInstance.rebalanceState.callAsync();
+    if (currentState.lt(RebalancingState.REBALANCE)) {
+      throw new Error(rebalancingErrors.INCORRECT_STATE(rebalancingSetTokenAddress, 'Rebalance Details'));
+    }
+  }
+
+  /**
    * Throws if given rebalancingSetToken in Rebalance state
    *
    * @param  rebalancingSetTokenAddress   The address of the rebalancing set token

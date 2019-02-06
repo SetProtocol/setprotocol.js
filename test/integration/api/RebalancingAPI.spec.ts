@@ -1556,11 +1556,16 @@ describe('RebalancingAPI', () => {
     });
 
     describe('when the Rebalancing Set Token is in Rebalance state', async () => {
+      let setAuctionPriceCurveAddress: Address;
+      let setAuctionTimeToPivot: BigNumber;
+      let setAuctionStartPrice: BigNumber;
+      let setAuctionPivotPrice: BigNumber;
+
       beforeEach(async () => {
-        const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
+        setAuctionPriceCurveAddress = priceCurve.address;
+        setAuctionTimeToPivot = new BigNumber(100000);
+        setAuctionStartPrice = new BigNumber(500);
+        setAuctionPivotPrice = new BigNumber(1000);
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
@@ -1573,10 +1578,17 @@ describe('RebalancingAPI', () => {
         );
       });
 
-      it('throw', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Proposal state to call that function.`
-        );
+      it('returns the proper proposal details', async () => {
+        const proposalDetails = await subject();
+
+        const proposedAt = await rebalancingSetToken.proposalStartTime.callAsync();
+        expect(proposalDetails.proposedAt).to.bignumber.equal(proposedAt);
+
+        expect(proposalDetails.nextSetAddress).eql(nextSetToken.address);
+        expect(proposalDetails.startingPrice).to.bignumber.equal(setAuctionStartPrice);
+        expect(proposalDetails.pricingLibraryAddress).eql(setAuctionPriceCurveAddress);
+        expect(proposalDetails.timeToPivot).to.bignumber.equal(setAuctionTimeToPivot);
+        expect(proposalDetails.auctionPivotPrice).to.bignumber.equal(setAuctionPivotPrice);
       });
     });
   });

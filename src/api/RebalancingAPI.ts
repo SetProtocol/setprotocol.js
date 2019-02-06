@@ -488,11 +488,11 @@ export class RebalancingAPI {
 
   private async assertGetRebalanceDetails(rebalancingSetTokenAddress: Address) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
-    await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
+    await this.assert.rebalancing.canFetchRebalanceState(rebalancingSetTokenAddress);
   }
 
   private async assertGetProposalDetails(rebalancingSetTokenAddress: Address) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
-    await this.assert.rebalancing.isInProposalState(rebalancingSetTokenAddress);
+    await this.assert.rebalancing.canFetchProposalDetails(rebalancingSetTokenAddress);
   }
 }
