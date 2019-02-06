@@ -28,6 +28,7 @@ export const RebalancingState = {
   DEFAULT: new BigNumber(0),
   PROPOSAL: new BigNumber(1),
   REBALANCE: new BigNumber(2),
+  DRAWDOWN: new BigNumber(3),
 };
 
 export interface SetUnits {
