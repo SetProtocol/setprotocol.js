@@ -23,7 +23,7 @@ export { instantiateWeb3 } from './provider';
 export { IntervalManager } from './intervalManager';
 export { calculatePartialAmount, calculatePercentDifference } from './commonMath';
 export { estimateIssueRedeemGasCost } from './setTokenUtils';
-export { SignatureUtils } from './SignatureUtils';
+export { SignatureUtils } from './signatureUtils';
 export { getFormattedLogsFromReceipt } from './logs';
 export { generateFutureTimestamp } from './timeStampUtils';
 export { generateTxOpts } from './transactionUtils';
