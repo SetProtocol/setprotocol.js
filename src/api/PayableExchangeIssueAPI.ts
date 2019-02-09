@@ -126,10 +126,10 @@ export class PayableExchangeIssueAPI {
       exchangeIssueErrors.PAYMENT_TOKEN_NOT_WETH(paymentToken, this.wrappedEther)
     );
 
-    await this.assert.order.assertExchangeIssueOrdersValidity(
-      exchangeIssueParams,
-      orders,
-    );
+    // await this.assert.order.assertExchangeIssueOrdersValidity(
+    //   exchangeIssueParams,
+    //   orders,
+    // );
   }
 
   private async assertExchangeIssueParams(
