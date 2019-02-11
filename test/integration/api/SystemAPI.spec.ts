@@ -123,6 +123,8 @@ describe('SystemAPI', () => {
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
       rebalancingTokenIssuanceModule: rebalancingTokenIssuanceModule.address,
       exchangeIssueModuleAddress: NULL_ADDRESS,
+      payableExchangeIssue: NULL_ADDRESS,
+      wrappedEtherAddress: NULL_ADDRESS,
     };
 
     systemAPI = new SystemAPI(web3, coreWrapper, setProtocolConfig);

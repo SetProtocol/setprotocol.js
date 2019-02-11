@@ -147,6 +147,8 @@ describe('RebalancingAPI', () => {
       issuanceOrderModuleAddress: NULL_ADDRESS,
       rebalancingTokenIssuanceModule: rebalanceIssuanceModule.address,
       exchangeIssueModuleAddress: NULL_ADDRESS,
+      payableExchangeIssue: NULL_ADDRESS,
+      wrappedEtherAddress: NULL_ADDRESS,
     };
 
     await addModuleAsync(core, rebalanceIssuanceModule.address);
