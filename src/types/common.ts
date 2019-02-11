@@ -106,8 +106,8 @@ export interface SetProtocolConfig {
   exchangeIssueModuleAddress: Address;
   issuanceOrderModuleAddress: Address;
   rebalancingTokenIssuanceModule: Address;
-  payableExchangeIssue?: Address;
-  wrappedEtherAddress?: Address;
+  payableExchangeIssue: Address;
+  wrappedEtherAddress: Address;
 }
 
 export interface SystemAuthorizableState {

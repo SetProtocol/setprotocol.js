@@ -140,6 +140,7 @@ describe('ExchangeIssueAPI', () => {
 
     let zeroExOrderMaker: Address;
 
+    let componentAddresses: Address[];
     let baseSetToken: SetTokenContract;
     let baseSetNaturalUnit: BigNumber;
 
@@ -153,13 +154,16 @@ describe('ExchangeIssueAPI', () => {
     let zeroExOrder: ZeroExSignedFillOrder;
 
     beforeEach(async () => {
+      subjectCaller = ACCOUNTS[1].address;
+
       // Create component token (owned by 0x order maker)
       zeroExOrderMaker = ACCOUNTS[2].address;
       const [baseSetComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, zeroExOrderMaker);
+      const [alreadyOwnedComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, subjectCaller);
 
       // Create the Set (1 component)
-      const componentAddresses = [baseSetComponent.address];
-      const componentUnits = [new BigNumber(10 ** 10)];
+      componentAddresses = [baseSetComponent.address, alreadyOwnedComponent.address];
+      const componentUnits = [new BigNumber(10 ** 10), new BigNumber(1)];
       baseSetNaturalUnit = new BigNumber(10 ** 9);
       baseSetToken = await deploySetTokenAsync(
         web3,
@@ -175,8 +179,8 @@ describe('ExchangeIssueAPI', () => {
       exchangeIssueQuantity = new BigNumber(10 ** 10);
       exchangeIssuePaymentToken = wrappedEtherMock.address;
       exchangeIssuePaymentTokenAmount = new BigNumber(10 ** 10);
-      exchangeIssueRequiredComponents = componentAddresses;
-      exchangeIssueRequiredComponentAmounts = componentUnits.map(
+      exchangeIssueRequiredComponents = [componentAddresses[0]];
+      exchangeIssueRequiredComponentAmounts = [componentUnits[0]].map(
         unit => unit.mul(exchangeIssueQuantity).div(baseSetNaturalUnit)
       );
 
@@ -193,6 +197,12 @@ describe('ExchangeIssueAPI', () => {
         [baseSetComponent],
         SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
         zeroExOrderMaker
+      );
+
+      await approveForTransferAsync(
+        [alreadyOwnedComponent],
+        transferProxy.address,
+        subjectCaller,
       );
 
       // Create 0x order for the component, using weth(4) paymentToken as default
@@ -214,8 +224,6 @@ describe('ExchangeIssueAPI', () => {
       );
 
       subjectExchangeOrder = [zeroExOrder];
-
-      subjectCaller = ACCOUNTS[1].address;
 
        // Subject caller needs to wrap ether
       await wrappedEtherMock.deposit.sendTransactionAsync(
@@ -246,5 +254,23 @@ describe('ExchangeIssueAPI', () => {
       const currentSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
       expect(expectedSetTokenBalance).to.bignumber.equal(currentSetTokenBalance);
     });
+
+    describe('when a required component is not represented in the orders', async () => {
+      let underRepresentedComponent: Address;
+
+      beforeEach(async () => {
+         underRepresentedComponent = componentAddresses[1].toLowerCase();
+
+         subjectExchangeIssueData.requiredComponents.push(underRepresentedComponent);
+         subjectExchangeIssueData.requiredComponentAmounts.push(new BigNumber(1));
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Token ${underRepresentedComponent} is unrepresented in the liquidity orders.`
+        );
+      });
+    });
+
   });
 });

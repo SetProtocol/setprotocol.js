@@ -22,4 +22,6 @@ export const exchangeIssueErrors = {
     `not the expected wrapped ether token at ${wethAddress}`,
   ISSUING_SET_NOT_BASE_SET: (setAddress: string, currentSet: string) => `Set token at ${setAddress} is ` +
     `not the expected rebalancing set token current Set at ${currentSet}`,
+  ETHER_VALUE_NOT_UNDEFINED: () =>
+    `Ether value should not be undefined`,
 };

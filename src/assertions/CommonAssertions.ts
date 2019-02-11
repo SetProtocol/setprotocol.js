@@ -44,6 +44,12 @@ export class CommonAssertions {
     }
   }
 
+  public isNotUndefined(value: any, errorMessage: string) {
+    if (!value) {
+      throw new Error(errorMessage);
+    }
+  }
+
   public isNotEmptyArray(array: any[], errorMessage: string) {
     if (array.length == 0) {
       throw new Error(errorMessage);

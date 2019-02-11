@@ -157,7 +157,9 @@ describe('PayableExchangeIssueAPI', () => {
     let subjectExchangeIssueData: ExchangeIssueParams;
     let subjectExchangeOrder: (KyberTrade | ZeroExSignedFillOrder)[];
     let subjectCaller: Address;
-    let subjectEther: BigNumber;
+    let etherValue: BigNumber;
+
+    let subjectEther: string;
 
     let zeroExOrderMaker: Address;
 
@@ -206,13 +208,13 @@ describe('PayableExchangeIssueAPI', () => {
         ONE_DAY_IN_SECONDS,
       );
 
-      subjectEther = new BigNumber(10 ** 10);
+      etherValue = new BigNumber(10 ** 10);
 
       // Generate exchange issue data
       exchangeIssueSetAddress = baseSetToken.address;
       exchangeIssueQuantity = new BigNumber(10 ** 10);
       exchangeIssuePaymentToken = wrappedEtherMock.address;
-      exchangeIssuePaymentTokenAmount = subjectEther;
+      exchangeIssuePaymentTokenAmount = etherValue;
       exchangeIssueRequiredComponents = componentAddresses;
       exchangeIssueRequiredComponentAmounts = componentUnits.map(
         unit => unit.mul(exchangeIssueQuantity).div(baseSetNaturalUnit)
@@ -256,6 +258,8 @@ describe('PayableExchangeIssueAPI', () => {
       rebalancingSetQuantity = exchangeIssueQuantity.mul(DEFAULT_REBALANCING_NATURAL_UNIT).div(rebalancingUnitShares);
 
       subjectCaller = ACCOUNTS[1].address;
+
+      subjectEther = etherValue.toString();
     });
 
     async function subject(): Promise<string> {
@@ -263,7 +267,7 @@ describe('PayableExchangeIssueAPI', () => {
         subjectRebalancingSetAddress,
         subjectExchangeIssueData,
         subjectExchangeOrder,
-        { from: subjectCaller, value: subjectEther.toString() }
+        { from: subjectCaller, value: subjectEther }
       );
     }
 
@@ -301,6 +305,18 @@ describe('PayableExchangeIssueAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `Set token at ${notBaseSet} is not the expected rebalancing set token current Set at ${baseSetToken.address}`
+        );
+      });
+    });
+
+    describe.only('when an empty value is passed in', async () => {
+      beforeEach(async () => {
+        subjectEther = undefined;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+           `Ether value should not be undefined`
         );
       });
     });
