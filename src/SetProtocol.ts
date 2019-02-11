@@ -147,14 +147,12 @@ class SetProtocol {
     this.rebalancingManager = new RebalancingManagerAPI(this.web3);
     this.exchangeIssue = new ExchangeIssueAPI(this.web3, assertions, config.exchangeIssueModuleAddress);
 
-    if (config.payableExchangeIssue && config.wrappedEtherAddress) {
-      this.payableExchangeIssue = new PayableExchangeIssueAPI(
-        this.web3,
-        assertions,
-        config.payableExchangeIssue,
-        config.wrappedEtherAddress,
-      );
-    }
+    this.payableExchangeIssue = new PayableExchangeIssueAPI(
+      this.web3,
+      assertions,
+      config.payableExchangeIssue,
+      config.wrappedEtherAddress,
+    );
   }
 
   /**

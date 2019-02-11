@@ -296,6 +296,12 @@ export class OrderAssertions {
       );
 
       const normalizedTokenAddress = component.toLowerCase();
+
+      this.commonAssertions.isNotUndefined(
+        componentAmountsFromLiquidity[normalizedTokenAddress],
+        orderErrors.INSUFFIENT_LIQUIDITY_FOR_REQUIRED_COMPONENT(normalizedTokenAddress),
+      );
+
       this.commonAssertions.isEqualBigNumber(
         componentAmountsFromLiquidity[normalizedTokenAddress],
         requiredComponentAmountForFillQuantity,

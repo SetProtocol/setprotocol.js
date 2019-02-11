@@ -81,7 +81,7 @@ export class PayableExchangeIssueAPI {
       rebalancingSetAddress,
       exchangeIssueParams,
       orders,
-      txOpts.from,
+      txOpts,
     );
     await this.assertExchangeIssueParams(rebalancingSetAddress, exchangeIssueParams);
 
@@ -101,12 +101,12 @@ export class PayableExchangeIssueAPI {
     rebalancingSetAddress: Address,
     exchangeIssueParams: ExchangeIssueParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
-    transactionCaller: Address,
+    txOpts: Tx,
   ) {
     const { setAddress, paymentToken } = exchangeIssueParams;
 
-
-    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
+    this.assert.common.isNotUndefined(txOpts.value, exchangeIssueErrors.ETHER_VALUE_NOT_UNDEFINED());
+    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     this.assert.schema.isValidAddress('rebalancingSetAddress', rebalancingSetAddress);
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
@@ -126,10 +126,10 @@ export class PayableExchangeIssueAPI {
       exchangeIssueErrors.PAYMENT_TOKEN_NOT_WETH(paymentToken, this.wrappedEther)
     );
 
-    // await this.assert.order.assertExchangeIssueOrdersValidity(
-    //   exchangeIssueParams,
-    //   orders,
-    // );
+    await this.assert.order.assertExchangeIssueOrdersValidity(
+      exchangeIssueParams,
+      orders,
+    );
   }
 
   private async assertExchangeIssueParams(
