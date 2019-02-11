@@ -40,8 +40,24 @@ const classes = [
 		apiPath: 'setProtocol.erc20',
 	},
 	{
+		name: 'ExchangeIssueAPI',
+		apiPath: 'setProtocol.exchangeIssue',
+	},
+	{
+		name: 'PayableExchangeIssueAPI',
+		apiPath: 'setProtocol.payableExchangeIssue',
+	},
+	{
+		name: 'RebalancingManagerAPI',
+		apiPath: 'setProtocol.rebalancingManager',
+	},
+	{
 		name: 'SetTokenAPI',
 		apiPath: 'setProtocol.setToken',
+	},
+	{
+		name: 'SystemAPI',
+		apiPath: 'setProtocol.system',
 	},
 	{
 		name: 'RebalancingAPI',
