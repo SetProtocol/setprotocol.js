@@ -49,7 +49,6 @@ import {
   NULL_ADDRESS,
   ONE_DAY_IN_SECONDS,
   TX_DEFAULTS,
-  ZERO,
 } from '@src/constants';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { BigNumber } from '@src/util';
@@ -356,8 +355,6 @@ describe('SetProtocol', async () => {
     let subjectInitialUnitShares: BigNumber;
     let subjectProposalPeriod: BigNumber;
     let subjectRebalanceInterval: BigNumber;
-    let subjectEntranceFee: BigNumber;
-    let subjectRebalanceFee: BigNumber;
     let subjectName: string;
     let subjectSymbol: string;
     let subjectCaller: Address;
@@ -377,8 +374,6 @@ describe('SetProtocol', async () => {
       subjectInitialUnitShares = DEFAULT_UNIT_SHARES;
       subjectProposalPeriod = ONE_DAY_IN_SECONDS;
       subjectRebalanceInterval = ONE_DAY_IN_SECONDS;
-      subjectEntranceFee = ZERO;
-      subjectRebalanceFee = ZERO;
       subjectName = 'My Set';
       subjectSymbol = 'SET';
       subjectCaller = DEFAULT_ACCOUNT;
@@ -391,8 +386,6 @@ describe('SetProtocol', async () => {
         subjectInitialUnitShares,
         subjectProposalPeriod,
         subjectRebalanceInterval,
-        subjectEntranceFee,
-        subjectRebalanceFee,
         subjectName,
         subjectSymbol,
         { from: subjectCaller }

@@ -235,8 +235,6 @@ export class FactoryAPI {
    *                                denominated in seconds
    * @param  rebalanceInterval    Duration after a rebalance is completed when the manager cannot initiate a new
    *                                Rebalance event
-   * @param  entranceFee          Entrance fee as a percentage of initialSet when minting the Rebalancing Set
-   * @param  rebalanceFee         Rebalance fee as a percentage of the nextSet when rebalance is settled
    * @param  name                 Name for RebalancingSet, i.e. "Top 10"
    * @param  symbol               Symbol for Set, i.e. "TOP10"
    * @param  txOpts               Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
@@ -248,8 +246,6 @@ export class FactoryAPI {
     initialUnitShares: BigNumber,
     proposalPeriod: BigNumber,
     rebalanceInterval: BigNumber,
-    entranceFee: BigNumber,
-    rebalanceFee: BigNumber,
     name: string,
     symbol: string,
     txOpts: Tx,
@@ -269,8 +265,6 @@ export class FactoryAPI {
       manager,
       proposalPeriod,
       rebalanceInterval,
-      entranceFee,
-      rebalanceFee,
     );
 
     return await this.core.create(

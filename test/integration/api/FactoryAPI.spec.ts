@@ -374,8 +374,6 @@ describe('FactoryAPI', () => {
     let subjectInitialUnitShares: BigNumber;
     let subjectProposalPeriod: BigNumber;
     let subjectRebalanceInterval: BigNumber;
-    let subjectEntranceFee: BigNumber;
-    let subjectRebalanceFee: BigNumber;
     let subjectName: string;
     let subjectSymbol: string;
     let subjectCaller: Address;
@@ -395,8 +393,6 @@ describe('FactoryAPI', () => {
       subjectInitialUnitShares = DEFAULT_UNIT_SHARES;
       subjectProposalPeriod = ONE_DAY_IN_SECONDS;
       subjectRebalanceInterval = ONE_DAY_IN_SECONDS;
-      subjectEntranceFee = ZERO;
-      subjectRebalanceFee = ZERO;
       subjectName = 'My Set';
       subjectSymbol = 'SET';
       subjectCaller = DEFAULT_ACCOUNT;
@@ -409,8 +405,6 @@ describe('FactoryAPI', () => {
         subjectInitialUnitShares,
         subjectProposalPeriod,
         subjectRebalanceInterval,
-        subjectEntranceFee,
-        subjectRebalanceFee,
         subjectName,
         subjectSymbol,
         { from: subjectCaller }
