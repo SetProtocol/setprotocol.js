@@ -185,6 +185,20 @@ export class RebalancingAPI {
   }
 
   /**
+   * Ends failed auction and either returns to Default if no bids or sets to Drawdown if there are bids
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
+   *                                          gasPrice data
+   * @return                                Transaction hash
+   */
+  public async endFailedAuctionAsync(rebalancingSetTokenAddress: Address, txOpts: Tx): Promise<string> {
+    await this.assertEndFailedAuction(rebalancingSetTokenAddress);
+
+    return await this.rebalancingSetToken.endFailedAuction(rebalancingSetTokenAddress, txOpts);
+  }
+
+  /**
    * Allows user to bid on a rebalance auction occuring on a Rebalancing Set Token
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
@@ -441,6 +455,14 @@ export class RebalancingAPI {
 
     await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
     await this.assert.rebalancing.enoughSetsRebalanced(rebalancingSetTokenAddress);
+  }
+
+  private async assertEndFailedAuction(rebalancingSetTokenAddress: Address) {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+
+    await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
+    await this.assert.rebalancing.passedPivotTime(rebalancingSetTokenAddress);
+    await this.assert.rebalancing.enoughRemainingBids(rebalancingSetTokenAddress);
   }
 
   private async assertBid(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: Tx) {

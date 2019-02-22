@@ -793,6 +793,316 @@ describe('RebalancingAPI', () => {
     });
   });
 
+  describe('endFailedAuctionAsync', async () => {
+    let currentSetToken: SetTokenContract;
+    let nextSetToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let proposalPeriod: BigNumber;
+    let managerAddress: Address;
+    let priceCurve: ConstantAuctionPriceCurveContract;
+
+    let rebalancingSetQuantityToIssue: BigNumber;
+
+    let subjectRebalancingSetTokenAddress: Address;
+    let subjectCaller: Address;
+
+    let pivotTime: BigNumber;
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 2;
+      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
+      proposalPeriod = ONE_DAY_IN_SECONDS;
+      managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      // Issue currentSetToken
+      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
+      // Deploy price curve used in auction
+      priceCurve = await deployConstantAuctionPriceCurveAsync(
+        web3,
+        DEFAULT_AUCTION_PRICE_NUMERATOR,
+        DEFAULT_AUCTION_PRICE_DENOMINATOR
+      );
+
+      addPriceCurveToCoreAsync(
+        core,
+        priceCurve.address
+      );
+
+      subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await rebalancingAPI.endFailedAuctionAsync(
+        subjectRebalancingSetTokenAddress,
+        { from: subjectCaller }
+      );
+    }
+
+    describe('when the Rebalancing Set Token is in Default state', async () => {
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Rebalance state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Proposal state', async () => {
+      beforeEach(async () => {
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToProposeAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice
+        );
+      });
+
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Rebalance state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Rebalance state and is before the pivot time', async () => {
+      beforeEach(async () => {
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToRebalanceAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice
+        );
+
+        pivotTime = setAuctionTimeToPivot;
+      });
+
+      it('throw', async () => {
+        const lastBlock = await web3.eth.getBlock('latest');
+        const auctionStartTimestamp = new BigNumber(lastBlock.timestamp);
+        const pivotTimeStart = auctionStartTimestamp.add(pivotTime).toString();
+        const pivotTimeFormattedDate = moment(+pivotTimeStart * 1000)
+          .format('dddd, MMMM Do YYYY, h:mm:ss a');
+        return expect(subject()).to.be.rejectedWith(
+          `Pivot time not yet reached. Pivot time starts at ${pivotTimeFormattedDate}`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Rebalance state, is in the pivot time and has 0 bids', async () => {
+      beforeEach(async () => {
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToRebalanceAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice
+        );
+
+        // Calculate pivot time start
+        const lastBlockStart = await web3.eth.getBlock('latest');
+        const auctionStartTimestamp = new BigNumber(lastBlockStart.timestamp);
+        const pivotTimeStart = auctionStartTimestamp.add(setAuctionTimeToPivot).toNumber();
+        timeKeeper.freeze(pivotTimeStart * 1000 + 1);
+
+        // Fast forward to 1 second after pivot time
+        await increaseChainTimeAsync(web3, new BigNumber(pivotTimeStart).add(1).mul(1000));
+      });
+
+      afterEach(async () => {
+        timeKeeper.reset();
+      });
+
+      test('updates the rebalancing properties correctly', async () => {
+        const expectedUnitShares = await getExpectedUnitSharesAsync(
+          rebalancingSetToken,
+          nextSetToken,
+          vault
+        );
+
+        await subject();
+
+        const lastBlockEnd = await web3.eth.getBlock('latest');
+        const auctionEndTimestamp = new BigNumber(lastBlockEnd.timestamp);
+        const returnedRebalanceState = await rebalancingSetTokenWrapper.rebalanceState(
+          subjectRebalancingSetTokenAddress
+        );
+        const returnedCurrentSet = await rebalancingSetTokenWrapper.currentSet(subjectRebalancingSetTokenAddress);
+        const returnedUnitShares = await rebalancingSetTokenWrapper.unitShares(subjectRebalancingSetTokenAddress);
+        const returnedLastRebalanceTimestamp = await rebalancingSetTokenWrapper.lastRebalanceTimestamp(
+          subjectRebalancingSetTokenAddress
+        );
+
+        expect(returnedRebalanceState).to.eql('Default');
+
+        expect(returnedCurrentSet).to.not.eql(nextSetToken.address);
+
+        expect(returnedUnitShares).to.not.be.bignumber.equal(expectedUnitShares);
+
+        expect(returnedLastRebalanceTimestamp).to.be.bignumber.equal(auctionEndTimestamp);
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Rebalance state, in the pivot time and\
+    no units are remaining', async () => {
+      beforeEach(async () => {
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToRebalanceAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice
+        );
+
+        await rebalanceAuctionModule.bid.sendTransactionAsync(
+          rebalancingSetToken.address,
+          rebalancingSetQuantityToIssue
+        );
+
+        // Calculate pivot time start
+        const lastBlockStart = await web3.eth.getBlock('latest');
+        const auctionStartTimestamp = new BigNumber(lastBlockStart.timestamp);
+        const pivotTimeStart = auctionStartTimestamp.add(setAuctionTimeToPivot).toNumber();
+        timeKeeper.freeze(pivotTimeStart * 1000 + 1);
+      });
+
+      afterEach(async () => {
+        timeKeeper.reset();
+      });
+
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Auction has no remaining bids. Cannot drawdown Set at ${rebalancingSetToken.address}.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Rebalance state, is in the pivot time and has 1 bid', async () => {
+      beforeEach(async () => {
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+
+        await transitionToRebalanceAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice
+        );
+
+        // Calculate pivot time start
+        const lastBlockStart = await web3.eth.getBlock('latest');
+        const auctionStartTimestamp = new BigNumber(lastBlockStart.timestamp);
+        const pivotTimeStart = auctionStartTimestamp.add(setAuctionTimeToPivot).toNumber();
+        timeKeeper.freeze(pivotTimeStart * 1000 + 1);
+
+        // Fast forward to 1 second after pivot time
+        await increaseChainTimeAsync(web3, new BigNumber(pivotTimeStart).add(1).mul(1000));
+      });
+
+      afterEach(async () => {
+        timeKeeper.reset();
+      });
+
+      test('draws down the ', async () => {
+        const expectedUnitShares = await getExpectedUnitSharesAsync(
+          rebalancingSetToken,
+          nextSetToken,
+          vault
+        );
+
+        const [minimumBid] = await rebalancingSetToken.getBiddingParameters.callAsync();
+
+        // Bid entire minus minimum amount
+        await rebalanceAuctionModule.bid.sendTransactionAsync(
+          rebalancingSetToken.address,
+          rebalancingSetQuantityToIssue.sub(minimumBid).sub(minimumBid)
+        );
+
+        await subject();
+
+        const lastBlockEnd = await web3.eth.getBlock('latest');
+        const auctionEndTimestamp = new BigNumber(lastBlockEnd.timestamp);
+        const returnedRebalanceState = await rebalancingSetTokenWrapper.rebalanceState(
+          subjectRebalancingSetTokenAddress
+        );
+        const returnedCurrentSet = await rebalancingSetTokenWrapper.currentSet(subjectRebalancingSetTokenAddress);
+        const returnedUnitShares = await rebalancingSetTokenWrapper.unitShares(subjectRebalancingSetTokenAddress);
+        const returnedLastRebalanceTimestamp = await rebalancingSetTokenWrapper.lastRebalanceTimestamp(
+          subjectRebalancingSetTokenAddress
+        );
+
+        expect(returnedRebalanceState).to.eql('Drawdown');
+
+        expect(returnedCurrentSet).to.not.eql(nextSetToken.address);
+
+        expect(returnedUnitShares).to.not.be.bignumber.equal(expectedUnitShares);
+
+        expect(returnedLastRebalanceTimestamp).to.be.bignumber.equal(auctionEndTimestamp);
+      });
+    });
+  });
+
   describe('bidAsync', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
