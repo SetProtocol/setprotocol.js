@@ -232,6 +232,46 @@ export class RebalancingAssertions {
   }
 
   /**
+   * Throws if not past pivot time
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   */
+  public async passedPivotTime(rebalancingSetTokenAddress: Address): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+    const [
+      auctionStartTime,
+      auctionTimeToPivot,
+    ] = await rebalancingSetTokenInstance.getAuctionParameters.callAsync();
+
+    const pivotTimeStart = auctionStartTime.add(auctionTimeToPivot).mul(1000);
+
+    const currentTimeStamp = new BigNumber(Date.now());
+    if (pivotTimeStart.greaterThanOrEqualTo(currentTimeStamp)) {
+      const pivotTimeStartFormattedDate = moment(
+        pivotTimeStart.toNumber()).format('dddd, MMMM Do YYYY, h:mm:ss a'
+      );
+      throw new Error(rebalancingErrors.PIVOT_TIME_NOT_PASSED(pivotTimeStartFormattedDate));
+    }
+  }
+
+  /**
+   * Throws if auction has no remaining bids
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   */
+  public async enoughRemainingBids(
+    rebalancingSetTokenAddress: Address,
+  ): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+    const [minimumBid, remainingCurrentSets] = await rebalancingSetTokenInstance.getBiddingParameters.callAsync();
+    if (remainingCurrentSets.lessThan(minimumBid)) {
+      throw new Error(rebalancingErrors.NOT_VALID_DRAWDOWN(
+        rebalancingSetTokenAddress
+      ));
+    }
+  }
+
+  /**
    * Throws if user bids to rebalance an amount of current set token that is greater than amount of current set
    * token remaining.
    *

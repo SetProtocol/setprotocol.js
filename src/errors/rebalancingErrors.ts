@@ -35,4 +35,8 @@ export const rebalancingErrors = {
     `bid quantity, ${bidQuantity}, exceeds the remaining current sets, ${remainingCurrentSets}.`,
   BID_AMOUNT_NOT_MULTIPLE_OF_MINIMUM_BID: (bidQuantity: string, minimumBid: string) => `The submitted bid quantity` +
     `, ${bidQuantity}, must be a multiple of the minimumBid, ${minimumBid}.`,
+  PIVOT_TIME_NOT_PASSED: (pivotTimeStart: string) => `Pivot time not yet reached. Pivot time ` +
+    `starts at ${pivotTimeStart}`,
+  NOT_VALID_DRAWDOWN: (rebalancingSetAddress: string) =>
+    `Auction has no remaining bids. Cannot drawdown Set at ${rebalancingSetAddress}.`,
 };

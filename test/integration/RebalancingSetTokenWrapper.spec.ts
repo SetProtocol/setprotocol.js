@@ -997,6 +997,165 @@ describe('SetTokenWrapper', () => {
     });
   });
 
+  describe('endFailedAuction', async () => {
+    let currentSetToken: SetTokenContract;
+    let nextSetToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+
+    let rebalancingSetQuantityToIssue: BigNumber;
+
+    let subjectRebalancingSetTokenAddress: Address;
+    let subjectCaller: Address;
+
+    let pivotTime: BigNumber;
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 2;
+      const setTokens = await deploySetTokensAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      currentSetToken = setTokens[0];
+      nextSetToken = setTokens[1];
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
+      const proposalPeriod = ONE_DAY_IN_SECONDS;
+      const managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      // Issue currentSetToken
+      await core.issue.sendTransactionAsync(currentSetToken.address, ether(7), TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
+      // Deploy price curve used in auction
+      const priceCurve = await deployConstantAuctionPriceCurveAsync(
+        web3,
+        DEFAULT_AUCTION_PRICE_NUMERATOR,
+        DEFAULT_AUCTION_PRICE_DENOMINATOR
+      );
+
+      addPriceCurveToCoreAsync(
+        core,
+        priceCurve.address
+      );
+
+      // Transition to proposal state
+      const auctionPriceCurveAddress = priceCurve.address;
+      const setAuctionTimeToPivot = new BigNumber(100000);
+      const setAuctionStartPrice = new BigNumber(500);
+      const setAuctionPivotPrice = new BigNumber(1000);
+      await transitionToRebalanceAsync(
+        web3,
+        rebalancingSetToken,
+        managerAddress,
+        nextSetToken.address,
+        auctionPriceCurveAddress,
+        setAuctionTimeToPivot,
+        setAuctionStartPrice,
+        setAuctionPivotPrice
+      );
+
+      subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
+      subjectCaller = managerAddress;
+      pivotTime = setAuctionTimeToPivot;
+    });
+
+    async function subject(): Promise<any> {
+      return await rebalancingSetTokenWrapper.endFailedAuction(
+        subjectRebalancingSetTokenAddress,
+        { from: subjectCaller }
+      );
+    }
+
+    test('it returns an auction to Default correctly if no bids and past the pivot time', async () => {
+      const expectedUnitShares = await getExpectedUnitSharesAsync(
+        rebalancingSetToken,
+        nextSetToken,
+        vault
+      );
+
+      // Fast forward to 1 second after pivot time
+      await increaseChainTimeAsync(web3, pivotTime.add(1));
+
+      await subject();
+
+      const lastBlock = await web3.eth.getBlock('latest');
+      const auctionEndTimestamp = new BigNumber(lastBlock.timestamp);
+
+      const returnedRebalanceState = await rebalancingSetTokenWrapper.rebalanceState(subjectRebalancingSetTokenAddress);
+      const returnedCurrentSet = await rebalancingSetTokenWrapper.currentSet(subjectRebalancingSetTokenAddress);
+      const returnedUnitShares = await rebalancingSetTokenWrapper.unitShares(subjectRebalancingSetTokenAddress);
+      const returnedLastRebalanceTimestamp = await rebalancingSetTokenWrapper.lastRebalanceTimestamp(
+        subjectRebalancingSetTokenAddress
+      );
+
+      expect(returnedRebalanceState).to.eql('Default');
+
+      expect(returnedCurrentSet).to.not.eql(nextSetToken.address);
+
+      expect(returnedUnitShares).to.not.be.bignumber.equal(expectedUnitShares);
+
+      expect(returnedLastRebalanceTimestamp).to.be.bignumber.equal(auctionEndTimestamp);
+    });
+
+    test('it sets an auction to Drawdown correctly if there is a bid and past the pivot time', async () => {
+      const expectedUnitShares = await getExpectedUnitSharesAsync(
+        rebalancingSetToken,
+        nextSetToken,
+        vault
+      );
+
+      // Fast forward to 1 second after pivot time
+      await increaseChainTimeAsync(web3, pivotTime.add(1));
+
+      // Bid entire minus minimum amount
+      const returnedMinimumBid = await rebalancingSetTokenWrapper.minimumBid(subjectRebalancingSetTokenAddress);
+      await rebalanceAuctionModule.bid.sendTransactionAsync(
+        rebalancingSetToken.address,
+        rebalancingSetQuantityToIssue.sub(returnedMinimumBid)
+      );
+
+      await subject();
+
+      const lastBlock = await web3.eth.getBlock('latest');
+      const auctionEndTimestamp = new BigNumber(lastBlock.timestamp);
+
+      const returnedRebalanceState = await rebalancingSetTokenWrapper.rebalanceState(subjectRebalancingSetTokenAddress);
+      const returnedCurrentSet = await rebalancingSetTokenWrapper.currentSet(subjectRebalancingSetTokenAddress);
+      const returnedUnitShares = await rebalancingSetTokenWrapper.unitShares(subjectRebalancingSetTokenAddress);
+      const returnedLastRebalanceTimestamp = await rebalancingSetTokenWrapper.lastRebalanceTimestamp(
+        subjectRebalancingSetTokenAddress
+      );
+
+      expect(returnedRebalanceState).to.eql('Drawdown');
+
+      expect(returnedCurrentSet).to.not.eql(nextSetToken.address);
+
+      expect(returnedUnitShares).to.not.be.bignumber.equal(expectedUnitShares);
+
+      expect(returnedLastRebalanceTimestamp).to.be.bignumber.equal(auctionEndTimestamp);
+    });
+  });
+
   describe('tokenIsComponent', async () => {
     let currentSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;

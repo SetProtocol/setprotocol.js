@@ -129,6 +129,24 @@ export class RebalancingSetTokenWrapper {
   }
 
   /**
+   * Ends a failed auction
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @param  txOpts                  Transaction options
+   * @return                         Transaction hash
+   */
+  public async endFailedAuction(
+    rebalancingSetAddress: Address,
+    txOpts: Tx
+  ): Promise<string> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    return await rebalancingSetTokenInstance.endFailedAuction.sendTransactionAsync(
+      txOpts
+    );
+  }
+
+  /**
    * Gets token inflow and outflows for current rebalance price
    *
    * @param  rebalancingSetAddress   Address of the Set
@@ -432,8 +450,10 @@ export class RebalancingSetTokenWrapper {
       return 'Default';
     } else if (stateNumber.eq(new BigNumber(1))) {
       return 'Proposal';
-    } else {
+    } else if (stateNumber.eq(new BigNumber(2))) {
       return 'Rebalance';
+    } else {
+      return 'Drawdown';
     }
   }
 }
