@@ -203,33 +203,23 @@ export class RebalancingAPI {
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
    * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
+   * @param  shouldWithdraw                 Boolean to withdraw back to signer's wallet or leave in vault
    * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
    *                                          gasPrice data
    * @return                                Transaction hash
    */
-  public async bidAsync(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: Tx): Promise<string> {
-    await this.assertBid(rebalancingSetTokenAddress, bidQuantity, txOpts);
-
-    return await this.rebalancingAuctionModule.bid(rebalancingSetTokenAddress, bidQuantity, txOpts);
-  }
-
-  /**
-   * Allows user to bid and withdraw to wallet on a rebalance auction occuring on a Rebalancing Set Token
-   *
-   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
-   * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
-   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
-   *                                          gasPrice data
-   * @return                                Transaction hash
-   */
-  public async bidAndWithdrawAsync(
+  public async bidAsync(
     rebalancingSetTokenAddress: Address,
     bidQuantity: BigNumber,
+    shouldWithdraw: boolean,
     txOpts: Tx
   ): Promise<string> {
     await this.assertBid(rebalancingSetTokenAddress, bidQuantity, txOpts);
-
-    return await this.rebalancingAuctionModule.bidAndWithdraw(rebalancingSetTokenAddress, bidQuantity, txOpts);
+    if (shouldWithdraw) {
+      return await this.rebalancingAuctionModule.bidAndWithdraw(rebalancingSetTokenAddress, bidQuantity, txOpts);
+    } else {
+      return await this.rebalancingAuctionModule.bid(rebalancingSetTokenAddress, bidQuantity, txOpts);
+    }
   }
 
   /**
