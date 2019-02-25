@@ -233,6 +233,20 @@ export class RebalancingAPI {
   }
 
   /**
+   * Burn rebalancing Set token and transfer ownership of collateral in Vault to owner in Drawdown state
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
+   *                                          gasPrice data
+   * @return                                Transaction hash
+   */
+  public async withdrawFromFailedRebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: Tx): Promise<string> {
+    await this.assertWithdrawFromFailedRebalance(rebalancingSetTokenAddress, txOpts);
+
+    return await this.rebalancingAuctionModule.withdrawFromFailedRebalance(rebalancingSetTokenAddress, txOpts);
+  }
+
+  /**
    * Fetches the current token inflows and outflows for a given bid quantity, returns `Component`
    * objects reflecting token inflows and outflows. Tokens flows of 0 are omitted
    *
@@ -463,6 +477,13 @@ export class RebalancingAPI {
     await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
     await this.assert.rebalancing.passedPivotTime(rebalancingSetTokenAddress);
     await this.assert.rebalancing.enoughRemainingBids(rebalancingSetTokenAddress);
+  }
+
+  private async assertWithdrawFromFailedRebalance(rebalancingSetTokenAddress: Address, txOpts: Tx) {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+
+    await this.assert.setToken.hasSufficientBalances(rebalancingSetTokenAddress, txOpts.from, new BigNumber(0));
+    await this.assert.rebalancing.isInDrawdownState(rebalancingSetTokenAddress);
   }
 
   private async assertBid(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: Tx) {

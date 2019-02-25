@@ -44,6 +44,7 @@ export {
   increaseChainTimeAsync,
   transitionToProposeAsync,
   transitionToRebalanceAsync,
+  transitionToDrawdownAsync,
   updateMedianizerPriceAsync,
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync,

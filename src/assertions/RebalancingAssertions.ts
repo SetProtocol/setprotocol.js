@@ -116,6 +116,20 @@ export class RebalancingAssertions {
   }
 
   /**
+   * Throws if given rebalancingSetToken is not in Drawdown state
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   */
+  public async isInDrawdownState(rebalancingSetTokenAddress: Address): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+
+    const currentState = await rebalancingSetTokenInstance.rebalanceState.callAsync();
+    if (!currentState.eq(RebalancingState.DRAWDOWN)) {
+      throw new Error(rebalancingErrors.INCORRECT_STATE(rebalancingSetTokenAddress, 'Drawdown'));
+    }
+  }
+
+  /**
    * Throws if caller of rebalancingSetToken is not manager
    *
    * @param  caller   The address of the rebalancing set token
