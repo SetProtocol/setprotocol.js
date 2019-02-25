@@ -25,6 +25,7 @@ import { ExchangeIssueModuleWrapper } from './ExchangeIssueModuleWrapper';
 import { IssuanceOrderModuleWrapper } from './IssuanceOrderModuleWrapper';
 import { KyberNetworkWrapper } from './KyberNetworkWrapper';
 import { PayableExchangeIssueWrapper } from './PayableExchangeIssueWrapper';
+import { PriceFeedWrapper } from './PriceFeedWrapper';
 import { RebalancingAuctionModuleWrapper } from './RebalancingAuctionModuleWrapper';
 import { RebalancingSetTokenWrapper } from './RebalancingSetTokenWrapper';
 import { RebalancingTokenIssuanceModuleWrapper } from './RebalancingTokenIssuanceModuleWrapper';
@@ -43,6 +44,7 @@ export {
   IssuanceOrderModuleWrapper,
   KyberNetworkWrapper,
   PayableExchangeIssueWrapper,
+  PriceFeedWrapper,
   RebalancingAuctionModuleWrapper,
   RebalancingSetTokenWrapper,
   RebalancingTokenIssuanceModuleWrapper,

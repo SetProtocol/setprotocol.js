@@ -32,20 +32,23 @@ export {
 } from './exchangeHelpers';
 
 export {
-  addPriceCurveToCoreAsync,
   addPriceFeedOwnerToMedianizer,
+  deployMedianizerAsync,
+  updateMedianizerPriceAsync
+} from './oracleHelpers';
+
+export {
+  addPriceCurveToCoreAsync,
   constructInflowOutflowArraysAsync,
   constructInflowOutflowAddressesArraysAsync,
   createDefaultRebalancingSetTokenAsync,
   deployConstantAuctionPriceCurveAsync,
   deployBtcEthManagerContractAsync,
-  deployMedianizerAsync,
   deploySetTokensAsync,
   increaseChainTimeAsync,
   transitionToProposeAsync,
   transitionToRebalanceAsync,
   transitionToDrawdownAsync,
-  updateMedianizerPriceAsync,
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync,
 } from './rebalancingHelpers';
