@@ -1446,7 +1446,7 @@ describe('RebalancingAPI', () => {
     });
   });
 
-  describe.only('withdrawFromFailedRebalance', async () => {
+  describe('withdrawFromFailedRebalance', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
