@@ -30,7 +30,6 @@ import { Address, Web3Utils } from 'set-protocol-utils';
 import * as setProtocolUtils from 'set-protocol-utils';
 import {
   CoreContract,
-  IssuanceOrderModuleContract,
   MedianContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
@@ -82,7 +81,6 @@ describe('SystemAPI', () => {
   let coreInstance: CoreContract;
   let setTokenFactoryInstance: SetTokenFactoryContract;
   let rebalanceAuctionModuleInstance: RebalanceAuctionModuleContract;
-  let issuanceOrderModuleInstance: IssuanceOrderModuleContract;
   let rebalancingSetTokenFactoryInstance: RebalancingSetTokenFactoryContract;
 
   beforeAll(() => {
@@ -103,14 +101,12 @@ describe('SystemAPI', () => {
       setTokenFactory,
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
-      issuanceOrderModule,
       ,
       rebalancingTokenIssuanceModule,
     ] = await deployBaseContracts(web3);
 
     coreInstance = core;
     setTokenFactoryInstance = setTokenFactory;
-    issuanceOrderModuleInstance = issuanceOrderModule;
     rebalanceAuctionModuleInstance = rebalanceAuctionModule;
     rebalancingSetTokenFactoryInstance = rebalancingSetTokenFactory;
 
@@ -126,7 +122,6 @@ describe('SystemAPI', () => {
       transferProxyAddress: transferProxy.address,
       vaultAddress: vault.address,
       rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
-      issuanceOrderModuleAddress: issuanceOrderModule.address,
       kyberNetworkWrapperAddress: SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
       setTokenFactoryAddress: setTokenFactory.address,
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
@@ -179,8 +174,8 @@ describe('SystemAPI', () => {
 
     beforeEach(async () => {
       systemAuthorizableAddresses = {
-        transferProxy: [coreInstance.address, issuanceOrderModuleInstance.address],
-        vault: [coreInstance.address, rebalanceAuctionModuleInstance.address, issuanceOrderModuleInstance.address],
+        transferProxy: [coreInstance.address],
+        vault: [coreInstance.address, rebalanceAuctionModuleInstance.address],
       };
     });
 
@@ -209,7 +204,7 @@ describe('SystemAPI', () => {
     beforeEach(async () => {
       alternativeTimeLockPeriod = new BigNumber(100);
 
-      await issuanceOrderModuleInstance.setTimeLockPeriod.sendTransactionAsync(
+      await coreInstance.setTimeLockPeriod.sendTransactionAsync(
         alternativeTimeLockPeriod,
         { from: DEFAULT_ACCOUNT}
       );
@@ -220,11 +215,10 @@ describe('SystemAPI', () => {
     }
 
     test('returns the correct timeLockPeriods', async () => {
-      const { core, vault, transferProxy, issuanceOrderModule} = await subject();
-      expect(core).to.bignumber.equal(ZERO);
+      const { core, vault, transferProxy} = await subject();
+      expect(core).to.bignumber.equal(alternativeTimeLockPeriod);
       expect(vault).to.bignumber.equal(ZERO);
       expect(transferProxy).to.bignumber.equal(ZERO);
-      expect(issuanceOrderModule).to.bignumber.equal(alternativeTimeLockPeriod);
     });
   });
 
@@ -303,7 +297,7 @@ describe('SystemAPI', () => {
     beforeEach(async () => {
       alternativeOwner = ACCOUNTS[2].address;
 
-      await issuanceOrderModuleInstance.transferOwnership.sendTransactionAsync(
+      await coreInstance.transferOwnership.sendTransactionAsync(
         alternativeOwner,
         { from: DEFAULT_ACCOUNT}
       );
@@ -314,11 +308,10 @@ describe('SystemAPI', () => {
     }
 
     test('returns the correct owners', async () => {
-      const { core, vault, transferProxy, issuanceOrderModule} = await subject();
-      expect(core).to.equal(DEFAULT_ACCOUNT);
+      const { core, vault, transferProxy} = await subject();
+      expect(core).to.equal(alternativeOwner);
       expect(vault).to.equal(DEFAULT_ACCOUNT);
       expect(transferProxy).to.equal(DEFAULT_ACCOUNT);
-      expect(issuanceOrderModule).to.equal(alternativeOwner);
     });
   });
 
@@ -359,7 +352,6 @@ describe('SystemAPI', () => {
 
       const expectedModules = [
         rebalanceAuctionModuleInstance.address,
-        issuanceOrderModuleInstance.address,
       ];
       expect(JSON.stringify(modules)).to.equal(JSON.stringify(expectedModules));
     });

@@ -113,7 +113,7 @@ describe('RebalancingManagerAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    [core, transferProxy, , factory, rebalancingFactory, , , whitelist] = await deployBaseContracts(web3);
+    [core, transferProxy, , factory, rebalancingFactory, , whitelist] = await deployBaseContracts(web3);
 
     btcMedianizer = await deployMedianizerAsync(web3);
     await addPriceFeedOwnerToMedianizer(btcMedianizer, DEFAULT_ACCOUNT);

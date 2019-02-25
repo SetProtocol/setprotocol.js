@@ -107,7 +107,7 @@ describe('IssuanceAPI', () => {
       transferProxy.address,
       vault.address,
     );
-    const assertions = new Assertions(web3, coreWrapper);
+    const assertions = new Assertions(web3);
     issuanceAPI = new IssuanceAPI(web3, coreWrapper, assertions);
 
     componentTokens = await deployTokensAsync(3, web3);

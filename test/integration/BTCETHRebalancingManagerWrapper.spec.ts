@@ -119,7 +119,7 @@ describe('BTCETHRebalancingManagerWrapper', () => {
       core,
       transferProxy, ,
       factory,
-      rebalancingFactory, , ,
+      rebalancingFactory, ,
       whitelist,
     ] = await deployBaseContracts(web3);
 

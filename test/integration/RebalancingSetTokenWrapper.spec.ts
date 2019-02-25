@@ -74,7 +74,7 @@ const web3Utils = new Web3Utils(web3);
 
 let currentSnapshotId: number;
 
-describe('SetTokenWrapper', () => {
+describe('RebalancingSetTokenWrapper', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
@@ -94,7 +94,7 @@ describe('SetTokenWrapper', () => {
       vault,
       setTokenFactory,
       rebalancingSetTokenFactory,
-      rebalanceAuctionModule, ,
+      rebalanceAuctionModule,
       whitelist,
     ] = await deployBaseContracts(web3);
 

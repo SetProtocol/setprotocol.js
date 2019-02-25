@@ -33,9 +33,8 @@ import {
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { SetTokenAPI } from '@src/api';
-import { DEFAULT_ACCOUNT, NULL_ADDRESS } from '@src/constants';
+import { DEFAULT_ACCOUNT } from '@src/constants';
 import { BigNumber, ether } from '@src/util';
-import { CoreWrapper } from '@src/wrappers';
 import { Assertions } from '@src/assertions';
 import ChaiSetup from '@test/helpers/chaiSetup';
 import {
@@ -68,13 +67,7 @@ describe('SetTokenAPI', () => {
       setTokenFactory, , , ,
     ] = await deployBaseContracts(web3);
 
-    const coreWrapper = new CoreWrapper(
-      web3,
-      NULL_ADDRESS,
-      NULL_ADDRESS,
-      NULL_ADDRESS,
-    );
-    const assertions = new Assertions(web3, coreWrapper);
+    const assertions = new Assertions(web3);
     setTokenAPI = new SetTokenAPI(web3, assertions);
   });
 

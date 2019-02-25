@@ -125,7 +125,7 @@ class SetProtocol {
       config.vaultAddress,
     );
 
-    const assertions = new Assertions(this.web3, this.core);
+    const assertions = new Assertions(this.web3);
 
     this.vault = new VaultWrapper(this.web3, config.vaultAddress);
 
@@ -136,8 +136,6 @@ class SetProtocol {
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
     this.orders = new OrderAPI(
       this.web3,
-      assertions,
-      config.issuanceOrderModuleAddress,
       config.kyberNetworkWrapperAddress,
       config.vaultAddress
     );

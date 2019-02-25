@@ -5,8 +5,6 @@ import {
   ERC20Wrapper,
   KyberNetworkWrapper,
   KyberNetworkWrapperContract,
-  TakerWalletWrapper,
-  TakerWalletWrapperContract,
   TransferProxyContract,
   ZeroExExchangeWrapper,
   ZeroExExchangeWrapperContract,
@@ -16,45 +14,6 @@ import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import { TX_DEFAULTS } from '@src/constants';
 
 const contract = require('truffle-contract');
-
-export const deployTakerWalletWrapperContract = async (
-  web3: Web3,
-  transferProxy: TransferProxyContract,
-  core: CoreContract,
-): Promise<TakerWalletWrapperContract> => {
-  const truffleTakerWalletWrapperContract = contract(TakerWalletWrapper);
-  truffleTakerWalletWrapperContract.setProvider(web3.currentProvider);
-  truffleTakerWalletWrapperContract.setNetwork(50);
-  truffleTakerWalletWrapperContract.defaults(TX_DEFAULTS);
-
-  const truffleERC20WrapperContract = contract(ERC20Wrapper);
-  truffleERC20WrapperContract.setProvider(web3.currentProvider);
-  truffleERC20WrapperContract.setNetwork(50);
-  truffleERC20WrapperContract.defaults(TX_DEFAULTS);
-
-  const deployedERC20Wrapper = await truffleERC20WrapperContract.new();
-  await truffleTakerWalletWrapperContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
-
-  const deployedTakerWalletWrapper = await truffleTakerWalletWrapperContract.new(
-    core.address,
-    transferProxy.address,
-    TX_DEFAULTS
-  );
-  const takerWalletWrapperContract = await TakerWalletWrapperContract.at(
-    deployedTakerWalletWrapper.address,
-    web3,
-    TX_DEFAULTS,
-  );
-
-  await transferProxy.addAuthorizedAddress.sendTransactionAsync(deployedTakerWalletWrapper.address, TX_DEFAULTS);
-  await core.addExchange.sendTransactionAsync(
-    SetProtocolUtils.EXCHANGES.TAKER_WALLET,
-    takerWalletWrapperContract.address,
-    TX_DEFAULTS
-  );
-
-  return takerWalletWrapperContract;
-};
 
 export const deployZeroExExchangeWrapperContract = async (
   web3: Web3,

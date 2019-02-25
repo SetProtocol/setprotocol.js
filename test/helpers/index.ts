@@ -7,7 +7,6 @@ export {
   deployBaseContracts,
   deployCoreContract,
   deployExchangeIssueModuleAsync,
-  deployIssuanceOrderModuleContract,
   deployNoDecimalTokenAsync,
   deployPayableExchangeIssueAsync,
   deployRebalancingSetTokenFactoryContract,
@@ -27,7 +26,6 @@ export {
 
 export {
   deployKyberNetworkWrapperContract,
-  deployTakerWalletWrapperContract,
   deployZeroExExchangeWrapperContract,
 } from './exchangeHelpers';
 

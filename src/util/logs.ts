@@ -19,6 +19,7 @@ export async function getFormattedLogsFromTxHash(web3: Web3, txHash: string): Pr
 
 export function getFormattedLogsFromReceipt(receipt: TransactionReceipt): Log[] {
   const logs: ABIDecoder.DecodedLog[] = _.compact(ABIDecoder.decodeLogs(receipt.logs));
+
   return _.map(logs, log => formatLogEntry(log));
 }
 

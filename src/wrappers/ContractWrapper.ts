@@ -24,7 +24,6 @@ import {
   CoreContract,
   ERC20DetailedContract,
   ExchangeIssueModuleContract,
-  IssuanceOrderModuleContract,
   KyberNetworkWrapperContract,
   PayableExchangeIssueContract,
   RebalanceAuctionModuleContract,
@@ -253,32 +252,6 @@ export class ContractWrapper {
       );
       this.cache[cacheKey] = kyberNetworkWrapperContract;
       return kyberNetworkWrapperContract;
-    }
-  }
-
-  /**
-   * Load Issuance Order Module contract
-   *
-   * @param  issuanceOrderModuleAddress          Address of the Issuance Order Module contract
-   * @param  transactionOptions                  Options sent into the contract deployed method
-   * @return                                     The Issuance Order Module Contract
-   */
-  public async loadIssuanceOrderModuleAsync(
-    issuanceOrderModuleAddress: Address,
-    transactionOptions: object = {},
-  ): Promise<IssuanceOrderModuleContract> {
-    const cacheKey = `IssuanceOrderModule_${issuanceOrderModuleAddress}`;
-
-    if (cacheKey in this.cache) {
-      return this.cache[cacheKey] as IssuanceOrderModuleContract;
-    } else {
-      const issuanceOrderModuleContract = await IssuanceOrderModuleContract.at(
-        issuanceOrderModuleAddress,
-        this.web3,
-        transactionOptions
-      );
-      this.cache[cacheKey] = issuanceOrderModuleContract;
-      return issuanceOrderModuleContract;
     }
   }
 

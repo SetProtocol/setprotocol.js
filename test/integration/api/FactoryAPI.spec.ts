@@ -29,7 +29,6 @@ import Web3 from 'web3';
 import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
-  IssuanceOrderModuleContract,
   NoDecimalTokenMockContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
@@ -82,7 +81,6 @@ describe('FactoryAPI', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
-  let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
   let rebalancingTokenIssuanceModule: RebalancingTokenIssuanceModuleContract;
 
@@ -109,7 +107,6 @@ describe('FactoryAPI', () => {
       setTokenFactory,
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
-      issuanceOrderModule,
       ,
       rebalancingTokenIssuanceModule,
     ] = await deployBaseContracts(web3);
@@ -121,7 +118,6 @@ describe('FactoryAPI', () => {
       setTokenFactoryAddress: setTokenFactory.address,
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
       rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
-      issuanceOrderModuleAddress: issuanceOrderModule.address,
       rebalancingTokenIssuanceModule: rebalancingTokenIssuanceModule.address,
     } as SetProtocolConfig;
     coreWrapper = new CoreWrapper(
@@ -130,7 +126,7 @@ describe('FactoryAPI', () => {
       config.transferProxyAddress,
       config.vaultAddress,
     );
-    assertions = new Assertions(web3, coreWrapper);
+    assertions = new Assertions(web3);
     factoryAPI = new FactoryAPI(web3, coreWrapper, assertions, config);
   });
 

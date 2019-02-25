@@ -113,31 +113,26 @@ export class SystemAPI {
       coreInstance,
       vaultInstance,
       transferProxyInstance,
-      issuanceOrderModuleInstance,
     ] = await Promise.all([
-      this.contract.loadCoreAsync(this.config.transferProxyAddress),
+      this.contract.loadCoreAsync(this.config.coreAddress),
       this.contract.loadVaultAsync(this.config.vaultAddress),
       this.contract.loadTransferProxyAsync(this.config.transferProxyAddress),
-      this.contract.loadIssuanceOrderModuleAsync(this.config.issuanceOrderModuleAddress),
     ]);
 
     const [
       coreOwner,
       vaultOwner,
       transferProxyOwner,
-      issuanceOrderModuleOwner,
     ] = await Promise.all([
       coreInstance.timeLockPeriod.callAsync(),
       vaultInstance.timeLockPeriod.callAsync(),
       transferProxyInstance.timeLockPeriod.callAsync(),
-      issuanceOrderModuleInstance.timeLockPeriod.callAsync(),
     ]);
 
     return {
       core: coreOwner,
       vault: vaultOwner,
       transferProxy: transferProxyOwner,
-      issuanceOrderModule: issuanceOrderModuleOwner,
     };
   }
 
@@ -182,31 +177,26 @@ export class SystemAPI {
       coreInstance,
       vaultInstance,
       transferProxyInstance,
-      issuanceOrderModuleInstance,
     ] = await Promise.all([
-      this.contract.loadCoreAsync(this.config.transferProxyAddress),
+      this.contract.loadCoreAsync(this.config.coreAddress),
       this.contract.loadVaultAsync(this.config.vaultAddress),
       this.contract.loadTransferProxyAsync(this.config.transferProxyAddress),
-      this.contract.loadIssuanceOrderModuleAsync(this.config.issuanceOrderModuleAddress),
     ]);
 
     const [
       coreOwner,
       vaultOwner,
       transferProxyOwner,
-      issuanceOrderModuleOwner,
     ] = await Promise.all([
       coreInstance.owner.callAsync(),
       vaultInstance.owner.callAsync(),
       transferProxyInstance.owner.callAsync(),
-      issuanceOrderModuleInstance.owner.callAsync(),
     ]);
 
     return {
       core: coreOwner,
       vault: vaultOwner,
       transferProxy: transferProxyOwner,
-      issuanceOrderModule: issuanceOrderModuleOwner,
     };
   }
 

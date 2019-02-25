@@ -25,7 +25,7 @@ import {
   ZERO,
 } from '@src/constants';
 import { deployTokensAsync, deploySetTokenAsync, approveForTransferAsync } from '@test/helpers';
-import { BigNumber, extractNewSetTokenAddressFromLogs } from '@src/util';
+import { BigNumber, getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util';
 
 const contract = require('truffle-contract');
 
@@ -177,8 +177,7 @@ export const createRebalancingSetTokenAsync = async(
     TX_DEFAULTS,
   );
 
-  const setTestUtils = new SetProtocolTestUtils(web3);
-  const logs = await setTestUtils.getLogsFromTxHash(txHash);
+  const logs = await getFormattedLogsFromTxHash(web3, txHash);
   const setAddress = extractNewSetTokenAddressFromLogs(logs);
 
   return await RebalancingSetTokenContract.at(
