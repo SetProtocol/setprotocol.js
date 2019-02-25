@@ -31,6 +31,7 @@ import * as setProtocolUtils from 'set-protocol-utils';
 import {
   CoreContract,
   IssuanceOrderModuleContract,
+  MedianContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
   SetTokenFactoryContract,
@@ -51,7 +52,15 @@ import {
   SystemOwnableState,
   SystemTimeLockPeriodState,
 } from '@src/types/common';
-import { addPriceLibraryAsync, deployBaseContracts, deployWhitelistContract, registerExchange } from '@test/helpers';
+import {
+  addPriceFeedOwnerToMedianizer,
+  addPriceLibraryAsync,
+  deployBaseContracts,
+  deployMedianizerAsync,
+  deployWhitelistContract,
+  registerExchange,
+  updateMedianizerPriceAsync,
+} from '@test/helpers';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
@@ -407,6 +416,40 @@ describe('SystemAPI', () => {
         DEFAULT_ACCOUNT,
       ];
       expect(JSON.stringify(priceLibraries)).to.equal(JSON.stringify(expectedPriceLibraries));
+    });
+  });
+
+  describe('getFeedPriceAsync', async () => {
+    let subjectMedianizerAddress: Address;
+
+    let btcMedianizer: MedianContract;
+    let btcPrice: BigNumber;
+
+    beforeEach(async () => {
+      btcMedianizer = await deployMedianizerAsync(web3);
+      await addPriceFeedOwnerToMedianizer(btcMedianizer, DEFAULT_ACCOUNT);
+
+      btcPrice = new BigNumber(4082 * 10 ** 18);
+      await updateMedianizerPriceAsync(
+        web3,
+        btcMedianizer,
+        btcPrice,
+        SetTestUtils.generateTimestamp(1000),
+      );
+
+      subjectMedianizerAddress = btcMedianizer.address;
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await systemAPI.getFeedPriceAsync(
+        subjectMedianizerAddress
+      );
+    }
+
+    test('gets the correct price', async () => {
+      const price = await subject();
+
+      expect(price).to.bignumber.equal(btcPrice);
     });
   });
 });

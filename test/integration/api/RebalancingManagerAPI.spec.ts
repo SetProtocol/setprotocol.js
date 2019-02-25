@@ -65,13 +65,8 @@ import {
   increaseChainTimeAsync,
   updateMedianizerPriceAsync,
 } from '@test/helpers';
-import {
-  BigNumber,
-} from '@src/util';
-import {
-  Address,
-  RebalancingManagerDetails,
-} from '@src/types/common';
+import { BigNumber } from '@src/util';
+import { Address, RebalancingManagerDetails } from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));

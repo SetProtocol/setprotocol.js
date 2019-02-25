@@ -30,6 +30,7 @@ import {
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingTokenIssuanceModuleContract,
+  MedianContract,
   SetTokenContract,
   TimeLockUpgradeContract,
   TransferProxyContract,
@@ -318,7 +319,7 @@ export class ContractWrapper {
     authorizableAddress: Address,
     transactionOptions: object = {},
   ): Promise<AuthorizableContract> {
-    const cacheKey = `SetToken_${authorizableAddress}`;
+    const cacheKey = `Authorizable_${authorizableAddress}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as AuthorizableContract;
@@ -344,7 +345,7 @@ export class ContractWrapper {
     timeLockUpgradeAddress: Address,
     transactionOptions: object = {},
   ): Promise<TimeLockUpgradeContract> {
-    const cacheKey = `SetToken_${timeLockUpgradeAddress}`;
+    const cacheKey = `TimeLockUpgrade_${timeLockUpgradeAddress}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as TimeLockUpgradeContract;
@@ -370,7 +371,7 @@ export class ContractWrapper {
     whitelistAddress: Address,
     transactionOptions: object = {},
   ): Promise<WhiteListContract> {
-    const cacheKey = `SetToken_${whitelistAddress}`;
+    const cacheKey = `WhiteList_${whitelistAddress}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as WhiteListContract;
@@ -422,7 +423,7 @@ export class ContractWrapper {
     rebalancingTokenIssuanceModuleAddress: Address,
     transactionOptions: object = {},
   ): Promise<RebalancingTokenIssuanceModuleContract> {
-    const cacheKey = `SetToken_${rebalancingTokenIssuanceModuleAddress}`;
+    const cacheKey = `RebalancingTokenIssuanceModule_${rebalancingTokenIssuanceModuleAddress}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as RebalancingTokenIssuanceModuleContract;
@@ -448,7 +449,7 @@ export class ContractWrapper {
     exchangeIssueModule: Address,
     transactionOptions: object = {},
   ): Promise<ExchangeIssueModuleContract> {
-    const cacheKey = `SetToken_${exchangeIssueModule}`;
+    const cacheKey = `ExchangeIssueModule_${exchangeIssueModule}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as ExchangeIssueModuleContract;
@@ -460,6 +461,32 @@ export class ContractWrapper {
       );
       this.cache[cacheKey] = rebalancingTokenIssuanceModuleContract;
       return rebalancingTokenIssuanceModuleContract;
+    }
+  }
+
+  /**
+   * Load a Medianizer contract
+   *
+   * @param  medianizer                   Address of the Medianizer contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The ExchangeIssueModule Contract
+   */
+  public async loadMedianizerContract(
+    medianizer: Address,
+    transactionOptions: object = {},
+  ): Promise<MedianContract> {
+    const cacheKey = `Medianizer_${medianizer}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as MedianContract;
+    } else {
+      const medianizerContract = await MedianContract.at(
+        medianizer,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = medianizerContract;
+      return medianizerContract;
     }
   }
 }
