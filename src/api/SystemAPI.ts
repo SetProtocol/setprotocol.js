@@ -114,7 +114,7 @@ export class SystemAPI {
       vaultInstance,
       transferProxyInstance,
     ] = await Promise.all([
-      this.contract.loadCoreAsync(this.config.transferProxyAddress),
+      this.contract.loadCoreAsync(this.config.coreAddress),
       this.contract.loadVaultAsync(this.config.vaultAddress),
       this.contract.loadTransferProxyAsync(this.config.transferProxyAddress),
     ]);
@@ -178,7 +178,7 @@ export class SystemAPI {
       vaultInstance,
       transferProxyInstance,
     ] = await Promise.all([
-      this.contract.loadCoreAsync(this.config.transferProxyAddress),
+      this.contract.loadCoreAsync(this.config.coreAddress),
       this.contract.loadVaultAsync(this.config.vaultAddress),
       this.contract.loadTransferProxyAsync(this.config.transferProxyAddress),
     ]);
