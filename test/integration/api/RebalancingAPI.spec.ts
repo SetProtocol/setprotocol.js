@@ -42,7 +42,7 @@ import {
 import { Web3Utils } from 'set-protocol-utils';
 
 import { RebalancingAPI } from '@src/api';
-import { RebalancingSetTokenWrapper, CoreWrapper } from '@src/wrappers';
+import { RebalancingSetTokenWrapper, CoreWrapper, ERC20Wrapper } from '@src/wrappers';
 import {
   DEFAULT_ACCOUNT,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
@@ -109,6 +109,7 @@ describe('RebalancingAPI', () => {
   let rebalanceIssuanceModule: RebalancingTokenIssuanceModuleContract;
   let whitelist: WhiteListContract;
 
+  let erc20Wrapper: ERC20Wrapper;
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
   let rebalancingAPI: RebalancingAPI;
 
@@ -134,6 +135,7 @@ describe('RebalancingAPI', () => {
       vault.address,
     );
 
+    erc20Wrapper = new ERC20Wrapper(web3);
     rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
 
     const setProtocolConfig: SetProtocolConfig = {
@@ -1116,6 +1118,7 @@ describe('RebalancingAPI', () => {
     let subjectRebalancingSetTokenAddress: Address;
     let subjectBidQuantity: BigNumber;
     let subjectCaller: Address;
+    let subjectShouldWithdraw: boolean;
 
     beforeEach(async () => {
       const setTokensToDeploy = 2;
@@ -1163,6 +1166,7 @@ describe('RebalancingAPI', () => {
         priceCurve.address
       );
 
+      subjectShouldWithdraw = false;
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
       subjectBidQuantity = rebalancingSetQuantityToIssue;
       subjectCaller = DEFAULT_ACCOUNT;
@@ -1172,6 +1176,7 @@ describe('RebalancingAPI', () => {
       return await rebalancingAPI.bidAsync(
         subjectRebalancingSetTokenAddress,
         subjectBidQuantity,
+        subjectShouldWithdraw,
         { from: subjectCaller }
       );
     }
@@ -1287,6 +1292,33 @@ describe('RebalancingAPI', () => {
         );
         const expectedReceiverBalances = _.map(oldReceiverBalances, (balance, index) =>
           balance.add(expectedTokenFlows['outflow'][index])
+        );
+
+        expect(JSON.stringify(newReceiverBalances)).to.equal(JSON.stringify(expectedReceiverBalances));
+      });
+
+      test('transfers and withdraws the correct amount of tokens to the bidder wallet', async () => {
+        const expectedTokenFlows = await constructInflowOutflowArraysAsync(
+          rebalancingSetToken,
+          subjectBidQuantity,
+          DEFAULT_AUCTION_PRICE_NUMERATOR,
+        );
+        const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+        const oldReceiverBalances = await Promise.all(
+          combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+
+        // Set withdrawal to true
+        subjectShouldWithdraw = true;
+        await subject();
+
+        const newReceiverBalances = await Promise.all(
+          combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+
+        const expectedReceiverBalances = _.map(oldReceiverBalances, (balance, index) =>
+          balance.add(expectedTokenFlows['outflow'][index]).sub(expectedTokenFlows['inflow'][index])
         );
 
         expect(JSON.stringify(newReceiverBalances)).to.equal(JSON.stringify(expectedReceiverBalances));

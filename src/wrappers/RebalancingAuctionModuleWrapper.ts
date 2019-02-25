@@ -68,6 +68,27 @@ export class RebalancingAuctionModuleWrapper {
   }
 
   /**
+   * Asynchronously submit a bid and withdraw bids for a rebalancing auction on a rebalancingSetToken
+   *
+   * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
+   * @param  quantity                      Amount of currentSetToken the bidder wants to rebalance
+   * @param  txOpts                        The options for executing the transaction
+   * @return                               A transaction hash
+   */
+  public async bidAndWithdraw(rebalancingSetTokenAddress: Address, quantity: BigNumber, txOpts?: Tx): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+    const rebalanceAuctionModuleInstance = await this.contracts.loadRebalanceAuctionModuleAsync(
+      this.rebalanceAuctionModuleAddress
+    );
+
+    return await rebalanceAuctionModuleInstance.bidAndWithdraw.sendTransactionAsync(
+      rebalancingSetTokenAddress,
+      quantity,
+      txSettings,
+    );
+  }
+
+  /**
    * Burns tokens in Drawdown state and transfers ownership of collateral to owner
    *
    * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
