@@ -76,6 +76,7 @@ import {
   increaseChainTimeAsync,
   transitionToProposeAsync,
   transitionToRebalanceAsync,
+  transitionToDrawdownAsync,
 } from '@test/helpers';
 import {
   Address,
@@ -108,7 +109,6 @@ describe('RebalancingAPI', () => {
   let rebalanceIssuanceModule: RebalancingTokenIssuanceModuleContract;
   let whitelist: WhiteListContract;
 
-  // let rebalancingAuctionModuleWrapper: RebalancingAuctionModuleWrapper;
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
   let rebalancingAPI: RebalancingAPI;
 
@@ -1442,6 +1442,180 @@ describe('RebalancingAPI', () => {
         return expect(subject()).to.be.rejectedWith(
           `Caller ${subjectCaller} is not the manager of this Rebalancing Set Token.`
         );
+      });
+    });
+  });
+
+  describe.only('withdrawFromFailedRebalance', async () => {
+    let currentSetToken: SetTokenContract;
+    let nextSetToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let proposalPeriod: BigNumber;
+    let managerAddress: Address;
+    let priceCurve: ConstantAuctionPriceCurveContract;
+
+    let rebalancingSetQuantityToIssue: BigNumber;
+
+    let subjectRebalancingSetTokenAddress: Address;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 2;
+      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
+      proposalPeriod = ONE_DAY_IN_SECONDS;
+      managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      // Issue currentSetToken
+      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
+      // Deploy price curve used in auction
+      priceCurve = await deployConstantAuctionPriceCurveAsync(
+        web3,
+        DEFAULT_AUCTION_PRICE_NUMERATOR,
+        DEFAULT_AUCTION_PRICE_DENOMINATOR
+      );
+
+      addPriceCurveToCoreAsync(
+        core,
+        priceCurve.address
+      );
+
+      subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<any> {
+      return await rebalancingAPI.withdrawFromFailedRebalanceAsync(
+        subjectRebalancingSetTokenAddress,
+        { from: subjectCaller }
+      );
+    }
+
+    describe('when the Rebalancing Set Token is in Default state', async () => {
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Drawdown state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Proposal state', async () => {
+      beforeEach(async () => {
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToProposeAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice
+        );
+      });
+
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Drawdown state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Rebalance state', async () => {
+      beforeEach(async () => {
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToRebalanceAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice
+        );
+      });
+
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Drawdown state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Drawdown state', async () => {
+      beforeEach(async () => {
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+        const setBidAmount = ether(1);
+
+        await transitionToDrawdownAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice,
+          rebalanceAuctionModule,
+          setBidAmount,
+        );
+      });
+
+      it('transfers the collateral to owner after burning the rebalancing Set', async () => {
+        const returnedRebalanceState =
+          await rebalancingSetTokenWrapper.rebalanceState(subjectRebalancingSetTokenAddress);
+        const combinedTokenArray =
+          await rebalancingSetToken.getCombinedTokenArray.callAsync();
+        const existingCollateralBalances = await getVaultBalances(
+          vault,
+          combinedTokenArray,
+          subjectRebalancingSetTokenAddress
+        );
+
+        await subject();
+
+        const expectedRBSetTokenBalance = new BigNumber(0);
+        const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+        const newOwnerVaultBalances = await getVaultBalances(vault, combinedTokenArray, subjectCaller);
+
+        expect(returnedRebalanceState).to.eql('Drawdown');
+        expect(expectedRBSetTokenBalance.toString()).to.eql(currentRBSetTokenBalance.toString());
+        expect(JSON.stringify(existingCollateralBalances)).to.be.eql(JSON.stringify(newOwnerVaultBalances));
       });
     });
   });

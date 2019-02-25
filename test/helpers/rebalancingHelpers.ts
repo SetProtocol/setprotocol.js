@@ -12,6 +12,7 @@ import {
   ConstantAuctionPriceCurveContract,
   CoreContract,
   MedianContract,
+  RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   SetTokenContract,
   VaultContract
@@ -316,6 +317,44 @@ export const transitionToRebalanceAsync = async(
   await rebalancingSetToken.startRebalance.sendTransactionAsync(
     TX_DEFAULTS
   );
+};
+
+export const transitionToDrawdownAsync = async(
+  web3: Web3,
+  rebalancingSetToken: RebalancingSetTokenContract,
+  manager: Address,
+  nextSetToken: Address,
+  auctionPriceCurve: Address,
+  auctionTimeToPivot: BigNumber,
+  auctionStartPrice: BigNumber,
+  auctionPivotPrice: BigNumber,
+  rebalanceAuctionModule: RebalanceAuctionModuleContract,
+  bidAmount: BigNumber,
+): Promise<void> => {
+  // Transition to rebalance
+  await transitionToRebalanceAsync(
+    web3,
+    rebalancingSetToken,
+    manager,
+    nextSetToken,
+    auctionPriceCurve,
+    auctionTimeToPivot,
+    auctionStartPrice,
+    auctionPivotPrice
+  );
+
+  // Bid
+  await rebalanceAuctionModule.bidAndWithdraw.sendTransactionAsync(
+    rebalancingSetToken.address,
+    bidAmount,
+    TX_DEFAULTS
+  );
+
+  // Transition to 1 second after pivot time
+  await increaseChainTimeAsync(web3, new BigNumber(auctionTimeToPivot).add(1).mul(1000));
+
+  // Transition to Drawdown
+  await rebalancingSetToken.endFailedAuction.sendTransactionAsync(TX_DEFAULTS);
 };
 
 export const increaseChainTimeAsync = async(
