@@ -1309,8 +1309,8 @@ describe('RebalancingAPI', () => {
           combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
         );
 
+        // Set withdrawal to true
         subjectShouldWithdraw = true;
-
         await subject();
 
         const newReceiverBalances = await Promise.all(

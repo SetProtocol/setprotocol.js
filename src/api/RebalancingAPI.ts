@@ -203,7 +203,8 @@ export class RebalancingAPI {
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
    * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
-   * @param  shouldWithdraw                 Boolean to withdraw back to signer's wallet or leave in vault
+   * @param  shouldWithdraw                 Boolean to withdraw back to signer's wallet or leave in vault.
+   *                                        Defaults to true
    * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
    *                                          gasPrice data
    * @return                                Transaction hash
@@ -211,7 +212,7 @@ export class RebalancingAPI {
   public async bidAsync(
     rebalancingSetTokenAddress: Address,
     bidQuantity: BigNumber,
-    shouldWithdraw: boolean,
+    shouldWithdraw: boolean = true,
     txOpts: Tx
   ): Promise<string> {
     await this.assertBid(rebalancingSetTokenAddress, bidQuantity, txOpts);
