@@ -42,7 +42,7 @@ import {
 import { Web3Utils } from 'set-protocol-utils';
 
 import { RebalancingAPI } from '@src/api';
-import { RebalancingSetTokenWrapper, CoreWrapper } from '@src/wrappers';
+import { RebalancingSetTokenWrapper, CoreWrapper, ERC20Wrapper } from '@src/wrappers';
 import {
   DEFAULT_ACCOUNT,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
@@ -109,6 +109,7 @@ describe('RebalancingAPI', () => {
   let rebalanceIssuanceModule: RebalancingTokenIssuanceModuleContract;
   let whitelist: WhiteListContract;
 
+  let erc20Wrapper: ERC20Wrapper;
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
   let rebalancingAPI: RebalancingAPI;
 
@@ -134,6 +135,7 @@ describe('RebalancingAPI', () => {
       vault.address,
     );
 
+    erc20Wrapper = new ERC20Wrapper(web3);
     rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
 
     const setProtocolConfig: SetProtocolConfig = {
@@ -1287,6 +1289,283 @@ describe('RebalancingAPI', () => {
         );
         const expectedReceiverBalances = _.map(oldReceiverBalances, (balance, index) =>
           balance.add(expectedTokenFlows['outflow'][index])
+        );
+
+        expect(JSON.stringify(newReceiverBalances)).to.equal(JSON.stringify(expectedReceiverBalances));
+      });
+
+      describe('and the passed rebalancingSetToken is not tracked by Core', async () => {
+        beforeEach(async () => {
+          subjectRebalancingSetTokenAddress = ACCOUNTS[5].address;
+        });
+
+        it('throw', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Contract at ${subjectRebalancingSetTokenAddress} is not a valid Set token address.`
+          );
+        });
+      });
+
+      describe('and the bid amount is greater than remaining current sets', async () => {
+        beforeEach(async () => {
+          subjectBidQuantity = ether(10);
+        });
+
+        it('throw', async () => {
+          const [, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
+
+          return expect(subject()).to.be.rejectedWith(
+            `The submitted bid quantity, ${subjectBidQuantity}, exceeds the remaining current sets,` +
+              ` ${remainingCurrentSets}.`
+          );
+        });
+      });
+
+      describe('and the bid amount is not a multiple of the minimumBid', async () => {
+        let minimumBid: BigNumber;
+
+        beforeEach(async () => {
+          [minimumBid] = await rebalancingSetToken.getBiddingParameters.callAsync();
+          subjectBidQuantity = minimumBid.mul(1.5);
+        });
+
+        test('throw', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `The submitted bid quantity, ${subjectBidQuantity}, must be a multiple of the minimumBid, ${minimumBid}.`
+          );
+        });
+      });
+
+      describe('and the caller has not approved inflow tokens for transfer', async () => {
+        beforeEach(async () => {
+          subjectCaller = ACCOUNTS[3].address;
+        });
+
+        test('throw', async () => {
+          const [inflowArray] = await rebalancingSetToken.getBidPrice.callAsync(subjectBidQuantity);
+          const components = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+          return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${subjectCaller} has allowance of 0
+
+        when required allowance is ${inflowArray[2]} at token
+
+        address: ${components[2]} for spender: ${transferProxy.address}.
+      `
+          );
+        });
+      });
+
+      describe('and the caller does not have the balance to transfer', async () => {
+        beforeEach(async () => {
+          subjectCaller = ACCOUNTS[3].address;
+          const components = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+          const approvalToken: ERC20DetailedContract = await ERC20DetailedContract.at(components[2], web3, {});
+          await approvalToken.approve.sendTransactionAsync(
+            transferProxy.address,
+            UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+            { from: subjectCaller }
+          );
+        });
+
+        test('throw', async () => {
+          const [inflowArray] = await rebalancingSetToken.getBidPrice.callAsync(subjectBidQuantity);
+          const components = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+          return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${subjectCaller} has balance of 0
+
+        when required balance is ${inflowArray[2]} at token address ${components[2]}.
+      `
+          );
+        });
+      });
+    });
+  });
+
+  describe('bidAndWithdrawAsync', async () => {
+    let currentSetToken: SetTokenContract;
+    let nextSetToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let proposalPeriod: BigNumber;
+    let managerAddress: Address;
+    let priceCurve: ConstantAuctionPriceCurveContract;
+
+    let rebalancingSetQuantityToIssue: BigNumber;
+
+    let subjectRebalancingSetTokenAddress: Address;
+    let subjectBidQuantity: BigNumber;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 2;
+      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
+      proposalPeriod = ONE_DAY_IN_SECONDS;
+      managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      // Issue currentSetToken
+      await core.issue.sendTransactionAsync(currentSetToken.address, ether(9), TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
+      // Deploy price curve used in auction
+      priceCurve = await deployConstantAuctionPriceCurveAsync(
+        web3,
+        DEFAULT_AUCTION_PRICE_NUMERATOR,
+        DEFAULT_AUCTION_PRICE_DENOMINATOR
+      );
+
+      addPriceCurveToCoreAsync(
+        core,
+        priceCurve.address
+      );
+
+      subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
+      subjectBidQuantity = rebalancingSetQuantityToIssue;
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await rebalancingAPI.bidAndWithdrawAsync(
+        subjectRebalancingSetTokenAddress,
+        subjectBidQuantity,
+        { from: subjectCaller }
+      );
+    }
+
+    describe('when the Rebalancing Set Token is in Default state', async () => {
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Rebalance state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Proposal state', async () => {
+      beforeEach(async () => {
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToProposeAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice
+        );
+      });
+
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Rebalance state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Rebalance state', async () => {
+      beforeEach(async () => {
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToRebalanceAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice
+        );
+      });
+
+      test('subtract correct amount from remainingCurrentSets', async () => {
+        const [, existingRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
+
+        await subject();
+
+        const expectedRemainingCurrentSets = existingRemainingCurrentSets.sub(subjectBidQuantity);
+        const [, newRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
+        expect(newRemainingCurrentSets).to.eql(expectedRemainingCurrentSets);
+      });
+
+      test('transfers the correct amount of tokens from the bidder to the rebalancing token in Vault', async () => {
+        const expectedTokenFlows = await constructInflowOutflowArraysAsync(
+          rebalancingSetToken,
+          subjectBidQuantity,
+          DEFAULT_AUCTION_PRICE_NUMERATOR,
+        );
+        const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+        const oldSenderBalances = await getVaultBalances(
+          vault,
+          combinedTokenArray,
+          rebalancingSetToken.address
+        );
+
+        await subject();
+
+        const newSenderBalances = await getVaultBalances(
+          vault,
+          combinedTokenArray,
+          rebalancingSetToken.address
+        );
+        const expectedSenderBalances = _.map(oldSenderBalances, (balance, index) =>
+          balance.add(expectedTokenFlows['inflow'][index]).sub(expectedTokenFlows['outflow'][index])
+        );
+        expect(JSON.stringify(newSenderBalances)).to.equal(JSON.stringify(expectedSenderBalances));
+      });
+
+      test('transfers the correct amount of tokens to the bidder wallet', async () => {
+        const expectedTokenFlows = await constructInflowOutflowArraysAsync(
+          rebalancingSetToken,
+          subjectBidQuantity,
+          DEFAULT_AUCTION_PRICE_NUMERATOR,
+        );
+        const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+        const oldReceiverBalances = await Promise.all(
+          combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+
+        await subject();
+
+        const newReceiverBalances = await Promise.all(
+          combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+
+        const expectedReceiverBalances = _.map(oldReceiverBalances, (balance, index) =>
+          balance.add(expectedTokenFlows['outflow'][index]).sub(expectedTokenFlows['inflow'][index])
         );
 
         expect(JSON.stringify(newReceiverBalances)).to.equal(JSON.stringify(expectedReceiverBalances));

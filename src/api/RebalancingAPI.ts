@@ -214,6 +214,25 @@ export class RebalancingAPI {
   }
 
   /**
+   * Allows user to bid and withdraw to wallet on a rebalance auction occuring on a Rebalancing Set Token
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
+   *                                          gasPrice data
+   * @return                                Transaction hash
+   */
+  public async bidAndWithdrawAsync(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    txOpts: Tx
+  ): Promise<string> {
+    await this.assertBid(rebalancingSetTokenAddress, bidQuantity, txOpts);
+
+    return await this.rebalancingAuctionModule.bidAndWithdraw(rebalancingSetTokenAddress, bidQuantity, txOpts);
+  }
+
+  /**
    * Allows current manager to change manager address to a new address
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
