@@ -20,9 +20,6 @@ import { Address } from '../types/common';
 import { BigNumber } from '../util';
 
 export const orderErrors = {
-  FILL_EXCEEDS_AVAILABLE: (availableFillAmount: BigNumber) =>
-    `The fill quantity supplied exceeds the amount available to fill. Remaining fillable quantity: ` +
-    `${availableFillAmount.toString()}.`,
   INSUFFIENT_LIQUIDITY_FOR_REQUIRED_COMPONENT: (
     component: string,
   ) => `Token ${component} is unrepresented in the liquidity orders.`,

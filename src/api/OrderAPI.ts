@@ -20,11 +20,8 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { SetProtocolUtils } from 'set-protocol-utils';
 
-import { Assertions } from '../assertions';
-import { coreAPIErrors } from '../errors';
 import {
   ERC20Wrapper,
-  IssuanceOrderModuleWrapper,
   KyberNetworkWrapper,
   SetTokenWrapper,
   VaultWrapper,
@@ -34,13 +31,6 @@ import { BigNumber, generateFutureTimestamp,  } from '../util';
 import {
   Address,
   Component,
-  ECSig,
-  IssuanceOrder,
-  KyberTrade,
-  SignedIssuanceOrder,
-  TakerWalletOrder,
-  Tx,
-  ZeroExSignedFillOrder,
 } from '../types/common';
 
 
@@ -52,13 +42,10 @@ import {
  */
 export class OrderAPI {
   private web3: Web3;
-  private assert: Assertions;
   private setToken: SetTokenWrapper;
   private erc20: ERC20Wrapper;
-  private issuanceOrderModule: IssuanceOrderModuleWrapper;
   private vault: VaultWrapper;
   private kyberNetworkWrapper: KyberNetworkWrapper;
-  private setProtocolUtils: SetProtocolUtils;
 
   /**
    * Instantiates a new OrderAPI instance that contains methods for creating, filling, and cancelling issuance orders
@@ -66,25 +53,19 @@ export class OrderAPI {
    * @param web3                        Web3.js Provider instance you would like the SetProtocol.js library to use for
    *                                      interacting with the Ethereum network
    * @param assertions                  An instance of the Assertion library
-   * @param issuanceOrderModuleAddress  Address of the issuanceOrderModule
    * @param kyberNetworkWrapperAddress  Address for kyber network wrapper
    * @param vaultAddress                Address for the vault
    */
   constructor(
     web3: Web3,
-    assertions: Assertions,
-    issuanceOrderModuleAddress: Address,
     kyberNetworkWrapperAddress: Address,
     vaultAddress: Address,
   ) {
     this.web3 = web3;
-    this.setProtocolUtils = new SetProtocolUtils(this.web3);
     this.erc20 = new ERC20Wrapper(this.web3);
-    this.issuanceOrderModule = new IssuanceOrderModuleWrapper(this.web3, issuanceOrderModuleAddress);
     this.kyberNetworkWrapper = new KyberNetworkWrapper(this.web3, kyberNetworkWrapperAddress);
     this.setToken = new SetTokenWrapper(this.web3);
     this.vault = new VaultWrapper(this.web3, vaultAddress);
-    this.assert = assertions;
   }
 
   /**
@@ -106,65 +87,6 @@ export class OrderAPI {
    */
   public generateExpirationTimestamp(seconds: number): BigNumber {
     return generateFutureTimestamp(seconds);
-  }
-
-  /**
-   * Checks whether a signature produced for an issuance order is valid. A signature is valid only
-   * if the issuance order is signed by the maker. The function throws upon receiving an invalid signature
-   *
-   * @param  issuanceOrder         Object conforming to the IssuanceOrder interface
-   * @param  signature             Object conforming to ECSignature containing elliptic curve signature components
-   * @return                       Whether the recovered signature matches the data hash
-   */
-  public async isValidSignatureOrThrowAsync(
-    issuanceOrder: IssuanceOrder,
-    signature: ECSig,
-  ): Promise<boolean> {
-    const orderData = SetProtocolUtils.hashOrderHex(issuanceOrder);
-
-    return await this.assert.core.isValidSignature(
-      orderData,
-      issuanceOrder.makerAddress,
-      signature,
-      true,
-    );
-  }
-
-  /**
-   * Generates a ECSig from an IssuanceOrder objects. It signs the user using the signer in the transaction options.
-   * If none is provided, it will use the first account from the provider
-   *
-   * @param  issuanceOrder         Issuance Order
-   * @param  txOpts                Transaction options object conforming to Tx with signer, gas, and gasPrice data
-   * @return                       Object conforming to ECSignature containing elliptic curve signature components
-   */
-  public async signOrderAsync(
-    issuanceOrder: IssuanceOrder,
-    txOpts: Tx
-  ): Promise<ECSig> {
-    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
-    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-
-    return await this.setProtocolUtils.signMessage(orderHash, txOpts.from, this.requiresSignaturePrefix());
-  }
-
-  /**
-   * Validates an IssuanceOrder object's signature, expiration, and fill amount. Developers should call this method
-   * frequently to prune order books and ensure the order has not already been filled or cancelled
-   *
-   * @param  signedIssuanceOrder    Object conforming to `SignedIssuanceOrder` interface to be validated
-   * @param  fillQuantity           Fill quantity to check if fillable
-   */
-  public async validateOrderFillableOrThrowAsync(
-    signedIssuanceOrder: SignedIssuanceOrder,
-    fillQuantity: BigNumber
-  ): Promise<void> {
-    const issuanceOrder: IssuanceOrder = _.omit(signedIssuanceOrder, 'signature');
-    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-    const orderFills = await this.issuanceOrderModule.orderFills(orderHash);
-    const orderCancels = await this.issuanceOrderModule.orderCancels(orderHash);
-
-    await this.assert.order.isIssuanceOrderFillable(signedIssuanceOrder, fillQuantity, orderFills, orderCancels);
   }
 
   /**
@@ -213,131 +135,6 @@ export class OrderAPI {
   }
 
   /**
-   * Creates a new issuance order with a valid signature denoting the user's intent to exchange some maker token for
-   * a Set token. Suggest using a popular trading pair as the maker token such as WETH or Dai in order to take
-   * advantage of external liquidity sources
-   *
-   * @param  setAddress                  Address of the Set token for issuance order
-   * @param  quantity                    Amount of the Set token to create as part of issuance order
-   * @param  requiredComponents          Addresses of required component tokens of the Set
-   * @param  requiredComponentAmounts    Amounts of each required component needed
-   * @param  makerAddress                Address of user making the issuance order
-   * @param  makerToken                  Address of token the issuance order maker is offering for the transaction
-   * @param  makerTokenAmount            Amount of tokens maker offers for aggergate order size
-   * @param  expiration                  Unix timestamp of expiration in seconds
-   * @param  relayerAddress              Address of relayer of order
-   * @param  relayerToken                Address of token paid to relayer as a fee
-   * @param  makerRelayerFee             Amount of relayer token paid to relayer by maker
-   * @param  takerRelayerFee             Amount of relayer token paid to relayer by taker
-   * @param  salt                        Optional salt to include in signing
-   * @return                             Object conforming to `SignedIssuanceOrder` with valid signature
-   */
-  public async createSignedOrderAsync(
-    setAddress: Address,
-    quantity: BigNumber,
-    requiredComponents: Address[],
-    requiredComponentAmounts: BigNumber[],
-    makerAddress: Address,
-    makerToken: Address,
-    makerTokenAmount: BigNumber,
-    expiration: BigNumber,
-    relayerAddress: Address,
-    relayerToken: Address,
-    makerRelayerFee: BigNumber,
-    takerRelayerFee: BigNumber,
-    salt: BigNumber = SetProtocolUtils.generateSalt(),
-  ): Promise<SignedIssuanceOrder> {
-    const order: IssuanceOrder = {
-      setAddress,
-      makerAddress,
-      makerToken,
-      relayerAddress,
-      relayerToken,
-      quantity,
-      makerTokenAmount,
-      expiration,
-      makerRelayerFee,
-      takerRelayerFee,
-      requiredComponents,
-      requiredComponentAmounts,
-      salt,
-    };
-
-    await this.assert.order.isValidIssuanceOrder(order);
-    const orderHash = SetProtocolUtils.hashOrderHex(order);
-
-    const signature = await this.setProtocolUtils.signMessage(orderHash, makerAddress, this.requiresSignaturePrefix());
-    return { ...order, signature } as SignedIssuanceOrder;
-  }
-
-  /**
-   * Fills an issuance order on behalf of the taker. The taker should specifiy the fill amount and the liquidity
-   * sources, either other exchange orders that can be exchanged using the specified maker token in the issuance order,
-   * or from the taker's own wallet
-   *
-   * @param  signedIssuanceOrder  Object conforming to `SignedIssuanceOrder` to fill
-   * @param  quantity             Amount of Set to fill in this call
-   * @param  orders               Array of liquidity source objects conforming to `KyberTrade` or `TakerWalletOrder`
-   *                                or `ZeroExSignedFillOrder` types that will collateralize the Set components
-   * @param  txOpts               Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
-   * @return                      Transaction hash
-   */
-  public async fillOrderAsync(
-    signedIssuanceOrder: SignedIssuanceOrder,
-    quantity: BigNumber,
-    orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
-    txOpts: Tx,
-  ): Promise<string> {
-    await this.assertFillOrder(txOpts.from, signedIssuanceOrder, quantity, orders);
-    const orderData = await this.setProtocolUtils.generateSerializedOrders(orders);
-
-    return await this.issuanceOrderModule.fillOrder(signedIssuanceOrder, quantity, orderData, txOpts);
-  }
-
-  /**
-   * Cancels an issuance order on behalf of the maker. After successfully mining this transaction, a taker can only
-   * fill up to an issuance order's quantity minus the quantity
-   *
-   * @param  issuanceOrder    Object conforming to `IssuanceOrder` to cancel
-   * @param  quantity         Amount of the issuance order's quantity to cancel
-   * @param  txOpts           Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
-   * @return                  Transaction hash
-   */
-  public async cancelOrderAsync(
-    issuanceOrder: IssuanceOrder,
-    quantity: BigNumber,
-    txOpts: Tx,
-  ): Promise<string> {
-    await this.assertCancelOrder(txOpts.from, issuanceOrder, quantity);
-
-    return await this.issuanceOrderModule.cancelOrder(issuanceOrder, quantity, txOpts);
-  }
-
-  /**
-   * Fetches the quantity of the issuance order that has already been filled
-   *
-   * @param  issuanceOrder    Object conforming to the `IssuanceOrder` interface
-   * @return                  Filled amount of issuance order
-   */
-  public async getOrderFillsAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
-    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-
-    return await this.issuanceOrderModule.orderFills(orderHash);
-  }
-
-  /**
-   * Fetches the quantity of the issuance order that has been cancelled
-   *
-   * @param  issuanceOrder    Object conforming to the `IssuanceOrder` interface
-   * @return                  Cancelled amount of the issuance order
-   */
-  public async getOrderCancelledAsync(issuanceOrder: IssuanceOrder): Promise<BigNumber> {
-    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-
-    return await this.issuanceOrderModule.orderCancels(orderHash);
-  }
-
-  /**
    * Fetch the conversion rate for a Kyber trading pair
    *
    * @param  makerTokenAddress       Address of the token to trade
@@ -351,56 +148,5 @@ export class OrderAPI {
     quantity: BigNumber
   ): Promise<[BigNumber, BigNumber]> {
     return await this.kyberNetworkWrapper.conversionRate(makerTokenAddress, componentTokenAddress, quantity);
-  }
-
-  /* ============ Private Helpers =============== */
-
-  private requiresSignaturePrefix(): boolean {
-    return this.web3.currentProvider.constructor.name === 'MetamaskInpageProvider';
-  }
-
-  /* ============ Private Assertions ============ */
-
-  private async assertFillOrder(
-    transactionCaller: Address,
-    signedIssuanceOrder: SignedIssuanceOrder,
-    quantityToFill: BigNumber,
-    orders: (KyberTrade | TakerWalletOrder | ZeroExSignedFillOrder)[],
-  ) {
-    const { signature, ...issuanceOrder } = signedIssuanceOrder;
-    await this.assert.order.isValidIssuanceOrder(issuanceOrder);
-
-    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
-    this.assert.common.greaterThanZero(quantityToFill, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToFill));
-    this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
-
-    const orderHash = SetProtocolUtils.hashOrderHex(issuanceOrder);
-    const orderFills = await this.issuanceOrderModule.orderFills(orderHash);
-    const orderCancels = await this.issuanceOrderModule.orderCancels(orderHash);
-
-    await this.assert.order.isIssuanceOrderFillable(
-      signedIssuanceOrder,
-      quantityToFill,
-      orderFills,
-      orderCancels,
-    );
-
-    await this.assert.order.assertLiquidityValidity(
-      transactionCaller,
-      signedIssuanceOrder,
-      quantityToFill,
-      orders,
-    );
-  }
-
-  private async assertCancelOrder(
-    transactionCaller: Address,
-    issuanceOrder: IssuanceOrder,
-    quantityToCancel: BigNumber
-  ) {
-    await this.assert.order.isValidIssuanceOrder(issuanceOrder);
-
-    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
-    this.assert.common.greaterThanZero(quantityToCancel, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantityToCancel));
   }
 }

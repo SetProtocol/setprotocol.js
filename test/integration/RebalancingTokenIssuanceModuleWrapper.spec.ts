@@ -101,7 +101,6 @@ describe('RebalancingAuctionModuleWrapper', () => {
       rebalancingSetTokenFactory,
       ,
       ,
-      ,
       rebalancingTokenIssuanceModule,
     ] = await deployBaseContracts(web3);
 

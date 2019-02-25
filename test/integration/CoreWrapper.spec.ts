@@ -30,7 +30,6 @@ import Web3 from 'web3';
 import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
-  IssuanceOrderModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
@@ -52,8 +51,8 @@ import {
   addPriceLibraryAsync,
   approveForTransferAsync,
   deployBaseContracts,
+  deployKyberNetworkWrapperContract,
   deploySetTokenAsync,
-  deployTakerWalletWrapperContract,
   deployTokenAsync,
   deployTokensAsync,
   getVaultBalances,
@@ -88,7 +87,6 @@ describe('CoreWrapper', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
-  let issuanceOrderModule: IssuanceOrderModuleContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let coreWrapper: CoreWrapper;
@@ -111,7 +109,6 @@ describe('CoreWrapper', () => {
       setTokenFactory,
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
-      issuanceOrderModule,
     ] = await deployBaseContracts(web3);
 
     coreWrapper = new CoreWrapper(
@@ -549,10 +546,10 @@ describe('CoreWrapper', () => {
     });
 
     test('gets exchange address', async () => {
-      const takerWalletWrapper = await deployTakerWalletWrapperContract(web3, transferProxy, core);
-      const exchangeAddress = await coreWrapper.exchangeIds(SetUtils.EXCHANGES.TAKER_WALLET);
+      const kyberWrapper = await deployKyberNetworkWrapperContract(web3, NULL_ADDRESS, transferProxy, core);
+      const exchangeAddress = await coreWrapper.exchangeIds(SetUtils.EXCHANGES.KYBER);
 
-      expect(exchangeAddress).to.equal(takerWalletWrapper.address);
+      expect(exchangeAddress).to.equal(kyberWrapper.address);
     });
 
     test('gets transfer proxy address', async () => {
@@ -618,7 +615,6 @@ describe('CoreWrapper', () => {
 
       const expectedModules = [
         rebalanceAuctionModule.address,
-        issuanceOrderModule.address,
         moduleAddress,
       ];
       expect(JSON.stringify(modules)).to.equal(JSON.stringify(expectedModules));

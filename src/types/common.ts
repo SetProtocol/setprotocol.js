@@ -9,12 +9,9 @@ export {
   Constants,
   ECSig,
   Exchanges,
-  IssuanceOrder,
   KyberTrade,
   Log,
-  SignedIssuanceOrder,
   SolidityTypes,
-  TakerWalletOrder,
   UInt,
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
@@ -104,7 +101,6 @@ export interface SetProtocolConfig {
   setTokenFactoryAddress: Address;
   rebalancingSetTokenFactoryAddress: Address;
   exchangeIssueModuleAddress: Address;
-  issuanceOrderModuleAddress: Address;
   rebalancingTokenIssuanceModule: Address;
   payableExchangeIssue: Address;
   wrappedEtherAddress: Address;
@@ -119,14 +115,12 @@ export interface SystemOwnableState {
   core: Address;
   vault: Address;
   transferProxy: Address;
-  issuanceOrderModule: Address;
 }
 
 export interface SystemTimeLockPeriodState {
   core: BigNumber;
   vault: BigNumber;
   transferProxy: BigNumber;
-  issuanceOrderModule: BigNumber;
 }
 
 export interface TokenFlows {

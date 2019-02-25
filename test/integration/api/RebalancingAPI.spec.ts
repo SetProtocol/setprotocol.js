@@ -123,7 +123,6 @@ describe('RebalancingAPI', () => {
       setTokenFactory,
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
-      ,
       whitelist,
       rebalanceIssuanceModule,
     ] = await deployBaseContracts(web3);
@@ -146,7 +145,6 @@ describe('RebalancingAPI', () => {
       rebalancingSetTokenFactoryAddress: NULL_ADDRESS,
       kyberNetworkWrapperAddress: NULL_ADDRESS,
       rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
-      issuanceOrderModuleAddress: NULL_ADDRESS,
       rebalancingTokenIssuanceModule: rebalanceIssuanceModule.address,
       exchangeIssueModuleAddress: NULL_ADDRESS,
       payableExchangeIssue: NULL_ADDRESS,
@@ -155,7 +153,7 @@ describe('RebalancingAPI', () => {
 
     await addModuleAsync(core, rebalanceIssuanceModule.address);
 
-    const assertions = new Assertions(web3, coreWrapper);
+    const assertions = new Assertions(web3);
     rebalancingAPI = new RebalancingAPI(web3, assertions, coreWrapper, setProtocolConfig);
   });
 

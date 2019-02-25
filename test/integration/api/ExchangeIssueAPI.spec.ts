@@ -39,7 +39,6 @@ import {
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { ACCOUNTS } from '@src/constants/accounts';
-import { CoreWrapper } from '@src/wrappers';
 import { ExchangeIssueAPI } from '@src/api';
 import {
   NULL_ADDRESS,
@@ -98,13 +97,6 @@ describe('ExchangeIssueAPI', () => {
       setTokenFactory,
     ] = await deployBaseContracts(web3);
 
-    const coreWrapper = new CoreWrapper(
-      web3,
-      core.address,
-      transferProxy.address,
-      vault.address,
-    );
-
     exchangeIssueModule = await deployExchangeIssueModuleAsync(web3, core, transferProxy, vault);
     await addModuleAsync(core, exchangeIssueModule.address);
     await addAuthorizationAsync(transferProxy, exchangeIssueModule.address);
@@ -121,7 +113,7 @@ describe('ExchangeIssueAPI', () => {
 
     wrappedEtherMock = await deployWethMockAsync(web3, NULL_ADDRESS, ZERO);
 
-    const assertions = new Assertions(web3, coreWrapper);
+    const assertions = new Assertions(web3);
     exchangeIssueAPI = new ExchangeIssueAPI(
       web3,
       assertions,

@@ -74,7 +74,7 @@ describe('AccountingAPI', () => {
       transferProxy.address,
       vault.address,
     );
-    const assertions = new Assertions(web3, coreWrapper);
+    const assertions = new Assertions(web3);
     accountingAPI = new AccountingAPI(coreWrapper, assertions);
 
     tokens = await deployTokensAsync(3, web3);

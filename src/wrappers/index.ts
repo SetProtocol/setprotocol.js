@@ -22,7 +22,6 @@ import { ContractWrapper } from './ContractWrapper';
 import { CoreWrapper } from './CoreWrapper';
 import { ERC20Wrapper } from './ERC20Wrapper';
 import { ExchangeIssueModuleWrapper } from './ExchangeIssueModuleWrapper';
-import { IssuanceOrderModuleWrapper } from './IssuanceOrderModuleWrapper';
 import { KyberNetworkWrapper } from './KyberNetworkWrapper';
 import { PayableExchangeIssueWrapper } from './PayableExchangeIssueWrapper';
 import { PriceFeedWrapper } from './PriceFeedWrapper';
@@ -41,7 +40,6 @@ export {
   CoreWrapper,
   ERC20Wrapper,
   ExchangeIssueModuleWrapper,
-  IssuanceOrderModuleWrapper,
   KyberNetworkWrapper,
   PayableExchangeIssueWrapper,
   PriceFeedWrapper,

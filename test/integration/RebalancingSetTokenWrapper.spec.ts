@@ -94,7 +94,7 @@ describe('SetTokenWrapper', () => {
       vault,
       setTokenFactory,
       rebalancingSetTokenFactory,
-      rebalanceAuctionModule, ,
+      rebalanceAuctionModule,
       whitelist,
     ] = await deployBaseContracts(web3);
 
