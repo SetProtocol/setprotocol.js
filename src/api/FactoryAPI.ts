@@ -208,7 +208,7 @@ export class FactoryAPI {
   ): Promise<string> {
     await this.assertCreateSet(txOpts.from, this.setTokenFactoryAddress, components, units, naturalUnit, name, symbol);
 
-    return await this.core.create(
+    return await this.core.createSet(
       this.setTokenFactoryAddress,
       components,
       units,
@@ -267,7 +267,7 @@ export class FactoryAPI {
       rebalanceInterval,
     );
 
-    return await this.core.create(
+    return await this.core.createSet(
       this.rebalancingSetTokenFactoryAddress,
       [initialSet],
       [initialUnitShares],
