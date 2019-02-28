@@ -18,20 +18,15 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { ExchangeIssueParams, SetProtocolUtils } from 'set-protocol-utils';
+import { ExchangeIssueParams } from 'set-protocol-utils';
 
-import { coreAPIErrors, orderErrors } from '../errors';
+import { coreAPIErrors } from '../errors';
 import { CommonAssertions } from './CommonAssertions';
 import { SchemaAssertions } from './SchemaAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
 import { SetTokenAssertions } from './SetTokenAssertions';
-import { ZERO } from '../constants';
-import { BigNumber, calculatePartialAmount } from '../util';
-import {
-  Address,
-  KyberTrade,
-  ZeroExSignedFillOrder,
-} from '../types/common';
+import { BigNumber } from '../util';
+import { Address, KyberTrade, ZeroExSignedFillOrder } from '../types/common';
 
 export class OrderAssertions {
   private erc20Assertions: ERC20Assertions;
@@ -70,196 +65,187 @@ export class OrderAssertions {
     exchangeIssueParams: ExchangeIssueParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
   ) {
-    const {
-      setAddress,
-      paymentToken,
-      quantity,
-      requiredComponents,
-      requiredComponentAmounts,
-    } = exchangeIssueParams;
+    // const {
+    //   setAddress,
+    //   sentTokenExchanges,
+    //   sentTokens,
+    //   sentTokenAmounts,
+    //   quantity,
+    //   receiveTokens,
+    //   receiveTokenAmounts,
+    // } = exchangeIssueParams;
 
-    await Promise.all(
-      _.map(orders, async (order: any) => {
-        if (SetProtocolUtils.isZeroExOrder(order)) {
-          await this.isValidZeroExOrderFill(setAddress, paymentToken, quantity, order);
-        } else if (SetProtocolUtils.isKyberTrade(order)) {
-          await this.isValidKyberTradeFill(setAddress, paymentToken, order);
-        }
-      })
-    );
+    // await Promise.all(
+    //   _.map(orders, async (order: any) => {
+    //     if (SetProtocolUtils.isZeroExOrder(order)) {
+    //       await this.isValidZeroExOrderFill(setAddress, paymentToken, quantity, order);
+    //     } else if (SetProtocolUtils.isKyberTrade(order)) {
+    //       await this.isValidKyberTradeFill(setAddress, paymentToken, order);
+    //     }
+    //   })
+    // );
 
-    this.isValidLiquidityAmounts(
-      quantity,
-      requiredComponents,
-      requiredComponentAmounts,
-      quantity,
-      orders,
-    );
+    // this.isValidLiquidityAmounts(
+    //   quantity,
+    //   requiredComponents,
+    //   requiredComponentAmounts,
+    //   quantity,
+    //   orders,
+    // );
   }
 
   /* ============ Private Helpers =============== */
 
-  private isValidLiquidityAmounts(
-    quantity: BigNumber,
-    requiredComponents: Address[],
-    requiredComponentAmounts: BigNumber[],
-    quantityToFill: BigNumber,
-    orders: (KyberTrade | ZeroExSignedFillOrder)[],
-  ) {
-    const componentAmountsFromLiquidity = this.calculateLiquidityFills(orders);
+  // private isValidLiquidityAmounts(
+  //   quantity: BigNumber,
+  //   requiredComponents: Address[],
+  //   requiredComponentAmounts: BigNumber[],
+  //   quantityToFill: BigNumber,
+  //   orders: (KyberTrade | ZeroExSignedFillOrder)[],
+  // ) {
+  //   const componentAmountsFromLiquidity = this.calculateLiquidityFills(orders);
 
-    _.each(requiredComponents, (component, i) => {
-      const requiredComponentAmountForFillQuantity = calculatePartialAmount(
-        requiredComponentAmounts[i],
-        quantityToFill,
-        quantity
-      );
+  //   _.each(requiredComponents, (component, i) => {
+  //     const requiredComponentAmountForFillQuantity = calculatePartialAmount(
+  //       requiredComponentAmounts[i],
+  //       quantityToFill,
+  //       quantity
+  //     );
 
-      const normalizedTokenAddress = component.toLowerCase();
+  //     const normalizedTokenAddress = component.toLowerCase();
 
-      this.commonAssertions.isNotUndefined(
-        componentAmountsFromLiquidity[normalizedTokenAddress],
-        orderErrors.INSUFFIENT_LIQUIDITY_FOR_REQUIRED_COMPONENT(normalizedTokenAddress),
-      );
+  //     this.commonAssertions.isNotUndefined(
+  //       componentAmountsFromLiquidity[normalizedTokenAddress],
+  //       orderErrors.INSUFFIENT_LIQUIDITY_FOR_REQUIRED_COMPONENT(normalizedTokenAddress),
+  //     );
 
-      this.commonAssertions.isEqualBigNumber(
-        componentAmountsFromLiquidity[normalizedTokenAddress],
-        requiredComponentAmountForFillQuantity,
-        orderErrors.INSUFFICIENT_COMPONENT_AMOUNT_FROM_LIQUIDITY(
-          normalizedTokenAddress,
-          componentAmountsFromLiquidity[normalizedTokenAddress],
-          requiredComponentAmountForFillQuantity,
-        ),
-      );
-    });
-  }
+  //     this.commonAssertions.isEqualBigNumber(
+  //       componentAmountsFromLiquidity[normalizedTokenAddress],
+  //       requiredComponentAmountForFillQuantity,
+  //       orderErrors.INSUFFICIENT_COMPONENT_AMOUNT_FROM_LIQUIDITY(
+  //         normalizedTokenAddress,
+  //         componentAmountsFromLiquidity[normalizedTokenAddress],
+  //         requiredComponentAmountForFillQuantity,
+  //       ),
+  //     );
+  //   });
+  // }
 
-  private calculateLiquidityFills(
-    orders: (KyberTrade | ZeroExSignedFillOrder)[],
-  ): { [addr: string]: BigNumber } {
-    let requiredComponentFills: { [addr: string]: BigNumber } = {};
+  // private calculateLiquidityFills(
+  //   orders: (KyberTrade | ZeroExSignedFillOrder)[],
+  // ): { [addr: string]: BigNumber } {
+  //   let requiredComponentFills: { [addr: string]: BigNumber } = {};
 
-    _.each(orders, (order: any) => {
-      // Count up components of issuance order that have been filled from this liquidity order
-      requiredComponentFills = this.addLiquidityOrderContribution(order, requiredComponentFills);
-    });
+  //   _.each(orders, (order: any) => {
+  //     // Count up components of issuance order that have been filled from this liquidity order
+  //     requiredComponentFills = this.addLiquidityOrderContribution(order, requiredComponentFills);
+  //   });
 
-    return requiredComponentFills;
-  }
+  //   return requiredComponentFills;
+  // }
 
   /*
    * This takes in an order from a liquidity source and adds up the amount of token being filled
    * for a given component.
    */
-  private addLiquidityOrderContribution(
-    order: any,
-    requiredComponentFills: { [addr: string]: BigNumber },
-  ): { [addr: string]: BigNumber } {
-    let existingAmount: BigNumber;
-    let currentOrderAmount: BigNumber;
-    if (SetProtocolUtils.isZeroExOrder(order)) {
-      const {
-        fillAmount,
-        makerAssetAmount,
-        makerAssetData,
-        takerAssetAmount,
-      } = order;
-      const tokenAddress = SetProtocolUtils.extractAddressFromAssetData(makerAssetData).toLowerCase();
+  // private addLiquidityOrderContribution(
+  //   order: any,
+  //   requiredComponentFills: { [addr: string]: BigNumber },
+  // ): { [addr: string]: BigNumber } {
+  //   let existingAmount: BigNumber;
+  //   let currentOrderAmount: BigNumber;
+  //   if (SetProtocolUtils.isZeroExOrder(order)) {
+  //     const {
+  //       fillAmount,
+  //       makerAssetAmount,
+  //       makerAssetData,
+  //       takerAssetAmount,
+  //     } = order;
+  //     const tokenAddress = SetProtocolUtils.extractAddressFromAssetData(makerAssetData).toLowerCase();
 
-      // Accumulate fraction of 0x order that was filled
-      existingAmount = requiredComponentFills[tokenAddress] || ZERO;
-      currentOrderAmount = calculatePartialAmount(makerAssetAmount, fillAmount, takerAssetAmount);
+  //     // Accumulate fraction of 0x order that was filled
+  //     existingAmount = requiredComponentFills[tokenAddress] || ZERO;
+  //     currentOrderAmount = calculatePartialAmount(makerAssetAmount, fillAmount, takerAssetAmount);
 
-      return Object.assign(requiredComponentFills, { [tokenAddress]: existingAmount.plus(currentOrderAmount) });
-    } else if (SetProtocolUtils.isTakerWalletOrder(order)) {
-      const {
-        takerTokenAddress,
-        takerTokenAmount,
-      } = order;
-      const tokenAddress = takerTokenAddress.toLowerCase();
+  //     return Object.assign(requiredComponentFills, { [tokenAddress]: existingAmount.plus(currentOrderAmount) });
+  //   } else if (SetProtocolUtils.isKyberTrade(order)) {
+  //     const {
+  //       destinationToken,
+  //       maxDestinationQuantity,
+  //     } = order;
+  //     const tokenAddress = destinationToken.toLowerCase();
 
-      existingAmount = requiredComponentFills[tokenAddress] || ZERO;
-      currentOrderAmount = takerTokenAmount;
+  //     existingAmount = requiredComponentFills[tokenAddress] || ZERO;
+  //     currentOrderAmount = maxDestinationQuantity;
 
-      return Object.assign(requiredComponentFills, { [tokenAddress]: existingAmount.plus(currentOrderAmount) });
-    } else if (SetProtocolUtils.isKyberTrade(order)) {
-      const {
-        destinationToken,
-        maxDestinationQuantity,
-      } = order;
-      const tokenAddress = destinationToken.toLowerCase();
+  //     return Object.assign(requiredComponentFills, { [tokenAddress]: existingAmount.plus(currentOrderAmount) });
+  //   }
 
-      existingAmount = requiredComponentFills[tokenAddress] || ZERO;
-      currentOrderAmount = maxDestinationQuantity;
+  //   return requiredComponentFills;
+  // }
 
-      return Object.assign(requiredComponentFills, { [tokenAddress]: existingAmount.plus(currentOrderAmount) });
-    }
+  // private async isValidKyberTradeFill(
+  //   setAddress: Address,
+  //   makerToken: Address,
+  //   trade: KyberTrade
+  // ) {
+  //   this.commonAssertions.greaterThanZero(
+  //     trade.sourceTokenQuantity,
+  //     coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(trade.sourceTokenQuantity),
+  //   );
 
-    return requiredComponentFills;
-  }
+  //   // Kyber trade destination token is not the issuance order maker token
+  //   this.commonAssertions.isDifferentAddress(
+  //     makerToken,
+  //     trade.destinationToken,
+  //     orderErrors.MAKER_TOKEN_AND_KYBER_DESTINATION_TOKEN_MISMATCH(),
+  //   );
 
-  private async isValidKyberTradeFill(
-    setAddress: Address,
-    makerToken: Address,
-    trade: KyberTrade
-  ) {
-    this.commonAssertions.greaterThanZero(
-      trade.sourceTokenQuantity,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(trade.sourceTokenQuantity),
-    );
+  //   // Kyber destination token is a component of the Set
+  //   await this.setTokenAssertions.isComponent(setAddress, trade.destinationToken);
 
-    // Kyber trade destination token is not the issuance order maker token
-    this.commonAssertions.isDifferentAddress(
-      makerToken,
-      trade.destinationToken,
-      orderErrors.MAKER_TOKEN_AND_KYBER_DESTINATION_TOKEN_MISMATCH(),
-    );
+  //   // Kyber trade parameters will yield enough component token
+  //   const amountComponentTokenFromTrade = trade.minimumConversionRate.mul(trade.sourceTokenQuantity);
+  //   this.commonAssertions.isGreaterOrEqualThan(
+  //     amountComponentTokenFromTrade,
+  //     trade.maxDestinationQuantity,
+  //     orderErrors.INSUFFICIENT_KYBER_SOURCE_TOKEN_FOR_RATE(
+  //       trade.sourceTokenQuantity,
+  //       amountComponentTokenFromTrade,
+  //       trade.destinationToken
+  //     )
+  //   );
+  // }
 
-    // Kyber destination token is a component of the Set
-    await this.setTokenAssertions.isComponent(setAddress, trade.destinationToken);
+  // private async isValidZeroExOrderFill(
+  //   setAddress: Address,
+  //   makerToken: Address,
+  //   quantityToFill: BigNumber,
+  //   zeroExOrder: ZeroExSignedFillOrder,
+  // ) {
+  //   this.commonAssertions.greaterThanZero(
+  //     zeroExOrder.fillAmount,
+  //     coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(zeroExOrder.fillAmount),
+  //   );
 
-    // Kyber trade parameters will yield enough component token
-    const amountComponentTokenFromTrade = trade.minimumConversionRate.mul(trade.sourceTokenQuantity);
-    this.commonAssertions.isGreaterOrEqualThan(
-      amountComponentTokenFromTrade,
-      trade.maxDestinationQuantity,
-      orderErrors.INSUFFICIENT_KYBER_SOURCE_TOKEN_FOR_RATE(
-        trade.sourceTokenQuantity,
-        amountComponentTokenFromTrade,
-        trade.destinationToken
-      )
-    );
-  }
+  //   // 0x taker token is equivalent to the issuance order maker token
+  //   this.commonAssertions.isEqualAddress(
+  //     makerToken,
+  //     SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.takerAssetData),
+  //     orderErrors.MAKER_TOKEN_AND_ZERO_EX_TAKER_TOKEN_MISMATCH(),
+  //   );
 
-  private async isValidZeroExOrderFill(
-    setAddress: Address,
-    makerToken: Address,
-    quantityToFill: BigNumber,
-    zeroExOrder: ZeroExSignedFillOrder,
-  ) {
-    this.commonAssertions.greaterThanZero(
-      zeroExOrder.fillAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(zeroExOrder.fillAmount),
-    );
+  //   // 0x maker token is a component of the Set
+  //   await this.setTokenAssertions.isComponent(
+  //     setAddress,
+  //     SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),
+  //   );
 
-    // 0x taker token is equivalent to the issuance order maker token
-    this.commonAssertions.isEqualAddress(
-      makerToken,
-      SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.takerAssetData),
-      orderErrors.MAKER_TOKEN_AND_ZERO_EX_TAKER_TOKEN_MISMATCH(),
-    );
-
-    // 0x maker token is a component of the Set
-    await this.setTokenAssertions.isComponent(
-      setAddress,
-      SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),
-    );
-
-    // 0x order maker has sufficient balance of the maker token
-    await this.erc20Assertions.hasSufficientBalanceAsync(
-      SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),
-      zeroExOrder.makerAddress,
-      zeroExOrder.makerAssetAmount,
-    );
-  }
+  //   // 0x order maker has sufficient balance of the maker token
+  //   await this.erc20Assertions.hasSufficientBalanceAsync(
+  //     SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),
+  //     zeroExOrder.makerAddress,
+  //     zeroExOrder.makerAssetAmount,
+  //   );
+  // }
 }

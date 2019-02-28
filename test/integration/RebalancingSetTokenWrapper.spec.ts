@@ -542,6 +542,15 @@ describe('RebalancingSetTokenWrapper', () => {
         priceCurve.address
       );
 
+      // Issue currentSetToken
+      const baseSetIssueQuantity = ether(7);
+      await core.issue.sendTransactionAsync(currentSetToken.address, baseSetIssueQuantity, TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      const rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
       // Transition to proposal state
       const auctionPriceCurveAddress = priceCurve.address;
       const setAuctionTimeToPivot = new BigNumber(100000);

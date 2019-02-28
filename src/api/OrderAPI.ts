@@ -28,10 +28,7 @@ import {
 } from '../wrappers';
 import { ZERO } from '../constants';
 import { BigNumber, generateFutureTimestamp,  } from '../util';
-import {
-  Address,
-  Component,
-} from '../types/common';
+import { Address, Component } from '../types/common';
 
 
 /**

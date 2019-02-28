@@ -20,10 +20,10 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Bytes, ExchangeIssueParams, SetProtocolUtils } from 'set-protocol-utils';
 
-import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { ExchangeIssueModuleWrapper } from '../wrappers';
 import { Address, KyberTrade, Tx, ZeroExSignedFillOrder } from '../types/common';
+import { coreAPIErrors } from '../errors';
 
 /**
  * @title ExchangeIssueAPI
@@ -89,12 +89,16 @@ export class ExchangeIssueAPI {
   ) {
     const {
       setAddress,
-      paymentToken,
-      paymentTokenAmount,
+      sentTokens,
+      sentTokenAmounts,
       quantity,
-      requiredComponents,
-      requiredComponentAmounts,
+      receiveTokens,
+      receiveTokenAmounts,
     } = exchangeIssueParams;
+
+    // TODO: Update this assertion to properly validate all sent tokens
+    const paymentToken = sentTokens[0];
+    const paymentTokenAmount = sentTokenAmounts[0];
 
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('paymentToken', paymentToken);
@@ -104,15 +108,15 @@ export class ExchangeIssueAPI {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(paymentTokenAmount)
     );
     this.assert.common.isEqualLength(
-      requiredComponents,
-      requiredComponentAmounts,
+      receiveTokens,
+      receiveTokenAmounts,
       coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
     );
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
     await this.assert.order.assertRequiredComponentsAndAmounts(
-      requiredComponents,
-      requiredComponentAmounts,
+      receiveTokens,
+      receiveTokenAmounts,
       setAddress,
     );
 

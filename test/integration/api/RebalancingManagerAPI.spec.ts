@@ -159,8 +159,8 @@ describe('RebalancingManagerAPI', () => {
       factory.address,
       constantAuctionPriceCurve.address,
       auctionTimeToPivot,
-      btcMultiplier,
-      ethMultiplier,
+      [btcMultiplier, ethMultiplier],
+      [new BigNumber(48), new BigNumber(52)]
     );
 
     rebalancingManagerAPI = new RebalancingManagerAPI(web3);

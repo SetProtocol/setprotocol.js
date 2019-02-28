@@ -79,7 +79,7 @@ export class CoreWrapper {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const coreInstance = await this.contracts.loadCoreAsync(this.coreAddress);
 
-    return await coreInstance.create.sendTransactionAsync(
+    return await coreInstance.createSet.sendTransactionAsync(
       factoryAddress,
       components,
       units,

@@ -20,10 +20,10 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Bytes, ExchangeIssueParams, SetProtocolUtils } from 'set-protocol-utils';
 
-import { coreAPIErrors, exchangeIssueErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { PayableExchangeIssueWrapper, RebalancingSetTokenWrapper } from '../wrappers';
 import { Address, KyberTrade, Tx, ZeroExSignedFillOrder } from '../types/common';
+import { coreAPIErrors, exchangeIssueErrors } from '../errors';
 
 /**
  * @title PayableExchangeIssueAPI
@@ -94,7 +94,6 @@ export class PayableExchangeIssueAPI {
     );
   }
 
-
   /* ============ Private Assertions ============ */
 
   private async assertIssueRebalancingSetWithEtherAsync(
@@ -103,7 +102,13 @@ export class PayableExchangeIssueAPI {
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
     txOpts: Tx,
   ) {
-    const { setAddress, paymentToken } = exchangeIssueParams;
+    const {
+      setAddress,
+      sentTokens,
+    } = exchangeIssueParams;
+
+    // TODO: Update this assertion to properly validate all sent tokens
+    const paymentToken = sentTokens[0];
 
     this.assert.common.isNotUndefined(txOpts.value, exchangeIssueErrors.ETHER_VALUE_NOT_UNDEFINED());
     this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
@@ -138,12 +143,16 @@ export class PayableExchangeIssueAPI {
   ) {
     const {
       setAddress,
-      paymentToken,
-      paymentTokenAmount,
+      sentTokens,
+      sentTokenAmounts,
       quantity,
-      requiredComponents,
-      requiredComponentAmounts,
+      receiveTokens,
+      receiveTokenAmounts,
     } = exchangeIssueParams;
+
+    // TODO: Update this assertion to properly validate all sent tokens
+    const paymentToken = sentTokens[0];
+    const paymentTokenAmount = sentTokenAmounts[0];
 
     this.assert.schema.isValidAddress('setAddress', setAddress);
     this.assert.schema.isValidAddress('paymentToken', paymentToken);
@@ -153,13 +162,13 @@ export class PayableExchangeIssueAPI {
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(paymentTokenAmount)
     );
     this.assert.common.isEqualLength(
-      requiredComponents,
-      requiredComponentAmounts,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+      receiveTokens,
+      receiveTokenAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('receiveTokens', 'receiveTokenAmounts'),
     );
     await this.assert.order.assertRequiredComponentsAndAmounts(
-      requiredComponents,
-      requiredComponentAmounts,
+      receiveTokens,
+      receiveTokenAmounts,
       setAddress,
     );
 
@@ -169,5 +178,4 @@ export class PayableExchangeIssueAPI {
       `Quantity of Exchange issue Params`,
     );
   }
-
 }

@@ -109,7 +109,7 @@ describe('ExchangeIssueModuleWrapper', () => {
       setTokenFactory,
     ] = await deployBaseContracts(web3);
 
-    exchangeIssueModule = await deployExchangeIssueModuleAsync(web3, core, transferProxy, vault);
+    exchangeIssueModule = await deployExchangeIssueModuleAsync(web3, core, vault);
     await addModuleAsync(core, exchangeIssueModule.address);
     await addAuthorizationAsync(transferProxy, exchangeIssueModule.address);
     await addAuthorizationAsync(vault, exchangeIssueModule.address);
@@ -186,11 +186,12 @@ describe('ExchangeIssueModuleWrapper', () => {
 
       subjectExchangeIssueData = {
         setAddress: exchangeIssueSetAddress,
-        paymentToken: exchangeIssuePaymentToken,
-        paymentTokenAmount: exchangeIssuePaymentTokenAmount,
+        sentTokenExchanges: [SetUtils.EXCHANGES.ZERO_EX],
+        sentTokens: [exchangeIssuePaymentToken],
+        sentTokenAmounts: [exchangeIssuePaymentTokenAmount],
         quantity: exchangeIssueQuantity,
-        requiredComponents: exchangeIssueRequiredComponents,
-        requiredComponentAmounts: exchangeIssueRequiredComponentAmounts,
+        receiveTokens: exchangeIssueRequiredComponents,
+        receiveTokenAmounts: exchangeIssueRequiredComponentAmounts,
       };
 
       await approveForTransferAsync(
@@ -201,20 +202,20 @@ describe('ExchangeIssueModuleWrapper', () => {
 
       // Create 0x order for the component, using weth(4) paymentToken as default
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                                     // senderAddress
-        zeroExOrderMaker,                                 // makerAddress
-        NULL_ADDRESS,                                     // takerAddress
-        ZERO,                                             // makerFee
-        ZERO,                                             // takerFee
-        subjectExchangeIssueData.requiredComponentAmounts[0],         // makerAssetAmount
-        exchangeIssuePaymentTokenAmount,                  // takerAssetAmount
-        exchangeIssueRequiredComponents[0],               // makerAssetAddress
-        exchangeIssuePaymentToken,                        // takerAssetAddress
-        SetUtils.generateSalt(),                          // salt
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,            // exchangeAddress
-        NULL_ADDRESS,                                     // feeRecipientAddress
-        SetTestUtils.generateTimestamp(10000),            // expirationTimeSeconds
-        exchangeIssuePaymentTokenAmount,                  // amount of zeroExOrder to fill
+        NULL_ADDRESS,                                    // senderAddress
+        zeroExOrderMaker,                                // makerAddress
+        NULL_ADDRESS,                                    // takerAddress
+        ZERO,                                            // makerFee
+        ZERO,                                            // takerFee
+        subjectExchangeIssueData.receiveTokenAmounts[0], // makerAssetAmount
+        exchangeIssuePaymentTokenAmount,                 // takerAssetAmount
+        exchangeIssueRequiredComponents[0],              // makerAssetAddress
+        exchangeIssuePaymentToken,                       // takerAssetAddress
+        SetUtils.generateSalt(),                         // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,           // exchangeAddress
+        NULL_ADDRESS,                                    // feeRecipientAddress
+        SetTestUtils.generateTimestamp(10000),           // expirationTimeSeconds
+        exchangeIssuePaymentTokenAmount,                 // amount of zeroExOrder to fill
       );
 
       subjectExchangeOrdersData = setUtils.generateSerializedOrders([zeroExOrder]);
