@@ -8,7 +8,6 @@ export {
   Bytes,
   Constants,
   ECSig,
-  Exchanges,
   KyberTrade,
   Log,
   SolidityTypes,

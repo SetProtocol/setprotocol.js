@@ -53,7 +53,6 @@ import {
   NULL_ADDRESS,
   TX_DEFAULTS,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
-  ZERO,
 } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber, ether } from '@src/util';
@@ -281,6 +280,15 @@ describe('RebalancingAPI', () => {
         priceCurve.address
       );
 
+      // Issue currentSetToken
+      const baseSetIssueQuantity = ether(7);
+      await core.issue.sendTransactionAsync(currentSetToken.address, baseSetIssueQuantity, TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      const rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
       // Fast forward to allow propose to be called
       const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
       nextRebalanceAvailableAtSeconds = lastRebalancedTimestampSeconds.toNumber() + rebalanceInterval.toNumber();
@@ -474,6 +482,15 @@ describe('RebalancingAPI', () => {
         priceCurve.address
       );
 
+      // Issue currentSetToken
+      const baseSetIssueQuantity = ether(7);
+      await core.issue.sendTransactionAsync(currentSetToken.address, baseSetIssueQuantity, TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      const rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
       subjectCaller = DEFAULT_ACCOUNT;
     });
@@ -547,7 +564,7 @@ describe('RebalancingAPI', () => {
 
         expect(returnedMinimumBid).to.be.bignumber.equal(auctionSetUpOutputs['expectedMinimumBid']);
 
-        expect(returnedRemainingCurrentSets).to.be.bignumber.equal(ZERO);
+        expect(returnedRemainingCurrentSets).to.be.bignumber.equal(ether(7));
 
         const returnedCombinedTokenArray = JSON.stringify(combinedTokenArray);
         const expectedCombinedTokenArray = JSON.stringify(auctionSetUpOutputs['expectedCombinedTokenArray']);

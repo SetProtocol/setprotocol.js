@@ -167,8 +167,8 @@ describe('BTCETHRebalancingManagerWrapper', () => {
       factory.address,
       constantAuctionPriceCurve.address,
       auctionTimeToPivot,
-      btcMultiplier,
-      ethMultiplier,
+      [btcMultiplier, ethMultiplier],
+      [new BigNumber(48), new BigNumber(52)]
     );
 
     btcEthManagerWrapper = new BTCETHRebalancingManagerWrapper(
