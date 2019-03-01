@@ -531,16 +531,18 @@ export class RebalancingAPI {
     quantity: BigNumber,
     txOpts: Tx
   ) {
+    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
     this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
 
     await this.assert.setToken.isMultipleOfNaturalUnit(
-      setAddress,
+      rebalancingSetTokenAddress,
       quantity,
       'Redeem quantity',
     );
+
     await this.assert.erc20.hasSufficientBalanceAsync(
-      setAddress,
+      rebalancingSetTokenAddress,
       txOpts.from,
       quantity,
     );
