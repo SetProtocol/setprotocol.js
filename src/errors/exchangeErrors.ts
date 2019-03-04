@@ -19,7 +19,7 @@
 import { Address } from '../types/common';
 import { BigNumber } from '../util';
 
-export const orderErrors = {
+export const exchangeErrors = {
   INSUFFIENT_LIQUIDITY_FOR_REQUIRED_COMPONENT: (
     component: string,
   ) => `Token ${component} is unrepresented in the liquidity orders.`,

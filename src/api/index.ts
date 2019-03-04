@@ -22,7 +22,6 @@ import { ERC20API } from './ERC20API';
 import { ExchangeIssuanceAPI } from './ExchangeIssuanceAPI';
 import { FactoryAPI } from './FactoryAPI';
 import { IssuanceAPI } from './IssuanceAPI';
-import { OrderAPI } from './OrderAPI';
 import { PayableExchangeIssuanceAPI } from './PayableExchangeIssuanceAPI';
 import { RebalancingAPI } from './RebalancingAPI';
 import { RebalancingManagerAPI } from './RebalancingManagerAPI';
@@ -36,7 +35,6 @@ export {
   ExchangeIssuanceAPI,
   FactoryAPI,
   IssuanceAPI,
-  OrderAPI,
   PayableExchangeIssuanceAPI,
   RebalancingAPI,
   SystemAPI,

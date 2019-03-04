@@ -26,7 +26,6 @@ import {
   ExchangeIssuanceAPI,
   FactoryAPI,
   IssuanceAPI,
-  OrderAPI,
   PayableExchangeIssuanceAPI,
   RebalancingAPI,
   RebalancingManagerAPI,
@@ -75,11 +74,6 @@ class SetProtocol {
    * with ExchangeIssuance contracts
    */
   public exchangeIssuance: ExchangeIssuanceAPI;
-
-  /**
-   * An instance of the OrderAPI class containing methods for exchange-related functionality
-   */
-  public orders: OrderAPI;
 
   /**
    * An instance of the PayableExchangeIssuanceAPI class containing methods for interacting
@@ -134,16 +128,11 @@ class SetProtocol {
     this.erc20 = new ERC20API(this.web3, assertions);
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
-    this.orders = new OrderAPI(
-      this.web3,
-      config.kyberNetworkWrapperAddress,
-      config.vaultAddress
-    );
     this.setToken = new SetTokenAPI(this.web3, assertions);
     this.system = new SystemAPI(this.web3, this.core, config);
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, config);
     this.rebalancingManager = new RebalancingManagerAPI(this.web3);
-    this.exchangeIssuance = new ExchangeIssuanceAPI(this.web3, assertions, config.exchangeIssuanceModuleAddress);
+    this.exchangeIssuance = new ExchangeIssuanceAPI(this.web3, assertions, config);
 
     this.payableExchangeIssuance = new PayableExchangeIssuanceAPI(
       this.web3,

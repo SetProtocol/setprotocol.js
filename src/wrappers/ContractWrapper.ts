@@ -427,13 +427,13 @@ export class ContractWrapper {
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as ExchangeIssuanceModuleContract;
     } else {
-      const rebalancingTokenIssuanceModuleContract = await ExchangeIssuanceModuleContract.at(
+      const exchangeIssuanceModuleContract = await ExchangeIssuanceModuleContract.at(
         exchangeIssuanceModule,
         this.web3,
         transactionOptions,
       );
-      this.cache[cacheKey] = rebalancingTokenIssuanceModuleContract;
-      return rebalancingTokenIssuanceModuleContract;
+      this.cache[cacheKey] = exchangeIssuanceModuleContract;
+      return exchangeIssuanceModuleContract;
     }
   }
 
