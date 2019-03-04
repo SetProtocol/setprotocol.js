@@ -5976,9 +5976,10 @@ set-immediate-shim@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/set-immediate-shim/-/set-immediate-shim-1.0.1.tgz#4b2b1b27eb808a9f8dcc481a58e5e56f599f3f61"
 
-set-protocol-contracts@1.2.1-beta.12:
-  version "1.2.1-beta.12"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.1-beta.12.tgz#7f3eb299df4f8cdfca164b4533b24e47cc6836c3"
+set-protocol-contracts@1.2.1-beta.13:
+  version "1.2.1-beta.13"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.1-beta.13.tgz#63626f7f5015fcc5be00ab0f2f23f83862788ade"
+  integrity sha512-KvjilyV0Tt6wIgmiaHlJ24FEBwujGiYjiqs50/y2hXrpCvbKsipE8+WFvfkVQXPiMZ+p8jDOjQ+lJBvLIqBlRA==
   dependencies:
     bn-chai "^1.0.1"
     canonical-weth "^1.3.1"
@@ -5991,18 +5992,18 @@ set-protocol-contracts@1.2.1-beta.12:
     lint-staged "^7.2.0"
     module-alias "^2.1.0"
     openzeppelin-solidity "^2.1.2"
-    set-protocol-utils "^1.0.0-beta.29"
+    set-protocol-utils "^1.0.0-beta.32"
     tiny-promisify "^1.0.0"
-    truffle-hdwallet-provider "^1.0.0-web3one.0"
     ts-mocha "^6.0.0"
     ts-node "^8.0.2"
     tslint-eslint-rules "^5.3.1"
     web3 "1.0.0-beta.36"
     web3-utils "1.0.0-beta.36"
 
-set-protocol-utils@1.0.0-beta.29, set-protocol-utils@^1.0.0-beta.29:
-  version "1.0.0-beta.29"
-  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-1.0.0-beta.29.tgz#00c081bc28ae689f05d87a41d39f5be50e9cc2b5"
+set-protocol-utils@1.0.0-beta.32, set-protocol-utils@^1.0.0-beta.32:
+  version "1.0.0-beta.32"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-1.0.0-beta.32.tgz#8f4d630987655a1b67fb5bf302d8a5789109b166"
+  integrity sha512-FHJPx5mEqyTevB2o2zF2rTfRp8U7i9fQCq38RL+OVK4N9TsaGM3m5pnS6c1sH1iY7lWJU0YMQ7tqqhUPtYsEwQ==
   dependencies:
     "@0xproject/base-contract" "^1.0.4"
     "@0xproject/order-utils" "^1.0.1"

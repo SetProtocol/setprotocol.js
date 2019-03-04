@@ -21,45 +21,45 @@ import Web3 from 'web3';
 import { ContractWrapper } from '.';
 import { generateTxOpts } from '../util';
 import { Address, Tx } from '../types/common';
-import { Bytes, ExchangeIssueParams } from 'set-protocol-utils';
+import { Bytes, ExchangeIssuanceParams } from 'set-protocol-utils';
 
 /**
- * @title  ExchangeIssueModuleWrapper
+ * @title  ExchangeIssuanceModuleWrapper
  * @author Set Protocol
  *
- * The ExchangeIssueModuleWrapper handles all functions on the Exchange Issue Module smart contract.
+ * The ExchangeIssuanceModuleWrapper handles all functions on the Exchange Issue Module smart contract.
  *
  */
-export class ExchangeIssueModuleWrapper {
+export class ExchangeIssuanceModuleWrapper {
   private web3: Web3;
   private contracts: ContractWrapper;
-  private exchangeIssueModule: Address;
+  private exchangeIssuanceModule: Address;
 
-  public constructor(web3: Web3, exchangeIssueModuleAddress: Address) {
+  public constructor(web3: Web3, exchangeIssuanceModuleAddress: Address) {
     this.web3 = web3;
-    this.exchangeIssueModule = exchangeIssueModuleAddress;
+    this.exchangeIssuanceModule = exchangeIssuanceModuleAddress;
     this.contracts = new ContractWrapper(this.web3);
   }
 
   /**
    * Issue a Set by acquiring the base components of the Set.
    *
-   * @param  exchangeIssueData        Struct containing data around the base Set issuance
+   * @param  exchangeIssuanceData        Struct containing data around the base Set issuance
    * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
    * @param  txOpts                    The options for executing the transaction
    */
   public async exchangeIssue(
-    exchangeIssueParams: ExchangeIssueParams,
+    exchangeIssuanceParams: ExchangeIssuanceParams,
     orderData: Bytes,
     txOpts?: Tx,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-    const exchangeIssueModuleInstance = await this.contracts.loadExchangeIssueModuleAsync(
-      this.exchangeIssueModule
+    const exchangeIssuanceModuleInstance = await this.contracts.loadExchangeIssuanceModuleAsync(
+      this.exchangeIssuanceModule
     );
 
-    return await exchangeIssueModuleInstance.exchangeIssue.sendTransactionAsync(
-      exchangeIssueParams,
+    return await exchangeIssuanceModuleInstance.exchangeIssue.sendTransactionAsync(
+      exchangeIssuanceParams,
       orderData,
       txSettings,
     );

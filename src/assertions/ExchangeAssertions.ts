@@ -18,7 +18,7 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { ExchangeIssueParams } from 'set-protocol-utils';
+import { ExchangeIssuanceParams } from 'set-protocol-utils';
 
 import { coreAPIErrors } from '../errors';
 import { CommonAssertions } from './CommonAssertions';
@@ -28,7 +28,7 @@ import { SetTokenAssertions } from './SetTokenAssertions';
 import { BigNumber } from '../util';
 import { Address, KyberTrade, ZeroExSignedFillOrder } from '../types/common';
 
-export class OrderAssertions {
+export class ExchangeAssertions {
   private erc20Assertions: ERC20Assertions;
   private schemaAssertions: SchemaAssertions;
   private commonAssertions: CommonAssertions;
@@ -61,8 +61,8 @@ export class OrderAssertions {
     );
   }
 
-  public async assertExchangeIssueOrdersValidity(
-    exchangeIssueParams: ExchangeIssueParams,
+  public async assertExchangeIssuanceOrdersValidity(
+    exchangeIssueParams: ExchangeIssuanceParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
   ) {
     // const {

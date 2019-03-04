@@ -23,9 +23,9 @@ import {
   BTCETHRebalancingManagerContract,
   CoreContract,
   ERC20DetailedContract,
-  ExchangeIssueModuleContract,
+  ExchangeIssuanceModuleContract,
   KyberNetworkWrapperContract,
-  PayableExchangeIssueContract,
+  PayableExchangeIssuanceContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingTokenIssuanceModuleContract,
@@ -256,28 +256,28 @@ export class ContractWrapper {
   }
 
   /**
-   * Load PayableExchangeIssue contract
+   * Load PayableExchangeIssuance contract
    *
-   * @param  payableExchangeIssueAddress    Address of the PayableExchangeIssue contract
+   * @param  payableExchangeIssuanceAddress    Address of the PayableExchangeIssuance contract
    * @param  transactionOptions             Options sent into the contract deployed method
-   * @return                                The PayableExchangeIssue Contract
+   * @return                                The PayableExchangeIssuance Contract
    */
-  public async loadPayableExchangeIssueAsync(
-    payableExchangeIssueAddress: Address,
+  public async loadPayableExchangeIssuanceAsync(
+    payableExchangeIssuanceAddress: Address,
     transactionOptions: object = {},
-  ): Promise<PayableExchangeIssueContract> {
-    const cacheKey = `PayableExchangeIssue_${payableExchangeIssueAddress}`;
+  ): Promise<PayableExchangeIssuanceContract> {
+    const cacheKey = `PayableExchangeIssuance_${payableExchangeIssuanceAddress}`;
 
     if (cacheKey in this.cache) {
-      return this.cache[cacheKey] as PayableExchangeIssueContract;
+      return this.cache[cacheKey] as PayableExchangeIssuanceContract;
     } else {
-      const payableExchangeIssueContract = await PayableExchangeIssueContract.at(
-        payableExchangeIssueAddress,
+      const payableExchangeIssuanceContract = await PayableExchangeIssuanceContract.at(
+        payableExchangeIssuanceAddress,
         this.web3,
         transactionOptions
       );
-      this.cache[cacheKey] = payableExchangeIssueContract;
-      return payableExchangeIssueContract;
+      this.cache[cacheKey] = payableExchangeIssuanceContract;
+      return payableExchangeIssuanceContract;
     }
   }
 
@@ -412,23 +412,23 @@ export class ContractWrapper {
   }
 
   /**
-   * Load a ExchangeIssueModule contract
+   * Load a ExchangeIssuanceModule contract
    *
-   * @param  exchangeIssueModule                   Address of the ExchangeIssueModule contract
+   * @param  exchangeIssuanceModule                   Address of the ExchangeIssuanceModule contract
    * @param  transactionOptions                    Options sent into the contract deployed method
-   * @return                                       The ExchangeIssueModule Contract
+   * @return                                       The ExchangeIssuanceModule Contract
    */
-  public async loadExchangeIssueModuleAsync(
-    exchangeIssueModule: Address,
+  public async loadExchangeIssuanceModuleAsync(
+    exchangeIssuanceModule: Address,
     transactionOptions: object = {},
-  ): Promise<ExchangeIssueModuleContract> {
-    const cacheKey = `ExchangeIssueModule_${exchangeIssueModule}`;
+  ): Promise<ExchangeIssuanceModuleContract> {
+    const cacheKey = `ExchangeIssuanceModule_${exchangeIssuanceModule}`;
 
     if (cacheKey in this.cache) {
-      return this.cache[cacheKey] as ExchangeIssueModuleContract;
+      return this.cache[cacheKey] as ExchangeIssuanceModuleContract;
     } else {
-      const rebalancingTokenIssuanceModuleContract = await ExchangeIssueModuleContract.at(
-        exchangeIssueModule,
+      const rebalancingTokenIssuanceModuleContract = await ExchangeIssuanceModuleContract.at(
+        exchangeIssuanceModule,
         this.web3,
         transactionOptions,
       );
@@ -442,7 +442,7 @@ export class ContractWrapper {
    *
    * @param  medianizer                   Address of the Medianizer contract
    * @param  transactionOptions           Options sent into the contract deployed method
-   * @return                              The ExchangeIssueModule Contract
+   * @return                              The ExchangeIssuanceModule Contract
    */
   public async loadMedianizerContract(
     medianizer: Address,
