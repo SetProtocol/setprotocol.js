@@ -124,14 +124,14 @@ export class ExchangeIssuanceAPI {
    * used as `requiredComponents` and `requiredComponentAmounts` inputs for an issuance order
    *
    * @param  setAddress       Address of the Set token for issuance order
-   * @param  makerAddress     Address of user making the issuance order
+   * @param  userAddress     Address of user making the issuance
    * @param  quantity         Amount of the Set token to create as part of issuance order
    * @return                  List of objects conforming to the `Component` interface with address and units of each
    *                            component required for issuance
    */
   public async calculateRequiredComponentsAndUnitsAsync(
     setAddress: Address,
-    makerAddress: Address,
+    userAddress: Address,
     quantity: BigNumber,
   ): Promise<Component[]> {
     const components = await this.setToken.getComponents(setAddress);
@@ -144,8 +144,8 @@ export class ExchangeIssuanceAPI {
     // Gather how many components are owned by the user in balance/vault
     await Promise.all(
       components.map(async (componentAddress, index) => {
-        const walletBalance = await this.erc20.balanceOf(componentAddress, makerAddress);
-        const vaultBalance = await this.vault.getBalanceInVault(componentAddress, makerAddress);
+        const walletBalance = await this.erc20.balanceOf(componentAddress, userAddress);
+        const vaultBalance = await this.vault.getBalanceInVault(componentAddress, userAddress);
         const userTokenbalance = walletBalance.add(vaultBalance);
 
         const missingUnits = totalUnitsNeeded[index].sub(userTokenbalance);

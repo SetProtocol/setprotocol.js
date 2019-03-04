@@ -18,10 +18,9 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { Address, ECSig } from 'set-protocol-utils';
+import { Address } from 'set-protocol-utils';
 import { CoreContract } from 'set-protocol-contracts';
-import { coreAPIErrors, coreAssertionErrors } from '../errors';
-import { SignatureUtils } from '../util';
+import { coreAssertionErrors } from '../errors';
 
 
 export class CoreAssertions {
@@ -46,19 +45,6 @@ export class CoreAssertions {
       await coreContract.owner.callAsync();
     } catch (error) {
       throw new Error(coreAssertionErrors.MISSING_CORE_METHOD(coreAddress));
-    }
-  }
-
-  public isValidSignature(
-    data: string,
-    signerAddress: Address,
-    signature: ECSig,
-    addPrefix: boolean,
-  ): boolean {
-    if (!SignatureUtils.isValidSignature(data, signature, signerAddress, addPrefix)) {
-      throw new Error(coreAPIErrors.SIGNATURE_MISMATCH());
-    } else {
-      return true;
     }
   }
 }
