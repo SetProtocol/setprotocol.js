@@ -300,40 +300,6 @@ describe('ExchangeIssuanceAPI', () => {
     // });
   });
 
-describe('generateSalt', async () => {
-    function subject(): BigNumber {
-      return exchangeIssuanceAPI.generateSalt();
-    }
-
-    test('should generate a timestamp in the future', async () => {
-      const salt = subject();
-
-      expect(salt).to.be.an('object');
-    });
-  });
-
-  describe('generateExpirationTimestamp', async () => {
-    let secondsInFuture: number;
-
-    beforeEach(async () => {
-      secondsInFuture = 100000;
-    });
-
-    function subject(): BigNumber {
-      return exchangeIssuanceAPI.generateExpirationTimestamp(
-        secondsInFuture,
-      );
-    }
-
-    test('should generate a timestamp in the future', async () => {
-      const timestamp = subject();
-
-      const currentTime = new BigNumber(Math.floor((Date.now()) / 1000));
-      const expectedTimestamp = currentTime.add(secondsInFuture);
-      expect(timestamp).to.bignumber.equal(expectedTimestamp);
-    });
-  });
-
   describe('getKyberConversionRate', async () => {
     let subjectMakerTokenAddress: Address;
     let subjectComponentTokenAddress: Address;

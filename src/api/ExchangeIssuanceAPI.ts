@@ -22,7 +22,7 @@ import { Bytes, ExchangeIssuanceParams, SetProtocolUtils } from 'set-protocol-ut
 
 import { Assertions } from '../assertions';
 import { ZERO } from '../constants';
-import { BigNumber, generateFutureTimestamp,  } from '../util';
+import { BigNumber,  } from '../util';
 import {
   ExchangeIssuanceModuleWrapper,
   ERC20Wrapper,
@@ -95,27 +95,6 @@ export class ExchangeIssuanceAPI {
       orderData,
       txOpts,
     );
-  }
-
-  /**
-   * Generates a 256-bit salt that can be included in an order, to ensure that the order generates
-   * a unique orderHash and will not collide with other outstanding orders that are identical
-   *
-   * @return    256-bit number that can be used as a salt
-   */
-  public generateSalt(): BigNumber {
-    return SetProtocolUtils.generateSalt();
-  }
-
-  /**
-   * Generates a timestamp represented as seconds since unix epoch. The timestamp is intended to be
-   * used to generate the expiration of an issuance order
-   *
-   * @param  seconds    Seconds from the present time
-   * @return            Unix timestamp (in seconds since unix epoch)
-   */
-  public generateExpirationTimestamp(seconds: number): BigNumber {
-    return generateFutureTimestamp(seconds);
   }
 
   /**
