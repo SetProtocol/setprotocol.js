@@ -106,11 +106,11 @@ export class ExchangeIssuanceAPI {
   }
 
   /**
-   * Issues a Set to the transaction signer using Ether as payment.
+   * Issues a Rebalancing Set to the transaction signer using Ether as payment.
    *
-   * @param  rebalancingSetAddress    Address of the Rebalancing Set to issue
+   * @param  rebalancingSetAddress       Address of the Rebalancing Set to issue
    * @param  exchangeIssuanceParams      Parameters required to facilitate an exchange issuance
-   * @param  orders                   A list of signed 0x orders or kyber trades
+   * @param  orders                      A list of signed 0x orders or kyber trades
    * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
@@ -170,9 +170,7 @@ export class ExchangeIssuanceAPI {
       sendTokens,
     } = exchangeIssuanceParams;
 
-    // TODO: Update this assertion to properly validate all sent tokens
-    const paymentToken = sendTokens[0];
-
+    this.assert.common.isValidLength(sendTokens, 1, exchangeIssuanceErrors.ONLY_ONE_SEND_TOKEN());
     this.assert.common.isNotUndefined(txOpts.value, exchangeIssuanceErrors.ETHER_VALUE_NOT_UNDEFINED());
     this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     this.assert.schema.isValidAddress('rebalancingSetAddress', rebalancingSetAddress);
@@ -188,6 +186,7 @@ export class ExchangeIssuanceAPI {
     );
 
     // Assert payment token is wrapped ether
+    const paymentToken = sendTokens[0];
     this.assert.common.isEqualAddress(
       paymentToken,
       this.wrappedEther,

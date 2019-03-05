@@ -62,6 +62,12 @@ export class CommonAssertions {
     }
   }
 
+  public isValidLength(arr: any[], len: number, errorMessage: string) {
+    if (arr.length !== len) {
+      throw new Error(errorMessage);
+    }
+  }
+
   public isEqualBigNumber(bigNumber1: BigNumber, bigNumber2: BigNumber, errorMessage: string) {
     if (!bigNumber1.eq(bigNumber2)) {
       throw new Error(errorMessage);
