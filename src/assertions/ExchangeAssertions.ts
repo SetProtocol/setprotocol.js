@@ -46,6 +46,73 @@ export class ExchangeAssertions {
     this.setTokenAssertions = new SetTokenAssertions(web3);
   }
 
+  public async assertExchangeIssueReceiveInputs(
+    exchangeIssuanceParams: ExchangeIssuanceParams,
+  ) {
+    const {
+      setAddress,
+      receiveTokens,
+    } = exchangeIssuanceParams;
+
+    await Promise.all(
+      receiveTokens.map(async (receiveToken, i) => {
+        await this.setTokenAssertions.isComponent(setAddress, receiveToken);
+      }),
+    );
+  }
+
+  public async assertExchangeIssuanceParams(
+    exchangeIssuanceParams: ExchangeIssuanceParams,
+    orders: (KyberTrade | ZeroExSignedFillOrder)[],
+    coreAddress: Address,
+  ) {
+    const {
+      setAddress,
+      sendTokens,
+      sendTokenAmounts,
+      sendTokenExchangeIds,
+      quantity,
+      receiveTokens,
+      receiveTokenAmounts,
+    } = exchangeIssuanceParams;
+
+    this.schemaAssertions.isValidAddress('setAddress', setAddress);
+    this.commonAssertions.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
+
+    await this.setTokenAssertions.isValidSetToken(coreAddress, setAddress);
+
+    await this.assertSendTokenInputs(
+      sendTokens,
+      sendTokenExchangeIds,
+      sendTokenAmounts,
+      coreAddress,
+    );
+
+    this.commonAssertions.isEqualLength(
+      receiveTokens,
+      receiveTokenAmounts,
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('receiveTokens', 'receiveTokenAmounts'),
+    );
+    this.commonAssertions.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
+
+    await this.assertReceiveTokenInputs(
+      receiveTokens,
+      receiveTokenAmounts,
+      setAddress,
+    );
+
+    await this.setTokenAssertions.isMultipleOfNaturalUnit(
+      setAddress,
+      quantity,
+      `Quantity of Exchange issue Params`,
+    );
+
+     await this.assertExchangeIssuanceOrdersValidity(
+      exchangeIssuanceParams,
+      orders,
+    );
+  }
+
   public async assertSendTokenInputs(
     sendTokens: Address[],
     sendTokenExchangeIds: BigNumber[],

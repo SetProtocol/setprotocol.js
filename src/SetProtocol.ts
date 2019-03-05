@@ -26,7 +26,6 @@ import {
   ExchangeIssuanceAPI,
   FactoryAPI,
   IssuanceAPI,
-  PayableExchangeIssuanceAPI,
   RebalancingAPI,
   RebalancingManagerAPI,
   SystemAPI,
@@ -74,12 +73,6 @@ class SetProtocol {
    * with ExchangeIssuance contracts
    */
   public exchangeIssuance: ExchangeIssuanceAPI;
-
-  /**
-   * An instance of the PayableExchangeIssuanceAPI class containing methods for interacting
-   * with PayableExchangeIssuance contracts
-   */
-  public payableExchangeIssuance: PayableExchangeIssuanceAPI;
 
   /**
    * An instance of the RebalancingAPI class containing methods for rebalancing Sets
@@ -133,13 +126,6 @@ class SetProtocol {
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, config);
     this.rebalancingManager = new RebalancingManagerAPI(this.web3);
     this.exchangeIssuance = new ExchangeIssuanceAPI(this.web3, assertions, config);
-
-    this.payableExchangeIssuance = new PayableExchangeIssuanceAPI(
-      this.web3,
-      assertions,
-      config.payableExchangeIssuance,
-      config.wrappedEtherAddress,
-    );
   }
 
   /**
