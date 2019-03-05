@@ -24,6 +24,7 @@ import { Assertions } from '../assertions';
 import { ZERO } from '../constants';
 import { BigNumber,  } from '../util';
 import {
+  CoreWrapper,
   ExchangeIssuanceModuleWrapper,
   ERC20Wrapper,
   KyberNetworkWrapper,
@@ -45,6 +46,7 @@ export class ExchangeIssuanceAPI {
   private exchangeIssuance: ExchangeIssuanceModuleWrapper;
   private setProtocolUtils: SetProtocolUtils;
 
+  private core: CoreWrapper;
   private setToken: SetTokenWrapper;
   private erc20: ERC20Wrapper;
   private vault: VaultWrapper;
@@ -66,6 +68,7 @@ export class ExchangeIssuanceAPI {
     this.web3 = web3;
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
     this.assert = assertions;
+    this.core = new CoreWrapper(this.web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
     this.exchangeIssuance = new ExchangeIssuanceModuleWrapper(web3, config.exchangeIssuanceModuleAddress);
     this.erc20 = new ERC20Wrapper(this.web3);
     this.kyberNetworkWrapper = new KyberNetworkWrapper(this.web3, config.kyberNetworkWrapperAddress);
@@ -88,6 +91,9 @@ export class ExchangeIssuanceAPI {
     txOpts: Tx
   ): Promise<string> {
     await this.assertExchangeIssuanceParams(exchangeIssuanceParams, orders);
+
+    // Assert receive tokens are components of the Set
+    await this.assertExchangeIssueReceiveInputs(exchangeIssuanceParams);
 
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
     return this.exchangeIssuance.exchangeIssue(
@@ -161,6 +167,22 @@ export class ExchangeIssuanceAPI {
 
   /* ============ Private Assertions ============ */
 
+  private async assertExchangeIssueReceiveInputs(
+    exchangeIssuanceParams: ExchangeIssuanceParams,
+  ) {
+    const {
+      setAddress,
+      receiveTokens,
+    } = exchangeIssuanceParams;
+
+    await Promise.all(
+      receiveTokens.map(async (receiveToken, i) => {
+        await this.assert.setToken.isComponent(setAddress, receiveToken);
+      }),
+    );
+
+  }
+
   private async assertExchangeIssuanceParams(
     exchangeIssuanceParams: ExchangeIssuanceParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
@@ -169,26 +191,28 @@ export class ExchangeIssuanceAPI {
       setAddress,
       sendTokens,
       sendTokenAmounts,
+      sendTokenExchangeIds,
       quantity,
       receiveTokens,
       receiveTokenAmounts,
     } = exchangeIssuanceParams;
 
-    // TODO: Update this assertion to properly validate all sent tokens
-    const paymentToken = sendTokens[0];
-    const paymentTokenAmount = sendTokenAmounts[0];
-
     this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.schema.isValidAddress('paymentToken', paymentToken);
     this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
-    this.assert.common.greaterThanZero(
-      paymentTokenAmount,
-      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(paymentTokenAmount)
+
+    await this.assert.setToken.isValidSetToken(this.core.coreAddress, setAddress);
+
+    await this.assert.exchange.assertSendTokenInputs(
+      sendTokens,
+      sendTokenExchangeIds,
+      sendTokenAmounts,
+      this.core.coreAddress,
     );
+
     this.assert.common.isEqualLength(
       receiveTokens,
       receiveTokenAmounts,
-      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('requiredComponents', 'requiredComponentAmounts'),
+      coreAPIErrors.ARRAYS_EQUAL_LENGTHS('receiveTokens', 'receiveTokenAmounts'),
     );
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
