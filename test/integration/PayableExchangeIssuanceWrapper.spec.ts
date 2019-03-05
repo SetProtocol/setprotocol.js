@@ -308,9 +308,10 @@ describe('PayableExchangeIssuanceWrapper', () => {
     let zeroExOrder: ZeroExSignedFillOrder;
 
     beforeEach(async () => {
-      // Create component token (owned by 0x order maker)
+      subjectCaller = ACCOUNTS[1].address;
       zeroExOrderMaker = ACCOUNTS[2].address;
-      const [baseSetComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, zeroExOrderMaker);
+
+      const [baseSetComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, subjectCaller);
 
       // Create the Set (1 component)
       const componentAddresses = [baseSetComponent.address];
@@ -383,8 +384,6 @@ describe('PayableExchangeIssuanceWrapper', () => {
         .mul(DEFAULT_REBALANCING_NATURAL_UNIT)
         .div(rebalancingUnitShares);
 
-      subjectCaller = ACCOUNTS[1].address;
-
       // 0x maker needs to wrap ether
       await wrappedEtherMock.deposit.sendTransactionAsync(
         { from: zeroExOrderMaker, value: exchangeIssuanceReceiveTokenAmounts[0].toString() }
@@ -429,7 +428,7 @@ describe('PayableExchangeIssuanceWrapper', () => {
         subjectRebalancingSetQuantity,
         subjectExchangeIssuanceData,
         subjectExchangeOrdersData,
-        { from: subjectCaller, value: subjectEther.toString() }
+        { from: subjectCaller }
       );
     }
 
