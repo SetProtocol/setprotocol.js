@@ -23,9 +23,9 @@ import { SetTokenContract } from 'set-protocol-contracts';
 import { ZERO } from '../constants';
 import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
-import { CoreWrapper } from '../wrappers';
+import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { Address, Tx } from '../types/common';
+import { Address, Component, Tx } from '../types/common';
 
 /**
  * @title IssuanceAPI
@@ -37,6 +37,9 @@ export class IssuanceAPI {
   private web3: Web3;
   private assert: Assertions;
   private core: CoreWrapper;
+  private setToken: SetTokenWrapper;
+  private erc20: ERC20Wrapper;
+  private vault: VaultWrapper;
 
   /**
    * Instantiates a new IssuanceAPI instance that contains methods for issuing and redeeming Sets
@@ -50,6 +53,9 @@ export class IssuanceAPI {
     this.web3 = web3;
     this.core = core;
     this.assert = assertions;
+    this.setToken = new SetTokenWrapper(this.web3);
+    this.erc20 = new ERC20Wrapper(this.web3);
+    this.vault = new VaultWrapper(this.web3, core.vaultAddress);
   }
 
   /**
@@ -104,6 +110,51 @@ export class IssuanceAPI {
     } else {
       return await this.core.redeem(setAddress, quantity, txOpts);
     }
+  }
+
+  /**
+   * Calculates additional amounts of each component token in a Set needed in order to issue a specific quantity of
+   * the Set. This includes token balances a user may have in both the account wallet and the Vault contract. Can be
+   * used as `requiredComponents` and `requiredComponentAmounts` inputs for an issuance order
+   *
+   * @param  setAddress       Address of the Set token for issuance order
+   * @param  userAddress     Address of user making the issuance
+   * @param  quantity         Amount of the Set token to create as part of issuance order
+   * @return                  List of objects conforming to the `Component` interface with address and units of each
+   *                            component required for issuance
+   */
+  public async calculateRequiredComponentsAndUnitsAsync(
+    setAddress: Address,
+    userAddress: Address,
+    quantity: BigNumber,
+  ): Promise<Component[]> {
+    const components = await this.setToken.getComponents(setAddress);
+    const componentUnits = await this.setToken.getUnits(setAddress);
+    const naturalUnit = await this.setToken.naturalUnit(setAddress);
+    const totalUnitsNeeded = _.map(componentUnits, componentUnit => componentUnit.mul(quantity).div(naturalUnit));
+
+    const requiredComponents: Component[] = [];
+
+    // Gather how many components are owned by the user in balance/vault
+    await Promise.all(
+      components.map(async (componentAddress, index) => {
+        const walletBalance = await this.erc20.balanceOf(componentAddress, userAddress);
+        const vaultBalance = await this.vault.getBalanceInVault(componentAddress, userAddress);
+        const userTokenbalance = walletBalance.add(vaultBalance);
+
+        const missingUnits = totalUnitsNeeded[index].sub(userTokenbalance);
+        if (missingUnits.gt(ZERO)) {
+          const requiredComponent: Component = {
+            address: componentAddress,
+            unit: missingUnits,
+          };
+
+          requiredComponents.push(requiredComponent);
+        }
+      }),
+    );
+
+    return requiredComponents;
   }
 
   /* ============ Private Assertions ============ */

@@ -31,9 +31,11 @@ import {
   CoreContract,
   ExchangeIssuanceModuleContract,
   KyberNetworkWrapperContract,
+  PayableExchangeIssuanceContract,
+  RebalancingSetTokenContract,
+  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
-  StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
   WethMockContract,
@@ -42,31 +44,32 @@ import {
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { ExchangeIssuanceAPI } from '@src/api';
-import { CoreWrapper } from '@src/wrappers';
-import { ether } from '@src/util';
 import {
   NULL_ADDRESS,
   ZERO,
+  ONE_DAY_IN_SECONDS,
+  DEFAULT_UNIT_SHARES,
+  DEFAULT_REBALANCING_NATURAL_UNIT,
 } from '@src/constants';
 import { Assertions } from '@src/assertions';
 import {
   addModuleAsync,
   approveForTransferAsync,
+  createDefaultRebalancingSetTokenAsync,
   deployExchangeIssuanceModuleAsync,
   deployTokensSpecifyingDecimals,
+  deployPayableExchangeIssuanceAsync,
   deployWethMockAsync,
   deployZeroExExchangeWrapperContract,
   deployBaseContracts,
   deployKyberNetworkWrapperContract,
   deploySetTokenAsync,
-  deployTokensAsync,
 } from '@test/helpers';
 import {
   BigNumber,
 } from '@src/util';
 import {
   Address,
-  Component,
   KyberTrade,
   SetProtocolConfig,
   ZeroExSignedFillOrder,
@@ -90,11 +93,12 @@ describe('ExchangeIssuanceAPI', () => {
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let wrappedEtherMock: WethMockContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let exchangeIssuanceModule: ExchangeIssuanceModuleContract;
   let kyberNetworkWrapper: KyberNetworkWrapperContract;
+  let payableExchangeIssuance: PayableExchangeIssuanceContract;
 
   let config: SetProtocolConfig;
-  let coreWrapper: CoreWrapper;
   let exchangeIssuanceAPI: ExchangeIssuanceAPI;
 
   beforeEach(async () => {
@@ -105,6 +109,7 @@ describe('ExchangeIssuanceAPI', () => {
       transferProxy,
       vault,
       setTokenFactory,
+      rebalancingSetTokenFactory,
     ] = await deployBaseContracts(web3);
 
     exchangeIssuanceModule = await deployExchangeIssuanceModuleAsync(web3, core, vault);
@@ -121,18 +126,19 @@ describe('ExchangeIssuanceAPI', () => {
 
     wrappedEtherMock = await deployWethMockAsync(web3, NULL_ADDRESS, ZERO);
 
+    payableExchangeIssuance = await deployPayableExchangeIssuanceAsync(
+      web3,
+      core,
+      transferProxy,
+      exchangeIssuanceModule,
+      wrappedEtherMock,
+    );
+
     kyberNetworkWrapper = await deployKyberNetworkWrapperContract(
       web3,
       SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
       transferProxy,
       core,
-    );
-
-    coreWrapper = new CoreWrapper(
-      web3,
-      core.address,
-      transferProxy.address,
-      vault.address,
     );
 
     config = {
@@ -142,9 +148,11 @@ describe('ExchangeIssuanceAPI', () => {
       setTokenFactoryAddress: setTokenFactory.address,
       exchangeIssuanceModuleAddress: exchangeIssuanceModule.address,
       kyberNetworkWrapperAddress: kyberNetworkWrapper.address,
-      rebalancingSetTokenFactoryAddress: NULL_ADDRESS,
+      rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
       rebalanceAuctionModuleAddress: NULL_ADDRESS,
       rebalancingTokenIssuanceModule: NULL_ADDRESS,
+      payableExchangeIssuance: payableExchangeIssuance.address,
+      wrappedEtherAddress: wrappedEtherMock.address,
     } as SetProtocolConfig;
 
     const assertions = new Assertions(web3);
@@ -281,23 +289,179 @@ describe('ExchangeIssuanceAPI', () => {
       const currentSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
       expect(expectedSetTokenBalance).to.bignumber.equal(currentSetTokenBalance);
     });
+  });
 
-    // describe('when a required component is not represented in the orders', async () => {
-    //   let underRepresentedComponent: Address;
+  describe('issueRebalancingSetWithEther', async () => {
+    let subjectRebalancingSetAddress: Address;
+    let subjectExchangeIssuanceData: ExchangeIssuanceParams;
+    let subjectExchangeOrder: (KyberTrade | ZeroExSignedFillOrder)[];
+    let subjectCaller: Address;
+    let etherValue: BigNumber;
 
-    //   beforeEach(async () => {
-    //      underRepresentedComponent = componentAddresses[1].toLowerCase();
+    let subjectEther: string;
 
-    //      subjectExchangeIssuanceData.receiveTokens.push(underRepresentedComponent);
-    //      subjectExchangeIssuanceData.receiveTokenAmounts.push(new BigNumber(1));
-    //   });
+    let zeroExOrderMaker: Address;
 
-    //   test('throws', async () => {
-    //     return expect(subject()).to.be.rejectedWith(
-    //       `Token ${underRepresentedComponent} is unrepresented in the liquidity orders.`
-    //     );
-    //   });
-    // });
+    let rebalancingSetQuantity: BigNumber;
+
+    let baseSetToken: SetTokenContract;
+    let baseSetNaturalUnit: BigNumber;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let rebalancingUnitShares: BigNumber;
+
+    let exchangeIssuanceSetAddress: Address;
+    let exchangeIssuanceQuantity: BigNumber;
+    let exchangeIssuancePaymentToken: Address;
+    let exchangeIssuancePaymentTokenAmount: BigNumber;
+    let exchangeIssuanceRequiredComponents: Address[];
+    let exchangeIssuanceRequiredComponentAmounts: BigNumber[];
+
+    let zeroExOrder: ZeroExSignedFillOrder;
+
+    beforeEach(async () => {
+      // Create component token (owned by 0x order maker)
+      zeroExOrderMaker = ACCOUNTS[2].address;
+      const [baseSetComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, zeroExOrderMaker);
+
+      // Create the Set (1 component)
+      const componentAddresses = [baseSetComponent.address];
+      const componentUnits = [new BigNumber(10 ** 10)];
+      baseSetNaturalUnit = new BigNumber(10 ** 9);
+      baseSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        componentUnits,
+        baseSetNaturalUnit,
+      );
+
+      // Create the Rebalancing Set
+      rebalancingUnitShares = DEFAULT_UNIT_SHARES;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        DEFAULT_ACCOUNT,
+        baseSetToken.address,
+        ONE_DAY_IN_SECONDS,
+      );
+
+      etherValue = new BigNumber(10 ** 10);
+
+      // Generate exchange issue data
+      exchangeIssuanceSetAddress = baseSetToken.address;
+      exchangeIssuanceQuantity = new BigNumber(10 ** 10);
+      exchangeIssuancePaymentToken = wrappedEtherMock.address;
+      exchangeIssuancePaymentTokenAmount = etherValue;
+      exchangeIssuanceRequiredComponents = componentAddresses;
+      exchangeIssuanceRequiredComponentAmounts = componentUnits.map(
+        unit => unit.mul(exchangeIssuanceQuantity).div(baseSetNaturalUnit)
+      );
+
+      subjectExchangeIssuanceData = {
+        setAddress: exchangeIssuanceSetAddress,
+        sendTokenExchangeIds: [SetUtils.EXCHANGES.ZERO_EX],
+        sendTokens: [exchangeIssuancePaymentToken],
+        sendTokenAmounts: [exchangeIssuancePaymentTokenAmount],
+        quantity: exchangeIssuanceQuantity,
+        receiveTokens: exchangeIssuanceRequiredComponents,
+        receiveTokenAmounts: exchangeIssuanceRequiredComponentAmounts,
+      };
+
+      await approveForTransferAsync(
+        [baseSetComponent],
+        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        zeroExOrderMaker
+      );
+
+      // Create 0x order for the component, using weth(4) paymentToken as default
+      zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
+        NULL_ADDRESS,                                    // senderAddress
+        zeroExOrderMaker,                                // makerAddress
+        NULL_ADDRESS,                                    // takerAddress
+        ZERO,                                            // makerFee
+        ZERO,                                            // takerFee
+        subjectExchangeIssuanceData.receiveTokenAmounts[0], // makerAssetAmount
+        exchangeIssuancePaymentTokenAmount,                 // takerAssetAmount
+        exchangeIssuanceRequiredComponents[0],              // makerAssetAddress
+        exchangeIssuancePaymentToken,                       // takerAssetAddress
+        SetUtils.generateSalt(),                         // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,           // exchangeAddress
+        NULL_ADDRESS,                                    // feeRecipientAddress
+        SetTestUtils.generateTimestamp(10000),           // expirationTimeSeconds
+        exchangeIssuancePaymentTokenAmount,                 // amount of zeroExOrder to fill
+      );
+
+      subjectExchangeOrder = [zeroExOrder];
+      subjectRebalancingSetAddress = rebalancingSetToken.address;
+      rebalancingSetQuantity = exchangeIssuanceQuantity
+        .mul(DEFAULT_REBALANCING_NATURAL_UNIT)
+        .div(rebalancingUnitShares);
+
+      subjectCaller = ACCOUNTS[1].address;
+
+      subjectEther = etherValue.toString();
+    });
+
+    async function subject(): Promise<string> {
+      return await exchangeIssuanceAPI.issueRebalancingSetWithEtherAsync(
+        subjectRebalancingSetAddress,
+        subjectExchangeIssuanceData,
+        subjectExchangeOrder,
+        { from: subjectCaller, value: subjectEther }
+      );
+    }
+
+    test('issues the rebalancing Set to the caller', async () => {
+      const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(rebalancingSetQuantity);
+
+      await subject();
+
+      const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
+
+    describe('when the payment token is not wrapped ether', async () => {
+      const notWrappedEther = ACCOUNTS[3].address;
+
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.sendTokens[0] = notWrappedEther;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Payment token at ${notWrappedEther} is not the expected wrapped ether token at ${wrappedEtherMock.address}`
+        );
+      });
+    });
+
+    describe('when a set address is not rebalancing Sets current set address', async () => {
+      const notBaseSet = ACCOUNTS[3].address;
+
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.setAddress = notBaseSet;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Set token at ${notBaseSet} is not the expected rebalancing set token current Set at ${baseSetToken.address}`
+        );
+      });
+    });
+
+    describe('when an empty value is passed in', async () => {
+      beforeEach(async () => {
+        subjectEther = undefined;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+           `Ether value should not be undefined`
+        );
+      });
+    });
   });
 
   describe('getKyberConversionRate', async () => {
@@ -324,185 +488,6 @@ describe('ExchangeIssuanceAPI', () => {
 
       expect(conversionRate).to.bignumber.equal(321550000000000000);
       expect(slipRate).to.bignumber.equal(319942250000000000);
-    });
-  });
-
-  describe('calculateRequiredComponentsAndUnitsAsync', async () => {
-    let setComponents: StandardTokenMockContract[];
-    let componentUnits: BigNumber[];
-    let setToken: SetTokenContract;
-    let naturalUnit: BigNumber;
-
-    let subjectSetAddress: Address;
-    let subjectMakerAddress: Address;
-    let subjectQuantity: BigNumber;
-
-    const makerAccount = ACCOUNTS[3].address;
-    let componentRecipient = makerAccount;
-
-    beforeEach(async () => {
-      setComponents = await deployTokensAsync(2, web3, componentRecipient);
-
-      // Deploy Set with those tokens
-      const setComponentUnit = ether(4);
-      const componentAddresses = setComponents.map(token => token.address);
-      componentUnits = setComponents.map(token => setComponentUnit);
-      naturalUnit = ether(2);
-      setToken = await deploySetTokenAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        componentAddresses,
-        componentUnits,
-        naturalUnit,
-      );
-
-      subjectSetAddress = setToken.address;
-      subjectMakerAddress = makerAccount;
-      subjectQuantity = naturalUnit;
-    });
-
-    async function subject(): Promise<Component[]> {
-      return exchangeIssuanceAPI.calculateRequiredComponentsAndUnitsAsync(
-        subjectSetAddress,
-        subjectMakerAddress,
-        subjectQuantity,
-      );
-    }
-
-    describe('when the maker has no token balances', async () => {
-      beforeAll(async () => {
-        componentRecipient = DEFAULT_ACCOUNT;
-      });
-
-      afterAll(async () => {
-        componentRecipient = makerAccount;
-      });
-
-      test('should return the correct required components', async () => {
-        const expectedComponents = setComponents.map(setComponent => setComponent.address);
-
-        const requiredComponents = await subject();
-        const componentAddresses = requiredComponents.map(requiredComponent => requiredComponent.address);
-
-        expectedComponents.sort();
-        componentAddresses.sort();
-
-        expect(JSON.stringify(expectedComponents)).to.equal(JSON.stringify(componentAddresses));
-      });
-
-      test('should return the correct required units', async () => {
-        const expectedUnits = componentUnits.map(componentUnit => componentUnit.mul(subjectQuantity).div(naturalUnit));
-
-        const requiredComponents = await subject();
-        const units = requiredComponents.map(requiredComponent => requiredComponent.unit);
-
-        expectedUnits.sort();
-        units.sort();
-        expect(JSON.stringify(expectedUnits)).to.equal(JSON.stringify(units));
-      });
-    });
-
-    describe('when a user has sufficient balance in the wallet', async () => {
-      test('should return an empty array of required components', async () => {
-        const expectedComponents: Address[] = [];
-
-        const requiredComponents = await subject();
-        const components = requiredComponents.map(requiredComponent => requiredComponent.address);
-
-        expect(JSON.stringify(components)).to.equal(JSON.stringify(expectedComponents));
-      });
-
-      test('should return an empty array of required units', async () => {
-        const expectedUnits: BigNumber[] = [];
-
-        const requiredComponents = await subject();
-        const units = requiredComponents.map(requiredComponent => requiredComponent.unit);
-
-        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedUnits));
-      });
-    });
-
-    describe('when a user has sufficient balance in the vault', async () => {
-      beforeEach(async () => {
-        // Approve and deposit tokens to the vault
-        for (let i = 0; i < setComponents.length; i++) {
-          const currentComponent = setComponents[i];
-          const makerComponentBalance = await currentComponent.balanceOf.callAsync(makerAccount);
-          await currentComponent.approve.sendTransactionAsync(
-            transferProxy.address,
-            makerComponentBalance,
-            { from: makerAccount }
-          );
-
-          await coreWrapper.deposit(currentComponent.address, makerComponentBalance, { from: makerAccount });
-        }
-      });
-
-      test('should return an empty array of required components', async () => {
-        const expectedComponents: Address[] = [];
-
-        const requiredComponents = await subject();
-        const components = requiredComponents.map(requiredComponent => requiredComponent.address);
-
-        expect(JSON.stringify(components)).to.equal(JSON.stringify(expectedComponents));
-      });
-
-      test('should return an empty array of required units', async () => {
-        const expectedUnits: BigNumber[] = [];
-
-        const requiredComponents = await subject();
-
-        const units = requiredComponents.map(requiredComponent => requiredComponent.unit);
-        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedUnits));
-      });
-    });
-
-    describe('when a user has half of the required balance', async () => {
-      let requiredBalances: BigNumber[];
-
-      beforeEach(async () => {
-        subjectMakerAddress = DEFAULT_ACCOUNT;
-
-        requiredBalances = [];
-        // Transfer half of each required amount to the maker
-        for (let i = 0; i < setComponents.length; i++) {
-          const currentComponent = setComponents[i];
-          const currentUnit = componentUnits[i];
-          const halfRequiredAmount = subjectQuantity.mul(currentUnit).div(naturalUnit).div(2);
-          await currentComponent.transfer.sendTransactionAsync(
-            subjectMakerAddress,
-            halfRequiredAmount,
-            { from: componentRecipient }
-          );
-
-          requiredBalances.push(halfRequiredAmount);
-        }
-      });
-
-      test('should return the correct array of required components', async () => {
-        const expectedComponents: Address[] = setComponents.map(setComponent => setComponent.address);
-
-        const requiredComponents = await subject();
-        const components = requiredComponents.map(requiredComponent => requiredComponent.address);
-
-        expectedComponents.sort();
-        components.sort();
-
-        expect(JSON.stringify(components)).to.equal(JSON.stringify(expectedComponents));
-      });
-
-      test('should return the correct array of required units', async () => {
-        const expectedUnits: BigNumber[] = requiredBalances;
-
-        const requiredComponents = await subject();
-        const units = requiredComponents.map(requiredComponent => requiredComponent.unit);
-
-        expectedUnits.sort();
-        units.sort();
-
-        expect(JSON.stringify(units)).to.equal(JSON.stringify(expectedUnits));
-      });
     });
   });
 });
