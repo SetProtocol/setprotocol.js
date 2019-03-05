@@ -26,12 +26,15 @@ import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as setProtocolUtils from 'set-protocol-utils';
-import { Bytes, ExchangeIssueParams } from 'set-protocol-utils';
+import { Bytes, ExchangeIssuanceParams } from 'set-protocol-utils';
 import Web3 from 'web3';
 import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
-  ExchangeIssueModuleContract,
+  ExchangeIssuanceModuleContract,
+  PayableExchangeIssuanceContract,
+  RebalancingSetTokenContract,
+  RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   TransferProxyContract,
@@ -39,19 +42,24 @@ import {
   WethMockContract,
 } from 'set-protocol-contracts';
 
-import { ACCOUNTS } from '@src/constants/accounts';
-import { ExchangeIssueModuleWrapper } from '@src/wrappers';
+import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
+import { PayableExchangeIssuanceWrapper } from '@src/wrappers';
 import {
   NULL_ADDRESS,
   TX_DEFAULTS,
   ZERO,
+  ONE_DAY_IN_SECONDS,
+  DEFAULT_UNIT_SHARES,
+  DEFAULT_REBALANCING_NATURAL_UNIT,
 } from '@src/constants';
 import {
   addAuthorizationAsync,
   addModuleAsync,
   approveForTransferAsync,
+  createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
-  deployExchangeIssueModuleAsync,
+  deployExchangeIssuanceModuleAsync,
+  deployPayableExchangeIssuanceAsync,
   deploySetTokenAsync,
   deployTokensSpecifyingDecimals,
   deployWethMockAsync,
@@ -81,15 +89,17 @@ coreContract.defaults(TX_DEFAULTS);
 let currentSnapshotId: number;
 
 
-describe('ExchangeIssueModuleWrapper', () => {
+describe('PayableExchangeIssuanceWrapper', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
+  let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
+  let payableExchangeIssuance: PayableExchangeIssuanceContract;
   let wrappedEtherMock: WethMockContract;
-  let exchangeIssueModule: ExchangeIssueModuleContract;
+  let exchangeIssuanceModule: ExchangeIssuanceModuleContract;
 
-  let exchangeIssueWrapper: ExchangeIssueModuleWrapper;
+  let payableExchangeIssuanceWrapper: PayableExchangeIssuanceWrapper;
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -107,12 +117,13 @@ describe('ExchangeIssueModuleWrapper', () => {
       transferProxy,
       vault,
       setTokenFactory,
+      rebalancingSetTokenFactory,
     ] = await deployBaseContracts(web3);
 
-    exchangeIssueModule = await deployExchangeIssueModuleAsync(web3, core, vault);
-    await addModuleAsync(core, exchangeIssueModule.address);
-    await addAuthorizationAsync(transferProxy, exchangeIssueModule.address);
-    await addAuthorizationAsync(vault, exchangeIssueModule.address);
+    exchangeIssuanceModule = await deployExchangeIssuanceModuleAsync(web3, core, vault);
+    await addModuleAsync(core, exchangeIssuanceModule.address);
+    await addAuthorizationAsync(transferProxy, exchangeIssuanceModule.address);
+    await addAuthorizationAsync(vault, exchangeIssuanceModule.address);
 
     await deployZeroExExchangeWrapperContract(
       web3,
@@ -124,10 +135,17 @@ describe('ExchangeIssueModuleWrapper', () => {
     );
 
     wrappedEtherMock = await deployWethMockAsync(web3, NULL_ADDRESS, ZERO);
-
-    exchangeIssueWrapper = new ExchangeIssueModuleWrapper(
+    payableExchangeIssuance = await deployPayableExchangeIssuanceAsync(
       web3,
-      exchangeIssueModule.address,
+      core,
+      transferProxy,
+      exchangeIssuanceModule,
+      wrappedEtherMock,
+    );
+
+    payableExchangeIssuanceWrapper = new PayableExchangeIssuanceWrapper(
+      web3,
+      payableExchangeIssuance.address,
     );
   });
 
@@ -135,28 +153,32 @@ describe('ExchangeIssueModuleWrapper', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('exchangeIssue', async () => {
-    let subjectExchangeIssueData: ExchangeIssueParams;
+  describe('issueRebalancingSetWithEther', async () => {
+    let subjectRebalancingSetAddress: Address;
+    let subjectExchangeIssuanceData: ExchangeIssuanceParams;
     let subjectExchangeOrdersData: Bytes;
     let subjectCaller: Address;
+    let subjectEther: BigNumber;
 
     let zeroExOrderMaker: Address;
 
+    let rebalancingSetQuantity: BigNumber;
+
     let baseSetToken: SetTokenContract;
     let baseSetNaturalUnit: BigNumber;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let rebalancingUnitShares: BigNumber;
 
-    let exchangeIssueSetAddress: Address;
-    let exchangeIssueQuantity: BigNumber;
-    let exchangeIssuePaymentToken: Address;
-    let exchangeIssuePaymentTokenAmount: BigNumber;
-    let exchangeIssueRequiredComponents: Address[];
-    let exchangeIssueRequiredComponentAmounts: BigNumber[];
+    let exchangeIssuanceSetAddress: Address;
+    let exchangeIssuanceQuantity: BigNumber;
+    let exchangeIssuancePaymentToken: Address;
+    let exchangeIssuancePaymentTokenAmount: BigNumber;
+    let exchangeIssuanceRequiredComponents: Address[];
+    let exchangeIssuanceRequiredComponentAmounts: BigNumber[];
 
     let zeroExOrder: ZeroExSignedFillOrder;
 
     beforeEach(async () => {
-      subjectCaller = ACCOUNTS[1].address;
-
       // Create component token (owned by 0x order maker)
       zeroExOrderMaker = ACCOUNTS[2].address;
       const [baseSetComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, zeroExOrderMaker);
@@ -174,24 +196,37 @@ describe('ExchangeIssueModuleWrapper', () => {
         baseSetNaturalUnit,
       );
 
-      // Generate exchange issue data
-      exchangeIssueSetAddress = baseSetToken.address;
-      exchangeIssueQuantity = new BigNumber(10 ** 10);
-      exchangeIssuePaymentToken = wrappedEtherMock.address;
-      exchangeIssuePaymentTokenAmount = new BigNumber(10 ** 10);
-      exchangeIssueRequiredComponents = componentAddresses;
-      exchangeIssueRequiredComponentAmounts = componentUnits.map(
-        unit => unit.mul(exchangeIssueQuantity).div(baseSetNaturalUnit)
+      // Create the Rebalancing Set
+      rebalancingUnitShares = DEFAULT_UNIT_SHARES;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        DEFAULT_ACCOUNT,
+        baseSetToken.address,
+        ONE_DAY_IN_SECONDS,
       );
 
-      subjectExchangeIssueData = {
-        setAddress: exchangeIssueSetAddress,
-        sentTokenExchanges: [SetUtils.EXCHANGES.ZERO_EX],
-        sentTokens: [exchangeIssuePaymentToken],
-        sentTokenAmounts: [exchangeIssuePaymentTokenAmount],
-        quantity: exchangeIssueQuantity,
-        receiveTokens: exchangeIssueRequiredComponents,
-        receiveTokenAmounts: exchangeIssueRequiredComponentAmounts,
+      subjectEther = new BigNumber(10 ** 10);
+
+      // Generate exchange issue data
+      exchangeIssuanceSetAddress = baseSetToken.address;
+      exchangeIssuanceQuantity = new BigNumber(10 ** 10);
+      exchangeIssuancePaymentToken = wrappedEtherMock.address;
+      exchangeIssuancePaymentTokenAmount = subjectEther;
+      exchangeIssuanceRequiredComponents = componentAddresses;
+      exchangeIssuanceRequiredComponentAmounts = componentUnits.map(
+        unit => unit.mul(exchangeIssuanceQuantity).div(baseSetNaturalUnit)
+      );
+
+      subjectExchangeIssuanceData = {
+        setAddress: exchangeIssuanceSetAddress,
+        sendTokenExchangeIds: [SetUtils.EXCHANGES.ZERO_EX],
+        sendTokens: [exchangeIssuancePaymentToken],
+        sendTokenAmounts: [exchangeIssuancePaymentTokenAmount],
+        quantity: exchangeIssuanceQuantity,
+        receiveTokens: exchangeIssuanceRequiredComponents,
+        receiveTokenAmounts: exchangeIssuanceRequiredComponentAmounts,
       };
 
       await approveForTransferAsync(
@@ -207,47 +242,43 @@ describe('ExchangeIssueModuleWrapper', () => {
         NULL_ADDRESS,                                    // takerAddress
         ZERO,                                            // makerFee
         ZERO,                                            // takerFee
-        subjectExchangeIssueData.receiveTokenAmounts[0], // makerAssetAmount
-        exchangeIssuePaymentTokenAmount,                 // takerAssetAmount
-        exchangeIssueRequiredComponents[0],              // makerAssetAddress
-        exchangeIssuePaymentToken,                       // takerAssetAddress
+        subjectExchangeIssuanceData.receiveTokenAmounts[0], // makerAssetAmount
+        exchangeIssuancePaymentTokenAmount,                 // takerAssetAmount
+        exchangeIssuanceRequiredComponents[0],              // makerAssetAddress
+        exchangeIssuancePaymentToken,                       // takerAssetAddress
         SetUtils.generateSalt(),                         // salt
         SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,           // exchangeAddress
         NULL_ADDRESS,                                    // feeRecipientAddress
         SetTestUtils.generateTimestamp(10000),           // expirationTimeSeconds
-        exchangeIssuePaymentTokenAmount,                 // amount of zeroExOrder to fill
+        exchangeIssuancePaymentTokenAmount,                 // amount of zeroExOrder to fill
       );
 
       subjectExchangeOrdersData = setUtils.generateSerializedOrders([zeroExOrder]);
+      subjectRebalancingSetAddress = rebalancingSetToken.address;
+      rebalancingSetQuantity = exchangeIssuanceQuantity
+        .mul(DEFAULT_REBALANCING_NATURAL_UNIT)
+        .div(rebalancingUnitShares);
 
-      // Subject caller needs to wrap ether
-      await wrappedEtherMock.deposit.sendTransactionAsync(
-        { from: subjectCaller, value: exchangeIssuePaymentTokenAmount.toString() }
-      );
-
-      await wrappedEtherMock.approve.sendTransactionAsync(
-        transferProxy.address,
-        exchangeIssuePaymentTokenAmount,
-        { from: subjectCaller }
-      );
+      subjectCaller = ACCOUNTS[1].address;
     });
 
     async function subject(): Promise<string> {
-      return await exchangeIssueWrapper.exchangeIssue(
-        subjectExchangeIssueData,
+      return await payableExchangeIssuanceWrapper.issueRebalancingSetWithEther(
+        subjectRebalancingSetAddress,
+        subjectExchangeIssuanceData,
         subjectExchangeOrdersData,
-        { from: subjectCaller }
+        { from: subjectCaller, value: subjectEther.toString() }
       );
     }
 
-    test('issues the Set to the caller', async () => {
-      const previousSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
-      const expectedSetTokenBalance = previousSetTokenBalance.add(exchangeIssueQuantity);
+    test('issues the rebalancing Set to the caller', async () => {
+      const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(rebalancingSetQuantity);
 
       await subject();
 
-      const currentRBSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
-      expect(expectedSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+      const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
     });
   });
 });

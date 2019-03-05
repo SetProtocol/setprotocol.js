@@ -145,8 +145,8 @@ describe('RebalancingAPI', () => {
       kyberNetworkWrapperAddress: NULL_ADDRESS,
       rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
       rebalancingTokenIssuanceModule: rebalanceIssuanceModule.address,
-      exchangeIssueModuleAddress: NULL_ADDRESS,
-      payableExchangeIssue: NULL_ADDRESS,
+      exchangeIssuanceModuleAddress: NULL_ADDRESS,
+      payableExchangeIssuance: NULL_ADDRESS,
       wrappedEtherAddress: NULL_ADDRESS,
     };
 

@@ -18,7 +18,7 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { ExchangeIssueParams } from 'set-protocol-utils';
+import { ExchangeIssuanceParams } from 'set-protocol-utils';
 
 import { coreAPIErrors } from '../errors';
 import { CommonAssertions } from './CommonAssertions';
@@ -28,7 +28,7 @@ import { SetTokenAssertions } from './SetTokenAssertions';
 import { BigNumber } from '../util';
 import { Address, KyberTrade, ZeroExSignedFillOrder } from '../types/common';
 
-export class OrderAssertions {
+export class ExchangeAssertions {
   private erc20Assertions: ERC20Assertions;
   private schemaAssertions: SchemaAssertions;
   private commonAssertions: CommonAssertions;
@@ -61,8 +61,8 @@ export class OrderAssertions {
     );
   }
 
-  public async assertExchangeIssueOrdersValidity(
-    exchangeIssueParams: ExchangeIssueParams,
+  public async assertExchangeIssuanceOrdersValidity(
+    exchangeIssueParams: ExchangeIssuanceParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
   ) {
     // const {
@@ -116,13 +116,13 @@ export class OrderAssertions {
 
   //     this.commonAssertions.isNotUndefined(
   //       componentAmountsFromLiquidity[normalizedTokenAddress],
-  //       orderErrors.INSUFFIENT_LIQUIDITY_FOR_REQUIRED_COMPONENT(normalizedTokenAddress),
+  //       exchangeErrors.INSUFFIENT_LIQUIDITY_FOR_REQUIRED_COMPONENT(normalizedTokenAddress),
   //     );
 
   //     this.commonAssertions.isEqualBigNumber(
   //       componentAmountsFromLiquidity[normalizedTokenAddress],
   //       requiredComponentAmountForFillQuantity,
-  //       orderErrors.INSUFFICIENT_COMPONENT_AMOUNT_FROM_LIQUIDITY(
+  //       exchangeErrors.INSUFFICIENT_COMPONENT_AMOUNT_FROM_LIQUIDITY(
   //         normalizedTokenAddress,
   //         componentAmountsFromLiquidity[normalizedTokenAddress],
   //         requiredComponentAmountForFillQuantity,
@@ -198,7 +198,7 @@ export class OrderAssertions {
   //   this.commonAssertions.isDifferentAddress(
   //     makerToken,
   //     trade.destinationToken,
-  //     orderErrors.MAKER_TOKEN_AND_KYBER_DESTINATION_TOKEN_MISMATCH(),
+  //     exchangeErrors.MAKER_TOKEN_AND_KYBER_DESTINATION_TOKEN_MISMATCH(),
   //   );
 
   //   // Kyber destination token is a component of the Set
@@ -209,7 +209,7 @@ export class OrderAssertions {
   //   this.commonAssertions.isGreaterOrEqualThan(
   //     amountComponentTokenFromTrade,
   //     trade.maxDestinationQuantity,
-  //     orderErrors.INSUFFICIENT_KYBER_SOURCE_TOKEN_FOR_RATE(
+  //     exchangeErrors.INSUFFICIENT_KYBER_SOURCE_TOKEN_FOR_RATE(
   //       trade.sourceTokenQuantity,
   //       amountComponentTokenFromTrade,
   //       trade.destinationToken
@@ -232,7 +232,7 @@ export class OrderAssertions {
   //   this.commonAssertions.isEqualAddress(
   //     makerToken,
   //     SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.takerAssetData),
-  //     orderErrors.MAKER_TOKEN_AND_ZERO_EX_TAKER_TOKEN_MISMATCH(),
+  //     exchangeErrors.MAKER_TOKEN_AND_ZERO_EX_TAKER_TOKEN_MISMATCH(),
   //   );
 
   //   // 0x maker token is a component of the Set
