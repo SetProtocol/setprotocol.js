@@ -315,20 +315,20 @@ describe('ExchangeIssuanceModuleWrapper', () => {
 
       // Create 0x order for the component, using weth(4) paymentToken as default
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                                    // senderAddress
-        zeroExOrderMaker,                                // makerAddress
-        NULL_ADDRESS,                                    // takerAddress
-        ZERO,                                            // makerFee
-        ZERO,                                            // takerFee
+        NULL_ADDRESS,                                       // senderAddress
+        zeroExOrderMaker,                                   // makerAddress
+        NULL_ADDRESS,                                       // takerAddress
+        ZERO,                                               // makerFee
+        ZERO,                                               // takerFee
         subjectExchangeIssuanceData.receiveTokenAmounts[0], // makerAssetAmount
-        exchangeIssuanceSendTokenAmounts[0],                 // takerAssetAmount
-        exchangeIssuanceReceiveTokens[0],              // makerAssetAddress
-        exchangeIssuanceSendTokens[0],                       // takerAssetAddress
-        SetUtils.generateSalt(),                         // salt
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,           // exchangeAddress
-        NULL_ADDRESS,                                    // feeRecipientAddress
-        SetTestUtils.generateTimestamp(10000),           // expirationTimeSeconds
-        exchangeIssuanceSendTokenAmounts[0],                 // amount of zeroExOrder to fill
+        exchangeIssuanceSendTokenAmounts[0],                // takerAssetAmount
+        exchangeIssuanceReceiveTokens[0],                   // makerAssetAddress
+        exchangeIssuanceSendTokens[0],                      // takerAssetAddress
+        SetUtils.generateSalt(),                            // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,              // exchangeAddress
+        NULL_ADDRESS,                                       // feeRecipientAddress
+        SetTestUtils.generateTimestamp(10000),              // expirationTimeSeconds
+        exchangeIssuanceSendTokenAmounts[0],                // amount of zeroExOrder to fill
       );
 
       subjectExchangeOrdersData = setUtils.generateSerializedOrders([zeroExOrder]);
