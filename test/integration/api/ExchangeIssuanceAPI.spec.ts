@@ -311,20 +311,21 @@ describe('ExchangeIssuanceAPI', () => {
 
     let exchangeIssuanceSetAddress: Address;
     let exchangeIssuanceQuantity: BigNumber;
-    let exchangeIssuancePaymentToken: Address;
-    let exchangeIssuancePaymentTokenAmount: BigNumber;
-    let exchangeIssuanceRequiredComponents: Address[];
-    let exchangeIssuanceRequiredComponentAmounts: BigNumber[];
+    let exchangeIssuanceSendTokenExchangeIds: BigNumber[];
+    let exchangeIssuanceSendTokens: Address[];
+    let exchangeIssuanceSendTokenAmounts: BigNumber[];
+    let exchangeIssuanceReceiveTokens: Address[];
+    let exchangeIssuanceReceiveTokenAmounts: BigNumber[];
 
     let zeroExOrder: ZeroExSignedFillOrder;
 
     beforeEach(async () => {
       // Create component token (owned by 0x order maker)
       zeroExOrderMaker = ACCOUNTS[2].address;
-      const [baseSetComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, zeroExOrderMaker);
+      const [firstComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, zeroExOrderMaker);
 
       // Create the Set (1 component)
-      const componentAddresses = [baseSetComponent.address];
+      const componentAddresses = [firstComponent.address];
       const componentUnits = [new BigNumber(10 ** 10)];
       baseSetNaturalUnit = new BigNumber(10 ** 9);
       baseSetToken = await deploySetTokenAsync(
@@ -352,45 +353,46 @@ describe('ExchangeIssuanceAPI', () => {
       // Generate exchange issue data
       exchangeIssuanceSetAddress = baseSetToken.address;
       exchangeIssuanceQuantity = new BigNumber(10 ** 10);
-      exchangeIssuancePaymentToken = wrappedEtherMock.address;
-      exchangeIssuancePaymentTokenAmount = etherValue;
-      exchangeIssuanceRequiredComponents = componentAddresses;
-      exchangeIssuanceRequiredComponentAmounts = componentUnits.map(
+      exchangeIssuanceSendTokenExchangeIds = [SetUtils.EXCHANGES.ZERO_EX];
+      exchangeIssuanceSendTokens = [wrappedEtherMock.address];
+      exchangeIssuanceSendTokenAmounts = [etherValue];
+      exchangeIssuanceReceiveTokens = componentAddresses;
+      exchangeIssuanceReceiveTokenAmounts = componentUnits.map(
         unit => unit.mul(exchangeIssuanceQuantity).div(baseSetNaturalUnit)
       );
 
       subjectExchangeIssuanceData = {
         setAddress: exchangeIssuanceSetAddress,
-        sendTokenExchangeIds: [SetUtils.EXCHANGES.ZERO_EX],
-        sendTokens: [exchangeIssuancePaymentToken],
-        sendTokenAmounts: [exchangeIssuancePaymentTokenAmount],
+        sendTokenExchangeIds: exchangeIssuanceSendTokenExchangeIds,
+        sendTokens: exchangeIssuanceSendTokens,
+        sendTokenAmounts: exchangeIssuanceSendTokenAmounts,
         quantity: exchangeIssuanceQuantity,
-        receiveTokens: exchangeIssuanceRequiredComponents,
-        receiveTokenAmounts: exchangeIssuanceRequiredComponentAmounts,
+        receiveTokens: exchangeIssuanceReceiveTokens,
+        receiveTokenAmounts: exchangeIssuanceReceiveTokenAmounts,
       };
 
       await approveForTransferAsync(
-        [baseSetComponent],
+        [firstComponent],
         SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
         zeroExOrderMaker
       );
 
-      // Create 0x order for the component, using weth(4) paymentToken as default
+      // Create 0x order for the first component
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
         NULL_ADDRESS,                                    // senderAddress
         zeroExOrderMaker,                                // makerAddress
         NULL_ADDRESS,                                    // takerAddress
         ZERO,                                            // makerFee
         ZERO,                                            // takerFee
-        subjectExchangeIssuanceData.receiveTokenAmounts[0], // makerAssetAmount
-        exchangeIssuancePaymentTokenAmount,                 // takerAssetAmount
-        exchangeIssuanceRequiredComponents[0],              // makerAssetAddress
-        exchangeIssuancePaymentToken,                       // takerAssetAddress
+        exchangeIssuanceReceiveTokenAmounts[0],          // makerAssetAmount
+        exchangeIssuanceSendTokenAmounts[0],             // takerAssetAmount
+        exchangeIssuanceReceiveTokens[0],                // makerAssetAddress
+        exchangeIssuanceSendTokens[0],                   // takerAssetAddress
         SetUtils.generateSalt(),                         // salt
         SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,           // exchangeAddress
         NULL_ADDRESS,                                    // feeRecipientAddress
         SetTestUtils.generateTimestamp(10000),           // expirationTimeSeconds
-        exchangeIssuancePaymentTokenAmount,                 // amount of zeroExOrder to fill
+        exchangeIssuanceSendTokenAmounts[0],             // amount of zeroExOrder to fill
       );
 
       subjectExchangeOrder = [zeroExOrder];
