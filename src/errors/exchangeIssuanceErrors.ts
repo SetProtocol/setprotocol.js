@@ -17,7 +17,7 @@
 'use strict';
 
 
-export const exchangeIssueErrors = {
+export const exchangeIssuanceErrors = {
   PAYMENT_TOKEN_NOT_WETH: (paymentToken: string, wethAddress: string) => `Payment token at ${paymentToken} is ` +
     `not the expected wrapped ether token at ${wethAddress}`,
   ISSUING_SET_NOT_BASE_SET: (setAddress: string, currentSet: string) => `Set token at ${setAddress} is ` +

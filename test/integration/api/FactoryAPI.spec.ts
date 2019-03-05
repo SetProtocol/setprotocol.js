@@ -471,7 +471,7 @@ describe('FactoryAPI', () => {
       const setComponentUnit = ether(4);
       const naturalUnit = ether(2);
 
-      subjectTxHash = await core.create.sendTransactionAsync(
+      subjectTxHash = await core.createSet.sendTransactionAsync(
         setTokenFactory.address,
         componentTokens.map(token => token.address),
         componentTokens.map(token => setComponentUnit),

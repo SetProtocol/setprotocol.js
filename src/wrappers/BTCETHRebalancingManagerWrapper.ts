@@ -59,51 +59,61 @@ export class BTCETHRebalancingManagerWrapper {
 
   public async core(managerAddress: Address): Promise<Address> {
     const btcEthManagerInstance = await this.contracts.loadBtcEthManagerAsync(managerAddress);
-    return await btcEthManagerInstance.core.callAsync();
+
+    return await btcEthManagerInstance.coreAddress.callAsync();
   }
 
   public async btcPriceFeed(managerAddress: Address): Promise<Address> {
     const btcEthManagerInstance = await this.contracts.loadBtcEthManagerAsync(managerAddress);
+
     return await btcEthManagerInstance.btcPriceFeed.callAsync();
   }
 
   public async ethPriceFeed(managerAddress: Address): Promise<Address> {
     const btcEthManagerInstance = await this.contracts.loadBtcEthManagerAsync(managerAddress);
+
     return await btcEthManagerInstance.ethPriceFeed.callAsync();
   }
 
   public async btcAddress(managerAddress: Address): Promise<Address> {
     const btcEthManagerInstance = await this.contracts.loadBtcEthManagerAsync(managerAddress);
+
     return await btcEthManagerInstance.btcAddress.callAsync();
   }
 
   public async ethAddress(managerAddress: Address): Promise<Address> {
     const btcEthManagerInstance = await this.contracts.loadBtcEthManagerAsync(managerAddress);
+
     return await btcEthManagerInstance.ethAddress.callAsync();
   }
 
   public async setTokenFactory(managerAddress: Address): Promise<Address> {
     const btcEthManagerInstance = await this.contracts.loadBtcEthManagerAsync(managerAddress);
+
     return await btcEthManagerInstance.setTokenFactory.callAsync();
   }
 
   public async btcMultiplier(managerAddress: Address): Promise<BigNumber> {
     const btcEthManagerInstance = await this.contracts.loadBtcEthManagerAsync(managerAddress);
+
     return await btcEthManagerInstance.btcMultiplier.callAsync();
   }
 
   public async ethMultiplier(managerAddress: Address): Promise<BigNumber> {
     const btcEthManagerInstance = await this.contracts.loadBtcEthManagerAsync(managerAddress);
+
     return await btcEthManagerInstance.ethMultiplier.callAsync();
   }
 
   public async auctionLibrary(managerAddress: Address): Promise<Address> {
     const btcEthManagerInstance = await this.contracts.loadBtcEthManagerAsync(managerAddress);
+
     return await btcEthManagerInstance.auctionLibrary.callAsync();
   }
 
   public async auctionTimeToPivot(managerAddress: Address): Promise<BigNumber> {
     const btcEthManagerInstance = await this.contracts.loadBtcEthManagerAsync(managerAddress);
+
     return await btcEthManagerInstance.auctionTimeToPivot.callAsync();
   }
 }

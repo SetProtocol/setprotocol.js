@@ -21,9 +21,9 @@ import { BTCETHRebalancingManagerWrapper } from './BTCETHRebalancingManagerWrapp
 import { ContractWrapper } from './ContractWrapper';
 import { CoreWrapper } from './CoreWrapper';
 import { ERC20Wrapper } from './ERC20Wrapper';
-import { ExchangeIssueModuleWrapper } from './ExchangeIssueModuleWrapper';
+import { ExchangeIssuanceModuleWrapper } from './ExchangeIssuanceModuleWrapper';
 import { KyberNetworkWrapper } from './KyberNetworkWrapper';
-import { PayableExchangeIssueWrapper } from './PayableExchangeIssueWrapper';
+import { PayableExchangeIssuanceWrapper } from './PayableExchangeIssuanceWrapper';
 import { PriceFeedWrapper } from './PriceFeedWrapper';
 import { RebalancingAuctionModuleWrapper } from './RebalancingAuctionModuleWrapper';
 import { RebalancingSetTokenWrapper } from './RebalancingSetTokenWrapper';
@@ -39,9 +39,9 @@ export {
   ContractWrapper,
   CoreWrapper,
   ERC20Wrapper,
-  ExchangeIssueModuleWrapper,
+  ExchangeIssuanceModuleWrapper,
   KyberNetworkWrapper,
-  PayableExchangeIssueWrapper,
+  PayableExchangeIssuanceWrapper,
   PriceFeedWrapper,
   RebalancingAuctionModuleWrapper,
   RebalancingSetTokenWrapper,

@@ -115,8 +115,8 @@ export const deployBtcEthManagerContractAsync = async(
   setTokenFactory: Address,
   auctionLibrary: Address,
   auctionTimeToPivot: BigNumber,
-  btcMultiplier: BigNumber,
-  ethMultiplier: BigNumber,
+  componentMultipliers: BigNumber[],
+  allocationBounds: BigNumber[],
 ): Promise<BTCETHRebalancingManagerContract> => {
   const truffleBTCETHRebalancingManagerContract = contract(BTCETHRebalancingManager);
   truffleBTCETHRebalancingManagerContract.setProvider(web3.currentProvider);
@@ -133,8 +133,8 @@ export const deployBtcEthManagerContractAsync = async(
     setTokenFactory,
     auctionLibrary,
     auctionTimeToPivot,
-    btcMultiplier,
-    ethMultiplier,
+    componentMultipliers,
+    allocationBounds,
   );
   return await BTCETHRebalancingManagerContract.at(
     deployedBtcEthManagerInstance.address,
@@ -166,7 +166,7 @@ export const createRebalancingSetTokenAsync = async(
   const encodedName = SetProtocolUtils.stringToBytes(name);
   const encodedSymbol = SetProtocolUtils.stringToBytes(symbol);
 
-  const txHash = await core.create.sendTransactionAsync(
+  const txHash = await core.createSet.sendTransactionAsync(
     factory,
     componentAddresses,
     units,

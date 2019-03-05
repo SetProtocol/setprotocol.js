@@ -19,11 +19,10 @@
 import { AccountingAPI } from './AccountingAPI';
 import { BlockchainAPI } from './BlockchainAPI';
 import { ERC20API } from './ERC20API';
-import { ExchangeIssueAPI } from './ExchangeIssueAPI';
+import { ExchangeIssuanceAPI } from './ExchangeIssuanceAPI';
 import { FactoryAPI } from './FactoryAPI';
 import { IssuanceAPI } from './IssuanceAPI';
-import { OrderAPI } from './OrderAPI';
-import { PayableExchangeIssueAPI } from './PayableExchangeIssueAPI';
+import { PayableExchangeIssuanceAPI } from './PayableExchangeIssuanceAPI';
 import { RebalancingAPI } from './RebalancingAPI';
 import { RebalancingManagerAPI } from './RebalancingManagerAPI';
 import { SetTokenAPI } from './SetTokenAPI';
@@ -33,11 +32,10 @@ export {
   AccountingAPI,
   BlockchainAPI,
   ERC20API,
-  ExchangeIssueAPI,
+  ExchangeIssuanceAPI,
   FactoryAPI,
   IssuanceAPI,
-  OrderAPI,
-  PayableExchangeIssueAPI,
+  PayableExchangeIssuanceAPI,
   RebalancingAPI,
   SystemAPI,
   RebalancingManagerAPI,

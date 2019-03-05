@@ -18,8 +18,8 @@
 
 export { coreAPIErrors, coreAssertionErrors } from './coreErrors';
 export { erc20AssertionErrors } from './erc20Errors';
-export { exchangeIssueErrors } from './exchangeIssueErrors';
-export { orderErrors } from './orderErrors';
+export { exchangeIssuanceErrors } from './exchangeIssuanceErrors';
+export { exchangeErrors } from './exchangeErrors';
 export { rebalancingErrors } from './rebalancingErrors';
 export { schemaAssertionsError } from './schemaErrors';
 export { setTokenAssertionsErrors } from './setTokenErrors';

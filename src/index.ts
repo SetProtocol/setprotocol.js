@@ -4,7 +4,6 @@ export {
   Component,
   Constants,
   ECSig,
-  Exchanges,
   KyberTrade,
   Log,
   SetDetails,

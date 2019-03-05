@@ -8,7 +8,6 @@ export {
   Bytes,
   Constants,
   ECSig,
-  Exchanges,
   KyberTrade,
   Log,
   SolidityTypes,
@@ -100,9 +99,9 @@ export interface SetProtocolConfig {
   kyberNetworkWrapperAddress: Address;
   setTokenFactoryAddress: Address;
   rebalancingSetTokenFactoryAddress: Address;
-  exchangeIssueModuleAddress: Address;
+  exchangeIssuanceModuleAddress: Address;
   rebalancingTokenIssuanceModule: Address;
-  payableExchangeIssue: Address;
+  payableExchangeIssuance: Address;
   wrappedEtherAddress: Address;
 }
 

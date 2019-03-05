@@ -126,8 +126,8 @@ describe('SystemAPI', () => {
       setTokenFactoryAddress: setTokenFactory.address,
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
       rebalancingTokenIssuanceModule: rebalancingTokenIssuanceModule.address,
-      exchangeIssueModuleAddress: NULL_ADDRESS,
-      payableExchangeIssue: NULL_ADDRESS,
+      exchangeIssuanceModuleAddress: NULL_ADDRESS,
+      payableExchangeIssuance: NULL_ADDRESS,
       wrappedEtherAddress: NULL_ADDRESS,
     };
 
