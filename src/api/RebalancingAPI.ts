@@ -102,6 +102,12 @@ export class RebalancingAPI {
     redeemQuantity: BigNumber,
     txOpts: Tx,
   ): Promise<string> {
+    await this.assertRedeemIntoBaseComponents(
+      rebalancingSetTokenAddress,
+      redeemQuantity,
+      txOpts
+    );
+
     return await this.rebalancingTokenIssuanceModule.redeemRebalancingSetIntoBaseComponents(
       rebalancingSetTokenAddress,
       redeemQuantity,
@@ -517,6 +523,34 @@ export class RebalancingAPI {
       rebalancingSetTokenAddress,
       txOpts.from,
       bidQuantity
+    );
+  }
+
+  private async assertRedeemIntoBaseComponents(
+    rebalancingSetTokenAddress: Address,
+    quantity: BigNumber,
+    txOpts: Tx
+  ) {
+    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+    this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
+
+    await this.assert.setToken.isMultipleOfNaturalUnit(
+      rebalancingSetTokenAddress,
+      quantity,
+      'Redeem quantity',
+    );
+
+    await this.assert.erc20.hasSufficientBalanceAsync(
+      rebalancingSetTokenAddress,
+      txOpts.from,
+      quantity,
+    );
+
+    await this.assert.vault.hasSufficientSetTokensBalances(
+      this.core.vaultAddress,
+      rebalancingSetTokenAddress,
+      quantity,
     );
   }
 

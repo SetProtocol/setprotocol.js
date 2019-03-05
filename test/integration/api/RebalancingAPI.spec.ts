@@ -222,6 +222,90 @@ describe('RebalancingAPI', () => {
       const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
       expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
     });
+
+    describe('when the transaction caller address is invalid', async () => {
+      beforeEach(async () => {
+        subjectCaller = 'invalidCallerAddress';
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        Expected txOpts.from to conform to schema /Address.
+
+        Encountered: "invalidCallerAddress"
+
+        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
+      `
+        );
+      });
+    });
+
+    describe('when the rebalancing Set address is invalid', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetToken = 'invalidSetAddress';
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        Expected rebalancingSetTokenAddress to conform to schema /Address.
+
+        Encountered: "invalidSetAddress"
+
+        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
+      `
+        );
+      });
+    });
+
+    describe('when the quantities contain a negative number', async () => {
+      let invalidQuantity: BigNumber;
+
+      beforeEach(async () => {
+        invalidQuantity = new BigNumber(-1);
+
+        subjectRedeemQuantity = invalidQuantity;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The quantity ${invalidQuantity} inputted needs to be greater than zero.`
+        );
+      });
+    });
+
+    describe('when the quantity is not a multiple of the natural unit', async () => {
+      let invalidQuantity: BigNumber;
+
+      beforeEach(async () => {
+        invalidQuantity = new BigNumber(1);
+
+        subjectRedeemQuantity = invalidQuantity;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith('Redeem quantity needs to be multiple of natural unit.');
+      });
+    });
+
+    describe('when the quantity to redeem is larger than the user\'s Rebalancing Set Token balance', async () => {
+      beforeEach(async () => {
+        subjectRedeemQuantity = ether(14);
+      });
+
+      test('throws', async () => {
+        const currentBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+
+        return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${subjectCaller} has balance of ${currentBalance}
+
+        when required balance is ${subjectRedeemQuantity} at token address ${subjectRebalancingSetToken}.
+      `
+        );
+      });
+    });
   });
 
   describe('proposeAsync', async () => {
