@@ -64,4 +64,28 @@ export class ExchangeIssuanceModuleWrapper {
       txSettings,
     );
   }
+
+  /**
+   * Redeems a Set and exchanges the components for a specific ERC20 token.
+   *
+   * @param  exchangeIssuanceData      Struct containing data around the base Set issuance
+   * @param  orderData                Bytecode formatted data with exchange data for disposing of base set components
+   * @param  txOpts                    The options for executing the transaction
+   */
+  public async exchangeRedeem(
+    exchangeIssuanceParams: ExchangeIssuanceParams,
+    orderData: Bytes,
+    txOpts?: Tx,
+  ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+    const exchangeIssuanceModuleInstance = await this.contracts.loadExchangeIssuanceModuleAsync(
+      this.exchangeIssuanceModule
+    );
+
+    return await exchangeIssuanceModuleInstance.exchangeRedeem.sendTransactionAsync(
+      exchangeIssuanceParams,
+      orderData,
+      txSettings,
+    );
+  }
 }

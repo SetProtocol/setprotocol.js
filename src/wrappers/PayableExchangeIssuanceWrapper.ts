@@ -19,7 +19,7 @@
 import Web3 from 'web3';
 
 import { ContractWrapper } from '.';
-import { generateTxOpts } from '../util';
+import { BigNumber, generateTxOpts } from '../util';
 import { Address, Tx } from '../types/common';
 import { Bytes, ExchangeIssuanceParams } from 'set-protocol-utils';
 
@@ -63,6 +63,37 @@ export class PayableExchangeIssuanceWrapper {
 
     return await payableExchangeIssuanceInstance.issueRebalancingSetWithEther.sendTransactionAsync(
       rebalancingSetAddress,
+      exchangeIssuanceParams,
+      orderData,
+      txSettings,
+    );
+  }
+
+  /**
+   * Redeems a Rebalancing Set into the base Set. Then the base Set is redeemed, and its components
+   * are exchanged for Wrapped Ether. The wrapped Ether is then unwrapped and attributed to the caller.
+   *
+   * @param  rebalancingSetAddress    Address of the rebalancing Set to redeem
+   * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
+   * @param  exchangeIssuanceData        Struct containing data around the base Set issuance
+   * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
+   * @param  txOpts                    The options for executing the transaction
+   */
+  public async redeemRebalancingSetIntoEther(
+    rebalancingSetAddress: Address,
+    rebalancingSetQuantity: BigNumber,
+    exchangeIssuanceParams: ExchangeIssuanceParams,
+    orderData: Bytes,
+    txOpts?: Tx,
+  ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+    const payableExchangeIssuanceInstance = await this.contracts.loadPayableExchangeIssuanceAsync(
+      this.payableExchangeIssuance
+    );
+
+    return await payableExchangeIssuanceInstance.redeemRebalancingSetIntoEther.sendTransactionAsync(
+      rebalancingSetAddress,
+      rebalancingSetQuantity,
       exchangeIssuanceParams,
       orderData,
       txSettings,

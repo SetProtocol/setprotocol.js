@@ -169,7 +169,6 @@ export class ExchangeAssertions {
         this.commonAssertions.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
         this.schemaAssertions.isValidAddress('tokenAddress', tokenAddress);
         await this.erc20Assertions.implementsERC20(tokenAddress);
-        await this.setTokenAssertions.isComponent(setAddress, tokenAddress);
 
         this.commonAssertions.greaterThanZero(
           receiveTokenAmounts[i],

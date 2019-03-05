@@ -135,7 +135,7 @@ describe('ExchangeIssuanceModuleWrapper', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('exchangeIssuance', async () => {
+  describe('exchangeIssue', async () => {
     let subjectExchangeIssuanceData: ExchangeIssuanceParams;
     let subjectExchangeOrdersData: Bytes;
     let subjectCaller: Address;
@@ -248,6 +248,144 @@ describe('ExchangeIssuanceModuleWrapper', () => {
 
       const currentRBSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
       expect(expectedSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
+  });
+
+  describe('exchangeRedeem', async () => {
+    let subjectExchangeIssuanceData: ExchangeIssuanceParams;
+    let subjectExchangeOrdersData: Bytes;
+    let subjectCaller: Address;
+
+    let zeroExOrderMaker: Address;
+
+    let baseSetToken: SetTokenContract;
+    let baseSetNaturalUnit: BigNumber;
+
+    let exchangeIssuanceSetAddress: Address;
+    let exchangeIssuanceQuantity: BigNumber;
+    let exchangeIssuanceSendTokenExchangeIds: BigNumber[];
+    let exchangeIssuanceSendTokens: Address[];
+    let exchangeIssuanceSendTokenAmounts: BigNumber[];
+    let exchangeIssuanceReceiveTokens: Address[];
+    let exchangeIssuanceReceiveTokenAmounts: BigNumber[];
+
+    let zeroExOrder: ZeroExSignedFillOrder;
+
+    beforeEach(async () => {
+      subjectCaller = ACCOUNTS[1].address;
+
+      // Create component token (owned by caller)
+      const [baseSetComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, subjectCaller);
+
+      zeroExOrderMaker = ACCOUNTS[2].address;
+
+      // Create the Set (1 component)
+      const componentAddresses = [baseSetComponent.address];
+      const componentUnits = [new BigNumber(10 ** 10)];
+      baseSetNaturalUnit = new BigNumber(10 ** 9);
+      baseSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        componentUnits,
+        baseSetNaturalUnit,
+      );
+
+      // Generate exchange issuance data
+      exchangeIssuanceSetAddress = baseSetToken.address;
+      exchangeIssuanceQuantity = new BigNumber(10 ** 10);
+      exchangeIssuanceSendTokenExchangeIds = [SetUtils.EXCHANGES.ZERO_EX];
+      exchangeIssuanceSendTokens = [baseSetComponent.address];
+      exchangeIssuanceSendTokenAmounts = componentUnits.map(
+        unit => unit.mul(exchangeIssuanceQuantity).div(baseSetNaturalUnit)
+      );
+      exchangeIssuanceReceiveTokens = [wrappedEtherMock.address];
+      exchangeIssuanceReceiveTokenAmounts = [new BigNumber(10 ** 10)];
+
+      subjectExchangeIssuanceData = {
+        setAddress: exchangeIssuanceSetAddress,
+        sendTokenExchangeIds: exchangeIssuanceSendTokenExchangeIds,
+        sendTokens: exchangeIssuanceSendTokens,
+        sendTokenAmounts: exchangeIssuanceSendTokenAmounts,
+        quantity: exchangeIssuanceQuantity,
+        receiveTokens: exchangeIssuanceReceiveTokens,
+        receiveTokenAmounts: exchangeIssuanceReceiveTokenAmounts,
+      };
+
+      // Create 0x order for the component, using weth(4) paymentToken as default
+      zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
+        NULL_ADDRESS,                                       // senderAddress
+        zeroExOrderMaker,                                   // makerAddress
+        NULL_ADDRESS,                                       // takerAddress
+        ZERO,                                               // makerFee
+        ZERO,                                               // takerFee
+        subjectExchangeIssuanceData.receiveTokenAmounts[0], // makerAssetAmount
+        exchangeIssuanceSendTokenAmounts[0],                // takerAssetAmount
+        exchangeIssuanceReceiveTokens[0],                   // makerAssetAddress
+        exchangeIssuanceSendTokens[0],                      // takerAssetAddress
+        SetUtils.generateSalt(),                            // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,              // exchangeAddress
+        NULL_ADDRESS,                                       // feeRecipientAddress
+        SetTestUtils.generateTimestamp(10000),              // expirationTimeSeconds
+        exchangeIssuanceSendTokenAmounts[0],                // amount of zeroExOrder to fill
+      );
+
+      subjectExchangeOrdersData = setUtils.generateSerializedOrders([zeroExOrder]);
+
+      // 0x maker needs to wrap ether
+      await wrappedEtherMock.deposit.sendTransactionAsync(
+        { from: zeroExOrderMaker, value: exchangeIssuanceReceiveTokenAmounts[0].toString() }
+      );
+
+      // 0x maker needs to approve to the 0x proxy
+      await wrappedEtherMock.approve.sendTransactionAsync(
+        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        exchangeIssuanceReceiveTokenAmounts[0],
+        { from: zeroExOrderMaker }
+      );
+
+      // Caller approves set to the transfer proxy
+      await approveForTransferAsync(
+        [baseSetComponent],
+        transferProxy.address,
+        subjectCaller
+      );
+
+      await core.issue.sendTransactionAsync(
+        baseSetToken.address,
+        exchangeIssuanceQuantity,
+        { from: subjectCaller }
+      );
+    });
+
+    async function subject(): Promise<string> {
+      return await exchangeIssuanceWrapper.exchangeRedeem(
+        subjectExchangeIssuanceData,
+        subjectExchangeOrdersData,
+        { from: subjectCaller }
+      );
+    }
+
+    test('redeems the Set', async () => {
+      const previousSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
+      const expectedSetTokenBalance = previousSetTokenBalance.sub(exchangeIssuanceQuantity);
+
+      await subject();
+
+      const currentRBSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
+      expect(expectedSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
+
+    test('increments the correct amount of Sent token', async () => {
+      const existingBalance = await wrappedEtherMock.balanceOf.callAsync(subjectCaller);
+
+      await subject();
+
+      const expectedNewBalance = existingBalance.add(exchangeIssuanceReceiveTokenAmounts[0]);
+      const newBalance = await wrappedEtherMock.balanceOf.callAsync(subjectCaller);
+
+      await expect(newBalance).to.be.bignumber.equal(expectedNewBalance);
     });
   });
 });
