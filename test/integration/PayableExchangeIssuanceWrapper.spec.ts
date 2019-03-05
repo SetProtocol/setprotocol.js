@@ -282,7 +282,7 @@ describe('PayableExchangeIssuanceWrapper', () => {
     });
   });
 
-  describe.only('redeemRebalancingSetIntoEther', async () => {
+  describe('redeemRebalancingSetIntoEther', async () => {
     let subjectRebalancingSetAddress: Address;
     let subjectRebalancingSetQuantity: BigNumber;
     let subjectExchangeIssuanceData: ExchangeIssuanceParams;
@@ -434,12 +434,29 @@ describe('PayableExchangeIssuanceWrapper', () => {
 
     test('redeems the rebalancing Set to the caller', async () => {
       const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
-      const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(subjectRebalancingSetQuantity);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.sub(subjectRebalancingSetQuantity);
 
       await subject();
 
       const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
       expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
+
+    test('increments the callers ether balance appropriately', async () => {
+      const previousEthBalance = new BigNumber(await web3.eth.getBalance(subjectCaller));
+
+      const txHash = await subject();
+      const txReceipt = await web3.eth.getTransactionReceipt(txHash);
+      const txn = await web3.eth.getTransaction(txHash);
+      const { gasPrice } = txn;
+      const { gasUsed } = txReceipt;
+
+      const totalGasInEth = new BigNumber(gasPrice).mul(gasUsed);
+
+      const expectedEthBalance = previousEthBalance.add(subjectEther).sub(totalGasInEth);
+      const currentEthBalance =  await web3.eth.getBalance(subjectCaller);
+
+      expect(currentEthBalance).to.bignumber.equal(expectedEthBalance);
     });
   });
 });
