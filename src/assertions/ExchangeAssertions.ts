@@ -29,7 +29,7 @@ import { ERC20Assertions } from './ERC20Assertions';
 import { SetTokenAssertions } from './SetTokenAssertions';
 import { BigNumber, calculatePartialAmount } from '../util';
 import { Address, KyberTrade, ZeroExSignedFillOrder } from '../types/common';
-import { NULL_ADDRESS, ZERO } from '@src/constants';
+import { NULL_ADDRESS, ZERO } from '../constants';
 
 export class ExchangeAssertions {
   private web3: Web3;
