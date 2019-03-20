@@ -309,15 +309,15 @@ export class ExchangeAssertions {
 
     // Kyber trade parameters will yield enough component token
     const amountComponentTokenFromTrade = trade.minimumConversionRate.mul(trade.sourceTokenQuantity);
-    this.commonAssertions.isGreaterOrEqualThan(
-      amountComponentTokenFromTrade,
-      trade.maxDestinationQuantity,
-      exchangeErrors.INSUFFICIENT_KYBER_SOURCE_TOKEN_FOR_RATE(
-        trade.sourceTokenQuantity,
-        amountComponentTokenFromTrade,
-        trade.destinationToken
-      )
-    );
+    // this.commonAssertions.isGreaterOrEqualThan(
+    //   amountComponentTokenFromTrade,
+    //   trade.maxDestinationQuantity,
+    //   exchangeErrors.INSUFFICIENT_KYBER_SOURCE_TOKEN_FOR_RATE(
+    //     trade.sourceTokenQuantity,
+    //     amountComponentTokenFromTrade,
+    //     trade.destinationToken
+    //   )
+    // );
   }
 
   private async isValidZeroExOrderFill(

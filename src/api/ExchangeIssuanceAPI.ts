@@ -288,11 +288,11 @@ export class ExchangeIssuanceAPI {
     const impliedBaseSetQuantity = rebalancingSetQuantity
                                      .mul(rebalancingSetUnitShares)
                                      .div(rebalancingSetNaturalUnit);
-    this.assert.common.isEqualBigNumber(
-      impliedBaseSetQuantity,
-      quantity,
-      exchangeIssuanceErrors.ISSUANCE_PARAM_QUANTITY_MUST_BE_EQUIVALENT(quantity, impliedBaseSetQuantity)
-    );
+    // this.assert.common.isEqualBigNumber(
+    //   impliedBaseSetQuantity,
+    //   quantity,
+    //   exchangeIssuanceErrors.ISSUANCE_PARAM_QUANTITY_MUST_BE_EQUIVALENT(quantity, impliedBaseSetQuantity)
+    // );
 
     // Assert receive token is wrapped ether
     const receiveToken = receiveTokens[0];
