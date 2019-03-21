@@ -26,7 +26,7 @@ import {
   CoreWrapper,
   ExchangeIssuanceModuleWrapper,
   KyberNetworkWrapper,
-  PayableExchangeIssuanceWrapper,
+  RebalancingSetExchangeIssuanceModuleWrapper,
   RebalancingSetTokenWrapper,
   SetTokenWrapper,
  } from '../wrappers';
@@ -44,7 +44,7 @@ export class ExchangeIssuanceAPI {
   private assert: Assertions;
   private exchangeIssuance: ExchangeIssuanceModuleWrapper;
   private setProtocolUtils: SetProtocolUtils;
-  private payableExchangeIssuance: PayableExchangeIssuanceWrapper;
+  private rebalancingSetExchangeIssuanceModule: RebalancingSetExchangeIssuanceModuleWrapper;
   private setToken: SetTokenWrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private wrappedEther: Address;
@@ -71,7 +71,10 @@ export class ExchangeIssuanceAPI {
     this.core = new CoreWrapper(this.web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
     this.exchangeIssuance = new ExchangeIssuanceModuleWrapper(web3, config.exchangeIssuanceModuleAddress);
     this.kyberNetworkWrapper = new KyberNetworkWrapper(this.web3, config.kyberNetworkWrapperAddress);
-    this.payableExchangeIssuance = new PayableExchangeIssuanceWrapper(web3, config.payableExchangeIssuance);
+    this.rebalancingSetExchangeIssuanceModule = new RebalancingSetExchangeIssuanceModuleWrapper(
+      web3,
+      config.rebalancingSetExchangeIssuanceModule,
+    );
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
     this.setToken = new SetTokenWrapper(this.web3);
     this.wrappedEther = config.wrappedEtherAddress;
@@ -137,7 +140,7 @@ export class ExchangeIssuanceAPI {
     );
 
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
-    return this.payableExchangeIssuance.issueRebalancingSetWithEther(
+    return this.rebalancingSetExchangeIssuanceModule.issueRebalancingSetWithEther(
       rebalancingSetAddress,
       exchangeIssuanceParams,
       orderData,
@@ -177,7 +180,7 @@ export class ExchangeIssuanceAPI {
     );
 
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
-    return this.payableExchangeIssuance.redeemRebalancingSetIntoEther(
+    return this.rebalancingSetExchangeIssuanceModule.redeemRebalancingSetIntoEther(
       rebalancingSetAddress,
       rebalancingSetQuantity,
       exchangeIssuanceParams,

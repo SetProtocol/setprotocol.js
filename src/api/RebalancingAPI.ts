@@ -211,6 +211,8 @@ export class RebalancingAPI {
    * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
    * @param  shouldWithdraw                 Boolean to withdraw back to signer's wallet or leave in vault.
    *                                        Defaults to true
+   * @param  allowPartialFill               Boolean to complete fill if quantity is less than available
+   *                                        Defaults to true
    * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
    *                                          gasPrice data
    * @return                                Transaction hash
@@ -219,13 +221,24 @@ export class RebalancingAPI {
     rebalancingSetTokenAddress: Address,
     bidQuantity: BigNumber,
     shouldWithdraw: boolean = true,
+    allowPartialFill: boolean = true,
     txOpts: Tx
   ): Promise<string> {
     await this.assertBid(rebalancingSetTokenAddress, bidQuantity, txOpts);
     if (shouldWithdraw) {
-      return await this.rebalancingAuctionModule.bidAndWithdraw(rebalancingSetTokenAddress, bidQuantity, txOpts);
+      return await this.rebalancingAuctionModule.bidAndWithdraw(
+        rebalancingSetTokenAddress,
+        bidQuantity,
+        allowPartialFill,
+        txOpts,
+      );
     } else {
-      return await this.rebalancingAuctionModule.bid(rebalancingSetTokenAddress, bidQuantity, txOpts);
+      return await this.rebalancingAuctionModule.bid(
+        rebalancingSetTokenAddress,
+        bidQuantity,
+        allowPartialFill,
+        txOpts,
+      );
     }
   }
 

@@ -911,7 +911,8 @@ describe('RebalancingSetTokenWrapper', () => {
       // Bid to rebalance the outstanding amount of currentSetToken
       await rebalanceAuctionModule.bid.sendTransactionAsync(
         rebalancingSetToken.address,
-        rebalancingSetQuantityToIssue
+        rebalancingSetQuantityToIssue,
+        false,
       );
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
@@ -1140,7 +1141,8 @@ describe('RebalancingSetTokenWrapper', () => {
       const returnedMinimumBid = await rebalancingSetTokenWrapper.minimumBid(subjectRebalancingSetTokenAddress);
       await rebalanceAuctionModule.bid.sendTransactionAsync(
         rebalancingSetToken.address,
-        rebalancingSetQuantityToIssue.sub(returnedMinimumBid)
+        rebalancingSetQuantityToIssue.sub(returnedMinimumBid),
+        false
       );
 
       await subject();

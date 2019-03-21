@@ -126,6 +126,10 @@ describe('RebalancingAPI', () => {
       rebalanceIssuanceModule,
     ] = await deployBaseContracts(web3);
 
+    setTokenFactory = setTokenFactory;
+
+    console.log('Set Token Factory,', setTokenFactory.address);
+
     const coreWrapper = new CoreWrapper(
       web3,
       core.address,
@@ -146,7 +150,7 @@ describe('RebalancingAPI', () => {
       rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
       rebalancingTokenIssuanceModule: rebalanceIssuanceModule.address,
       exchangeIssuanceModuleAddress: NULL_ADDRESS,
-      payableExchangeIssuance: NULL_ADDRESS,
+      rebalancingSetExchangeIssuanceModule: NULL_ADDRESS,
       wrappedEtherAddress: NULL_ADDRESS,
     };
 
@@ -830,7 +834,8 @@ describe('RebalancingAPI', () => {
 
         await rebalanceAuctionModule.bid.sendTransactionAsync(
           rebalancingSetToken.address,
-          rebalancingSetQuantityToIssue
+          rebalancingSetQuantityToIssue,
+          false,
         );
       });
 
@@ -1112,7 +1117,8 @@ describe('RebalancingAPI', () => {
 
         await rebalanceAuctionModule.bid.sendTransactionAsync(
           rebalancingSetToken.address,
-          rebalancingSetQuantityToIssue
+          rebalancingSetQuantityToIssue,
+          false,
         );
 
         // Calculate pivot time start
@@ -1177,7 +1183,8 @@ describe('RebalancingAPI', () => {
         // Bid entire minus minimum amount
         await rebalanceAuctionModule.bid.sendTransactionAsync(
           rebalancingSetToken.address,
-          rebalancingSetQuantityToIssue.sub(minimumBid).sub(minimumBid)
+          rebalancingSetQuantityToIssue.sub(minimumBid).sub(minimumBid),
+          false,
         );
 
         await subject();
@@ -1218,6 +1225,7 @@ describe('RebalancingAPI', () => {
     let subjectBidQuantity: BigNumber;
     let subjectCaller: Address;
     let subjectShouldWithdraw: boolean;
+    let subjectAllowPartialFill: boolean;
 
     beforeEach(async () => {
       const setTokensToDeploy = 2;
@@ -1268,6 +1276,7 @@ describe('RebalancingAPI', () => {
       subjectShouldWithdraw = false;
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
       subjectBidQuantity = rebalancingSetQuantityToIssue;
+      subjectAllowPartialFill = false;
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
@@ -1276,6 +1285,7 @@ describe('RebalancingAPI', () => {
         subjectRebalancingSetTokenAddress,
         subjectBidQuantity,
         subjectShouldWithdraw,
+        subjectAllowPartialFill,
         { from: subjectCaller }
       );
     }
@@ -1514,7 +1524,7 @@ describe('RebalancingAPI', () => {
     });
   });
 
-  describe('updateManagerAsync', async () => {
+  describe.only('updateManagerAsync', async () => {
     let currentSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
     let managerAddress: Address;
@@ -1525,6 +1535,8 @@ describe('RebalancingAPI', () => {
 
     beforeEach(async () => {
       const setTokensToDeploy = 2;
+      console.log('Factory 2', setTokenFactory);
+
       [currentSetToken] = await deploySetTokensAsync(
         web3,
         core,

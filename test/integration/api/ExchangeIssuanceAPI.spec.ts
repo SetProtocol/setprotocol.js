@@ -31,7 +31,7 @@ import {
   CoreContract,
   ExchangeIssuanceModuleContract,
   KyberNetworkWrapperContract,
-  PayableExchangeIssuanceContract,
+  RebalancingSetExchangeIssuanceModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
@@ -58,7 +58,7 @@ import {
   createDefaultRebalancingSetTokenAsync,
   deployExchangeIssuanceModuleAsync,
   deployTokensSpecifyingDecimals,
-  deployPayableExchangeIssuanceAsync,
+  deployRebalancingSetExchangeIssuanceModuleAsync,
   deployWethMockAsync,
   deployZeroExExchangeWrapperContract,
   deployBaseContracts,
@@ -96,7 +96,7 @@ describe('ExchangeIssuanceAPI', () => {
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let exchangeIssuanceModule: ExchangeIssuanceModuleContract;
   let kyberNetworkWrapper: KyberNetworkWrapperContract;
-  let payableExchangeIssuance: PayableExchangeIssuanceContract;
+  let rebalancingSetExchangeIssuanceModule: RebalancingSetExchangeIssuanceModuleContract;
 
   let config: SetProtocolConfig;
   let exchangeIssuanceAPI: ExchangeIssuanceAPI;
@@ -126,12 +126,13 @@ describe('ExchangeIssuanceAPI', () => {
 
     wrappedEtherMock = await deployWethMockAsync(web3, NULL_ADDRESS, ZERO);
 
-    payableExchangeIssuance = await deployPayableExchangeIssuanceAsync(
+    rebalancingSetExchangeIssuanceModule = await deployRebalancingSetExchangeIssuanceModuleAsync(
       web3,
       core,
       transferProxy,
       exchangeIssuanceModule,
       wrappedEtherMock,
+      vault,
     );
 
     kyberNetworkWrapper = await deployKyberNetworkWrapperContract(
@@ -151,7 +152,7 @@ describe('ExchangeIssuanceAPI', () => {
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
       rebalanceAuctionModuleAddress: NULL_ADDRESS,
       rebalancingTokenIssuanceModule: NULL_ADDRESS,
-      payableExchangeIssuance: payableExchangeIssuance.address,
+      rebalancingSetExchangeIssuanceModule: rebalancingSetExchangeIssuanceModule.address,
       wrappedEtherAddress: wrappedEtherMock.address,
     } as SetProtocolConfig;
 
@@ -601,7 +602,7 @@ describe('ExchangeIssuanceAPI', () => {
 
       await approveForTransferAsync(
         [rebalancingSetToken],
-        payableExchangeIssuance.address,
+        rebalancingSetExchangeIssuanceModule.address,
         subjectCaller
       );
     });
