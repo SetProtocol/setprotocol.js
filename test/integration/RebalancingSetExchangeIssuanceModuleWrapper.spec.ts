@@ -32,7 +32,7 @@ import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
   ExchangeIssuanceModuleContract,
-  PayableExchangeIssuanceContract,
+  RebalancingSetExchangeIssuanceModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
@@ -43,7 +43,7 @@ import {
 } from 'set-protocol-contracts';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
-import { PayableExchangeIssuanceWrapper } from '@src/wrappers';
+import { RebalancingSetExchangeIssuanceModuleWrapper } from '@src/wrappers';
 import {
   NULL_ADDRESS,
   TX_DEFAULTS,
@@ -59,7 +59,7 @@ import {
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
   deployExchangeIssuanceModuleAsync,
-  deployPayableExchangeIssuanceAsync,
+  deployRebalancingSetExchangeIssuanceModuleAsync,
   deploySetTokenAsync,
   deployTokensSpecifyingDecimals,
   deployWethMockAsync,
@@ -89,17 +89,17 @@ coreContract.defaults(TX_DEFAULTS);
 let currentSnapshotId: number;
 
 
-describe('PayableExchangeIssuanceWrapper', () => {
+describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
-  let payableExchangeIssuance: PayableExchangeIssuanceContract;
+  let rebalancingSetExchangeIssuanceModule: RebalancingSetExchangeIssuanceModuleContract;
   let wrappedEtherMock: WethMockContract;
   let exchangeIssuanceModule: ExchangeIssuanceModuleContract;
 
-  let payableExchangeIssuanceWrapper: PayableExchangeIssuanceWrapper;
+  let rebalancingSetExchangeIssuanceModuleWrapper: RebalancingSetExchangeIssuanceModuleWrapper;
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -135,17 +135,19 @@ describe('PayableExchangeIssuanceWrapper', () => {
     );
 
     wrappedEtherMock = await deployWethMockAsync(web3, NULL_ADDRESS, ZERO);
-    payableExchangeIssuance = await deployPayableExchangeIssuanceAsync(
+    rebalancingSetExchangeIssuanceModule = await deployRebalancingSetExchangeIssuanceModuleAsync(
       web3,
       core,
       transferProxy,
       exchangeIssuanceModule,
       wrappedEtherMock,
+      vault,
     );
+    await addModuleAsync(core, rebalancingSetExchangeIssuanceModule.address);
 
-    payableExchangeIssuanceWrapper = new PayableExchangeIssuanceWrapper(
+    rebalancingSetExchangeIssuanceModuleWrapper = new RebalancingSetExchangeIssuanceModuleWrapper(
       web3,
-      payableExchangeIssuance.address,
+      rebalancingSetExchangeIssuanceModule.address,
     );
   });
 
@@ -263,7 +265,7 @@ describe('PayableExchangeIssuanceWrapper', () => {
     });
 
     async function subject(): Promise<string> {
-      return await payableExchangeIssuanceWrapper.issueRebalancingSetWithEther(
+      return await rebalancingSetExchangeIssuanceModuleWrapper.issueRebalancingSetWithEther(
         subjectRebalancingSetAddress,
         subjectExchangeIssuanceData,
         subjectExchangeOrdersData,
@@ -414,16 +416,10 @@ describe('PayableExchangeIssuanceWrapper', () => {
         subjectRebalancingSetQuantity,
         { from: subjectCaller }
       );
-
-      await approveForTransferAsync(
-        [rebalancingSetToken],
-        payableExchangeIssuance.address,
-        subjectCaller
-      );
     });
 
     async function subject(): Promise<string> {
-      return await payableExchangeIssuanceWrapper.redeemRebalancingSetIntoEther(
+      return await rebalancingSetExchangeIssuanceModuleWrapper.redeemRebalancingSetIntoEther(
         subjectRebalancingSetAddress,
         subjectRebalancingSetQuantity,
         subjectExchangeIssuanceData,

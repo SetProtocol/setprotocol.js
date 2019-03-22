@@ -140,6 +140,7 @@ describe('RebalancingAuctionModuleWrapper', () => {
 
     let subjectRebalancingSetToken: Address;
     let subjectBidQuantity: BigNumber;
+    let subjectAllowPartialFill: boolean;
     let subjectCaller: Address;
 
     beforeEach(async () => {
@@ -208,6 +209,7 @@ describe('RebalancingAuctionModuleWrapper', () => {
 
       subjectRebalancingSetToken = rebalancingSetToken.address;
       subjectBidQuantity = ether(2);
+      subjectAllowPartialFill = false;
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
@@ -215,6 +217,7 @@ describe('RebalancingAuctionModuleWrapper', () => {
       return await rebalancingAuctionModuleWrapper.bid(
         subjectRebalancingSetToken,
         subjectBidQuantity,
+        subjectAllowPartialFill,
         { from: subjectCaller },
       );
     }
@@ -292,6 +295,7 @@ describe('RebalancingAuctionModuleWrapper', () => {
 
     let subjectRebalancingSetToken: Address;
     let subjectBidQuantity: BigNumber;
+    let subjectAllowPartialFill: boolean;
     let subjectCaller: Address;
 
     beforeEach(async () => {
@@ -360,6 +364,7 @@ describe('RebalancingAuctionModuleWrapper', () => {
 
       subjectRebalancingSetToken = rebalancingSetToken.address;
       subjectBidQuantity = ether(2);
+      subjectAllowPartialFill = false;
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
@@ -367,6 +372,7 @@ describe('RebalancingAuctionModuleWrapper', () => {
       return await rebalancingAuctionModuleWrapper.bidAndWithdraw(
         subjectRebalancingSetToken,
         subjectBidQuantity,
+        subjectAllowPartialFill,
         { from: subjectCaller },
       );
     }

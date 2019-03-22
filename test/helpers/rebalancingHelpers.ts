@@ -295,6 +295,7 @@ export const transitionToDrawdownAsync = async(
   await rebalanceAuctionModule.bidAndWithdraw.sendTransactionAsync(
     rebalancingSetToken.address,
     bidAmount,
+    true,
     TX_DEFAULTS
   );
 

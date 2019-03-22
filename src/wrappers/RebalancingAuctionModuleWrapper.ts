@@ -51,10 +51,16 @@ export class RebalancingAuctionModuleWrapper {
    *
    * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
    * @param  quantity                      Amount of currentSetToken the bidder wants to rebalance
+   * @param  allowPartialFill              Boolean that signifies whether to bid if full amount is not possible
    * @param  txOpts                        The options for executing the transaction
    * @return                               A transaction hash
    */
-  public async bid(rebalancingSetTokenAddress: Address, quantity: BigNumber, txOpts?: Tx): Promise<string> {
+  public async bid(
+    rebalancingSetTokenAddress: Address,
+    quantity: BigNumber,
+    allowPartialFill: boolean,
+    txOpts?: Tx,
+  ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const rebalanceAuctionModuleInstance = await this.contracts.loadRebalanceAuctionModuleAsync(
       this.rebalanceAuctionModuleAddress
@@ -63,6 +69,7 @@ export class RebalancingAuctionModuleWrapper {
     return await rebalanceAuctionModuleInstance.bid.sendTransactionAsync(
       rebalancingSetTokenAddress,
       quantity,
+      allowPartialFill,
       txSettings,
     );
   }
@@ -73,9 +80,15 @@ export class RebalancingAuctionModuleWrapper {
    * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
    * @param  quantity                      Amount of currentSetToken the bidder wants to rebalance
    * @param  txOpts                        The options for executing the transaction
+   * @param  allowPartialFill              Boolean that signifies whether to bid if full amount is not possible
    * @return                               A transaction hash
    */
-  public async bidAndWithdraw(rebalancingSetTokenAddress: Address, quantity: BigNumber, txOpts?: Tx): Promise<string> {
+  public async bidAndWithdraw(
+    rebalancingSetTokenAddress: Address,
+    quantity: BigNumber,
+    allowPartialFill: boolean,
+    txOpts?: Tx,
+  ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const rebalanceAuctionModuleInstance = await this.contracts.loadRebalanceAuctionModuleAsync(
       this.rebalanceAuctionModuleAddress
@@ -84,6 +97,7 @@ export class RebalancingAuctionModuleWrapper {
     return await rebalanceAuctionModuleInstance.bidAndWithdraw.sendTransactionAsync(
       rebalancingSetTokenAddress,
       quantity,
+      allowPartialFill,
       txSettings,
     );
   }

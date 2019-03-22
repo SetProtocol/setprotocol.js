@@ -25,7 +25,7 @@ import {
   ERC20DetailedContract,
   ExchangeIssuanceModuleContract,
   KyberNetworkWrapperContract,
-  PayableExchangeIssuanceContract,
+  RebalancingSetExchangeIssuanceModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingTokenIssuanceModuleContract,
@@ -256,28 +256,28 @@ export class ContractWrapper {
   }
 
   /**
-   * Load PayableExchangeIssuance contract
+   * Load RebalancingSetExchangeIssuanceModule contract
    *
-   * @param  payableExchangeIssuanceAddress    Address of the PayableExchangeIssuance contract
-   * @param  transactionOptions             Options sent into the contract deployed method
-   * @return                                The PayableExchangeIssuance Contract
+   * @param  rebalancingSetExchangeIssuanceAddress    Address of the RebalancingSetExchangeIssuanceModule contract
+   * @param  transactionOptions                       Options sent into the contract deployed method
+   * @return                                          The RebalancingSetExchangeIssuanceModule Contract
    */
-  public async loadPayableExchangeIssuanceAsync(
-    payableExchangeIssuanceAddress: Address,
+  public async loadRebalancingSetExchangeIssuanceModuleAsync(
+    rebalancingSetExchangeIssuanceAddress: Address,
     transactionOptions: object = {},
-  ): Promise<PayableExchangeIssuanceContract> {
-    const cacheKey = `PayableExchangeIssuance_${payableExchangeIssuanceAddress}`;
+  ): Promise<RebalancingSetExchangeIssuanceModuleContract> {
+    const cacheKey = `RebalancingSetExchangeIssuanceModule_${rebalancingSetExchangeIssuanceAddress}`;
 
     if (cacheKey in this.cache) {
-      return this.cache[cacheKey] as PayableExchangeIssuanceContract;
+      return this.cache[cacheKey] as RebalancingSetExchangeIssuanceModuleContract;
     } else {
-      const payableExchangeIssuanceContract = await PayableExchangeIssuanceContract.at(
-        payableExchangeIssuanceAddress,
+      const rebalancingSetExchangeIssuanceModuleContract = await RebalancingSetExchangeIssuanceModuleContract.at(
+        rebalancingSetExchangeIssuanceAddress,
         this.web3,
         transactionOptions
       );
-      this.cache[cacheKey] = payableExchangeIssuanceContract;
-      return payableExchangeIssuanceContract;
+      this.cache[cacheKey] = rebalancingSetExchangeIssuanceModuleContract;
+      return rebalancingSetExchangeIssuanceModuleContract;
     }
   }
 

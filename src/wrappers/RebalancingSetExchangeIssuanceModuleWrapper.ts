@@ -24,20 +24,20 @@ import { Address, Tx } from '../types/common';
 import { Bytes, ExchangeIssuanceParams } from 'set-protocol-utils';
 
 /**
- * @title  PayableExchangeIssuanceWrapper
+ * @title  RebalancingSetExchangeIssuanceModuleWrapper
  * @author Set Protocol
  *
- * The PayableExchangeIssuanceWrapper handles all functions on the Payable Exchange Issue smart contract.
+ * The RebalancingSetExchangeIssuanceModuleWrapper handles all functions on the Payable Exchange Issue smart contract.
  *
  */
-export class PayableExchangeIssuanceWrapper {
+export class RebalancingSetExchangeIssuanceModuleWrapper {
   private web3: Web3;
   private contracts: ContractWrapper;
-  private payableExchangeIssuance: Address;
+  private rebalancingSetExchangeIssuanceModule: Address;
 
-  public constructor(web3: Web3, payableExchangeIssuanceAddress: Address) {
+  public constructor(web3: Web3, rebalancingSetExchangeIssuanceModuleAddress: Address) {
     this.web3 = web3;
-    this.payableExchangeIssuance = payableExchangeIssuanceAddress;
+    this.rebalancingSetExchangeIssuanceModule = rebalancingSetExchangeIssuanceModuleAddress;
     this.contracts = new ContractWrapper(this.web3);
   }
 
@@ -57,11 +57,12 @@ export class PayableExchangeIssuanceWrapper {
     txOpts?: Tx,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-    const payableExchangeIssuanceInstance = await this.contracts.loadPayableExchangeIssuanceAsync(
-      this.payableExchangeIssuance
-    );
+    const rebalancingSetExchangeIssuanceModuleInstance =
+      await this.contracts.loadRebalancingSetExchangeIssuanceModuleAsync(
+        this.rebalancingSetExchangeIssuanceModule
+      );
 
-    return await payableExchangeIssuanceInstance.issueRebalancingSetWithEther.sendTransactionAsync(
+    return await rebalancingSetExchangeIssuanceModuleInstance.issueRebalancingSetWithEther.sendTransactionAsync(
       rebalancingSetAddress,
       exchangeIssuanceParams,
       orderData,
@@ -75,7 +76,7 @@ export class PayableExchangeIssuanceWrapper {
    *
    * @param  rebalancingSetAddress    Address of the rebalancing Set to redeem
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
-   * @param  exchangeIssuanceData        Struct containing data around the base Set issuance
+   * @param  exchangeIssuanceData     Struct containing data around the base Set issuance
    * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
    * @param  txOpts                    The options for executing the transaction
    */
@@ -87,11 +88,12 @@ export class PayableExchangeIssuanceWrapper {
     txOpts?: Tx,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
-    const payableExchangeIssuanceInstance = await this.contracts.loadPayableExchangeIssuanceAsync(
-      this.payableExchangeIssuance
-    );
+    const rebalancingSetExchangeIssuanceModuleInstance =
+      await this.contracts.loadRebalancingSetExchangeIssuanceModuleAsync(
+        this.rebalancingSetExchangeIssuanceModule
+      );
 
-    return await payableExchangeIssuanceInstance.redeemRebalancingSetIntoEther.sendTransactionAsync(
+    return await rebalancingSetExchangeIssuanceModuleInstance.redeemRebalancingSetIntoEther.sendTransactionAsync(
       rebalancingSetAddress,
       rebalancingSetQuantity,
       exchangeIssuanceParams,

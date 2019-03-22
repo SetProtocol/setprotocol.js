@@ -3,20 +3,22 @@ import Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import {
   Core,
+  CommonValidationsLibrary,
   ERC20Wrapper,
   ExchangeIssuanceModule,
   CoreIssuanceLibrary,
   NoDecimalTokenMock,
-  PayableExchangeIssuance,
+  RebalancingSetExchangeIssuanceModule,
   RebalanceAuctionModule,
   RebalancingHelperLibrary,
   RebalancingSetTokenFactory,
   SetTokenFactory,
-  StandardFailAuctionLibrary,
-  StandardPlaceBidLibrary,
-  StandardProposeLibrary,
-  StandardSettleRebalanceLibrary,
-  StandardStartRebalanceLibrary,
+  FailAuctionLibrary,
+  PlaceBidLibrary,
+  ProposeLibrary,
+  SettleRebalanceLibrary,
+  SetTokenLibrary,
+  StartRebalanceLibrary,
   StandardTokenMock,
   TransferProxy,
   Vault,
@@ -28,7 +30,7 @@ import {
   CoreContract,
   ExchangeIssuanceModuleContract,
   NoDecimalTokenMockContract,
-  PayableExchangeIssuanceContract,
+  RebalancingSetExchangeIssuanceModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
   RebalancingTokenIssuanceModule,
@@ -58,16 +60,10 @@ const contract = require('truffle-contract');
 export const deployTransferProxyContract = async (
 web3: Web3,
 ): Promise<TransferProxyContract> => {
-  const truffleTransferProxyContract = contract(TransferProxy);
-  truffleTransferProxyContract.setProvider(web3.currentProvider);
-  truffleTransferProxyContract.setNetwork(50);
-  truffleTransferProxyContract.defaults(TX_DEFAULTS);
+  const truffleTransferProxyContract = setDefaultTruffleContract(web3, TransferProxy);
 
   // Deploy ERC20Wrapper dependency
-  const truffleERC20WrapperContract = contract(ERC20Wrapper);
-  truffleERC20WrapperContract.setProvider(web3.currentProvider);
-  truffleERC20WrapperContract.setNetwork(50);
-  truffleERC20WrapperContract.defaults(TX_DEFAULTS);
+  const truffleERC20WrapperContract = setDefaultTruffleContract(web3, ERC20Wrapper);
 
   const deployedERC20Wrapper = await truffleERC20WrapperContract.new();
   await truffleTransferProxyContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
@@ -84,16 +80,10 @@ web3: Web3,
 export const deployVaultContract = async (
   web3: Web3
 ): Promise<VaultContract> => {
-  const truffleVaultContract = contract(Vault);
-  truffleVaultContract.setProvider(web3.currentProvider);
-  truffleVaultContract.setNetwork(50);
-  truffleVaultContract.defaults(TX_DEFAULTS);
+  const truffleVaultContract = setDefaultTruffleContract(web3, Vault);
 
   // Deploy ERC20Wrapper dependency
-  const truffleErc20WrapperContract = contract(ERC20Wrapper);
-  truffleErc20WrapperContract.setProvider(web3.currentProvider);
-  truffleErc20WrapperContract.setNetwork(50);
-  truffleErc20WrapperContract.defaults(TX_DEFAULTS);
+  const truffleErc20WrapperContract = setDefaultTruffleContract(web3, ERC20Wrapper);
 
   const deployedERC20Wrapper = await truffleErc20WrapperContract.new();
   await truffleVaultContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
@@ -112,18 +102,19 @@ export const deployCoreContract = async (
   transferProxyAddress: Address,
   vaultAddress: Address,
 ): Promise<CoreContract> => {
-  const truffleCoreContract = contract(Core);
-  truffleCoreContract.setProvider(web3.currentProvider);
-  truffleCoreContract.setNetwork(50);
-  truffleCoreContract.defaults(TX_DEFAULTS);
+  const truffleCoreContract = setDefaultTruffleContract(web3, Core);
 
-  const truffleCoreIssuanceLibraryContract = contract(CoreIssuanceLibrary);
-  truffleCoreIssuanceLibraryContract.setProvider(web3.currentProvider);
-  truffleCoreIssuanceLibraryContract.setNetwork(50);
-  truffleCoreIssuanceLibraryContract.defaults(TX_DEFAULTS);
-
+  const truffleCoreIssuanceLibraryContract = setDefaultTruffleContract(web3, CoreIssuanceLibrary);
   const deployedCoreIssuanceLibraryContract = await truffleCoreIssuanceLibraryContract.new();
   await truffleCoreContract.link('CoreIssuanceLibrary', deployedCoreIssuanceLibraryContract.address);
+
+  const truffleCommonValidationsLibraryContract = setDefaultTruffleContract(web3, CommonValidationsLibrary);
+  const deployedCommonValidationsLibraryContract = await truffleCommonValidationsLibraryContract.new();
+  await truffleCoreContract.link('CommonValidationsLibrary', deployedCommonValidationsLibraryContract.address);
+
+  const truffleSetTokenLibraryContract = setDefaultTruffleContract(web3, SetTokenLibrary);
+  const deployedSetTokenLibraryContract = await truffleSetTokenLibraryContract.new();
+  await truffleCoreContract.link('SetTokenLibrary', deployedSetTokenLibraryContract.address);
 
   // Deploy Core
   const deployedCoreInstance = await truffleCoreContract.new(
@@ -144,9 +135,15 @@ export const deploySetTokenFactoryContract = async (
   core: CoreContract
 ): Promise<SetTokenFactoryContract> => {
   // Deploy SetTokenFactory contract
-  const truffleSetTokenFactoryContract = contract(SetTokenFactory);
-  truffleSetTokenFactoryContract.setProvider(web3.currentProvider);
-  truffleSetTokenFactoryContract.defaults(TX_DEFAULTS);
+  const truffleSetTokenFactoryContract = setDefaultTruffleContract(web3, SetTokenFactory);
+
+  const truffleCommonValidationsLibraryContract = setDefaultTruffleContract(web3, CommonValidationsLibrary);
+  const deployedCommonValidationsLibraryContract = await truffleCommonValidationsLibraryContract.new();
+  await truffleSetTokenFactoryContract.link(
+    'CommonValidationsLibrary',
+    deployedCommonValidationsLibraryContract.address
+  );
+
   const deployedSetTokenFactory = await truffleSetTokenFactoryContract.new(core.address);
 
   // Initialize typed contract class
@@ -171,11 +168,7 @@ export const deployRebalancingSetTokenFactoryContract = async (
   whitelist: WhiteListContract,
 ): Promise<RebalancingSetTokenFactoryContract> => {
   // Deploy SetTokenFactory contract
-  const truffleRebalancingSetTokenFactoryContract = contract(RebalancingSetTokenFactory);
-  truffleRebalancingSetTokenFactoryContract.setProvider(web3.currentProvider);
-  truffleRebalancingSetTokenFactoryContract.setNetwork(50);
-  truffleRebalancingSetTokenFactoryContract.defaults(TX_DEFAULTS);
-
+  const truffleRebalancingSetTokenFactoryContract = setDefaultTruffleContract(web3, RebalancingSetTokenFactory);
   await linkRebalancingLibrariesAsync(truffleRebalancingSetTokenFactoryContract, web3);
 
   const deployedRebalancingSetTokenFactory = await truffleRebalancingSetTokenFactoryContract.new(
@@ -209,85 +202,67 @@ const linkRebalancingLibrariesAsync = async (
     contractToLink: any,
     web3: Web3,
   ): Promise<void> => {
-  const truffleRebalancingHelperLibraryContract = contract(RebalancingHelperLibrary);
-  truffleRebalancingHelperLibraryContract.setProvider(web3.currentProvider);
-  truffleRebalancingHelperLibraryContract.setNetwork(50);
-  truffleRebalancingHelperLibraryContract.defaults(TX_DEFAULTS);
+  const truffleRebalancingHelperLibraryContract = setDefaultTruffleContract(web3, RebalancingHelperLibrary);
   const truffleRebalancingHelperLibrary = await truffleRebalancingHelperLibraryContract.new();
 
-  const truffleStandardProposeLibraryContract = contract(StandardProposeLibrary);
-  truffleStandardProposeLibraryContract.setProvider(web3.currentProvider);
-  truffleStandardProposeLibraryContract.setNetwork(50);
-  truffleStandardProposeLibraryContract.defaults(TX_DEFAULTS);
-  await truffleStandardProposeLibraryContract.link(
+  const truffleProposeLibraryContract = setDefaultTruffleContract(web3, ProposeLibrary);
+  await truffleProposeLibraryContract.link(
     'RebalancingHelperLibrary',
     truffleRebalancingHelperLibrary.address
   );
-  const truffleStandardProposeLibrary = await truffleStandardProposeLibraryContract.new();
+  const truffleProposeLibrary = await truffleProposeLibraryContract.new();
 
-  const truffleStandardStartRebalanceLibraryContract = contract(StandardStartRebalanceLibrary);
-  truffleStandardStartRebalanceLibraryContract.setProvider(web3.currentProvider);
-  truffleStandardStartRebalanceLibraryContract.setNetwork(50);
-  truffleStandardStartRebalanceLibraryContract.defaults(TX_DEFAULTS);
-  await truffleStandardStartRebalanceLibraryContract.link(
+  const truffleStartRebalanceLibraryContract = setDefaultTruffleContract(web3, StartRebalanceLibrary);
+  await truffleStartRebalanceLibraryContract.link(
     'RebalancingHelperLibrary',
     truffleRebalancingHelperLibrary.address
   );
-  const truffleStandardStartRebalanceLibrary = await truffleStandardStartRebalanceLibraryContract.new();
+  const truffleStartRebalanceLibrary = await truffleStartRebalanceLibraryContract.new();
 
-  const truffleStandardPlaceBidLibraryContract = contract(StandardPlaceBidLibrary);
-  truffleStandardPlaceBidLibraryContract.setProvider(web3.currentProvider);
-  truffleStandardPlaceBidLibraryContract.setNetwork(50);
-  truffleStandardPlaceBidLibraryContract.defaults(TX_DEFAULTS);
-  await truffleStandardPlaceBidLibraryContract.link(
+  const trufflePlaceBidLibraryContract = setDefaultTruffleContract(web3, PlaceBidLibrary);
+  await trufflePlaceBidLibraryContract.link(
     'RebalancingHelperLibrary',
     truffleRebalancingHelperLibrary.address
   );
-  const truffleStandardPlaceBidLibrary = await truffleStandardPlaceBidLibraryContract.new();
+  const trufflePlaceBidLibrary = await trufflePlaceBidLibraryContract.new();
 
-  const truffleStandardSettleRebalanceLibraryContract = contract(StandardSettleRebalanceLibrary);
-  truffleStandardSettleRebalanceLibraryContract.setProvider(web3.currentProvider);
-  truffleStandardSettleRebalanceLibraryContract.setNetwork(50);
-  truffleStandardSettleRebalanceLibraryContract.defaults(TX_DEFAULTS);
-  await truffleStandardSettleRebalanceLibraryContract.link(
+  const truffleSettleRebalanceLibraryContract = setDefaultTruffleContract(web3, SettleRebalanceLibrary);
+  await truffleSettleRebalanceLibraryContract.link(
     'RebalancingHelperLibrary',
     truffleRebalancingHelperLibrary.address
   );
-  const truffleStandardSettleRebalanceLibrary = await truffleStandardSettleRebalanceLibraryContract.new();
+  const truffleSettleRebalanceLibrary = await truffleSettleRebalanceLibraryContract.new();
 
-  const truffleStandardFailAuctionLibraryContract = contract(StandardFailAuctionLibrary);
-  truffleStandardFailAuctionLibraryContract.setProvider(web3.currentProvider);
-  truffleStandardFailAuctionLibraryContract.setNetwork(50);
-  truffleStandardFailAuctionLibraryContract.defaults(TX_DEFAULTS);
-  await truffleStandardFailAuctionLibraryContract.link(
+  const truffleFailAuctionLibraryContract = setDefaultTruffleContract(web3, FailAuctionLibrary);
+  await truffleFailAuctionLibraryContract.link(
     'RebalancingHelperLibrary',
     truffleRebalancingHelperLibrary.address
   );
-  const truffleStandardFailAuctionLibrary = await truffleStandardFailAuctionLibraryContract.new();
+  const truffleFailAuctionLibrary = await truffleFailAuctionLibraryContract.new();
 
   await contractToLink.link(
     'RebalancingHelperLibrary',
     truffleRebalancingHelperLibrary.address
   );
   await contractToLink.link(
-    'StandardProposeLibrary',
-    truffleStandardProposeLibrary.address
+    'ProposeLibrary',
+    truffleProposeLibrary.address
   );
   await contractToLink.link(
-    'StandardStartRebalanceLibrary',
-    truffleStandardStartRebalanceLibrary.address
+    'StartRebalanceLibrary',
+    truffleStartRebalanceLibrary.address
   );
   await contractToLink.link(
-    'StandardPlaceBidLibrary',
-    truffleStandardPlaceBidLibrary.address
+    'PlaceBidLibrary',
+    trufflePlaceBidLibrary.address
   );
   await contractToLink.link(
-    'StandardSettleRebalanceLibrary',
-    truffleStandardSettleRebalanceLibrary.address
+    'SettleRebalanceLibrary',
+    truffleSettleRebalanceLibrary.address
   );
   await contractToLink.link(
-    'StandardFailAuctionLibrary',
-    truffleStandardFailAuctionLibrary.address
+    'FailAuctionLibrary',
+    truffleFailAuctionLibrary.address
   );
 };
 
@@ -296,10 +271,7 @@ export const deployRebalanceAuctionModuleContract = async (
   core: CoreContract,
   vault: VaultContract,
 ): Promise<RebalanceAuctionModuleContract> => {
-  const truffleRebalanceAuctionModuleContract = contract(RebalanceAuctionModule);
-  truffleRebalanceAuctionModuleContract.setProvider(web3.currentProvider);
-  truffleRebalanceAuctionModuleContract.setNetwork(50);
-  truffleRebalanceAuctionModuleContract.defaults(TX_DEFAULTS);
+  const truffleRebalanceAuctionModuleContract = setDefaultTruffleContract(web3, RebalanceAuctionModule);
 
   const deployedRebalanceAuctionModule = await truffleRebalanceAuctionModuleContract.new(
     core.address,
@@ -368,9 +340,7 @@ export const deployWhitelistContract = async (
   web3: Web3,
 ): Promise<WhiteListContract> => {
   // Deploy WhitelistContract contract
-  const truffleWhitelistContract = contract(WhiteList);
-  truffleWhitelistContract.setProvider(web3.currentProvider);
-  truffleWhitelistContract.defaults(TX_DEFAULTS);
+  const truffleWhitelistContract = setDefaultTruffleContract(web3, WhiteList);
   const deployedWhitelistContract = await truffleWhitelistContract.new(
     initialAddresses,
   );
@@ -391,9 +361,12 @@ export const deployExchangeIssuanceModuleAsync = async (
   vault: VaultContract,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<ExchangeIssuanceModuleContract> => {
-  const truffleExchangeIssuanceModuleContract = contract(ExchangeIssuanceModule);
-  truffleExchangeIssuanceModuleContract.setProvider(web3.currentProvider);
-  truffleExchangeIssuanceModuleContract.defaults(TX_DEFAULTS);
+  const truffleExchangeIssuanceModuleContract = setDefaultTruffleContract(web3, ExchangeIssuanceModule);
+
+  const truffleSetTokenLibraryContract = setDefaultTruffleContract(web3, SetTokenLibrary);
+
+  const deployedSetTokenLibraryContract = await truffleSetTokenLibraryContract.new();
+  await truffleExchangeIssuanceModuleContract.link('SetTokenLibrary', deployedSetTokenLibraryContract.address);
 
   const deployedExchangeIssuanceModuleContract = await truffleExchangeIssuanceModuleContract.new(
     core.address,
@@ -416,9 +389,7 @@ export const deployRebalancingTokenIssuanceModuleAsync = async (
   vault: VaultContract,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<RebalancingTokenIssuanceModuleContract> => {
-  const truffleRebalancingTokenIssuanceModuleContract = contract(RebalancingTokenIssuanceModule);
-  truffleRebalancingTokenIssuanceModuleContract.setProvider(web3.currentProvider);
-  truffleRebalancingTokenIssuanceModuleContract.defaults(TX_DEFAULTS);
+  const truffleRebalancingTokenIssuanceModuleContract = setDefaultTruffleContract(web3, RebalancingTokenIssuanceModule);
 
   const deployedRebalancingTokenIssuanceModuleContract = await truffleRebalancingTokenIssuanceModuleContract.new(
     core.address,
@@ -435,44 +406,41 @@ export const deployRebalancingTokenIssuanceModuleAsync = async (
   return rebalancingTokenIssuanceModule;
 };
 
-export const deployPayableExchangeIssuanceAsync = async (
+export const deployRebalancingSetExchangeIssuanceModuleAsync = async (
   web3: Web3,
   core: CoreContract,
   transferProxy: TransferProxyContract,
   exchangeIssuanceModule: ExchangeIssuanceModuleContract,
   wrappedEther: WethMockContract,
+  vault: VaultContract,
   owner: Address = DEFAULT_ACCOUNT,
-): Promise<PayableExchangeIssuanceContract> => {
-
-
-  const trufflePayableExchangeIssuanceContract = contract(PayableExchangeIssuance);
-  trufflePayableExchangeIssuanceContract.setProvider(web3.currentProvider);
-  trufflePayableExchangeIssuanceContract.setNetwork(50);
-  trufflePayableExchangeIssuanceContract.defaults(TX_DEFAULTS);
-
-  const truffleERC20WrapperContract = contract(ERC20Wrapper);
-  truffleERC20WrapperContract.setProvider(web3.currentProvider);
-  truffleERC20WrapperContract.setNetwork(50);
-  truffleERC20WrapperContract.defaults(TX_DEFAULTS);
+): Promise<RebalancingSetExchangeIssuanceModuleContract> => {
+  const truffleRebalancingSetExchangeIssuanceModuleContract = setDefaultTruffleContract(
+    web3,
+    RebalancingSetExchangeIssuanceModule
+  );
+  const truffleERC20WrapperContract = setDefaultTruffleContract(web3, ERC20Wrapper);
 
   const deployedERC20Wrapper = await truffleERC20WrapperContract.new();
-  await trufflePayableExchangeIssuanceContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
+  await truffleRebalancingSetExchangeIssuanceModuleContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
 
-  const deployedPayableExchangeIssuanceContract = await trufflePayableExchangeIssuanceContract.new(
-    core.address,
-    transferProxy.address,
-    exchangeIssuanceModule.address,
-    wrappedEther.address,
-  );
+  const deployedRebalancingSetExchangeIssuanceModuleContract =
+    await truffleRebalancingSetExchangeIssuanceModuleContract.new(
+      core.address,
+      transferProxy.address,
+      exchangeIssuanceModule.address,
+      wrappedEther.address,
+      vault.address,
+    );
 
   // Initialize typed contract class
-  const payableExchangeIssuance = await PayableExchangeIssuanceContract.at(
-    deployedPayableExchangeIssuanceContract.address,
+  const rebalancingSetExchangeIssuanceModule = await RebalancingSetExchangeIssuanceModuleContract.at(
+    deployedRebalancingSetExchangeIssuanceModuleContract.address,
     web3,
     TX_DEFAULTS,
   );
 
-  return payableExchangeIssuance;
+  return rebalancingSetExchangeIssuanceModule;
 };
 
 export const deployWethMockAsync = async (
@@ -481,9 +449,7 @@ export const deployWethMockAsync = async (
   initialBalance: BigNumber,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<WethMockContract> => {
-  const truffleWethMockContract = contract(WethMock);
-  truffleWethMockContract.setProvider(web3.currentProvider);
-  truffleWethMockContract.defaults(TX_DEFAULTS);
+  const truffleWethMockContract = setDefaultTruffleContract(web3, WethMock);
 
   const deployedWethMockContract = await truffleWethMockContract.new(
     initialAccount,
@@ -526,9 +492,7 @@ export const deployTokensSpecifyingDecimals = async (
   web3: Web3,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<StandardTokenMockContract[]> => {
-  const standardTokenMockContract = contract(StandardTokenMock);
-  standardTokenMockContract.setProvider(web3.currentProvider);
-  standardTokenMockContract.defaults(TX_DEFAULTS);
+  const standardTokenMockContract = setDefaultTruffleContract(web3, StandardTokenMock);
   const mockTokens: StandardTokenMockContract[] = [];
 
   const mockTokenPromises = _.times(tokenCount, async index => (
@@ -558,9 +522,7 @@ export const deployNoDecimalTokenAsync = async (
   web3: Web3,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<NoDecimalTokenMockContract> => {
-  const noDecimalTokenMockContract = contract(NoDecimalTokenMock);
-  noDecimalTokenMockContract.setProvider(web3.currentProvider);
-  noDecimalTokenMockContract.defaults(TX_DEFAULTS);
+  const noDecimalTokenMockContract = setDefaultTruffleContract(web3, NoDecimalTokenMock);
 
   const mockToken = await noDecimalTokenMockContract.new(
     owner,
@@ -707,4 +669,13 @@ export const getTokenBalances = async (
   });
 
   return ownerBalances;
+};
+
+export const setDefaultTruffleContract = (web3: Web3, contractInstance: any): any => {
+  const truffleContract = contract(contractInstance);
+  truffleContract.setProvider(web3.currentProvider);
+  truffleContract.setNetwork(50);
+  truffleContract.defaults(TX_DEFAULTS);
+
+  return truffleContract;
 };
