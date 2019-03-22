@@ -143,6 +143,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       wrappedEtherMock,
       vault,
     );
+    await addModuleAsync(core, rebalancingSetExchangeIssuanceModule.address);
 
     rebalancingSetExchangeIssuanceModuleWrapper = new RebalancingSetExchangeIssuanceModuleWrapper(
       web3,
@@ -414,12 +415,6 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
         rebalancingSetToken.address,
         subjectRebalancingSetQuantity,
         { from: subjectCaller }
-      );
-
-      await approveForTransferAsync(
-        [rebalancingSetToken],
-        rebalancingSetExchangeIssuanceModule.address,
-        subjectCaller
       );
     });
 

@@ -140,7 +140,7 @@ describe('RebalancingAuctionModuleWrapper', () => {
 
     let subjectRebalancingSetToken: Address;
     let subjectBidQuantity: BigNumber;
-    let subjectAllowPartialFill: Boolean;
+    let subjectAllowPartialFill: boolean;
     let subjectCaller: Address;
 
     beforeEach(async () => {

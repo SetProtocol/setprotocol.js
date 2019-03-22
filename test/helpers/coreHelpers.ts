@@ -153,15 +153,11 @@ export const deploySetTokenFactoryContract = async (
     TX_DEFAULTS,
   );
 
-  console.log('Got here 23', deployedSetTokenFactory.address);
-
   // Enable factory for provided core
   await core.addFactory.sendTransactionAsync(
     setTokenFactoryContract.address,
     TX_DEFAULTS
   );
-
-  console.log('Got here 24');
 
   return setTokenFactoryContract;
 };
@@ -393,8 +389,7 @@ export const deployRebalancingTokenIssuanceModuleAsync = async (
   vault: VaultContract,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<RebalancingTokenIssuanceModuleContract> => {
-  const truffleRebalancingTokenIssuanceModuleContract = contract(RebalancingTokenIssuanceModule);
-  truffleRebalancingTokenIssuanceModuleContract.setProvider(web3.currentProvider);
+  const truffleRebalancingTokenIssuanceModuleContract = setDefaultTruffleContract(web3, RebalancingTokenIssuanceModule);
 
   const deployedRebalancingTokenIssuanceModuleContract = await truffleRebalancingTokenIssuanceModuleContract.new(
     core.address,

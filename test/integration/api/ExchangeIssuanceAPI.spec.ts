@@ -134,6 +134,7 @@ describe('ExchangeIssuanceAPI', () => {
       wrappedEtherMock,
       vault,
     );
+    await addModuleAsync(core, rebalancingSetExchangeIssuanceModule.address);
 
     kyberNetworkWrapper = await deployKyberNetworkWrapperContract(
       web3,
@@ -598,12 +599,6 @@ describe('ExchangeIssuanceAPI', () => {
         rebalancingSetToken.address,
         subjectRebalancingSetQuantity,
         { from: subjectCaller }
-      );
-
-      await approveForTransferAsync(
-        [rebalancingSetToken],
-        rebalancingSetExchangeIssuanceModule.address,
-        subjectCaller
       );
     });
 

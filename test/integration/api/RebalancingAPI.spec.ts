@@ -128,8 +128,6 @@ describe('RebalancingAPI', () => {
 
     setTokenFactory = setTokenFactory;
 
-    console.log('Set Token Factory,', setTokenFactory.address);
-
     const coreWrapper = new CoreWrapper(
       web3,
       core.address,
@@ -1524,7 +1522,7 @@ describe('RebalancingAPI', () => {
     });
   });
 
-  describe.only('updateManagerAsync', async () => {
+  describe('updateManagerAsync', async () => {
     let currentSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
     let managerAddress: Address;
@@ -1535,8 +1533,6 @@ describe('RebalancingAPI', () => {
 
     beforeEach(async () => {
       const setTokensToDeploy = 2;
-      console.log('Factory 2', setTokenFactory);
-
       [currentSetToken] = await deploySetTokensAsync(
         web3,
         core,
