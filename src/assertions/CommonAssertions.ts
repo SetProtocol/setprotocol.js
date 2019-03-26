@@ -26,6 +26,13 @@ export class CommonAssertions {
       throw new Error(errorMessage);
     }
   }
+
+  public includes(arr1: any[], val: any, errorMessage: string) {
+    if (!arr1.includes(val)) {
+      throw new Error(errorMessage);
+    }
+  }
+
   public isEqualLength(arr1: any[], arr2: any[], errorMessage: string) {
     if (arr1.length !== arr2.length) {
       throw new Error(errorMessage);

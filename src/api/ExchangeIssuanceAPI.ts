@@ -94,14 +94,7 @@ export class ExchangeIssuanceAPI {
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
     txOpts: Tx
   ): Promise<string> {
-    await this.assert.exchange.assertExchangeIssuanceParams(
-      exchangeIssuanceParams,
-      orders,
-      this.core.coreAddress,
-    );
-
-    // Assert receive tokens are components of the Set
-    await this.assert.exchange.assertExchangeIssueReceiveInputs(exchangeIssuanceParams);
+    await this.assertExchangeIssue(exchangeIssuanceParams, orders);
 
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
     return this.exchangeIssuance.exchangeIssue(
@@ -126,18 +119,7 @@ export class ExchangeIssuanceAPI {
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
     txOpts: Tx
   ): Promise<string> {
-    await this.assertIssueRebalancingSetWithEther(
-      rebalancingSetAddress,
-      exchangeIssuanceParams,
-      orders,
-      txOpts,
-    );
-
-    await this.assert.exchange.assertExchangeIssuanceParams(
-      exchangeIssuanceParams,
-      orders,
-      this.core.coreAddress
-    );
+    await this.assertIssueRebalancingSetWithEther(rebalancingSetAddress, exchangeIssuanceParams, orders, txOpts);
 
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
     return this.rebalancingSetExchangeIssuanceModule.issueRebalancingSetWithEther(
@@ -171,12 +153,7 @@ export class ExchangeIssuanceAPI {
       rebalancingSetQuantity,
       exchangeIssuanceParams,
       orders,
-    );
-
-    await this.assert.exchange.assertExchangeIssuanceParams(
-      exchangeIssuanceParams,
-      orders,
-      this.core.coreAddress
+      txOpts,
     );
 
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
@@ -207,6 +184,31 @@ export class ExchangeIssuanceAPI {
 
   /* ============ Private Assertions ============ */
 
+  private async assertExchangeIssue(
+    exchangeIssuanceParams: ExchangeIssuanceParams,
+    orders: (KyberTrade | ZeroExSignedFillOrder)[],
+  ) {
+    const {
+      setAddress,
+      receiveTokens,
+    } = exchangeIssuanceParams;
+
+    // Assert orders are passed in
+    this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
+
+    // Assert each component to trade for is a component of the collateralizing set
+    const components = await this.setToken.getComponents(setAddress);
+    receiveTokens.forEach(receiveToken => {
+      this.assert.common.includes(
+        components,
+        receiveToken,
+        exchangeIssuanceErrors.TRADE_TOKENS_NOT_COMPONENT(setAddress, receiveToken)
+      );
+    });
+
+    await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
+  }
+
   private async assertIssueRebalancingSetWithEther(
     rebalancingSetAddress: Address,
     exchangeIssuanceParams: ExchangeIssuanceParams,
@@ -219,6 +221,7 @@ export class ExchangeIssuanceAPI {
       receiveTokens,
     } = exchangeIssuanceParams;
 
+    // Assert valid parameters were passed into issueRebalancingSetWithEther
     this.assert.common.isValidLength(sendTokens, 1, exchangeIssuanceErrors.ONLY_ONE_SEND_TOKEN());
     this.assert.common.isNotUndefined(txOpts.value, exchangeIssuanceErrors.ETHER_VALUE_NOT_UNDEFINED());
     this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
@@ -234,11 +237,15 @@ export class ExchangeIssuanceAPI {
       exchangeIssuanceErrors.ISSUING_SET_NOT_BASE_SET(setAddress, baseSetAddress)
     );
 
-    await Promise.all(
-      receiveTokens.map(async (receiveToken, i) => {
-        await this.assert.setToken.isComponent(setAddress, receiveToken);
-      }),
-    );
+    // Assert each component to trade for is a component of the collateralizing set
+    const components = await this.setToken.getComponents(setAddress);
+    receiveTokens.forEach(receiveToken => {
+      this.assert.common.includes(
+        components,
+        receiveToken,
+        exchangeIssuanceErrors.TRADE_TOKENS_NOT_COMPONENT(setAddress, receiveToken)
+      );
+    });
 
     // Assert payment token is wrapped ether
     const paymentToken = sendTokens[0];
@@ -248,10 +255,8 @@ export class ExchangeIssuanceAPI {
       exchangeIssuanceErrors.PAYMENT_TOKEN_NOT_WETH(paymentToken, this.wrappedEther)
     );
 
-    await this.assert.exchange.assertExchangeIssuanceOrdersValidity(
-      exchangeIssuanceParams,
-      orders,
-    );
+    // Assert valid exchange trade and order parameters
+    await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
   }
 
   private async assertRedeemRebalancingSetIntoEther(
@@ -259,6 +264,7 @@ export class ExchangeIssuanceAPI {
     rebalancingSetQuantity: BigNumber,
     exchangeIssuanceParams: ExchangeIssuanceParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
+    txOpts: Tx,
   ) {
     const {
       setAddress,
@@ -267,7 +273,9 @@ export class ExchangeIssuanceAPI {
       receiveTokens,
     } = exchangeIssuanceParams;
 
+    // Assert valid parameters were passed into redeemRebalancingSetIntoEther
     this.assert.common.isValidLength(receiveTokens, 1, exchangeIssuanceErrors.ONLY_ONE_RECEIVE_TOKEN());
+    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     this.assert.schema.isValidAddress('rebalancingSetAddress', rebalancingSetAddress);
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
@@ -280,21 +288,24 @@ export class ExchangeIssuanceAPI {
       exchangeIssuanceErrors.REDEEMING_SET_NOT_BASE_SET(setAddress, baseSetAddress)
     );
 
-    await Promise.all(
-      sendTokens.map(async (sendToken, i) => {
-        await this.assert.setToken.isComponent(setAddress, sendToken);
-      }),
-    );
+    // Assert each component to trade for is a component of the collateralizing set
+    const components = await this.setToken.getComponents(setAddress);
+    sendTokens.forEach(sendToken => {
+      this.assert.common.includes(
+        components,
+        sendToken,
+        exchangeIssuanceErrors.TRADE_TOKENS_NOT_COMPONENT(setAddress, sendToken)
+      );
+    });
 
+    // Amount of base set components to trade after redeeming must be enough to collateralize the quantity
     const rebalancingSetNaturalUnit = await this.setToken.naturalUnit(rebalancingSetAddress);
     const rebalancingSetUnitShares = (await this.setToken.getUnits(rebalancingSetAddress))[0];
-    const impliedBaseSetQuantity = rebalancingSetQuantity
-                                     .mul(rebalancingSetUnitShares)
-                                     .div(rebalancingSetNaturalUnit);
-    this.assert.common.isEqualBigNumber(
+    const impliedBaseSetQuantity = rebalancingSetQuantity.mul(rebalancingSetUnitShares).div(rebalancingSetNaturalUnit);
+    this.assert.common.isGreaterOrEqualThan(
       impliedBaseSetQuantity,
-      quantity,
-      exchangeIssuanceErrors.ISSUANCE_PARAM_QUANTITY_MUST_BE_EQUIVALENT(quantity, impliedBaseSetQuantity)
+      quantity, // Base set quantity to redeem
+      exchangeIssuanceErrors.REDEEM_AND_TRADE_QUANTITIES_MISMATCH()
     );
 
     // Assert receive token is wrapped ether
@@ -305,9 +316,7 @@ export class ExchangeIssuanceAPI {
       exchangeIssuanceErrors.PAYMENT_TOKEN_NOT_WETH(receiveToken, this.wrappedEther)
     );
 
-    await this.assert.exchange.assertExchangeIssuanceOrdersValidity(
-      exchangeIssuanceParams,
-      orders,
-    );
+    // Assert valid exchange trade and order parameters
+    await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
   }
 }

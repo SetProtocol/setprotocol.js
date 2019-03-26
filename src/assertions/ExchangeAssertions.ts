@@ -20,45 +20,24 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { ExchangeIssuanceParams, SetProtocolUtils } from 'set-protocol-utils';
 
-import { CoreContract } from 'set-protocol-contracts';
 
 import { coreAPIErrors, exchangeErrors } from '../errors';
 import { CommonAssertions } from './CommonAssertions';
-import { SchemaAssertions } from './SchemaAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
 import { SetTokenAssertions } from './SetTokenAssertions';
 import { BigNumber, calculatePartialAmount } from '../util';
 import { Address, KyberTrade, ZeroExSignedFillOrder } from '../types/common';
-import { NULL_ADDRESS, ZERO } from '../constants';
+import { ZERO } from '../constants';
 
 export class ExchangeAssertions {
-  private web3: Web3;
   private erc20Assertions: ERC20Assertions;
-  private schemaAssertions: SchemaAssertions;
   private commonAssertions: CommonAssertions;
   private setTokenAssertions: SetTokenAssertions;
 
   constructor(web3: Web3) {
-    this.web3 = web3;
     this.erc20Assertions = new ERC20Assertions(web3);
-    this.schemaAssertions = new SchemaAssertions();
     this.commonAssertions = new CommonAssertions();
     this.setTokenAssertions = new SetTokenAssertions(web3);
-  }
-
-  public async assertExchangeIssueReceiveInputs(
-    exchangeIssuanceParams: ExchangeIssuanceParams,
-  ) {
-    const {
-      setAddress,
-      receiveTokens,
-    } = exchangeIssuanceParams;
-
-    await Promise.all(
-      receiveTokens.map(async (receiveToken, i) => {
-        await this.setTokenAssertions.isComponent(setAddress, receiveToken);
-      }),
-    );
   }
 
   public async assertExchangeIssuanceParams(
@@ -76,61 +55,41 @@ export class ExchangeAssertions {
       receiveTokenAmounts,
     } = exchangeIssuanceParams;
 
-    this.schemaAssertions.isValidAddress('setAddress', setAddress);
     this.commonAssertions.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
-
-    await this.setTokenAssertions.isValidSetToken(coreAddress, setAddress);
-
-    await this.assertSendTokenInputs(
-      sendTokens,
-      sendTokenExchangeIds,
-      sendTokenAmounts,
-      coreAddress,
-    );
-
     this.commonAssertions.isEqualLength(
       receiveTokens,
       receiveTokenAmounts,
       coreAPIErrors.ARRAYS_EQUAL_LENGTHS('receiveTokens', 'receiveTokenAmounts'),
     );
-    this.commonAssertions.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
-    await this.assertReceiveTokenInputs(
-      receiveTokens,
-      receiveTokenAmounts,
-      setAddress,
-    );
+    // Set must be enabled by Core to be issued or redeemed and quantity must be multiple of natural unit
+    await this.setTokenAssertions.isValidSetToken(coreAddress, setAddress);
+    await this.setTokenAssertions.isMultipleOfNaturalUnit(setAddress, quantity, `Quantity of Exchange issue Params`);
 
-    await this.setTokenAssertions.isMultipleOfNaturalUnit(
-      setAddress,
-      quantity,
-      `Quantity of Exchange issue Params`,
-    );
+    // Validate the send and receive tokens are valid
+    this.assertSendTokenInputs(sendTokens, sendTokenExchangeIds, sendTokenAmounts, coreAddress);
+    this.assertReceiveTokenInputs(receiveTokens, receiveTokenAmounts, setAddress);
 
-     await this.assertExchangeIssuanceOrdersValidity(
-      exchangeIssuanceParams,
-      orders,
-    );
+    // Validate the liquiduity source orders net the correct component tokens
+    await this.assertExchangeIssuanceOrdersValidity(exchangeIssuanceParams, orders);
   }
 
-  public async assertSendTokenInputs(
+  public assertSendTokenInputs(
     sendTokens: Address[],
     sendTokenExchangeIds: BigNumber[],
     sendTokenAmounts: BigNumber[],
     coreAddress: Address,
   ) {
-    await Promise.all(
-      sendTokens.map(async (sendToken, i) => {
-        this.commonAssertions.isValidString(sendToken, coreAPIErrors.STRING_CANNOT_BE_EMPTY('sendToken'));
-        this.schemaAssertions.isValidAddress('sendToken', sendToken);
-        await this.erc20Assertions.implementsERC20(sendToken);
+      const validExchangeIds = [SetProtocolUtils.EXCHANGES.ZERO_EX, SetProtocolUtils.EXCHANGES.KYBER];
 
-        this.commonAssertions.isNotEmptyArray(sendTokens, coreAPIErrors.EMPTY_ARRAY('sendTokens'));
+      this.commonAssertions.isNotEmptyArray(sendTokens, coreAPIErrors.EMPTY_ARRAY('sendTokens'));
+      sendTokens.map((sendToken, i) => {
         this.commonAssertions.isEqualLength(
           sendTokens,
           sendTokenAmounts,
           coreAPIErrors.ARRAYS_EQUAL_LENGTHS('sendTokens', 'sendTokenAmounts'),
         );
+
         this.commonAssertions.isEqualLength(
           sendTokens,
           sendTokenExchangeIds,
@@ -142,40 +101,29 @@ export class ExchangeAssertions {
           coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(sendTokenAmounts[i]),
         );
 
-        await this.isValidExchangeId(coreAddress, sendTokenExchangeIds[i]);
-      }),
-    );
+        const exchangeId = sendTokenExchangeIds[i];
+        this.commonAssertions.includes(validExchangeIds, exchangeId, exchangeErrors.INVALID_EXCHANGE_ID(exchangeId));
+      });
   }
 
-  public async isValidExchangeId(
-    coreAddress: Address,
-    exchangeId: BigNumber,
-  ): Promise<void> {
-    const coreInstance = await CoreContract.at(coreAddress, this.web3, {});
-
-    const exchangeAddress = await coreInstance.exchangeIds.callAsync(exchangeId);
-    if (exchangeAddress === NULL_ADDRESS) {
-      throw new Error(exchangeErrors.INVALID_EXCHANGE_ID(exchangeId));
-    }
-  }
-
-  public async assertReceiveTokenInputs(
+  public assertReceiveTokenInputs(
     receiveTokens: Address[],
     receiveTokenAmounts: BigNumber[],
     setAddress: Address,
   ) {
-    await Promise.all(
-      receiveTokens.map(async (tokenAddress, i) => {
-        this.commonAssertions.isValidString(tokenAddress, coreAPIErrors.STRING_CANNOT_BE_EMPTY('tokenAddress'));
-        this.schemaAssertions.isValidAddress('tokenAddress', tokenAddress);
-        await this.erc20Assertions.implementsERC20(tokenAddress);
+    this.commonAssertions.isNotEmptyArray(receiveTokens, coreAPIErrors.EMPTY_ARRAY('receiveTokens'));
+    receiveTokens.map((tokenAddress, i) => {
+      this.commonAssertions.isEqualLength(
+        receiveTokens,
+        receiveTokenAmounts,
+        coreAPIErrors.ARRAYS_EQUAL_LENGTHS('receiveTokens', 'receiveTokenAmounts'),
+      );
 
-        this.commonAssertions.greaterThanZero(
-          receiveTokenAmounts[i],
-          coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(receiveTokenAmounts[i]),
-        );
-      }),
-    );
+      this.commonAssertions.greaterThanZero(
+        receiveTokenAmounts[i],
+        coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(receiveTokenAmounts[i]),
+      );
+    });
   }
 
   public async assertExchangeIssuanceOrdersValidity(
@@ -194,18 +142,12 @@ export class ExchangeAssertions {
         if (SetProtocolUtils.isZeroExOrder(order)) {
           await this.isValidZeroExOrderFill(setAddress, quantity, order);
         } else if (SetProtocolUtils.isKyberTrade(order)) {
-          await this.isValidKyberTradeFill(setAddress, order);
+          this.isValidKyberTradeFill(setAddress, order);
         }
       })
     );
 
-    this.isValidLiquidityAmounts(
-      quantity,
-      receiveTokens,
-      receiveTokenAmounts,
-      quantity,
-      orders,
-    );
+    this.isValidLiquidityAmounts(quantity, receiveTokens, receiveTokenAmounts, quantity, orders);
   }
 
   /* ============ Private Helpers =============== */
@@ -298,26 +240,26 @@ export class ExchangeAssertions {
     return requiredComponentFills;
   }
 
-  private async isValidKyberTradeFill(
-    setAddress: Address,
-    trade: KyberTrade
-  ) {
+  private isValidKyberTradeFill(setAddress: Address, trade: KyberTrade) {
     this.commonAssertions.greaterThanZero(
       trade.sourceTokenQuantity,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(trade.sourceTokenQuantity),
     );
 
+    // TODO: Waiting on performance to see if this assertion is necessary. Conversion rate may not need to be
+    // provided because we require the final received token amounts to match the trade amounts or it will revert
+
     // Kyber trade parameters will yield enough component token
-    const amountComponentTokenFromTrade = trade.minimumConversionRate.mul(trade.sourceTokenQuantity);
-    this.commonAssertions.isGreaterOrEqualThan(
-      amountComponentTokenFromTrade,
-      trade.maxDestinationQuantity,
-      exchangeErrors.INSUFFICIENT_KYBER_SOURCE_TOKEN_FOR_RATE(
-        trade.sourceTokenQuantity,
-        amountComponentTokenFromTrade,
-        trade.destinationToken
-      )
-    );
+    // const amountComponentTokenFromTrade = trade.minimumConversionRate.mul(trade.sourceTokenQuantity);
+    // this.commonAssertions.isGreaterOrEqualThan(
+    //   amountComponentTokenFromTrade,
+    //   trade.maxDestinationQuantity,
+    //   exchangeErrors.INSUFFICIENT_KYBER_SOURCE_TOKEN_FOR_RATE(
+    //     trade.sourceTokenQuantity,
+    //     amountComponentTokenFromTrade,
+    //     trade.destinationToken
+    //   )
+    // );
   }
 
   private async isValidZeroExOrderFill(
