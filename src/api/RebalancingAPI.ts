@@ -26,7 +26,6 @@ import {
   SetTokenWrapper,
   RebalancingAuctionModuleWrapper,
   RebalancingSetTokenWrapper,
-  RebalancingTokenIssuanceModuleWrapper,
   CoreWrapper,
 } from '../wrappers';
 import { BigNumber } from '../util';
@@ -54,7 +53,6 @@ export class RebalancingAPI {
   private erc20: ERC20Wrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private rebalancingAuctionModule: RebalancingAuctionModuleWrapper;
-  private rebalancingTokenIssuanceModule: RebalancingTokenIssuanceModuleWrapper;
   private setToken: SetTokenWrapper;
 
   /**
@@ -82,38 +80,6 @@ export class RebalancingAPI {
     this.erc20 = new ERC20Wrapper(this.web3);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
     this.setToken = new SetTokenWrapper(this.web3);
-    this.rebalancingTokenIssuanceModule = new RebalancingTokenIssuanceModuleWrapper(
-      this.web3,
-      config.rebalancingTokenIssuanceModule
-    );
-  }
-
-  /**
-   * Redeems a Rebalancing Set into the base set's components
-   *
-   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
-   * @param  redeemQuantity                 Quantity of rebalancing Set to redeem
-   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
-   *                                          gasPrice data
-   * @return                                Transaction hash
-   */
-  public async redeemIntoBaseComponentsAsync(
-    rebalancingSetTokenAddress: Address,
-    redeemQuantity: BigNumber,
-    txOpts: Tx,
-  ): Promise<string> {
-    await this.assertRedeemIntoBaseComponents(
-      rebalancingSetTokenAddress,
-      redeemQuantity,
-      txOpts
-    );
-
-    return await this.rebalancingTokenIssuanceModule.redeemRebalancingSetIntoBaseComponents(
-      rebalancingSetTokenAddress,
-      redeemQuantity,
-      new BigNumber(0),
-      txOpts
-    );
   }
 
   /**
@@ -536,34 +502,6 @@ export class RebalancingAPI {
       rebalancingSetTokenAddress,
       txOpts.from,
       bidQuantity
-    );
-  }
-
-  private async assertRedeemIntoBaseComponents(
-    rebalancingSetTokenAddress: Address,
-    quantity: BigNumber,
-    txOpts: Tx
-  ) {
-    this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
-    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
-    this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
-
-    await this.assert.setToken.isMultipleOfNaturalUnit(
-      rebalancingSetTokenAddress,
-      quantity,
-      'Redeem quantity',
-    );
-
-    await this.assert.erc20.hasSufficientBalanceAsync(
-      rebalancingSetTokenAddress,
-      txOpts.from,
-      quantity,
-    );
-
-    await this.assert.vault.hasSufficientSetTokensBalances(
-      this.core.vaultAddress,
-      rebalancingSetTokenAddress,
-      quantity,
     );
   }
 

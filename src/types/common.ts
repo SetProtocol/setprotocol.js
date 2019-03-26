@@ -100,7 +100,6 @@ export interface SetProtocolConfig {
   setTokenFactoryAddress: Address;
   rebalancingSetTokenFactoryAddress: Address;
   exchangeIssuanceModuleAddress: Address;
-  rebalancingTokenIssuanceModule: Address;
   rebalancingSetExchangeIssuanceModule: Address;
   wrappedEtherAddress: Address;
 }
