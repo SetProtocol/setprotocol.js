@@ -202,19 +202,19 @@ describe('ExchangeIssuanceModuleWrapper', () => {
 
       // Create 0x order for the component, using weth(4) paymentToken as default
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                                    // senderAddress
-        zeroExOrderMaker,                                // makerAddress
-        NULL_ADDRESS,                                    // takerAddress
-        ZERO,                                            // makerFee
-        ZERO,                                            // takerFee
+        NULL_ADDRESS,                                       // senderAddress
+        zeroExOrderMaker,                                   // makerAddress
+        NULL_ADDRESS,                                       // takerAddress
+        ZERO,                                               // makerFee
+        ZERO,                                               // takerFee
         subjectExchangeIssuanceData.receiveTokenAmounts[0], // makerAssetAmount
         exchangeIssuancePaymentTokenAmount,                 // takerAssetAmount
         exchangeIssuanceRequiredComponents[0],              // makerAssetAddress
         exchangeIssuancePaymentToken,                       // takerAssetAddress
-        SetUtils.generateSalt(),                         // salt
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,           // exchangeAddress
-        NULL_ADDRESS,                                    // feeRecipientAddress
-        SetTestUtils.generateTimestamp(10000),           // expirationTimeSeconds
+        SetUtils.generateSalt(),                            // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,              // exchangeAddress
+        NULL_ADDRESS,                                       // feeRecipientAddress
+        SetTestUtils.generateTimestamp(10000),              // expirationTimeSeconds
         exchangeIssuancePaymentTokenAmount,                 // amount of zeroExOrder to fill
       );
 

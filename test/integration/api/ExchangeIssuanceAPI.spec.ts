@@ -56,24 +56,17 @@ import {
   addModuleAsync,
   approveForTransferAsync,
   createDefaultRebalancingSetTokenAsync,
+  deployBaseContracts,
   deployExchangeIssuanceModuleAsync,
-  deployTokensSpecifyingDecimals,
+  deployKyberNetworkWrapperContract,
   deployRebalancingSetExchangeIssuanceModuleAsync,
+  deploySetTokenAsync,
+  deployTokensSpecifyingDecimals,
   deployWethMockAsync,
   deployZeroExExchangeWrapperContract,
-  deployBaseContracts,
-  deployKyberNetworkWrapperContract,
-  deploySetTokenAsync,
 } from '@test/helpers';
-import {
-  BigNumber,
-} from '@src/util';
-import {
-  Address,
-  KyberTrade,
-  SetProtocolConfig,
-  ZeroExSignedFillOrder,
-} from '@src/types/common';
+import { BigNumber } from '@src/util';
+import { Address, KyberTrade, SetProtocolConfig, ZeroExSignedFillOrder } from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
@@ -158,11 +151,7 @@ describe('ExchangeIssuanceAPI', () => {
     } as SetProtocolConfig;
 
     const assertions = new Assertions(web3);
-    exchangeIssuanceAPI = new ExchangeIssuanceAPI(
-      web3,
-      assertions,
-      config,
-    );
+    exchangeIssuanceAPI = new ExchangeIssuanceAPI(web3, assertions, config);
   });
 
   afterEach(async () => {
@@ -171,7 +160,7 @@ describe('ExchangeIssuanceAPI', () => {
 
   describe('exchangeIssuance', async () => {
     let subjectExchangeIssuanceData: ExchangeIssuanceParams;
-    let subjectExchangeOrder: (KyberTrade | ZeroExSignedFillOrder)[];
+    let subjectExchangeOrders: (KyberTrade | ZeroExSignedFillOrder)[];
     let subjectCaller: Address;
 
     let zeroExOrderMaker: Address;
@@ -244,23 +233,23 @@ describe('ExchangeIssuanceAPI', () => {
 
       // Create 0x order for the component, using weth(4) paymentToken as default
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                                     // senderAddress
-        zeroExOrderMaker,                                 // makerAddress
-        NULL_ADDRESS,                                     // takerAddress
-        ZERO,                                             // makerFee
-        ZERO,                                             // takerFee
+        NULL_ADDRESS,                                        // senderAddress
+        zeroExOrderMaker,                                    // makerAddress
+        NULL_ADDRESS,                                        // takerAddress
+        ZERO,                                                // makerFee
+        ZERO,                                                // takerFee
         subjectExchangeIssuanceData.receiveTokenAmounts[0],  // makerAssetAmount
         exchangeIssuancePaymentTokenAmount,                  // takerAssetAmount
         exchangeIssuanceRequiredComponents[0],               // makerAssetAddress
         exchangeIssuancePaymentToken,                        // takerAssetAddress
-        SetUtils.generateSalt(),                          // salt
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,            // exchangeAddress
-        NULL_ADDRESS,                                     // feeRecipientAddress
-        SetTestUtils.generateTimestamp(10000),            // expirationTimeSeconds
+        SetUtils.generateSalt(),                             // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,               // exchangeAddress
+        NULL_ADDRESS,                                        // feeRecipientAddress
+        SetTestUtils.generateTimestamp(10000),               // expirationTimeSeconds
         exchangeIssuancePaymentTokenAmount,                  // amount of zeroExOrder to fill
       );
 
-      subjectExchangeOrder = [zeroExOrder];
+      subjectExchangeOrders = [zeroExOrder];
 
        // Subject caller needs to wrap ether
       await wrappedEtherMock.deposit.sendTransactionAsync(
@@ -277,7 +266,7 @@ describe('ExchangeIssuanceAPI', () => {
     async function subject(): Promise<string> {
       return await exchangeIssuanceAPI.exchangeIssueAsync(
         subjectExchangeIssuanceData,
-        subjectExchangeOrder,
+        subjectExchangeOrders,
         { from: subjectCaller }
       );
     }
@@ -291,16 +280,168 @@ describe('ExchangeIssuanceAPI', () => {
       const currentSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
       expect(expectedSetTokenBalance).to.bignumber.equal(currentSetTokenBalance);
     });
+
+    describe('when the receive tokens are not included in the set\'s components', async () => {
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.receiveTokens[0] = 'NotAComponentAddress';
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Component at NotAComponentAddress is not part of the collateralizing set at ${baseSetToken.address}`
+        );
+      });
+    });
+
+    describe('when the orders array is empty', async () => {
+      beforeEach(async () => {
+        subjectExchangeOrders = [];
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+           `The array orders cannot be empty.`
+        );
+      });
+    });
+
+    describe('when the quantity of set to acquire is zero', async () => {
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.quantity = new BigNumber(0);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The quantity 0 inputted needs to be greater than zero.`
+        );
+      });
+    });
+
+    describe('when the base set is invalid because it is disabled', async () => {
+      beforeEach(async () => {
+        await core.disableSet.sendTransactionAsync(baseSetToken.address);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Contract at ${baseSetToken.address} is not a valid Set token address.`
+        );
+      });
+    });
+
+    describe('when the receive token and receive token array lengths are different', async () => {
+      const arbitraryTokenUnits = new BigNumber(10 ** 10);
+
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.receiveTokenAmounts.push(arbitraryTokenUnits);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The receiveTokens and receiveTokenAmounts arrays need to be equal lengths.`
+        );
+      });
+    });
+
+    describe('when the quantity to issue is not a multiple of the sets natural unit', async () => {
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.quantity = baseSetNaturalUnit.add(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Quantity of Exchange issue Params needs to be multiple of natural unit.`
+        );
+      });
+    });
+
+    describe('when the send token amounts array is longer than the send tokens list', async () => {
+      const arbitraryTokenUnits = new BigNumber(10 ** 10);
+
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.sendTokenAmounts.push(arbitraryTokenUnits);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The sendTokens and sendTokenAmounts arrays need to be equal lengths.`
+        );
+      });
+    });
+
+    describe('when the send token exchange ids array is longer than the send tokens list', async () => {
+      const arbitraryTokenUnits = new BigNumber(10 ** 10);
+
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.sendTokenAmounts.push(arbitraryTokenUnits);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The sendTokens and sendTokenAmounts arrays need to be equal lengths.`
+        );
+      });
+    });
+
+    describe('when a send token amount is 0', async () => {
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.sendTokenAmounts[0] = new BigNumber(0);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The quantity 0 inputted needs to be greater than zero.`
+        );
+      });
+    });
+
+    describe('when a send token exchange id does not map to a known exchange enum', async () => {
+      const invalidExchangeIdEnum = new BigNumber(3);
+
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.sendTokenExchangeIds[0] = invalidExchangeIdEnum;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `ExchangeId 3 is invalid.`
+        );
+      });
+    });
+
+    describe('when the receive tokens array is empty', async () => {
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.receiveTokens = [];
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The receiveTokens and receiveTokenAmounts arrays need to be equal lengths.`
+        );
+      });
+    });
+
+    describe('when a receive token amount is 0', async () => {
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.receiveTokenAmounts[0] = new BigNumber(0);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The quantity 0 inputted needs to be greater than zero.`
+        );
+      });
+    });
   });
 
   describe('issueRebalancingSetWithEther', async () => {
     let subjectRebalancingSetAddress: Address;
     let subjectExchangeIssuanceData: ExchangeIssuanceParams;
-    let subjectExchangeOrder: (KyberTrade | ZeroExSignedFillOrder)[];
+    let subjectExchangeOrders: (KyberTrade | ZeroExSignedFillOrder)[];
     let subjectCaller: Address;
-    let etherValue: BigNumber;
+    let subjectTransactionEtherValue: string;
 
-    let subjectEther: string;
+    let etherValue: BigNumber;
 
     let zeroExOrderMaker: Address;
 
@@ -397,23 +538,21 @@ describe('ExchangeIssuanceAPI', () => {
         exchangeIssuanceSendTokenAmounts[0],             // amount of zeroExOrder to fill
       );
 
-      subjectExchangeOrder = [zeroExOrder];
+      rebalancingSetQuantity = exchangeIssuanceQuantity.mul(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                                       .div(rebalancingUnitShares);
+
+      subjectExchangeOrders = [zeroExOrder];
       subjectRebalancingSetAddress = rebalancingSetToken.address;
-      rebalancingSetQuantity = exchangeIssuanceQuantity
-        .mul(DEFAULT_REBALANCING_NATURAL_UNIT)
-        .div(rebalancingUnitShares);
-
       subjectCaller = ACCOUNTS[1].address;
-
-      subjectEther = etherValue.toString();
+      subjectTransactionEtherValue = etherValue.toString();
     });
 
     async function subject(): Promise<string> {
       return await exchangeIssuanceAPI.issueRebalancingSetWithEtherAsync(
         subjectRebalancingSetAddress,
         subjectExchangeIssuanceData,
-        subjectExchangeOrder,
-        { from: subjectCaller, value: subjectEther }
+        subjectExchangeOrders,
+        { from: subjectCaller, value: subjectTransactionEtherValue }
       );
     }
 
@@ -427,21 +566,75 @@ describe('ExchangeIssuanceAPI', () => {
       expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
     });
 
-    describe('when the payment token is not wrapped ether', async () => {
+    describe('when the send tokens has more than one address', async () => {
       const notWrappedEther = ACCOUNTS[3].address;
 
       beforeEach(async () => {
-        subjectExchangeIssuanceData.sendTokens[0] = notWrappedEther;
+        subjectExchangeIssuanceData.sendTokens = [wrappedEtherMock.address, notWrappedEther];
       });
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `Payment token at ${notWrappedEther} is not the expected wrapped ether token at ${wrappedEtherMock.address}`
+          `Only one send token is allowed in Payable Exchange Issuance`
         );
       });
     });
 
-    describe('when a set address is not rebalancing Sets current set address', async () => {
+    describe('when a from transaction parameter is not passed in', async () => {
+      beforeEach(async () => {
+        subjectCaller = undefined;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+           `No "from" address specified in neither the given options, nor the default options.`
+        );
+      });
+    });
+
+    describe('when an empty Ether transaction value is passed in', async () => {
+      beforeEach(async () => {
+        subjectTransactionEtherValue = undefined;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+           `Ether value should not be undefined`
+        );
+      });
+    });
+
+    describe('when the rebalancing set address is invalid', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetAddress = 'InvalidTokenAddress';
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        Expected rebalancingSetAddress to conform to schema /Address.
+
+        Encountered: "InvalidTokenAddress"
+
+        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
+      `
+        );
+      });
+    });
+
+    describe('when no orders are passed in', async () => {
+      beforeEach(async () => {
+        subjectExchangeOrders = [];
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The array orders cannot be empty.`
+        );
+      });
+    });
+
+    describe('when the set to exchange issue for is not the rebalancing set\'s base set', async () => {
       const notBaseSet = ACCOUNTS[3].address;
 
       beforeEach(async () => {
@@ -455,14 +648,28 @@ describe('ExchangeIssuanceAPI', () => {
       });
     });
 
-    describe('when an empty value is passed in', async () => {
+    describe('when the receive tokens are not included in the rebalancing set\'s base set\'s components', async () => {
       beforeEach(async () => {
-        subjectEther = undefined;
+        subjectExchangeIssuanceData.receiveTokens[0] = 'NotAComponentAddress';
       });
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-           `Ether value should not be undefined`
+          `Component at NotAComponentAddress is not part of the collateralizing set at ${baseSetToken.address}`
+        );
+      });
+    });
+
+    describe('when the send token does not contain Wrapper Ether', async () => {
+      const notWrappedEther = ACCOUNTS[3].address;
+
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.sendTokens[0] = notWrappedEther;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Payment token at ${notWrappedEther} is not the expected wrapped ether token at ${wrappedEtherMock.address}`
         );
       });
     });
@@ -474,7 +681,7 @@ describe('ExchangeIssuanceAPI', () => {
     let subjectExchangeIssuanceData: ExchangeIssuanceParams;
     let subjectExchangeOrders: (KyberTrade | ZeroExSignedFillOrder)[];
     let subjectCaller: Address;
-    let subjectEther: BigNumber;
+    let subjectTransactionEtherValue: BigNumber;
 
     let zeroExOrderMaker: Address;
 
@@ -523,7 +730,7 @@ describe('ExchangeIssuanceAPI', () => {
         ONE_DAY_IN_SECONDS,
       );
 
-      subjectEther = new BigNumber(10 ** 10);
+      subjectTransactionEtherValue = new BigNumber(10 ** 10);
 
       // Generate exchange issue data
       exchangeIssuanceSetAddress = baseSetToken.address;
@@ -534,7 +741,7 @@ describe('ExchangeIssuanceAPI', () => {
         unit => unit.mul(exchangeIssuanceQuantity).div(baseSetNaturalUnit)
       );
       exchangeIssuanceReceiveTokens = [wrappedEtherMock.address];
-      exchangeIssuanceReceiveTokenAmounts = [subjectEther];
+      exchangeIssuanceReceiveTokenAmounts = [subjectTransactionEtherValue];
 
       subjectExchangeIssuanceData = {
         setAddress: exchangeIssuanceSetAddress,
@@ -566,9 +773,8 @@ describe('ExchangeIssuanceAPI', () => {
 
       subjectExchangeOrders = [zeroExOrder];
       subjectRebalancingSetAddress = rebalancingSetToken.address;
-      subjectRebalancingSetQuantity = exchangeIssuanceQuantity
-        .mul(DEFAULT_REBALANCING_NATURAL_UNIT)
-        .div(rebalancingUnitShares);
+      subjectRebalancingSetQuantity = exchangeIssuanceQuantity.mul(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                                              .div(rebalancingUnitShares);
 
       // 0x maker needs to wrap ether
       await wrappedEtherMock.deposit.sendTransactionAsync(
@@ -620,6 +826,117 @@ describe('ExchangeIssuanceAPI', () => {
 
       const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
       expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
+
+    describe('when the receive tokens has more than one address', async () => {
+      const notWrappedEther = ACCOUNTS[3].address;
+
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.receiveTokens = [wrappedEtherMock.address, notWrappedEther];
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Only one receive token is allowed in Payable Exchange Redemption`
+        );
+      });
+    });
+
+    describe('when a from transaction parameter is not passed in', async () => {
+      beforeEach(async () => {
+        subjectCaller = undefined;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+           `No "from" address specified in neither the given options, nor the default options.`
+        );
+      });
+    });
+
+    describe('when the rebalancing set address is invalid', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetAddress = 'InvalidTokenAddress';
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        Expected rebalancingSetAddress to conform to schema /Address.
+
+        Encountered: "InvalidTokenAddress"
+
+        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
+      `
+        );
+      });
+    });
+
+    describe('when no orders are passed in', async () => {
+      beforeEach(async () => {
+        subjectExchangeOrders = [];
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The array orders cannot be empty.`
+        );
+      });
+    });
+
+    describe('when the set to exchange redeem for is not the rebalancing set\'s base set', async () => {
+      const notBaseSet = ACCOUNTS[3].address;
+
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.setAddress = notBaseSet;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Set token at ${notBaseSet} is not the expected rebalancing set token current Set at ${baseSetToken.address}`
+        );
+      });
+    });
+
+    describe('when the send tokens are not included in the rebalancing set\'s base set\'s components', async () => {
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.sendTokens[0] = 'NotAComponentAddress';
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Component at NotAComponentAddress is not part of the collateralizing set at ${baseSetToken.address}`
+        );
+      });
+    });
+
+    describe('when the amount of base set from the rebalancing set quantity is not enough to trade', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetQuantity = exchangeIssuanceQuantity.mul(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                                                .div(rebalancingUnitShares)
+                                                                .sub(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The quantity of base set redeemable from the quantity of the rebalancing set must be greater or equal to ` +
+          `the amount required for the redemption trades`
+        );
+      });
+    });
+
+    describe('when the receive tokens does not contain Wrapper Ether', async () => {
+      const notWrappedEther = ACCOUNTS[3].address;
+
+      beforeEach(async () => {
+        subjectExchangeIssuanceData.receiveTokens[0] = notWrappedEther;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Payment token at ${notWrappedEther} is not the expected wrapped ether token at ${wrappedEtherMock.address}`
+        );
+      });
     });
   });
 

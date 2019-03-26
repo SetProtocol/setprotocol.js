@@ -16,16 +16,12 @@
 
 'use strict';
 
-import { BigNumber } from '../util';
 
 export const exchangeIssuanceErrors = {
   ONLY_ONE_SEND_TOKEN: () => `Only one send token is allowed in Payable Exchange Issuance`,
-  ONLY_ONE_RECEIVE_TOKEN: () => `Only one send token is allowed in Payable Exchange Redemption`,
-  ISSUANCE_PARAM_QUANTITY_MUST_BE_EQUIVALENT: (
-    rebalancingSetQuantity: BigNumber,
-    impliedBaseSetQuantity: BigNumber,
-  ) => `Rebalancing Set Quantity ${rebalancingSetQuantity.toString()} and the implied Base Set Quantity` +
-       `${impliedBaseSetQuantity.toString()} must be equivalent.`,
+  ONLY_ONE_RECEIVE_TOKEN: () => `Only one receive token is allowed in Payable Exchange Redemption`,
+  REDEEM_AND_TRADE_QUANTITIES_MISMATCH: () => `The quantity of base set redeemable from the quantity ` +
+    `of the rebalancing set must be greater or equal to the amount required for the redemption trades`,
   PAYMENT_TOKEN_NOT_WETH: (paymentToken: string, wethAddress: string) => `Payment token at ${paymentToken} is ` +
     `not the expected wrapped ether token at ${wethAddress}`,
   ISSUING_SET_NOT_BASE_SET: (setAddress: string, currentSet: string) => `Set token at ${setAddress} is ` +
@@ -34,4 +30,6 @@ export const exchangeIssuanceErrors = {
     `not the expected rebalancing set token current Set at ${currentSet}`,
   ETHER_VALUE_NOT_UNDEFINED: () =>
     `Ether value should not be undefined`,
+  TRADE_TOKENS_NOT_COMPONENT: (setAddress: string, componentAddress: string) => `Component at ${componentAddress} ` +
+    `is not part of the collateralizing set at ${setAddress}`,
 };
