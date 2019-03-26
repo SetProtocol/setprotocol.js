@@ -101,8 +101,6 @@ describe('SystemAPI', () => {
       setTokenFactory,
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
-      ,
-      rebalancingTokenIssuanceModule,
     ] = await deployBaseContracts(web3);
 
     coreInstance = core;
@@ -125,7 +123,6 @@ describe('SystemAPI', () => {
       kyberNetworkWrapperAddress: SetTestUtils.KYBER_NETWORK_PROXY_ADDRESS,
       setTokenFactoryAddress: setTokenFactory.address,
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
-      rebalancingTokenIssuanceModule: rebalancingTokenIssuanceModule.address,
       exchangeIssuanceModuleAddress: NULL_ADDRESS,
       rebalancingSetExchangeIssuanceModule: NULL_ADDRESS,
       wrappedEtherAddress: NULL_ADDRESS,

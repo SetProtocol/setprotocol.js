@@ -27,7 +27,6 @@ import { RebalancingSetExchangeIssuanceModuleWrapper } from './RebalancingSetExc
 import { PriceFeedWrapper } from './PriceFeedWrapper';
 import { RebalancingAuctionModuleWrapper } from './RebalancingAuctionModuleWrapper';
 import { RebalancingSetTokenWrapper } from './RebalancingSetTokenWrapper';
-import { RebalancingTokenIssuanceModuleWrapper } from './RebalancingTokenIssuanceModuleWrapper';
 import { SetTokenWrapper } from './SetTokenWrapper';
 import { TimeLockUpgradeWrapper } from './TimeLockUpgradeWrapper';
 import { WhitelistWrapper } from './WhitelistWrapper';
@@ -45,7 +44,6 @@ export {
   PriceFeedWrapper,
   RebalancingAuctionModuleWrapper,
   RebalancingSetTokenWrapper,
-  RebalancingTokenIssuanceModuleWrapper,
   SetTokenWrapper,
   TimeLockUpgradeWrapper,
   WhitelistWrapper,

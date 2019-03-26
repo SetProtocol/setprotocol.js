@@ -255,7 +255,7 @@ export class RebalancingAssertions {
     const [
       auctionStartTime,
       auctionTimeToPivot,
-    ] = await rebalancingSetTokenInstance.getAuctionParameters.callAsync();
+    ] = await rebalancingSetTokenInstance.getAuctionPriceParameters.callAsync();
 
     const pivotTimeStart = auctionStartTime.add(auctionTimeToPivot).mul(1000);
 

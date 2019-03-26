@@ -28,7 +28,6 @@ import {
   RebalancingSetExchangeIssuanceModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
-  RebalancingTokenIssuanceModuleContract,
   MedianContract,
   SetTokenContract,
   TimeLockUpgradeContract,
@@ -386,35 +385,9 @@ export class ContractWrapper {
   }
 
   /**
-   * Load a RebalancingTokenIssuanceModule contract
-   *
-   * @param  rebalancingTokenIssuanceModuleAddress Address of the RebalancingTokenIssuanceModule contract
-   * @param  transactionOptions                    Options sent into the contract deployed method
-   * @return                                       The RebalancingTokenIssuanceModule Contract
-   */
-  public async loadRebalancingTokenIssuanceModuleAsync(
-    rebalancingTokenIssuanceModuleAddress: Address,
-    transactionOptions: object = {},
-  ): Promise<RebalancingTokenIssuanceModuleContract> {
-    const cacheKey = `RebalancingTokenIssuanceModule_${rebalancingTokenIssuanceModuleAddress}`;
-
-    if (cacheKey in this.cache) {
-      return this.cache[cacheKey] as RebalancingTokenIssuanceModuleContract;
-    } else {
-      const rebalancingTokenIssuanceModuleContract = await RebalancingTokenIssuanceModuleContract.at(
-        rebalancingTokenIssuanceModuleAddress,
-        this.web3,
-        transactionOptions,
-      );
-      this.cache[cacheKey] = rebalancingTokenIssuanceModuleContract;
-      return rebalancingTokenIssuanceModuleContract;
-    }
-  }
-
-  /**
    * Load a ExchangeIssuanceModule contract
    *
-   * @param  exchangeIssuanceModule                   Address of the ExchangeIssuanceModule contract
+   * @param  exchangeIssuanceModule                Address of the ExchangeIssuanceModule contract
    * @param  transactionOptions                    Options sent into the contract deployed method
    * @return                                       The ExchangeIssuanceModule Contract
    */

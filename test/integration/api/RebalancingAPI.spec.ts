@@ -32,7 +32,6 @@ import {
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
-  RebalancingTokenIssuanceModuleContract,
   SetTokenContract,
   SetTokenFactoryContract,
   TransferProxyContract,
@@ -59,7 +58,6 @@ import { BigNumber, ether } from '@src/util';
 import { Assertions } from '@src/assertions';
 import ChaiSetup from '@test/helpers/chaiSetup';
 import {
-  addModuleAsync,
   addWhiteListedTokenAsync,
   addPriceCurveToCoreAsync,
   approveForTransferAsync,
@@ -105,7 +103,6 @@ describe('RebalancingAPI', () => {
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
-  let rebalanceIssuanceModule: RebalancingTokenIssuanceModuleContract;
   let whitelist: WhiteListContract;
 
   let erc20Wrapper: ERC20Wrapper;
@@ -123,7 +120,6 @@ describe('RebalancingAPI', () => {
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
       whitelist,
-      rebalanceIssuanceModule,
     ] = await deployBaseContracts(web3);
 
     setTokenFactory = setTokenFactory;
@@ -146,13 +142,10 @@ describe('RebalancingAPI', () => {
       rebalancingSetTokenFactoryAddress: NULL_ADDRESS,
       kyberNetworkWrapperAddress: NULL_ADDRESS,
       rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
-      rebalancingTokenIssuanceModule: rebalanceIssuanceModule.address,
       exchangeIssuanceModuleAddress: NULL_ADDRESS,
       rebalancingSetExchangeIssuanceModule: NULL_ADDRESS,
       wrappedEtherAddress: NULL_ADDRESS,
     };
-
-    await addModuleAsync(core, rebalanceIssuanceModule.address);
 
     const assertions = new Assertions(web3);
     rebalancingAPI = new RebalancingAPI(web3, assertions, coreWrapper, setProtocolConfig);
@@ -162,152 +155,6 @@ describe('RebalancingAPI', () => {
     timeKeeper.reset();
 
     await web3Utils.revertToSnapshot(currentSnapshotId);
-  });
-
-  describe('redeemIntoBaseComponentsAsync', async () => {
-    let rebalancingSetToken: RebalancingSetTokenContract;
-    let currentSetToken: SetTokenContract;
-
-    let subjectRebalancingSetToken: Address;
-    let subjectRedeemQuantity: BigNumber;
-    let subjectCaller: Address;
-
-    beforeEach(async () => {
-      const setTokens = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        2,
-      );
-
-      currentSetToken = setTokens[0];
-
-      const proposalPeriod = ONE_DAY_IN_SECONDS;
-      const managerAddress = ACCOUNTS[1].address;
-      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
-        web3,
-        core,
-        rebalancingSetTokenFactory.address,
-        managerAddress,
-        currentSetToken.address,
-        proposalPeriod
-      );
-
-      // Issue currentSetToken
-      await core.issue.sendTransactionAsync(currentSetToken.address, ether(7), TX_DEFAULTS);
-      await approveForTransferAsync([currentSetToken], transferProxy.address);
-
-      // Use issued currentSetToken to issue rebalancingSetToken
-      const rebalancingSetQuantityToIssue = ether(7);
-      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
-
-      subjectRebalancingSetToken = rebalancingSetToken.address;
-      subjectRedeemQuantity = ether(2);
-      subjectCaller = DEFAULT_ACCOUNT;
-    });
-
-    async function subject(): Promise<string> {
-      return await rebalancingAPI.redeemIntoBaseComponentsAsync(
-        subjectRebalancingSetToken,
-        subjectRedeemQuantity,
-        { from: subjectCaller },
-      );
-    }
-
-    test('redeems the rebalancing Set', async () => {
-      const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
-      const expectedRBSetTokenBalance = previousRBSetTokenBalance.sub(subjectRedeemQuantity);
-
-      await subject();
-
-      const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
-      expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
-    });
-
-    describe('when the transaction caller address is invalid', async () => {
-      beforeEach(async () => {
-        subjectCaller = 'invalidCallerAddress';
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-      `
-        Expected txOpts.from to conform to schema /Address.
-
-        Encountered: "invalidCallerAddress"
-
-        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
-      `
-        );
-      });
-    });
-
-    describe('when the rebalancing Set address is invalid', async () => {
-      beforeEach(async () => {
-        subjectRebalancingSetToken = 'invalidSetAddress';
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-      `
-        Expected rebalancingSetTokenAddress to conform to schema /Address.
-
-        Encountered: "invalidSetAddress"
-
-        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
-      `
-        );
-      });
-    });
-
-    describe('when the quantities contain a negative number', async () => {
-      let invalidQuantity: BigNumber;
-
-      beforeEach(async () => {
-        invalidQuantity = new BigNumber(-1);
-
-        subjectRedeemQuantity = invalidQuantity;
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `The quantity ${invalidQuantity} inputted needs to be greater than zero.`
-        );
-      });
-    });
-
-    describe('when the quantity is not a multiple of the natural unit', async () => {
-      let invalidQuantity: BigNumber;
-
-      beforeEach(async () => {
-        invalidQuantity = new BigNumber(1);
-
-        subjectRedeemQuantity = invalidQuantity;
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith('Redeem quantity needs to be multiple of natural unit.');
-      });
-    });
-
-    describe('when the quantity to redeem is larger than the user\'s Rebalancing Set Token balance', async () => {
-      beforeEach(async () => {
-        subjectRedeemQuantity = ether(14);
-      });
-
-      test('throws', async () => {
-        const currentBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
-
-        return expect(subject()).to.be.rejectedWith(
-      `
-        User: ${subjectCaller} has balance of ${currentBalance}
-
-        when required balance is ${subjectRedeemQuantity} at token address ${subjectRebalancingSetToken}.
-      `
-        );
-      });
-    });
   });
 
   describe('proposeAsync', async () => {
@@ -2350,7 +2197,7 @@ describe('RebalancingAPI', () => {
       it('returns the proper rebalancing details', async () => {
         const rebalanceDetails = await subject();
 
-        const [rebalancingStartedAt] = await rebalancingSetToken.getAuctionParameters.callAsync();
+        const [rebalancingStartedAt] = await rebalancingSetToken.getAuctionPriceParameters.callAsync();
         expect(rebalanceDetails.rebalancingStartedAt).to.bignumber.equal(rebalancingStartedAt);
 
         const [minimumBid, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
