@@ -322,7 +322,7 @@ export class RebalancingSetTokenWrapper {
   public async auctionParameters(rebalancingSetAddress: Address): Promise<BigNumber[]> {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 
-    return await rebalancingSetTokenInstance.getAuctionPriceParameters.callAsync();
+    return await rebalancingSetTokenInstance.auctionPriceParameters.callAsync();
   }
 
   /**
