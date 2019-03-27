@@ -305,7 +305,10 @@ export class ExchangeIssuanceAPI {
     this.assert.common.isGreaterOrEqualThan(
       impliedBaseSetQuantity,
       quantity, // Base set quantity to redeem
-      exchangeIssuanceErrors.REDEEM_AND_TRADE_QUANTITIES_MISMATCH()
+      exchangeIssuanceErrors.REDEEM_AND_TRADE_QUANTITIES_MISMATCH(
+        impliedBaseSetQuantity.valueOf(),
+        quantity.valueOf()
+      )
     );
 
     // Assert receive token is wrapped ether
