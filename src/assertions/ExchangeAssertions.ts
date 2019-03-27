@@ -83,7 +83,7 @@ export class ExchangeAssertions {
       const validExchangeIds = [
         SetProtocolUtils.EXCHANGES.ZERO_EX,
         SetProtocolUtils.EXCHANGES.KYBER,
-      ].map(exchangeEnumeration => new BigNumber(exchangeEnumeration));
+      ].map(exchangeEnumeration => exchangeEnumeration.toString());
 
       this.commonAssertions.isNotEmptyArray(sendTokens, coreAPIErrors.EMPTY_ARRAY('sendTokens'));
       sendTokens.map((sendToken, i) => {
@@ -104,7 +104,7 @@ export class ExchangeAssertions {
           coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(sendTokenAmounts[i]),
         );
 
-        const exchangeId = sendTokenExchangeIds[i];
+        const exchangeId = sendTokenExchangeIds[i].toString();
         this.commonAssertions.includes(validExchangeIds, exchangeId, exchangeErrors.INVALID_EXCHANGE_ID(exchangeId));
       });
   }
