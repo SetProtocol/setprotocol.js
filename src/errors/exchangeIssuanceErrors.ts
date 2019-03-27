@@ -20,8 +20,10 @@
 export const exchangeIssuanceErrors = {
   ONLY_ONE_SEND_TOKEN: () => `Only one send token is allowed in Payable Exchange Issuance`,
   ONLY_ONE_RECEIVE_TOKEN: () => `Only one receive token is allowed in Payable Exchange Redemption`,
-  REDEEM_AND_TRADE_QUANTITIES_MISMATCH: () => `The quantity of base set redeemable from the quantity ` +
-    `of the rebalancing set must be greater or equal to the amount required for the redemption trades`,
+  REDEEM_AND_TRADE_QUANTITIES_MISMATCH: (quantityFromRebalancingSetQuantity: string, quantityToTrade: string) =>
+    `The quantity of base set redeemable from the quantity of the rebalancing set: ` +
+    `${quantityFromRebalancingSetQuantity} must be greater or equal to the amount required for the redemption ` +
+    `trades: ${quantityToTrade}`,
   PAYMENT_TOKEN_NOT_WETH: (paymentToken: string, wethAddress: string) => `Payment token at ${paymentToken} is ` +
     `not the expected wrapped ether token at ${wethAddress}`,
   ISSUING_SET_NOT_BASE_SET: (setAddress: string, currentSet: string) => `Set token at ${setAddress} is ` +

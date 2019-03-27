@@ -919,8 +919,8 @@ describe('ExchangeIssuanceAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `The quantity of base set redeemable from the quantity of the rebalancing set must be greater or equal to ` +
-          `the amount required for the redemption trades`
+          `The quantity of base set redeemable from the quantity of the rebalancing set: 9999999999 must be ` +
+          `greater or equal to the amount required for the redemption trades: 10000000000`
         );
       });
     });

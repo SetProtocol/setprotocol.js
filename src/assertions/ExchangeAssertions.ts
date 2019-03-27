@@ -80,7 +80,10 @@ export class ExchangeAssertions {
     sendTokenAmounts: BigNumber[],
     coreAddress: Address,
   ) {
-      const validExchangeIds = [SetProtocolUtils.EXCHANGES.ZERO_EX, SetProtocolUtils.EXCHANGES.KYBER];
+      const validExchangeIds = [
+        SetProtocolUtils.EXCHANGES.ZERO_EX,
+        SetProtocolUtils.EXCHANGES.KYBER,
+      ].map(exchangeEnumeration => new BigNumber(exchangeEnumeration));
 
       this.commonAssertions.isNotEmptyArray(sendTokens, coreAPIErrors.EMPTY_ARRAY('sendTokens'));
       sendTokens.map((sendToken, i) => {
