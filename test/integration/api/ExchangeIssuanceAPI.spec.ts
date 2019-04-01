@@ -436,6 +436,7 @@ describe('ExchangeIssuanceAPI', () => {
 
   describe('issueRebalancingSetWithEther', async () => {
     let subjectRebalancingSetAddress: Address;
+    let subjectRebalancingSetQuantity: BigNumber;
     let subjectExchangeIssuanceData: ExchangeIssuanceParams;
     let subjectExchangeOrders: (KyberTrade | ZeroExSignedFillOrder)[];
     let subjectCaller: Address;
@@ -444,8 +445,6 @@ describe('ExchangeIssuanceAPI', () => {
     let etherValue: BigNumber;
 
     let zeroExOrderMaker: Address;
-
-    let rebalancingSetQuantity: BigNumber;
 
     let baseSetToken: SetTokenContract;
     let baseSetNaturalUnit: BigNumber;
@@ -538,8 +537,8 @@ describe('ExchangeIssuanceAPI', () => {
         exchangeIssuanceSendTokenAmounts[0],             // amount of zeroExOrder to fill
       );
 
-      rebalancingSetQuantity = exchangeIssuanceQuantity.mul(DEFAULT_REBALANCING_NATURAL_UNIT)
-                                                       .div(rebalancingUnitShares);
+      subjectRebalancingSetQuantity = exchangeIssuanceQuantity.mul(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                                              .div(rebalancingUnitShares);
 
       subjectExchangeOrders = [zeroExOrder];
       subjectRebalancingSetAddress = rebalancingSetToken.address;
@@ -550,6 +549,7 @@ describe('ExchangeIssuanceAPI', () => {
     async function subject(): Promise<string> {
       return await exchangeIssuanceAPI.issueRebalancingSetWithEtherAsync(
         subjectRebalancingSetAddress,
+        subjectRebalancingSetQuantity,
         subjectExchangeIssuanceData,
         subjectExchangeOrders,
         { from: subjectCaller, value: subjectTransactionEtherValue }
@@ -558,7 +558,7 @@ describe('ExchangeIssuanceAPI', () => {
 
     test('issues the rebalancing Set to the caller', async () => {
       const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
-      const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(rebalancingSetQuantity);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(subjectRebalancingSetQuantity);
 
       await subject();
 

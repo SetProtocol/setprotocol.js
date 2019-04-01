@@ -107,14 +107,16 @@ export class ExchangeIssuanceAPI {
   /**
    * Issues a Rebalancing Set to the transaction signer using Ether as payment.
    *
-   * @param  rebalancingSetAddress       Address of the Rebalancing Set to issue
-   * @param  exchangeIssuanceParams      Parameters required to facilitate an exchange issuance
-   * @param  orders                      A list of signed 0x orders or kyber trades
-   * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
-   * @return               Transaction hash
+   * @param  rebalancingSetAddress    Address of the Rebalancing Set to issue
+   * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to issue
+   * @param  exchangeIssuanceParams   Parameters required to facilitate an exchange issuance
+   * @param  orders                   A list of signed 0x orders or kyber trades
+   * @param  txOpts                   Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
+   * @return                          Transaction hash
    */
   public async issueRebalancingSetWithEtherAsync(
     rebalancingSetAddress: Address,
+    rebalancingSetQuantity: BigNumber,
     exchangeIssuanceParams: ExchangeIssuanceParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
     txOpts: Tx
@@ -124,6 +126,7 @@ export class ExchangeIssuanceAPI {
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
     return this.rebalancingSetExchangeIssuanceModule.issueRebalancingSetWithEther(
       rebalancingSetAddress,
+      rebalancingSetQuantity,
       exchangeIssuanceParams,
       orderData,
       txOpts,
@@ -136,10 +139,10 @@ export class ExchangeIssuanceAPI {
    *
    * @param  rebalancingSetAddress    Address of the rebalancing Set to redeem
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
-   * @param  exchangeIssuanceParams      Parameters required to facilitate an exchange issuance
-   * @param  orders                      A list of signed 0x orders or kyber trades
-   * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
-   * @return               Transaction hash
+   * @param  exchangeIssuanceParams   Parameters required to facilitate an exchange issuance
+   * @param  orders                   A list of signed 0x orders or kyber trades
+   * @param  txOpts                   Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
+   * @return                          Transaction hash
    */
   public async redeemRebalancingSetIntoEtherAsync(
     rebalancingSetAddress: Address,

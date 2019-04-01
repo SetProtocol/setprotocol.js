@@ -41,11 +41,7 @@ import {
 
 import { ACCOUNTS } from '@src/constants/accounts';
 import { ExchangeIssuanceModuleWrapper } from '@src/wrappers';
-import {
-  NULL_ADDRESS,
-  TX_DEFAULTS,
-  ZERO,
-} from '@src/constants';
+import { NULL_ADDRESS, TX_DEFAULTS, ZERO } from '@src/constants';
 import {
   addAuthorizationAsync,
   addModuleAsync,
@@ -57,13 +53,8 @@ import {
   deployWethMockAsync,
   deployZeroExExchangeWrapperContract,
 } from '@test/helpers';
-import {
-  BigNumber,
-} from '@src/util';
-import {
-  Address,
-  ZeroExSignedFillOrder,
-} from '@src/types/common';
+import { BigNumber } from '@src/util';
+import { Address, ZeroExSignedFillOrder } from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));

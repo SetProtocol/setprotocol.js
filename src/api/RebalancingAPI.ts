@@ -235,10 +235,10 @@ export class RebalancingAPI {
    *                                          gasPrice data
    * @return                                Transaction hash
    */
-  public async withdrawFromFailedRebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: Tx): Promise<string> {
-    await this.assertWithdrawFromFailedRebalance(rebalancingSetTokenAddress, txOpts);
+  public async redeemFromFailedRebalanceAsync(rebalancingSetTokenAddress: Address, txOpts: Tx): Promise<string> {
+    await this.assertRedeemFromFailedRebalance(rebalancingSetTokenAddress, txOpts);
 
-    return await this.rebalancingAuctionModule.withdrawFromFailedRebalance(rebalancingSetTokenAddress, txOpts);
+    return await this.rebalancingAuctionModule.redeemFromFailedRebalance(rebalancingSetTokenAddress, txOpts);
   }
 
   /**
@@ -474,7 +474,7 @@ export class RebalancingAPI {
     await this.assert.rebalancing.enoughRemainingBids(rebalancingSetTokenAddress);
   }
 
-  private async assertWithdrawFromFailedRebalance(rebalancingSetTokenAddress: Address, txOpts: Tx) {
+  private async assertRedeemFromFailedRebalance(rebalancingSetTokenAddress: Address, txOpts: Tx) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
 
     await this.assert.setToken.hasSufficientBalances(rebalancingSetTokenAddress, txOpts.from, new BigNumber(0));

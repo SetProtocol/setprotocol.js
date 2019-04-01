@@ -5976,9 +5976,9 @@ set-immediate-shim@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/set-immediate-shim/-/set-immediate-shim-1.0.1.tgz#4b2b1b27eb808a9f8dcc481a58e5e56f599f3f61"
 
-set-protocol-contracts@1.2.1-beta.16:
-  version "1.2.1-beta.16"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.1-beta.16.tgz#cf1b1219f8d46cfd64ff2c5bce1e81b5ebccd326"
+set-protocol-contracts@1.2.1-beta.17:
+  version "1.2.1-beta.17"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.1-beta.17.tgz#a79d349ad427d2849c455def8bf3927f89387add"
   dependencies:
     bn-chai "^1.0.1"
     canonical-weth "^1.3.1"
