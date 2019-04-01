@@ -65,13 +65,8 @@ import {
   deployWethMockAsync,
   deployZeroExExchangeWrapperContract,
 } from '@test/helpers';
-import {
-  BigNumber,
-} from '@src/util';
-import {
-  Address,
-  ZeroExSignedFillOrder,
-} from '@src/types/common';
+import { BigNumber } from '@src/util';
+import { Address, ZeroExSignedFillOrder } from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
@@ -157,14 +152,13 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
 
   describe('issueRebalancingSetWithEther', async () => {
     let subjectRebalancingSetAddress: Address;
+    let subjectRebalancingSetQuantity: BigNumber;
     let subjectExchangeIssuanceData: ExchangeIssuanceParams;
     let subjectExchangeOrdersData: Bytes;
     let subjectCaller: Address;
     let subjectEther: BigNumber;
 
     let zeroExOrderMaker: Address;
-
-    let rebalancingSetQuantity: BigNumber;
 
     let baseSetToken: SetTokenContract;
     let baseSetNaturalUnit: BigNumber;
@@ -239,27 +233,26 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
 
       // Create 0x order for the component, using weth(4) paymentToken as default
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                                    // senderAddress
-        zeroExOrderMaker,                                // makerAddress
-        NULL_ADDRESS,                                    // takerAddress
-        ZERO,                                            // makerFee
-        ZERO,                                            // takerFee
+        NULL_ADDRESS,                                       // senderAddress
+        zeroExOrderMaker,                                   // makerAddress
+        NULL_ADDRESS,                                       // takerAddress
+        ZERO,                                               // makerFee
+        ZERO,                                               // takerFee
         subjectExchangeIssuanceData.receiveTokenAmounts[0], // makerAssetAmount
         exchangeIssuancePaymentTokenAmount,                 // takerAssetAmount
         exchangeIssuanceRequiredComponents[0],              // makerAssetAddress
         exchangeIssuancePaymentToken,                       // takerAssetAddress
-        SetUtils.generateSalt(),                         // salt
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,           // exchangeAddress
-        NULL_ADDRESS,                                    // feeRecipientAddress
-        SetTestUtils.generateTimestamp(10000),           // expirationTimeSeconds
+        SetUtils.generateSalt(),                            // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,              // exchangeAddress
+        NULL_ADDRESS,                                       // feeRecipientAddress
+        SetTestUtils.generateTimestamp(10000),              // expirationTimeSeconds
         exchangeIssuancePaymentTokenAmount,                 // amount of zeroExOrder to fill
       );
 
       subjectExchangeOrdersData = setUtils.generateSerializedOrders([zeroExOrder]);
       subjectRebalancingSetAddress = rebalancingSetToken.address;
-      rebalancingSetQuantity = exchangeIssuanceQuantity
-        .mul(DEFAULT_REBALANCING_NATURAL_UNIT)
-        .div(rebalancingUnitShares);
+      subjectRebalancingSetQuantity = exchangeIssuanceQuantity.mul(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                                              .div(rebalancingUnitShares);
 
       subjectCaller = ACCOUNTS[1].address;
     });
@@ -267,6 +260,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     async function subject(): Promise<string> {
       return await rebalancingSetExchangeIssuanceModuleWrapper.issueRebalancingSetWithEther(
         subjectRebalancingSetAddress,
+        subjectRebalancingSetQuantity,
         subjectExchangeIssuanceData,
         subjectExchangeOrdersData,
         { from: subjectCaller, value: subjectEther.toString() }
@@ -275,7 +269,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
 
     test('issues the rebalancing Set to the caller', async () => {
       const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
-      const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(rebalancingSetQuantity);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(subjectRebalancingSetQuantity);
 
       await subject();
 
@@ -382,9 +376,8 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
 
       subjectExchangeOrdersData = setUtils.generateSerializedOrders([zeroExOrder]);
       subjectRebalancingSetAddress = rebalancingSetToken.address;
-      subjectRebalancingSetQuantity = exchangeIssuanceQuantity
-        .mul(DEFAULT_REBALANCING_NATURAL_UNIT)
-        .div(rebalancingUnitShares);
+      subjectRebalancingSetQuantity = exchangeIssuanceQuantity.mul(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                                              .div(rebalancingUnitShares);
 
       // 0x maker needs to wrap ether
       await wrappedEtherMock.deposit.sendTransactionAsync(

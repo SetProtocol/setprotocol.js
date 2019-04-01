@@ -46,12 +46,14 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
    * The Base Set is then issued using Exchange Issue and reissued into the Rebalancing Set.
    *
    * @param  rebalancingSetAddress    Address of the rebalancing Set to issue
-   * @param  exchangeIssuanceData        Struct containing data around the base Set issuance
+   * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to issue
+   * @param  exchangeIssuanceData     Struct containing data around the base Set issuance
    * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
    * @param  txOpts                    The options for executing the transaction
    */
   public async issueRebalancingSetWithEther(
     rebalancingSetAddress: Address,
+    rebalancingSetQuantity: BigNumber,
     exchangeIssuanceParams: ExchangeIssuanceParams,
     orderData: Bytes,
     txOpts?: Tx,
@@ -64,6 +66,7 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
 
     return await rebalancingSetExchangeIssuanceModuleInstance.issueRebalancingSetWithEther.sendTransactionAsync(
       rebalancingSetAddress,
+      rebalancingSetQuantity,
       exchangeIssuanceParams,
       orderData,
       txSettings,

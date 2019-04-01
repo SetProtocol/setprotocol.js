@@ -103,19 +103,20 @@ export class RebalancingAuctionModuleWrapper {
   }
 
   /**
-   * Burns tokens in Drawdown state and transfers ownership of collateral to owner
+   * Burns tokens in Drawdown state and transfers ownership of collateral to owner in the vault. Collateral
+   * must be withdrawn separately
    *
    * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
    * @param  txOpts                        The options for executing the transaction
    * @return                               A transaction hash
    */
-  public async withdrawFromFailedRebalance(rebalancingSetTokenAddress: Address, txOpts?: Tx): Promise<string> {
+  public async redeemFromFailedRebalance(rebalancingSetTokenAddress: Address, txOpts?: Tx): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
     const rebalanceAuctionModuleInstance = await this.contracts.loadRebalanceAuctionModuleAsync(
       this.rebalanceAuctionModuleAddress
     );
 
-    return await rebalanceAuctionModuleInstance.withdrawFromFailedRebalance.sendTransactionAsync(
+    return await rebalanceAuctionModuleInstance.redeemFromFailedRebalance.sendTransactionAsync(
       rebalancingSetTokenAddress,
       txSettings,
     );

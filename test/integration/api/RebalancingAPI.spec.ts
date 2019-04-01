@@ -1432,7 +1432,7 @@ describe('RebalancingAPI', () => {
     });
   });
 
-  describe('withdrawFromFailedRebalance', async () => {
+  describe('redeemFromFailedRebalanceAsync', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
@@ -1496,7 +1496,7 @@ describe('RebalancingAPI', () => {
     });
 
     async function subject(): Promise<any> {
-      return await rebalancingAPI.withdrawFromFailedRebalanceAsync(
+      return await rebalancingAPI.redeemFromFailedRebalanceAsync(
         subjectRebalancingSetTokenAddress,
         { from: subjectCaller }
       );

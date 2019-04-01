@@ -440,7 +440,7 @@ describe('RebalancingAuctionModuleWrapper', () => {
     });
   });
 
-  describe('withdrawFromFailedRebalance', async () => {
+  describe('redeemFromFailedRebalance', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
@@ -524,7 +524,7 @@ describe('RebalancingAuctionModuleWrapper', () => {
     });
 
     async function subject(): Promise<any> {
-      return await rebalancingAuctionModuleWrapper.withdrawFromFailedRebalance(
+      return await rebalancingAuctionModuleWrapper.redeemFromFailedRebalance(
         subjectRebalancingSetTokenAddress,
         { from: subjectCaller }
       );
