@@ -941,29 +941,47 @@ describe('ExchangeIssuanceAPI', () => {
   });
 
   describe('getKyberConversionRate', async () => {
-    let subjectMakerTokenAddress: Address;
-    let subjectComponentTokenAddress: Address;
-    let subjectQuantity: BigNumber;
+    let subjectSourceTokenAddresses: Address[];
+    let subjectDestinationTokenAddresses: Address[];
+    let subjectQuantities: BigNumber[];
 
-    async function subject(): Promise<[BigNumber, BigNumber]> {
-      return exchangeIssuanceAPI.getKyberConversionRate(
-        subjectMakerTokenAddress,
-        subjectComponentTokenAddress,
-        subjectQuantity
+    beforeEach(async () => {
+      const makerTokenAddress = SetTestUtils.KYBER_RESERVE_SOURCE_TOKEN_ADDRESS;
+      const componentTokenAddress = SetTestUtils.KYBER_RESERVE_DESTINATION_TOKEN_ADDRESS;
+
+      subjectSourceTokenAddresses = [makerTokenAddress, makerTokenAddress];
+      subjectDestinationTokenAddresses = [componentTokenAddress, componentTokenAddress];
+      subjectQuantities = [new BigNumber(10 ** 10), new BigNumber(10 ** 10)];
+    });
+
+    async function subject(): Promise<[BigNumber[], BigNumber[]]> {
+      return await exchangeIssuanceAPI.getKyberConversionRates(
+        subjectSourceTokenAddresses,
+        subjectDestinationTokenAddresses,
+        subjectQuantities
       );
     }
 
-    beforeEach(async () => {
-      subjectMakerTokenAddress = SetTestUtils.KYBER_RESERVE_SOURCE_TOKEN_ADDRESS;
-      subjectComponentTokenAddress = SetTestUtils.KYBER_RESERVE_DESTINATION_TOKEN_ADDRESS;
-      subjectQuantity = new BigNumber(100000);
-    });
-
     it('returns a conversion rate and slip rate', async () => {
-      const [conversionRate, slipRate] = await subject();
+      let firstRate: BigNumber;
+      let secondRate: BigNumber;
+      let firstSlippage: BigNumber;
+      let secondSlippage: BigNumber;
 
-      expect(conversionRate).to.bignumber.equal(321550000000000000);
-      expect(slipRate).to.bignumber.equal(319942250000000000);
+      const conversionRates = await subject();
+      [[firstRate, secondRate], [firstSlippage, secondSlippage]] = conversionRates;
+
+      const expectedRate = new BigNumber('321556325900000000');
+      expect(firstRate).to.be.bignumber.equal(expectedRate);
+
+      const expectedSecondRate = new BigNumber('321556325900000000');
+      expect(secondRate).to.be.bignumber.equal(expectedSecondRate);
+
+      const expectedSlippage = new BigNumber('319948544270500000');
+      expect(firstSlippage).to.be.bignumber.equal(expectedSlippage);
+
+      const expectedSecondSlippage = new BigNumber ('319948544270500000');
+      expect(secondSlippage).to.be.bignumber.equal(expectedSecondSlippage);
     });
   });
 });
