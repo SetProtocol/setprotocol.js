@@ -43,18 +43,18 @@ export class KyberNetworkWrapper {
   /**
    * Fetch the conversion rate for a Kyber trading pair
    *
-   * @param  makerTokenAddress       Address of the token to trade
-   * @param  componentTokenAddress   Address of the set component to trade for
-   * @param  quantity                Quantity of maker token to trade for component token
-   * @return                         The conversion rate and slip rate for the trade
+   * @param  sourceTokens        Addresses of the tokens to trade
+   * @param  destinationTokens   Addresses of the set components to trade for
+   * @param  quantities          Quantities of maker tokens to trade for component tokens
+   * @return                     Conversion and slippage rates for the source and destination token pairs
    */
-  public async conversionRate(
-    makerTokenAddress: Address,
-    componentTokenAddress: Address,
-    quantity: BigNumber
-  ): Promise<[BigNumber, BigNumber]> {
+  public async conversionRates(
+    sourceTokens: Address[],
+    destinationTokens: Address[],
+    quantities: BigNumber[]
+  ): Promise<[BigNumber[], BigNumber[]]> {
     const kyberNetworkWrapper = await this.contracts.loadKyberNetworkWrapperAsync(this.kyberNetworkWrapperAddress);
 
-    return await kyberNetworkWrapper.conversionRate.callAsync(makerTokenAddress, componentTokenAddress, quantity);
+    return await kyberNetworkWrapper.conversionRate.callAsync(sourceTokens, destinationTokens, quantities);
   }
 }
