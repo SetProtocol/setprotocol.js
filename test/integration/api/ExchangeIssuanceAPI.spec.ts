@@ -444,6 +444,8 @@ describe('ExchangeIssuanceAPI', () => {
 
     let etherValue: BigNumber;
 
+    let customSalt: BigNumber;
+    let customExpirationTimeSeconds: BigNumber;
     let zeroExOrderMaker: Address;
 
     let baseSetToken: SetTokenContract;
@@ -521,20 +523,20 @@ describe('ExchangeIssuanceAPI', () => {
 
       // Create 0x order for the first component
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                                    // senderAddress
-        zeroExOrderMaker,                                // makerAddress
-        NULL_ADDRESS,                                    // takerAddress
-        ZERO,                                            // makerFee
-        ZERO,                                            // takerFee
-        exchangeIssuanceReceiveTokenAmounts[0],          // makerAssetAmount
-        exchangeIssuanceSendTokenAmounts[0],             // takerAssetAmount
-        exchangeIssuanceReceiveTokens[0],                // makerAssetAddress
-        exchangeIssuanceSendTokens[0],                   // takerAssetAddress
-        SetUtils.generateSalt(),                         // salt
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,           // exchangeAddress
-        NULL_ADDRESS,                                    // feeRecipientAddress
-        SetTestUtils.generateTimestamp(10000),           // expirationTimeSeconds
-        exchangeIssuanceSendTokenAmounts[0],             // amount of zeroExOrder to fill
+        NULL_ADDRESS,                                                         // senderAddress
+        zeroExOrderMaker,                                                     // makerAddress
+        NULL_ADDRESS,                                                         // takerAddress
+        ZERO,                                                                 // makerFee
+        ZERO,                                                                 // takerFee
+        exchangeIssuanceReceiveTokenAmounts[0],                               // makerAssetAmount
+        exchangeIssuanceSendTokenAmounts[0],                                  // takerAssetAmount
+        exchangeIssuanceReceiveTokens[0],                                     // makerAssetAddress
+        exchangeIssuanceSendTokens[0],                                        // takerAssetAddress
+        customSalt || SetUtils.generateSalt(),                                // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,                                // exchangeAddress
+        NULL_ADDRESS,                                                         // feeRecipientAddress
+        customExpirationTimeSeconds || SetTestUtils.generateTimestamp(10000), // expirationTimeSeconds
+        exchangeIssuanceSendTokenAmounts[0],                                  // amount of zeroExOrder to fill
       );
 
       subjectRebalancingSetQuantity = exchangeIssuanceQuantity.mul(DEFAULT_REBALANCING_NATURAL_UNIT)
@@ -673,6 +675,94 @@ describe('ExchangeIssuanceAPI', () => {
         );
       });
     });
+
+    describe('#issueRebalancingSetWithEtherTransactionData', async () => {
+      beforeAll(async () => {
+        customSalt = new BigNumber(1000);
+        customExpirationTimeSeconds = new BigNumber(1902951096);
+      });
+
+      afterAll(async () => {
+        customSalt = undefined;
+        customExpirationTimeSeconds = undefined;
+      });
+
+      async function subject(): Promise<string> {
+        return await exchangeIssuanceAPI.fetchIssueRebalancingSetWithEtherTransactionDataAsync(
+          subjectRebalancingSetAddress,
+          subjectRebalancingSetQuantity,
+          subjectExchangeIssuanceData,
+          subjectExchangeOrders,
+          { from: subjectCaller, value: subjectTransactionEtherValue }
+        );
+      }
+
+      test('issues the rebalancing Set to the caller', async () => {
+        const data = await subject();
+
+        expect(data).to.equal('0xb7fd4d0700000000000000000000000020a052db6ea52533804b768d7b43fe732a83e67d000000000' +
+                              '00000000000000000000000000000000000000000000002540be4000000000000000000000000000000' +
+                              '00000000000000000000000000000000008000000000000000000000000000000000000000000000000' +
+                              '000000000000002a0000000000000000000000000746d084aed3a220a120162008ed3912c29dbef7100' +
+                              '000000000000000000000000000000000000000000000000000002540be400000000000000000000000' +
+                              '00000000000000000000000000000000000000000e00000000000000000000000000000000000000000' +
+                              '00000000000000000000012000000000000000000000000000000000000000000000000000000000000' +
+                              '0016000000000000000000000000000000000000000000000000000000000000001a000000000000000' +
+                              '000000000000000000000000000000000000000000000001e0000000000000000000000000000000000' +
+                              '00000000000000000000000000000010000000000000000000000000000000000000000000000000000' +
+                              '00000000000100000000000000000000000000000000000000000000000000000000000000010000000' +
+                              '000000000000000001590311c922a283024f0363777478c6b8c3d8c6c00000000000000000000000000' +
+                              '00000000000000000000000000000000000001000000000000000000000000000000000000000000000' +
+                              '00000000002540be4000000000000000000000000000000000000000000000000000000000000000001' +
+                              '000000000000000000000000841789fe96a433b49450e37e8cb513117712f63f0000000000000000000' +
+                              '00000000000000000000000000000000000000000000100000000000000000000000000000000000000' +
+                              '0000000000000000174876e800000000000000000000000000000000000000000000000000000000000' +
+                              '00002620000000000000000000000000000000000000000000000000000000000000001000000000000' +
+                              '00000000000000000000000000000000000000000000000000010000000000000000000000000000000' +
+                              '00000000000000000000000000000020200000000000000000000000000000000000000000000000000' +
+                              '0000000000004200000000000000000000000000000000000000000000000000000002540be4001c686' +
+                              'd2f5daabb0ddc9934e9169e6d41ce00e8ffdcb9d18d1786268088b60b9b9a15947de19446a602b50f99' +
+                              '7cb3a005bb56bcd15bae4d69d43058ad04b35eb70203000000000000000000000000e36ea790bc9d7ab' +
+                              '70c55260c66d52b1eca985f840000000000000000000000000000000000000000000000000000000000' +
+                              '00000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '00000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '0000000000000000000000174876e800000000000000000000000000000000000000000000000000000' +
+                              '00002540be4000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '00000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '0000000000000000000000000000000716cbab800000000000000000000000000000000000000000000' +
+                              '000000000000000003e8000000000000000000000000841789fe96a433b49450e37e8cb513117712f63' +
+                              'f0000000000000000000000001590311c922a283024f0363777478c6b8c3d8c6c000000000000000000' +
+                              '000000000000000000000000000000000000000000');
+      });
+    });
+
+    describe('#issueRebalancingSetWithEtherGasEstimate', async () => {
+      beforeAll(async () => {
+        customSalt = new BigNumber(1000);
+        customExpirationTimeSeconds = new BigNumber(1902951096);
+      });
+
+      afterAll(async () => {
+        customSalt = undefined;
+        customExpirationTimeSeconds = undefined;
+      });
+
+      async function subject(): Promise<number> {
+        return await exchangeIssuanceAPI.fetchIssueRebalancingSetWithEtherGasCostAsync(
+          subjectRebalancingSetAddress,
+          subjectRebalancingSetQuantity,
+          subjectExchangeIssuanceData,
+          subjectExchangeOrders,
+          { from: subjectCaller, value: subjectTransactionEtherValue }
+        );
+      }
+
+      test('issues the rebalancing Set to the caller', async () => {
+        const data = await subject();
+
+        expect(data).to.equal(829714);
+      });
+    });
   });
 
   describe('redeemRebalancingSetIntoEther', async () => {
@@ -683,6 +773,8 @@ describe('ExchangeIssuanceAPI', () => {
     let subjectCaller: Address;
     let subjectTransactionEtherValue: BigNumber;
 
+    let customSalt: BigNumber;
+    let customExpirationTimeSeconds: BigNumber;
     let zeroExOrderMaker: Address;
 
     let baseSetToken: SetTokenContract;
@@ -755,20 +847,20 @@ describe('ExchangeIssuanceAPI', () => {
 
       // Create 0x order for the component, using weth(4) paymentToken as default
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                                    // senderAddress
-        zeroExOrderMaker,                                // makerAddress
-        NULL_ADDRESS,                                    // takerAddress
-        ZERO,                                            // makerFee
-        ZERO,                                            // takerFee
-        exchangeIssuanceReceiveTokenAmounts[0],          // makerAssetAmount
-        exchangeIssuanceSendTokenAmounts[0],             // takerAssetAmount
-        exchangeIssuanceReceiveTokens[0],                // makerAssetAddress
-        exchangeIssuanceSendTokens[0],                   // takerAssetAddress
-        SetUtils.generateSalt(),                         // salt
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,           // exchangeAddress
-        NULL_ADDRESS,                                    // feeRecipientAddress
-        SetTestUtils.generateTimestamp(10000),           // expirationTimeSeconds
-        exchangeIssuanceSendTokenAmounts[0],             // amount of zeroExOrder to fill
+        NULL_ADDRESS,                                                         // senderAddress
+        zeroExOrderMaker,                                                     // makerAddress
+        NULL_ADDRESS,                                                         // takerAddress
+        ZERO,                                                                 // makerFee
+        ZERO,                                                                 // takerFee
+        exchangeIssuanceReceiveTokenAmounts[0],                               // makerAssetAmount
+        exchangeIssuanceSendTokenAmounts[0],                                  // takerAssetAmount
+        exchangeIssuanceReceiveTokens[0],                                     // makerAssetAddress
+        exchangeIssuanceSendTokens[0],                                        // takerAssetAddress
+        customSalt || SetUtils.generateSalt(),                                // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,                                // exchangeAddress
+        NULL_ADDRESS,                                                         // feeRecipientAddress
+        customExpirationTimeSeconds || SetTestUtils.generateTimestamp(10000), // expirationTimeSeconds
+        exchangeIssuanceSendTokenAmounts[0],                                  // amount of zeroExOrder to fill
       );
 
       subjectExchangeOrders = [zeroExOrder];
@@ -936,6 +1028,94 @@ describe('ExchangeIssuanceAPI', () => {
         return expect(subject()).to.be.rejectedWith(
           `Payment token at ${notWrappedEther} is not the expected wrapped ether token at ${wrappedEtherMock.address}`
         );
+      });
+    });
+
+    describe('#issueRebalancingSetWithEtherTransactionData', async () => {
+      beforeAll(async () => {
+        customSalt = new BigNumber(1000);
+        customExpirationTimeSeconds = new BigNumber(1902951096);
+      });
+
+      afterAll(async () => {
+        customSalt = undefined;
+        customExpirationTimeSeconds = undefined;
+      });
+
+      async function subject(): Promise<string> {
+        return await exchangeIssuanceAPI.fetchRedeemRebalancingSetIntoEtherTransactionDataAsyncAsync(
+          subjectRebalancingSetAddress,
+          subjectRebalancingSetQuantity,
+          subjectExchangeIssuanceData,
+          subjectExchangeOrders,
+          { from: subjectCaller }
+        );
+      }
+
+      test('issues the rebalancing Set to the caller', async () => {
+        const data = await subject();
+
+        expect(data).to.equal('0xe8bf981d00000000000000000000000020a052db6ea52533804b768d7b43fe732a83e67d0000000000' +
+                              '0000000000000000000000000000000000000000000002540be400000000000000000000000000000000' +
+                              '000000000000000000000000000000008000000000000000000000000000000000000000000000000000' +
+                              '000000000002a0000000000000000000000000746d084aed3a220a120162008ed3912c29dbef71000000' +
+                              '00000000000000000000000000000000000000000000000002540be40000000000000000000000000000' +
+                              '000000000000000000000000000000000000e00000000000000000000000000000000000000000000000' +
+                              '000000000000000120000000000000000000000000000000000000000000000000000000000000016000' +
+                              '000000000000000000000000000000000000000000000000000000000001a00000000000000000000000' +
+                              '0000000000000000000000000000000000000001e0000000000000000000000000000000000000000000' +
+                              '000000000000000000000100000000000000000000000000000000000000000000000000000000000000' +
+                              '010000000000000000000000000000000000000000000000000000000000000001000000000000000000' +
+                              '000000841789fe96a433b49450e37e8cb513117712f63f00000000000000000000000000000000000000' +
+                              '000000000000000000000000010000000000000000000000000000000000000000000000000000001748' +
+                              '76e800000000000000000000000000000000000000000000000000000000000000000100000000000000' +
+                              '00000000001590311c922a283024f0363777478c6b8c3d8c6c0000000000000000000000000000000000' +
+                              '000000000000000000000000000001000000000000000000000000000000000000000000000000000000' +
+                              '02540be40000000000000000000000000000000000000000000000000000000000000002620000000000' +
+                              '000000000000000000000000000000000000000000000000000001000000000000000000000000000000' +
+                              '000000000000000000000000000000000100000000000000000000000000000000000000000000000000' +
+                              '000000000002020000000000000000000000000000000000000000000000000000000000000042000000' +
+                              '000000000000000000000000000000000000000000000000174876e8001be1783670033e6da58b5fe0a1' +
+                              '2f9c6548b5b57838f44b648b5cd9210ee74376fe58cbadb6bf85fbdffa2beebe03f6e048a1bd2dff92b1' +
+                              'aefcee768593a94808e603000000000000000000000000e36ea790bc9d7ab70c55260c66d52b1eca985f' +
+                              '840000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '000000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '000000000000000000000000000000000000000000000000000000000000000000000000000000000254' +
+                              '0be400000000000000000000000000000000000000000000000000000000174876e80000000000000000' +
+                              '000000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '000000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '00716cbab800000000000000000000000000000000000000000000000000000000000003e80000000000' +
+                              '000000000000001590311c922a283024f0363777478c6b8c3d8c6c000000000000000000000000841789' +
+                              'fe96a433b49450e37e8cb513117712f63f00000000000000000000000000000000000000000000000000' +
+                              '0000000000');
+      });
+    });
+
+    describe('#issueRebalancingSetWithEtherGasEstimate', async () => {
+      beforeAll(async () => {
+        customSalt = new BigNumber(1000);
+        customExpirationTimeSeconds = new BigNumber(1902951096);
+      });
+
+      afterAll(async () => {
+        customSalt = undefined;
+        customExpirationTimeSeconds = undefined;
+      });
+
+      async function subject(): Promise<number> {
+        return await exchangeIssuanceAPI.fetchRedeemRebalancingSetIntoEtherGasCostAsync(
+          subjectRebalancingSetAddress,
+          subjectRebalancingSetQuantity,
+          subjectExchangeIssuanceData,
+          subjectExchangeOrders,
+          { from: subjectCaller }
+        );
+      }
+
+      test('issues the rebalancing Set to the caller', async () => {
+        const data = await subject();
+
+        expect(data).to.equal(835180);
       });
     });
   });
