@@ -34,7 +34,7 @@ export const BlockchainAPIErrors = {
  *
  * @type {number}
  */
-export const DEFAULT_TIMEOUT_FOR_TX_MINED = 60000;
+export const DEFAULT_TIMEOUT_FOR_TX_MINED = 30000;
 
 /**
  * @title BlockchainAPI

@@ -150,7 +150,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('issueRebalancingSetWithEther', async () => {
+  describe('#issueRebalancingSetWithEther', async () => {
     let subjectRebalancingSetAddress: Address;
     let subjectRebalancingSetQuantity: BigNumber;
     let subjectExchangeIssuanceData: ExchangeIssuanceParams;
@@ -158,6 +158,8 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     let subjectCaller: Address;
     let subjectEther: BigNumber;
 
+    let customSalt: BigNumber;
+    let customExpirationTimeSeconds: BigNumber;
     let zeroExOrderMaker: Address;
 
     let baseSetToken: SetTokenContract;
@@ -233,20 +235,20 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
 
       // Create 0x order for the component, using weth(4) paymentToken as default
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                                       // senderAddress
-        zeroExOrderMaker,                                   // makerAddress
-        NULL_ADDRESS,                                       // takerAddress
-        ZERO,                                               // makerFee
-        ZERO,                                               // takerFee
-        subjectExchangeIssuanceData.receiveTokenAmounts[0], // makerAssetAmount
-        exchangeIssuancePaymentTokenAmount,                 // takerAssetAmount
-        exchangeIssuanceRequiredComponents[0],              // makerAssetAddress
-        exchangeIssuancePaymentToken,                       // takerAssetAddress
-        SetUtils.generateSalt(),                            // salt
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,              // exchangeAddress
-        NULL_ADDRESS,                                       // feeRecipientAddress
-        SetTestUtils.generateTimestamp(10000),              // expirationTimeSeconds
-        exchangeIssuancePaymentTokenAmount,                 // amount of zeroExOrder to fill
+        NULL_ADDRESS,                                                         // senderAddress
+        zeroExOrderMaker,                                                     // makerAddress
+        NULL_ADDRESS,                                                         // takerAddress
+        ZERO,                                                                 // makerFee
+        ZERO,                                                                 // takerFee
+        subjectExchangeIssuanceData.receiveTokenAmounts[0],                   // makerAssetAmount
+        exchangeIssuancePaymentTokenAmount,                                   // takerAssetAmount
+        exchangeIssuanceRequiredComponents[0],                                // makerAssetAddress
+        exchangeIssuancePaymentToken,                                         // takerAssetAddress
+        customSalt || SetUtils.generateSalt(),                                // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,                                // exchangeAddress
+        NULL_ADDRESS,                                                         // feeRecipientAddress
+        customExpirationTimeSeconds || SetTestUtils.generateTimestamp(10000), // expirationTimeSeconds
+        exchangeIssuancePaymentTokenAmount,                                   // amount of zeroExOrder to fill
       );
 
       subjectExchangeOrdersData = setUtils.generateSerializedOrders([zeroExOrder]);
@@ -276,9 +278,97 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
       expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
     });
+
+    describe('#issueRebalancingSetWithEtherTransactionData', async () => {
+      beforeAll(async () => {
+        customSalt = new BigNumber(1000);
+        customExpirationTimeSeconds = new BigNumber(1902951096);
+      });
+
+      afterAll(async () => {
+        customSalt = undefined;
+        customExpirationTimeSeconds = undefined;
+      });
+
+      async function subject(): Promise<string> {
+        return await rebalancingSetExchangeIssuanceModuleWrapper.issueRebalancingSetWithEtherTransactionData(
+          subjectRebalancingSetAddress,
+          subjectRebalancingSetQuantity,
+          subjectExchangeIssuanceData,
+          subjectExchangeOrdersData,
+          { from: subjectCaller, value: subjectEther.toString() }
+        );
+      }
+
+      test('issues the rebalancing Set to the caller', async () => {
+        const data = await subject();
+
+        expect(data).to.equal('0xb7fd4d0700000000000000000000000020a052db6ea52533804b768d7b43fe732a83e67d0000000000' +
+                              '0000000000000000000000000000000000000000000002540be400000000000000000000000000000000' +
+                              '000000000000000000000000000000008000000000000000000000000000000000000000000000000000' +
+                              '000000000002a0000000000000000000000000746d084aed3a220a120162008ed3912c29dbef71000000' +
+                              '00000000000000000000000000000000000000000000000002540be40000000000000000000000000000' +
+                              '000000000000000000000000000000000000e00000000000000000000000000000000000000000000000' +
+                              '000000000000000120000000000000000000000000000000000000000000000000000000000000016000' +
+                              '000000000000000000000000000000000000000000000000000000000001a00000000000000000000000' +
+                              '0000000000000000000000000000000000000001e0000000000000000000000000000000000000000000' +
+                              '000000000000000000000100000000000000000000000000000000000000000000000000000000000000' +
+                              '010000000000000000000000000000000000000000000000000000000000000001000000000000000000' +
+                              '000000a9a65d631f8c8577f543b64b35909030c84676a200000000000000000000000000000000000000' +
+                              '000000000000000000000000010000000000000000000000000000000000000000000000000000000254' +
+                              '0be400000000000000000000000000000000000000000000000000000000000000000100000000000000' +
+                              '000000000058787e5441be9548440086495ea8583394e3427f0000000000000000000000000000000000' +
+                              '000000000000000000000000000001000000000000000000000000000000000000000000000000000000' +
+                              '174876e80000000000000000000000000000000000000000000000000000000000000002620000000000' +
+                              '000000000000000000000000000000000000000000000000000001000000000000000000000000000000' +
+                              '000000000000000000000000000000000100000000000000000000000000000000000000000000000000' +
+                              '000000000002020000000000000000000000000000000000000000000000000000000000000042000000' +
+                              '00000000000000000000000000000000000000000000000002540be4001cdaf75a34923557b37b4b29fb' +
+                              'a81f372d7b3f56137fe8edc039222ef48f94ab803e22dd1350f5645a4dc819bb65710f04eb6f264ad032' +
+                              '1b724e95f5e920142d5803000000000000000000000000e36ea790bc9d7ab70c55260c66d52b1eca985f' +
+                              '840000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '000000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '000000000000000000000000000000000000000000000000000000000000000000000000000000001748' +
+                              '76e80000000000000000000000000000000000000000000000000000000002540be40000000000000000' +
+                              '000000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '000000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '00716cbab800000000000000000000000000000000000000000000000000000000000003e80000000000' +
+                              '0000000000000058787e5441be9548440086495ea8583394e3427f000000000000000000000000a9a65d' +
+                              '631f8c8577f543b64b35909030c84676a200000000000000000000000000000000000000000000000000' +
+                              '0000000000');
+      });
+    });
+
+    describe('#issueRebalancingSetWithEtherGasEstimate', async () => {
+      beforeAll(async () => {
+        customSalt = new BigNumber(1000);
+        customExpirationTimeSeconds = new BigNumber(1902951096);
+      });
+
+      afterAll(async () => {
+        customSalt = undefined;
+        customExpirationTimeSeconds = undefined;
+      });
+
+      async function subject(): Promise<number> {
+        return await rebalancingSetExchangeIssuanceModuleWrapper.issueRebalancingSetWithEtherGasEstimate(
+          subjectRebalancingSetAddress,
+          subjectRebalancingSetQuantity,
+          subjectExchangeIssuanceData,
+          subjectExchangeOrdersData,
+          { from: subjectCaller, value: subjectEther.toString() }
+        );
+      }
+
+      test('issues the rebalancing Set to the caller', async () => {
+        const data = await subject();
+
+        expect(data).to.equal(829650);
+      });
+    });
   });
 
-  describe('redeemRebalancingSetIntoEther', async () => {
+  describe('#redeemRebalancingSetIntoEther', async () => {
     let subjectRebalancingSetAddress: Address;
     let subjectRebalancingSetQuantity: BigNumber;
     let subjectExchangeIssuanceData: ExchangeIssuanceParams;
@@ -286,6 +376,8 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     let subjectCaller: Address;
     let subjectEther: BigNumber;
 
+    let customSalt: BigNumber;
+    let customExpirationTimeSeconds: BigNumber;
     let zeroExOrderMaker: Address;
 
     let baseSetToken: SetTokenContract;
@@ -358,20 +450,20 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
 
       // Create 0x order for the component, using weth(4) paymentToken as default
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                                    // senderAddress
-        zeroExOrderMaker,                                // makerAddress
-        NULL_ADDRESS,                                    // takerAddress
-        ZERO,                                            // makerFee
-        ZERO,                                            // takerFee
-        exchangeIssuanceReceiveTokenAmounts[0],          // makerAssetAmount
-        exchangeIssuanceSendTokenAmounts[0],             // takerAssetAmount
-        exchangeIssuanceReceiveTokens[0],                // makerAssetAddress
-        exchangeIssuanceSendTokens[0],                   // takerAssetAddress
-        SetUtils.generateSalt(),                         // salt
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,           // exchangeAddress
-        NULL_ADDRESS,                                    // feeRecipientAddress
-        SetTestUtils.generateTimestamp(10000),           // expirationTimeSeconds
-        exchangeIssuanceSendTokenAmounts[0],             // amount of zeroExOrder to fill
+        NULL_ADDRESS,                                                         // senderAddress
+        zeroExOrderMaker,                                                     // makerAddress
+        NULL_ADDRESS,                                                         // takerAddress
+        ZERO,                                                                 // makerFee
+        ZERO,                                                                 // takerFee
+        exchangeIssuanceReceiveTokenAmounts[0],                               // makerAssetAmount
+        exchangeIssuanceSendTokenAmounts[0],                                  // takerAssetAmount
+        exchangeIssuanceReceiveTokens[0],                                     // makerAssetAddress
+        exchangeIssuanceSendTokens[0],                                        // takerAssetAddress
+        customSalt || SetUtils.generateSalt(),                                // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,                                // exchangeAddress
+        NULL_ADDRESS,                                                         // feeRecipientAddress
+        customExpirationTimeSeconds || SetTestUtils.generateTimestamp(10000), // expirationTimeSeconds
+        exchangeIssuanceSendTokenAmounts[0],                                  // amount of zeroExOrder to fill
       );
 
       subjectExchangeOrdersData = setUtils.generateSerializedOrders([zeroExOrder]);
@@ -446,6 +538,93 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       const currentEthBalance =  await web3.eth.getBalance(subjectCaller);
 
       expect(currentEthBalance).to.bignumber.equal(expectedEthBalance);
+    });
+
+    describe('#redeemRebalancingSetIntoEtherTransactionData', async () => {
+      beforeAll(async () => {
+        customSalt = new BigNumber(1000);
+        customExpirationTimeSeconds = new BigNumber(1902951096);
+      });
+
+      afterAll(async () => {
+        customSalt = undefined;
+        customExpirationTimeSeconds = undefined;
+      });
+
+      async function subject(): Promise<string> {
+        return await rebalancingSetExchangeIssuanceModuleWrapper.redeemRebalancingSetIntoEtherTransactionData(
+          subjectRebalancingSetAddress,
+          subjectRebalancingSetQuantity,
+          subjectExchangeIssuanceData,
+          subjectExchangeOrdersData,
+          { from: subjectCaller }
+        );
+      }
+
+      test('issues the rebalancing Set to the caller', async () => {
+        const data = await subject();
+
+        expect(data).to.equal('0xe8bf981d00000000000000000000000020a052db6ea52533804b768d7b43fe732a83e67d00000000000' +
+                              '000000000000000000000000000000000000000000002540be40000000000000000000000000000000000' +
+                              '0000000000000000000000000000008000000000000000000000000000000000000000000000000000000' +
+                              '000000002a0000000000000000000000000746d084aed3a220a120162008ed3912c29dbef710000000000' +
+                              '0000000000000000000000000000000000000000000002540be4000000000000000000000000000000000' +
+                              '0000000000000000000000000000000e00000000000000000000000000000000000000000000000000000' +
+                              '0000000001200000000000000000000000000000000000000000000000000000000000000160000000000' +
+                              '00000000000000000000000000000000000000000000000000001a0000000000000000000000000000000' +
+                              '00000000000000000000000000000001e0000000000000000000000000000000000000000000000000000' +
+                              '0000000000001000000000000000000000000000000000000000000000000000000000000000100000000' +
+                              '0000000000000000000000000000000000000000000000000000000100000000000000000000000058787' +
+                              'e5441be9548440086495ea8583394e3427f00000000000000000000000000000000000000000000000000' +
+                              '00000000000001000000000000000000000000000000000000000000000000000000174876e8000000000' +
+                              '000000000000000000000000000000000000000000000000000000001000000000000000000000000a9a6' +
+                              '5d631f8c8577f543b64b35909030c84676a20000000000000000000000000000000000000000000000000' +
+                              '00000000000000100000000000000000000000000000000000000000000000000000002540be400000000' +
+                              '0000000000000000000000000000000000000000000000000000000262000000000000000000000000000' +
+                              '0000000000000000000000000000000000001000000000000000000000000000000000000000000000000' +
+                              '0000000000000001000000000000000000000000000000000000000000000000000000000000020200000' +
+                              '0000000000000000000000000000000000000000000000000000000004200000000000000000000000000' +
+                              '0000000000000000000000000000174876e8001cd300a45883c8e13b91fbab35c07fff0cbe0e3ba57559f' +
+                              '9b114c4e6f44f2dad253e51efcdac6e82bbf4b3b130b9b1b4e759301a1b0019f97d90a2da016f03118e03' +
+                              '000000000000000000000000e36ea790bc9d7ab70c55260c66d52b1eca985f84000000000000000000000' +
+                              '0000000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '0000000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '000000000000000000000000000000000000000000000000000000002540be40000000000000000000000' +
+                              '0000000000000000000000000000000000174876e80000000000000000000000000000000000000000000' +
+                              '0000000000000000000000000000000000000000000000000000000000000000000000000000000000000' +
+                              '0000000000000000000000000000000000000000000000000000000000716cbab80000000000000000000' +
+                              '0000000000000000000000000000000000000000003e8000000000000000000000000a9a65d631f8c8577' +
+                              'f543b64b35909030c84676a200000000000000000000000058787e5441be9548440086495ea8583394e34' +
+                              '27f000000000000000000000000000000000000000000000000000000000000');
+      });
+
+      describe('#redeemRebalancingSetIntoEtherGasEstimate', async () => {
+        beforeAll(async () => {
+          customSalt = new BigNumber(1000);
+          customExpirationTimeSeconds = new BigNumber(1902951096);
+        });
+
+        afterAll(async () => {
+          customSalt = undefined;
+          customExpirationTimeSeconds = undefined;
+        });
+
+        async function subject(): Promise<number> {
+          return await rebalancingSetExchangeIssuanceModuleWrapper.redeemRebalancingSetIntoEtherGasEstimate(
+            subjectRebalancingSetAddress,
+            subjectRebalancingSetQuantity,
+            subjectExchangeIssuanceData,
+            subjectExchangeOrdersData,
+            { from: subjectCaller }
+          );
+        }
+
+        test('issues the rebalancing Set to the caller', async () => {
+          const data = await subject();
+
+          expect(data).to.equal(834924);
+        });
+      });
     });
   });
 });
