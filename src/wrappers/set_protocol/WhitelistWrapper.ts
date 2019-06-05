@@ -18,17 +18,18 @@
 
 import Web3 from 'web3';
 
+
 import { ContractWrapper } from '.';
-import { Address } from '../types/common';
+import { Address } from '../../types/common';
 
 /**
- * @title  AuthorizableWrapper
+ * @title  WhitelistWrapper
  * @author Set Protocol
  *
- * The AuthorizableWrapper handles all functions and states related to authorizable contracts
+ * The WhitelistWrapper handles all functions and states related to authorizable contracts
  *
  */
-export class AuthorizableWrapper {
+export class WhitelistWrapper {
   private web3: Web3;
   private contracts: ContractWrapper;
 
@@ -38,14 +39,16 @@ export class AuthorizableWrapper {
   }
 
   /**
-   * Fetches an array of authorized addresses for the autorized contract
+   * Fetches the valid addresses in the whitelist contract
    *
-   * @param  authorizableContract Address of the contract
-   * @return                      A list of authorized addresses
+   * @param  whitelistContract    Address of the contract
+   * @return                      A list of whitelisted addresses
    */
-  public async getAuthorizedAddresses(authorizableContract: Address): Promise<Address[]> {
-    const authorizableInstance = await this.contracts.loadAuthorizableAsync(authorizableContract);
+  public async validAddresses(whitelistContract: Address): Promise<Address[]> {
+    const whitelistInstance = await this.contracts.loadWhitelistAsync(
+      whitelistContract
+    );
 
-    return await authorizableInstance.getAuthorizedAddresses.callAsync();
+    return await whitelistInstance.validAddresses.callAsync();
   }
 }

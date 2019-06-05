@@ -21,8 +21,8 @@ import Web3 from 'web3';
 import { SetProtocolUtils } from 'set-protocol-utils';
 
 import { ContractWrapper } from '.';
-import { Address, Tx } from '../types/common';
-import { BigNumber, generateTxOpts } from '../util';
+import { Address, Tx } from '../../types/common';
+import { BigNumber, generateTxOpts } from '../../util';
 
 /**
  * @title CoreWrapper

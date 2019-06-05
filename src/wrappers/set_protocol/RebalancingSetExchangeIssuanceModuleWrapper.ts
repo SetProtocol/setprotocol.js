@@ -19,8 +19,8 @@
 import Web3 from 'web3';
 
 import { ContractWrapper } from '.';
-import { BigNumber, generateTxOpts } from '../util';
-import { Address, Tx } from '../types/common';
+import { BigNumber, generateTxOpts } from '../../util';
+import { Address, Tx } from '../../types/common';
 import { Bytes, ExchangeIssuanceParams } from 'set-protocol-utils';
 
 /**

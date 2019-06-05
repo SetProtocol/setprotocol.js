@@ -93,14 +93,14 @@ export interface RebalancingManagerDetails {
 
 export interface SetProtocolConfig {
   coreAddress: Address;
+  exchangeIssuanceModuleAddress: Address;
+  kyberNetworkWrapperAddress: Address;
+  rebalanceAuctionModuleAddress: Address;
+  rebalancingSetExchangeIssuanceModule: Address;
+  rebalancingSetTokenFactoryAddress: Address;
+  setTokenFactoryAddress: Address;
   transferProxyAddress: Address;
   vaultAddress: Address;
-  rebalanceAuctionModuleAddress: Address;
-  kyberNetworkWrapperAddress: Address;
-  setTokenFactoryAddress: Address;
-  rebalancingSetTokenFactoryAddress: Address;
-  exchangeIssuanceModuleAddress: Address;
-  rebalancingSetExchangeIssuanceModule: Address;
   wrappedEtherAddress: Address;
 }
 

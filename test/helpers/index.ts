@@ -31,7 +31,9 @@ export {
 
 export {
   addPriceFeedOwnerToMedianizer,
+  deployDailyPriceFeedAsync,
   deployMedianizerAsync,
+  deployMovingAverageOracleAsync,
   updateMedianizerPriceAsync
 } from './oracleHelpers';
 

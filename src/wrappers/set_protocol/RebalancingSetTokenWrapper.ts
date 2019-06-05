@@ -17,10 +17,10 @@
 'use strict';
 
 import Web3 from 'web3';
-import { Address, TokenFlows, Tx } from '../types/common';
+import { Address, TokenFlows, Tx } from '../../types/common';
 
 import { ContractWrapper } from '.';
-import { BigNumber } from '../util';
+import { BigNumber } from '../../util';
 
 /**
  * @title  RebalancingSetTokenWrapper

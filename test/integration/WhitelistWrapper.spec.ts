@@ -24,9 +24,7 @@ jest.setTimeout(30000);
 
 import * as chai from 'chai';
 import Web3 from 'web3';
-import {
-  WhiteListContract,
-} from 'set-protocol-contracts';
+import { WhiteListContract } from 'set-protocol-contracts';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { WhitelistWrapper } from '@src/wrappers';

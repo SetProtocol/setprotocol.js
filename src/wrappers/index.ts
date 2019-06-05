@@ -16,23 +16,7 @@
 
 'use strict';
 
-import { AuthorizableWrapper } from './AuthorizableWrapper';
-import { BTCETHRebalancingManagerWrapper } from './BTCETHRebalancingManagerWrapper';
-import { ContractWrapper } from './ContractWrapper';
-import { CoreWrapper } from './CoreWrapper';
-import { ERC20Wrapper } from './ERC20Wrapper';
-import { ExchangeIssuanceModuleWrapper } from './ExchangeIssuanceModuleWrapper';
-import { KyberNetworkWrapper } from './KyberNetworkWrapper';
-import { RebalancingSetExchangeIssuanceModuleWrapper } from './RebalancingSetExchangeIssuanceModuleWrapper';
-import { PriceFeedWrapper } from './PriceFeedWrapper';
-import { RebalancingAuctionModuleWrapper } from './RebalancingAuctionModuleWrapper';
-import { RebalancingSetTokenWrapper } from './RebalancingSetTokenWrapper';
-import { SetTokenWrapper } from './SetTokenWrapper';
-import { TimeLockUpgradeWrapper } from './TimeLockUpgradeWrapper';
-import { WhitelistWrapper } from './WhitelistWrapper';
-import { VaultWrapper } from './VaultWrapper';
-
-export {
+import {
   AuthorizableWrapper,
   BTCETHRebalancingManagerWrapper,
   ContractWrapper,
@@ -48,4 +32,25 @@ export {
   TimeLockUpgradeWrapper,
   WhitelistWrapper,
   VaultWrapper
+} from './set_protocol';
+
+import { DailyPriceFeedWrapper } from './strategies';
+
+export {
+  AuthorizableWrapper,
+  BTCETHRebalancingManagerWrapper,
+  ContractWrapper,
+  CoreWrapper,
+  DailyPriceFeedWrapper,
+  ERC20Wrapper,
+  ExchangeIssuanceModuleWrapper,
+  KyberNetworkWrapper,
+  PriceFeedWrapper,
+  RebalancingAuctionModuleWrapper,
+  RebalancingSetExchangeIssuanceModuleWrapper,
+  RebalancingSetTokenWrapper,
+  SetTokenWrapper,
+  TimeLockUpgradeWrapper,
+  VaultWrapper,
+  WhitelistWrapper
 };

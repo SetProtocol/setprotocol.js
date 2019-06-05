@@ -19,7 +19,7 @@
 import Web3 from 'web3';
 
 import { ContractWrapper } from '.';
-import { Address } from '../types/common';
+import { Address } from '../../types/common';
 import { Bytes } from 'set-protocol-utils';
 
 /**

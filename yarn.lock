@@ -5976,9 +5976,9 @@ set-immediate-shim@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/set-immediate-shim/-/set-immediate-shim-1.0.1.tgz#4b2b1b27eb808a9f8dcc481a58e5e56f599f3f61"
 
-set-protocol-contracts@1.2.1-beta.18:
-  version "1.2.1-beta.18"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.1-beta.18.tgz#ad11c1dd0c686d7127fb4cb0f867a0305b5cbc6c"
+set-protocol-contracts@1.2.1-beta.23, set-protocol-contracts@^1.2.1-beta.22:
+  version "1.2.1-beta.23"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.1-beta.23.tgz#1f6bbd9b0d4578238df4b577b4853d225d7ad2fb"
   dependencies:
     bn-chai "^1.0.1"
     canonical-weth "^1.3.1"
@@ -5991,6 +5991,30 @@ set-protocol-contracts@1.2.1-beta.18:
     lint-staged "^7.2.0"
     module-alias "^2.1.0"
     openzeppelin-solidity "^2.2"
+    set-protocol-utils "^1.0.0-beta.32"
+    tiny-promisify "^1.0.0"
+    ts-mocha "^6.0.0"
+    ts-node "^8.0.2"
+    tslint-eslint-rules "^5.3.1"
+    web3 "1.0.0-beta.36"
+    web3-utils "1.0.0-beta.36"
+
+set-protocol-strategies@1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/set-protocol-strategies/-/set-protocol-strategies-1.0.3.tgz#0e822a562104b2ad10f45a0be529b1fd66cf7d5f"
+  dependencies:
+    bn-chai "^1.0.1"
+    canonical-weth "^1.3.1"
+    dotenv "^6.2.0"
+    eth-gas-reporter "^0.1.10"
+    ethlint "^1.2.3"
+    expect "^24.1.0"
+    fs-extra "^5.0.0"
+    husky "^0.14.3"
+    lint-staged "^7.2.0"
+    module-alias "^2.1.0"
+    openzeppelin-solidity "^2.2"
+    set-protocol-contracts "^1.2.1-beta.22"
     set-protocol-utils "^1.0.0-beta.32"
     tiny-promisify "^1.0.0"
     ts-mocha "^6.0.0"
