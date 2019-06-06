@@ -26,15 +26,15 @@ import * as chai from 'chai';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
 import { MedianContract } from 'set-protocol-contracts';
-import { DailyPriceFeedContract } from 'set-protocol-strategies';
+import { HistoricalPriceFeedContract } from 'set-protocol-strategies';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
-import { DailyPriceFeedWrapper } from '@src/wrappers';
+import { HistoricalPriceFeedWrapper } from '@src/wrappers';
 import { BigNumber } from '@src/util';
 import {
   addPriceFeedOwnerToMedianizer,
-  deployDailyPriceFeedAsync,
+  deployHistoricalPriceFeedAsync,
   deployMedianizerAsync,
   increaseChainTimeAsync,
   updateMedianizerPriceAsync
@@ -50,10 +50,11 @@ const web3Utils = new Web3Utils(web3);
 let currentSnapshotId: number;
 
 
-describe('DailyPriceFeedWrapper', () => {
-  let dailyPriceFeed: DailyPriceFeedContract;
-  let dailyPriceFeedWrapper: DailyPriceFeedWrapper;
+describe('historicalPriceFeedWrapper', () => {
+  let dailyPriceFeed: HistoricalPriceFeedContract;
+  let historicalPriceFeedWrapper: HistoricalPriceFeedWrapper;
 
+  const priceFeedUpdateFrequency: BigNumber = new BigNumber(10);
   const initialMedianizerEthPrice: BigNumber = new BigNumber(1000000);
   const priceFeedDataDescription: string = '200DailyETHPrice';
   const seededPriceFeedPrices: BigNumber[] = [
@@ -76,14 +77,15 @@ describe('DailyPriceFeedWrapper', () => {
       SetTestUtils.generateTimestamp(1000),
     );
 
-    dailyPriceFeed = await deployDailyPriceFeedAsync(
+    dailyPriceFeed = await deployHistoricalPriceFeedAsync(
       web3,
+      priceFeedUpdateFrequency,
       medianizer.address,
       priceFeedDataDescription,
       seededPriceFeedPrices
     );
 
-    dailyPriceFeedWrapper = new DailyPriceFeedWrapper(web3);
+    historicalPriceFeedWrapper = new HistoricalPriceFeedWrapper(web3);
   });
 
   afterEach(async () => {
@@ -100,7 +102,7 @@ describe('DailyPriceFeedWrapper', () => {
     });
 
     async function subject(): Promise<BigNumber[]> {
-      return await dailyPriceFeedWrapper.read(
+      return await historicalPriceFeedWrapper.read(
         subjectPriceFeedAddress,
         subjectDataDays
       );
@@ -122,7 +124,7 @@ describe('DailyPriceFeedWrapper', () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await dailyPriceFeedWrapper.lastUpdatedAt(
+      return await historicalPriceFeedWrapper.lastUpdatedAt(
         subjectPriceFeedAddress
       );
     }
@@ -144,11 +146,11 @@ describe('DailyPriceFeedWrapper', () => {
       subjectPriceFeedAddress = dailyPriceFeed.address;
       subjectCaller = DEFAULT_ACCOUNT;
 
-      increaseChainTimeAsync(web3, new BigNumber(10000000));
+      increaseChainTimeAsync(web3, priceFeedUpdateFrequency);
     });
 
     async function subject(): Promise<string> {
-      return await dailyPriceFeedWrapper.poke(
+      return await historicalPriceFeedWrapper.poke(
         subjectPriceFeedAddress,
         { from: subjectCaller }
       );
@@ -158,7 +160,7 @@ describe('DailyPriceFeedWrapper', () => {
       await subject();
 
       const dataPointsToRead = new BigNumber(1);
-      const [mostRecentPrice] = await dailyPriceFeedWrapper.read(subjectPriceFeedAddress, dataPointsToRead);
+      const [mostRecentPrice] = await historicalPriceFeedWrapper.read(subjectPriceFeedAddress, dataPointsToRead);
       expect(mostRecentPrice).to.bignumber.equal(initialMedianizerEthPrice);
     });
   });

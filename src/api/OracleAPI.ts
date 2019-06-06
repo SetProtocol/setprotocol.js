@@ -19,10 +19,7 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
 
-import {
-  DailyPriceFeedWrapper,
-  MovingAverageOracleWrapper
-} from '../wrappers/strategies';
+import { HistoricalPriceFeedWrapper, MovingAverageOracleWrapper } from '../wrappers';
 import { BigNumber } from '../util';
 import {
   Address,
@@ -36,7 +33,7 @@ import {
  * A library for reading and updating price oracles
  */
 export class OracleAPI {
-  private dailyPriceFeedWrapper: DailyPriceFeedWrapper;
+  private historicalPriceFeedWrapper: HistoricalPriceFeedWrapper;
   private movingAverageOracleWrapper: MovingAverageOracleWrapper;
 
   /**
@@ -46,45 +43,48 @@ export class OracleAPI {
    *                      with the Ethereum network
    */
   constructor(web3: Web3) {
-    this.dailyPriceFeedWrapper = new DailyPriceFeedWrapper(web3);
+    this.historicalPriceFeedWrapper = new HistoricalPriceFeedWrapper(web3);
     this.movingAverageOracleWrapper = new MovingAverageOracleWrapper(web3);
   }
 
   /**
    * Returns the Unix timestamp of when the price feed was last updated
    *
-   * @param  dailyPriceFeed    Address of the DailyPriceFeed contract to poll
-   * @return                   Timestamp of when the price feed was last updated
+   * @param  historicalPriceFeed    Address of the HistoricalPriceFeed contract to poll
+   * @return                        Timestamp of when the price feed was last updated
    */
-  public async getRollingDailyFeedLastUpdatedAsync(dailyPriceFeed: Address): Promise<BigNumber> {
-    return await this.dailyPriceFeedWrapper.lastUpdatedAt(dailyPriceFeed);
+  public async getRollingHistoricalFeedLastUpdatedAsync(historicalPriceFeed: Address): Promise<BigNumber> {
+    return await this.historicalPriceFeedWrapper.lastUpdatedAt(historicalPriceFeed);
   }
 
   /**
    * Returns the current price feed prices for dayCount number of days
    *
-   * @param  dailyPriceFeed    Address of the DailyPriceFeed contract to update
-   * @param  dayCount          Number of days to fetch price data for
-   * @return                   List of prices recorded on the feed
+   * @param  historicalPriceFeed    Address of the HistoricalPriceFeed contract to update
+   * @param  dayCount               Number of days to fetch price data for
+   * @return                        List of prices recorded on the feed
    */
-  public async getRollingDailyFeedPricesAsync(dailyPriceFeed: Address, dayCount: BigNumber): Promise<BigNumber[]> {
-    return await this.dailyPriceFeedWrapper.read(dailyPriceFeed, dayCount);
+  public async getRollingHistoricalFeedPricesAsync(
+    historicalPriceFeed: Address,
+    dayCount: BigNumber
+  ): Promise<BigNumber[]> {
+    return await this.historicalPriceFeedWrapper.read(historicalPriceFeed, dayCount);
   }
 
   /**
    * Updates the price feed to record the current price from another Medianizer oracle
    *
-   * @param  dailyPriceFeed    Address of the DailyPriceFeed contract to update
-   * @param  txOpts            The options for executing the transaction
-   * @return                   Transaction hash
+   * @param  historicalPriceFeed    Address of the historicalPriceFeed contract to update
+   * @param  txOpts                 The options for executing the transaction
+   * @return                        Transaction hash
    */
-  public async updateRollingDailyFeedPriceAsync(dailyPriceFeedAddress: Address, txOpts: Tx): Promise<string> {
-    return await this.dailyPriceFeedWrapper.poke(dailyPriceFeedAddress, txOpts);
+  public async updateRollingHistoricalFeedPriceAsync(historicalPriceFeedAddress: Address, txOpts: Tx): Promise<string> {
+    return await this.historicalPriceFeedWrapper.poke(historicalPriceFeedAddress, txOpts);
   }
 
   /**
    * Get the average price of a sequential list of asset prices stored on the MovingAverageOracle's connected
-   * DailyPriceFeed contract
+   * HistoricalPriceFeed contract
    *
    * @param  movingAverageOracle    Address of the MovingAverageOracle contract
    * @param  txOpts                 The options for executing the transaction

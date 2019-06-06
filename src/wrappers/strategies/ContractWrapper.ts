@@ -20,7 +20,7 @@ import Web3 from 'web3';
 
 import {
   BaseContract,
-  DailyPriceFeedContract,
+  HistoricalPriceFeedContract,
   MovingAverageOracleContract
 } from 'set-protocol-strategies';
 
@@ -43,28 +43,28 @@ export class ContractWrapper {
   }
 
   /**
-   * Load a DailyPriceFeed contract
+   * Load a HistoricalPriceFeed contract
    *
-   * @param  dailyPriceFeed               Address of the DailyPriceFeed contract
+   * @param  historicalPriceFeed          Address of the HistoricalPriceFeed contract
    * @param  transactionOptions           Options sent into the contract deployed method
-   * @return                              The DailyPriceFeed Contract
+   * @return                              The HistoricalPriceFeed Contract
    */
-  public async loadDailyPriceFeedContract(
-    dailyPriceFeed: Address,
+  public async loadHistoricalPriceFeedContract(
+    historicalPriceFeed: Address,
     transactionOptions: object = {},
-  ): Promise<DailyPriceFeedContract> {
-    const cacheKey = `DailyPriceFeed_${dailyPriceFeed}`;
+  ): Promise<HistoricalPriceFeedContract> {
+    const cacheKey = `HistoricalPriceFeed_${historicalPriceFeed}`;
 
     if (cacheKey in this.cache) {
-      return this.cache[cacheKey] as DailyPriceFeedContract;
+      return this.cache[cacheKey] as HistoricalPriceFeedContract;
     } else {
-      const dailyPriceFeedContract = await DailyPriceFeedContract.at(
-        dailyPriceFeed,
+      const historicalPriceFeedContract = await HistoricalPriceFeedContract.at(
+        historicalPriceFeed,
         this.web3,
         transactionOptions,
       );
-      this.cache[cacheKey] = dailyPriceFeedContract;
-      return dailyPriceFeedContract;
+      this.cache[cacheKey] = historicalPriceFeedContract;
+      return historicalPriceFeedContract;
     }
   }
 

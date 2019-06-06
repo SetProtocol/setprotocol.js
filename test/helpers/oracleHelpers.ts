@@ -3,8 +3,8 @@ import Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import { Median, MedianContract } from 'set-protocol-contracts';
 import {
-  DailyPriceFeed,
-  DailyPriceFeedContract,
+  HistoricalPriceFeed,
+  HistoricalPriceFeedContract,
   MovingAverageOracle,
   MovingAverageOracleContract
 } from 'set-protocol-strategies';
@@ -61,25 +61,27 @@ export const updateMedianizerPriceAsync = async(
     );
 };
 
-export const deployDailyPriceFeedAsync = async(
+export const deployHistoricalPriceFeedAsync = async(
   web3: Web3,
+  updateFrequency: BigNumber,
   medianizerAddress: Address,
   dataDescription: string = '200DailyETHPrice',
   seededValues: BigNumber[] = [],
   from: Address = TX_DEFAULTS.from,
-): Promise<DailyPriceFeedContract> => {
-  const truffleDailyPriceFeedContract = contract(DailyPriceFeed);
-  truffleDailyPriceFeedContract.setProvider(web3.currentProvider);
-  truffleDailyPriceFeedContract.setNetwork(50);
-  truffleDailyPriceFeedContract.defaults(TX_DEFAULTS);
+): Promise<HistoricalPriceFeedContract> => {
+  const truffleHistoricalPriceFeedContract = contract(HistoricalPriceFeed);
+  truffleHistoricalPriceFeedContract.setProvider(web3.currentProvider);
+  truffleHistoricalPriceFeedContract.setNetwork(50);
+  truffleHistoricalPriceFeedContract.defaults(TX_DEFAULTS);
 
-  // Deploy DailyPriceFeed
-  const deployedMedianInstance = await truffleDailyPriceFeedContract.new(
+  // Deploy HistoricalPriceFeed
+  const deployedMedianInstance = await truffleHistoricalPriceFeedContract.new(
+    updateFrequency,
     medianizerAddress,
     dataDescription,
     seededValues
   );
-  return await DailyPriceFeedContract.at(
+  return await HistoricalPriceFeedContract.at(
     deployedMedianInstance.address,
     web3,
     TX_DEFAULTS,
@@ -97,7 +99,7 @@ export const deployMovingAverageOracleAsync = async(
   truffleMovingAveragesOracleContract.setNetwork(50);
   truffleMovingAveragesOracleContract.defaults(TX_DEFAULTS);
 
-  // Deploy DailyPriceFeed
+  // Deploy HistoricalPriceFeed
   const deployedMovingAverageOracleInstance = await truffleMovingAveragesOracleContract.new(
     priceFeedAddress,
     dataDescription
