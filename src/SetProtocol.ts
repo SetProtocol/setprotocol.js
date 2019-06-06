@@ -26,6 +26,7 @@ import {
   ExchangeIssuanceAPI,
   FactoryAPI,
   IssuanceAPI,
+  OracleAPI,
   RebalancingAPI,
   RebalancingManagerAPI,
   SystemAPI,
@@ -94,6 +95,11 @@ class SetProtocol {
    */
   public system: SystemAPI;
 
+  /**
+   * An instance of the OracleAPI class containing methods for interacting with Price Feeds and Moving Average Oracles
+   */
+  public oracle: OracleAPI;
+
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library
@@ -121,6 +127,7 @@ class SetProtocol {
     this.erc20 = new ERC20API(this.web3, assertions);
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
+    this.oracle = new OracleAPI(this.web3);
     this.setToken = new SetTokenAPI(this.web3, assertions);
     this.system = new SystemAPI(this.web3, this.core, config);
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, config);
