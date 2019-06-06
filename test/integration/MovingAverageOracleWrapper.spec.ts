@@ -26,7 +26,7 @@ import * as chai from 'chai';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
 import { MedianContract } from 'set-protocol-contracts';
-import { DailyPriceFeedContract, MovingAverageOracleContract } from 'set-protocol-strategies';
+import { HistoricalPriceFeedContract, MovingAverageOracleContract } from 'set-protocol-strategies';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
@@ -34,7 +34,7 @@ import { MovingAverageOracleWrapper } from '@src/wrappers/strategies';
 import { BigNumber } from '@src/util';
 import {
   addPriceFeedOwnerToMedianizer,
-  deployDailyPriceFeedAsync,
+  deployHistoricalPriceFeedAsync,
   deployMedianizerAsync,
   deployMovingAverageOracleAsync,
   updateMedianizerPriceAsync,
@@ -54,6 +54,7 @@ describe('MovingAveragesOracleWrapper', () => {
   let movingAverageOracle: MovingAverageOracleContract;
   let movingAveragesOracleWrapper: MovingAverageOracleWrapper;
 
+  const priceFeedUpdateFrequency: BigNumber = new BigNumber(10);
   const initialMedianizerEthPrice: BigNumber = new BigNumber(1000000);
   const priceFeedDataDescription: string = '200DailyETHPrice';
   const seededPriceFeedPrices: BigNumber[] = [
@@ -76,8 +77,9 @@ describe('MovingAveragesOracleWrapper', () => {
       SetTestUtils.generateTimestamp(1000),
     );
 
-    const dailyPriceFeed: DailyPriceFeedContract = await deployDailyPriceFeedAsync(
+    const dailyPriceFeed: HistoricalPriceFeedContract = await deployHistoricalPriceFeedAsync(
       web3,
+      priceFeedUpdateFrequency,
       medianizer.address,
       priceFeedDataDescription,
       seededPriceFeedPrices

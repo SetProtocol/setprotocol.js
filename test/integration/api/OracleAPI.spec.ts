@@ -32,7 +32,7 @@ import {
   MedianContract,
 } from 'set-protocol-contracts';
 import { Core } from 'set-protocol-contracts';
-import { DailyPriceFeedContract, MovingAverageOracleContract } from 'set-protocol-strategies';
+import { HistoricalPriceFeedContract, MovingAverageOracleContract } from 'set-protocol-strategies';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { OracleAPI } from '@src/api';
@@ -41,7 +41,7 @@ import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { TX_DEFAULTS } from '@src/constants';
 import {
   addPriceFeedOwnerToMedianizer,
-  deployDailyPriceFeedAsync,
+  deployHistoricalPriceFeedAsync,
   deployMedianizerAsync,
   deployMovingAverageOracleAsync,
   updateMedianizerPriceAsync,
@@ -66,15 +66,16 @@ coreContract.defaults(TX_DEFAULTS);
 describe('OracleAPI', () => {
   let oracleAPI: OracleAPI;
 
+  const priceFeedUpdateFrequency: BigNumber = new BigNumber(10);
   const initialMedianizerEthPrice: BigNumber = new BigNumber(1000000);
-    const priceFeedDataDescription: string = '200DailyETHPrice';
-    const seededPriceFeedPrices: BigNumber[] = [
-      new BigNumber(1000000),
-      new BigNumber(2000000),
-      new BigNumber(3000000),
-      new BigNumber(4000000),
-      new BigNumber(5000000),
-    ];
+  const priceFeedDataDescription: string = '200DailyETHPrice';
+  const seededPriceFeedPrices: BigNumber[] = [
+    new BigNumber(1000000),
+    new BigNumber(2000000),
+    new BigNumber(3000000),
+    new BigNumber(4000000),
+    new BigNumber(5000000),
+  ];
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -94,7 +95,7 @@ describe('OracleAPI', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('getRollingDailyFeedLastUpdatedAsync', async () => {
+  describe('getRollingHistoricalFeedLastUpdatedAsync', async () => {
     let subjectPriceFeedAddress: Address;
 
     beforeEach(async () => {
@@ -107,18 +108,19 @@ describe('OracleAPI', () => {
         SetTestUtils.generateTimestamp(1000),
       );
 
-      const dailyPriceFeed: DailyPriceFeedContract = await deployDailyPriceFeedAsync(
+      const historicalPriceFeed: HistoricalPriceFeedContract = await deployHistoricalPriceFeedAsync(
         web3,
+        priceFeedUpdateFrequency,
         medianizer.address,
         priceFeedDataDescription,
         seededPriceFeedPrices
       );
 
-      subjectPriceFeedAddress = dailyPriceFeed.address;
+      subjectPriceFeedAddress = historicalPriceFeed.address;
     });
 
     async function subject(): Promise<BigNumber> {
-      return await oracleAPI.getRollingDailyFeedLastUpdatedAsync(
+      return await oracleAPI.getRollingHistoricalFeedLastUpdatedAsync(
         subjectPriceFeedAddress,
       );
     }
@@ -132,7 +134,7 @@ describe('OracleAPI', () => {
     });
   });
 
-  describe('getRollingDailyFeedPricesAsync', async () => {
+  describe('getRollingHistoricalFeedPricesAsync', async () => {
     let subjectPriceFeedAddress: Address;
     let subjectDayCount: BigNumber;
 
@@ -146,19 +148,20 @@ describe('OracleAPI', () => {
         SetTestUtils.generateTimestamp(1000),
       );
 
-      const dailyPriceFeed: DailyPriceFeedContract = await deployDailyPriceFeedAsync(
+      const historicalPriceFeed: HistoricalPriceFeedContract = await deployHistoricalPriceFeedAsync(
         web3,
+        priceFeedUpdateFrequency,
         medianizer.address,
         priceFeedDataDescription,
         seededPriceFeedPrices
       );
 
-      subjectPriceFeedAddress = dailyPriceFeed.address;
+      subjectPriceFeedAddress = historicalPriceFeed.address;
       subjectDayCount = new BigNumber(seededPriceFeedPrices.length + 1);
     });
 
     async function subject(): Promise<BigNumber[]> {
-      return await oracleAPI.getRollingDailyFeedPricesAsync(
+      return await oracleAPI.getRollingHistoricalFeedPricesAsync(
         subjectPriceFeedAddress,
         subjectDayCount
       );
@@ -172,7 +175,7 @@ describe('OracleAPI', () => {
     });
   });
 
-  describe('updateRollingDailyFeedPriceAsync', async () => {
+  describe('updateRollingHistoricalFeedPriceAsync', async () => {
     let subjectPriceFeedAddress: Address;
     let subjectCaller: Address;
 
@@ -186,8 +189,9 @@ describe('OracleAPI', () => {
         SetTestUtils.generateTimestamp(1000),
       );
 
-      const dailyPriceFeed: DailyPriceFeedContract = await deployDailyPriceFeedAsync(
+      const historicalPriceFeed: HistoricalPriceFeedContract = await deployHistoricalPriceFeedAsync(
         web3,
+        priceFeedUpdateFrequency,
         medianizer.address,
         priceFeedDataDescription,
         seededPriceFeedPrices
@@ -195,12 +199,12 @@ describe('OracleAPI', () => {
 
       increaseChainTimeAsync(web3, new BigNumber(10000000));
 
-      subjectPriceFeedAddress = dailyPriceFeed.address;
+      subjectPriceFeedAddress = historicalPriceFeed.address;
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
     async function subject(): Promise<string> {
-      return await oracleAPI.updateRollingDailyFeedPriceAsync(
+      return await oracleAPI.updateRollingHistoricalFeedPriceAsync(
         subjectPriceFeedAddress,
         { from: subjectCaller }
       );
@@ -210,7 +214,7 @@ describe('OracleAPI', () => {
       await subject();
 
       const dataPointsToRead = new BigNumber(1);
-      const [mostRecentPrice] = await oracleAPI.getRollingDailyFeedPricesAsync(
+      const [mostRecentPrice] = await oracleAPI.getRollingHistoricalFeedPricesAsync(
         subjectPriceFeedAddress,
         dataPointsToRead
       );
@@ -233,8 +237,9 @@ describe('OracleAPI', () => {
         SetTestUtils.generateTimestamp(1000),
       );
 
-      const dailyPriceFeed: DailyPriceFeedContract = await deployDailyPriceFeedAsync(
+      const historicalPriceFeed: HistoricalPriceFeedContract = await deployHistoricalPriceFeedAsync(
         web3,
+        priceFeedUpdateFrequency,
         medianizer.address,
         priceFeedDataDescription,
         seededPriceFeedPrices
@@ -242,7 +247,7 @@ describe('OracleAPI', () => {
 
       const movingAverageOracle: MovingAverageOracleContract = await deployMovingAverageOracleAsync(
         web3,
-        dailyPriceFeed.address,
+        historicalPriceFeed.address,
         priceFeedDataDescription
       );
 

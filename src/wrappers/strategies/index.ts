@@ -17,11 +17,11 @@
 'use strict';
 
 import { ContractWrapper } from './ContractWrapper';
-import { DailyPriceFeedWrapper } from './DailyPriceFeedWrapper';
+import { HistoricalPriceFeedWrapper } from './HistoricalPriceFeedWrapper';
 import { MovingAverageOracleWrapper } from './MovingAverageOracleWrapper';
 
 export {
   ContractWrapper,
-  DailyPriceFeedWrapper,
+  HistoricalPriceFeedWrapper,
   MovingAverageOracleWrapper
 };
