@@ -19,7 +19,7 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
 
-import { HistoricalPriceFeedWrapper, MovingAverageOracleWrapper } from '../wrappers/strategies';
+import { HistoricalPriceFeedWrapper, MovingAverageOracleWrapper } from '../wrappers';
 import { BigNumber } from '../util';
 import {
   Address,

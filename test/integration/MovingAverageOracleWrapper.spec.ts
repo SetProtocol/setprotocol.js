@@ -30,7 +30,7 @@ import { HistoricalPriceFeedContract, MovingAverageOracleContract } from 'set-pr
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
-import { MovingAverageOracleWrapper } from '@src/wrappers/strategies';
+import { MovingAverageOracleWrapper } from '@src/wrappers';
 import { BigNumber } from '@src/util';
 import {
   addPriceFeedOwnerToMedianizer,

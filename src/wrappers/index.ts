@@ -34,17 +34,21 @@ import {
   VaultWrapper
 } from './set_protocol';
 
-import { DailyPriceFeedWrapper } from './strategies';
+import {
+  HistoricalPriceFeedWrapper,
+  MovingAverageOracleWrapper
+} from './strategies';
 
 export {
   AuthorizableWrapper,
   BTCETHRebalancingManagerWrapper,
   ContractWrapper,
   CoreWrapper,
-  DailyPriceFeedWrapper,
   ERC20Wrapper,
   ExchangeIssuanceModuleWrapper,
+  HistoricalPriceFeedWrapper,
   KyberNetworkWrapper,
+  MovingAverageOracleWrapper,
   PriceFeedWrapper,
   RebalancingAuctionModuleWrapper,
   RebalancingSetExchangeIssuanceModuleWrapper,

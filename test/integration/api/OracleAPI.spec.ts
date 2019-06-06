@@ -28,9 +28,7 @@ import * as chai from 'chai';
 import Web3 from 'web3';
 import { Address, Web3Utils } from 'set-protocol-utils';
 import * as setProtocolUtils from 'set-protocol-utils';
-import {
-  MedianContract,
-} from 'set-protocol-contracts';
+import { MedianContract } from 'set-protocol-contracts';
 import { Core } from 'set-protocol-contracts';
 import { HistoricalPriceFeedContract, MovingAverageOracleContract } from 'set-protocol-strategies';
 

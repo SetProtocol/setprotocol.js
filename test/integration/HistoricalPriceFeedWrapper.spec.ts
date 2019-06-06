@@ -30,7 +30,7 @@ import { HistoricalPriceFeedContract } from 'set-protocol-strategies';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
-import { HistoricalPriceFeedWrapper } from '@src/wrappers/strategies';
+import { HistoricalPriceFeedWrapper } from '@src/wrappers';
 import { BigNumber } from '@src/util';
 import {
   addPriceFeedOwnerToMedianizer,
