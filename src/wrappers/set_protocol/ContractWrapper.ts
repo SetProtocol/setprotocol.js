@@ -36,7 +36,7 @@ import {
   VaultContract,
 } from 'set-protocol-contracts';
 
-import { Address } from '../types/common';
+import { Address } from '../../types/common';
 
 /**
  * @title ContractWrapper
@@ -415,7 +415,7 @@ export class ContractWrapper {
    *
    * @param  medianizer                   Address of the Medianizer contract
    * @param  transactionOptions           Options sent into the contract deployed method
-   * @return                              The ExchangeIssuanceModule Contract
+   * @return                              The Medianizer Contract
    */
   public async loadMedianizerContract(
     medianizer: Address,

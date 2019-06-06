@@ -52,7 +52,7 @@ import {
 } from '@src/constants';
 import { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util/logs';
 import { BigNumber } from '@src/util';
-import { ERC20Wrapper } from '@src/wrappers/ERC20Wrapper';
+import { ERC20Wrapper } from '@src/wrappers';
 import { Address, Log, SetProtocolConfig, SetUnits } from '@src/types/common';
 import {
   approveForTransferAsync,

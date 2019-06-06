@@ -20,8 +20,8 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 
 import { ContractWrapper } from '.';
-import { Address, Tx } from '../types/common';
-import { BigNumber, generateTxOpts } from '../util';
+import { Address, Tx } from '../../types/common';
+import { BigNumber, generateTxOpts } from '../../util';
 
 /**
  * @title RebalancingAuctionModuleWrapper
