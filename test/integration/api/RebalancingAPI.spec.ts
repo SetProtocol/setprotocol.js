@@ -25,6 +25,7 @@ jest.setTimeout(30000);
 import * as chai from 'chai';
 import * as _ from 'lodash';
 import Web3 from 'web3';
+import { format } from 'date-fns';
 import {
   ConstantAuctionPriceCurveContract,
   CoreContract,
@@ -89,7 +90,6 @@ const { expect } = chai;
 const timeKeeper = require('timekeeper');
 const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
-const moment = require('moment');
 
 let currentSnapshotId: number;
 
@@ -342,8 +342,7 @@ describe('RebalancingAPI', () => {
 
       test('throws', async () => {
         const nextAvailableRebalance = nextRebalanceAvailableAtSeconds * 1000;
-        const nextRebalanceFormattedDate = moment(nextAvailableRebalance)
-          .format('dddd, MMMM Do YYYY, h:mm:ss a');
+        const nextRebalanceFormattedDate = format(nextAvailableRebalance, 'dddd, MMMM Do YYYY, h:mm:ss a');
         return expect(subject()).to.be.rejectedWith(
           `Attempting to rebalance too soon. Rebalancing next ` +
           `available on ${nextRebalanceFormattedDate}`
@@ -521,8 +520,7 @@ describe('RebalancingAPI', () => {
 
         test('throws', async () => {
           const nextAvailableRebalance = nextRebalanceAvailableAtSeconds * 1000;
-          const nextRebalanceFormattedDate = moment(nextAvailableRebalance)
-            .format('dddd, MMMM Do YYYY, h:mm:ss a');
+          const nextRebalanceFormattedDate = format(nextAvailableRebalance, 'dddd, MMMM Do YYYY, h:mm:ss a');
           return expect(subject()).to.be.rejectedWith(
             `Attempting to rebalance too soon. Rebalancing next ` +
             `available on ${nextRebalanceFormattedDate}`
@@ -873,8 +871,7 @@ describe('RebalancingAPI', () => {
         const lastBlock = await web3.eth.getBlock('latest');
         const auctionStartTimestamp = new BigNumber(lastBlock.timestamp);
         const pivotTimeStart = auctionStartTimestamp.add(pivotTime).toString();
-        const pivotTimeFormattedDate = moment(+pivotTimeStart * 1000)
-          .format('dddd, MMMM Do YYYY, h:mm:ss a');
+        const pivotTimeFormattedDate = format(+pivotTimeStart * 1000, 'dddd, MMMM Do YYYY, h:mm:ss a');
         return expect(subject()).to.be.rejectedWith(
           `Pivot time not yet reached. Pivot time starts at ${pivotTimeFormattedDate}`
         );

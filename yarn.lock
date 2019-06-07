@@ -1914,6 +1914,11 @@ date-fns@^1.27.2:
   version "1.29.0"
   resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-1.29.0.tgz#12e609cdcb935127311d04d33334e2960a2a54e6"
 
+date-fns@^1.30.1:
+  version "1.30.1"
+  resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-1.30.1.tgz#2e71bf0b119153dbb4cc4e88d9ea5acfb50dc05c"
+  integrity sha512-hBSVCvSmWC+QypYObzwGOd9wqdDpOt+0wl0KbU+R+uuZBS1jN8VsD1ss3irQDknRj5NvxiTF6oj/nDRnN/UQNw==
+
 debug@2.6.9, debug@^2.1.2, debug@^2.2.0, debug@^2.3.3, debug@^2.6.8, debug@^2.6.9:
   version "2.6.9"
   resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.9.tgz#5d128515df134ff327e90a4c93f4e077a536341f"
@@ -4842,10 +4847,6 @@ mock-fs@^4.1.0:
 module-alias@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/module-alias/-/module-alias-2.1.0.tgz#c36d4fd15f7f9d7112f62fa015385e7b65a286c1"
-
-moment@^2.22.2:
-  version "2.22.2"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.22.2.tgz#3c257f9839fc0e93ff53149632239eb90783ff66"
 
 mout@^0.11.0:
   version "0.11.1"

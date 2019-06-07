@@ -19,6 +19,7 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
+import { format } from 'date-fns';
 
 import { CommonAssertions } from './CommonAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
@@ -31,8 +32,6 @@ import {
 import { rebalancingErrors } from '../errors';
 import { BigNumber } from '../util';
 import { RebalancingState } from '../types/common';
-
-const moment = require('moment');
 
 export class RebalancingAssertions {
   private web3: Web3;
@@ -159,8 +158,7 @@ export class RebalancingAssertions {
     const currentTimeStamp = new BigNumber(Date.now());
 
     if (nextAvailableRebalance.greaterThan(currentTimeStamp)) {
-      const nextRebalanceFormattedDate = moment(nextAvailableRebalance.toNumber())
-        .format('dddd, MMMM Do YYYY, h:mm:ss a');
+      const nextRebalanceFormattedDate = format(nextAvailableRebalance.toNumber(), 'dddd, MMMM Do YYYY, h:mm:ss a');
       throw new Error(rebalancingErrors.INSUFFICIENT_TIME_PASSED(nextRebalanceFormattedDate));
     }
   }
@@ -220,8 +218,8 @@ export class RebalancingAssertions {
     const currentTimeStamp = new BigNumber(Date.now());
 
     if (nextAvailableRebalance.greaterThan(currentTimeStamp)) {
-      const nextRebalanceFormattedDate = moment(
-        nextAvailableRebalance.toNumber()).format('dddd, MMMM Do YYYY, h:mm:ss a'
+      const nextRebalanceFormattedDate = format(
+        nextAvailableRebalance.toNumber(), 'dddd, MMMM Do YYYY, h:mm:ss a'
       );
       throw new Error(rebalancingErrors.INSUFFICIENT_TIME_PASSED(nextRebalanceFormattedDate));
     }
@@ -261,8 +259,8 @@ export class RebalancingAssertions {
 
     const currentTimeStamp = new BigNumber(Date.now());
     if (pivotTimeStart.greaterThanOrEqualTo(currentTimeStamp)) {
-      const pivotTimeStartFormattedDate = moment(
-        pivotTimeStart.toNumber()).format('dddd, MMMM Do YYYY, h:mm:ss a'
+      const pivotTimeStartFormattedDate = format(
+        pivotTimeStart.toNumber(), 'dddd, MMMM Do YYYY, h:mm:ss a'
       );
       throw new Error(rebalancingErrors.PIVOT_TIME_NOT_PASSED(pivotTimeStartFormattedDate));
     }
