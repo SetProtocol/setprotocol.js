@@ -27,8 +27,8 @@ import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
-import { Core } from 'set-protocol-contracts';
 import {
+  Core,
   CoreContract,
   ConstantAuctionPriceCurveContract,
   MedianContract,
@@ -251,7 +251,7 @@ describe('MACOStrategyManagerWrapper', () => {
       rebalancingSetToken.address
     );
 
-    macoStrategyManagerWrapper = new MACOStrategyManagerWrapper(web3, );
+    macoStrategyManagerWrapper = new MACOStrategyManagerWrapper(web3);
   });
 
   afterEach(async () => {
