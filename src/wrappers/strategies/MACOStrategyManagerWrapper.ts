@@ -74,7 +74,7 @@ export class MACOStrategyManagerWrapper {
     return await macoStrategyManagerInstance.confirmPropose.sendTransactionAsync(txOptions);
   }
 
-  public async core(managerAddress: Address): Promise<Address> {
+  public async coreAddress(managerAddress: Address): Promise<Address> {
     const macoStrategyManagerInstance = await this.contracts.loadMACOStrategyManagerContractAsync(managerAddress);
 
     return await macoStrategyManagerInstance.coreAddress.callAsync();
