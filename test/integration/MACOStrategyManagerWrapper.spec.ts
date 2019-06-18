@@ -41,7 +41,7 @@ import {
   WhiteListContract,
 } from 'set-protocol-contracts';
 
-import { 
+import {
   MACOStrategyManagerContract,
   HistoricalPriceFeedContract,
   MovingAverageOracleContract,
@@ -50,8 +50,10 @@ import {
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { MACOStrategyManagerWrapper } from '@src/wrappers';
 import {
+  E18,
   TX_DEFAULTS,
   ONE_DAY_IN_SECONDS,
+  ONE_HOUR_IN_SECONDS,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
   DEFAULT_AUCTION_PRICE_DENOMINATOR,
 } from '@src/constants';
@@ -114,14 +116,14 @@ describe('MACOStrategyManagerWrapper', () => {
   let macoStrategyManagerWrapper: MACOStrategyManagerWrapper;
 
   const priceFeedUpdateFrequency: BigNumber = new BigNumber(10);
-  const initialMedianizerEthPrice: BigNumber = new BigNumber(1000000);
+  const initialMedianizerEthPrice: BigNumber = E18;
   const priceFeedDataDescription: string = '200DailyETHPrice';
   const seededPriceFeedPrices: BigNumber[] = [
-    new BigNumber(1000000),
-    new BigNumber(2000000),
-    new BigNumber(3000000),
-    new BigNumber(4000000),
-    new BigNumber(5000000),
+    E18.mul(1),
+    E18.mul(2),
+    E18.mul(3),
+    E18.mul(4),
+    E18.mul(5),
   ];
 
   const movingAverageDays = new BigNumber(5);
@@ -221,15 +223,6 @@ describe('MACOStrategyManagerWrapper', () => {
       riskCollateralNaturalUnit,
     );
 
-    rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
-      web3,
-      core,
-      rebalancingFactory.address,
-      DEFAULT_ACCOUNT,
-      initialRiskCollateral.address,
-      ONE_DAY_IN_SECONDS,
-    );
-
     macoManager = await deployMovingAverageStrategyManagerAsync(
       web3,
       core.address,
@@ -244,12 +237,21 @@ describe('MACOStrategyManagerWrapper', () => {
       auctionTimeToPivot,
     );
 
+    rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+      web3,
+      core,
+      rebalancingFactory.address,
+      macoManager.address,
+      initialRiskCollateral.address,
+      ONE_DAY_IN_SECONDS,
+    );
+
     await initializeMovingAverageStrategyManagerAsync(
       macoManager,
       rebalancingSetToken.address
     );
 
-    macoStrategyManagerWrapper = new MACOStrategyManagerWrapper(web3,);
+    macoStrategyManagerWrapper = new MACOStrategyManagerWrapper(web3, );
   });
 
   afterEach(async () => {
@@ -500,6 +502,78 @@ describe('MACOStrategyManagerWrapper', () => {
     test('gets the correct auctionTimeToPivot', async () => {
       const address = await subject();
       expect(address).to.bignumber.equal(auctionTimeToPivot);
+    });
+  });
+
+  describe('initialPropose', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = macoManager.address;
+
+      // Elapse the rebalance interval
+      await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+      await updateMedianizerPriceAsync(
+        web3,
+        ethMedianizer,
+        initialMedianizerEthPrice.div(10),
+        SetTestUtils.generateTimestamp(1000),
+      );
+    });
+
+    async function subject(): Promise<string> {
+      return await macoStrategyManagerWrapper.initialPropose(
+        subjectManagerAddress,
+      );
+    }
+
+    test('sets the lastProposalTimestamp properly', async () => {
+      const txnHash = await subject();
+      const { blockNumber } = await web3.eth.getTransactionReceipt(txnHash);
+      const { timestamp } = await web3.eth.getBlock(blockNumber);
+
+      const lastTimestamp = await macoStrategyManagerWrapper.lastProposalTimestamp(
+        subjectManagerAddress,
+      );
+      expect(lastTimestamp).to.bignumber.equal(timestamp);
+    });
+  });
+
+  describe('confirmPropose', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = macoManager.address;
+
+      // Elapse the rebalance interval
+      await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+      await updateMedianizerPriceAsync(
+        web3,
+        ethMedianizer,
+        initialMedianizerEthPrice.div(4),
+        SetTestUtils.generateTimestamp(1000),
+      );
+
+      await macoManager.initialPropose.sendTransactionAsync();
+
+      // Elapse the signal confirmation period
+      await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(7));
+    });
+
+    async function subject(): Promise<string> {
+      return await macoStrategyManagerWrapper.confirmPropose(
+        subjectManagerAddress,
+      );
+    }
+
+    test('sets the rebalancing Set into proposal period', async () => {
+      await subject();
+      const proposalStateEnum = new BigNumber(1);
+      const rebalancingSetState = await rebalancingSetToken.rebalanceState.callAsync();
+
+      expect(rebalancingSetState).to.bignumber.equal(proposalStateEnum);
     });
   });
 });
