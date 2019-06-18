@@ -27,8 +27,13 @@ import {
   SetTokenWrapper,
 } from '../wrappers';
 import { Assertions } from '../assertions';
+import { ONE_HOUR_IN_SECONDS } from '../constants';
 import { Address, Tx } from '../types/common';
 import { MovingAverageManagerDetails } from '../types/strategies';
+import { generateFutureTimestamp } from '../util';
+
+const TWELVE_HOURS = ONE_HOUR_IN_SECONDS.mul(12);
+const SIX_HOURS = ONE_HOUR_IN_SECONDS.mul(12);
 
 /**
  * @title MACOManagerAPI
@@ -75,13 +80,21 @@ export class MACOManagerAPI {
     await this.assertPropose(macoManager);
 
     // Check the current block.timestamp
+    const currentTimestamp = generateFutureTimestamp(0);
+    const lastProposalPeriod = await this.macoStrategyManager.lastProposalTimestamp(macoManager);
+
+    const moreThanTwelveHoursElapsed = currentTimestamp.minus(lastProposalPeriod).gt(TWELVE_HOURS);
+    const moreThanSixHoursElapsed = currentTimestamp.minus(lastProposalPeriod).gt(SIX_HOURS);
+
+    if (moreThanTwelveHoursElapsed) {
       // If current timestamp > 12 hours since the last, call initialPropose
+      return await this.macoStrategyManager.initialPropose(macoManager, txOpts);
+    } else if (moreThanSixHoursElapsed) {
       // If the current timestamp >6 and <12 hours since last call, call confirmPropose
-      // Else throw error
-
-    return await this.macoStrategyManager.initialPropose(rebalancingManager, txOpts);
-
-    return await this.macoStrategyManager.confirmPropose(rebalancingManager, txOpts);
+      return await this.macoStrategyManager.confirmPropose(macoManager, txOpts);
+    } else {
+      throw new Error('Less than 6 hours has elapsed since the last proposal timestamp');
+    }
   }
 
   /**
@@ -154,10 +167,7 @@ export class MACOManagerAPI {
     return riskComponent.toLowerCase() === collateralComponent.toLowerCase();
   }
 
-  private async assertPropose(
-    macoManagerAddress: Address,
-    txOpts: Tx,
-  ) {
+  private async assertPropose(macoManagerAddress: Address) {
     this.assert.schema.isValidAddress('macoManagerAddress', macoManagerAddress);
 
     const [
