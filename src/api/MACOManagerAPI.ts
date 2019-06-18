@@ -50,7 +50,7 @@ export class MACOManagerAPI {
    *                      with the Ethereum network
    * @param core        An instance of CoreWrapper to interact with the deployed Core contract
    */
-  constructor(web3: Web3, assertions: Assertions,) {
+  constructor(web3: Web3, assertions: Assertions, ) {
     this.macoStrategyManager = new MACOStrategyManagerWrapper(web3);
     this.assert = assertions;
     this.setToken = new SetTokenWrapper(web3);
@@ -59,25 +59,25 @@ export class MACOManagerAPI {
   }
 
   /**
-   * Depending on the current state of the collateral Set, calls the initialPropose or confirmPropose function on a specified moving
-   * average crossover manager. 
-   * TODO: document that there is an initialPropose state where a timestamp is stored. And 
+   * Depending on the current state of the collateral Set, calls the initialPropose or confirmPropose
+   * function on a specified moving
+   * average crossover manager.
+   * TODO: document that there is an initialPropose state where a timestamp is stored. And
    * This function will generate a new set token using data from the btc and eth price feeds and ultimately generate
    * a proposal on the rebalancing set token.
    *
-   * @param  rebalancingManager    Address of the BTCETH Rebalancing Manager contract
-   * @param  rebalancingSet        Rebalancing Set to call propose on
+   * @param  macoManager    Address of the BTCETH Rebalancing Manager contract
    * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
-  public async proposeAsync(rebalancingManager: Address, txOpts: Tx): Promise<string> {
+  public async proposeAsync(macoManager: Address, txOpts: Tx): Promise<string> {
     // Check that the price has indeed experienced a crossover
+    await this.assertPropose(macoManager);
 
     // Check the current block.timestamp
       // If current timestamp > 12 hours since the last, call initialPropose
       // If the current timestamp >6 and <12 hours since last call, call confirmPropose
       // Else throw error
-
 
     return await this.macoStrategyManager.initialPropose(rebalancingManager, txOpts);
 
@@ -90,7 +90,7 @@ export class MACOManagerAPI {
    * @param  rebalancingManager    Address of the Moving Average Crossover Manager contract
    * @return               Object containing the state information related to the manager
    */
-  public async getMovingAverageManagerDetailsAsync(rebalancingManager: Address): Promise<MovingAverageManagerDetails> {
+  public async getMovingAverageManagerDetailsAsync(macoManager: Address): Promise<MovingAverageManagerDetails> {
     const [
       auctionLibrary,
       auctionTimeToPivot,
@@ -100,13 +100,13 @@ export class MACOManagerAPI {
       movingAveragePriceFeed,
       rebalancingSetToken,
     ] = await Promise.all([
-      this.macoStrategyManager.auctionLibrary(rebalancingManager),
-      this.macoStrategyManager.auctionTimeToPivot(rebalancingManager),
-      this.macoStrategyManager.coreAddress(rebalancingManager),
-      this.macoStrategyManager.lastProposalTimestamp(rebalancingManager),
-      this.macoStrategyManager.movingAverageDays(rebalancingManager),
-      this.macoStrategyManager.movingAveragePriceFeed(rebalancingManager),
-      this.macoStrategyManager.rebalancingSetTokenAddress(rebalancingManager),
+      this.macoStrategyManager.auctionLibrary(macoManager),
+      this.macoStrategyManager.auctionTimeToPivot(macoManager),
+      this.macoStrategyManager.coreAddress(macoManager),
+      this.macoStrategyManager.lastProposalTimestamp(macoManager),
+      this.macoStrategyManager.movingAverageDays(macoManager),
+      this.macoStrategyManager.movingAveragePriceFeed(macoManager),
+      this.macoStrategyManager.rebalancingSetTokenAddress(macoManager),
     ]);
 
     const [
@@ -116,11 +116,11 @@ export class MACOManagerAPI {
       stableAsset,
       stableCollateral,
     ] = await Promise.all([
-      this.macoStrategyManager.riskAssetAddress(rebalancingManager),
-      this.macoStrategyManager.riskCollateralAddress(rebalancingManager),
-      this.macoStrategyManager.setTokenFactory(rebalancingManager),
-      this.macoStrategyManager.stableAssetAddress(rebalancingManager),
-      this.macoStrategyManager.stableCollateralAddress(rebalancingManager),
+      this.macoStrategyManager.riskAssetAddress(macoManager),
+      this.macoStrategyManager.riskCollateralAddress(macoManager),
+      this.macoStrategyManager.setTokenFactory(macoManager),
+      this.macoStrategyManager.stableAssetAddress(macoManager),
+      this.macoStrategyManager.stableCollateralAddress(macoManager),
     ]);
 
     return {
@@ -139,7 +139,20 @@ export class MACOManagerAPI {
     } as MovingAverageManagerDetails;
   }
 
-  /* ============ Private Assertions ============ */
+  /* ============ Private Functions ============ */
+
+  private async isUsingRiskCollateral(macoManagerAddress: Address): Promise<boolean> {
+    const [
+      rebalancingSetAddress,
+      riskComponent,
+    ] = await Promise.all([
+      this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
+      this.macoStrategyManager.riskAssetAddress(macoManagerAddress),
+    ]);
+
+    const [collateralComponent] = await this.setToken.getComponents(rebalancingSetAddress);
+    return riskComponent.toLowerCase() === collateralComponent.toLowerCase();
+  }
 
   private async assertPropose(
     macoManagerAddress: Address,
@@ -152,24 +165,22 @@ export class MACOManagerAPI {
       riskComponent,
       movingAverageDays,
       movingAveragePriceFeed,
+      isUsingRiskCollateral,
     ] = await Promise.all([
       this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
       this.macoStrategyManager.riskAssetAddress(macoManagerAddress),
       this.macoStrategyManager.movingAverageDays(macoManagerAddress),
       this.macoStrategyManager.movingAveragePriceFeed(macoManagerAddress),
+      this.isUsingRiskCollateral(macoManagerAddress),
     ]);
 
     // Assert the rebalancing Set is ready to be proposed
     await this.assert.rebalancing.isNotInDefaultState(rebalancingSetAddress);
     await this.assert.rebalancing.sufficientTimeBetweenRebalance(rebalancingSetAddress);
 
-    // Using Risk Collateral
-    const [collateralComponent] = await this.setToken.getComponents(rebalancingSetAddress);
-    const isUsingRiskCollateral = riskComponent.toLowerCase() === collateralComponent.toLowerCase();
-
     // Get the current price
     const riskCollateralPriceFeed = await this.movingAverageOracleWrapper.getSourceMedianizer(movingAveragePriceFeed);
-    
+
     const [
       currentPrice,
       movingAverage,
@@ -181,7 +192,7 @@ export class MACOManagerAPI {
     if (isUsingRiskCollateral) {
       // Assert currentPrice < moving average
       this.assert.common.isGreaterThan(
-        movingAverage,
+        new BigNumber(movingAverage),
         new BigNumber(currentPrice),
         `Current Price ${currentPrice.toString()} must be less than Moving Average ${movingAverage.toString()}`
       );
@@ -189,7 +200,7 @@ export class MACOManagerAPI {
       // Assert currentPrice > moving average
       this.assert.common.isGreaterThan(
         new BigNumber(currentPrice),
-        movingAverage,
+        new BigNumber(movingAverage),
         `Current Price ${currentPrice.toString()} must be greater than Moving Average ${movingAverage.toString()}`
       );
     }
