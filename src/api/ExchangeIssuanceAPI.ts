@@ -325,9 +325,6 @@ export class ExchangeIssuanceAPI {
       receiveTokens,
     } = exchangeIssuanceParams;
 
-    // Assert orders are passed in
-    this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
-
     // Assert each component to trade for is a component of the collateralizing set
     const components = await this.setToken.getComponents(setAddress);
     receiveTokens.forEach(receiveToken => {
@@ -338,7 +335,13 @@ export class ExchangeIssuanceAPI {
       );
     });
 
-    await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
+    // Assert only if exchanging is involved in the transaction
+    if (receiveTokens.length) {
+      // Assert orders are passed in
+      this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
+
+      await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
+    }
   }
 
   private async assertIssueRebalancingSetWithEther(
@@ -358,7 +361,6 @@ export class ExchangeIssuanceAPI {
     this.assert.common.isNotUndefined(txOpts.value, exchangeIssuanceErrors.ETHER_VALUE_NOT_UNDEFINED());
     this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     this.assert.schema.isValidAddress('rebalancingSetAddress', rebalancingSetAddress);
-    this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
     const baseSetAddress = await this.rebalancingSetToken.currentSet(rebalancingSetAddress);
 
@@ -387,8 +389,13 @@ export class ExchangeIssuanceAPI {
       exchangeIssuanceErrors.PAYMENT_TOKEN_NOT_WETH(paymentToken, this.wrappedEther)
     );
 
-    // Assert valid exchange trade and order parameters
-    await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
+    // Assert only if exchanging is involved in the transaction
+    if (receiveTokens.length) {
+      this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
+
+      // Assert valid exchange trade and order parameters
+      await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
+    }
   }
 
   private async assertRedeemRebalancingSetIntoEther(
@@ -409,7 +416,6 @@ export class ExchangeIssuanceAPI {
     this.assert.common.isValidLength(receiveTokens, 1, exchangeIssuanceErrors.ONLY_ONE_RECEIVE_TOKEN());
     this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     this.assert.schema.isValidAddress('rebalancingSetAddress', rebalancingSetAddress);
-    this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
 
     const baseSetAddress = await this.rebalancingSetToken.currentSet(rebalancingSetAddress);
 
@@ -451,7 +457,12 @@ export class ExchangeIssuanceAPI {
       exchangeIssuanceErrors.PAYMENT_TOKEN_NOT_WETH(receiveToken, this.wrappedEther)
     );
 
-    // Assert valid exchange trade and order parameters
-    await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
+    // Assert only if exchanging is involved in the transaction
+    if (sendTokens.length) {
+      this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
+
+      // Assert valid exchange trade and order parameters
+      await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
+    }
   }
 }

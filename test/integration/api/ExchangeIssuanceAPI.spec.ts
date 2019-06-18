@@ -409,18 +409,6 @@ describe('ExchangeIssuanceAPI', () => {
       });
     });
 
-    describe('when the receive tokens array is empty', async () => {
-      beforeEach(async () => {
-        subjectExchangeIssuanceData.receiveTokens = [];
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `The receiveTokens and receiveTokenAmounts arrays need to be equal lengths.`
-        );
-      });
-    });
-
     describe('when a receive token amount is 0', async () => {
       beforeEach(async () => {
         subjectExchangeIssuanceData.receiveTokenAmounts[0] = new BigNumber(0);
