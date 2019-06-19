@@ -1,5 +1,5 @@
 /*
-  Copyright 2018 Set Labs Inc.
+  Copyright 2019 Set Labs Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import {
   MovingAverageOracleWrapper,
   PriceFeedWrapper,
   SetTokenWrapper,
+  RebalancingSetTokenWrapper,
 } from '../wrappers';
 import { Assertions } from '../assertions';
 import { ONE_HOUR_IN_SECONDS } from '../constants';
@@ -44,12 +45,14 @@ export class MACOManagerAPI {
   private web3: Web3;
   private assert: Assertions;
   private setToken: SetTokenWrapper;
+  private rebalancingSetToken: RebalancingSetTokenWrapper;
   private macoStrategyManager: MACOStrategyManagerWrapper;
   private priceFeed: PriceFeedWrapper;
   private movingAverageOracleWrapper: MovingAverageOracleWrapper;
 
   /**
-   * Instantiates a new MACOManagerAPI instance that contains methods for issuing and redeeming Sets
+   * Instantiates a new MACOManagerAPI instance that contains methods for interacting with
+   * the Moving Average Crossover Manager.
    *
    * @param web3        The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
    *                      with the Ethereum network
@@ -62,17 +65,19 @@ export class MACOManagerAPI {
     this.setToken = new SetTokenWrapper(web3);
     this.priceFeed = new PriceFeedWrapper(web3);
     this.movingAverageOracleWrapper = new MovingAverageOracleWrapper(web3);
+    this.rebalancingSetToken = new RebalancingSetTokenWrapper(web3);
   }
 
   /**
-   * Depending on the current state of the collateral Set, calls the initialPropose or confirmPropose
-   * function on a specified moving
-   * average crossover manager.
-   * TODO: document that there is an initialPropose state where a timestamp is stored. And
-   * This function will generate a new set token using data from the btc and eth price feeds and ultimately generate
+   * This function is callable by anyone to advance the state of the Moving Average Crossover (MACO) manager.
+   * To successfully call propose, the rebalancing Set must be in a rebalancable state and there must
+   * be a crossover between the current price and the moving average oracle.
+   * To successfully generate a proposal, this function needs to be called twice. The initial call is to
+   * note that a crossover has occurred. The second call is to confirm the signal (must be called 6-12 hours)
+   * after the initial call. When the confirmPropose is called, this function will generate
    * a proposal on the rebalancing set token.
    *
-   * @param  macoManager    Address of the BTCETH Rebalancing Manager contract
+   * @param  macoManager   Address of the Moving Average Crossover Manager contract
    * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
@@ -102,8 +107,8 @@ export class MACOManagerAPI {
   /**
    * Fetches the state variables of the Moving Average Crossover Manager contract.
    *
-   * @param  rebalancingManager    Address of the Moving Average Crossover Manager contract
-   * @return               Object containing the state information related to the manager
+   * @param  macoManager         Address of the Moving Average Crossover Manager contract
+   * @return                     Object containing the state information related to the manager
    */
   public async getMovingAverageManagerDetailsAsync(macoManager: Address): Promise<MovingAverageManagerDetails> {
     const [
@@ -158,14 +163,15 @@ export class MACOManagerAPI {
 
   private async isUsingRiskCollateral(macoManagerAddress: Address): Promise<boolean> {
     const [
-      collateralSet,
+      rebalancingSetToken,
       riskComponent,
     ] = await Promise.all([
-      this.macoStrategyManager.riskCollateralAddress(macoManagerAddress),
+      this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
       this.macoStrategyManager.riskAssetAddress(macoManagerAddress),
     ]);
 
-    const [collateralComponent] = await this.setToken.getComponents(collateralSet);
+    const rebalancingSetCurrentCollateral = await this.rebalancingSetToken.currentSet(rebalancingSetToken);
+    const [collateralComponent] = await this.setToken.getComponents(rebalancingSetCurrentCollateral);
 
     return riskComponent.toLowerCase() === collateralComponent.toLowerCase();
   }
@@ -208,14 +214,14 @@ export class MACOManagerAPI {
       this.assert.common.isGreaterThan(
         movingAverageBN,
         currentPriceBN,
-        `Current Price ${currentPrice.toString()} must be less than Moving Average ${movingAverage.toString()}`
+        `Current Price ${currentPriceBN.toString()} must be less than Moving Average ${movingAverageBN.toString()}`
       );
     } else {
       // Assert currentPrice > moving average
       this.assert.common.isGreaterThan(
         currentPriceBN,
         movingAverageBN,
-        `Current Price ${currentPrice.toString()} must be greater than Moving Average ${movingAverage.toString()}`
+        `Current Price ${currentPriceBN.toString()} must be greater than Moving Average ${movingAverageBN.toString()}`
       );
     }
   }

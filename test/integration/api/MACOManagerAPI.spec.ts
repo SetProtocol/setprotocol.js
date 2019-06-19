@@ -22,6 +22,7 @@
 jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
+const moment = require('moment');
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
@@ -47,6 +48,7 @@ import {
   MovingAverageOracleContract,
 } from 'set-protocol-strategies';
 
+import ChaiSetup from '@test/helpers/chaiSetup';
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { Assertions } from '@src/assertions';
 import { MACOManagerAPI } from '@src/api';
@@ -83,6 +85,7 @@ import { Address } from '@src/types/common';
 import { MACOStrategyManagerWrapper } from '@src/wrappers';
 import { MovingAverageManagerDetails } from '@src/types/strategies';
 
+ChaiSetup.configure();
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
@@ -354,7 +357,7 @@ describe('MACOManagerAPI', () => {
 
     describe('when more than 12 hours has elapsed since the last Proposal timestamp', async () => {
       beforeEach(async () => {
-         // Elapse the rebalance interval
+        // Elapse the rebalance interval
         await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
 
         await updateMedianizerPriceAsync(
@@ -404,7 +407,7 @@ describe('MACOManagerAPI', () => {
         );
       });
 
-      test.only('sets the rebalancing Set into proposal period', async () => {
+      test('sets the rebalancing Set into proposal period', async () => {
         await subject();
         const proposalStateEnum = new BigNumber(1);
         const rebalancingSetState = await rebalancingSetToken.rebalanceState.callAsync();
@@ -413,7 +416,7 @@ describe('MACOManagerAPI', () => {
       });
     });
 
-    describe.only('when 6 hours has not elapsed since the lastProposalTimestamp', async () => {
+    describe('when 6 hours has not elapsed since the lastProposalTimestamp', async () => {
       beforeEach(async () => {
          // Elapse the rebalance interval
         await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
@@ -443,6 +446,134 @@ describe('MACOManagerAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `Less than 6 hours has elapsed since the last proposal timestamp`
+        );
+      });
+    });
+
+    describe('when the RebalancingSet is not in Default state', async () => {
+      beforeEach(async () => {
+        // Elapse the rebalance interval
+        await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+        await updateMedianizerPriceAsync(
+          web3,
+          ethMedianizer,
+          initialMedianizerEthPrice.div(10),
+          SetTestUtils.generateTimestamp(1000),
+        );
+
+        // Call initialPropose to set the timestamp
+        await macoManagerWrapper.initialPropose(subjectManagerAddress);
+
+        // Elapse signal confirmation period
+        await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(7));
+
+        // Put the rebalancing set into proposal state
+        await macoManagerWrapper.confirmPropose(subjectManagerAddress);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${rebalancingSetToken.address} must be in Default state to call that function.`
+        );
+      });
+    });
+
+    describe('when insufficient time has elapsed since the last rebalance', async () => {
+      test('throws', async () => {
+        const lastRebalanceTime = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+        const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+        const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval);
+        const nextRebalanceFormattedDate = moment(nextAvailableRebalance.toNumber())
+        .format('dddd, MMMM Do YYYY, h:mm:ss a');
+
+        return expect(subject()).to.be.rejectedWith(
+          `Attempting to rebalance too soon. Rebalancing next ` +
+          `available on ${nextRebalanceFormattedDate}`
+        );
+      });
+    });
+
+    describe('when no MA crossover when rebalancing Set is risk collateral', async () => {
+      let currentPrice: BigNumber;
+
+      beforeEach(async () => {
+        currentPrice = initialMedianizerEthPrice.mul(5);
+
+        // Elapse the rebalance interval
+        await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+        await updateMedianizerPriceAsync(
+          web3,
+          ethMedianizer,
+          initialMedianizerEthPrice.mul(5),
+          SetTestUtils.generateTimestamp(1000),
+        );
+      });
+
+      test('throws', async () => {
+        const movingAverage = new BigNumber(await movingAverageOracle.read.callAsync(movingAverageDays));
+
+        return expect(subject()).to.be.rejectedWith(
+          `Current Price ${currentPrice.toString()} must be less than Moving Average ${movingAverage.toString()}`
+        );
+      });
+    });
+
+    describe('when no MA crossover when rebalancing Set is stable collateral', async () => {
+      let currentPriceThatIsBelowMA: BigNumber;
+
+      beforeEach(async () => {
+
+        macoManager = await deployMovingAverageStrategyManagerAsync(
+          web3,
+          core.address,
+          movingAverageOracle.address,
+          usdc.address,
+          wrappedETH.address,
+          initialStableCollateral.address,
+          initialRiskCollateral.address,
+          factory.address,
+          constantAuctionPriceCurve.address,
+          movingAverageDays,
+          auctionTimeToPivot,
+        );
+
+        rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+          web3,
+          core,
+          rebalancingFactory.address,
+          macoManager.address,
+          initialStableCollateral.address,
+          ONE_DAY_IN_SECONDS,
+        );
+
+        await initializeMovingAverageStrategyManagerAsync(
+          macoManager,
+          rebalancingSetToken.address
+        );
+
+        currentPriceThatIsBelowMA = initialMedianizerEthPrice.div(10);
+
+        // Elapse the rebalance interval
+        await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+        await updateMedianizerPriceAsync(
+          web3,
+          ethMedianizer,
+          currentPriceThatIsBelowMA,
+          SetTestUtils.generateTimestamp(1000),
+        );
+
+        subjectManagerAddress = macoManager.address;
+      });
+
+      test('throws', async () => {
+        const movingAverage = new BigNumber(await movingAverageOracle.read.callAsync(movingAverageDays));
+
+        return expect(subject()).to.be.rejectedWith(
+          `Current Price ${currentPriceThatIsBelowMA.toString()} must be ` +
+          `greater than Moving Average ${movingAverage.toString()}`
         );
       });
     });
