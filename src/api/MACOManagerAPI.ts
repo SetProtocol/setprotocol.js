@@ -33,7 +33,7 @@ import { MovingAverageManagerDetails } from '../types/strategies';
 import { generateFutureTimestamp } from '../util';
 
 const TWELVE_HOURS = ONE_HOUR_IN_SECONDS.mul(12);
-const SIX_HOURS = ONE_HOUR_IN_SECONDS.mul(12);
+const SIX_HOURS = ONE_HOUR_IN_SECONDS.mul(6);
 
 /**
  * @title MACOManagerAPI
@@ -42,6 +42,7 @@ const SIX_HOURS = ONE_HOUR_IN_SECONDS.mul(12);
  * A library for interacting with MovingAverageManager Manager
  */
 export class MACOManagerAPI {
+  private web3: Web3;
   private assert: Assertions;
   private setToken: SetTokenWrapper;
   private macoStrategyManager: MACOStrategyManagerWrapper;
@@ -55,7 +56,8 @@ export class MACOManagerAPI {
    *                      with the Ethereum network
    * @param core        An instance of CoreWrapper to interact with the deployed Core contract
    */
-  constructor(web3: Web3, assertions: Assertions, ) {
+  constructor(web3: Web3, assertions: Assertions) {
+    this.web3 = web3;
     this.macoStrategyManager = new MACOStrategyManagerWrapper(web3);
     this.assert = assertions;
     this.setToken = new SetTokenWrapper(web3);
@@ -80,11 +82,12 @@ export class MACOManagerAPI {
     await this.assertPropose(macoManager);
 
     // Check the current block.timestamp
-    const currentTimestamp = generateFutureTimestamp(0);
-    const lastProposalPeriod = await this.macoStrategyManager.lastProposalTimestamp(macoManager);
+    const { timestamp } = await this.web3.eth.getBlock("latest");
+    const currentTimeStamp = new BigNumber(timestamp);
+    const lastProposalTimestamp = await this.macoStrategyManager.lastProposalTimestamp(macoManager);
 
-    const moreThanTwelveHoursElapsed = currentTimestamp.minus(lastProposalPeriod).gt(TWELVE_HOURS);
-    const moreThanSixHoursElapsed = currentTimestamp.minus(lastProposalPeriod).gt(SIX_HOURS);
+    const moreThanTwelveHoursElapsed = currentTimeStamp.minus(lastProposalTimestamp).gt(TWELVE_HOURS);
+    const moreThanSixHoursElapsed = currentTimeStamp.minus(lastProposalTimestamp).gte(SIX_HOURS);
 
     if (moreThanTwelveHoursElapsed) {
       // If current timestamp > 12 hours since the last, call initialPropose
@@ -93,7 +96,8 @@ export class MACOManagerAPI {
       // If the current timestamp >6 and <12 hours since last call, call confirmPropose
       return await this.macoStrategyManager.confirmPropose(macoManager, txOpts);
     } else {
-      throw new Error('Less than 6 hours has elapsed since the last proposal timestamp');
+      console.log("Got to throw");
+      // throw new Error('Less than 6 hours has elapsed since the last proposal timestamp');
     }
   }
 
@@ -156,14 +160,15 @@ export class MACOManagerAPI {
 
   private async isUsingRiskCollateral(macoManagerAddress: Address): Promise<boolean> {
     const [
-      rebalancingSetAddress,
+      collateralSet,
       riskComponent,
     ] = await Promise.all([
-      this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
+      this.macoStrategyManager.riskCollateralAddress(macoManagerAddress),
       this.macoStrategyManager.riskAssetAddress(macoManagerAddress),
     ]);
 
-    const [collateralComponent] = await this.setToken.getComponents(rebalancingSetAddress);
+    const [collateralComponent] = await this.setToken.getComponents(collateralSet);
+
     return riskComponent.toLowerCase() === collateralComponent.toLowerCase();
   }
 
@@ -199,18 +204,21 @@ export class MACOManagerAPI {
       this.movingAverageOracleWrapper.read(movingAveragePriceFeed, movingAverageDays),
     ]);
 
+    const currentPriceBN = new BigNumber(currentPrice);
+    const movingAverageBN = new BigNumber(movingAverage);
+
     if (isUsingRiskCollateral) {
       // Assert currentPrice < moving average
       this.assert.common.isGreaterThan(
-        new BigNumber(movingAverage),
-        new BigNumber(currentPrice),
+        movingAverageBN,
+        currentPriceBN,
         `Current Price ${currentPrice.toString()} must be less than Moving Average ${movingAverage.toString()}`
       );
     } else {
       // Assert currentPrice > moving average
       this.assert.common.isGreaterThan(
-        new BigNumber(currentPrice),
-        new BigNumber(movingAverage),
+        currentPriceBN,
+        movingAverageBN,
         `Current Price ${currentPrice.toString()} must be greater than Moving Average ${movingAverage.toString()}`
       );
     }

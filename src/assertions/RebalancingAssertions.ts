@@ -169,8 +169,9 @@ export class RebalancingAssertions {
 
     const lastRebalanceTime = await rebalancingSetTokenInstance.lastRebalanceTimestamp.callAsync();
     const rebalanceInterval = await rebalancingSetTokenInstance.rebalanceInterval.callAsync();
-    const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval).mul(1000);
-    const currentTimeStamp = new BigNumber(Date.now());
+    const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval);
+    const { timestamp } = await this.web3.eth.getBlock("latest");
+    const currentTimeStamp = timestamp;
 
     if (nextAvailableRebalance.greaterThan(currentTimeStamp)) {
       const nextRebalanceFormattedDate = moment(nextAvailableRebalance.toNumber())

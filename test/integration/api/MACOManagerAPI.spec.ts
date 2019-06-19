@@ -54,6 +54,7 @@ import {
   E18,
   TX_DEFAULTS,
   ONE_DAY_IN_SECONDS,
+  ONE_HOUR_IN_SECONDS,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
   DEFAULT_AUCTION_PRICE_DENOMINATOR,
 } from '@src/constants';
@@ -71,6 +72,7 @@ import {
   deploySetTokenAsync,
   deployMedianizerAsync,
   deployTokensSpecifyingDecimals,
+  increaseChainTimeAsync,
   initializeMovingAverageStrategyManagerAsync,
   updateMedianizerPriceAsync,
 } from '@test/helpers';
@@ -78,6 +80,7 @@ import {
   BigNumber,
 } from '@src/util';
 import { Address } from '@src/types/common';
+import { MACOStrategyManagerWrapper } from '@src/wrappers';
 import { MovingAverageManagerDetails } from '@src/types/strategies';
 
 const chaiBigNumber = require('chai-bignumber');
@@ -132,6 +135,8 @@ describe('MACOManagerAPI', () => {
   const initializedProposalTimestamp = new BigNumber(0);
 
   const assertions = new Assertions(web3);
+
+  const macoManagerWrapper: MACOStrategyManagerWrapper = new MACOStrategyManagerWrapper(web3);
 
   const macoManagerAPI: MACOManagerAPI = new MACOManagerAPI(web3, assertions);
 
@@ -331,38 +336,115 @@ describe('MACOManagerAPI', () => {
     });
   });
 
-  // describe('initialPropose', async () => {
-  //   let subjectManagerAddress: Address;
+  describe('proposeAsync', async () => {
+    let subjectManagerAddress: Address;
+    let subjectCaller: Address;
 
-  //   beforeEach(async () => {
-  //     subjectManagerAddress = macoManager.address;
+    beforeEach(async () => {
+      subjectManagerAddress = macoManager.address;
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
 
-  //     // Elapse the rebalance interval
-  //     await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+    async function subject(): Promise<string> {
+      return await macoManagerAPI.proposeAsync(
+        subjectManagerAddress,
+        { from: subjectCaller },
+      );
+    }
 
-  //     await updateMedianizerPriceAsync(
-  //       web3,
-  //       ethMedianizer,
-  //       initialMedianizerEthPrice.div(10),
-  //       SetTestUtils.generateTimestamp(1000),
-  //     );
-  //   });
+    describe('when more than 12 hours has elapsed since the last Proposal timestamp', async () => {
+      beforeEach(async () => {
+         // Elapse the rebalance interval
+        await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
 
-  //   async function subject(): Promise<string> {
-  //     return await macoManagerAPI.proposeAsync(
-  //       subjectManagerAddress,
-  //     );
-  //   }
+        await updateMedianizerPriceAsync(
+          web3,
+          ethMedianizer,
+          initialMedianizerEthPrice.div(10),
+          SetTestUtils.generateTimestamp(1000),
+        );
+      });
 
-  //   test('sets the lastProposalTimestamp properly', async () => {
-  //     const txnHash = await subject();
-  //     const { blockNumber } = await web3.eth.getTransactionReceipt(txnHash);
-  //     const { timestamp } = await web3.eth.getBlock(blockNumber);
+      test('calls initialPropose and sets the lastProposalTimestamp properly', async () => {
+        const txnHash = await subject();
+        const { blockNumber } = await web3.eth.getTransactionReceipt(txnHash);
+        const { timestamp } = await web3.eth.getBlock(blockNumber);
 
-  //     const lastTimestamp = await macoManagerAPI.lastProposalTimestamp(
-  //       subjectManagerAddress,
-  //     );
-  //     expect(lastTimestamp).to.bignumber.equal(timestamp);
-  //   });
-  // });
+        const lastTimestamp = await macoManagerWrapper.lastProposalTimestamp(
+          subjectManagerAddress,
+        );
+        expect(lastTimestamp).to.bignumber.equal(timestamp);
+      });
+    });
+    
+    describe('when 6 hours has elapsed since the lastProposalTimestamp', async () => {
+      beforeEach(async () => {
+         // Elapse the rebalance interval
+        await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+        await updateMedianizerPriceAsync(
+          web3,
+          ethMedianizer,
+          initialMedianizerEthPrice.div(10),
+          SetTestUtils.generateTimestamp(1000),
+        );
+
+        // Call initialPropose to set the timestamp
+        await macoManagerWrapper.initialPropose(subjectManagerAddress);
+
+        // Elapse 7 hours
+        await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(7));
+
+        // Need to perform a transaction to further the timestamp
+        await updateMedianizerPriceAsync(
+          web3,
+          ethMedianizer,
+          initialMedianizerEthPrice.div(10),
+          SetTestUtils.generateTimestamp(2000),
+        );
+      });
+
+      test('sets the rebalancing Set into proposal period', async () => {
+        await subject();
+        const proposalStateEnum = new BigNumber(1);
+        const rebalancingSetState = await rebalancingSetToken.rebalanceState.callAsync();
+
+        expect(rebalancingSetState).to.bignumber.equal(proposalStateEnum);
+      });
+    });
+
+    // describe.only('when 6 hours has not elapsed since the lastProposalTimestamp', async () => {
+    //   beforeEach(async () => {
+    //      // Elapse the rebalance interval
+    //     await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+    //     await updateMedianizerPriceAsync(
+    //       web3,
+    //       ethMedianizer,
+    //       initialMedianizerEthPrice.div(10),
+    //       SetTestUtils.generateTimestamp(1000),
+    //     );
+
+    //     // Call initialPropose to set the timestamp
+    //     await macoManagerWrapper.initialPropose(subjectManagerAddress);
+
+    //     // Elapse 3 hours
+    //     await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(3));
+
+    //     // Need to perform a transaction to further the timestamp
+    //     await updateMedianizerPriceAsync(
+    //       web3,
+    //       ethMedianizer,
+    //       initialMedianizerEthPrice.div(10),
+    //       SetTestUtils.generateTimestamp(2000),
+    //     );
+    //   });
+
+    //   test('throws', async () => {
+    //     return expect(subject()).to.be.rejectedWith(
+    //       `Less than 6 hours has elapsed since the last proposal timestamp`
+    //     );
+    //   });
+    // });
+  });
 });
