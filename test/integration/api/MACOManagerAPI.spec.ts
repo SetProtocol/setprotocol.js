@@ -22,6 +22,7 @@
 jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
+const timeKeeper = require('timekeeper');
 const moment = require('moment');
 import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
@@ -262,6 +263,8 @@ describe('MACOManagerAPI', () => {
   });
 
   afterEach(async () => {
+    timeKeeper.reset();
+
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
@@ -343,9 +346,19 @@ describe('MACOManagerAPI', () => {
     let subjectManagerAddress: Address;
     let subjectCaller: Address;
 
+    let nextRebalanceAvailableInSeconds: BigNumber;
+
     beforeEach(async () => {
       subjectManagerAddress = macoManager.address;
       subjectCaller = DEFAULT_ACCOUNT;
+
+      const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+      const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+      nextRebalanceAvailableInSeconds = lastRebalancedTimestampSeconds.plus(rebalanceInterval);
+    });
+
+    afterEach(async () => {
+      timeKeeper.reset();
     });
 
     async function subject(): Promise<string> {
@@ -366,6 +379,9 @@ describe('MACOManagerAPI', () => {
           initialMedianizerEthPrice.div(10),
           SetTestUtils.generateTimestamp(1000),
         );
+
+        // Free time at the rebalance interval minimum
+        timeKeeper.freeze(nextRebalanceAvailableInSeconds.toNumber() * 1000);
       });
 
       test('calls initialPropose and sets the lastProposalTimestamp properly', async () => {
@@ -405,6 +421,11 @@ describe('MACOManagerAPI', () => {
           initialMedianizerEthPrice.div(10),
           SetTestUtils.generateTimestamp(2000),
         );
+
+        // Freeze the time at rebalance interval + 7 hours
+        const lastProposalTimestamp = await macoManager.lastProposalTimestamp.callAsync(macoManager);
+        const newDesiredTimestamp = lastProposalTimestamp.plus(ONE_HOUR_IN_SECONDS.mul(7));
+        timeKeeper.freeze(newDesiredTimestamp.toNumber() * 1000);
       });
 
       test('sets the rebalancing Set into proposal period', async () => {
@@ -441,6 +462,11 @@ describe('MACOManagerAPI', () => {
           initialMedianizerEthPrice.div(10),
           SetTestUtils.generateTimestamp(2000),
         );
+
+        // Freeze the time at rebalance interval + 3 hours
+        const lastProposalTimestamp = await macoManager.lastProposalTimestamp.callAsync(macoManager);
+        const newDesiredTimestamp = lastProposalTimestamp.plus(ONE_HOUR_IN_SECONDS.mul(3));
+        timeKeeper.freeze(newDesiredTimestamp.toNumber() * 1000);
       });
 
       test('throws', async () => {
@@ -470,6 +496,10 @@ describe('MACOManagerAPI', () => {
 
         // Put the rebalancing set into proposal state
         await macoManagerWrapper.confirmPropose(subjectManagerAddress);
+
+        // Freeze the time at rebalance interval + 3 hours
+        const newDesiredTimestamp = nextRebalanceAvailableInSeconds.plus(ONE_HOUR_IN_SECONDS.mul(7));
+        timeKeeper.freeze(newDesiredTimestamp.toNumber() * 1000);
       });
 
       test('throws', async () => {
@@ -480,10 +510,16 @@ describe('MACOManagerAPI', () => {
     });
 
     describe('when insufficient time has elapsed since the last rebalance', async () => {
+      beforeEach(async () => {
+        // Freeze the time at rebalance interval
+        const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+        timeKeeper.freeze(lastRebalancedTimestampSeconds.toNumber() * 1000);
+      });
+
       test('throws', async () => {
         const lastRebalanceTime = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
         const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
-        const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval);
+        const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval).mul(1000);
         const nextRebalanceFormattedDate = moment(nextAvailableRebalance.toNumber())
         .format('dddd, MMMM Do YYYY, h:mm:ss a');
 
@@ -509,6 +545,9 @@ describe('MACOManagerAPI', () => {
           initialMedianizerEthPrice.mul(5),
           SetTestUtils.generateTimestamp(1000),
         );
+
+        // Freeze the time at rebalance interval
+        timeKeeper.freeze(nextRebalanceAvailableInSeconds.toNumber() * 1000);
       });
 
       test('throws', async () => {
@@ -566,6 +605,12 @@ describe('MACOManagerAPI', () => {
         );
 
         subjectManagerAddress = macoManager.address;
+
+        // Freeze the time at rebalance interval
+        const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+        const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+        nextRebalanceAvailableInSeconds = lastRebalancedTimestampSeconds.plus(rebalanceInterval);
+        timeKeeper.freeze(nextRebalanceAvailableInSeconds.toNumber() * 1000);
       });
 
       test('throws', async () => {

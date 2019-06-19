@@ -42,7 +42,6 @@ const SIX_HOURS = ONE_HOUR_IN_SECONDS.mul(6);
  * A library for interacting with MovingAverageManager Manager
  */
 export class MACOManagerAPI {
-  private web3: Web3;
   private assert: Assertions;
   private setToken: SetTokenWrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
@@ -59,7 +58,6 @@ export class MACOManagerAPI {
    * @param core        An instance of CoreWrapper to interact with the deployed Core contract
    */
   constructor(web3: Web3, assertions: Assertions) {
-    this.web3 = web3;
     this.macoStrategyManager = new MACOStrategyManagerWrapper(web3);
     this.assert = assertions;
     this.setToken = new SetTokenWrapper(web3);
@@ -86,12 +84,11 @@ export class MACOManagerAPI {
     await this.assertPropose(macoManager);
 
     // Check the current block.timestamp
-    const { timestamp } = await this.web3.eth.getBlock('latest');
-    const currentTimeStamp = new BigNumber(timestamp);
-    const lastProposalTimestamp = await this.macoStrategyManager.lastProposalTimestamp(macoManager);
+    const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
+    const lastProposalTimestamp = (await this.macoStrategyManager.lastProposalTimestamp(macoManager));
 
-    const moreThanTwelveHoursElapsed = currentTimeStamp.minus(lastProposalTimestamp).gt(TWELVE_HOURS);
-    const moreThanSixHoursElapsed = currentTimeStamp.minus(lastProposalTimestamp).gte(SIX_HOURS);
+    const moreThanTwelveHoursElapsed = currentTimeStampInSeconds.minus(lastProposalTimestamp).gt(TWELVE_HOURS);
+    const moreThanSixHoursElapsed = currentTimeStampInSeconds.minus(lastProposalTimestamp).gte(SIX_HOURS);
 
     if (moreThanTwelveHoursElapsed) {
       // If current timestamp > 12 hours since the last, call initialPropose
