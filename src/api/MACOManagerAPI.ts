@@ -30,7 +30,6 @@ import { Assertions } from '../assertions';
 import { ONE_HOUR_IN_SECONDS } from '../constants';
 import { Address, Tx } from '../types/common';
 import { MovingAverageManagerDetails } from '../types/strategies';
-import { generateFutureTimestamp } from '../util';
 
 const TWELVE_HOURS = ONE_HOUR_IN_SECONDS.mul(12);
 const SIX_HOURS = ONE_HOUR_IN_SECONDS.mul(6);
@@ -82,7 +81,7 @@ export class MACOManagerAPI {
     await this.assertPropose(macoManager);
 
     // Check the current block.timestamp
-    const { timestamp } = await this.web3.eth.getBlock("latest");
+    const { timestamp } = await this.web3.eth.getBlock('latest');
     const currentTimeStamp = new BigNumber(timestamp);
     const lastProposalTimestamp = await this.macoStrategyManager.lastProposalTimestamp(macoManager);
 
@@ -96,8 +95,7 @@ export class MACOManagerAPI {
       // If the current timestamp >6 and <12 hours since last call, call confirmPropose
       return await this.macoStrategyManager.confirmPropose(macoManager, txOpts);
     } else {
-      console.log("Got to throw");
-      // throw new Error('Less than 6 hours has elapsed since the last proposal timestamp');
+      throw new Error('Less than 6 hours has elapsed since the last proposal timestamp');
     }
   }
 
@@ -177,13 +175,11 @@ export class MACOManagerAPI {
 
     const [
       rebalancingSetAddress,
-      riskComponent,
       movingAverageDays,
       movingAveragePriceFeed,
       isUsingRiskCollateral,
     ] = await Promise.all([
       this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
-      this.macoStrategyManager.riskAssetAddress(macoManagerAddress),
       this.macoStrategyManager.movingAverageDays(macoManagerAddress),
       this.macoStrategyManager.movingAveragePriceFeed(macoManagerAddress),
       this.isUsingRiskCollateral(macoManagerAddress),

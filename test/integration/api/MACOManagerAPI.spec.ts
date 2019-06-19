@@ -376,7 +376,7 @@ describe('MACOManagerAPI', () => {
         expect(lastTimestamp).to.bignumber.equal(timestamp);
       });
     });
-    
+
     describe('when 6 hours has elapsed since the lastProposalTimestamp', async () => {
       beforeEach(async () => {
          // Elapse the rebalance interval
@@ -404,7 +404,7 @@ describe('MACOManagerAPI', () => {
         );
       });
 
-      test('sets the rebalancing Set into proposal period', async () => {
+      test.only('sets the rebalancing Set into proposal period', async () => {
         await subject();
         const proposalStateEnum = new BigNumber(1);
         const rebalancingSetState = await rebalancingSetToken.rebalanceState.callAsync();
@@ -413,38 +413,38 @@ describe('MACOManagerAPI', () => {
       });
     });
 
-    // describe.only('when 6 hours has not elapsed since the lastProposalTimestamp', async () => {
-    //   beforeEach(async () => {
-    //      // Elapse the rebalance interval
-    //     await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+    describe.only('when 6 hours has not elapsed since the lastProposalTimestamp', async () => {
+      beforeEach(async () => {
+         // Elapse the rebalance interval
+        await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
 
-    //     await updateMedianizerPriceAsync(
-    //       web3,
-    //       ethMedianizer,
-    //       initialMedianizerEthPrice.div(10),
-    //       SetTestUtils.generateTimestamp(1000),
-    //     );
+        await updateMedianizerPriceAsync(
+          web3,
+          ethMedianizer,
+          initialMedianizerEthPrice.div(10),
+          SetTestUtils.generateTimestamp(1000),
+        );
 
-    //     // Call initialPropose to set the timestamp
-    //     await macoManagerWrapper.initialPropose(subjectManagerAddress);
+        // Call initialPropose to set the timestamp
+        await macoManagerWrapper.initialPropose(subjectManagerAddress);
 
-    //     // Elapse 3 hours
-    //     await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(3));
+        // Elapse 3 hours
+        await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(3));
 
-    //     // Need to perform a transaction to further the timestamp
-    //     await updateMedianizerPriceAsync(
-    //       web3,
-    //       ethMedianizer,
-    //       initialMedianizerEthPrice.div(10),
-    //       SetTestUtils.generateTimestamp(2000),
-    //     );
-    //   });
+        // Need to perform a transaction to further the timestamp
+        await updateMedianizerPriceAsync(
+          web3,
+          ethMedianizer,
+          initialMedianizerEthPrice.div(10),
+          SetTestUtils.generateTimestamp(2000),
+        );
+      });
 
-    //   test('throws', async () => {
-    //     return expect(subject()).to.be.rejectedWith(
-    //       `Less than 6 hours has elapsed since the last proposal timestamp`
-    //     );
-    //   });
-    // });
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Less than 6 hours has elapsed since the last proposal timestamp`
+        );
+      });
+    });
   });
 });
