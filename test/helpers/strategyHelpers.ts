@@ -1,7 +1,6 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { Address, SetProtocolUtils } from 'set-protocol-utils';
-import { Median, MedianContract } from 'set-protocol-contracts';
+import { Address } from 'set-protocol-utils';
 import {
   MACOStrategyManager,
   MACOStrategyManagerContract,
@@ -56,4 +55,4 @@ export const initializeMovingAverageStrategyManagerAsync = async(
   rebalancingSetTokenAddress: Address,
 ): Promise<void> => {
   await macoManager.initialize.sendTransactionAsync(rebalancingSetTokenAddress);
-}
+};
