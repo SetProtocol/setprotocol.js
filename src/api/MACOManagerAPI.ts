@@ -19,7 +19,7 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
 
-import { BigNumber } from '@src/util';
+import { BigNumber } from '../util';
 import {
   MACOStrategyManagerWrapper,
   MovingAverageOracleWrapper,
