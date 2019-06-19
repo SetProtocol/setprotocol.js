@@ -36,6 +36,7 @@ export const DEPLOYED_TOKEN_QUANTITY: BigNumber = ether(100000000000);
 export const E18: BigNumber = new BigNumber(10).pow(18);
 export const NULL_ADDRESS = SetProtocolUtils.CONSTANTS.NULL_ADDRESS;
 export const ONE_DAY_IN_SECONDS = new BigNumber(86400);
+export const ONE_HOUR_IN_SECONDS = new BigNumber(3600);
 export const ONE_WEEK_IN_SECONDS = new BigNumber(604800);
 export const STANDARD_DECIMALS: BigNumber = new BigNumber(18); // ETH natural unit, wei
 export const STANDARD_SUPPLY: BigNumber = new BigNumber(100000000000000000000); // 100 Ether

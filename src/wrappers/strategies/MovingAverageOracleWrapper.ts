@@ -50,4 +50,16 @@ export class MovingAverageOracleWrapper {
 
     return await movingAverageOracle.read.callAsync(dataPoints);
   }
+
+  /**
+   * Fetch the MakerDAO risk asset price medianizer from the MovingAverageOracle
+   *
+   * @param  movingAverageOracleAddress    Address of the moving average oracle to fetch data from
+   * @return                               Moving average for passed number of dataPoints returned in bytes
+   */
+  public async getSourceMedianizer(movingAverageOracleAddress: Address): Promise<string> {
+    const movingAverageOracle = await this.contracts.loadMovingAverageOracleContract(movingAverageOracleAddress);
+
+    return await movingAverageOracle.getSourceMedianizer.callAsync();
+  }
 }

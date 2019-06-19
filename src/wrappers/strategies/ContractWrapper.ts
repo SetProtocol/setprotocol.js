@@ -21,6 +21,7 @@ import Web3 from 'web3';
 import {
   BaseContract,
   HistoricalPriceFeedContract,
+  MACOStrategyManagerContract,
   MovingAverageOracleContract
 } from 'set-protocol-strategies';
 
@@ -91,6 +92,32 @@ export class ContractWrapper {
       );
       this.cache[cacheKey] = movingAverageOracleContract;
       return movingAverageOracleContract;
+    }
+  }
+
+  /**
+   * Load a MACOStrategyManager contract
+   *
+   * @param  macoStrategyManager          Address of the MACOStrategyManager contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The MACOStrategyManager Contract
+   */
+  public async loadMACOStrategyManagerContractAsync(
+    macoStrategyManager: Address,
+    transactionOptions: object = {},
+  ): Promise<MACOStrategyManagerContract> {
+    const cacheKey = `macoStrategyManager_${macoStrategyManager}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as MACOStrategyManagerContract;
+    } else {
+      const macoStrategyManagerContract = await MACOStrategyManagerContract.at(
+        macoStrategyManager,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = macoStrategyManagerContract;
+      return macoStrategyManagerContract;
     }
   }
 }
