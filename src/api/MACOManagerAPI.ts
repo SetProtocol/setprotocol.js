@@ -79,26 +79,35 @@ export class MACOManagerAPI {
    * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
-  public async proposeAsync(macoManager: Address, txOpts: Tx): Promise<string> {
+  public async initiateCrossoverProposeAsync(macoManager: Address, txOpts: Tx): Promise<string> {
     // Check that the price has indeed experienced a crossover
     await this.assertPropose(macoManager);
 
-    // Check the current block.timestamp
-    const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
-    const lastProposalTimestamp = (await this.macoStrategyManager.lastProposalTimestamp(macoManager));
+    await this.assertInitialPropose(macoManager);
 
-    const moreThanTwelveHoursElapsed = currentTimeStampInSeconds.minus(lastProposalTimestamp).gt(TWELVE_HOURS);
-    const moreThanSixHoursElapsed = currentTimeStampInSeconds.minus(lastProposalTimestamp).gte(SIX_HOURS);
+    // If current timestamp > 12 hours since the last, call initialPropose
+    return await this.macoStrategyManager.initialPropose(macoManager, txOpts);
+  }
 
-    if (moreThanTwelveHoursElapsed) {
-      // If current timestamp > 12 hours since the last, call initialPropose
-      return await this.macoStrategyManager.initialPropose(macoManager, txOpts);
-    } else if (moreThanSixHoursElapsed) {
-      // If the current timestamp >6 and <12 hours since last call, call confirmPropose
-      return await this.macoStrategyManager.confirmPropose(macoManager, txOpts);
-    } else {
-      throw new Error('Less than 6 hours has elapsed since the last proposal timestamp');
-    }
+  public async confirmCrossoverProposeAsync(macoManager: Address, txOpts: Tx): Promise<string> {
+    // Check that the price has indeed experienced a crossover
+    await this.assertPropose(macoManager);
+
+    await this.assertConfirmPropose(macoManager);
+
+    return await this.macoStrategyManager.confirmPropose(macoManager, txOpts);
+  }
+
+  /**
+   * Fetches the lastProposalTimestamp of the Moving Average Crossover Manager contract.
+   *
+   * @param  macoManager         Address of the Moving Average Crossover Manager contract
+   * @return                     BigNumber containing the lastProposalTimestamp
+   */
+  public async getLastProposalTimestampAsync(macoManager: Address): Promise<BigNumber> {
+    this.assert.schema.isValidAddress('macoManager', macoManager);
+
+    return await this.macoStrategyManager.lastProposalTimestamp(macoManager);
   }
 
   /**
@@ -158,21 +167,6 @@ export class MACOManagerAPI {
 
   /* ============ Private Functions ============ */
 
-  private async isUsingRiskCollateral(macoManagerAddress: Address): Promise<boolean> {
-    const [
-      rebalancingSetToken,
-      riskComponent,
-    ] = await Promise.all([
-      this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
-      this.macoStrategyManager.riskAssetAddress(macoManagerAddress),
-    ]);
-
-    const rebalancingSetCurrentCollateral = await this.rebalancingSetToken.currentSet(rebalancingSetToken);
-    const [collateralComponent] = await this.setToken.getComponents(rebalancingSetCurrentCollateral);
-
-    return riskComponent.toLowerCase() === collateralComponent.toLowerCase();
-  }
-
   private async assertPropose(macoManagerAddress: Address) {
     this.assert.schema.isValidAddress('macoManagerAddress', macoManagerAddress);
 
@@ -185,7 +179,7 @@ export class MACOManagerAPI {
       this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
       this.macoStrategyManager.movingAverageDays(macoManagerAddress),
       this.macoStrategyManager.movingAveragePriceFeed(macoManagerAddress),
-      this.isUsingRiskCollateral(macoManagerAddress),
+      this.isUsingRiskComponent(macoManagerAddress),
     ]);
 
     // Assert the rebalancing Set is ready to be proposed
@@ -221,5 +215,43 @@ export class MACOManagerAPI {
         `Current Price ${currentPriceBN.toString()} must be greater than Moving Average ${movingAverageBN.toString()}`
       );
     }
+  }
+
+  private async assertInitialPropose(macoManagerAddress: Address) {
+    const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
+    const lastProposalTimestamp = (await this.macoStrategyManager.lastProposalTimestamp(macoManagerAddress));
+    const lessThanTwelveHoursElapsed = currentTimeStampInSeconds.minus(lastProposalTimestamp).lt(TWELVE_HOURS);
+    if (lessThanTwelveHoursElapsed) {
+      throw new Error('Less than 12 hours has elapsed since the last proposal timestamp');
+    }
+  }
+
+  private async assertConfirmPropose(macoManagerAddress: Address) {
+    // Check the current block.timestamp
+    const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
+    const lastProposalTimestamp = (await this.macoStrategyManager.lastProposalTimestamp(macoManagerAddress));
+
+    const moreThanTwelveHoursElapsed = currentTimeStampInSeconds.minus(lastProposalTimestamp).gt(TWELVE_HOURS);
+    const lessThanSixHoursElapsed = currentTimeStampInSeconds.minus(lastProposalTimestamp).lt(SIX_HOURS);
+
+    if (moreThanTwelveHoursElapsed || lessThanSixHoursElapsed) {
+      // If the current timestamp >6 and <12 hours since last call, call confirmPropose
+      throw new Error('Confirm Crossover Propose is not called 6-12 hours since last proposal timestamp');
+    }
+  }
+
+  private async isUsingRiskComponent(macoManagerAddress: Address): Promise<boolean> {
+    const [
+      rebalancingSetToken,
+      riskComponent,
+    ] = await Promise.all([
+      this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
+      this.macoStrategyManager.riskAssetAddress(macoManagerAddress),
+    ]);
+
+    const rebalancingSetCurrentCollateral = await this.rebalancingSetToken.currentSet(rebalancingSetToken);
+    const [collateralComponent] = await this.setToken.getComponents(rebalancingSetCurrentCollateral);
+
+    return riskComponent.toLowerCase() === collateralComponent.toLowerCase();
   }
 }

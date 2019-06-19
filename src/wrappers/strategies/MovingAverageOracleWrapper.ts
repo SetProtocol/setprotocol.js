@@ -52,7 +52,7 @@ export class MovingAverageOracleWrapper {
   }
 
   /**
-   * Fetch the source price medianizer from the MovingAverageOracle
+   * Fetch the MakerDAO risk asset price medianizer from the MovingAverageOracle
    *
    * @param  movingAverageOracleAddress    Address of the moving average oracle to fetch data from
    * @return                               Moving average for passed number of dataPoints returned in bytes
