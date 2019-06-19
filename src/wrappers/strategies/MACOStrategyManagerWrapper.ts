@@ -134,10 +134,22 @@ export class MACOStrategyManagerWrapper {
     return await macoStrategyManagerInstance.movingAverageDays.callAsync();
   }
 
-  public async lastProposalTimestamp(managerAddress: Address): Promise<BigNumber> {
+  public async lastCrossoverConfirmationTimestamp(managerAddress: Address): Promise<BigNumber> {
     const macoStrategyManagerInstance = await this.contracts.loadMACOStrategyManagerContractAsync(managerAddress);
 
-    return await macoStrategyManagerInstance.lastProposalTimestamp.callAsync();
+    return await macoStrategyManagerInstance.lastCrossoverConfirmationTimestamp.callAsync();
+  }
+
+  public async crossoverConfirmationMinTime(managerAddress: Address): Promise<BigNumber> {
+    const macoStrategyManagerInstance = await this.contracts.loadMACOStrategyManagerContractAsync(managerAddress);
+
+    return await macoStrategyManagerInstance.crossoverConfirmationMinTime.callAsync();
+  }
+
+  public async crossoverConfirmationMaxTime(managerAddress: Address): Promise<BigNumber> {
+    const macoStrategyManagerInstance = await this.contracts.loadMACOStrategyManagerContractAsync(managerAddress);
+
+    return await macoStrategyManagerInstance.crossoverConfirmationMaxTime.callAsync();
   }
 
   public async auctionTimeToPivot(managerAddress: Address): Promise<BigNumber> {

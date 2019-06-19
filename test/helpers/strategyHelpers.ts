@@ -23,6 +23,8 @@ export const deployMovingAverageStrategyManagerAsync = async(
   auctionLibrary: Address,
   movingAverageDays: BigNumber,
   auctionTimeToPivot: BigNumber,
+  crossoverConfirmationMinTime: BigNumber,
+  crossoverConfirmationMaxTime: BigNumber,
   from: Address = TX_DEFAULTS.from,
 ): Promise<MACOStrategyManagerContract> => {
   const truffleMacoManagerContract = contract(MACOStrategyManager);
@@ -42,6 +44,7 @@ export const deployMovingAverageStrategyManagerAsync = async(
     auctionLibrary,
     movingAverageDays,
     auctionTimeToPivot,
+    [crossoverConfirmationMinTime, crossoverConfirmationMaxTime],
   );
   return await MACOStrategyManagerContract.at(
     deployedMacoStrategyInstance.address,
