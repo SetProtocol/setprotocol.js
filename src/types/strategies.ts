@@ -20,7 +20,9 @@ export interface MovingAverageManagerDetails {
   auctionLibrary: Address;
   auctionTimeToPivot: BigNumber;
   core: Address;
-  lastProposalTimestamp: BigNumber;
+  crossoverConfirmationMaxTime: BigNumber;
+  crossoverConfirmationMinTime: BigNumber;
+  lastCrossoverConfirmationTimestamp: BigNumber;
   movingAverageDays: BigNumber;
   movingAveragePriceFeed: Address;
   rebalancingSetToken: Address;

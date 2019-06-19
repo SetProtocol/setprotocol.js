@@ -115,6 +115,9 @@ describe('MACOStrategyManagerWrapper', () => {
 
   let macoStrategyManagerWrapper: MACOStrategyManagerWrapper;
 
+  const crossoverConfirmationMinTime = ONE_HOUR_IN_SECONDS.mul(6);
+  const crossoverConfirmationMaxTime = ONE_HOUR_IN_SECONDS.mul(12);
+
   const priceFeedUpdateFrequency: BigNumber = new BigNumber(10);
   const initialMedianizerEthPrice: BigNumber = E18;
   const priceFeedDataDescription: string = '200DailyETHPrice';
@@ -235,6 +238,8 @@ describe('MACOStrategyManagerWrapper', () => {
       constantAuctionPriceCurve.address,
       movingAverageDays,
       auctionTimeToPivot,
+      crossoverConfirmationMinTime,
+      crossoverConfirmationMaxTime,
     );
 
     rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
@@ -467,7 +472,7 @@ describe('MACOStrategyManagerWrapper', () => {
     });
   });
 
-  describe('lastProposalTimestamp', async () => {
+  describe('lastCrossoverConfirmationTimestamp', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
@@ -475,12 +480,12 @@ describe('MACOStrategyManagerWrapper', () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await macoStrategyManagerWrapper.lastProposalTimestamp(
+      return await macoStrategyManagerWrapper.lastCrossoverConfirmationTimestamp(
         subjectManagerAddress,
       );
     }
 
-    test('gets the correct lastProposalTimestamp', async () => {
+    test('gets the correct lastCrossoverConfirmationTimestamp', async () => {
       const address = await subject();
       expect(address).to.bignumber.equal(initializedProposalTimestamp);
     });
@@ -502,6 +507,44 @@ describe('MACOStrategyManagerWrapper', () => {
     test('gets the correct auctionTimeToPivot', async () => {
       const address = await subject();
       expect(address).to.bignumber.equal(auctionTimeToPivot);
+    });
+  });
+
+  describe('crossoverConfirmationMinTime', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = macoManager.address;
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await macoStrategyManagerWrapper.crossoverConfirmationMinTime(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct crossoverConfirmationMinTime', async () => {
+      const minTime = await subject();
+      expect(minTime).to.bignumber.equal(crossoverConfirmationMinTime);
+    });
+  });
+
+  describe('crossoverConfirmationMaxTime', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = macoManager.address;
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await macoStrategyManagerWrapper.crossoverConfirmationMaxTime(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct crossoverConfirmationMaxTime', async () => {
+      const minTime = await subject();
+      expect(minTime).to.bignumber.equal(crossoverConfirmationMaxTime);
     });
   });
 
@@ -528,12 +571,12 @@ describe('MACOStrategyManagerWrapper', () => {
       );
     }
 
-    test('sets the lastProposalTimestamp properly', async () => {
+    test('sets the lastCrossoverConfirmationTimestamp properly', async () => {
       const txnHash = await subject();
       const { blockNumber } = await web3.eth.getTransactionReceipt(txnHash);
       const { timestamp } = await web3.eth.getBlock(blockNumber);
 
-      const lastTimestamp = await macoStrategyManagerWrapper.lastProposalTimestamp(
+      const lastTimestamp = await macoStrategyManagerWrapper.lastCrossoverConfirmationTimestamp(
         subjectManagerAddress,
       );
       expect(lastTimestamp).to.bignumber.equal(timestamp);
