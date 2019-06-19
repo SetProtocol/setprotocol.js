@@ -88,6 +88,20 @@ export class RebalancingAssertions {
   }
 
   /**
+   * Throws if given rebalancingSetToken is not in Default state
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   */
+  public async isNotInDefaultState(rebalancingSetTokenAddress: Address): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+
+    const currentState = await rebalancingSetTokenInstance.rebalanceState.callAsync();
+    if (!currentState.eq(RebalancingState.DEFAULT)) {
+      throw new Error(rebalancingErrors.INCORRECT_STATE(rebalancingSetTokenAddress, 'Default'));
+    }
+  }
+
+  /**
    * Throws if given rebalancingSetToken is not in Proposal state
    *
    * @param  rebalancingSetTokenAddress   The address of the rebalancing set token

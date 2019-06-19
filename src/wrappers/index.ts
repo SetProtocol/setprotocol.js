@@ -16,7 +16,7 @@
 
 'use strict';
 
-import {
+export {
   AuthorizableWrapper,
   BTCETHRebalancingManagerWrapper,
   ContractWrapper,
@@ -34,27 +34,8 @@ import {
   VaultWrapper
 } from './set_protocol';
 
-import {
-  HistoricalPriceFeedWrapper,
-  MovingAverageOracleWrapper
-} from './strategies';
-
 export {
-  AuthorizableWrapper,
-  BTCETHRebalancingManagerWrapper,
-  ContractWrapper,
-  CoreWrapper,
-  ERC20Wrapper,
-  ExchangeIssuanceModuleWrapper,
   HistoricalPriceFeedWrapper,
-  KyberNetworkWrapper,
+  MACOStrategyManagerWrapper,
   MovingAverageOracleWrapper,
-  PriceFeedWrapper,
-  RebalancingAuctionModuleWrapper,
-  RebalancingSetExchangeIssuanceModuleWrapper,
-  RebalancingSetTokenWrapper,
-  SetTokenWrapper,
-  TimeLockUpgradeWrapper,
-  VaultWrapper,
-  WhitelistWrapper
-};
+} from './strategies';

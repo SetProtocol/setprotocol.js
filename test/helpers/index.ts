@@ -53,4 +53,9 @@ export {
   getExpectedUnitSharesAsync,
 } from './rebalancingHelpers';
 
+export {
+  deployMovingAverageStrategyManagerAsync,
+  initializeMovingAverageStrategyManagerAsync,
+} from './strategyHelpers';
+
 export { getVaultBalances } from './vaultHelpers';

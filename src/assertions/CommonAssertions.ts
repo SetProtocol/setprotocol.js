@@ -39,6 +39,12 @@ export class CommonAssertions {
     }
   }
 
+  public isGreaterThan(quantity1: BigNumber, quantity2: BigNumber, errorMessage: string) {
+    if (quantity1.lte(quantity2)) {
+      throw new Error(errorMessage);
+    }
+  }
+
   public isGreaterOrEqualThan(quantity1: BigNumber, quantity2: BigNumber, errorMessage: string) {
     if (quantity1.lt(quantity2)) {
       throw new Error(errorMessage);

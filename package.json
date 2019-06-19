@@ -69,7 +69,7 @@
     "lodash.compact": "^3.0.1",
     "moment": "^2.22.2",
     "set-protocol-contracts": "1.2.1-beta.23",
-    "set-protocol-strategies": "1.0.4",
+    "set-protocol-strategies": "1.0.6",
     "set-protocol-utils": "1.0.0-beta.32",
     "timekeeper": "^2.1.2",
     "tiny-promisify": "^1.0.0",
