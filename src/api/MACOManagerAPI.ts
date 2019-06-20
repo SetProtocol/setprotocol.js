@@ -80,9 +80,6 @@ export class MACOManagerAPI {
    * @return               Transaction hash
    */
   public async initiateCrossoverProposeAsync(macoManager: Address, txOpts: Tx): Promise<string> {
-    // Check that the price has indeed experienced a crossover
-    await this.assertPropose(macoManager);
-
     await this.assertInitialPropose(macoManager);
 
     // If current timestamp > 12 hours since the last, call initialPropose
@@ -90,9 +87,6 @@ export class MACOManagerAPI {
   }
 
   public async confirmCrossoverProposeAsync(macoManager: Address, txOpts: Tx): Promise<string> {
-    // Check that the price has indeed experienced a crossover
-    await this.assertPropose(macoManager);
-
     await this.assertConfirmPropose(macoManager);
 
     return await this.macoStrategyManager.confirmPropose(macoManager, txOpts);
@@ -173,6 +167,39 @@ export class MACOManagerAPI {
 
   /* ============ Private Functions ============ */
 
+  private async assertInitialPropose(macoManagerAddress: Address) {
+    await this.assertPropose(macoManagerAddress);
+
+
+    const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
+    const lastCrossoverConfirmationTimestamp = (
+      await this.macoStrategyManager.lastCrossoverConfirmationTimestamp(macoManagerAddress)
+    );
+    const lessThanTwelveHoursElapsed = currentTimeStampInSeconds.minus(
+      lastCrossoverConfirmationTimestamp).lt(TWELVE_HOURS);
+    if (lessThanTwelveHoursElapsed) {
+      throw new Error('Less than 12 hours has elapsed since the last proposal timestamp');
+    }
+  }
+
+  private async assertConfirmPropose(macoManagerAddress: Address) {
+    await this.assertPropose(macoManagerAddress);
+
+    // Check the current block.timestamp
+    const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
+    const lastCrossoverConfirmationTimestamp = (
+      await this.macoStrategyManager.lastCrossoverConfirmationTimestamp(macoManagerAddress)
+    );
+    const moreThanTwelveHoursElapsed = currentTimeStampInSeconds.minus(
+      lastCrossoverConfirmationTimestamp).gt(TWELVE_HOURS);
+    const lessThanSixHoursElapsed = currentTimeStampInSeconds.minus(lastCrossoverConfirmationTimestamp).lt(SIX_HOURS);
+
+    if (moreThanTwelveHoursElapsed || lessThanSixHoursElapsed) {
+      // If the current timestamp >6 and <12 hours since last call, call confirmPropose
+      throw new Error('Confirm Crossover Propose is not called 6-12 hours since last proposal timestamp');
+    }
+  }
+
   private async assertPropose(macoManagerAddress: Address) {
     this.assert.schema.isValidAddress('macoManagerAddress', macoManagerAddress);
 
@@ -220,34 +247,6 @@ export class MACOManagerAPI {
         movingAverageBN,
         `Current Price ${currentPriceBN.toString()} must be greater than Moving Average ${movingAverageBN.toString()}`
       );
-    }
-  }
-
-  private async assertInitialPropose(macoManagerAddress: Address) {
-    const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
-    const lastCrossoverConfirmationTimestamp = (
-      await this.macoStrategyManager.lastCrossoverConfirmationTimestamp(macoManagerAddress)
-    );
-    const lessThanTwelveHoursElapsed = currentTimeStampInSeconds.minus(
-      lastCrossoverConfirmationTimestamp).lt(TWELVE_HOURS);
-    if (lessThanTwelveHoursElapsed) {
-      throw new Error('Less than 12 hours has elapsed since the last proposal timestamp');
-    }
-  }
-
-  private async assertConfirmPropose(macoManagerAddress: Address) {
-    // Check the current block.timestamp
-    const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
-    const lastCrossoverConfirmationTimestamp = (
-      await this.macoStrategyManager.lastCrossoverConfirmationTimestamp(macoManagerAddress)
-    );
-    const moreThanTwelveHoursElapsed = currentTimeStampInSeconds.minus(
-      lastCrossoverConfirmationTimestamp).gt(TWELVE_HOURS);
-    const lessThanSixHoursElapsed = currentTimeStampInSeconds.minus(lastCrossoverConfirmationTimestamp).lt(SIX_HOURS);
-
-    if (moreThanTwelveHoursElapsed || lessThanSixHoursElapsed) {
-      // If the current timestamp >6 and <12 hours since last call, call confirmPropose
-      throw new Error('Confirm Crossover Propose is not called 6-12 hours since last proposal timestamp');
     }
   }
 
