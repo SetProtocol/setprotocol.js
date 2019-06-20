@@ -685,7 +685,7 @@ describe('MACOManagerAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `Confirm Crossover Propose is not called 6-12 hours since last proposal timestamp`
+          `Confirm Crossover Propose is not called in the confirmation period since last proposal timestamp`
         );
       });
     });
@@ -725,7 +725,7 @@ describe('MACOManagerAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `Confirm Crossover Propose is not called 6-12 hours since last proposal timestamp`
+          `Confirm Crossover Propose is not called in the confirmation period since last proposal timestamp`
         );
       });
     });
