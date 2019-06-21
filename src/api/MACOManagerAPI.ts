@@ -28,12 +28,8 @@ import {
   RebalancingSetTokenWrapper,
 } from '../wrappers';
 import { Assertions } from '../assertions';
-import { ONE_HOUR_IN_SECONDS } from '../constants';
 import { Address, Tx } from '../types/common';
 import { MovingAverageManagerDetails } from '../types/strategies';
-
-const TWELVE_HOURS = ONE_HOUR_IN_SECONDS.mul(12);
-const SIX_HOURS = ONE_HOUR_IN_SECONDS.mul(6);
 
 /**
  * @title MACOManagerAPI
@@ -172,13 +168,15 @@ export class MACOManagerAPI {
 
 
     const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
-    const lastCrossoverConfirmationTimestamp = (
-      await this.macoStrategyManager.lastCrossoverConfirmationTimestamp(macoManagerAddress)
-    );
+    const lastCrossoverConfirmationTimestamp =
+      await this.macoStrategyManager.lastCrossoverConfirmationTimestamp(macoManagerAddress);
+    const crossoverConfirmationMaxTime =
+      await this.macoStrategyManager.crossoverConfirmationMaxTime(macoManagerAddress);
+
     const lessThanTwelveHoursElapsed = currentTimeStampInSeconds.minus(
-      lastCrossoverConfirmationTimestamp).lt(TWELVE_HOURS);
+      lastCrossoverConfirmationTimestamp).lt(crossoverConfirmationMaxTime);
     if (lessThanTwelveHoursElapsed) {
-      throw new Error('Less than 12 hours has elapsed since the last proposal timestamp');
+      throw new Error('Less than max confirm time has elapsed since the last proposal timestamp');
     }
   }
 
@@ -187,16 +185,27 @@ export class MACOManagerAPI {
 
     // Check the current block.timestamp
     const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
-    const lastCrossoverConfirmationTimestamp = (
-      await this.macoStrategyManager.lastCrossoverConfirmationTimestamp(macoManagerAddress)
-    );
+    const [
+      lastCrossoverConfirmationTimestamp,
+      crossoverConfirmationMaxTime,
+      crossoverConfirmationMinTime,
+    ] = await Promise.all([
+      this.macoStrategyManager.lastCrossoverConfirmationTimestamp(macoManagerAddress),
+      this.macoStrategyManager.crossoverConfirmationMaxTime(macoManagerAddress),
+      this.macoStrategyManager.crossoverConfirmationMinTime(macoManagerAddress),
+    ]);
+
     const moreThanTwelveHoursElapsed = currentTimeStampInSeconds.minus(
-      lastCrossoverConfirmationTimestamp).gt(TWELVE_HOURS);
-    const lessThanSixHoursElapsed = currentTimeStampInSeconds.minus(lastCrossoverConfirmationTimestamp).lt(SIX_HOURS);
+      lastCrossoverConfirmationTimestamp).gt(crossoverConfirmationMaxTime);
+    const lessThanSixHoursElapsed = currentTimeStampInSeconds
+                                      .minus(lastCrossoverConfirmationTimestamp)
+                                      .lt(crossoverConfirmationMinTime);
 
     if (moreThanTwelveHoursElapsed || lessThanSixHoursElapsed) {
-      // If the current timestamp >6 and <12 hours since last call, call confirmPropose
-      throw new Error('Confirm Crossover Propose is not called 6-12 hours since last proposal timestamp');
+      // If the current timestamp min confirm and max confirm time since last call, call confirmPropose
+      throw new Error(
+        'Confirm Crossover Propose is not called in the confirmation period since last proposal timestamp'
+      );
     }
   }
 
