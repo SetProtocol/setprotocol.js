@@ -3,10 +3,7 @@ import promisify from 'tiny-promisify';
 import Web3 from 'web3';
 import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
 import { ConstantAuctionPriceCurve } from 'set-protocol-contracts';
-<<<<<<< HEAD
-=======
-import { BTCETHRebalancingManager, BTCETHRebalancingManagerContract, } from 'set-protocol-strategies';
->>>>>>> Complete wrapper and tests
+
 import {
   ConstantAuctionPriceCurveContract,
   CoreContract,
