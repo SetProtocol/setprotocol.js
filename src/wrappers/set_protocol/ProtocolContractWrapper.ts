@@ -19,11 +19,12 @@
 import Web3 from 'web3';
 import {
   AuthorizableContract,
-  BaseContract,
+  BaseContract as CoreBaseContract,
   CoreContract,
   ERC20DetailedContract,
   ExchangeIssuanceModuleContract,
   KyberNetworkWrapperContract,
+  RebalancingSetIssuanceModuleContract,
   RebalancingSetExchangeIssuanceModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
@@ -34,6 +35,11 @@ import {
   WhiteListContract,
   VaultContract,
 } from 'set-protocol-contracts';
+
+import {
+  BaseContract as StrategyBaseContract,
+  BTCETHRebalancingManagerContract,
+} from 'set-protocol-strategies';
 
 import { Address } from '../../types/common';
 
@@ -46,7 +52,7 @@ import { Address } from '../../types/common';
  */
 export class ProtocolContractWrapper {
   private web3: Web3;
-  private cache: { [contractName: string]: BaseContract };
+  private cache: { [contractName: string]: CoreBaseContract | StrategyBaseContract };
 
   public constructor(web3: Web3) {
     this.web3 = web3;
@@ -276,6 +282,32 @@ export class ProtocolContractWrapper {
       );
       this.cache[cacheKey] = rebalancingSetExchangeIssuanceModuleContract;
       return rebalancingSetExchangeIssuanceModuleContract;
+    }
+  }
+
+  /**
+   * Load RebalancingSetIssuanceModule contract
+   *
+   * @param  rebalancingSetIssuanceAddress    Address of the RebalancingSetIssuanceModule contract
+   * @param  transactionOptions                       Options sent into the contract deployed method
+   * @return                                          The RebalancingSetIssuanceModule Contract
+   */
+  public async loadRebalancingSetIssuanceModuleAsync(
+    rebalancingSetIssuanceAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<RebalancingSetIssuanceModuleContract> {
+    const cacheKey = `RebalancingSetIssuanceModule_${rebalancingSetIssuanceAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as RebalancingSetIssuanceModuleContract;
+    } else {
+      const rebalancingSetIssuanceModuleContract = await RebalancingSetIssuanceModuleContract.at(
+        rebalancingSetIssuanceAddress,
+        this.web3,
+        transactionOptions
+      );
+      this.cache[cacheKey] = rebalancingSetIssuanceModuleContract;
+      return rebalancingSetIssuanceModuleContract;
     }
   }
 
