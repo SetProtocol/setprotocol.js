@@ -41,7 +41,7 @@ import {
 } from 'set-protocol-contracts';
 import { SetProtocolUtils, Web3Utils } from 'set-protocol-utils';
 
-import ChaiSetup from '../helpers/chaiSetup';
+import ChaiSetup from '../../helpers/chaiSetup';
 import { ACCOUNTS, DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import SetProtocol from '@src/SetProtocol';
 import {
