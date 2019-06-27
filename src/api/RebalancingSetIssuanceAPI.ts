@@ -1,5 +1,5 @@
 /*
-  Copyright 2018 Set Labs Inc.
+  Copyright 2019 Set Labs Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import {
   SetTokenWrapper,
  } from '../wrappers';
 import { Address, SetProtocolConfig, Tx } from '../types/common';
-import { coreAPIErrors } from '../errors';
+import { coreAPIErrors, exchangeIssuanceErrors } from '../errors';
 
 /**
  * @title RebalancingSetIssuanceAPI
@@ -42,8 +42,8 @@ export class RebalancingSetIssuanceAPI {
   private assert: Assertions;
   private setProtocolUtils: SetProtocolUtils;
   private rebalancingSetIssuanceModule: RebalancingSetIssuanceModuleWrapper;
-  private setToken: SetTokenWrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
+  private setToken: SetTokenWrapper;
   private wrappedEther: Address;
   private transferProxy: Address;
 
@@ -210,8 +210,15 @@ export class RebalancingSetIssuanceAPI {
     );
 
     // Add checks for required ether quantities
-    // Check that a base SetToken component is ether
-
     this.assert.common.isNotUndefined(txOpts.value, exchangeIssuanceErrors.ETHER_VALUE_NOT_UNDEFINED());
+
+    const baseSetAddress = await this.rebalancingSetToken.currentSet(rebalancingSetAddress);
+
+    // Check that a base SetToken component is ether
+    await this.assert.setToken.isComponent(
+      baseSetAddress,
+      this.wrappedEther,
+    );
+    
   }
 }
