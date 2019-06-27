@@ -21,7 +21,6 @@ import Web3 from 'web3';
 import { SetTokenContract } from 'set-protocol-contracts';
 
 import { ZERO } from '../constants';
-import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from '../wrappers';
 import { BigNumber } from '../util';

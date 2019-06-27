@@ -26,7 +26,6 @@ import { SchemaAssertions } from './SchemaAssertions';
 import { SetTokenAssertions } from './SetTokenAssertions';
 import { BigNumber } from '../util';
 import { Address } from '../types/common';
-import { ZERO } from '../constants';
 
 export class IssuanceAssertions {
   private erc20Assertions: ERC20Assertions;
@@ -65,7 +64,7 @@ export class IssuanceAssertions {
       transactionCaller,
       setTokenQuantity,
     );
-    
+
     await this.setTokenAssertions.hasSufficientAllowances(
       setTokenAddress,
       transactionCaller,

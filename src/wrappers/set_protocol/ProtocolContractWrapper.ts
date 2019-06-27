@@ -36,11 +36,6 @@ import {
   VaultContract,
 } from 'set-protocol-contracts';
 
-import {
-  BaseContract as StrategyBaseContract,
-  BTCETHRebalancingManagerContract,
-} from 'set-protocol-strategies';
-
 import { Address } from '../../types/common';
 
 /**
@@ -52,7 +47,7 @@ import { Address } from '../../types/common';
  */
 export class ProtocolContractWrapper {
   private web3: Web3;
-  private cache: { [contractName: string]: CoreBaseContract | StrategyBaseContract };
+  private cache: { [contractName: string]: CoreBaseContract };
 
   public constructor(web3: Web3) {
     this.web3 = web3;
