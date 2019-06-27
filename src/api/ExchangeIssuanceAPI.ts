@@ -163,35 +163,6 @@ export class ExchangeIssuanceAPI {
   }
 
   /**
-   * Get get estimate for the issueRebalancingSetWithEtherAsync request
-   *
-   * @param  rebalancingSetAddress    Address of the Rebalancing Set to issue
-   * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to issue
-   * @param  exchangeIssuanceParams   Parameters required to facilitate an exchange issuance
-   * @param  orders                   A list of signed 0x orders or kyber trades
-   * @param  txOpts                   Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
-   * @return                          Transaction hash
-   */
-  public async fetchIssueRebalancingSetWithEtherGasCostAsync(
-    rebalancingSetAddress: Address,
-    rebalancingSetQuantity: BigNumber,
-    exchangeIssuanceParams: ExchangeIssuanceParams,
-    orders: (KyberTrade | ZeroExSignedFillOrder)[],
-    txOpts: Tx
-  ): Promise<number> {
-    await this.assertIssueRebalancingSetWithEther(rebalancingSetAddress, exchangeIssuanceParams, orders, txOpts);
-
-    const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
-    return this.rebalancingSetExchangeIssuanceModule.issueRebalancingSetWithEtherGasEstimate(
-      rebalancingSetAddress,
-      rebalancingSetQuantity,
-      exchangeIssuanceParams,
-      orderData,
-      txOpts,
-    );
-  }
-
-  /**
    * Redeems a Rebalancing Set into the base Set. Then the base Set is redeemed, and its components
    * are exchanged for Wrapped Ether. The wrapped Ether is then unwrapped and attributed to the caller.
    *
@@ -254,42 +225,6 @@ export class ExchangeIssuanceAPI {
 
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
     return this.rebalancingSetExchangeIssuanceModule.redeemRebalancingSetIntoEtherTransactionData(
-      rebalancingSetAddress,
-      rebalancingSetQuantity,
-      exchangeIssuanceParams,
-      orderData,
-      txOpts,
-    );
-  }
-
-  /**
-   * Redeems a Rebalancing Set into the base Set. Then the base Set is redeemed, and its components
-   * are exchanged for Wrapped Ether. The wrapped Ether is then unwrapped and attributed to the caller.
-   *
-   * @param  rebalancingSetAddress    Address of the rebalancing Set to redeem
-   * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
-   * @param  exchangeIssuanceParams   Parameters required to facilitate an exchange issuance
-   * @param  orders                   A list of signed 0x orders or kyber trades
-   * @param  txOpts                   Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
-   * @return                          Transaction hash
-   */
-  public async fetchRedeemRebalancingSetIntoEtherGasCostAsync(
-    rebalancingSetAddress: Address,
-    rebalancingSetQuantity: BigNumber,
-    exchangeIssuanceParams: ExchangeIssuanceParams,
-    orders: (KyberTrade | ZeroExSignedFillOrder)[],
-    txOpts: Tx
-  ): Promise<number> {
-    await this.assertRedeemRebalancingSetIntoEther(
-      rebalancingSetAddress,
-      rebalancingSetQuantity,
-      exchangeIssuanceParams,
-      orders,
-      txOpts,
-    );
-
-    const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
-    return this.rebalancingSetExchangeIssuanceModule.redeemRebalancingSetIntoEtherGasEstimate(
       rebalancingSetAddress,
       rebalancingSetQuantity,
       exchangeIssuanceParams,

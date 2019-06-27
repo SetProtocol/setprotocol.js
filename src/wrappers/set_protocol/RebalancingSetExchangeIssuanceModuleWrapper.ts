@@ -105,37 +105,6 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
   }
 
   /**
-   * Get get estimate for the issueRebalancingSetWithEther request
-   *
-   * @param  rebalancingSetAddress    Address of the rebalancing Set to issue
-   * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to issue
-   * @param  exchangeIssuanceData     Struct containing data around the base Set issuance
-   * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
-   * @param  txOpts                    The options for executing the transaction
-   */
-  public async issueRebalancingSetWithEtherGasEstimate(
-    rebalancingSetAddress: Address,
-    rebalancingSetQuantity: BigNumber,
-    exchangeIssuanceParams: ExchangeIssuanceParams,
-    orderData: Bytes,
-    txOpts?: Tx,
-  ): Promise<number> {
-    const txSettings = await generateTxOpts(this.web3, txOpts);
-    const rebalancingSetExchangeIssuanceModuleInstance =
-      await this.contracts.loadRebalancingSetExchangeIssuanceModuleAsync(
-        this.rebalancingSetExchangeIssuanceModule
-      );
-
-    return await rebalancingSetExchangeIssuanceModuleInstance.issueRebalancingSetWithEther.estimateGasAsync(
-      rebalancingSetAddress,
-      rebalancingSetQuantity,
-      exchangeIssuanceParams,
-      orderData,
-      txSettings,
-    );
-  }
-
-  /**
    * Redeems a Rebalancing Set into the base Set. Then the base Set is redeemed, and its components
    * are exchanged for Wrapped Ether. The wrapped Ether is then unwrapped and attributed to the caller.
    *
@@ -197,36 +166,5 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
         orderData,
         txSettings,
       );
-  }
-
-  /**
-   * Get get estimate for the redeemRebalancingSetIntoEtherGasEstimate request
-   *
-   * @param  rebalancingSetAddress    Address of the rebalancing Set to redeem
-   * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
-   * @param  exchangeIssuanceData     Struct containing data around the base Set issuance
-   * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
-   * @param  txOpts                    The options for executing the transaction
-   */
-  public async redeemRebalancingSetIntoEtherGasEstimate(
-    rebalancingSetAddress: Address,
-    rebalancingSetQuantity: BigNumber,
-    exchangeIssuanceParams: ExchangeIssuanceParams,
-    orderData: Bytes,
-    txOpts?: Tx,
-  ): Promise<number> {
-    const txSettings = await generateTxOpts(this.web3, txOpts);
-    const rebalancingSetExchangeIssuanceModuleInstance =
-      await this.contracts.loadRebalancingSetExchangeIssuanceModuleAsync(
-        this.rebalancingSetExchangeIssuanceModule
-      );
-
-    return await rebalancingSetExchangeIssuanceModuleInstance.redeemRebalancingSetIntoEther.estimateGasAsync(
-      rebalancingSetAddress,
-      rebalancingSetQuantity,
-      exchangeIssuanceParams,
-      orderData,
-      txSettings,
-    );
   }
 }
