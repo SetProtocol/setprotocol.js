@@ -18,18 +18,15 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { SetProtocolUtils } from 'set-protocol-utils';
 
 import { Assertions } from '../assertions';
 import { BigNumber,  } from '../util';
 import {
-  CoreWrapper,
   RebalancingSetIssuanceModuleWrapper,
   RebalancingSetTokenWrapper,
-  SetTokenWrapper,
  } from '../wrappers';
 import { Address, SetProtocolConfig, Tx } from '../types/common';
-import { coreAPIErrors, exchangeIssuanceErrors } from '../errors';
+import { exchangeIssuanceErrors } from '../errors';
 
 /**
  * @title RebalancingSetIssuanceAPI
@@ -40,14 +37,10 @@ import { coreAPIErrors, exchangeIssuanceErrors } from '../errors';
 export class RebalancingSetIssuanceAPI {
   private web3: Web3;
   private assert: Assertions;
-  private setProtocolUtils: SetProtocolUtils;
   private rebalancingSetIssuanceModule: RebalancingSetIssuanceModuleWrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
-  private setToken: SetTokenWrapper;
   private wrappedEther: Address;
   private transferProxy: Address;
-
-  private core: CoreWrapper;
 
   /**
    * Instantiates a new RebalancingSetIssuanceAPI instance that contains methods for issuing and redeeming Sets
@@ -63,16 +56,13 @@ export class RebalancingSetIssuanceAPI {
     config: SetProtocolConfig,
   ) {
     this.web3 = web3;
-    this.setProtocolUtils = new SetProtocolUtils(this.web3);
     this.assert = assertions;
-    this.core = new CoreWrapper(this.web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
     this.transferProxy = config.transferProxyAddress;
     this.rebalancingSetIssuanceModule = new RebalancingSetIssuanceModuleWrapper(
       web3,
       config.rebalancingSetIssuanceModule,
     );
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
-    this.setToken = new SetTokenWrapper(this.web3);
     this.wrappedEther = config.wrappedEtherAddress;
   }
 
@@ -184,8 +174,11 @@ export class RebalancingSetIssuanceAPI {
     keepChangeInVault: boolean,
     txOpts: Tx
   ): Promise<string> {
-
-    // Check that a component is ether
+    await this.assertRedeemRebalancingSetUnwrappingEther(
+      rebalancingSetAddress,
+      rebalancingSetQuantity,
+      txOpts,
+    );
 
     return this.rebalancingSetIssuanceModule.redeemRebalancingSetUnwrappingEther(
       rebalancingSetAddress,
@@ -219,6 +212,26 @@ export class RebalancingSetIssuanceAPI {
       baseSetAddress,
       this.wrappedEther,
     );
-    
+  }
+
+  private async assertRedeemRebalancingSetUnwrappingEther(
+    rebalancingSetAddress: Address,
+    rebalancingSetQuantity: BigNumber,
+    txOpts: Tx,
+  ) {
+    await this.assert.issuance.assertIssue(
+      rebalancingSetAddress,
+      rebalancingSetQuantity,
+      txOpts.from,
+      this.transferProxy,
+    );
+
+    const baseSetAddress = await this.rebalancingSetToken.currentSet(rebalancingSetAddress);
+
+    // Check that a base SetToken component is ether
+    await this.assert.setToken.isComponent(
+      baseSetAddress,
+      this.wrappedEther,
+    );
   }
 }
