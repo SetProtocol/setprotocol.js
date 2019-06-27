@@ -9,6 +9,7 @@ export {
   deployExchangeIssuanceModuleAsync,
   deployNoDecimalTokenAsync,
   deployRebalancingSetExchangeIssuanceModuleAsync,
+  deployRebalancingSetIssuanceModuleAsync,
   deployRebalancingSetTokenFactoryContract,
   deploySetTokenAsync,
   deploySetTokenFactoryContract,
