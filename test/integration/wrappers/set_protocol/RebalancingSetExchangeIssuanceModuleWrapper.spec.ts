@@ -242,10 +242,10 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
         exchangeIssuancePaymentTokenAmount,                                   // takerAssetAmount
         exchangeIssuanceRequiredComponents[0],                                // makerAssetAddress
         exchangeIssuancePaymentToken,                                         // takerAssetAddress
-        customSalt || SetUtils.generateSalt(),                                // salt
+        SetUtils.generateSalt(),                                              // salt
         SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,                                // exchangeAddress
         NULL_ADDRESS,                                                         // feeRecipientAddress
-        customExpirationTimeSeconds || SetTestUtils.generateTimestamp(10000), // expirationTimeSeconds
+        SetTestUtils.generateTimestamp(10000),                                // expirationTimeSeconds
         exchangeIssuancePaymentTokenAmount,                                   // amount of zeroExOrder to fill
       );
 
@@ -367,10 +367,10 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
         exchangeIssuanceSendTokenAmounts[0],                                  // takerAssetAmount
         exchangeIssuanceReceiveTokens[0],                                     // makerAssetAddress
         exchangeIssuanceSendTokens[0],                                        // takerAssetAddress
-        customSalt || SetUtils.generateSalt(),                                // salt
+        SetUtils.generateSalt(),                                              // salt
         SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,                                // exchangeAddress
         NULL_ADDRESS,                                                         // feeRecipientAddress
-        customExpirationTimeSeconds || SetTestUtils.generateTimestamp(10000), // expirationTimeSeconds
+        SetTestUtils.generateTimestamp(10000),                                // expirationTimeSeconds
         exchangeIssuanceSendTokenAmounts[0],                                  // amount of zeroExOrder to fill
       );
 
