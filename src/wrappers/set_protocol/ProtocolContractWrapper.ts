@@ -44,7 +44,7 @@ import { Address } from '../../types/common';
  * The Contracts API handles all functions that load contracts
  *
  */
-export class ContractWrapper {
+export class ProtocolContractWrapper {
   private web3: Web3;
   private cache: { [contractName: string]: BaseContract };
 

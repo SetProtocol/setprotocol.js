@@ -19,7 +19,7 @@
 import Web3 from 'web3';
 import { Address, TokenFlows, Tx } from '../../types/common';
 
-import { ContractWrapper } from '.';
+import { ProtocolContractWrapper } from './ProtocolContractWrapper';
 import { BigNumber } from '../../util';
 
 /**
@@ -31,11 +31,11 @@ import { BigNumber } from '../../util';
  */
 export class RebalancingSetTokenWrapper {
   private web3: Web3;
-  private contracts: ContractWrapper;
+  private contracts: ProtocolContractWrapper;
 
   public constructor(web3: Web3) {
     this.web3 = web3;
-    this.contracts = new ContractWrapper(this.web3);
+    this.contracts = new ProtocolContractWrapper(this.web3);
   }
 
   /**

@@ -18,7 +18,7 @@
 
 import Web3 from 'web3';
 
-import { ContractWrapper } from '.';
+import { ProtocolContractWrapper } from './ProtocolContractWrapper';
 import { BigNumber } from '../../util';
 import { Address } from '../../types/common';
 
@@ -31,13 +31,13 @@ import { Address } from '../../types/common';
  */
 export class KyberNetworkWrapper {
   private web3: Web3;
-  private contracts: ContractWrapper;
+  private contracts: ProtocolContractWrapper;
   private kyberNetworkWrapperAddress: Address;
 
   public constructor(web3: Web3, kyberNetworkWrapperAddress: Address) {
     this.web3 = web3;
     this.kyberNetworkWrapperAddress = kyberNetworkWrapperAddress;
-    this.contracts = new ContractWrapper(this.web3);
+    this.contracts = new ProtocolContractWrapper(this.web3);
   }
 
   /**

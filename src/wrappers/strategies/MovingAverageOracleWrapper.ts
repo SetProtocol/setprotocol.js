@@ -18,7 +18,7 @@
 
 import Web3 from 'web3';
 
-import { ContractWrapper } from '.';
+import { StrategyContractWrapper } from './StrategyContractWrapper';
 import { BigNumber } from '../../util';
 import { Address } from '../../types/common';
 
@@ -31,11 +31,11 @@ import { Address } from '../../types/common';
  */
 export class MovingAverageOracleWrapper {
   private web3: Web3;
-  private contracts: ContractWrapper;
+  private contracts: StrategyContractWrapper;
 
   public constructor(web3: Web3) {
     this.web3 = web3;
-    this.contracts = new ContractWrapper(this.web3);
+    this.contracts = new StrategyContractWrapper(this.web3);
   }
 
   /**

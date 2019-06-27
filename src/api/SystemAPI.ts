@@ -21,7 +21,7 @@ import Web3 from 'web3';
 
 import {
   AuthorizableWrapper,
-  ContractWrapper,
+  ProtocolContractWrapper,
   CoreWrapper,
   PriceFeedWrapper,
   TimeLockUpgradeWrapper,
@@ -45,7 +45,7 @@ import {
  */
 export class SystemAPI {
   private web3: Web3;
-  private contract: ContractWrapper;
+  private contract: ProtocolContractWrapper;
   private config: SetProtocolConfig;
   private core: CoreWrapper;
   private authorizable: AuthorizableWrapper;
@@ -65,7 +65,7 @@ export class SystemAPI {
   constructor(web3: Web3, core: CoreWrapper, config: SetProtocolConfig) {
     this.web3 = web3;
     this.core = core;
-    this.contract = new ContractWrapper(web3);
+    this.contract = new ProtocolContractWrapper(web3);
     this.config = config;
     this.authorizable = new AuthorizableWrapper(web3);
     this.priceFeed = new PriceFeedWrapper(web3);

@@ -18,7 +18,7 @@
 
 import Web3 from 'web3';
 
-import { ContractWrapper } from '.';
+import { ProtocolContractWrapper } from './ProtocolContractWrapper';
 import { BigNumber, generateTxOpts } from '../../util';
 import { Address, Tx } from '../../types/common';
 import { Bytes, ExchangeIssuanceParams } from 'set-protocol-utils';
@@ -32,13 +32,13 @@ import { Bytes, ExchangeIssuanceParams } from 'set-protocol-utils';
  */
 export class RebalancingSetExchangeIssuanceModuleWrapper {
   private web3: Web3;
-  private contracts: ContractWrapper;
+  private contracts: ProtocolContractWrapper;
   private rebalancingSetExchangeIssuanceModule: Address;
 
   public constructor(web3: Web3, rebalancingSetExchangeIssuanceModuleAddress: Address) {
     this.web3 = web3;
     this.rebalancingSetExchangeIssuanceModule = rebalancingSetExchangeIssuanceModuleAddress;
-    this.contracts = new ContractWrapper(this.web3);
+    this.contracts = new ProtocolContractWrapper(this.web3);
   }
 
   /**
@@ -65,37 +65,6 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
       );
 
     return await rebalancingSetExchangeIssuanceModuleInstance.issueRebalancingSetWithEther.sendTransactionAsync(
-      rebalancingSetAddress,
-      rebalancingSetQuantity,
-      exchangeIssuanceParams,
-      orderData,
-      txSettings,
-    );
-  }
-
-  /**
-   * Get ABI encoded transaction data for the issueRebalancingSetWithEther request
-   *
-   * @param  rebalancingSetAddress    Address of the rebalancing Set to issue
-   * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to issue
-   * @param  exchangeIssuanceData     Struct containing data around the base Set issuance
-   * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
-   * @param  txOpts                    The options for executing the transaction
-   */
-  public async issueRebalancingSetWithEtherTransactionData(
-    rebalancingSetAddress: Address,
-    rebalancingSetQuantity: BigNumber,
-    exchangeIssuanceParams: ExchangeIssuanceParams,
-    orderData: Bytes,
-    txOpts?: Tx,
-  ): Promise<string> {
-    const txSettings = await generateTxOpts(this.web3, txOpts);
-    const rebalancingSetExchangeIssuanceModuleInstance =
-      await this.contracts.loadRebalancingSetExchangeIssuanceModuleAsync(
-        this.rebalancingSetExchangeIssuanceModule
-      );
-
-    return await rebalancingSetExchangeIssuanceModuleInstance.issueRebalancingSetWithEther.getABIEncodedTransactionData(
       rebalancingSetAddress,
       rebalancingSetQuantity,
       exchangeIssuanceParams,
@@ -134,37 +103,5 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
       orderData,
       txSettings,
     );
-  }
-
-  /**
-   * Get ABI encoded transaction data for the redeemRebalancingSetIntoEther request
-   *
-   * @param  rebalancingSetAddress    Address of the rebalancing Set to redeem
-   * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
-   * @param  exchangeIssuanceData     Struct containing data around the base Set issuance
-   * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
-   * @param  txOpts                    The options for executing the transaction
-   */
-  public async redeemRebalancingSetIntoEtherTransactionData(
-    rebalancingSetAddress: Address,
-    rebalancingSetQuantity: BigNumber,
-    exchangeIssuanceParams: ExchangeIssuanceParams,
-    orderData: Bytes,
-    txOpts?: Tx,
-  ): Promise<string> {
-    const txSettings = await generateTxOpts(this.web3, txOpts);
-    const rebalancingSetExchangeIssuanceModuleInstance =
-      await this.contracts.loadRebalancingSetExchangeIssuanceModuleAsync(
-        this.rebalancingSetExchangeIssuanceModule
-      );
-
-    return await rebalancingSetExchangeIssuanceModuleInstance
-      .redeemRebalancingSetIntoEther.getABIEncodedTransactionData(
-        rebalancingSetAddress,
-        rebalancingSetQuantity,
-        exchangeIssuanceParams,
-        orderData,
-        txSettings,
-      );
   }
 }

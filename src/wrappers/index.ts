@@ -16,28 +16,27 @@
 
 'use strict';
 
+export { AuthorizableWrapper } from './set_protocol/AuthorizableWrapper';
+export { CoreWrapper } from './set_protocol/CoreWrapper';
+export { ERC20Wrapper } from './set_protocol/ERC20Wrapper';
+export { ExchangeIssuanceModuleWrapper } from './set_protocol/ExchangeIssuanceModuleWrapper';
+export { KyberNetworkWrapper } from './set_protocol/KyberNetworkWrapper';
 export {
-  AuthorizableWrapper,
-  ContractWrapper,
-  CoreWrapper,
-  ERC20Wrapper,
-  ExchangeIssuanceModuleWrapper,
-  KyberNetworkWrapper,
-  RebalancingSetExchangeIssuanceModuleWrapper,
-  PriceFeedWrapper,
-  RebalancingAuctionModuleWrapper,
-  RebalancingSetTokenWrapper,
-  SetTokenWrapper,
-  TimeLockUpgradeWrapper,
-  WhitelistWrapper,
-  VaultWrapper
-} from './set_protocol';
+ RebalancingSetExchangeIssuanceModuleWrapper
+} from './set_protocol/RebalancingSetExchangeIssuanceModuleWrapper';
+export { PriceFeedWrapper } from './set_protocol/PriceFeedWrapper';
+export { ProtocolContractWrapper } from './set_protocol/ProtocolContractWrapper';
+export { RebalancingAuctionModuleWrapper } from './set_protocol/RebalancingAuctionModuleWrapper';
+export { RebalancingSetTokenWrapper } from './set_protocol/RebalancingSetTokenWrapper';
+export { SetTokenWrapper } from './set_protocol/SetTokenWrapper';
+export { TimeLockUpgradeWrapper } from './set_protocol/TimeLockUpgradeWrapper';
+export { WhitelistWrapper } from './set_protocol/WhitelistWrapper';
+export { VaultWrapper } from './set_protocol/VaultWrapper';
 
-export {
-  BTCDAIRebalancingManagerWrapper,
-  BTCETHRebalancingManagerWrapper,
-  ETHDAIRebalancingManagerWrapper,
-  HistoricalPriceFeedWrapper,
-  MACOStrategyManagerWrapper,
-  MovingAverageOracleWrapper,
-} from './strategies';
+export { BTCDAIRebalancingManagerWrapper } from './strategies/BTCDAIRebalancingManagerWrapper';
+export { BTCETHRebalancingManagerWrapper } from './strategies/BTCETHRebalancingManagerWrapper';
+export { ETHDAIRebalancingManagerWrapper } from './strategies/ETHDAIRebalancingManagerWrapper';
+export { HistoricalPriceFeedWrapper } from './strategies/HistoricalPriceFeedWrapper';
+export { MovingAverageOracleWrapper } from './strategies/MovingAverageOracleWrapper';
+export { MACOStrategyManagerWrapper } from './strategies/MACOStrategyManagerWrapper';
+export { StrategyContractWrapper } from './strategies/StrategyContractWrapper';
