@@ -18,7 +18,7 @@
 
 import Web3 from 'web3';
 
-import { ContractWrapper } from '.';
+import { ProtocolContractWrapper } from './ProtocolContractWrapper';
 import { generateTxOpts } from '../../util';
 import { Address, Tx } from '../../types/common';
 import { Bytes, ExchangeIssuanceParams } from 'set-protocol-utils';
@@ -32,13 +32,13 @@ import { Bytes, ExchangeIssuanceParams } from 'set-protocol-utils';
  */
 export class ExchangeIssuanceModuleWrapper {
   private web3: Web3;
-  private contracts: ContractWrapper;
+  private contracts: ProtocolContractWrapper;
   private exchangeIssuanceModule: Address;
 
   public constructor(web3: Web3, exchangeIssuanceModuleAddress: Address) {
     this.web3 = web3;
     this.exchangeIssuanceModule = exchangeIssuanceModuleAddress;
-    this.contracts = new ContractWrapper(this.web3);
+    this.contracts = new ProtocolContractWrapper(this.web3);
   }
 
   /**

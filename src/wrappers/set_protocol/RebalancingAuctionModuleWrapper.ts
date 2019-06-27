@@ -19,7 +19,7 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
 
-import { ContractWrapper } from '.';
+import { ProtocolContractWrapper } from './ProtocolContractWrapper';
 import { Address, Tx } from '../../types/common';
 import { BigNumber, generateTxOpts } from '../../util';
 
@@ -32,7 +32,7 @@ import { BigNumber, generateTxOpts } from '../../util';
  */
 export class RebalancingAuctionModuleWrapper {
   private web3: Web3;
-  private contracts: ContractWrapper;
+  private contracts: ProtocolContractWrapper;
 
   public rebalanceAuctionModuleAddress: Address;
 
@@ -41,7 +41,7 @@ export class RebalancingAuctionModuleWrapper {
     rebalanceAuctionModule: Address,
   ) {
     this.web3 = web3;
-    this.contracts = new ContractWrapper(this.web3);
+    this.contracts = new ProtocolContractWrapper(this.web3);
 
     this.rebalanceAuctionModuleAddress = rebalanceAuctionModule;
   }

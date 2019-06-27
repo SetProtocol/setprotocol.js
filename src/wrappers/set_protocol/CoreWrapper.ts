@@ -20,7 +20,7 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { SetProtocolUtils } from 'set-protocol-utils';
 
-import { ContractWrapper } from '.';
+import { ProtocolContractWrapper } from './ProtocolContractWrapper';
 import { Address, Tx } from '../../types/common';
 import { BigNumber, generateTxOpts } from '../../util';
 
@@ -33,7 +33,7 @@ import { BigNumber, generateTxOpts } from '../../util';
  */
 export class CoreWrapper {
   private web3: Web3;
-  private contracts: ContractWrapper;
+  private contracts: ProtocolContractWrapper;
 
   public coreAddress: Address;
   public transferProxyAddress: Address;
@@ -46,7 +46,7 @@ export class CoreWrapper {
     vaultAddress: Address,
   ) {
     this.web3 = web3;
-    this.contracts = new ContractWrapper(this.web3);
+    this.contracts = new ProtocolContractWrapper(this.web3);
 
     this.coreAddress = coreAddress;
     this.transferProxyAddress = transferProxyAddress;
