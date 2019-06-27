@@ -30,6 +30,7 @@ import {
   OracleAPI,
   RebalancingAPI,
   RebalancingManagerAPI,
+  RebalancingSetIssuanceAPI,
   SystemAPI,
   SetTokenAPI,
 } from './api';
@@ -87,6 +88,12 @@ class SetProtocol {
    */
   public rebalancing: RebalancingAPI;
 
+
+  /**
+   * An instance of the RebalancingSetIssuanceAPI class containing methods for rebalancing Set issuances.
+   */
+  public rebalancingSetIssuance: RebalancingSetIssuanceAPI;
+
   /**
    * An instance of the RebalancingManagerAPI class containing methods for interacting with Rebalancing Manager
    */
@@ -139,6 +146,7 @@ class SetProtocol {
     this.system = new SystemAPI(this.web3, this.core, config);
     this.movingAverageManager = new MACOManagerAPI(this.web3, assertions);
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, config);
+    this.rebalancingSetIssuance = new RebalancingSetIssuanceAPI(this.web3, assertions, config);
     this.rebalancingManager = new RebalancingManagerAPI(this.web3);
     this.exchangeIssuance = new ExchangeIssuanceAPI(this.web3, assertions, config);
   }

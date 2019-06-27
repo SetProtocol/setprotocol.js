@@ -170,7 +170,7 @@ describe('IssuanceAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
       `
-        Expected txOpts.from to conform to schema /Address.
+        Expected transactionCaller to conform to schema /Address.
 
         Encountered: "invalidCallerAddress"
 
@@ -224,7 +224,7 @@ describe('IssuanceAPI', () => {
       });
 
       test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith('Issue quantity needs to be multiple of natural unit.');
+        return expect(subject()).to.be.rejectedWith('Issuance quantity needs to be multiple of natural unit.');
       });
     });
 
@@ -358,7 +358,7 @@ describe('IssuanceAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
       `
-        Expected txOpts.from to conform to schema /Address.
+        Expected transactionCaller to conform to schema /Address.
 
         Encountered: "invalidCallerAddress"
 
@@ -430,7 +430,7 @@ describe('IssuanceAPI', () => {
       });
 
       test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith('Redeem quantity needs to be multiple of natural unit.');
+        return expect(subject()).to.be.rejectedWith('Issuance quantity needs to be multiple of natural unit.');
       });
     });
 

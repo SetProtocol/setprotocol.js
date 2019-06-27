@@ -26,6 +26,7 @@ import { MACOManagerAPI } from './MACOManagerAPI';
 import { OracleAPI } from './OracleAPI';
 import { RebalancingAPI } from './RebalancingAPI';
 import { RebalancingManagerAPI } from './RebalancingManagerAPI';
+import { RebalancingSetIssuanceAPI } from './RebalancingSetIssuanceAPI';
 import { SetTokenAPI } from './SetTokenAPI';
 import { SystemAPI } from './SystemAPI';
 
@@ -40,6 +41,7 @@ export {
   OracleAPI,
   RebalancingAPI,
   RebalancingManagerAPI,
+  RebalancingSetIssuanceAPI,
   SetTokenAPI,
   SystemAPI
 };

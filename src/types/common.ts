@@ -97,6 +97,7 @@ export interface SetProtocolConfig {
   kyberNetworkWrapperAddress: Address;
   rebalanceAuctionModuleAddress: Address;
   rebalancingSetExchangeIssuanceModule: Address;
+  rebalancingSetIssuanceModule: Address;
   rebalancingSetTokenFactoryAddress: Address;
   setTokenFactoryAddress: Address;
   transferProxyAddress: Address;
