@@ -16,13 +16,19 @@
 
 'use strict';
 
+import { BTCDAIRebalancingManagerWrapper } from './BTCDAIRebalancingManagerWrapper';
+import { BTCETHRebalancingManagerWrapper } from './BTCETHRebalancingManagerWrapper';
 import { ContractWrapper } from './ContractWrapper';
+import { ETHDAIRebalancingManagerWrapper } from './ETHDAIRebalancingManagerWrapper';
 import { HistoricalPriceFeedWrapper } from './HistoricalPriceFeedWrapper';
 import { MovingAverageOracleWrapper } from './MovingAverageOracleWrapper';
 import { MACOStrategyManagerWrapper } from './MACOStrategyManagerWrapper';
 
 export {
+  BTCDAIRebalancingManagerWrapper,
+  BTCETHRebalancingManagerWrapper,
   ContractWrapper,
+  ETHDAIRebalancingManagerWrapper,
   HistoricalPriceFeedWrapper,
   MACOStrategyManagerWrapper,
   MovingAverageOracleWrapper

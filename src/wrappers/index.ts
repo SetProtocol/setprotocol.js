@@ -18,7 +18,6 @@
 
 export {
   AuthorizableWrapper,
-  BTCETHRebalancingManagerWrapper,
   ContractWrapper,
   CoreWrapper,
   ERC20Wrapper,
@@ -35,6 +34,9 @@ export {
 } from './set_protocol';
 
 export {
+  BTCDAIRebalancingManagerWrapper,
+  BTCETHRebalancingManagerWrapper,
+  ETHDAIRebalancingManagerWrapper,
   HistoricalPriceFeedWrapper,
   MACOStrategyManagerWrapper,
   MovingAverageOracleWrapper,

@@ -20,7 +20,6 @@ import Web3 from 'web3';
 import {
   AuthorizableContract,
   BaseContract,
-  BTCETHRebalancingManagerContract,
   CoreContract,
   ERC20DetailedContract,
   ExchangeIssuanceModuleContract,
@@ -355,32 +354,6 @@ export class ContractWrapper {
       );
       this.cache[cacheKey] = whitelistContract;
       return whitelistContract;
-    }
-  }
-
-  /**
-   * Load BtcEthManagerContract contract
-   *
-   * @param  btcEthManagerAddress           Address of the BTCETHRebalancingManagerContract contract
-   * @param  transactionOptions             Options sent into the contract deployed method
-   * @return                                The BtcEthManagerContract Contract
-   */
-  public async loadBtcEthManagerAsync(
-    btcEthManagerAddress: Address,
-    transactionOptions: object = {},
-  ): Promise<BTCETHRebalancingManagerContract> {
-    const cacheKey = `BtcEthManager_${btcEthManagerAddress}`;
-
-    if (cacheKey in this.cache) {
-      return this.cache[cacheKey] as BTCETHRebalancingManagerContract;
-    } else {
-      const btcEthRebalancingManagerContract = await BTCETHRebalancingManagerContract.at(
-        btcEthManagerAddress,
-        this.web3,
-        transactionOptions
-      );
-      this.cache[cacheKey] = btcEthRebalancingManagerContract;
-      return btcEthRebalancingManagerContract;
     }
   }
 

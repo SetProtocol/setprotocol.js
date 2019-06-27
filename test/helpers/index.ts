@@ -43,7 +43,6 @@ export {
   constructInflowOutflowAddressesArraysAsync,
   createDefaultRebalancingSetTokenAsync,
   deployConstantAuctionPriceCurveAsync,
-  deployBtcEthManagerContractAsync,
   deploySetTokensAsync,
   increaseChainTimeAsync,
   transitionToProposeAsync,
@@ -54,6 +53,9 @@ export {
 } from './rebalancingHelpers';
 
 export {
+  deployBtcDaiManagerContractAsync,
+  deployBtcEthManagerContractAsync,
+  deployEthDaiManagerContractAsync,
   deployMovingAverageStrategyManagerAsync,
   initializeMovingAverageStrategyManagerAsync,
 } from './strategyHelpers';

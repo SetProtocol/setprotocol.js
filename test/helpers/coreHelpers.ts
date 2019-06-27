@@ -462,6 +462,9 @@ export const deployTokensSpecifyingDecimals = async (
   web3: Web3,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<StandardTokenMockContract[]> => {
+  if (tokenCount != decimalsList.length) {
+    throw new Error('Amount of tokens must match passed decimal list length');
+  }
   const standardTokenMockContract = setDefaultTruffleContract(web3, StandardTokenMock);
   const mockTokens: StandardTokenMockContract[] = [];
 

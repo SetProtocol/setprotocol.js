@@ -20,6 +20,9 @@ import Web3 from 'web3';
 
 import {
   BaseContract,
+  BTCDaiRebalancingManagerContract,
+  BTCETHRebalancingManagerContract,
+  ETHDaiRebalancingManagerContract,
   HistoricalPriceFeedContract,
   MACOStrategyManagerContract,
   MovingAverageOracleContract
@@ -92,6 +95,84 @@ export class ContractWrapper {
       );
       this.cache[cacheKey] = movingAverageOracleContract;
       return movingAverageOracleContract;
+    }
+  }
+
+  /**
+   * Load BTCETHManagerContract contract
+   *
+   * @param  btcEthManagerAddress           Address of the BTCETHRebalancingManagerContract contract
+   * @param  transactionOptions             Options sent into the contract deployed method
+   * @return                                The BtcEthManagerContract Contract
+   */
+  public async loadBtcEthManagerContractAsync(
+    btcEthManagerAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<BTCETHRebalancingManagerContract> {
+    const cacheKey = `BtcEthManager_${btcEthManagerAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as BTCETHRebalancingManagerContract;
+    } else {
+      const btcEthRebalancingManagerContract = await BTCETHRebalancingManagerContract.at(
+        btcEthManagerAddress,
+        this.web3,
+        transactionOptions
+      );
+      this.cache[cacheKey] = btcEthRebalancingManagerContract;
+      return btcEthRebalancingManagerContract;
+    }
+  }
+
+  /**
+   * Load a BTCDAIRebalancingManager contract
+   *
+   * @param  btcDaiManager                Address of the BTCDAIRebalancingManager contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The BTCDAIRebalancingManager Contract
+   */
+  public async loadBtcDaiManagerContractAsync(
+    btcDaiManager: Address,
+    transactionOptions: object = {},
+  ): Promise<BTCDaiRebalancingManagerContract> {
+    const cacheKey = `btcDaiManager_${btcDaiManager}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as BTCDaiRebalancingManagerContract;
+    } else {
+      const btcDaiRebalancingManagerContract = await BTCDaiRebalancingManagerContract.at(
+        btcDaiManager,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = btcDaiRebalancingManagerContract;
+      return btcDaiRebalancingManagerContract;
+    }
+  }
+
+  /**
+   * Load a ETHDAIRebalancingManager contract
+   *
+   * @param  ethDaiManager                Address of the ETHDAIRebalancingManager contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The ETHDAIRebalancingManager Contract
+   */
+  public async loadEthDaiManagerContractAsync(
+    ethDaiManager: Address,
+    transactionOptions: object = {},
+  ): Promise<ETHDaiRebalancingManagerContract> {
+    const cacheKey = `ethDaiManager_${ethDaiManager}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as ETHDaiRebalancingManagerContract;
+    } else {
+      const ethDaiRebalancingManagerContract = await ETHDaiRebalancingManagerContract.at(
+        ethDaiManager,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = ethDaiRebalancingManagerContract;
+      return ethDaiRebalancingManagerContract;
     }
   }
 
