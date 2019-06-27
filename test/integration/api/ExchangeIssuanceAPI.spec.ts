@@ -735,6 +735,7 @@ describe('ExchangeIssuanceAPI', () => {
                               '000000000000000000000000000000000000000000');
       });
     });
+  });
 
   describe('redeemRebalancingSetIntoEther', async () => {
     let subjectRebalancingSetAddress: Address;
@@ -1061,6 +1062,7 @@ describe('ExchangeIssuanceAPI', () => {
                               '0000000000');
       });
     });
+  });
 
   describe('getKyberConversionRate', async () => {
     let subjectSourceTokenAddresses: Address[];
