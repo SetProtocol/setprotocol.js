@@ -25,6 +25,7 @@ export {
  RebalancingSetExchangeIssuanceModuleWrapper
 } from './set_protocol/RebalancingSetExchangeIssuanceModuleWrapper';
 export { PriceFeedWrapper } from './set_protocol/PriceFeedWrapper';
+export { ProtocolContractWrapper } from './set_protocol/ProtocolContractWrapper';
 export { RebalancingAuctionModuleWrapper } from './set_protocol/RebalancingAuctionModuleWrapper';
 export { RebalancingSetTokenWrapper } from './set_protocol/RebalancingSetTokenWrapper';
 export { SetTokenWrapper } from './set_protocol/SetTokenWrapper';
@@ -38,3 +39,4 @@ export { ETHDAIRebalancingManagerWrapper } from './strategies/ETHDAIRebalancingM
 export { HistoricalPriceFeedWrapper } from './strategies/HistoricalPriceFeedWrapper';
 export { MovingAverageOracleWrapper } from './strategies/MovingAverageOracleWrapper';
 export { MACOStrategyManagerWrapper } from './strategies/MACOStrategyManagerWrapper';
+export { StrategyContractWrapper } from './strategies/StrategyContractWrapper';
