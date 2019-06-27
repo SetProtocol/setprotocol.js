@@ -42,11 +42,11 @@ import {
 } from 'set-protocol-contracts';
 
 import {
-  BTCETHRebalancingManagerContract,
+  ETHDaiRebalancingManagerContract,
 } from 'set-protocol-strategies';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
-import { BTCETHRebalancingManagerWrapper } from '@src/wrappers';
+import { ETHDAIRebalancingManagerWrapper } from '@src/wrappers';
 import {
   TX_DEFAULTS,
   ONE_DAY_IN_SECONDS,
@@ -60,7 +60,7 @@ import {
   approveForTransferAsync,
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
-  deployBtcEthManagerContractAsync,
+  deployEthDaiManagerContractAsync,
   deployConstantAuctionPriceCurveAsync,
   deploySetTokenAsync,
   deployMedianizerAsync,
@@ -88,26 +88,25 @@ coreContract.defaults(TX_DEFAULTS);
 let currentSnapshotId: number;
 
 
-describe('BTCETHRebalancingManagerWrapper', () => {
+describe('ETHDAIRebalancingManagerWrapper', () => {
   let core: CoreContract;
   let transferProxy: TransferProxyContract;
   let factory: SetTokenFactoryContract;
   let rebalancingFactory: RebalancingSetTokenFactoryContract;
   let constantAuctionPriceCurve: ConstantAuctionPriceCurveContract;
-  let btcethRebalancingManager: BTCETHRebalancingManagerContract;
-  let btcMedianizer: MedianContract;
+  let ethDaiRebalancingManager: ETHDaiRebalancingManagerContract;
   let ethMedianizer: MedianContract;
-  let wrappedBTC: StandardTokenMockContract;
   let wrappedETH: StandardTokenMockContract;
+  let dai: StandardTokenMockContract;
   let whitelist: WhiteListContract;
 
-  let btcMultiplier: BigNumber;
   let ethMultiplier: BigNumber;
+  let daiMultiplier: BigNumber;
   let maximumLowerThreshold: BigNumber;
   let minimumUpperThreshold: BigNumber;
   let auctionTimeToPivot: BigNumber;
 
-  let btcEthManagerWrapper: BTCETHRebalancingManagerWrapper;
+  let ethDaiManagerWrapper: ETHDAIRebalancingManagerWrapper;
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -128,23 +127,23 @@ describe('BTCETHRebalancingManagerWrapper', () => {
       whitelist,
     ] = await deployBaseContracts(web3);
 
-    btcMedianizer = await deployMedianizerAsync(web3);
-    await addPriceFeedOwnerToMedianizer(btcMedianizer, DEFAULT_ACCOUNT);
     ethMedianizer = await deployMedianizerAsync(web3);
     await addPriceFeedOwnerToMedianizer(ethMedianizer, DEFAULT_ACCOUNT);
 
-    [wrappedBTC, wrappedETH] = await deployTokensSpecifyingDecimals(2, [8, 18], web3, DEFAULT_ACCOUNT);
+    [wrappedETH, dai] = await deployTokensSpecifyingDecimals(2, [18, 18], web3, DEFAULT_ACCOUNT);
+
     await approveForTransferAsync(
-      [wrappedBTC, wrappedETH],
+      [wrappedETH, dai],
       transferProxy.address
     );
     await addWhiteListedTokenAsync(
       whitelist,
-      wrappedBTC.address,
+      wrappedETH.address,
     );
+
     await addWhiteListedTokenAsync(
       whitelist,
-      wrappedETH.address,
+      dai.address,
     );
 
     constantAuctionPriceCurve = await deployConstantAuctionPriceCurveAsync(
@@ -153,32 +152,32 @@ describe('BTCETHRebalancingManagerWrapper', () => {
       DEFAULT_AUCTION_PRICE_DENOMINATOR,
     );
 
-    addPriceCurveToCoreAsync(
+    await addPriceCurveToCoreAsync(
       core,
       constantAuctionPriceCurve.address,
     );
 
-    btcMultiplier = new BigNumber(1);
     ethMultiplier = new BigNumber(1);
+    daiMultiplier = new BigNumber(1);
+
     auctionTimeToPivot = ONE_DAY_IN_SECONDS;
 
     maximumLowerThreshold = new BigNumber(48);
     minimumUpperThreshold = new BigNumber(52);
-    btcethRebalancingManager = await deployBtcEthManagerContractAsync(
+    ethDaiRebalancingManager = await deployEthDaiManagerContractAsync(
       web3,
       core.address,
-      btcMedianizer.address,
       ethMedianizer.address,
-      wrappedBTC.address,
+      dai.address,
       wrappedETH.address,
       factory.address,
       constantAuctionPriceCurve.address,
       auctionTimeToPivot,
-      [btcMultiplier, ethMultiplier],
+      [ethMultiplier, daiMultiplier],
       [maximumLowerThreshold, minimumUpperThreshold]
     );
 
-    btcEthManagerWrapper = new BTCETHRebalancingManagerWrapper(
+    ethDaiManagerWrapper = new ETHDAIRebalancingManagerWrapper(
       web3,
     );
   });
@@ -191,11 +190,11 @@ describe('BTCETHRebalancingManagerWrapper', () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
-      subjectManagerAddress = btcethRebalancingManager.address;
+      subjectManagerAddress = ethDaiRebalancingManager.address;
     });
 
     async function subject(): Promise<Address> {
-      return await btcEthManagerWrapper.core(
+      return await ethDaiManagerWrapper.core(
         subjectManagerAddress,
       );
     }
@@ -206,34 +205,15 @@ describe('BTCETHRebalancingManagerWrapper', () => {
     });
   });
 
-   describe('btcPriceFeed', async () => {
-    let subjectManagerAddress: Address;
-
-    beforeEach(async () => {
-      subjectManagerAddress = btcethRebalancingManager.address;
-    });
-
-    async function subject(): Promise<Address> {
-      return await btcEthManagerWrapper.btcPriceFeed(
-        subjectManagerAddress,
-      );
-    }
-
-    test('gets the correct btcPriceFeed', async () => {
-      const address = await subject();
-      expect(address).to.equal(btcMedianizer.address);
-    });
-  });
-
   describe('ethPriceFeed', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
-      subjectManagerAddress = btcethRebalancingManager.address;
+      subjectManagerAddress = ethDaiRebalancingManager.address;
     });
 
     async function subject(): Promise<Address> {
-      return await btcEthManagerWrapper.ethPriceFeed(
+      return await ethDaiManagerWrapper.ethPriceFeed(
         subjectManagerAddress,
       );
     }
@@ -244,35 +224,15 @@ describe('BTCETHRebalancingManagerWrapper', () => {
     });
   });
 
-  describe('btcAddress', async () => {
-    let subjectManagerAddress: Address;
-
-    beforeEach(async () => {
-      subjectManagerAddress = btcethRebalancingManager.address;
-    });
-
-    async function subject(): Promise<Address> {
-      return await btcEthManagerWrapper.btcAddress(
-        subjectManagerAddress,
-      );
-    }
-
-    test('gets the correct btcAddress', async () => {
-      const address = await subject();
-      expect(address).to.equal(wrappedBTC.address);
-    });
-  });
-
   describe('ethAddress', async () => {
     let subjectManagerAddress: Address;
 
-
     beforeEach(async () => {
-      subjectManagerAddress = btcethRebalancingManager.address;
+      subjectManagerAddress = ethDaiRebalancingManager.address;
     });
 
     async function subject(): Promise<Address> {
-      return await btcEthManagerWrapper.ethAddress(
+      return await ethDaiManagerWrapper.ethAddress(
         subjectManagerAddress,
       );
     }
@@ -283,15 +243,35 @@ describe('BTCETHRebalancingManagerWrapper', () => {
     });
   });
 
+  describe('daiAddress', async () => {
+    let subjectManagerAddress: Address;
+
+
+    beforeEach(async () => {
+      subjectManagerAddress = ethDaiRebalancingManager.address;
+    });
+
+    async function subject(): Promise<Address> {
+      return await ethDaiManagerWrapper.daiAddress(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct ethAddress', async () => {
+      const address = await subject();
+      expect(address).to.equal(dai.address);
+    });
+  });
+
   describe('setTokenFactory', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
-      subjectManagerAddress = btcethRebalancingManager.address;
+      subjectManagerAddress = ethDaiRebalancingManager.address;
     });
 
     async function subject(): Promise<Address> {
-      return await btcEthManagerWrapper.setTokenFactory(
+      return await ethDaiManagerWrapper.setTokenFactory(
         subjectManagerAddress,
       );
     }
@@ -302,41 +282,41 @@ describe('BTCETHRebalancingManagerWrapper', () => {
     });
   });
 
-  describe('btcMultiplier', async () => {
-    let subjectManagerAddress: Address;
-
-    beforeEach(async () => {
-      subjectManagerAddress = btcethRebalancingManager.address;
-    });
-
-    async function subject(): Promise<BigNumber> {
-      return await btcEthManagerWrapper.btcMultiplier(
-        subjectManagerAddress,
-      );
-    }
-
-    test('gets the correct btcMultiplier', async () => {
-      const address = await subject();
-      expect(address).to.bignumber.equal(btcMultiplier);
-    });
-  });
-
   describe('ethMultiplier', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
-      subjectManagerAddress = btcethRebalancingManager.address;
+      subjectManagerAddress = ethDaiRebalancingManager.address;
     });
 
     async function subject(): Promise<BigNumber> {
-      return await btcEthManagerWrapper.ethMultiplier(
+      return await ethDaiManagerWrapper.ethMultiplier(
         subjectManagerAddress,
       );
     }
 
     test('gets the correct ethMultiplier', async () => {
-      const address = await subject();
-      expect(address).to.bignumber.equal(ethMultiplier);
+      const multiplier = await subject();
+      expect(multiplier).to.bignumber.equal(ethMultiplier);
+    });
+  });
+
+  describe('daiMultiplier', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = ethDaiRebalancingManager.address;
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await ethDaiManagerWrapper.daiMultiplier(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct daiMultiplier', async () => {
+      const multiplier = await subject();
+      expect(multiplier).to.bignumber.equal(daiMultiplier);
     });
   });
 
@@ -344,18 +324,18 @@ describe('BTCETHRebalancingManagerWrapper', () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
-      subjectManagerAddress = btcethRebalancingManager.address;
+      subjectManagerAddress = ethDaiRebalancingManager.address;
     });
 
     async function subject(): Promise<BigNumber> {
-      return await btcEthManagerWrapper.maximumLowerThreshold(
+      return await ethDaiManagerWrapper.maximumLowerThreshold(
         subjectManagerAddress,
       );
     }
 
     test('gets the correct maximumLowerThreshold', async () => {
-      const threshold = await subject();
-      expect(threshold).to.bignumber.equal(maximumLowerThreshold);
+      const multiplier = await subject();
+      expect(multiplier).to.bignumber.equal(maximumLowerThreshold);
     });
   });
 
@@ -363,18 +343,18 @@ describe('BTCETHRebalancingManagerWrapper', () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
-      subjectManagerAddress = btcethRebalancingManager.address;
+      subjectManagerAddress = ethDaiRebalancingManager.address;
     });
 
     async function subject(): Promise<BigNumber> {
-      return await btcEthManagerWrapper.minimumUpperThreshold(
+      return await ethDaiManagerWrapper.minimumUpperThreshold(
         subjectManagerAddress,
       );
     }
 
     test('gets the correct minimumUpperThreshold', async () => {
-      const threshold = await subject();
-      expect(threshold).to.bignumber.equal(minimumUpperThreshold);
+      const multiplier = await subject();
+      expect(multiplier).to.bignumber.equal(minimumUpperThreshold);
     });
   });
 
@@ -382,11 +362,11 @@ describe('BTCETHRebalancingManagerWrapper', () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
-      subjectManagerAddress = btcethRebalancingManager.address;
+      subjectManagerAddress = ethDaiRebalancingManager.address;
     });
 
     async function subject(): Promise<Address> {
-      return await btcEthManagerWrapper.auctionLibrary(
+      return await ethDaiManagerWrapper.auctionLibrary(
         subjectManagerAddress,
       );
     }
@@ -402,11 +382,11 @@ describe('BTCETHRebalancingManagerWrapper', () => {
 
 
     beforeEach(async () => {
-      subjectManagerAddress = btcethRebalancingManager.address;
+      subjectManagerAddress = ethDaiRebalancingManager.address;
     });
 
     async function subject(): Promise<BigNumber> {
-      return await btcEthManagerWrapper.auctionTimeToPivot(
+      return await ethDaiManagerWrapper.auctionTimeToPivot(
         subjectManagerAddress,
       );
     }
@@ -421,9 +401,8 @@ describe('BTCETHRebalancingManagerWrapper', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
 
     let proposalPeriod: BigNumber;
-    let btcPrice: BigNumber;
     let ethPrice: BigNumber;
-    let ethUnit: BigNumber;
+    let daiUnit: BigNumber;
 
     let initialAllocationToken: SetTokenContract;
     let timeFastForward: BigNumber;
@@ -433,9 +412,8 @@ describe('BTCETHRebalancingManagerWrapper', () => {
     let subjectCaller: Address;
 
     beforeAll(async () => {
-      btcPrice = new BigNumber(4082 * 10 ** 18);
-      ethPrice = new BigNumber(128 * 10 ** 18);
-      ethUnit = new BigNumber(28.999 * 10 ** 10);
+      ethPrice = new BigNumber(350 * 10 ** 18);
+      daiUnit = new BigNumber(300 * 100);
     });
 
     beforeEach(async () => {
@@ -443,9 +421,9 @@ describe('BTCETHRebalancingManagerWrapper', () => {
         web3,
         core,
         factory.address,
-        [wrappedBTC.address, wrappedETH.address],
-        [new BigNumber(1).mul(btcMultiplier), ethUnit.mul(ethMultiplier)],
-        new BigNumber(10 ** 10),
+        [dai.address, wrappedETH.address],
+        [daiUnit.mul(daiMultiplier), new BigNumber(100).mul(ethMultiplier)],
+        new BigNumber(100),
       );
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
@@ -453,7 +431,7 @@ describe('BTCETHRebalancingManagerWrapper', () => {
         web3,
         core,
         rebalancingFactory.address,
-        btcethRebalancingManager.address,
+        ethDaiRebalancingManager.address,
         initialAllocationToken.address,
         proposalPeriod
       );
@@ -461,26 +439,19 @@ describe('BTCETHRebalancingManagerWrapper', () => {
       timeFastForward = ONE_DAY_IN_SECONDS.add(1);
       await updateMedianizerPriceAsync(
         web3,
-        btcMedianizer,
-        btcPrice,
-        SetTestUtils.generateTimestamp(1000),
-      );
-
-      await updateMedianizerPriceAsync(
-        web3,
         ethMedianizer,
         ethPrice,
         SetTestUtils.generateTimestamp(1000),
       );
 
-      subjectManagerAddress = btcethRebalancingManager.address;
+      subjectManagerAddress = ethDaiRebalancingManager.address;
       subjectRebalancingSetToken = rebalancingSetToken.address;
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
     async function subject(): Promise<string> {
       await increaseChainTimeAsync(web3, timeFastForward);
-      return await btcEthManagerWrapper.propose(
+      return await ethDaiManagerWrapper.propose(
         subjectManagerAddress,
         subjectRebalancingSetToken,
         { from: subjectCaller },

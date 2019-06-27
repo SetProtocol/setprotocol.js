@@ -2,9 +2,8 @@ import * as _ from 'lodash';
 import promisify from 'tiny-promisify';
 import Web3 from 'web3';
 import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
-import { BTCETHRebalancingManager, ConstantAuctionPriceCurve } from 'set-protocol-contracts';
+import { ConstantAuctionPriceCurve } from 'set-protocol-contracts';
 import {
-  BTCETHRebalancingManagerContract,
   ConstantAuctionPriceCurveContract,
   CoreContract,
   RebalanceAuctionModuleContract,
@@ -100,44 +99,6 @@ export const deployConstantAuctionPriceCurveAsync = async(
   );
   return await ConstantAuctionPriceCurveContract.at(
     deployedConstantAuctionPriceCurveInstance.address,
-    web3,
-    TX_DEFAULTS,
-  );
-};
-
-export const deployBtcEthManagerContractAsync = async(
-  web3: Web3,
-  coreAddress: Address,
-  btcPriceFeedAddress: Address,
-  ethPriceFeedAddress: Address,
-  btcAddress: Address,
-  ethAddress: Address,
-  setTokenFactory: Address,
-  auctionLibrary: Address,
-  auctionTimeToPivot: BigNumber,
-  componentMultipliers: BigNumber[],
-  allocationBounds: BigNumber[],
-): Promise<BTCETHRebalancingManagerContract> => {
-  const truffleBTCETHRebalancingManagerContract = contract(BTCETHRebalancingManager);
-  truffleBTCETHRebalancingManagerContract.setProvider(web3.currentProvider);
-  truffleBTCETHRebalancingManagerContract.setNetwork(50);
-  truffleBTCETHRebalancingManagerContract.defaults(TX_DEFAULTS);
-
-  // Deploy BTCETHRebalancingManager
-  const deployedBtcEthManagerInstance = await truffleBTCETHRebalancingManagerContract.new(
-    coreAddress,
-    btcPriceFeedAddress,
-    ethPriceFeedAddress,
-    btcAddress,
-    ethAddress,
-    setTokenFactory,
-    auctionLibrary,
-    auctionTimeToPivot,
-    componentMultipliers,
-    allocationBounds,
-  );
-  return await BTCETHRebalancingManagerContract.at(
-    deployedBtcEthManagerInstance.address,
     web3,
     TX_DEFAULTS,
   );
