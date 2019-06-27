@@ -42,12 +42,11 @@ export class RebalancingSetIssuanceModuleWrapper {
   }
 
   /**
-   * Issue a Rebalancing Set using the base components of the Base SetToken.
-   * The Base SetToken is then issued into the Rebalancing Set.
+   * Issue a rebalancing SetToken using the base components of the base SetToken.
    *
    * @param  rebalancingSetAddress    Address of the rebalancing Set to issue
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to issue
-   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transfered to the user 
+   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transfered to the user
    *                                    or is left in the vault
    * @param  txOpts                    The options for executing the transaction
    */
@@ -71,6 +70,17 @@ export class RebalancingSetIssuanceModuleWrapper {
     );
   }
 
+  /**
+   * Issue a rebalancing SetToken using the base components of the base SetToken.
+   * Wrapped Ether must be a component of the base SetToken - which is wrapped using the
+   * ether sent along with the transaction.
+   *
+   * @param  rebalancingSetAddress    Address of the rebalancing Set to issue
+   * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to issue
+   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transfered to the user
+   *                                    or is left in the vault
+   * @param  txOpts                   The options for executing the transaction.
+   */
   public async issueRebalancingSetWrappingEther(
     rebalancingSetAddress: Address,
     rebalancingSetQuantity: BigNumber,
@@ -89,15 +99,15 @@ export class RebalancingSetIssuanceModuleWrapper {
       keepChangeInVault,
       txSettings,
     );
-  }  
+  }
 
   /**
-   * Redeems a Rebalancing Set into the base Set. Then the base Set is redeemed, and its components
-   * are exchanged for Wrapped Ether. The wrapped Ether is then unwrapped and attributed to the caller.
+   * Redeems a Rebalancing Set into the base SetToken. Then the base SetToken is redeemed, and its components
+   * are sent to the caller.
    *
    * @param  rebalancingSetAddress    Address of the rebalancing Set to redeem
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
-   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transfered to the user 
+   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transfered to the user
    *                                    or is left in the vault
    * @param  txOpts                    The options for executing the transaction
    */
@@ -121,6 +131,16 @@ export class RebalancingSetIssuanceModuleWrapper {
     );
   }
 
+  /**
+   * Redeems a Rebalancing Set into the base SetToken. Then the base Set is redeemed, and its components
+   * are sent to the caller. Any wrapped Ether is unwrapped and attributed to the caller.
+   *
+   * @param  rebalancingSetAddress    Address of the rebalancing Set to redeem
+   * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
+   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transfered to the user
+   *                                    or is left in the vault
+   * @param  txOpts                    The options for executing the transaction
+   */
   public async redeemRebalancingSetUnwrappingEther(
     rebalancingSetAddress: Address,
     rebalancingSetQuantity: BigNumber,
