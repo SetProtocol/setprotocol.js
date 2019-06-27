@@ -29,7 +29,6 @@ import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
 import { Core } from 'set-protocol-contracts';
 import {
-  BTCETHRebalancingManagerContract,
   CoreContract,
   ConstantAuctionPriceCurveContract,
   MedianContract,
@@ -41,6 +40,10 @@ import {
   TransferProxyContract,
   WhiteListContract,
 } from 'set-protocol-contracts';
+
+import {
+  BTCETHRebalancingManagerContract,
+} from 'set-protocol-strategies';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { RebalancingManagerAPI } from '@src/api';
