@@ -18,7 +18,7 @@
 
 import Web3 from 'web3';
 
-import { ContractWrapper } from '.';
+import { ProtocolContractWrapper } from './ProtocolContractWrapper';
 import { BigNumber, generateTxOpts } from '../../util';
 import { Address, Tx } from '../../types/common';
 
@@ -32,13 +32,13 @@ import { Address, Tx } from '../../types/common';
  */
 export class RebalancingSetIssuanceModuleWrapper {
   private web3: Web3;
-  private contracts: ContractWrapper;
+  private contracts: ProtocolContractWrapper;
   private rebalancingSetIssuanceModule: Address;
 
   public constructor(web3: Web3, rebalancingSetIssuanceModuleAddress: Address) {
     this.web3 = web3;
     this.rebalancingSetIssuanceModule = rebalancingSetIssuanceModuleAddress;
-    this.contracts = new ContractWrapper(this.web3);
+    this.contracts = new ProtocolContractWrapper(this.web3);
   }
 
   /**

@@ -33,6 +33,7 @@ import {
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
+  StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
   WethMockContract,
@@ -45,8 +46,9 @@ import {
   NULL_ADDRESS,
   ZERO,
   ONE_DAY_IN_SECONDS,
-  DEFAULT_UNIT_SHARES,
+  DEFAULT_GAS_LIMIT,
   DEFAULT_REBALANCING_NATURAL_UNIT,
+  UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
 } from '@src/constants';
 import { Assertions } from '@src/assertions';
 import {
@@ -59,27 +61,27 @@ import {
   deployTokensSpecifyingDecimals,
   deployWethMockAsync,
 } from '@test/helpers';
-import { BigNumber } from '@src/util';
-import { Address, KyberTrade, SetProtocolConfig, ZeroExSignedFillOrder } from '@src/types/common';
+import { BigNumber, ether, getGasUsageInEth } from '@src/util';
+import { Address, SetProtocolConfig } from '@src/types/common';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 ChaiSetup.configure();
-const { SetProtocolTestUtils: SetTestUtils, SetProtocolUtils: SetUtils, Web3Utils } = setProtocolUtils;
+const { Web3Utils } = setProtocolUtils;
 const { expect } = chai;
 const web3 = new Web3('http://localhost:8545');
-const setUtils = new SetUtils(web3);
 const web3Utils = new Web3Utils(web3);
 
 let currentSnapshotId: number;
 
+const functionCaller = ACCOUNTS[2].address;
 
 describe('RebalancingSetIssuanceAPI', () => {
   let transferProxy: TransferProxyContract;
   let vault: VaultContract;
   let core: CoreContract;
   let setTokenFactory: SetTokenFactoryContract;
-  let wrappedEtherMock: WethMockContract;
+  let wethMock: WethMockContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let rebalancingSetIssuanceModule: RebalancingSetIssuanceModuleContract;
 
@@ -97,14 +99,14 @@ describe('RebalancingSetIssuanceAPI', () => {
       rebalancingSetTokenFactory,
     ] = await deployBaseContracts(web3);
 
-    wrappedEtherMock = await deployWethMockAsync(web3, NULL_ADDRESS, ZERO);
+    wethMock = await deployWethMockAsync(web3, NULL_ADDRESS, ZERO);
 
     rebalancingSetIssuanceModule = await deployRebalancingSetIssuanceModuleAsync(
       web3,
       core,
       vault,
       transferProxy,
-      wrappedEtherMock,      
+      wethMock,
     );
     await addModuleAsync(core, rebalancingSetIssuanceModule.address);
 
@@ -117,10 +119,9 @@ describe('RebalancingSetIssuanceAPI', () => {
       kyberNetworkWrapperAddress: NULL_ADDRESS,
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
       rebalanceAuctionModuleAddress: NULL_ADDRESS,
-      rebalancingTokenIssuanceModule: NULL_ADDRESS,
       rebalancingSetExchangeIssuanceModule: NULL_ADDRESS,
       rebalancingSetIssuanceModule: rebalancingSetIssuanceModule.address,
-      wrappedEtherAddress: wrappedEtherMock.address,
+      wrappedEtherAddress: wethMock.address,
     } as SetProtocolConfig;
 
     const assertions = new Assertions(web3);
@@ -131,38 +132,40 @@ describe('RebalancingSetIssuanceAPI', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('exchangeIssuance', async () => {
-    let subjectExchangeIssuanceData: ExchangeIssuanceParams;
-    let subjectExchangeOrders: (KyberTrade | ZeroExSignedFillOrder)[];
+  describe('#issueRebalancingSet', async () => {
     let subjectCaller: Address;
+    let subjectRebalancingSetAddress: Address;
+    let subjectRebalancingSetQuantity: BigNumber;
+    let subjectKeepChangeInVault: boolean;
 
-    let zeroExOrderMaker: Address;
-
-    let componentAddresses: Address[];
+    let baseSetComponent: StandardTokenMockContract;
+    let baseSetComponent2: StandardTokenMockContract;
     let baseSetToken: SetTokenContract;
     let baseSetNaturalUnit: BigNumber;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let rebalancingUnitShares: BigNumber;
+    let baseSetComponentUnit: BigNumber;
+    let baseSetIssueQuantity: BigNumber;
 
-    let exchangeIssuanceSetAddress: Address;
-    let exchangeIssuanceQuantity: BigNumber;
-    let exchangeIssuancePaymentToken: Address;
-    let exchangeIssuancePaymentTokenAmount: BigNumber;
-    let exchangeIssuanceRequiredComponents: Address[];
-    let exchangeIssuanceRequiredComponentAmounts: BigNumber[];
-
-    let zeroExOrder: ZeroExSignedFillOrder;
+    let customRebalancingUnitShares: BigNumber;
+    let customRebalancingSetQuantity: BigNumber;
 
     beforeEach(async () => {
-      subjectCaller = ACCOUNTS[1].address;
+      subjectCaller = functionCaller;
 
-      // Create component token (owned by 0x order maker)
-      zeroExOrderMaker = ACCOUNTS[2].address;
-      const [baseSetComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, zeroExOrderMaker);
-      const [alreadyOwnedComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, subjectCaller);
+      [baseSetComponent, baseSetComponent2] = await deployTokensSpecifyingDecimals(2, [18, 18], web3, subjectCaller);
+
+      await approveForTransferAsync(
+        [baseSetComponent, baseSetComponent2],
+        transferProxy.address,
+        subjectCaller,
+      );
 
       // Create the Set (1 component)
-      componentAddresses = [baseSetComponent.address, alreadyOwnedComponent.address];
-      const componentUnits = [new BigNumber(10 ** 10), new BigNumber(1)];
-      baseSetNaturalUnit = new BigNumber(10 ** 9);
+      const componentAddresses = [baseSetComponent.address, baseSetComponent2.address];
+      baseSetComponentUnit = ether(1);
+      const componentUnits = [baseSetComponentUnit, baseSetComponentUnit];
+      baseSetNaturalUnit = ether(1);
       baseSetToken = await deploySetTokenAsync(
         web3,
         core,
@@ -172,237 +175,712 @@ describe('RebalancingSetIssuanceAPI', () => {
         baseSetNaturalUnit,
       );
 
-      // Generate exchange issue data
-      exchangeIssuanceSetAddress = baseSetToken.address;
-      exchangeIssuanceQuantity = new BigNumber(10 ** 10);
-      exchangeIssuancePaymentToken = wrappedEtherMock.address;
-      exchangeIssuancePaymentTokenAmount = new BigNumber(10 ** 10);
-      exchangeIssuanceRequiredComponents = [componentAddresses[0]];
-      exchangeIssuanceRequiredComponentAmounts = [componentUnits[0]].map(
-        unit => unit.mul(exchangeIssuanceQuantity).div(baseSetNaturalUnit)
+      // Create the Rebalancing Set
+      rebalancingUnitShares = customRebalancingUnitShares || ether(1);
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        functionCaller,
+        baseSetToken.address,
+        ONE_DAY_IN_SECONDS,
+        rebalancingUnitShares,
       );
 
-      subjectExchangeIssuanceData = {
-        setAddress: exchangeIssuanceSetAddress,
-        sendTokenExchangeIds: [SetUtils.EXCHANGES.ZERO_EX],
-        sendTokens: [exchangeIssuancePaymentToken],
-        sendTokenAmounts: [exchangeIssuancePaymentTokenAmount],
-        quantity: exchangeIssuanceQuantity,
-        receiveTokens: exchangeIssuanceRequiredComponents,
-        receiveTokenAmounts: exchangeIssuanceRequiredComponentAmounts,
-      };
+      subjectRebalancingSetAddress = rebalancingSetToken.address;
+
+      subjectRebalancingSetQuantity = customRebalancingSetQuantity || new BigNumber(10 ** 18);
+      baseSetIssueQuantity =
+        subjectRebalancingSetQuantity.mul(rebalancingUnitShares).div(DEFAULT_REBALANCING_NATURAL_UNIT);
+
+      subjectKeepChangeInVault = false;
+    });
+
+    async function subject(): Promise<string> {
+      return rebalancingSetIssuanceAPI.issueRebalancingSet(
+        subjectRebalancingSetAddress,
+        subjectRebalancingSetQuantity,
+        subjectKeepChangeInVault,
+        {
+          from: subjectCaller,
+          gas: DEFAULT_GAS_LIMIT,
+        },
+      );
+    }
+
+    it('issues the rebalancing Set', async () => {
+      const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(subjectRebalancingSetQuantity);
+
+      await subject();
+
+      const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
+
+
+    it('uses the correct amount of component tokens', async () => {
+      const previousComponentBalance = await baseSetComponent.balanceOf.callAsync(subjectCaller);
+      const expectedComponentUsed = baseSetIssueQuantity.mul(baseSetComponentUnit).div(baseSetNaturalUnit);
+
+      const expectedComponentBalance = previousComponentBalance.sub(expectedComponentUsed);
+
+      await subject();
+
+      const componentBalance = await baseSetComponent.balanceOf.callAsync(subjectCaller);
+      expect(expectedComponentBalance).to.bignumber.equal(componentBalance);
+    });
+
+    it('uses the correct amount of component 2 tokens', async () => {
+      const previousComponentBalance = await baseSetComponent2.balanceOf.callAsync(subjectCaller);
+      const expectedComponentUsed = baseSetIssueQuantity.mul(baseSetComponentUnit).div(baseSetNaturalUnit);
+
+      const expectedComponentBalance = previousComponentBalance.sub(expectedComponentUsed);
+
+      await subject();
+
+      const componentBalance = await baseSetComponent2.balanceOf.callAsync(subjectCaller);
+      expect(expectedComponentBalance).to.bignumber.equal(componentBalance);
+    });
+
+    describe('when the rebalancing Set quantiy results in base Set change', async () => {
+      beforeAll(async () => {
+        customRebalancingSetQuantity = new BigNumber(1.5).mul(10 ** 11);
+        customRebalancingUnitShares = new BigNumber(10 ** 17);
+      });
+
+      afterAll(async () => {
+        customRebalancingSetQuantity = undefined;
+        customRebalancingUnitShares = undefined;
+      });
+
+      it('returns the correct quantity of base Set change', async () => {
+        await subject();
+
+        const baseSetChange = baseSetIssueQuantity.mod(baseSetNaturalUnit);
+
+        const baseSetBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
+        expect(baseSetBalance).to.bignumber.equal(baseSetChange);
+      });
+
+      describe('when keepChangeInVault is true', async () => {
+        beforeEach(async () => {
+          subjectKeepChangeInVault = true;
+        });
+
+        it('returns the correct quantity of base Set change in the Vault', async () => {
+          await subject();
+
+          const baseSetChange = baseSetIssueQuantity.mod(baseSetNaturalUnit);
+
+          const baseSetBalance = await vault.getOwnerBalance.callAsync(
+            baseSetToken.address,
+            subjectCaller,
+          );
+          expect(baseSetBalance).to.bignumber.equal(baseSetChange);
+        });
+      });
+    });
+  });
+
+  describe('#issueRebalancingSetWrappingEther', async () => {
+    let subjectCaller: Address;
+    let subjectRebalancingSetAddress: Address;
+    let subjectRebalancingSetQuantity: BigNumber;
+    let subjectKeepChangeInVault: boolean;
+    let subjectWethQuantity: BigNumber;
+
+    let baseSetWethComponent: WethMockContract;
+    let baseSetComponent: StandardTokenMockContract;
+    let baseSetToken: SetTokenContract;
+    let baseSetNaturalUnit: BigNumber;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let rebalancingUnitShares: BigNumber;
+    let baseSetComponentUnit: BigNumber;
+    let baseSetIssueQuantity: BigNumber;
+
+    let customBaseIssueQuantity: BigNumber;
+    let customRebalancingUnitShares: BigNumber;
+    let customRebalancingSetQuantity: BigNumber;
+
+    beforeEach(async () => {
+      subjectCaller = functionCaller;
+
+      [baseSetComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, subjectCaller);
 
       await approveForTransferAsync(
         [baseSetComponent],
-        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
-        zeroExOrderMaker
-      );
-
-      await approveForTransferAsync(
-        [alreadyOwnedComponent],
         transferProxy.address,
         subjectCaller,
       );
 
-      // Create 0x order for the component, using weth(4) paymentToken as default
-      zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
-        NULL_ADDRESS,                                        // senderAddress
-        zeroExOrderMaker,                                    // makerAddress
-        NULL_ADDRESS,                                        // takerAddress
-        ZERO,                                                // makerFee
-        ZERO,                                                // takerFee
-        subjectExchangeIssuanceData.receiveTokenAmounts[0],  // makerAssetAmount
-        exchangeIssuancePaymentTokenAmount,                  // takerAssetAmount
-        exchangeIssuanceRequiredComponents[0],               // makerAssetAddress
-        exchangeIssuancePaymentToken,                        // takerAssetAddress
-        SetUtils.generateSalt(),                             // salt
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,               // exchangeAddress
-        NULL_ADDRESS,                                        // feeRecipientAddress
-        SetTestUtils.generateTimestamp(10000),               // expirationTimeSeconds
-        exchangeIssuancePaymentTokenAmount,                  // amount of zeroExOrder to fill
-      );
+      baseSetWethComponent = wethMock;
 
-      subjectExchangeOrders = [zeroExOrder];
-
-       // Subject caller needs to wrap ether
-      await wrappedEtherMock.deposit.sendTransactionAsync(
-        { from: subjectCaller, value: exchangeIssuancePaymentTokenAmount.toString() }
-      );
-
-      await wrappedEtherMock.approve.sendTransactionAsync(
+      baseSetWethComponent.approve.sendTransactionAsync(
         transferProxy.address,
-        exchangeIssuancePaymentTokenAmount,
-        { from: subjectCaller }
+        UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+        { from: subjectCaller, gas: DEFAULT_GAS_LIMIT }
       );
+
+      // Create the Set (2 component)
+      const componentAddresses = [baseSetWethComponent.address, baseSetComponent.address];
+      baseSetComponentUnit = ether(1);
+      const componentUnits = [baseSetComponentUnit, baseSetComponentUnit];
+      baseSetNaturalUnit = ether(1);
+      baseSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        componentUnits,
+        baseSetNaturalUnit,
+      );
+
+      // Create the Rebalancing Set
+      rebalancingUnitShares = customRebalancingUnitShares || ether(1);
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        functionCaller,
+        baseSetToken.address,
+        ONE_DAY_IN_SECONDS,
+        rebalancingUnitShares,
+      );
+
+      subjectRebalancingSetAddress = rebalancingSetToken.address;
+
+      subjectRebalancingSetQuantity = customRebalancingSetQuantity || new BigNumber(10 ** 11);
+      baseSetIssueQuantity = customBaseIssueQuantity ||
+        subjectRebalancingSetQuantity.mul(rebalancingUnitShares).div(DEFAULT_REBALANCING_NATURAL_UNIT);
+
+      subjectWethQuantity = baseSetIssueQuantity.mul(baseSetComponentUnit).div(baseSetNaturalUnit);
+
+      subjectKeepChangeInVault = false;
     });
 
     async function subject(): Promise<string> {
-      return await rebalancingSetIssuanceAPI.issueRebalancingSet(
-        subjectExchangeIssuanceData,
-        subjectExchangeOrders,
-        { from: subjectCaller }
+      return rebalancingSetIssuanceAPI.issueRebalancingSetWrappingEther(
+        subjectRebalancingSetAddress,
+        subjectRebalancingSetQuantity,
+        subjectKeepChangeInVault,
+        {
+          from: subjectCaller,
+          gas: DEFAULT_GAS_LIMIT,
+          value: subjectWethQuantity.toNumber(),
+        },
       );
     }
 
-    test('issues the Set to the caller', async () => {
-      const previousSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
-      const expectedSetTokenBalance = previousSetTokenBalance.add(exchangeIssuanceQuantity);
+    it('issues the rebalancing Set', async () => {
+      const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(subjectRebalancingSetQuantity);
 
       await subject();
 
-      const currentSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
-      expect(expectedSetTokenBalance).to.bignumber.equal(currentSetTokenBalance);
+      const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
     });
 
-    describe('when the receive tokens are not included in the set\'s components', async () => {
-      beforeEach(async () => {
-        subjectExchangeIssuanceData.receiveTokens[0] = 'NotAComponentAddress';
-      });
 
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `Component at NotAComponentAddress is not part of the collateralizing set at ${baseSetToken.address}`
-        );
-      });
+    it('uses the correct amount of component tokens', async () => {
+      const previousComponentBalance = await baseSetComponent.balanceOf.callAsync(subjectCaller);
+      const expectedComponentUsed = baseSetIssueQuantity.mul(baseSetComponentUnit).div(baseSetNaturalUnit);
+
+      const expectedComponentBalance = previousComponentBalance.sub(expectedComponentUsed);
+
+      await subject();
+
+      const componentBalance = await baseSetComponent.balanceOf.callAsync(subjectCaller);
+      expect(expectedComponentBalance).to.bignumber.equal(componentBalance);
     });
 
-    describe('when the orders array is empty', async () => {
-      beforeEach(async () => {
-        subjectExchangeOrders = [];
-      });
+    it('uses the correct amount of ETH from the caller', async () => {
+      const previousEthBalance: BigNumber = new BigNumber(await web3.eth.getBalance(subjectCaller));
 
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-           `The array orders cannot be empty.`
-        );
-      });
+      const txHash = await subject();
+      const totalGasInEth = await getGasUsageInEth(web3, txHash);
+      const expectedEthBalance = previousEthBalance
+                                  .sub(subjectWethQuantity)
+                                  .sub(totalGasInEth);
+
+      const ethBalance = new BigNumber(await web3.eth.getBalance(subjectCaller));
+      expect(ethBalance).to.bignumber.equal(expectedEthBalance);
     });
 
-    describe('when the quantity of set to acquire is zero', async () => {
-      beforeEach(async () => {
-        subjectExchangeIssuanceData.quantity = new BigNumber(0);
+    describe('when the rebalancing Set quantiy results in base Set change', async () => {
+      beforeAll(async () => {
+        customRebalancingSetQuantity = new BigNumber(1.5).mul(10 ** 11);
+        customRebalancingUnitShares = new BigNumber(10 ** 17);
+        customBaseIssueQuantity = ether(2);
       });
 
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `The quantity 0 inputted needs to be greater than zero.`
-        );
-      });
-    });
-
-    describe('when the base set is invalid because it is disabled', async () => {
-      beforeEach(async () => {
-        await core.disableSet.sendTransactionAsync(baseSetToken.address);
+      afterAll(async () => {
+        customRebalancingSetQuantity = undefined;
+        customRebalancingUnitShares = undefined;
+        customBaseIssueQuantity = undefined;
       });
 
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `Contract at ${baseSetToken.address} is not a valid Set token address.`
-        );
-      });
-    });
+      it('returns the correct quantity of base Set change', async () => {
+        await subject();
 
-    describe('when the receive token and receive token array lengths are different', async () => {
-      const arbitraryTokenUnits = new BigNumber(10 ** 10);
+        const expectedBaseSetChange = new BigNumber(5).mul(10 ** 17);
 
-      beforeEach(async () => {
-        subjectExchangeIssuanceData.receiveTokenAmounts.push(arbitraryTokenUnits);
+        const baseSetBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
+        expect(baseSetBalance).to.bignumber.equal(expectedBaseSetChange);
       });
 
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `The receiveTokens and receiveTokenAmounts arrays need to be equal lengths.`
-        );
-      });
-    });
+      describe('when keepChangeInVault is true', async () => {
+        beforeEach(async () => {
+          subjectKeepChangeInVault = true;
+        });
 
-    describe('when the quantity to issue is not a multiple of the sets natural unit', async () => {
-      beforeEach(async () => {
-        subjectExchangeIssuanceData.quantity = baseSetNaturalUnit.add(1);
-      });
+        it('returns the correct quantity of base Set change in the Vault', async () => {
+          await subject();
 
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `Quantity of Exchange issue Params needs to be multiple of natural unit.`
-        );
+          const expectedBaseSetChange = new BigNumber(5).mul(10 ** 17);
+
+          const baseSetBalance = await vault.getOwnerBalance.callAsync(
+            baseSetToken.address,
+            subjectCaller,
+          );
+          expect(baseSetBalance).to.bignumber.equal(expectedBaseSetChange);
+        });
       });
     });
+  });
 
-    describe('when the send token amounts array is longer than the send tokens list', async () => {
-      const arbitraryTokenUnits = new BigNumber(10 ** 10);
+  describe('#redeemRebalancingSet', async () => {
+    let subjectCaller: Address;
+    let subjectRebalancingSetAddress: Address;
+    let subjectRebalancingSetQuantity: BigNumber;
+    let subjectKeepChangeInVault: boolean;
 
-      beforeEach(async () => {
-        subjectExchangeIssuanceData.sendTokenAmounts.push(arbitraryTokenUnits);
-      });
+    let baseSetIssueQuantity: BigNumber;
+    let baseSetComponentUnit: BigNumber;
 
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `The sendTokens and sendTokenAmounts arrays need to be equal lengths.`
-        );
-      });
+    let baseSetComponent: StandardTokenMockContract;
+    let baseSetComponent2: StandardTokenMockContract;
+    let baseSetToken: SetTokenContract;
+    let baseSetNaturalUnit: BigNumber;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let rebalancingUnitShares: BigNumber;
+
+    let customBaseIssueQuantity: BigNumber;
+    let customRebalancingUnitShares: BigNumber;
+    let customRedeemQuantity: BigNumber;
+    let customRebalancingSetIssueQuantity: BigNumber;
+    let customBaseComponentUnit: BigNumber;
+
+    beforeEach(async () => {
+      subjectCaller = functionCaller;
+
+      [baseSetComponent, baseSetComponent2] = await deployTokensSpecifyingDecimals(2, [18, 18], web3, DEFAULT_ACCOUNT);
+
+      await approveForTransferAsync(
+        [baseSetComponent, baseSetComponent2],
+        transferProxy.address,
+        DEFAULT_ACCOUNT,
+      );
+
+      // Create the Set (2 component)
+      const componentAddresses = [baseSetComponent.address, baseSetComponent2.address];
+      baseSetComponentUnit = customBaseComponentUnit || ether(1);
+      const componentUnits = [baseSetComponentUnit, baseSetComponentUnit];
+      baseSetNaturalUnit = ether(1);
+      baseSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        componentUnits,
+        baseSetNaturalUnit,
+      );
+      await approveForTransferAsync(
+        [baseSetToken],
+        transferProxy.address,
+        DEFAULT_ACCOUNT,
+      );
+
+      // Create the Rebalancing Set
+      rebalancingUnitShares = customRebalancingUnitShares || ether(1);
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        functionCaller,
+        baseSetToken.address,
+        ONE_DAY_IN_SECONDS,
+        rebalancingUnitShares,
+      );
+
+      subjectRebalancingSetAddress = rebalancingSetToken.address;
+
+      subjectRebalancingSetQuantity = customRedeemQuantity || new BigNumber(10 ** 11);
+      baseSetIssueQuantity = customBaseIssueQuantity ||
+        subjectRebalancingSetQuantity.mul(rebalancingUnitShares).div(DEFAULT_REBALANCING_NATURAL_UNIT);
+
+      await core.issue.sendTransactionAsync(
+        baseSetToken.address,
+        baseSetIssueQuantity,
+        { from: DEFAULT_ACCOUNT, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      const rebalancingSetIssueQuantity = customRebalancingSetIssueQuantity || subjectRebalancingSetQuantity;
+
+      // Issue the rebalancing Set Token
+      await core.issueTo.sendTransactionAsync(
+        functionCaller,
+        rebalancingSetToken.address,
+        rebalancingSetIssueQuantity,
+        { from: DEFAULT_ACCOUNT, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      subjectKeepChangeInVault = false;
     });
 
-    describe('when the send token exchange ids array is longer than the send tokens list', async () => {
-      const arbitraryTokenUnits = new BigNumber(10 ** 10);
+    async function subject(): Promise<string> {
+      return rebalancingSetIssuanceAPI.redeemRebalancingSet(
+        subjectRebalancingSetAddress,
+        subjectRebalancingSetQuantity,
+        subjectKeepChangeInVault,
+        {
+          from: subjectCaller,
+          gas: DEFAULT_GAS_LIMIT,
+        },
+      );
+    }
 
-      beforeEach(async () => {
-        subjectExchangeIssuanceData.sendTokenAmounts.push(arbitraryTokenUnits);
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `The sendTokens and sendTokenAmounts arrays need to be equal lengths.`
-        );
-      });
+    afterEach(async () => {
+      customRedeemQuantity = undefined;
+      customRebalancingUnitShares = undefined;
+      customBaseIssueQuantity = undefined;
+      customRebalancingSetIssueQuantity = undefined;
+      customBaseComponentUnit = undefined;
     });
 
-    describe('when a send token amount is 0', async () => {
-      beforeEach(async () => {
-        subjectExchangeIssuanceData.sendTokenAmounts[0] = new BigNumber(0);
-      });
+    it('redeems the rebalancing Set', async () => {
+      const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.sub(subjectRebalancingSetQuantity);
 
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `The quantity 0 inputted needs to be greater than zero.`
-        );
-      });
+      await subject();
+
+      const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
     });
 
-    describe('when a send token exchange id does not map to a known exchange enum', async () => {
-      const invalidExchangeIdEnum = new BigNumber(3);
+    it('redeems the base Set', async () => {
+      await subject();
 
-      beforeEach(async () => {
-        subjectExchangeIssuanceData.sendTokenExchangeIds[0] = invalidExchangeIdEnum;
-      });
-
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `ExchangeId 3 is invalid.`
-        );
-      });
+      const currentSaseSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
+      expect(currentSaseSetTokenBalance).to.bignumber.equal(ZERO);
     });
 
-    describe('when the receive tokens array is empty', async () => {
-      beforeEach(async () => {
-        subjectExchangeIssuanceData.receiveTokens = [];
-      });
+    it('attributes the base Set components to the caller', async () => {
+      await subject();
 
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `The receiveTokens and receiveTokenAmounts arrays need to be equal lengths.`
-        );
-      });
+      const expectedBaseComponentBalance = baseSetIssueQuantity.mul(baseSetComponentUnit).div(baseSetNaturalUnit);
+
+      const baseSetComponentBalance = await baseSetComponent.balanceOf.callAsync(subjectCaller);
+      expect(baseSetComponentBalance).to.bignumber.equal(expectedBaseComponentBalance);
     });
 
-    describe('when a receive token amount is 0', async () => {
-      beforeEach(async () => {
-        subjectExchangeIssuanceData.receiveTokenAmounts[0] = new BigNumber(0);
+    it('attributes the base Set components 2 to the caller', async () => {
+      await subject();
+
+      const expectedBaseComponentBalance = baseSetIssueQuantity.mul(baseSetComponentUnit).div(baseSetNaturalUnit);
+
+      const baseSetComponentBalance = await baseSetComponent2.balanceOf.callAsync(subjectCaller);
+      expect(baseSetComponentBalance).to.bignumber.equal(expectedBaseComponentBalance);
+    });
+
+    describe('when the redeem quantity results in excess base Set', async () => {
+      describe('when keep change in vault is false', async () => {
+        beforeAll(async () => {
+          customRebalancingUnitShares  = new BigNumber(10 ** 17);
+          customRedeemQuantity = new BigNumber(1.5).mul(10 ** 11);
+          customBaseIssueQuantity = ether(2);
+          customRebalancingSetIssueQuantity = new BigNumber(2).mul(10 ** 11);
+        });
+
+        afterAll(async () => {
+          customRebalancingUnitShares = undefined;
+          customRedeemQuantity = undefined;
+          customBaseIssueQuantity = undefined;
+          customRebalancingSetIssueQuantity = undefined;
+        });
+
+        // It sends the change to the user
+        it('sends the correct base set quantity to the user', async () => {
+          await subject();
+
+          const expectedBalance = customRedeemQuantity
+                                    .mul(rebalancingUnitShares)
+                                    .div(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                    .mod(baseSetNaturalUnit);
+
+          const currentBaseSetBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
+          expect(currentBaseSetBalance).to.bignumber.equal(expectedBalance);
+        });
       });
 
-      test('throws', async () => {
-        return expect(subject()).to.be.rejectedWith(
-          `The quantity 0 inputted needs to be greater than zero.`
-        );
+      describe('when keep change in vault is true', async () => {
+        beforeEach(async () => {
+          customRebalancingUnitShares  = new BigNumber(10 ** 17);
+          customRedeemQuantity = new BigNumber(1.5).mul(10 ** 11);
+          customBaseIssueQuantity = ether(2);
+          customRebalancingSetIssueQuantity = new BigNumber(2).mul(10 ** 11);
+        });
+
+        afterEach(async () => {
+          customRebalancingUnitShares = undefined;
+          customRedeemQuantity = undefined;
+          customBaseIssueQuantity = undefined;
+          customRebalancingSetIssueQuantity = undefined;
+        });
+
+        beforeEach(async () => {
+          subjectKeepChangeInVault = true;
+        });
+
+        it('sends the correct base set quantity to the user in the vault', async () => {
+          await subject();
+
+          const expectedBalance = customRedeemQuantity
+                                  .mul(rebalancingUnitShares)
+                                  .div(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                  .mod(baseSetNaturalUnit);
+          const currentBaseSetBalance = await vault.getOwnerBalance.callAsync(
+            baseSetToken.address,
+            subjectCaller,
+          );
+          expect(currentBaseSetBalance).to.bignumber.equal(expectedBalance);
+        });
+      });
+    });
+  });
+
+  describe('#redeemRebalancingSetUnwrappingEther', async () => {
+    let subjectCaller: Address;
+    let subjectRebalancingSetAddress: Address;
+    let subjectRebalancingSetQuantity: BigNumber;
+    let subjectKeepChangeInVault: boolean;
+
+    let baseSetIssueQuantity: BigNumber;
+    let baseSetComponentUnit: BigNumber;
+
+    let baseSetWethComponent: WethMockContract;
+    let baseSetComponent: StandardTokenMockContract;
+    let baseSetToken: SetTokenContract;
+    let baseSetNaturalUnit: BigNumber;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let rebalancingUnitShares: BigNumber;
+
+    let customBaseIssueQuantity: BigNumber;
+    let customRebalancingUnitShares: BigNumber;
+    let customRedeemQuantity: BigNumber;
+    let customRebalancingSetIssueQuantity: BigNumber;
+
+    let wethRequiredToMintSet: BigNumber;
+    let baseComponentQuantity: BigNumber;
+
+    beforeEach(async () => {
+      subjectCaller = functionCaller;
+
+      [baseSetComponent] = await deployTokensSpecifyingDecimals(1, [18], web3, DEFAULT_ACCOUNT);
+
+      await approveForTransferAsync(
+        [baseSetComponent],
+        transferProxy.address,
+        DEFAULT_ACCOUNT,
+      );
+
+      baseSetWethComponent = wethMock;
+
+      baseSetWethComponent.approve.sendTransactionAsync(
+        transferProxy.address,
+        UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+        { from: DEFAULT_ACCOUNT, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      // Create the Set (2 component)
+      const componentAddresses = [baseSetWethComponent.address, baseSetComponent.address];
+      baseSetComponentUnit = ether(1);
+      const componentUnits = [baseSetComponentUnit, baseSetComponentUnit];
+      baseSetNaturalUnit = ether(1);
+      baseSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        componentUnits,
+        baseSetNaturalUnit,
+      );
+      await approveForTransferAsync([baseSetToken], transferProxy.address, DEFAULT_ACCOUNT);
+
+      // Create the Rebalancing Set
+      rebalancingUnitShares = customRebalancingUnitShares || ether(1);
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        DEFAULT_ACCOUNT,
+        baseSetToken.address,
+        ONE_DAY_IN_SECONDS,
+        rebalancingUnitShares,
+      );
+
+      subjectRebalancingSetAddress = rebalancingSetToken.address;
+
+      subjectRebalancingSetQuantity = customRedeemQuantity || new BigNumber(10 ** 11);
+      baseSetIssueQuantity = customBaseIssueQuantity ||
+        subjectRebalancingSetQuantity.mul(rebalancingUnitShares).div(DEFAULT_REBALANCING_NATURAL_UNIT);
+
+      baseComponentQuantity = baseSetIssueQuantity.mul(baseSetComponentUnit).div(baseSetNaturalUnit);
+
+      // Wrap WETH
+      wethRequiredToMintSet = baseSetIssueQuantity.mul(baseSetComponentUnit).div(baseSetNaturalUnit);
+      await wethMock.deposit.sendTransactionAsync(
+        { from: DEFAULT_ACCOUNT, gas: DEFAULT_GAS_LIMIT, value: wethRequiredToMintSet.toString() }
+      );
+
+      await core.issue.sendTransactionAsync(
+        baseSetToken.address,
+        baseSetIssueQuantity,
+        { from: DEFAULT_ACCOUNT, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      const rebalancingSetIssueQuantity = customRebalancingSetIssueQuantity || subjectRebalancingSetQuantity;
+
+      // Issue the rebalancing Set Token
+      await core.issueTo.sendTransactionAsync(
+        functionCaller,
+        rebalancingSetToken.address,
+        rebalancingSetIssueQuantity,
+        { from: DEFAULT_ACCOUNT, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      subjectKeepChangeInVault = false;
+    });
+
+    async function subject(): Promise<string> {
+      return rebalancingSetIssuanceAPI.redeemRebalancingSetUnwrappingEther(
+        subjectRebalancingSetAddress,
+        subjectRebalancingSetQuantity,
+        subjectKeepChangeInVault,
+        {
+          from: subjectCaller,
+          gas: DEFAULT_GAS_LIMIT,
+        },
+      );
+    }
+
+    afterEach(async () => {
+      customRebalancingUnitShares = undefined;
+      customBaseIssueQuantity = undefined;
+      customRedeemQuantity = undefined;
+      customRebalancingSetIssueQuantity = undefined;
+    });
+
+    it('redeems the rebalancing Set', async () => {
+      const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.sub(subjectRebalancingSetQuantity);
+
+      await subject();
+
+      const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
+
+    it('redeems the base Set', async () => {
+      await subject();
+
+      const currentSaseSetTokenBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
+      expect(currentSaseSetTokenBalance).to.bignumber.equal(ZERO);
+    });
+
+    it('attributes the correct amount of ETH to the caller', async () => {
+      const previousEthBalance: BigNumber = new BigNumber(await web3.eth.getBalance(subjectCaller));
+
+      const txHash = await subject();
+      const totalGasInEth = await getGasUsageInEth(web3, txHash);
+      const expectedEthBalance = previousEthBalance
+                                  .add(wethRequiredToMintSet)
+                                  .sub(totalGasInEth);
+
+      const ethBalance = new BigNumber(await web3.eth.getBalance(subjectCaller));
+      expect(ethBalance).to.bignumber.equal(expectedEthBalance);
+    });
+
+    it('attributes the base Set component to the caller', async () => {
+      await subject();
+
+      const baseSetComponentBalance = await baseSetComponent.balanceOf.callAsync(subjectCaller);
+      expect(baseSetComponentBalance).to.bignumber.equal(baseComponentQuantity);
+    });
+
+    describe('when the redeem quantity results in excess base Set', async () => {
+      describe('when keep change in vault is false', async () => {
+        beforeAll(async () => {
+          customRebalancingUnitShares  = new BigNumber(10 ** 17);
+          customRedeemQuantity = new BigNumber(1.5).mul(10 ** 11);
+          customBaseIssueQuantity = ether(2);
+          customRebalancingSetIssueQuantity = new BigNumber(2).mul(10 ** 11);
+        });
+
+        afterAll(async () => {
+          customRebalancingUnitShares = undefined;
+          customRedeemQuantity = undefined;
+          customBaseIssueQuantity = undefined;
+          customRebalancingSetIssueQuantity = undefined;
+        });
+
+        // It sends the change to the user
+        it('sends the correct base set quantity to the user', async () => {
+          await subject();
+
+          const expectedBalance = customRedeemQuantity
+                                    .mul(rebalancingUnitShares)
+                                    .div(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                    .mod(baseSetNaturalUnit);
+
+          const currentBaseSetBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
+          expect(currentBaseSetBalance).to.bignumber.equal(expectedBalance);
+        });
+      });
+
+      describe('when keep change in vault is true', async () => {
+        beforeAll(async () => {
+          customRebalancingUnitShares  = new BigNumber(10 ** 17);
+          customRedeemQuantity = new BigNumber(1.5).mul(10 ** 11);
+          customBaseIssueQuantity = ether(2);
+          customRebalancingSetIssueQuantity = new BigNumber(2).mul(10 ** 11);
+        });
+
+        afterAll(async () => {
+          customRebalancingUnitShares = undefined;
+          customRedeemQuantity = undefined;
+          customBaseIssueQuantity = undefined;
+          customRebalancingSetIssueQuantity = undefined;
+        });
+
+        beforeEach(async () => {
+          subjectKeepChangeInVault = true;
+        });
+
+        it('sends the correct base set quantity to the user in the vault', async () => {
+          await subject();
+
+          const expectedBalance = customRedeemQuantity
+                                  .mul(rebalancingUnitShares)
+                                  .div(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                  .mod(baseSetNaturalUnit);
+          const currentBaseSetBalance = await vault.getOwnerBalance.callAsync(
+            baseSetToken.address,
+            subjectCaller,
+          );
+          expect(currentBaseSetBalance).to.bignumber.equal(expectedBalance);
+        });
       });
     });
   });

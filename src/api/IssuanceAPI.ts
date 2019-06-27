@@ -159,7 +159,7 @@ export class IssuanceAPI {
   /* ============ Private Assertions ============ */
 
   private async assertIssue(transactionCaller: Address, setAddress: Address, quantity: BigNumber) {
-    await this.assert.issuance.assertIssue(
+    await this.assert.issuance.assertSetTokenIssue(
       setAddress,
       quantity,
       transactionCaller,

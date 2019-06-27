@@ -40,7 +40,7 @@ export class IssuanceAssertions {
     this.setTokenAssertions = new SetTokenAssertions(web3);
   }
 
-  public async assertIssue(
+  public async assertSetTokenIssue(
     setTokenAddress: Address,
     setTokenQuantity: BigNumber,
     transactionCaller: Address,
@@ -71,6 +71,31 @@ export class IssuanceAssertions {
       transferProxyAddress,
       setTokenQuantity,
     );
+  }
+
+  public async assertRebalancingSetTokenIssue(
+    rebalancingSetTokenAddress: Address,
+    rebalancingSetTokenQuantity: BigNumber,
+    transactionCaller: Address,
+    transferProxyAddress: Address,
+  ): Promise<void> {
+    // Do all the normal asserts
+    this.schemaAssertions.isValidAddress('transactionCaller', transactionCaller);
+    this.schemaAssertions.isValidAddress('setAddress', rebalancingSetTokenAddress);
+    this.commonAssertions.greaterThanZero(
+      rebalancingSetTokenQuantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(rebalancingSetTokenQuantity),
+    );
+
+    await this.setTokenAssertions.isMultipleOfNaturalUnit(
+      rebalancingSetTokenAddress,
+      rebalancingSetTokenQuantity,
+      'Issuance quantity',
+    );
+
+    // Calculate the implied base Set quantity required
+
+    // Calculate the components required
   }
 
   public async assertRedeem(

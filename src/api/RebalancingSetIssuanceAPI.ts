@@ -82,7 +82,7 @@ export class RebalancingSetIssuanceAPI {
     keepChangeInVault: boolean,
     txOpts: Tx
   ): Promise<string> {
-    await this.assert.issuance.assertIssue(
+    await this.assert.issuance.assertRebalancingSetTokenIssue(
       rebalancingSetAddress,
       rebalancingSetQuantity,
       txOpts.from,
@@ -195,7 +195,7 @@ export class RebalancingSetIssuanceAPI {
     rebalancingSetQuantity: BigNumber,
     txOpts: Tx,
   ) {
-    await this.assert.issuance.assertIssue(
+    await this.assert.issuance.assertRebalancingSetTokenIssue(
       rebalancingSetAddress,
       rebalancingSetQuantity,
       txOpts.from,
@@ -219,12 +219,12 @@ export class RebalancingSetIssuanceAPI {
     rebalancingSetQuantity: BigNumber,
     txOpts: Tx,
   ) {
-    await this.assert.issuance.assertIssue(
-      rebalancingSetAddress,
-      rebalancingSetQuantity,
-      txOpts.from,
-      this.transferProxy,
-    );
+    // await this.assert.issuance.assertRebalancingSetTokenIssue(
+    //   rebalancingSetAddress,
+    //   rebalancingSetQuantity,
+    //   txOpts.from,
+    //   this.transferProxy,
+    // );
 
     const baseSetAddress = await this.rebalancingSetToken.currentSet(rebalancingSetAddress);
 
