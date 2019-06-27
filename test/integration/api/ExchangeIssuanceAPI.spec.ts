@@ -735,34 +735,6 @@ describe('ExchangeIssuanceAPI', () => {
                               '000000000000000000000000000000000000000000');
       });
     });
-
-    describe('#issueRebalancingSetWithEtherGasEstimate', async () => {
-      beforeAll(async () => {
-        customSalt = new BigNumber(1000);
-        customExpirationTimeSeconds = new BigNumber(1902951096);
-      });
-
-      afterAll(async () => {
-        customSalt = undefined;
-        customExpirationTimeSeconds = undefined;
-      });
-
-      async function subject(): Promise<number> {
-        return await exchangeIssuanceAPI.fetchIssueRebalancingSetWithEtherGasCostAsync(
-          subjectRebalancingSetAddress,
-          subjectRebalancingSetQuantity,
-          subjectExchangeIssuanceData,
-          subjectExchangeOrders,
-          { from: subjectCaller, value: subjectTransactionEtherValue }
-        );
-      }
-
-      test('issues the rebalancing Set to the caller', async () => {
-        const data = await subject();
-
-        expect(data).to.equal(829714);
-      });
-    });
   });
 
   describe('redeemRebalancingSetIntoEther', async () => {
@@ -1088,34 +1060,6 @@ describe('ExchangeIssuanceAPI', () => {
                               '000000000000001590311c922a283024f0363777478c6b8c3d8c6c000000000000000000000000841789' +
                               'fe96a433b49450e37e8cb513117712f63f00000000000000000000000000000000000000000000000000' +
                               '0000000000');
-      });
-    });
-
-    describe('#issueRebalancingSetWithEtherGasEstimate', async () => {
-      beforeAll(async () => {
-        customSalt = new BigNumber(1000);
-        customExpirationTimeSeconds = new BigNumber(1902951096);
-      });
-
-      afterAll(async () => {
-        customSalt = undefined;
-        customExpirationTimeSeconds = undefined;
-      });
-
-      async function subject(): Promise<number> {
-        return await exchangeIssuanceAPI.fetchRedeemRebalancingSetIntoEtherGasCostAsync(
-          subjectRebalancingSetAddress,
-          subjectRebalancingSetQuantity,
-          subjectExchangeIssuanceData,
-          subjectExchangeOrders,
-          { from: subjectCaller }
-        );
-      }
-
-      test('issues the rebalancing Set to the caller', async () => {
-        const data = await subject();
-
-        expect(data).to.equal(835180);
       });
     });
   });
