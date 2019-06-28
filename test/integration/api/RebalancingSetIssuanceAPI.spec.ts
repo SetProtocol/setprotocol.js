@@ -350,7 +350,7 @@ describe('RebalancingSetIssuanceAPI', () => {
     });
   });
 
-  describe.only('#issueRebalancingSetWrappingEther', async () => {
+  describe('#issueRebalancingSetWrappingEther', async () => {
     let subjectCaller: Address;
     let subjectRebalancingSetAddress: Address;
     let subjectRebalancingSetQuantity: BigNumber;
@@ -366,7 +366,6 @@ describe('RebalancingSetIssuanceAPI', () => {
     let baseSetComponentUnit: BigNumber;
     let baseSetIssueQuantity: BigNumber;
 
-    let customComponentAddresses: Address[];
     let customBaseIssueQuantity: BigNumber;
     let customRebalancingUnitShares: BigNumber;
     let customRebalancingSetQuantity: BigNumber;
@@ -600,7 +599,7 @@ describe('RebalancingSetIssuanceAPI', () => {
       });
     });
 
-    describe.only('when the base components do not contain wrapped ether', async () => {
+    describe('when the base SetToken components do not contain wrapped ether', async () => {
       beforeAll(async () => {
         customWethMock = await deployWethMockAsync(web3, functionCaller, ether(100));
       });
@@ -613,6 +612,18 @@ describe('RebalancingSetIssuanceAPI', () => {
         return expect(subject()).to.be.rejectedWith(
           `Token address at ${wethMock.address} ` +
           `is not a component of the Set Token at ${baseSetToken.address}.`
+        );
+      });
+    });
+
+    describe('when there is insufficient wrapped ether', async () => {
+      beforeEach(async () => {
+        subjectWethQuantity = new BigNumber(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Ether value must be greater than required wrapped ether quantity`
         );
       });
     });
@@ -826,6 +837,50 @@ describe('RebalancingSetIssuanceAPI', () => {
         });
       });
     });
+
+    describe('when the quantity is not positive', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetQuantity = new BigNumber(0);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The quantity ${subjectRebalancingSetQuantity.toString()} inputted needs to be greater than zero.`
+        );
+      });
+    });
+
+    describe('when the quantity to issue is not a multiple of the sets natural unit', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetQuantity = subjectRebalancingSetQuantity.add(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Issuance quantity needs to be multiple of natural unit.`
+        );
+      });
+    });
+
+    describe('when the user does not have enough rebalancing Set quantity', async () => {
+      beforeAll(async () => {
+        customRebalancingSetIssueQuantity = DEFAULT_REBALANCING_NATURAL_UNIT;
+      });
+
+      afterAll(async () => {
+        customRebalancingSetIssueQuantity = undefined;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `
+        User: ${subjectCaller} has balance of ${customRebalancingSetIssueQuantity}
+
+        when required balance is ${subjectRebalancingSetQuantity} at token address ${subjectRebalancingSetAddress}.
+      `
+        );
+      });
+    });
   });
 
   describe('#redeemRebalancingSetUnwrappingEther', async () => {
@@ -848,6 +903,7 @@ describe('RebalancingSetIssuanceAPI', () => {
     let customRebalancingUnitShares: BigNumber;
     let customRedeemQuantity: BigNumber;
     let customRebalancingSetIssueQuantity: BigNumber;
+    let customWethMock: WethMockContract;
 
     let wethRequiredToMintSet: BigNumber;
     let baseComponentQuantity: BigNumber;
@@ -863,7 +919,7 @@ describe('RebalancingSetIssuanceAPI', () => {
         DEFAULT_ACCOUNT,
       );
 
-      baseSetWethComponent = wethMock;
+      baseSetWethComponent = customWethMock || wethMock;
 
       baseSetWethComponent.approve.sendTransactionAsync(
         transferProxy.address,
@@ -908,7 +964,7 @@ describe('RebalancingSetIssuanceAPI', () => {
 
       // Wrap WETH
       wethRequiredToMintSet = baseSetIssueQuantity.mul(baseSetComponentUnit).div(baseSetNaturalUnit);
-      await wethMock.deposit.sendTransactionAsync(
+      await baseSetWethComponent.deposit.sendTransactionAsync(
         { from: DEFAULT_ACCOUNT, gas: DEFAULT_GAS_LIMIT, value: wethRequiredToMintSet.toString() }
       );
 
@@ -1049,6 +1105,67 @@ describe('RebalancingSetIssuanceAPI', () => {
           );
           expect(currentBaseSetBalance).to.bignumber.equal(expectedBalance);
         });
+      });
+    });
+
+    describe('when the quantity is not positive', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetQuantity = new BigNumber(0);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The quantity ${subjectRebalancingSetQuantity.toString()} inputted needs to be greater than zero.`
+        );
+      });
+    });
+
+    describe('when the quantity to issue is not a multiple of the sets natural unit', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetQuantity = subjectRebalancingSetQuantity.add(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Issuance quantity needs to be multiple of natural unit.`
+        );
+      });
+    });
+
+    describe('when the user does not have enough rebalancing Set quantity', async () => {
+      beforeAll(async () => {
+        customRebalancingSetIssueQuantity = DEFAULT_REBALANCING_NATURAL_UNIT;
+      });
+
+      afterAll(async () => {
+        customRebalancingSetIssueQuantity = undefined;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `
+        User: ${subjectCaller} has balance of ${customRebalancingSetIssueQuantity}
+
+        when required balance is ${subjectRebalancingSetQuantity} at token address ${subjectRebalancingSetAddress}.
+      `
+        );
+      });
+    });
+
+    describe('when the base components do not contain wrapped ether', async () => {
+      beforeAll(async () => {
+        customWethMock = await deployWethMockAsync(web3, functionCaller, ether(100));
+      });
+
+      afterAll(async () => {
+        customWethMock = undefined;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Token address at ${wethMock.address} ` +
+          `is not a component of the Set Token at ${baseSetToken.address}.`
+        );
       });
     });
   });

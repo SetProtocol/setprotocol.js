@@ -181,9 +181,8 @@ export class IssuanceAssertions {
     this.commonAssertions.isGreaterOrEqualThan(
       etherValue,
       requiredWrappedEtherQuantity,
-      "Ether value must be greater than required wrapped ether quantity",
+      'Ether value must be greater than required wrapped ether quantity',
     );
-
   }
 
   public async assertRedeem(

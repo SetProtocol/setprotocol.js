@@ -221,12 +221,11 @@ export class RebalancingSetIssuanceAPI {
     rebalancingSetQuantity: BigNumber,
     txOpts: Tx,
   ) {
-    // await this.assert.issuance.assertRebalancingSetTokenIssue(
-    //   rebalancingSetAddress,
-    //   rebalancingSetQuantity,
-    //   txOpts.from,
-    //   this.transferProxy,
-    // );
+    await this.assert.issuance.assertRedeem(
+      rebalancingSetAddress,
+      rebalancingSetQuantity,
+      txOpts.from,
+    );
 
     const baseSetAddress = await this.rebalancingSetToken.currentSet(rebalancingSetAddress);
 
