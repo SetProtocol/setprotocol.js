@@ -78,19 +78,6 @@ export interface RebalancingSetDetails {
   symbol: string;
 }
 
-export interface RebalancingManagerDetails {
-  core: Address;
-  btcPriceFeed: Address;
-  ethPriceFeed: Address;
-  btcAddress: Address;
-  ethAddress: Address;
-  setTokenFactory: Address;
-  auctionLibrary: Address;
-  auctionTimeToPivot: BigNumber;
-  btcMultiplier: BigNumber;
-  ethMultiplier: BigNumber;
-}
-
 export interface SetProtocolConfig {
   coreAddress: Address;
   exchangeIssuanceModuleAddress: Address;
