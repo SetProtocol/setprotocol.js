@@ -3,6 +3,7 @@ import { Web3Utils } from 'set-protocol-utils';
 
 import { Tx } from '../types/common';
 import { DEFAULT_GAS_PRICE, DEFAULT_GAS_LIMIT } from '../constants';
+import { BigNumber } from '.';
 
 export interface TransactionMiningOpts {
   interval: number;
@@ -92,3 +93,12 @@ export async function awaitTx(
     });
   }
 }
+
+export const getGasUsageInEth = async (web3: any, txHash: string) => {
+  const txReceipt = await web3.eth.getTransactionReceipt(txHash);
+    const txn = await web3.eth.getTransaction(txHash);
+    const { gasPrice } = txn;
+    const { gasUsed } = txReceipt;
+
+    return new BigNumber(gasPrice).mul(gasUsed);
+};

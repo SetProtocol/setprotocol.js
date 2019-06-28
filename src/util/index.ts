@@ -25,5 +25,5 @@ export { calculatePartialAmount, calculatePercentDifference } from './commonMath
 export { estimateIssueRedeemGasCost } from './setTokenUtils';
 export { getFormattedLogsFromReceipt } from './logs';
 export { generateFutureTimestamp } from './timeStampUtils';
-export { generateTxOpts } from './transactionUtils';
+export { generateTxOpts, getGasUsageInEth } from './transactionUtils';
 export { ether } from './units';

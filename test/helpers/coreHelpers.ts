@@ -9,6 +9,7 @@ import {
   CoreIssuanceLibrary,
   NoDecimalTokenMock,
   RebalancingSetExchangeIssuanceModule,
+  RebalancingSetIssuanceModule,
   RebalanceAuctionModule,
   RebalancingLibrary,
   RebalancingSetTokenFactory,
@@ -31,6 +32,7 @@ import {
   ExchangeIssuanceModuleContract,
   NoDecimalTokenMockContract,
   RebalancingSetExchangeIssuanceModuleContract,
+  RebalancingSetIssuanceModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
@@ -411,6 +413,41 @@ export const deployRebalancingSetExchangeIssuanceModuleAsync = async (
   );
 
   return rebalancingSetExchangeIssuanceModule;
+};
+
+export const deployRebalancingSetIssuanceModuleAsync = async (
+  web3: Web3,
+  core: CoreContract,
+  vault: VaultContract,
+  transferProxy: TransferProxyContract,
+  wrappedEther: WethMockContract,
+  owner: Address = DEFAULT_ACCOUNT,
+): Promise<RebalancingSetIssuanceModuleContract> => {
+  const truffleRebalancingSetIssuanceModuleContract = setDefaultTruffleContract(
+    web3,
+    RebalancingSetIssuanceModule
+  );
+  const truffleERC20WrapperContract = setDefaultTruffleContract(web3, ERC20Wrapper);
+
+  const deployedERC20Wrapper = await truffleERC20WrapperContract.new();
+  await truffleRebalancingSetIssuanceModuleContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
+
+  const deployedRebalancingSetIssuanceModuleContract =
+    await truffleRebalancingSetIssuanceModuleContract.new(
+      core.address,
+      vault.address,
+      transferProxy.address,
+      wrappedEther.address,
+    );
+
+  // Initialize typed contract class
+  const rebalancingSetIssuanceModule = await RebalancingSetIssuanceModuleContract.at(
+    deployedRebalancingSetIssuanceModuleContract.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  return rebalancingSetIssuanceModule;
 };
 
 export const deployWethMockAsync = async (

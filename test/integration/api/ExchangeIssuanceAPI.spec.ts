@@ -146,6 +146,7 @@ describe('ExchangeIssuanceAPI', () => {
       rebalancingSetTokenFactoryAddress: rebalancingSetTokenFactory.address,
       rebalanceAuctionModuleAddress: NULL_ADDRESS,
       rebalancingTokenIssuanceModule: NULL_ADDRESS,
+      rebalancingSetIssuanceModule: NULL_ADDRESS,
       rebalancingSetExchangeIssuanceModule: rebalancingSetExchangeIssuanceModule.address,
       wrappedEtherAddress: wrappedEtherMock.address,
     } as SetProtocolConfig;

@@ -44,6 +44,7 @@ import {
   DEFAULT_UNIT_SHARES,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
   DEFAULT_AUCTION_PRICE_DENOMINATOR,
+  DEFAULT_REBALANCING_NATURAL_UNIT,
 } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber } from '@src/util';
@@ -148,6 +149,7 @@ describe('RebalancingSetTokenWrapper', () => {
       const rebalanceState = await rebalancingSetTokenWrapper.rebalanceState(subjectRebalancingSetTokenAddress);
       const currentSet = await rebalancingSetTokenWrapper.currentSet(subjectRebalancingSetTokenAddress);
       const unitShares = await rebalancingSetTokenWrapper.unitShares(subjectRebalancingSetTokenAddress);
+      const naturalUnit = await rebalancingSetTokenWrapper.naturalUnit(subjectRebalancingSetTokenAddress);
       const lastRebalanceTimestamp = await rebalancingSetTokenWrapper.lastRebalanceTimestamp(
         subjectRebalancingSetTokenAddress
       );
@@ -159,6 +161,7 @@ describe('RebalancingSetTokenWrapper', () => {
         rebalanceState,
         currentSet,
         unitShares,
+        naturalUnit,
         lastRebalanceTimestamp,
         proposalPeriod,
         rebalanceInterval,
@@ -171,6 +174,7 @@ describe('RebalancingSetTokenWrapper', () => {
         rebalanceState,
         currentSet,
         unitShares,
+        naturalUnit,
         lastRebalanceTimestamp,
         proposalPeriod,
         rebalanceInterval,
@@ -183,6 +187,8 @@ describe('RebalancingSetTokenWrapper', () => {
       expect(currentSet).to.eql(currentSetToken.address);
 
       expect(unitShares).to.be.bignumber.equal(DEFAULT_UNIT_SHARES);
+
+      expect(naturalUnit).to.be.bignumber.equal(DEFAULT_REBALANCING_NATURAL_UNIT);
 
       expect(lastRebalanceTimestamp).to.be.bignumber.equal(rebalanceTimestamp);
 
@@ -941,6 +947,7 @@ describe('RebalancingSetTokenWrapper', () => {
       const returnedRebalanceState = await rebalancingSetTokenWrapper.rebalanceState(subjectRebalancingSetTokenAddress);
       const returnedCurrentSet = await rebalancingSetTokenWrapper.currentSet(subjectRebalancingSetTokenAddress);
       const returnedUnitShares = await rebalancingSetTokenWrapper.unitShares(subjectRebalancingSetTokenAddress);
+      const returnedNaturalUnit = await rebalancingSetTokenWrapper.naturalUnit(subjectRebalancingSetTokenAddress);
       const returnedLastRebalanceTimestamp = await rebalancingSetTokenWrapper.lastRebalanceTimestamp(
         subjectRebalancingSetTokenAddress
       );
@@ -950,6 +957,8 @@ describe('RebalancingSetTokenWrapper', () => {
       expect(returnedCurrentSet).to.eql(nextSetToken.address);
 
       expect(returnedUnitShares).to.be.bignumber.equal(expectedUnitShares);
+
+      expect(returnedNaturalUnit).to.be.bignumber.equal(DEFAULT_REBALANCING_NATURAL_UNIT);
 
       expect(returnedLastRebalanceTimestamp).to.be.bignumber.equal(auctionEndTimestamp);
     });

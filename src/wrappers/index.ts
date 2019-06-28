@@ -24,6 +24,7 @@ export { KyberNetworkWrapper } from './set_protocol/KyberNetworkWrapper';
 export {
  RebalancingSetExchangeIssuanceModuleWrapper
 } from './set_protocol/RebalancingSetExchangeIssuanceModuleWrapper';
+export { RebalancingSetIssuanceModuleWrapper } from './set_protocol/RebalancingSetIssuanceModuleWrapper';
 export { PriceFeedWrapper } from './set_protocol/PriceFeedWrapper';
 export { ProtocolContractWrapper } from './set_protocol/ProtocolContractWrapper';
 export { RebalancingAuctionModuleWrapper } from './set_protocol/RebalancingAuctionModuleWrapper';

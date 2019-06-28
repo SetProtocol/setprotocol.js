@@ -21,7 +21,6 @@ import Web3 from 'web3';
 import { SetTokenContract } from 'set-protocol-contracts';
 
 import { ZERO } from '../constants';
-import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
 import { CoreWrapper, ERC20Wrapper, SetTokenWrapper, VaultWrapper } from '../wrappers';
 import { BigNumber } from '../util';
@@ -160,22 +159,11 @@ export class IssuanceAPI {
   /* ============ Private Assertions ============ */
 
   private async assertIssue(transactionCaller: Address, setAddress: Address, quantity: BigNumber) {
-    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
-
-    await this.assert.setToken.isMultipleOfNaturalUnit(
+    await this.assert.issuance.assertSetTokenIssue(
       setAddress,
       quantity,
-      'Issue quantity',
-    );
-
-    await this.assert.setToken.hasSufficientBalances(setAddress, transactionCaller, quantity);
-    await this.assert.setToken.hasSufficientAllowances(
-      setAddress,
       transactionCaller,
-      this.core.transferProxyAddress,
-      quantity,
+      this.core.transferProxyAddress
     );
   }
 
@@ -186,24 +174,15 @@ export class IssuanceAPI {
     withdraw: boolean,
     tokensToExclude: Address[],
   ) {
-    this.assert.schema.isValidAddress('txOpts.from', transactionCaller);
-    this.assert.schema.isValidAddress('setAddress', setAddress);
-    this.assert.common.greaterThanZero(quantity, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(quantity));
+    await this.assert.issuance.assertRedeem(
+      setAddress,
+      quantity,
+      transactionCaller,
+    );
 
     _.each(tokensToExclude, tokenAddress => {
       this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     });
-
-    await this.assert.setToken.isMultipleOfNaturalUnit(
-      setAddress,
-      quantity,
-      'Redeem quantity',
-    );
-    await this.assert.erc20.hasSufficientBalanceAsync(
-      setAddress,
-      transactionCaller,
-      quantity,
-    );
 
     await this.assert.vault.hasSufficientSetTokensBalances(
       this.core.vaultAddress,

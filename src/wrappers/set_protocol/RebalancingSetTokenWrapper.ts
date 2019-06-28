@@ -230,6 +230,18 @@ export class RebalancingSetTokenWrapper {
   }
 
   /**
+   * Gets naturalUnit of the Rebalancing Set
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @return                         The naturalUnit of the RebalancingSetToken
+   */
+  public async naturalUnit(rebalancingSetAddress: Address): Promise<BigNumber> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
+
+    return await rebalancingSetTokenInstance.naturalUnit.callAsync();
+  }
+
+  /**
    * Gets Unix timestamp of last rebalance for the Rebalancing Set Token
    *
    * @param  rebalancingSetAddress   Address of the Set

@@ -62,21 +62,26 @@ export class SetTokenAssertions {
    * @param  setTokenAddress  The address of the Set Token contract
    * @param  ownerAddress     The address of the owner
    * @param  quantity         Amount of a Set in base units
+   * @param  exclusions       The addresses to exclude from checking
    */
   public async hasSufficientBalances(
     setTokenAddress: Address,
     ownerAddress: Address,
     quantity: BigNumber,
+    exclusions: Address[] = [],
   ): Promise<void> {
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
 
     const components: Address[] = await setTokenInstance.getComponents.callAsync();
+
+    const componentsFilteredForExclusions: Address[] = _.difference(components, exclusions);
+
     const units = await setTokenInstance.getUnits.callAsync();
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
 
     // Create component ERC20 token instances
     const componentInstancePromises = _.map(
-      components,
+      componentsFilteredForExclusions,
       async component =>
         await ERC20DetailedContract.at(component, this.web3, { from: ownerAddress }),
     );
@@ -109,6 +114,7 @@ export class SetTokenAssertions {
     ownerAddress: Address,
     spenderAddress: Address,
     quantity: BigNumber,
+    exclusions: Address[] = [],
   ): Promise<void> {
     const setTokenInstance = await SetTokenContract.at(setTokenAddress, this.web3, {});
 
@@ -116,9 +122,11 @@ export class SetTokenAssertions {
     const units = await setTokenInstance.getUnits.callAsync();
     const naturalUnit = await setTokenInstance.naturalUnit.callAsync();
 
+    const componentsFilteredForExclusions: Address[] = _.difference(components, exclusions);
+
     // Create component ERC20 token instances
     const componentInstancePromises = _.map(
-      components,
+      componentsFilteredForExclusions,
       async component =>
         await ERC20DetailedContract.at(component, this.web3, { from: ownerAddress }),
     );

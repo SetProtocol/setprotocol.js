@@ -3,6 +3,7 @@ import promisify from 'tiny-promisify';
 import Web3 from 'web3';
 import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
 import { ConstantAuctionPriceCurve } from 'set-protocol-contracts';
+
 import {
   ConstantAuctionPriceCurveContract,
   CoreContract,
@@ -155,9 +156,9 @@ export const createDefaultRebalancingSetTokenAsync = async(
   manager: Address,
   initialSet: Address,
   proposalPeriod: BigNumber,
+  initialUnitShares: BigNumber = DEFAULT_UNIT_SHARES,
 ): Promise<RebalancingSetTokenContract> => {
   // Generate defualt rebalancingSetToken params
-  const initialUnitShares = DEFAULT_UNIT_SHARES;
   const rebalanceInterval = ONE_DAY_IN_SECONDS;
   const callData = SetProtocolTestUtils.bufferArrayToHex([
     SetProtocolUtils.paddedBufferForPrimitive(manager),
