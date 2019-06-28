@@ -16,32 +16,16 @@
 
 'use strict';
 
-import { AccountingAPI } from './AccountingAPI';
-import { BlockchainAPI } from './BlockchainAPI';
-import { ERC20API } from './ERC20API';
-import { ExchangeIssuanceAPI } from './ExchangeIssuanceAPI';
-import { FactoryAPI } from './FactoryAPI';
-import { IssuanceAPI } from './IssuanceAPI';
-import { MACOManagerAPI } from './MACOManagerAPI';
-import { OracleAPI } from './OracleAPI';
-import { RebalancingAPI } from './RebalancingAPI';
-import { RebalancingManagerAPI } from './RebalancingManagerAPI';
-import { RebalancingSetIssuanceAPI } from './RebalancingSetIssuanceAPI';
-import { SetTokenAPI } from './SetTokenAPI';
-import { SystemAPI } from './SystemAPI';
-
-export {
-  AccountingAPI,
-  BlockchainAPI,
-  ERC20API,
-  ExchangeIssuanceAPI,
-  FactoryAPI,
-  IssuanceAPI,
-  MACOManagerAPI,
-  OracleAPI,
-  RebalancingAPI,
-  RebalancingManagerAPI,
-  RebalancingSetIssuanceAPI,
-  SetTokenAPI,
-  SystemAPI
-};
+export { AccountingAPI } from './AccountingAPI';
+export { BlockchainAPI } from './BlockchainAPI';
+export { ERC20API } from './ERC20API';
+export { ExchangeIssuanceAPI } from './ExchangeIssuanceAPI';
+export { FactoryAPI } from './FactoryAPI';
+export { IssuanceAPI } from './IssuanceAPI';
+export { MACOManagerAPI } from './MACOManagerAPI';
+export { OracleAPI } from './OracleAPI';
+export { RebalancingAPI } from './RebalancingAPI';
+export { RebalancingManagerAPI } from './RebalancingManagerAPI';
+export { RebalancingSetIssuanceAPI } from './RebalancingSetIssuanceAPI';
+export { SetTokenAPI } from './SetTokenAPI';
+export { SystemAPI } from './SystemAPI';

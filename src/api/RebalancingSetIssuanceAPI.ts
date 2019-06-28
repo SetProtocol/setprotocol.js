@@ -32,7 +32,7 @@ import { exchangeIssuanceErrors } from '../errors';
  * @title RebalancingSetIssuanceAPI
  * @author Set Protocol
  *
- * A library for issuing RebalancingSets using Ether.
+ * A library for issuance and redemption of RebalancingSets.
  */
 export class RebalancingSetIssuanceAPI {
   private web3: Web3;
@@ -74,7 +74,7 @@ export class RebalancingSetIssuanceAPI {
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to issue
    * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transfered to the user
    *                                    or is left in the vault
-   * @param  txOpts                    The options for executing the transaction
+   * @param  txOpts                    The options for executing the transaction.
    */
   public async issueRebalancingSet(
     rebalancingSetAddress: Address,
@@ -100,13 +100,13 @@ export class RebalancingSetIssuanceAPI {
   /**
    * Issue a rebalancing SetToken using the base components of the base SetToken.
    * Wrapped Ether must be a component of the base SetToken - which is wrapped using the
-   * ether sent along with the transaction.
+   * ether sent along with the transaction. Excess ether is returned to the user.
    *
    * @param  rebalancingSetAddress    Address of the rebalancing Set to issue
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to issue
    * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transfered to the user
    *                                    or is left in the vault
-   * @param  txOpts                   The options for executing the transaction.
+   * @param  txOpts                   The options for executing the transaction. Value must be filled in.
    */
   public async issueRebalancingSetWrappingEther(
     rebalancingSetAddress: Address,
@@ -130,13 +130,13 @@ export class RebalancingSetIssuanceAPI {
 
   /**
    * Redeems a Rebalancing Set into the base SetToken. Then the base SetToken is redeemed, and its components
-   * are sent to the caller.
+   * are sent to the caller or transferred to the caller in the Vault depending on the keepChangeInVault argument.
    *
    * @param  rebalancingSetAddress    Address of the rebalancing Set to redeem
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
    * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transfered to the user
    *                                    or is left in the vault
-   * @param  txOpts                    The options for executing the transaction
+   * @param  txOpts                   The options for executing the transaction
    */
   public async redeemRebalancingSet(
     rebalancingSetAddress: Address,
@@ -160,7 +160,7 @@ export class RebalancingSetIssuanceAPI {
 
   /**
    * Redeems a Rebalancing Set into the base SetToken. Then the base Set is redeemed, and its components
-   * are sent to the caller. Any wrapped Ether is unwrapped and attributed to the caller.
+   * are sent to the caller. Any wrapped Ether is unwrapped and transferred to the caller.
    *
    * @param  rebalancingSetAddress    Address of the rebalancing Set to redeem
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
@@ -195,7 +195,6 @@ export class RebalancingSetIssuanceAPI {
     rebalancingSetQuantity: BigNumber,
     txOpts: Tx,
   ) {
-    // Add checks for required ether quantities
     this.assert.common.isNotUndefined(txOpts.value, exchangeIssuanceErrors.ETHER_VALUE_NOT_UNDEFINED());
 
     await this.assert.issuance.assertRebalancingSetTokenIssueWrappingEther(
@@ -205,14 +204,6 @@ export class RebalancingSetIssuanceAPI {
       this.transferProxy,
       this.wrappedEther,
       new BigNumber(txOpts.value),
-    );
-
-    const baseSetAddress = await this.rebalancingSetToken.currentSet(rebalancingSetAddress);
-
-    // Check that a base SetToken component is ether
-    await this.assert.setToken.isComponent(
-      baseSetAddress,
-      this.wrappedEther,
     );
   }
 
@@ -227,9 +218,8 @@ export class RebalancingSetIssuanceAPI {
       txOpts.from,
     );
 
+    // Check that wrapped Ether is a base SetToken component
     const baseSetAddress = await this.rebalancingSetToken.currentSet(rebalancingSetAddress);
-
-    // Check that a base SetToken component is ether
     await this.assert.setToken.isComponent(
       baseSetAddress,
       this.wrappedEther,

@@ -372,6 +372,8 @@ describe('RebalancingSetIssuanceAPI', () => {
     let customWethMock: WethMockContract;
     let sendUndefinedEtherValue: any;
 
+    let onlyWeth: boolean;
+
     beforeEach(async () => {
       subjectCaller = functionCaller;
 
@@ -392,9 +394,10 @@ describe('RebalancingSetIssuanceAPI', () => {
       );
 
       // Create the Set (2 component)
-      const componentAddresses = [baseSetWethComponent.address, baseSetComponent.address];
+      const componentAddresses =
+        onlyWeth ? [baseSetWethComponent.address] : [baseSetWethComponent.address, baseSetComponent.address];
       baseSetComponentUnit = ether(1);
-      const componentUnits = [baseSetComponentUnit, baseSetComponentUnit];
+      const componentUnits = onlyWeth ? [baseSetComponentUnit] : [baseSetComponentUnit, baseSetComponentUnit];
       baseSetNaturalUnit = ether(1);
       baseSetToken = await deploySetTokenAsync(
         web3,
@@ -517,6 +520,26 @@ describe('RebalancingSetIssuanceAPI', () => {
           );
           expect(baseSetBalance).to.bignumber.equal(expectedBaseSetChange);
         });
+      });
+    });
+
+    describe('when only 1 wrapped ether is the base component', async () => {
+      beforeAll(async () => {
+        onlyWeth = true;
+      });
+
+      afterAll(async () => {
+        onlyWeth = undefined;
+      });
+
+      it('issues the rebalancing Set', async () => {
+        const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+        const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(subjectRebalancingSetQuantity);
+
+        await subject();
+
+        const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+        expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
       });
     });
 
@@ -908,6 +931,8 @@ describe('RebalancingSetIssuanceAPI', () => {
     let wethRequiredToMintSet: BigNumber;
     let baseComponentQuantity: BigNumber;
 
+    let onlyWeth: boolean;
+
     beforeEach(async () => {
       subjectCaller = functionCaller;
 
@@ -928,9 +953,10 @@ describe('RebalancingSetIssuanceAPI', () => {
       );
 
       // Create the Set (2 component)
-      const componentAddresses = [baseSetWethComponent.address, baseSetComponent.address];
+      const componentAddresses = onlyWeth ?
+        [baseSetWethComponent.address] : [baseSetWethComponent.address, baseSetComponent.address];
       baseSetComponentUnit = ether(1);
-      const componentUnits = [baseSetComponentUnit, baseSetComponentUnit];
+      const componentUnits = onlyWeth ? [baseSetComponentUnit] : [baseSetComponentUnit, baseSetComponentUnit];
       baseSetNaturalUnit = ether(1);
       baseSetToken = await deploySetTokenAsync(
         web3,
@@ -1041,6 +1067,26 @@ describe('RebalancingSetIssuanceAPI', () => {
 
       const baseSetComponentBalance = await baseSetComponent.balanceOf.callAsync(subjectCaller);
       expect(baseSetComponentBalance).to.bignumber.equal(baseComponentQuantity);
+    });
+
+    describe('when only 1 wrapped ether is the base component', async () => {
+      beforeAll(async () => {
+        onlyWeth = true;
+      });
+
+      afterAll(async () => {
+        onlyWeth = undefined;
+      });
+
+      it('redeems the rebalancing Set', async () => {
+        const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+        const expectedRBSetTokenBalance = previousRBSetTokenBalance.sub(subjectRebalancingSetQuantity);
+
+        await subject();
+
+        const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+        expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+      });
     });
 
     describe('when the redeem quantity results in excess base Set', async () => {

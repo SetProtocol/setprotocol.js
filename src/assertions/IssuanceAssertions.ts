@@ -1,5 +1,5 @@
 /*
-  Copyright 2018 Set Labs Inc.
+  Copyright 2019 Set Labs Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -45,6 +45,12 @@ export class IssuanceAssertions {
     this.setToken = new SetTokenWrapper(web3);
   }
 
+  /**
+   * Makes the following assertions on a Set Token:
+   * 1) Set quantity is a multiple of the natural unit
+   * 2) The caller has sufficient component balance and allowance
+   *
+   */
   public async assertSetTokenIssue(
     setTokenAddress: Address,
     setTokenQuantity: BigNumber,
@@ -78,13 +84,18 @@ export class IssuanceAssertions {
     );
   }
 
+  /**
+   * Makes the following assertions on a Rebalancing Set Token Issuance:
+   * 1) Rebalancing Set quantity is a multiple of the natural unit
+   * 2) The caller has sufficient component balance and allowance based on the implied
+   *    base SetToken issue quantity
+   */
   public async assertRebalancingSetTokenIssue(
     rebalancingSetTokenAddress: Address,
     rebalancingSetTokenQuantity: BigNumber,
     transactionCaller: Address,
     transferProxyAddress: Address,
   ): Promise<void> {
-    // Do all the normal asserts
     this.schemaAssertions.isValidAddress('transactionCaller', transactionCaller);
     this.schemaAssertions.isValidAddress('setAddress', rebalancingSetTokenAddress);
     this.commonAssertions.greaterThanZero(
@@ -120,6 +131,14 @@ export class IssuanceAssertions {
     );
   }
 
+  /**
+   * Makes the following assertions on a Rebalancing Set Token Issuance:
+   * 1) Rebalancing Set quantity is a multiple of the natural unit
+   * 2) The caller has sufficient component balance and allowance based on the implied
+   *    base SetToken issue quantity
+   * 3) Validate wrapped ether is a component
+   * 4) Validate there is enough ether for issuance
+   */
   public async assertRebalancingSetTokenIssueWrappingEther(
     rebalancingSetTokenAddress: Address,
     rebalancingSetTokenQuantity: BigNumber,
@@ -150,6 +169,7 @@ export class IssuanceAssertions {
       rebalancingSetTokenQuantity,
     );
 
+    // Check sufficient base Set components, excluding Ether
     await this.setTokenAssertions.hasSufficientBalances(
       baseSetTokenAddress,
       transactionCaller,
@@ -157,6 +177,7 @@ export class IssuanceAssertions {
       [wrappedEtherAddress],
     );
 
+    // Check sufficient base Set components, excluding Ether
     await this.setTokenAssertions.hasSufficientAllowances(
       baseSetTokenAddress,
       transactionCaller,
@@ -213,6 +234,12 @@ export class IssuanceAssertions {
 
   /* ============ Private Functions ============ */
 
+  /**
+   * Given a rebalancing SetToken and a desired issue quantity, calculates the
+   * minimum issuable quantity of the base SetToken. If the calculated quantity is initially
+   * not a multiple of the base SetToken's natural unit, the quantity is rounded up
+   * to the next base set natural unit.
+   */
   private async getBaseSetIssuanceRequiredQuantity(
     rebalancingSetTokenAddress: Address,
     rebalancingSetTokenQuantity: BigNumber,
@@ -235,6 +262,10 @@ export class IssuanceAssertions {
     return requiredBaseSetQuantity;
   }
 
+  /**
+   * Given a base SetToken and a desired issue quantity, calculates the
+   * required wrapped Ether quantity.
+   */
   private async getWrappedEtherRequiredQuantity(
     baseSetAddress: Address,
     baseSetQuantity: BigNumber,
