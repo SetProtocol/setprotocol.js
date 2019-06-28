@@ -281,9 +281,76 @@ describe('RebalancingSetIssuanceAPI', () => {
         });
       });
     });
+
+    describe('when the quantity is not positive', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetQuantity = new BigNumber(0);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The quantity ${subjectRebalancingSetQuantity.toString()} inputted needs to be greater than zero.`
+        );
+      });
+    });
+
+    describe('when the quantity to issue is not a multiple of the sets natural unit', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetQuantity = subjectRebalancingSetQuantity.add(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Issuance quantity needs to be multiple of natural unit.`
+        );
+      });
+    });
+
+    describe('when the caller does not have the right amount of allowance to the transfer proxy', async () => {
+      let componentWithInsufficientAllowance: StandardTokenMockContract;
+      let requiredAllowance: BigNumber;
+
+      beforeEach(async () => {
+        componentWithInsufficientAllowance = baseSetComponent;
+        requiredAllowance = baseSetIssueQuantity.mul(baseSetComponentUnit).div(baseSetNaturalUnit);
+
+        await componentWithInsufficientAllowance.approve.sendTransactionAsync(
+          transferProxy.address,
+          ZERO,
+          { from: subjectCaller, gas: DEFAULT_GAS_LIMIT},
+        );
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${subjectCaller} has allowance of ${ZERO}
+
+        when required allowance is ${requiredAllowance} at token
+
+        address: ${componentWithInsufficientAllowance.address} for spender: ${transferProxy.address}.
+      `
+        );
+      });
+    });
+
+    describe('when the user doesnt have enough the components', async () => {
+      beforeEach(async () => {
+        const callerBalance = await baseSetComponent.balanceOf.callAsync(subjectCaller);
+        await baseSetComponent.transfer.sendTransactionAsync(
+          ACCOUNTS[4].address,
+          callerBalance,
+          { from: subjectCaller, gas: DEFAULT_GAS_LIMIT}
+        );
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejected;
+      });
+    });
   });
 
-  describe('#issueRebalancingSetWrappingEther', async () => {
+  describe.only('#issueRebalancingSetWrappingEther', async () => {
     let subjectCaller: Address;
     let subjectRebalancingSetAddress: Address;
     let subjectRebalancingSetQuantity: BigNumber;
@@ -299,9 +366,12 @@ describe('RebalancingSetIssuanceAPI', () => {
     let baseSetComponentUnit: BigNumber;
     let baseSetIssueQuantity: BigNumber;
 
+    let customComponentAddresses: Address[];
     let customBaseIssueQuantity: BigNumber;
     let customRebalancingUnitShares: BigNumber;
     let customRebalancingSetQuantity: BigNumber;
+    let customWethMock: WethMockContract;
+    let sendUndefinedEtherValue: any;
 
     beforeEach(async () => {
       subjectCaller = functionCaller;
@@ -314,7 +384,7 @@ describe('RebalancingSetIssuanceAPI', () => {
         subjectCaller,
       );
 
-      baseSetWethComponent = wethMock;
+      baseSetWethComponent = customWethMock || wethMock;
 
       baseSetWethComponent.approve.sendTransactionAsync(
         transferProxy.address,
@@ -357,6 +427,8 @@ describe('RebalancingSetIssuanceAPI', () => {
       subjectWethQuantity = baseSetIssueQuantity.mul(baseSetComponentUnit).div(baseSetNaturalUnit);
 
       subjectKeepChangeInVault = false;
+
+      sendUndefinedEtherValue = false;
     });
 
     async function subject(): Promise<string> {
@@ -367,7 +439,7 @@ describe('RebalancingSetIssuanceAPI', () => {
         {
           from: subjectCaller,
           gas: DEFAULT_GAS_LIMIT,
-          value: subjectWethQuantity.toNumber(),
+          value: sendUndefinedEtherValue ? undefined : subjectWethQuantity.toNumber(),
         },
       );
     }
@@ -446,6 +518,102 @@ describe('RebalancingSetIssuanceAPI', () => {
           );
           expect(baseSetBalance).to.bignumber.equal(expectedBaseSetChange);
         });
+      });
+    });
+
+    describe('when the quantity is not positive', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetQuantity = new BigNumber(0);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The quantity ${subjectRebalancingSetQuantity.toString()} inputted needs to be greater than zero.`
+        );
+      });
+    });
+
+    describe('when the quantity to issue is not a multiple of the sets natural unit', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetQuantity = subjectRebalancingSetQuantity.add(1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Issuance quantity needs to be multiple of natural unit.`
+        );
+      });
+    });
+
+    describe('when the caller does not have the right amount of allowance to the transfer proxy', async () => {
+      let componentWithInsufficientAllowance: StandardTokenMockContract;
+      let requiredAllowance: BigNumber;
+
+      beforeEach(async () => {
+        componentWithInsufficientAllowance = baseSetComponent;
+        requiredAllowance = baseSetIssueQuantity.mul(baseSetComponentUnit).div(baseSetNaturalUnit);
+
+        await componentWithInsufficientAllowance.approve.sendTransactionAsync(
+          transferProxy.address,
+          ZERO,
+          { from: subjectCaller, gas: DEFAULT_GAS_LIMIT},
+        );
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${subjectCaller} has allowance of ${ZERO}
+
+        when required allowance is ${requiredAllowance} at token
+
+        address: ${componentWithInsufficientAllowance.address} for spender: ${transferProxy.address}.
+      `
+        );
+      });
+    });
+
+    describe('when the user doesnt have enough the components', async () => {
+      beforeEach(async () => {
+        const callerBalance = await baseSetComponent.balanceOf.callAsync(subjectCaller);
+        await baseSetComponent.transfer.sendTransactionAsync(
+          ACCOUNTS[4].address,
+          callerBalance,
+          { from: subjectCaller, gas: DEFAULT_GAS_LIMIT}
+        );
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejected;
+      });
+    });
+
+    describe('when the ether inputted is undefined', async () => {
+      beforeEach(async () => {
+        sendUndefinedEtherValue = true;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Ether value should not be undefined`
+        );
+      });
+    });
+
+    describe.only('when the base components do not contain wrapped ether', async () => {
+      beforeAll(async () => {
+        customWethMock = await deployWethMockAsync(web3, functionCaller, ether(100));
+      });
+
+      afterAll(async () => {
+        customWethMock = undefined;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Token address at ${wethMock.address} ` +
+          `is not a component of the Set Token at ${baseSetToken.address}.`
+        );
       });
     });
   });

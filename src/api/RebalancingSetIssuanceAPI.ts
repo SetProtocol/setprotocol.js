@@ -195,15 +195,17 @@ export class RebalancingSetIssuanceAPI {
     rebalancingSetQuantity: BigNumber,
     txOpts: Tx,
   ) {
-    await this.assert.issuance.assertRebalancingSetTokenIssue(
+    // Add checks for required ether quantities
+    this.assert.common.isNotUndefined(txOpts.value, exchangeIssuanceErrors.ETHER_VALUE_NOT_UNDEFINED());
+
+    await this.assert.issuance.assertRebalancingSetTokenIssueWrappingEther(
       rebalancingSetAddress,
       rebalancingSetQuantity,
       txOpts.from,
       this.transferProxy,
+      this.wrappedEther,
+      new BigNumber(txOpts.value),
     );
-
-    // Add checks for required ether quantities
-    this.assert.common.isNotUndefined(txOpts.value, exchangeIssuanceErrors.ETHER_VALUE_NOT_UNDEFINED());
 
     const baseSetAddress = await this.rebalancingSetToken.currentSet(rebalancingSetAddress);
 

@@ -24,6 +24,7 @@ import { CommonAssertions } from './CommonAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
 import { SchemaAssertions } from './SchemaAssertions';
 import { SetTokenAssertions } from './SetTokenAssertions';
+import { RebalancingSetTokenWrapper, SetTokenWrapper } from '../wrappers';
 import { BigNumber } from '../util';
 import { Address } from '../types/common';
 
@@ -32,12 +33,16 @@ export class IssuanceAssertions {
   private commonAssertions: CommonAssertions;
   private schemaAssertions: SchemaAssertions;
   private setTokenAssertions: SetTokenAssertions;
+  private rebalancingSetToken: RebalancingSetTokenWrapper;
+  private setToken: SetTokenWrapper;
 
   constructor(web3: Web3) {
     this.erc20Assertions = new ERC20Assertions(web3);
     this.commonAssertions = new CommonAssertions();
     this.schemaAssertions = new SchemaAssertions();
     this.setTokenAssertions = new SetTokenAssertions(web3);
+    this.rebalancingSetToken = new RebalancingSetTokenWrapper(web3);
+    this.setToken = new SetTokenWrapper(web3);
   }
 
   public async assertSetTokenIssue(
@@ -93,9 +98,92 @@ export class IssuanceAssertions {
       'Issuance quantity',
     );
 
-    // Calculate the implied base Set quantity required
+    const baseSetTokenAddress = await this.rebalancingSetToken.currentSet(rebalancingSetTokenAddress);
 
-    // Calculate the components required
+    // Calculate the implied base Set quantity required
+    const baseSetTokenQuantity = await this.getBaseSetIssuanceRequiredQuantity(
+      rebalancingSetTokenAddress,
+      rebalancingSetTokenQuantity,
+    );
+
+    await this.setTokenAssertions.hasSufficientBalances(
+      baseSetTokenAddress,
+      transactionCaller,
+      baseSetTokenQuantity,
+    );
+
+    await this.setTokenAssertions.hasSufficientAllowances(
+      baseSetTokenAddress,
+      transactionCaller,
+      transferProxyAddress,
+      baseSetTokenQuantity,
+    );
+  }
+
+  public async assertRebalancingSetTokenIssueWrappingEther(
+    rebalancingSetTokenAddress: Address,
+    rebalancingSetTokenQuantity: BigNumber,
+    transactionCaller: Address,
+    transferProxyAddress: Address,
+    wrappedEtherAddress: Address,
+    etherValue: BigNumber,
+  ): Promise<void> {
+    // Do all the normal asserts
+    this.schemaAssertions.isValidAddress('transactionCaller', transactionCaller);
+    this.schemaAssertions.isValidAddress('setAddress', rebalancingSetTokenAddress);
+    this.commonAssertions.greaterThanZero(
+      rebalancingSetTokenQuantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(rebalancingSetTokenQuantity),
+    );
+
+    await this.setTokenAssertions.isMultipleOfNaturalUnit(
+      rebalancingSetTokenAddress,
+      rebalancingSetTokenQuantity,
+      'Issuance quantity',
+    );
+
+    const baseSetTokenAddress = await this.rebalancingSetToken.currentSet(rebalancingSetTokenAddress);
+
+    // Calculate the implied base Set quantity required
+    const baseSetTokenQuantity = await this.getBaseSetIssuanceRequiredQuantity(
+      rebalancingSetTokenAddress,
+      rebalancingSetTokenQuantity,
+    );
+
+    await this.setTokenAssertions.hasSufficientBalances(
+      baseSetTokenAddress,
+      transactionCaller,
+      baseSetTokenQuantity,
+      [wrappedEtherAddress],
+    );
+
+    await this.setTokenAssertions.hasSufficientAllowances(
+      baseSetTokenAddress,
+      transactionCaller,
+      transferProxyAddress,
+      baseSetTokenQuantity,
+      [wrappedEtherAddress],
+    );
+
+    // Check that a base SetToken component is ether
+    await this.setTokenAssertions.isComponent(
+      baseSetTokenAddress,
+      wrappedEtherAddress,
+    );
+
+    // Check that there is enough ether
+    const requiredWrappedEtherQuantity = await this.getWrappedEtherRequiredQuantity(
+      baseSetTokenAddress,
+      baseSetTokenQuantity,
+      wrappedEtherAddress,
+    );
+
+    this.commonAssertions.isGreaterOrEqualThan(
+      etherValue,
+      requiredWrappedEtherQuantity,
+      "Ether value must be greater than required wrapped ether quantity",
+    );
+
   }
 
   public async assertRedeem(
@@ -121,6 +209,48 @@ export class IssuanceAssertions {
       transactionCaller,
       setTokenQuantity,
     );
+  }
+
+
+  /* ============ Private Functions ============ */
+
+  private async getBaseSetIssuanceRequiredQuantity(
+    rebalancingSetTokenAddress: Address,
+    rebalancingSetTokenQuantity: BigNumber,
+  ): Promise<BigNumber> {
+    const [unitShares, naturalUnit, baseSetTokenAddress] = await Promise.all([
+      this.rebalancingSetToken.unitShares(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.naturalUnit(rebalancingSetTokenAddress),
+      this.rebalancingSetToken.currentSet(rebalancingSetTokenAddress),
+    ]);
+
+    let requiredBaseSetQuantity = rebalancingSetTokenQuantity.mul(unitShares).div(naturalUnit);
+
+    const baseSetNaturalUnit = await this.setToken.naturalUnit(baseSetTokenAddress);
+
+    if (requiredBaseSetQuantity.mod(baseSetNaturalUnit).gt(new BigNumber(0))) {
+      const roundDownQuantity = requiredBaseSetQuantity.mod(baseSetNaturalUnit);
+      requiredBaseSetQuantity = requiredBaseSetQuantity.sub(roundDownQuantity).add(baseSetNaturalUnit);
+    }
+
+    return requiredBaseSetQuantity;
+  }
+
+  private async getWrappedEtherRequiredQuantity(
+    baseSetAddress: Address,
+    baseSetQuantity: BigNumber,
+    wrappedEther: Address,
+  ): Promise<BigNumber> {
+    const [baseSetComponents, baseSetUnits, baseSetNaturalUnit] = await Promise.all([
+      this.setToken.getComponents(baseSetAddress),
+      this.setToken.getUnits(baseSetAddress),
+      this.setToken.naturalUnit(baseSetAddress),
+    ]);
+    const indexOfWrappedEther = baseSetComponents.indexOf(wrappedEther);
+
+    const wrappedEtherUnits = baseSetUnits[indexOfWrappedEther];
+
+    return baseSetQuantity.mul(wrappedEtherUnits).div(baseSetNaturalUnit);
   }
 
 }
