@@ -287,6 +287,18 @@ export class RebalancingAPI {
   }
 
   /**
+   * Fetches the current state of the RebalancingSetToken
+   *
+   * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
+   * @return                               Current state belonging to {'Default', 'Propose', 'Rebalance', 'Drawdown'}
+   */
+  public async getRebalanceStateAsync(rebalancingSetTokenAddress: Address): Promise<string> {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+
+    return await this.rebalancingSetToken.rebalanceState(rebalancingSetTokenAddress);
+  }
+
+  /**
    * Fetches details of a RebalancingSetToken comprised of factory address, manager, current set, unit shares,
    * natural unit, state, date the last rebalance ended, supply, name, and symbol
    *
