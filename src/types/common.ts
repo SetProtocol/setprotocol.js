@@ -27,6 +27,12 @@ export const RebalancingState = {
   DRAWDOWN: new BigNumber(3),
 };
 
+export const ManagerType = {
+  BTCETH: new BigNumber(0),
+  BTCDAI: new BigNumber(1),
+  ETHDAI: new BigNumber(2),
+};
+
 export interface SetUnits {
   units: BigNumber[];
   naturalUnit: BigNumber;

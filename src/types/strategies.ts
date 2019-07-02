@@ -33,7 +33,7 @@ export interface MovingAverageManagerDetails {
   stableCollateral: Address;
 }
 
-export interface RebalancingManagerDetails {
+export interface BTCETHRebalancingManagerDetails {
   core: Address;
   btcPriceFeed: Address;
   ethPriceFeed: Address;
@@ -44,4 +44,34 @@ export interface RebalancingManagerDetails {
   auctionTimeToPivot: BigNumber;
   btcMultiplier: BigNumber;
   ethMultiplier: BigNumber;
+  maximumLowerThreshold: BigNumber;
+  minimumUpperThreshold: BigNumber;
+}
+
+export interface BTCDAIRebalancingManagerDetails {
+  core: Address;
+  btcPriceFeed: Address;
+  btcAddress: Address;
+  daiAddress: Address;
+  setTokenFactory: Address;
+  auctionLibrary: Address;
+  auctionTimeToPivot: BigNumber;
+  btcMultiplier: BigNumber;
+  daiMultiplier: BigNumber;
+  maximumLowerThreshold: BigNumber;
+  minimumUpperThreshold: BigNumber;
+}
+
+export interface ETHDAIRebalancingManagerDetails {
+  core: Address;
+  ethPriceFeed: Address;
+  ethAddress: Address;
+  daiAddress: Address;
+  setTokenFactory: Address;
+  auctionLibrary: Address;
+  auctionTimeToPivot: BigNumber;
+  ethMultiplier: BigNumber;
+  daiMultiplier: BigNumber;
+  maximumLowerThreshold: BigNumber;
+  minimumUpperThreshold: BigNumber;
 }

@@ -21,7 +21,9 @@ import Web3 from 'web3';
 
 import { BigNumber } from '../util';
 import {
+  BTCDAIRebalancingManagerWrapper,
   BTCETHRebalancingManagerWrapper,
+  ETHDAIRebalancingManagerWrapper,
   MACOStrategyManagerWrapper,
   MovingAverageOracleWrapper,
   PriceFeedWrapper,
@@ -29,10 +31,20 @@ import {
   RebalancingSetTokenWrapper,
 } from '../wrappers';
 import { Assertions } from '../assertions';
-import { Address, Tx } from '../types/common';
+import { Address, ManagerType, Tx } from '../types/common';
 import {
+  DAI_FULL_TOKEN_UNITS,
+  DAI_PRICE,
+  SET_FULL_TOKEN_UNITS,
+  VALUE_TO_CENTS_CONVERSION,
+  WBTC_FULL_TOKEN_UNITS,
+  WETH_FULL_TOKEN_UNITS,
+} from '../constants';
+import {
+  BTCDAIRebalancingManagerDetails,
+  BTCETHRebalancingManagerDetails,
+  ETHDAIRebalancingManagerDetails,
   MovingAverageManagerDetails,
-  RebalancingManagerDetails
 } from '../types/strategies';
 
 /**
@@ -49,6 +61,8 @@ export class RebalancingManagerAPI {
   private movingAverageOracleWrapper: MovingAverageOracleWrapper;
 
   private btcEthRebalancingManager: BTCETHRebalancingManagerWrapper;
+  private btcDaiRebalancingManager: BTCDAIRebalancingManagerWrapper;
+  private ethDaiRebalancingManager: ETHDAIRebalancingManagerWrapper;
   private macoStrategyManager: MACOStrategyManagerWrapper;
 
   /**
@@ -59,6 +73,8 @@ export class RebalancingManagerAPI {
    */
   constructor(web3: Web3, assertions: Assertions) {
     this.btcEthRebalancingManager = new BTCETHRebalancingManagerWrapper(web3);
+    this.btcDaiRebalancingManager = new BTCDAIRebalancingManagerWrapper(web3);
+    this.ethDaiRebalancingManager = new ETHDAIRebalancingManagerWrapper(web3);
     this.macoStrategyManager = new MACOStrategyManagerWrapper(web3);
 
     this.assert = assertions;
@@ -73,13 +89,32 @@ export class RebalancingManagerAPI {
    * This function will generate a new set token using data from the btc and eth price feeds and ultimately generate
    * a proposal on the rebalancing set token.
    *
+   * @param  managerType           BigNumber indicating which kind of manager is being called
    * @param  rebalancingManager    Address of the BTCETH Rebalancing Manager contract
    * @param  rebalancingSet        Rebalancing Set to call propose on
-   * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
-   * @return               Transaction hash
+   * @param  txOpts                Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
+   * @return                       Transaction hash
    */
-  public async proposeAsync(rebalancingManager: Address, rebalancingSet: Address, txOpts: Tx): Promise<string> {
-    return await this.btcEthRebalancingManager.propose(rebalancingManager, rebalancingSet, txOpts);
+  public async proposeAsync(
+    managerType: BigNumber,
+    rebalancingManager: Address,
+    rebalancingSet: Address,
+    txOpts: Tx
+  ): Promise<string> {
+    await this.assertPropose(rebalancingManager, rebalancingSet);
+
+    if (managerType == ManagerType.BTCETH) {
+      await this.assertBTCETHPriceTrigger(rebalancingManager, rebalancingSet);
+      return await this.btcEthRebalancingManager.propose(rebalancingManager, rebalancingSet, txOpts);
+    } else if (managerType == ManagerType.BTCDAI) {
+      await this.assertBTCDAIPriceTrigger(rebalancingManager, rebalancingSet);
+      return await this.btcDaiRebalancingManager.propose(rebalancingManager, rebalancingSet, txOpts);
+    } else if (managerType == ManagerType.ETHDAI) {
+      await this.assertETHDAIPriceTrigger(rebalancingManager, rebalancingSet);
+      return await this.ethDaiRebalancingManager.propose(rebalancingManager, rebalancingSet, txOpts);
+    } else {
+      throw new Error('Passed manager type is not recognized.');
+    }
   }
 
   /**
@@ -109,12 +144,27 @@ export class RebalancingManagerAPI {
   }
 
   /**
-   * Fetches the state variables of the Rebalancing Manager contract.
+   * Fetches the lastCrossoverConfirmationTimestamp of the Moving Average Crossover Manager contract.
+   *
+   * @param  macoManager         Address of the Moving Average Crossover Manager contract
+   * @return                     BigNumber containing the lastCrossoverConfirmationTimestamp
+   */
+  public async getLastCrossoverConfirmationTimestampAsync(macoManager: Address): Promise<BigNumber> {
+    this.assert.schema.isValidAddress('macoManager', macoManager);
+
+    return await this.macoStrategyManager.lastCrossoverConfirmationTimestamp(macoManager);
+  }
+
+
+  /**
+   * Fetches the state variables of the BTCETH Rebalancing Manager contract.
    *
    * @param  rebalancingManager    Address of the BTCETH Rebalancing Manager contract
-   * @return               Object containing the state information related to the rebalancing manager
+   * @return                       Object containing the state information related to the rebalancing manager
    */
-  public async getRebalancingManagerDetailsAsync(rebalancingManager: Address): Promise<RebalancingManagerDetails> {
+  public async getBTCETHRebalancingManagerDetailsAsync(
+    rebalancingManager: Address
+  ): Promise<BTCETHRebalancingManagerDetails> {
     const [
       core,
       btcPriceFeed,
@@ -124,8 +174,6 @@ export class RebalancingManagerAPI {
       setTokenFactory,
       btcMultiplier,
       ethMultiplier,
-      auctionLibrary,
-      auctionTimeToPivot,
     ] = await Promise.all([
       this.btcEthRebalancingManager.core(rebalancingManager),
       this.btcEthRebalancingManager.btcPriceFeed(rebalancingManager),
@@ -135,8 +183,18 @@ export class RebalancingManagerAPI {
       this.btcEthRebalancingManager.setTokenFactory(rebalancingManager),
       this.btcEthRebalancingManager.btcMultiplier(rebalancingManager),
       this.btcEthRebalancingManager.ethMultiplier(rebalancingManager),
+    ]);
+
+    const [
+      auctionLibrary,
+      auctionTimeToPivot,
+      maximumLowerThreshold,
+      minimumUpperThreshold,
+    ] = await Promise.all([
       this.btcEthRebalancingManager.auctionLibrary(rebalancingManager),
       this.btcEthRebalancingManager.auctionTimeToPivot(rebalancingManager),
+      this.btcEthRebalancingManager.maximumLowerThreshold(rebalancingManager),
+      this.btcEthRebalancingManager.minimumUpperThreshold(rebalancingManager),
     ]);
 
     return {
@@ -150,7 +208,117 @@ export class RebalancingManagerAPI {
       ethMultiplier,
       auctionLibrary,
       auctionTimeToPivot,
-    } as RebalancingManagerDetails;
+      maximumLowerThreshold,
+      minimumUpperThreshold,
+    } as BTCETHRebalancingManagerDetails;
+  }
+
+  /**
+   * Fetches the state variables of the BTCDAI Rebalancing Manager contract.
+   *
+   * @param  rebalancingManager    Address of the BTCDAI Rebalancing Manager contract
+   * @return                       Object containing the state information related to the rebalancing manager
+   */
+  public async getBTCDAIRebalancingManagerDetailsAsync(
+    rebalancingManager: Address
+  ): Promise<BTCDAIRebalancingManagerDetails> {
+    const [
+      core,
+      btcPriceFeed,
+      btcAddress,
+      daiAddress,
+      setTokenFactory,
+      btcMultiplier,
+      daiMultiplier,
+    ] = await Promise.all([
+      this.btcDaiRebalancingManager.core(rebalancingManager),
+      this.btcDaiRebalancingManager.btcPriceFeed(rebalancingManager),
+      this.btcDaiRebalancingManager.btcAddress(rebalancingManager),
+      this.btcDaiRebalancingManager.daiAddress(rebalancingManager),
+      this.btcDaiRebalancingManager.setTokenFactory(rebalancingManager),
+      this.btcDaiRebalancingManager.btcMultiplier(rebalancingManager),
+      this.btcDaiRebalancingManager.daiMultiplier(rebalancingManager),
+    ]);
+
+    const [
+      auctionLibrary,
+      auctionTimeToPivot,
+      maximumLowerThreshold,
+      minimumUpperThreshold,
+    ] = await Promise.all([
+      this.btcDaiRebalancingManager.auctionLibrary(rebalancingManager),
+      this.btcDaiRebalancingManager.auctionTimeToPivot(rebalancingManager),
+      this.btcDaiRebalancingManager.maximumLowerThreshold(rebalancingManager),
+      this.btcDaiRebalancingManager.minimumUpperThreshold(rebalancingManager),
+    ]);
+
+    return {
+      core,
+      btcPriceFeed,
+      btcAddress,
+      daiAddress,
+      setTokenFactory,
+      btcMultiplier,
+      daiMultiplier,
+      auctionLibrary,
+      auctionTimeToPivot,
+      maximumLowerThreshold,
+      minimumUpperThreshold,
+    } as BTCDAIRebalancingManagerDetails;
+  }
+
+  /**
+   * Fetches the state variables of the ETHDAI Rebalancing Manager contract.
+   *
+   * @param  rebalancingManager    Address of the ETHDAI Rebalancing Manager contract
+   * @return                       Object containing the state information related to the rebalancing manager
+   */
+  public async getETHDAIRebalancingManagerDetailsAsync(
+    rebalancingManager: Address
+  ): Promise<ETHDAIRebalancingManagerDetails> {
+    const [
+      core,
+      ethPriceFeed,
+      ethAddress,
+      daiAddress,
+      setTokenFactory,
+      ethMultiplier,
+      daiMultiplier,
+    ] = await Promise.all([
+      this.ethDaiRebalancingManager.core(rebalancingManager),
+      this.ethDaiRebalancingManager.ethPriceFeed(rebalancingManager),
+      this.ethDaiRebalancingManager.ethAddress(rebalancingManager),
+      this.ethDaiRebalancingManager.daiAddress(rebalancingManager),
+      this.ethDaiRebalancingManager.setTokenFactory(rebalancingManager),
+      this.ethDaiRebalancingManager.ethMultiplier(rebalancingManager),
+      this.ethDaiRebalancingManager.daiMultiplier(rebalancingManager),
+    ]);
+
+    const [
+      auctionLibrary,
+      auctionTimeToPivot,
+      maximumLowerThreshold,
+      minimumUpperThreshold,
+    ] = await Promise.all([
+      this.ethDaiRebalancingManager.auctionLibrary(rebalancingManager),
+      this.ethDaiRebalancingManager.auctionTimeToPivot(rebalancingManager),
+      this.ethDaiRebalancingManager.maximumLowerThreshold(rebalancingManager),
+      this.ethDaiRebalancingManager.minimumUpperThreshold(rebalancingManager),
+    ]);
+
+    return {
+      core,
+      ethPriceFeed,
+      ethAddress,
+      daiAddress,
+      setTokenFactory,
+      ethMultiplier,
+      daiMultiplier,
+      auctionLibrary,
+      auctionTimeToPivot,
+      maximumLowerThreshold,
+      minimumUpperThreshold,
+    } as ETHDAIRebalancingManagerDetails;
   }
 
   /**
@@ -216,8 +384,146 @@ export class RebalancingManagerAPI {
 
   /* ============ Private Functions ============ */
 
+  private async assertPropose(managerAddress: Address, rebalancingSetAddress: Address) {
+    // Assert a valid RebalancingSetToken is being passed in
+    const coreAddress = await this.btcEthRebalancingManager.core(managerAddress);
+    await this.assert.setToken.isValidSetToken(coreAddress, rebalancingSetAddress);
+
+    await this.assertGeneralPropose(managerAddress, rebalancingSetAddress);
+  }
+
+  private async assertGeneralPropose(managerAddress: Address, rebalancingSetAddress: Address) {
+    this.assert.schema.isValidAddress('managerAddress', managerAddress);
+    this.assert.schema.isValidAddress('rebalancingSetAddress', rebalancingSetAddress);
+
+    // Assert the rebalancing Set is ready to be proposed
+    await this.assert.rebalancing.isNotInDefaultState(rebalancingSetAddress);
+    await this.assert.rebalancing.sufficientTimeBetweenRebalance(rebalancingSetAddress);
+  }
+
+  private async assertBTCETHPriceTrigger(rebalancingManager: Address, rebalancingSet: Address) {
+    const collateralSet = await this.rebalancingSetToken.currentSet(rebalancingSet);
+
+    const [
+      btcPriceFeed,
+      ethPriceFeed,
+      maximumLowerThreshold,
+      minimumUpperThreshold,
+    ] = await Promise.all([
+      this.btcEthRebalancingManager.btcPriceFeed(rebalancingManager),
+      this.btcEthRebalancingManager.ethPriceFeed(rebalancingManager),
+      this.btcEthRebalancingManager.maximumLowerThreshold(rebalancingManager),
+      this.btcEthRebalancingManager.minimumUpperThreshold(rebalancingManager),
+    ]);
+
+    const [collateralNaturalUnit, collateralUnits] = await Promise.all([
+      this.setToken.naturalUnit(collateralSet),
+      this.setToken.getUnits(collateralSet),
+    ]);
+
+    const [btcPrice, ethPrice] = await Promise.all([
+      this.priceFeed.read(btcPriceFeed),
+      this.priceFeed.read(ethPriceFeed),
+    ]);
+
+    const btcAllocationAmount = this.computeSetTokenAllocation(
+      collateralUnits,
+      collateralNaturalUnit,
+      new BigNumber(btcPrice),
+      new BigNumber(ethPrice),
+      WBTC_FULL_TOKEN_UNITS,
+      WETH_FULL_TOKEN_UNITS,
+    );
+
+    this.assert.rebalancing.isOutsideAllocationBounds(
+      btcAllocationAmount,
+      maximumLowerThreshold,
+      minimumUpperThreshold,
+      `Current BTC allocation ${btcAllocationAmount.toString()}% must be outside allocation bounds ` +
+      `${maximumLowerThreshold.toString()} and ${minimumUpperThreshold.toString()}.`
+    );
+  }
+
+  private async assertBTCDAIPriceTrigger(rebalancingManager: Address, rebalancingSet: Address) {
+    const collateralSet = await this.rebalancingSetToken.currentSet(rebalancingSet);
+
+    const [
+      btcPriceFeed,
+      maximumLowerThreshold,
+      minimumUpperThreshold,
+    ] = await Promise.all([
+      this.btcDaiRebalancingManager.btcPriceFeed(rebalancingManager),
+      this.btcDaiRebalancingManager.maximumLowerThreshold(rebalancingManager),
+      this.btcDaiRebalancingManager.minimumUpperThreshold(rebalancingManager),
+    ]);
+
+    const [collateralNaturalUnit, collateralUnits] = await Promise.all([
+      this.setToken.naturalUnit(collateralSet),
+      this.setToken.getUnits(collateralSet),
+    ]);
+
+    const btcPrice = await this.priceFeed.read(btcPriceFeed);
+
+    const daiAllocationAmount = this.computeSetTokenAllocation(
+      collateralUnits,
+      collateralNaturalUnit,
+      DAI_PRICE,
+      new BigNumber(btcPrice),
+      DAI_FULL_TOKEN_UNITS,
+      WBTC_FULL_TOKEN_UNITS,
+    );
+
+    this.assert.rebalancing.isOutsideAllocationBounds(
+      daiAllocationAmount,
+      maximumLowerThreshold,
+      minimumUpperThreshold,
+      `Current DAI allocation ${daiAllocationAmount.toString()}% must be outside allocation bounds ` +
+      `${maximumLowerThreshold.toString()} and ${minimumUpperThreshold.toString()}.`
+    );
+  }
+
+  private async assertETHDAIPriceTrigger(rebalancingManager: Address, rebalancingSet: Address) {
+    const collateralSet = await this.rebalancingSetToken.currentSet(rebalancingSet);
+
+    const [
+      ethPriceFeed,
+      maximumLowerThreshold,
+      minimumUpperThreshold,
+    ] = await Promise.all([
+      this.ethDaiRebalancingManager.ethPriceFeed(rebalancingManager),
+      this.ethDaiRebalancingManager.maximumLowerThreshold(rebalancingManager),
+      this.ethDaiRebalancingManager.minimumUpperThreshold(rebalancingManager),
+    ]);
+
+    const [collateralNaturalUnit, collateralUnits] = await Promise.all([
+      this.setToken.naturalUnit(collateralSet),
+      this.setToken.getUnits(collateralSet),
+    ]);
+
+    const ethPrice = await this.priceFeed.read(ethPriceFeed);
+
+    const daiAllocationAmount = this.computeSetTokenAllocation(
+      collateralUnits,
+      collateralNaturalUnit,
+      DAI_PRICE,
+      new BigNumber(ethPrice),
+      DAI_FULL_TOKEN_UNITS,
+      WETH_FULL_TOKEN_UNITS,
+    );
+
+    this.assert.rebalancing.isOutsideAllocationBounds(
+      daiAllocationAmount,
+      maximumLowerThreshold,
+      minimumUpperThreshold,
+      `Current DAI allocation ${daiAllocationAmount.toString()}% must be outside allocation bounds ` +
+      `${maximumLowerThreshold.toString()} and ${minimumUpperThreshold.toString()}.`
+    );
+  }
+
+  // MACO Assertions
+
   private async assertInitialPropose(macoManagerAddress: Address) {
-    await this.assertPropose(macoManagerAddress);
+    await this.assertMACOPropose(macoManagerAddress);
 
 
     const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
@@ -234,7 +540,7 @@ export class RebalancingManagerAPI {
   }
 
   private async assertConfirmPropose(macoManagerAddress: Address) {
-    await this.assertPropose(macoManagerAddress);
+    await this.assertMACOPropose(macoManagerAddress);
 
     // Check the current block.timestamp
     const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
@@ -262,9 +568,7 @@ export class RebalancingManagerAPI {
     }
   }
 
-  private async assertPropose(macoManagerAddress: Address) {
-    this.assert.schema.isValidAddress('macoManagerAddress', macoManagerAddress);
-
+  private async assertMACOPropose(macoManagerAddress: Address) {
     const [
       rebalancingSetAddress,
       movingAverageDays,
@@ -277,9 +581,7 @@ export class RebalancingManagerAPI {
       this.isUsingRiskComponent(macoManagerAddress),
     ]);
 
-    // Assert the rebalancing Set is ready to be proposed
-    await this.assert.rebalancing.isNotInDefaultState(rebalancingSetAddress);
-    await this.assert.rebalancing.sufficientTimeBetweenRebalance(rebalancingSetAddress);
+    await this.assertGeneralPropose(macoManagerAddress, rebalancingSetAddress);
 
     // Get the current price
     const riskCollateralPriceFeed = await this.movingAverageOracleWrapper.getSourceMedianizer(movingAveragePriceFeed);
@@ -310,6 +612,45 @@ export class RebalancingManagerAPI {
         `Current Price ${currentPriceBN.toString()} must be greater than Moving Average ${movingAverageBN.toString()}`
       );
     }
+  }
+
+  // Helper functions
+
+  private computeSetTokenAllocation(
+    units: BigNumber[],
+    naturalUnit: BigNumber,
+    tokenOnePrice: BigNumber,
+    tokenTwoPrice: BigNumber,
+    tokenOneDecimals: BigNumber,
+    tokenTwoDecimals: BigNumber,
+  ): BigNumber {
+    const tokenOneUnitsInFullToken = SET_FULL_TOKEN_UNITS.mul(units[0]).div(naturalUnit).round(0, 3);
+    const tokenTwoUnitsInFullToken = SET_FULL_TOKEN_UNITS.mul(units[1]).div(naturalUnit).round(0, 3);
+
+    const tokenOneDollarAmount = this.computeTokenDollarAmount(
+      tokenOnePrice,
+      tokenOneUnitsInFullToken,
+      tokenOneDecimals
+    );
+    const tokenTwoDollarAmount = this.computeTokenDollarAmount(
+      tokenTwoPrice,
+      tokenTwoUnitsInFullToken,
+      tokenTwoDecimals
+    );
+
+    return tokenOneDollarAmount.mul(100).div(tokenOneDollarAmount.add(tokenTwoDollarAmount)).round(0, 3);
+  }
+
+  private computeTokenDollarAmount(
+    tokenPrice: BigNumber,
+    unitsInFullSet: BigNumber,
+    tokenDecimals: BigNumber,
+  ): BigNumber {
+    return tokenPrice
+             .mul(unitsInFullSet)
+             .div(tokenDecimals)
+             .div(VALUE_TO_CENTS_CONVERSION)
+             .round(0, 3);
   }
 
   private async isUsingRiskComponent(macoManagerAddress: Address): Promise<boolean> {
