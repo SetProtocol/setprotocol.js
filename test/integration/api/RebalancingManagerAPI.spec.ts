@@ -44,7 +44,9 @@ import {
 } from 'set-protocol-contracts';
 
 import {
+  BTCDaiRebalancingManagerContract,
   BTCETHRebalancingManagerContract,
+  ETHDaiRebalancingManagerContract,
   HistoricalPriceFeedContract,
   MACOStrategyManagerContract,
   MovingAverageOracleContract,
@@ -62,6 +64,7 @@ import {
   ONE_HOUR_IN_SECONDS,
   TX_DEFAULTS,
 } from '@src/constants';
+import { ACCOUNTS } from '@src/constants/accounts';
 import {
   addPriceCurveToCoreAsync,
   addPriceFeedOwnerToMedianizer,
@@ -69,8 +72,10 @@ import {
   approveForTransferAsync,
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
+  deployBtcDaiManagerContractAsync,
   deployBtcEthManagerContractAsync,
   deployConstantAuctionPriceCurveAsync,
+  deployEthDaiManagerContractAsync,
   deployHistoricalPriceFeedAsync,
   deployMedianizerAsync,
   deployMovingAverageOracleAsync,
@@ -82,11 +87,18 @@ import {
   updateMedianizerPriceAsync,
 } from '@test/helpers';
 import { BigNumber } from '@src/util';
-import { Address } from '@src/types/common';
-import { MACOStrategyManagerWrapper } from '@src/wrappers';
+import { Address, ManagerType } from '@src/types/common';
 import {
+  BTCDAIRebalancingManagerWrapper,
+  BTCETHRebalancingManagerWrapper,
+  ETHDAIRebalancingManagerWrapper,
+  MACOStrategyManagerWrapper
+} from '@src/wrappers';
+import {
+  BTCDAIRebalancingManagerDetails,
+  BTCETHRebalancingManagerDetails,
+  ETHDAIRebalancingManagerDetails,
   MovingAverageManagerDetails,
-  RebalancingManagerDetails,
 } from '@src/types/strategies';
 
 ChaiSetup.configure();
@@ -190,11 +202,15 @@ describe('RebalancingManagerAPI', () => {
     let btcMultiplier: BigNumber;
     let ethMultiplier: BigNumber;
     let auctionTimeToPivot: BigNumber;
+    let maximumLowerThreshold: BigNumber;
+    let minimumUpperThreshold: BigNumber;
 
     beforeEach(async () => {
       btcMultiplier = new BigNumber(1);
       ethMultiplier = new BigNumber(1);
       auctionTimeToPivot = ONE_DAY_IN_SECONDS;
+      maximumLowerThreshold = new BigNumber(48);
+      minimumUpperThreshold = new BigNumber(52);
 
       btcethRebalancingManager = await deployBtcEthManagerContractAsync(
         web3,
@@ -207,17 +223,9 @@ describe('RebalancingManagerAPI', () => {
         constantAuctionPriceCurve.address,
         auctionTimeToPivot,
         [btcMultiplier, ethMultiplier],
-        [new BigNumber(48), new BigNumber(52)]
+        [maximumLowerThreshold, minimumUpperThreshold]
       );
     });
-    /*
-
-
-      ADD ALLOCATION BOUNDS TO REBALANCING MANAGER DETAILS
-
-
-
-    */
 
     describe('getRebalancingManagerDetailsAsync', async () => {
       let subjectManagerAddress: Address;
@@ -226,8 +234,8 @@ describe('RebalancingManagerAPI', () => {
         subjectManagerAddress = btcethRebalancingManager.address;
       });
 
-      async function subject(): Promise<RebalancingManagerDetails> {
-        return await rebalancingManagerAPI.getRebalancingManagerDetailsAsync(
+      async function subject(): Promise<BTCETHRebalancingManagerDetails> {
+        return await rebalancingManagerAPI.getBTCETHRebalancingManagerDetailsAsync(
           subjectManagerAddress,
         );
       }
@@ -281,6 +289,16 @@ describe('RebalancingManagerAPI', () => {
         const details = await subject();
         expect(details.auctionTimeToPivot).to.bignumber.equal(auctionTimeToPivot);
       });
+
+      test('gets the correct maximumLowerThreshold', async () => {
+        const details = await subject();
+        expect(details.maximumLowerThreshold).to.bignumber.equal(maximumLowerThreshold);
+      });
+
+      test('gets the correct minimumUpperThreshold', async () => {
+        const details = await subject();
+        expect(details.minimumUpperThreshold).to.bignumber.equal(minimumUpperThreshold);
+      });
     });
 
     describe('proposeAsync', async () => {
@@ -293,10 +311,14 @@ describe('RebalancingManagerAPI', () => {
 
       let initialAllocationToken: SetTokenContract;
       let timeFastForward: BigNumber;
+      let nextRebalanceAvailableInSeconds: BigNumber;
 
+      let subjectManagerType: BigNumber;
       let subjectRebalancingSetToken: Address;
       let subjectManagerAddress: Address;
       let subjectCaller: Address;
+
+      const btcethManagerWrapper: BTCETHRebalancingManagerWrapper = new BTCETHRebalancingManagerWrapper(web3);
 
       beforeAll(async () => {
         btcPrice = new BigNumber(4082 * 10 ** 18);
@@ -339,14 +361,25 @@ describe('RebalancingManagerAPI', () => {
           SetTestUtils.generateTimestamp(1000),
         );
 
+        subjectManagerType = ManagerType.BTCETH;
         subjectManagerAddress = btcethRebalancingManager.address;
         subjectRebalancingSetToken = rebalancingSetToken.address;
         subjectCaller = DEFAULT_ACCOUNT;
+
+        const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+        const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+        nextRebalanceAvailableInSeconds = lastRebalancedTimestampSeconds.plus(rebalanceInterval);
+      });
+
+      afterEach(async () => {
+        timeKeeper.reset();
       });
 
       async function subject(): Promise<string> {
         await increaseChainTimeAsync(web3, timeFastForward);
-        return await rebalancingManagerAPI.proposeAsync(
+        timeKeeper.freeze(nextRebalanceAvailableInSeconds.toNumber() * 1000);
+        return rebalancingManagerAPI.proposeAsync(
+          subjectManagerType,
           subjectManagerAddress,
           subjectRebalancingSetToken,
           { from: subjectCaller },
@@ -355,6 +388,84 @@ describe('RebalancingManagerAPI', () => {
 
       test('successfully proposes', async () => {
         await subject();
+      });
+
+      describe('when price trigger is not met', async () => {
+        beforeAll(async () => {
+          btcPrice = new BigNumber(3700 * 10 ** 18);
+        });
+
+        afterAll(async () => {
+          btcPrice = new BigNumber(4082 * 10 ** 18);
+        });
+
+        test('throws', async () => {
+          const btcAllocationAmount = new BigNumber(49);
+          return expect(subject()).to.be.rejectedWith(
+            `Current BTC allocation ${btcAllocationAmount.toString()}% must be outside allocation bounds ` +
+            `${maximumLowerThreshold.toString()} and ${minimumUpperThreshold.toString()}.`
+          );
+        });
+      });
+
+      describe('when the RebalancingSet is not in Default state', async () => {
+        beforeEach(async () => {
+          // Elapse the rebalance interval
+          await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+          // Call propose to transition out of Default
+          await btcethManagerWrapper.propose(btcethRebalancingManager.address, rebalancingSetToken.address);
+        });
+
+        test('throws', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Rebalancing token at ${rebalancingSetToken.address} must be in Default state to call that function.`
+          );
+        });
+      });
+
+      describe('when the rebalanceInterval has not elapsed', async () => {
+        beforeEach(async () => {
+          timeFastForward = new BigNumber(1);
+          nextRebalanceAvailableInSeconds = nextRebalanceAvailableInSeconds.sub(1);
+        });
+
+        test('throws', async () => {
+          const lastRebalanceTime = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+          const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+          const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval).mul(1000);
+          const nextRebalanceFormattedDate = moment(nextAvailableRebalance.toNumber())
+          .format('dddd, MMMM Do YYYY, h:mm:ss a');
+
+          return expect(subject()).to.be.rejectedWith(
+            `Attempting to rebalance too soon. Rebalancing next ` +
+            `available on ${nextRebalanceFormattedDate}`
+          );
+        });
+      });
+
+      describe('when invalid rebalancing set token is passed in', async () => {
+        beforeEach(async () => {
+          subjectRebalancingSetToken = ACCOUNTS[2].address;
+        });
+
+        test('throws', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Contract at ${subjectRebalancingSetToken} is not a valid Set token address.`
+          );
+        });
+      });
+
+      describe('when invalid rebalancing manager type is passed in', async () => {
+        beforeEach(async () => {
+          subjectManagerType = new BigNumber(4);
+        });
+
+        test('throws', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Passed manager type is not recognized.`
+          );
+        });
       });
     });
   });
@@ -548,6 +659,25 @@ describe('RebalancingManagerAPI', () => {
       test('gets the correct crossoverConfirmationMaxTime', async () => {
         const details = await subject();
         expect(details.crossoverConfirmationMaxTime).to.bignumber.equal(crossoverConfirmationMaxTime);
+      });
+    });
+
+    describe('getLastCrossoverConfirmationTimestampAsync', async () => {
+      let subjectManagerAddress: Address;
+
+      beforeEach(async () => {
+        subjectManagerAddress = macoManager.address;
+      });
+
+      async function subject(): Promise<BigNumber> {
+        return await rebalancingManagerAPI.getLastCrossoverConfirmationTimestampAsync(
+          subjectManagerAddress,
+        );
+      }
+
+      test('gets the correct lastCrossoverConfirmationTimestamp', async () => {
+        const lastCrossoverConfirmationTimestamp = await subject();
+        expect(lastCrossoverConfirmationTimestamp).to.bignumber.equal(initializedProposalTimestamp);
       });
     });
 
@@ -1050,6 +1180,494 @@ describe('RebalancingManagerAPI', () => {
           return expect(subject()).to.be.rejectedWith(
             `Current Price ${currentPriceThatIsBelowMA.toString()} must be ` +
             `greater than Moving Average ${movingAverage.toString()}`
+          );
+        });
+      });
+    });
+  });
+
+  describe('BTCDAIRebalancingManager', async () => {
+    let btcDaiRebalancingManager: BTCDaiRebalancingManagerContract;
+    let btcMultiplier: BigNumber;
+    let daiMultiplier: BigNumber;
+    let auctionTimeToPivot: BigNumber;
+    let maximumLowerThreshold: BigNumber;
+    let minimumUpperThreshold: BigNumber;
+
+    beforeEach(async () => {
+      btcMultiplier = new BigNumber(1);
+      daiMultiplier = new BigNumber(1);
+      auctionTimeToPivot = ONE_DAY_IN_SECONDS;
+      maximumLowerThreshold = new BigNumber(47);
+      minimumUpperThreshold = new BigNumber(55);
+
+      btcDaiRebalancingManager = await deployBtcDaiManagerContractAsync(
+        web3,
+        core.address,
+        btcMedianizer.address,
+        dai.address,
+        wrappedBTC.address,
+        factory.address,
+        constantAuctionPriceCurve.address,
+        auctionTimeToPivot,
+        [btcMultiplier, daiMultiplier],
+        [maximumLowerThreshold, minimumUpperThreshold]
+      );
+    });
+
+    describe('getRebalancingManagerDetailsAsync', async () => {
+      let subjectManagerAddress: Address;
+
+      beforeEach(async () => {
+        subjectManagerAddress = btcDaiRebalancingManager.address;
+      });
+
+      async function subject(): Promise<BTCDAIRebalancingManagerDetails> {
+        return await rebalancingManagerAPI.getBTCDAIRebalancingManagerDetailsAsync(
+          subjectManagerAddress,
+        );
+      }
+
+      test('gets the correct core address', async () => {
+        const details = await subject();
+        expect(details.core).to.equal(core.address);
+      });
+
+      test('gets the correct btcPriceFeed address', async () => {
+        const details = await subject();
+        expect(details.btcPriceFeed).to.equal(btcMedianizer.address);
+      });
+
+      test('gets the correct btcAddress address', async () => {
+        const details = await subject();
+        expect(details.btcAddress).to.equal(wrappedBTC.address);
+      });
+
+      test('gets the correct daiAddress address', async () => {
+        const details = await subject();
+        expect(details.daiAddress).to.equal(dai.address);
+      });
+
+      test('gets the correct setTokenFactory address', async () => {
+        const details = await subject();
+        expect(details.setTokenFactory).to.equal(factory.address);
+      });
+
+      test('gets the correct btcMultiplier address', async () => {
+        const details = await subject();
+        expect(details.btcMultiplier).to.bignumber.equal(btcMultiplier);
+      });
+
+      test('gets the correct daiMultiplier address', async () => {
+        const details = await subject();
+        expect(details.daiMultiplier).to.bignumber.equal(daiMultiplier);
+      });
+
+      test('gets the correct auctionLibrary address', async () => {
+        const details = await subject();
+        expect(details.auctionLibrary).to.equal(constantAuctionPriceCurve.address);
+      });
+
+      test('gets the correct auctionTimeToPivot address', async () => {
+        const details = await subject();
+        expect(details.auctionTimeToPivot).to.bignumber.equal(auctionTimeToPivot);
+      });
+
+      test('gets the correct maximumLowerThreshold', async () => {
+        const details = await subject();
+        expect(details.maximumLowerThreshold).to.bignumber.equal(maximumLowerThreshold);
+      });
+
+      test('gets the correct minimumUpperThreshold', async () => {
+        const details = await subject();
+        expect(details.minimumUpperThreshold).to.bignumber.equal(minimumUpperThreshold);
+      });
+    });
+
+    describe('proposeAsync', async () => {
+      let rebalancingSetToken: RebalancingSetTokenContract;
+
+      let proposalPeriod: BigNumber;
+      let btcPrice: BigNumber;
+      let daiUnit: BigNumber;
+
+      let initialAllocationToken: SetTokenContract;
+      let timeFastForward: BigNumber;
+      let nextRebalanceAvailableInSeconds: BigNumber;
+
+      let subjectManagerType: BigNumber;
+      let subjectRebalancingSetToken: Address;
+      let subjectManagerAddress: Address;
+      let subjectCaller: Address;
+
+      const btcdaiManagerWrapper: BTCDAIRebalancingManagerWrapper = new BTCDAIRebalancingManagerWrapper(web3);
+
+      beforeAll(async () => {
+        btcPrice = new BigNumber(4082 * 10 ** 18);
+        daiUnit = new BigNumber(3000 * 10 ** 10);
+      });
+
+      beforeEach(async () => {
+        initialAllocationToken = await deploySetTokenAsync(
+          web3,
+          core,
+          factory.address,
+          [dai.address, wrappedBTC.address],
+          [daiUnit.mul(daiMultiplier), new BigNumber(1).mul(btcMultiplier)],
+          new BigNumber(10 ** 10),
+        );
+
+        proposalPeriod = ONE_DAY_IN_SECONDS;
+        rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+          web3,
+          core,
+          rebalancingFactory.address,
+          btcDaiRebalancingManager.address,
+          initialAllocationToken.address,
+          proposalPeriod
+        );
+
+        timeFastForward = ONE_DAY_IN_SECONDS.add(1);
+        await updateMedianizerPriceAsync(
+          web3,
+          btcMedianizer,
+          btcPrice,
+          SetTestUtils.generateTimestamp(1000),
+        );
+
+        subjectManagerType = ManagerType.BTCDAI;
+        subjectManagerAddress = btcDaiRebalancingManager.address;
+        subjectRebalancingSetToken = rebalancingSetToken.address;
+        subjectCaller = DEFAULT_ACCOUNT;
+
+        const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+        const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+        nextRebalanceAvailableInSeconds = lastRebalancedTimestampSeconds.plus(rebalanceInterval);
+      });
+
+      afterEach(async () => {
+        timeKeeper.reset();
+      });
+
+      async function subject(): Promise<string> {
+        await increaseChainTimeAsync(web3, timeFastForward);
+        timeKeeper.freeze(nextRebalanceAvailableInSeconds.toNumber() * 1000);
+        return await rebalancingManagerAPI.proposeAsync(
+          subjectManagerType,
+          subjectManagerAddress,
+          subjectRebalancingSetToken,
+          { from: subjectCaller },
+        );
+      }
+
+      test('successfully proposes', async () => {
+        await subject();
+      });
+
+      describe('when price trigger is not met', async () => {
+        beforeAll(async () => {
+          btcPrice = new BigNumber(2500 * 10 ** 18);
+        });
+
+        afterAll(async () => {
+          btcPrice = new BigNumber(4082 * 10 ** 18);
+        });
+
+        test('throws', async () => {
+          const daiAllocationAmount = new BigNumber(54);
+          return expect(subject()).to.be.rejectedWith(
+            `Current DAI allocation ${daiAllocationAmount.toString()}% must be outside allocation bounds ` +
+            `${maximumLowerThreshold.toString()} and ${minimumUpperThreshold.toString()}.`
+          );
+        });
+      });
+
+      describe('when the RebalancingSet is not in Default state', async () => {
+        beforeEach(async () => {
+          // Elapse the rebalance interval
+          await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+          // Call propose to transition out of Default
+          await btcdaiManagerWrapper.propose(btcDaiRebalancingManager.address, rebalancingSetToken.address);
+        });
+
+        test('throws', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Rebalancing token at ${rebalancingSetToken.address} must be in Default state to call that function.`
+          );
+        });
+      });
+
+      describe('when the rebalanceInterval has not elapsed', async () => {
+        beforeEach(async () => {
+          timeFastForward = new BigNumber(1);
+          nextRebalanceAvailableInSeconds = nextRebalanceAvailableInSeconds.sub(1);
+        });
+
+        test('throws', async () => {
+          const lastRebalanceTime = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+          const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+          const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval).mul(1000);
+          const nextRebalanceFormattedDate = moment(nextAvailableRebalance.toNumber())
+          .format('dddd, MMMM Do YYYY, h:mm:ss a');
+
+          return expect(subject()).to.be.rejectedWith(
+            `Attempting to rebalance too soon. Rebalancing next ` +
+            `available on ${nextRebalanceFormattedDate}`
+          );
+        });
+      });
+
+      describe('when invalid rebalancing set token is passed in', async () => {
+        beforeEach(async () => {
+          subjectRebalancingSetToken = ACCOUNTS[2].address;
+        });
+
+        test('throws', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Contract at ${subjectRebalancingSetToken} is not a valid Set token address.`
+          );
+        });
+      });
+    });
+  });
+
+  describe('ETHDAIRebalancingManager', async () => {
+    let ethDaiRebalancingManager: ETHDaiRebalancingManagerContract;
+    let ethMultiplier: BigNumber;
+    let daiMultiplier: BigNumber;
+    let auctionTimeToPivot: BigNumber;
+    let maximumLowerThreshold: BigNumber;
+    let minimumUpperThreshold: BigNumber;
+
+    beforeEach(async () => {
+      ethMultiplier = new BigNumber(1);
+      daiMultiplier = new BigNumber(1);
+      auctionTimeToPivot = ONE_DAY_IN_SECONDS;
+      maximumLowerThreshold = new BigNumber(47);
+      minimumUpperThreshold = new BigNumber(55);
+
+      ethDaiRebalancingManager = await deployEthDaiManagerContractAsync(
+        web3,
+        core.address,
+        ethMedianizer.address,
+        dai.address,
+        wrappedETH.address,
+        factory.address,
+        constantAuctionPriceCurve.address,
+        auctionTimeToPivot,
+        [ethMultiplier, daiMultiplier],
+        [maximumLowerThreshold, minimumUpperThreshold]
+      );
+    });
+
+    describe('getRebalancingManagerDetailsAsync', async () => {
+      let subjectManagerAddress: Address;
+
+      beforeEach(async () => {
+        subjectManagerAddress = ethDaiRebalancingManager.address;
+      });
+
+      async function subject(): Promise<ETHDAIRebalancingManagerDetails> {
+        return await rebalancingManagerAPI.getETHDAIRebalancingManagerDetailsAsync(
+          subjectManagerAddress,
+        );
+      }
+
+      test('gets the correct core address', async () => {
+        const details = await subject();
+        expect(details.core).to.equal(core.address);
+      });
+
+      test('gets the correct btcPriceFeed address', async () => {
+        const details = await subject();
+        expect(details.ethPriceFeed).to.equal(ethMedianizer.address);
+      });
+
+      test('gets the correct btcAddress address', async () => {
+        const details = await subject();
+        expect(details.ethAddress).to.equal(wrappedETH.address);
+      });
+
+      test('gets the correct daiAddress address', async () => {
+        const details = await subject();
+        expect(details.daiAddress).to.equal(dai.address);
+      });
+
+      test('gets the correct setTokenFactory address', async () => {
+        const details = await subject();
+        expect(details.setTokenFactory).to.equal(factory.address);
+      });
+
+      test('gets the correct ethMultiplier address', async () => {
+        const details = await subject();
+        expect(details.ethMultiplier).to.bignumber.equal(ethMultiplier);
+      });
+
+      test('gets the correct daiMultiplier address', async () => {
+        const details = await subject();
+        expect(details.daiMultiplier).to.bignumber.equal(daiMultiplier);
+      });
+
+      test('gets the correct auctionLibrary address', async () => {
+        const details = await subject();
+        expect(details.auctionLibrary).to.equal(constantAuctionPriceCurve.address);
+      });
+
+      test('gets the correct auctionTimeToPivot address', async () => {
+        const details = await subject();
+        expect(details.auctionTimeToPivot).to.bignumber.equal(auctionTimeToPivot);
+      });
+
+      test('gets the correct maximumLowerThreshold', async () => {
+        const details = await subject();
+        expect(details.maximumLowerThreshold).to.bignumber.equal(maximumLowerThreshold);
+      });
+
+      test('gets the correct minimumUpperThreshold', async () => {
+        const details = await subject();
+        expect(details.minimumUpperThreshold).to.bignumber.equal(minimumUpperThreshold);
+      });
+    });
+
+    describe('proposeAsync', async () => {
+      let rebalancingSetToken: RebalancingSetTokenContract;
+
+      let proposalPeriod: BigNumber;
+      let ethPrice: BigNumber;
+      let daiUnit: BigNumber;
+
+      let initialAllocationToken: SetTokenContract;
+      let timeFastForward: BigNumber;
+      let nextRebalanceAvailableInSeconds: BigNumber;
+
+      let subjectManagerType: BigNumber;
+      let subjectRebalancingSetToken: Address;
+      let subjectManagerAddress: Address;
+      let subjectCaller: Address;
+
+      const ethdaiManagerWrapper: ETHDAIRebalancingManagerWrapper = new ETHDAIRebalancingManagerWrapper(web3);
+
+      beforeAll(async () => {
+        ethPrice = new BigNumber(128 * 10 ** 18);
+        daiUnit = new BigNumber(10000);
+      });
+
+      beforeEach(async () => {
+        initialAllocationToken = await deploySetTokenAsync(
+          web3,
+          core,
+          factory.address,
+          [dai.address, wrappedETH.address],
+          [daiUnit.mul(daiMultiplier), new BigNumber(100).mul(ethMultiplier)],
+          new BigNumber(100),
+        );
+
+        proposalPeriod = ONE_DAY_IN_SECONDS;
+        rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+          web3,
+          core,
+          rebalancingFactory.address,
+          ethDaiRebalancingManager.address,
+          initialAllocationToken.address,
+          proposalPeriod
+        );
+
+        timeFastForward = ONE_DAY_IN_SECONDS.add(1);
+        await updateMedianizerPriceAsync(
+          web3,
+          ethMedianizer,
+          ethPrice,
+          SetTestUtils.generateTimestamp(1000),
+        );
+
+        subjectManagerType = ManagerType.ETHDAI;
+        subjectManagerAddress = ethDaiRebalancingManager.address;
+        subjectRebalancingSetToken = rebalancingSetToken.address;
+        subjectCaller = DEFAULT_ACCOUNT;
+
+        const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+        const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+        nextRebalanceAvailableInSeconds = lastRebalancedTimestampSeconds.plus(rebalanceInterval);
+      });
+
+      async function subject(): Promise<string> {
+        await increaseChainTimeAsync(web3, timeFastForward);
+        timeKeeper.freeze(nextRebalanceAvailableInSeconds.toNumber() * 1000);
+        return await rebalancingManagerAPI.proposeAsync(
+          subjectManagerType,
+          subjectManagerAddress,
+          subjectRebalancingSetToken,
+          { from: subjectCaller },
+        );
+      }
+
+      test('successfully proposes', async () => {
+        await subject();
+      });
+
+      describe('when price trigger is not met', async () => {
+        beforeAll(async () => {
+          ethPrice = new BigNumber(83 * 10 ** 18);
+        });
+
+        afterAll(async () => {
+          ethPrice = new BigNumber(128 * 10 ** 18);
+        });
+
+        test('throws', async () => {
+          const daiAllocationAmount = new BigNumber(54);
+          return expect(subject()).to.be.rejectedWith(
+            `Current DAI allocation ${daiAllocationAmount.toString()}% must be outside allocation bounds ` +
+            `${maximumLowerThreshold.toString()} and ${minimumUpperThreshold.toString()}.`
+          );
+        });
+      });
+
+      describe('when the RebalancingSet is not in Default state', async () => {
+        beforeEach(async () => {
+          // Elapse the rebalance interval
+          await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+          // Call propose to transition out of Default
+          await ethdaiManagerWrapper.propose(ethDaiRebalancingManager.address, rebalancingSetToken.address);
+        });
+
+        test('throws', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Rebalancing token at ${rebalancingSetToken.address} must be in Default state to call that function.`
+          );
+        });
+      });
+
+      describe('when the rebalanceInterval has not elapsed', async () => {
+        beforeEach(async () => {
+          timeFastForward = new BigNumber(1);
+          nextRebalanceAvailableInSeconds = nextRebalanceAvailableInSeconds.sub(1);
+        });
+
+        test('throws', async () => {
+          const lastRebalanceTime = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+          const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+          const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval).mul(1000);
+          const nextRebalanceFormattedDate = moment(nextAvailableRebalance.toNumber())
+          .format('dddd, MMMM Do YYYY, h:mm:ss a');
+
+          return expect(subject()).to.be.rejectedWith(
+            `Attempting to rebalance too soon. Rebalancing next ` +
+            `available on ${nextRebalanceFormattedDate}`
+          );
+        });
+      });
+
+      describe('when invalid rebalancing set token is passed in', async () => {
+        beforeEach(async () => {
+          subjectRebalancingSetToken = ACCOUNTS[2].address;
+        });
+
+        test('throws', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Contract at ${subjectRebalancingSetToken} is not a valid Set token address.`
           );
         });
       });
