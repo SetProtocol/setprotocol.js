@@ -26,7 +26,6 @@ import {
   ExchangeIssuanceAPI,
   FactoryAPI,
   IssuanceAPI,
-  MACOManagerAPI,
   OracleAPI,
   RebalancingAPI,
   RebalancingManagerAPI,
@@ -76,12 +75,6 @@ class SetProtocol {
    * with ExchangeIssuance contracts
    */
   public exchangeIssuance: ExchangeIssuanceAPI;
-
-  /**
-   * An instance of the MACOManagerAPI class containing methods for interacting
-   * with Moving Average Crossover Manager contracts
-   */
-  public movingAverageManager: MACOManagerAPI;
 
   /**
    * An instance of the RebalancingAPI class containing methods for rebalancing Sets
@@ -144,10 +137,9 @@ class SetProtocol {
     this.oracle = new OracleAPI(this.web3);
     this.setToken = new SetTokenAPI(this.web3, assertions);
     this.system = new SystemAPI(this.web3, this.core, config);
-    this.movingAverageManager = new MACOManagerAPI(this.web3, assertions);
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, config);
+    this.rebalancingManager = new RebalancingManagerAPI(this.web3, assertions);
     this.rebalancingSetIssuance = new RebalancingSetIssuanceAPI(this.web3, assertions, config);
-    this.rebalancingManager = new RebalancingManagerAPI(this.web3);
     this.exchangeIssuance = new ExchangeIssuanceAPI(this.web3, assertions, config);
   }
 

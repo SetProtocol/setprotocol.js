@@ -68,8 +68,9 @@ export class RebalancingManagerAPI {
   /**
    * Instantiates a new RebalancingManagerAPI instance that contains methods for issuing and redeeming Sets
    *
-   * @param web3        The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
+   * @param web3          The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
    *                      with the Ethereum network
+   * @param assertions    An instance of the Assertion library
    */
   constructor(web3: Web3, assertions: Assertions) {
     this.btcEthRebalancingManager = new BTCETHRebalancingManagerWrapper(web3);
