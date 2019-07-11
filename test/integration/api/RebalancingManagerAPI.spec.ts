@@ -227,7 +227,7 @@ describe('RebalancingManagerAPI', () => {
       );
     });
 
-    describe('getRebalancingManagerDetailsAsync', async () => {
+    describe('getBTCETHRebalancingManagerDetailsAsync', async () => {
       let subjectManagerAddress: Address;
 
       beforeEach(async () => {
