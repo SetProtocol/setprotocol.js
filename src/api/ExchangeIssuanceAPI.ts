@@ -55,10 +55,10 @@ export class ExchangeIssuanceAPI {
   /**
    * Instantiates a new ExchangeIssuanceAPI instance that contains methods for issuing and redeeming Sets
    *
-   * @param web3                         The Web3.js Provider instance you would like the SetProtocol.js library
-   *                                      to use for interacting with the Ethereum network
-   * @param assertions                   An instance of the Assertion library
-   * @param config      Configuration object conforming to SetProtocolConfig with Set Protocol's contract addresses
+   * @param web3            The Web3.js Provider instance you would like the SetProtocol.js library
+   *                        to use for interacting with the Ethereum network
+   * @param assertions      An instance of the Assertion library
+   * @param config          Configuration object conforming to SetProtocolConfig with Set Protocol's contract addresses
    */
   constructor(
     web3: Web3,

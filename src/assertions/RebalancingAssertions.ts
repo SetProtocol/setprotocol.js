@@ -60,7 +60,7 @@ export class RebalancingAssertions {
   }
 
   /**
-   * Throws if the retails details cannot be fetched
+   * Throws if the rebalance details cannot be fetched
    *
    * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
    */
@@ -379,6 +379,17 @@ export class RebalancingAssertions {
       },
     );
     await Promise.all(userHasSufficientBalancePromises);
+  }
+
+  public isOutsideAllocationBounds(
+    quantity: BigNumber,
+    lowerBound: BigNumber,
+    upperBound: BigNumber,
+    errorMessage: string
+  ) {
+    if (quantity.gte(lowerBound) && quantity.lt(upperBound)) {
+      throw new Error(errorMessage);
+    }
   }
 
   /**

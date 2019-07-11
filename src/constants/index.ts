@@ -24,6 +24,8 @@ import { DEFAULT_ACCOUNT } from './accounts';
 import { Tx } from '../types/common';
 
 export { DEFAULT_ACCOUNT };
+export const DAI_FULL_TOKEN_UNITS = new BigNumber(10 ** 18);
+export const DAI_PRICE = new BigNumber(10 ** 18);
 export const DEFAULT_AUCTION_PRICE_DENOMINATOR = new BigNumber(1000);
 export const DEFAULT_AUCTION_PRICE_NUMERATOR = new BigNumber(2000);
 export const DEFAULT_GAS_LIMIT: number = 6712390; // default of 6.7 million gas
@@ -38,11 +40,15 @@ export const NULL_ADDRESS = SetProtocolUtils.CONSTANTS.NULL_ADDRESS;
 export const ONE_DAY_IN_SECONDS = new BigNumber(86400);
 export const ONE_HOUR_IN_SECONDS = new BigNumber(3600);
 export const ONE_WEEK_IN_SECONDS = new BigNumber(604800);
+export const SET_FULL_TOKEN_UNITS = new BigNumber(10 ** 18);
 export const STANDARD_DECIMALS: BigNumber = new BigNumber(18); // ETH natural unit, wei
 export const STANDARD_SUPPLY: BigNumber = new BigNumber(100000000000000000000); // 100 Ether
 export const STANDARD_TRANSFER_VALUE: BigNumber = new BigNumber(1000000000000000000); // 1 Ether
 export const UNLIMITED_ALLOWANCE_IN_BASE_UNITS: BigNumber =
   SetProtocolUtils.CONSTANTS.UNLIMITED_ALLOWANCE_IN_BASE_UNITS; // 2 ** 256 - 1
+export const VALUE_TO_CENTS_CONVERSION = new BigNumber(10 ** 16);
+export const WBTC_FULL_TOKEN_UNITS = new BigNumber(10 ** 8);
+export const WETH_FULL_TOKEN_UNITS = new BigNumber(10 ** 18);
 export const ZERO: BigNumber = SetProtocolUtils.CONSTANTS.ZERO;
 
 // Returns a big number that can be passed in as a smart contract parameter

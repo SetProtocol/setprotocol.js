@@ -27,6 +27,12 @@ export const RebalancingState = {
   DRAWDOWN: new BigNumber(3),
 };
 
+export const ManagerType = {
+  BTCETH: new BigNumber(0),
+  BTCDAI: new BigNumber(1),
+  ETHDAI: new BigNumber(2),
+};
+
 export interface SetUnits {
   units: BigNumber[];
   naturalUnit: BigNumber;
@@ -76,19 +82,6 @@ export interface RebalancingSetDetails {
   supply: BigNumber;
   name: string;
   symbol: string;
-}
-
-export interface RebalancingManagerDetails {
-  core: Address;
-  btcPriceFeed: Address;
-  ethPriceFeed: Address;
-  btcAddress: Address;
-  ethAddress: Address;
-  setTokenFactory: Address;
-  auctionLibrary: Address;
-  auctionTimeToPivot: BigNumber;
-  btcMultiplier: BigNumber;
-  ethMultiplier: BigNumber;
 }
 
 export interface SetProtocolConfig {
