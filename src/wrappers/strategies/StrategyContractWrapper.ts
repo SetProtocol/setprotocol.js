@@ -24,6 +24,7 @@ import {
   BTCETHRebalancingManagerContract,
   ETHDaiRebalancingManagerContract,
   HistoricalPriceFeedContract,
+  HistoricalPriceFeedV2Contract,
   MACOStrategyManagerContract,
   MovingAverageOracleContract
 } from 'set-protocol-strategies';
@@ -63,6 +64,32 @@ export class StrategyContractWrapper {
       return this.cache[cacheKey] as HistoricalPriceFeedContract;
     } else {
       const historicalPriceFeedContract = await HistoricalPriceFeedContract.at(
+        historicalPriceFeed,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = historicalPriceFeedContract;
+      return historicalPriceFeedContract;
+    }
+  }
+
+  /**
+   * Load a HistoricalPriceFeedV2 contract
+   *
+   * @param  historicalPriceFeed          Address of the HistoricalPriceFeedV2 contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The HistoricalPriceFeed Contract
+   */
+  public async loadHistoricalPriceFeedV2Contract(
+    historicalPriceFeed: Address,
+    transactionOptions: object = {},
+  ): Promise<HistoricalPriceFeedV2Contract> {
+    const cacheKey = `HistoricalPriceFeed_${historicalPriceFeed}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as HistoricalPriceFeedV2Contract;
+    } else {
+      const historicalPriceFeedContract = await HistoricalPriceFeedV2Contract.at(
         historicalPriceFeed,
         this.web3,
         transactionOptions,

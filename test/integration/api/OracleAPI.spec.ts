@@ -30,7 +30,11 @@ import { Address, Web3Utils } from 'set-protocol-utils';
 import * as setProtocolUtils from 'set-protocol-utils';
 import { MedianContract } from 'set-protocol-contracts';
 import { Core } from 'set-protocol-contracts';
-import { HistoricalPriceFeedContract, MovingAverageOracleContract } from 'set-protocol-strategies';
+import {
+  HistoricalPriceFeedContract,
+  HistoricalPriceFeedV2Contract,
+  MovingAverageOracleContract
+} from 'set-protocol-strategies';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { OracleAPI } from '@src/api';
@@ -40,6 +44,7 @@ import { TX_DEFAULTS } from '@src/constants';
 import {
   addPriceFeedOwnerToMedianizer,
   deployHistoricalPriceFeedAsync,
+  deployHistoricalPriceFeedV2Async,
   deployMedianizerAsync,
   deployMovingAverageOracleAsync,
   updateMedianizerPriceAsync,
@@ -129,6 +134,44 @@ describe('OracleAPI', () => {
       const blockNumber = await web3.eth.getBlockNumber();
       const { timestamp } = await web3.eth.getBlock(blockNumber);
       expect(lastUpdatedTimestamp).to.bignumber.equal(timestamp);
+    });
+  });
+
+  describe('getRollingHistoricalFeedNextAvailableUpdateAsync', async () => {
+    let subjectPriceFeedAddress: Address;
+
+    beforeEach(async () => {
+      const medianizer: MedianContract = await deployMedianizerAsync(web3);
+      await addPriceFeedOwnerToMedianizer(medianizer, DEFAULT_ACCOUNT);
+      await updateMedianizerPriceAsync(
+        web3,
+        medianizer,
+        initialMedianizerEthPrice,
+        SetTestUtils.generateTimestamp(1000),
+      );
+
+      const historicalPriceFeed: HistoricalPriceFeedV2Contract = await deployHistoricalPriceFeedV2Async(
+        web3,
+        medianizer.address,
+        priceFeedUpdateFrequency
+      );
+
+      subjectPriceFeedAddress = historicalPriceFeed.address;
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await oracleAPI.getRollingHistoricalFeedNextAvailableUpdateAsync(
+        subjectPriceFeedAddress,
+      );
+    }
+
+    test('fetches the correct timestamp', async () => {
+      const lastUpdatedTimestamp = await subject();
+
+      const blockNumber = await web3.eth.getBlockNumber();
+      const { timestamp } = await web3.eth.getBlock(blockNumber);
+      const expectedTimestamp = new BigNumber(timestamp).add(priceFeedUpdateFrequency);
+      expect(lastUpdatedTimestamp).to.bignumber.equal(expectedTimestamp);
     });
   });
 
