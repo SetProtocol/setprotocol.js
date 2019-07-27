@@ -176,11 +176,13 @@ describe('OracleAPI', () => {
   });
 
   describe('getRollingHistoricalFeedPricesAsync', async () => {
+    let medianizer: MedianContract;
+
     let subjectPriceFeedAddress: Address;
     let subjectDayCount: BigNumber;
 
     beforeEach(async () => {
-      const medianizer: MedianContract = await deployMedianizerAsync(web3);
+      medianizer = await deployMedianizerAsync(web3);
       await addPriceFeedOwnerToMedianizer(medianizer, DEFAULT_ACCOUNT);
       await updateMedianizerPriceAsync(
         web3,
@@ -214,14 +216,42 @@ describe('OracleAPI', () => {
       const expectedPrices = [initialMedianizerEthPrice].concat(seededPriceFeedPrices.reverse());
       expect(JSON.stringify(prices)).to.equal(JSON.stringify(expectedPrices));
     });
+
+    describe('when price feed is v2', async () => {
+      beforeEach(async () => {
+        const historicalPriceFeed: HistoricalPriceFeedV2Contract = await deployHistoricalPriceFeedV2Async(
+          web3,
+          medianizer.address,
+          priceFeedUpdateFrequency,
+          undefined,
+          undefined,
+          undefined,
+          seededPriceFeedPrices
+        );
+
+        increaseChainTimeAsync(web3, new BigNumber(10000000));
+
+        subjectPriceFeedAddress = historicalPriceFeed.address;
+      });
+
+      test('gets the correct data for the number of data days in reverse', async () => {
+        const prices = await subject();
+
+        const expectedPrices = [initialMedianizerEthPrice].concat(seededPriceFeedPrices.reverse());
+        expect(JSON.stringify(prices)).to.equal(JSON.stringify(expectedPrices));
+      });
+    });
   });
 
   describe('updateRollingHistoricalFeedPriceAsync', async () => {
+    let medianizer: MedianContract;
+    let newMedianizerPrice: BigNumber;
+
     let subjectPriceFeedAddress: Address;
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const medianizer: MedianContract = await deployMedianizerAsync(web3);
+      medianizer = await deployMedianizerAsync(web3);
       await addPriceFeedOwnerToMedianizer(medianizer, DEFAULT_ACCOUNT);
       await updateMedianizerPriceAsync(
         web3,
@@ -236,6 +266,14 @@ describe('OracleAPI', () => {
         medianizer.address,
         priceFeedDataDescription,
         seededPriceFeedPrices
+      );
+
+      newMedianizerPrice = new BigNumber(10 ** 18);
+      await updateMedianizerPriceAsync(
+        web3,
+        medianizer,
+        newMedianizerPrice,
+        SetTestUtils.generateTimestamp(1000),
       );
 
       increaseChainTimeAsync(web3, new BigNumber(10000000));
@@ -260,7 +298,45 @@ describe('OracleAPI', () => {
         dataPointsToRead
       );
 
-      expect(mostRecentPrice).to.bignumber.equal(initialMedianizerEthPrice);
+      expect(mostRecentPrice).to.bignumber.equal(newMedianizerPrice);
+    });
+
+    describe('when price feed is v2', async () => {
+      beforeEach(async () => {
+        const historicalPriceFeed: HistoricalPriceFeedV2Contract = await deployHistoricalPriceFeedV2Async(
+          web3,
+          medianizer.address,
+          priceFeedUpdateFrequency,
+          undefined,
+          undefined,
+          undefined,
+          seededPriceFeedPrices
+        );
+
+        newMedianizerPrice = new BigNumber(10 ** 18);
+        await updateMedianizerPriceAsync(
+          web3,
+          medianizer,
+          newMedianizerPrice,
+          SetTestUtils.generateTimestamp(1000),
+        );
+
+        increaseChainTimeAsync(web3, new BigNumber(10000000));
+
+        subjectPriceFeedAddress = historicalPriceFeed.address;
+      });
+
+      test('adds another data point to the price feed equivalent to the current price on the medianizer', async () => {
+        await subject();
+
+        const dataPointsToRead = new BigNumber(1);
+        const [mostRecentPrice] = await oracleAPI.getRollingHistoricalFeedPricesAsync(
+          subjectPriceFeedAddress,
+          dataPointsToRead
+        );
+
+        expect(mostRecentPrice).to.bignumber.equal(newMedianizerPrice);
+      });
     });
   });
 
