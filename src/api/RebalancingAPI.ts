@@ -439,6 +439,18 @@ export class RebalancingAPI {
     return await this.rebalancingSetToken.currentSet(rebalancingSetTokenAddress);
   }
 
+  /**
+   * Fetches the remaining current sets of a rebalancing set that is currently undergoing a rebalance
+   *
+   * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
+   * @return                               Number of remaining shares available
+   */
+  public async getRebalancingSetAuctionRemainingCurrentSets(rebalancingSetTokenAddress: Address): Promise<BigNumber> {
+    await this.assertGetRebalanceDetails(rebalancingSetTokenAddress);
+
+    return await this.rebalancingSetToken.remainingCurrentSets(rebalancingSetTokenAddress);
+  }
+
   /* ============ Private Assertions ============ */
 
   private async assertPropose(

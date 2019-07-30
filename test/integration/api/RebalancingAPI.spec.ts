@@ -2318,4 +2318,140 @@ describe('RebalancingAPI', () => {
       });
     });
   });
+
+  describe('getRebalancingSetAuctionRemainingCurrentSets', async () => {
+    let currentSetToken: SetTokenContract;
+    let nextSetToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let proposalPeriod: BigNumber;
+    let managerAddress: Address;
+    let priceCurve: ConstantAuctionPriceCurveContract;
+    let rebalancingSetQuantityToIssue: BigNumber;
+    let currentSetStartingQuantity: BigNumber;
+
+    let subjectRebalancingSetTokenAddress: Address;
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 2;
+      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
+      proposalPeriod = ONE_DAY_IN_SECONDS;
+      managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      // Issue currentSetToken
+      currentSetStartingQuantity = ether(7);
+      await core.issue.sendTransactionAsync(currentSetToken.address, currentSetStartingQuantity, TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
+      // Deploy price curve used in auction
+      priceCurve = await deployConstantAuctionPriceCurveAsync(
+        web3,
+        DEFAULT_AUCTION_PRICE_NUMERATOR,
+        DEFAULT_AUCTION_PRICE_DENOMINATOR
+      );
+
+      addPriceCurveToCoreAsync(
+        core,
+        priceCurve.address
+      );
+
+      subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await rebalancingAPI.getRebalancingSetAuctionRemainingCurrentSets(subjectRebalancingSetTokenAddress);
+    }
+
+    describe('when the Rebalancing Set Token is in Default state', async () => {
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Rebalance state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Proposal state', async () => {
+      let setAuctionPriceCurveAddress: Address;
+      let setAuctionTimeToPivot: BigNumber;
+      let setAuctionStartPrice: BigNumber;
+      let setAuctionPivotPrice: BigNumber;
+
+      beforeEach(async () => {
+        setAuctionPriceCurveAddress = priceCurve.address;
+        setAuctionTimeToPivot = new BigNumber(100000);
+        setAuctionStartPrice = new BigNumber(500);
+        setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToProposeAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice,
+        );
+      });
+
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Rebalance state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Rebalance state', async () => {
+      let setAuctionPriceCurveAddress: Address;
+      let setAuctionTimeToPivot: BigNumber;
+      let setAuctionStartPrice: BigNumber;
+      let setAuctionPivotPrice: BigNumber;
+
+      beforeEach(async () => {
+        setAuctionPriceCurveAddress = priceCurve.address;
+        setAuctionTimeToPivot = new BigNumber(100000);
+        setAuctionStartPrice = new BigNumber(500);
+        setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToRebalanceAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          nextSetToken.address,
+          setAuctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice,
+        );
+      });
+
+      it('returns the proper rebalancing details', async () => {
+        const rebalancingAuctionRemainingCurrentShares = await subject();
+
+        const [, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
+        expect(rebalancingAuctionRemainingCurrentShares).to.bignumber.equal(remainingCurrentSets);
+      });
+    });
+  });
 });
