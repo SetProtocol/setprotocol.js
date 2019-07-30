@@ -287,18 +287,6 @@ export class RebalancingAPI {
   }
 
   /**
-   * Fetches the current state of the RebalancingSetToken
-   *
-   * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
-   * @return                               Current state belonging to {'Default', 'Propose', 'Rebalance', 'Drawdown'}
-   */
-  public async getRebalanceStateAsync(rebalancingSetTokenAddress: Address): Promise<string> {
-    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
-
-    return await this.rebalancingSetToken.rebalanceState(rebalancingSetTokenAddress);
-  }
-
-  /**
    * Fetches details of a RebalancingSetToken comprised of factory address, manager, current set, unit shares,
    * natural unit, state, date the last rebalance ended, supply, name, and symbol
    *
@@ -427,6 +415,40 @@ export class RebalancingAPI {
       remainingCurrentSet,
       minimumBid,
     } as RebalancingProgressDetails;
+  }
+
+  /**
+   * Fetches the current state of the RebalancingSetToken
+   *
+   * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
+   * @return                               Current state belonging to {'Default', 'Propose', 'Rebalance', 'Drawdown'}
+   */
+  public async getRebalanceStateAsync(rebalancingSetTokenAddress: Address): Promise<string> {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+
+    return await this.rebalancingSetToken.rebalanceState(rebalancingSetTokenAddress);
+  }
+
+  /**
+   * Fetches the current collateral set token address of a rebalancing set
+   *
+   * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
+   * @return                               Address of the rebalancing set's current Set Token
+   */
+  public async getRebalancingSetCurrentSetAsync(rebalancingSetTokenAddress: Address): Promise<Address> {
+    return await this.rebalancingSetToken.currentSet(rebalancingSetTokenAddress);
+  }
+
+  /**
+   * Fetches the remaining current sets of a rebalancing set that is currently undergoing a rebalance
+   *
+   * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
+   * @return                               Number of remaining shares available
+   */
+  public async getRebalancingSetAuctionRemainingCurrentSets(rebalancingSetTokenAddress: Address): Promise<BigNumber> {
+    await this.assertGetRebalanceDetails(rebalancingSetTokenAddress);
+
+    return await this.rebalancingSetToken.remainingCurrentSets(rebalancingSetTokenAddress);
   }
 
   /* ============ Private Assertions ============ */
