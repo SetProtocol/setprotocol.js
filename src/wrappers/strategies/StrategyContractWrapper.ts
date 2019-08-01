@@ -76,7 +76,7 @@ export class StrategyContractWrapper {
   /**
    * Load a TimeSeriesFeed contract
    *
-   * @param  historicalPriceFeed          Address of the TimeSeriesFeed contract
+   * @param  timeSeriesFeed               Address of the TimeSeriesFeed contract
    * @param  transactionOptions           Options sent into the contract deployed method
    * @return                              The TimeSeriesFeed Contract
    */

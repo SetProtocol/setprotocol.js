@@ -139,7 +139,7 @@ describe('OracleAPI', () => {
     });
   });
 
-  describe('getRollingHistoricalFeedNextEarliestUpdateAsync', async () => {
+  describe('getTimeSeriesFeedNextEarliestUpdateAsync', async () => {
     let subjectPriceFeedAddress: Address;
 
     beforeEach(async () => {
@@ -162,7 +162,7 @@ describe('OracleAPI', () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await oracleAPI.getRollingHistoricalFeedNextEarliestUpdateAsync(
+      return await oracleAPI.geTimeSeriesFeedNextEarliestUpdateAsync(
         subjectPriceFeedAddress,
       );
     }

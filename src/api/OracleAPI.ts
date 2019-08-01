@@ -69,7 +69,7 @@ export class OracleAPI {
    * @param  timeSeriesFeed         Address of the TimeSeriesFeed contract to poll
    * @return                        Timestamp of when the price feed can be updated next
    */
-  public async getRollingHistoricalFeedNextEarliestUpdateAsync(timeSeriesFeed: Address): Promise<BigNumber> {
+  public async geTimeSeriesFeedNextEarliestUpdateAsync(timeSeriesFeed: Address): Promise<BigNumber> {
     return await this.timeSeriesFeedWrapper.nextEarliestUpdate(timeSeriesFeed);
   }
 

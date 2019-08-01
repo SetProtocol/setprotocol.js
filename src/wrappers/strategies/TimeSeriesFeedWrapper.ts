@@ -23,10 +23,10 @@ import { BigNumber } from '../../util';
 import { Address } from '../../types/common';
 
 /**
- * @title  HistoricalPriceFeedV2Wrapper
+ * @title  TimeSeriesFeedWrapper
  * @author Set Protocol
  *
- * The HistoricalPriceFeedV2Wrapper handles interactions with Set's price feed for moving averages
+ * The TimeSeriesFeedWrapper handles interactions with Set's price feed for moving averages
  *
  */
 export class TimeSeriesFeedWrapper {
