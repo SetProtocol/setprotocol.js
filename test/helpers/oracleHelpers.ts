@@ -5,10 +5,12 @@ import { Median, MedianContract } from 'set-protocol-contracts';
 import {
   HistoricalPriceFeed,
   HistoricalPriceFeedContract,
-  HistoricalPriceFeedV2,
-  HistoricalPriceFeedV2Contract,
+  LinearizedPriceDataSource,
+  LinearizedPriceDataSourceContract,
   MovingAverageOracle,
-  MovingAverageOracleContract
+  MovingAverageOracleContract,
+  TimeSeriesFeed,
+  TimeSeriesFeedContract,
 } from 'set-protocol-strategies';
 
 import { ONE_DAY_IN_SECONDS, TX_DEFAULTS } from '@src/constants';
@@ -90,32 +92,55 @@ export const deployHistoricalPriceFeedAsync = async(
   );
 };
 
-export const deployHistoricalPriceFeedV2Async = async(
+export const deployTimeSeriesFeedAsync = async(
   web3: Web3,
-  medianizerAddress: Address,
+  dataSourceAddress: Address,
   updateFrequency: BigNumber = ONE_DAY_IN_SECONDS,
-  updateTolerance: BigNumber = ONE_DAY_IN_SECONDS.div(4),
   maxDataPoints: BigNumber = new BigNumber(200),
   dataDescription: string = '200DailyETHPrice',
-  seededValues: BigNumber[] = [],
+  seededValues: BigNumber[] = [new BigNumber(200 * 10 ** 18)],
   from: Address = TX_DEFAULTS.from,
-): Promise<HistoricalPriceFeedV2Contract> => {
-  const truffleHistoricalPriceFeedContract = contract(HistoricalPriceFeedV2);
-  truffleHistoricalPriceFeedContract.setProvider(web3.currentProvider);
-  truffleHistoricalPriceFeedContract.setNetwork(50);
-  truffleHistoricalPriceFeedContract.defaults(TX_DEFAULTS);
+): Promise<TimeSeriesFeedContract> => {
+  const truffleTimeSeriesFeedContract = contract(TimeSeriesFeed);
+  truffleTimeSeriesFeedContract.setProvider(web3.currentProvider);
+  truffleTimeSeriesFeedContract.setNetwork(50);
+  truffleTimeSeriesFeedContract.defaults(TX_DEFAULTS);
 
-  // Deploy HistoricalPriceFeed
-  const deployedMedianInstance = await truffleHistoricalPriceFeedContract.new(
+  // Deploy TimeSeriesFeed
+  const deployedTimeSeriesFeedInstance = await truffleTimeSeriesFeedContract.new(
     updateFrequency,
-    updateTolerance,
     maxDataPoints,
-    medianizerAddress,
+    dataSourceAddress,
     dataDescription,
     seededValues
   );
-  return await HistoricalPriceFeedV2Contract.at(
-    deployedMedianInstance.address,
+  return await TimeSeriesFeedContract.at(
+    deployedTimeSeriesFeedInstance.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
+export const deployLinearizedPriceDataSourceAsync = async(
+  web3: Web3,
+  medianizerAddress: Address,
+  interpolationThreshold: BigNumber = ONE_DAY_IN_SECONDS.div(8),
+  dataDescription: string = '200DailyETHPrice',
+  from: Address = TX_DEFAULTS.from,
+): Promise<LinearizedPriceDataSourceContract> => {
+  const truffleLinearizedPriceDataSourceContract = contract(LinearizedPriceDataSource);
+  truffleLinearizedPriceDataSourceContract.setProvider(web3.currentProvider);
+  truffleLinearizedPriceDataSourceContract.setNetwork(50);
+  truffleLinearizedPriceDataSourceContract.defaults(TX_DEFAULTS);
+
+  // Deploy LinearizedPriceDataSource
+  const deployedDataSourceInstance = await truffleLinearizedPriceDataSourceContract.new(
+    interpolationThreshold,
+    medianizerAddress,
+    dataDescription
+  );
+  return await LinearizedPriceDataSourceContract.at(
+    deployedDataSourceInstance.address,
     web3,
     TX_DEFAULTS,
   );

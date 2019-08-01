@@ -21,7 +21,7 @@ import Web3 from 'web3';
 
 import {
   HistoricalPriceFeedWrapper,
-  HistoricalPriceFeedV2Wrapper,
+  TimeSeriesFeedWrapper,
   MovingAverageOracleWrapper
 } from '../wrappers';
 import { BigNumber } from '../util';
@@ -38,7 +38,7 @@ import {
  */
 export class OracleAPI {
   private historicalPriceFeedWrapper: HistoricalPriceFeedWrapper;
-  private historicalPriceFeedV2Wrapper: HistoricalPriceFeedV2Wrapper;
+  private timeSeriesFeedWrapper: TimeSeriesFeedWrapper;
   private movingAverageOracleWrapper: MovingAverageOracleWrapper;
 
   /**
@@ -49,7 +49,7 @@ export class OracleAPI {
    */
   constructor(web3: Web3) {
     this.historicalPriceFeedWrapper = new HistoricalPriceFeedWrapper(web3);
-    this.historicalPriceFeedV2Wrapper = new HistoricalPriceFeedV2Wrapper(web3);
+    this.timeSeriesFeedWrapper = new TimeSeriesFeedWrapper(web3);
     this.movingAverageOracleWrapper = new MovingAverageOracleWrapper(web3);
   }
 
@@ -64,13 +64,13 @@ export class OracleAPI {
   }
 
   /**
-   * Returns the Unix timestamp of when price can feed can next be updated
+   * Returns the Unix timestamp of earliest time the TimeSeriesFeed can be updated
    *
-   * @param  historicalPriceFeed    Address of the HistoricalPriceFeedV2 contract to poll
+   * @param  timeSeriesFeed         Address of the TimeSeriesFeed contract to poll
    * @return                        Timestamp of when the price feed can be updated next
    */
-  public async getRollingHistoricalFeedNextAvailableUpdateAsync(historicalPriceFeed: Address): Promise<BigNumber> {
-    return await this.historicalPriceFeedV2Wrapper.nextAvailableUpdate(historicalPriceFeed);
+  public async getRollingHistoricalFeedNextEarliestUpdateAsync(timeSeriesFeed: Address): Promise<BigNumber> {
+    return await this.timeSeriesFeedWrapper.nextEarliestUpdate(timeSeriesFeed);
   }
 
   /**

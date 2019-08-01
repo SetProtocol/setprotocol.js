@@ -32,7 +32,8 @@ import { MedianContract } from 'set-protocol-contracts';
 import { Core } from 'set-protocol-contracts';
 import {
   HistoricalPriceFeedContract,
-  HistoricalPriceFeedV2Contract,
+  LinearizedPriceDataSourceContract,
+  TimeSeriesFeedContract,
   MovingAverageOracleContract
 } from 'set-protocol-strategies';
 
@@ -44,9 +45,10 @@ import { TX_DEFAULTS } from '@src/constants';
 import {
   addPriceFeedOwnerToMedianizer,
   deployHistoricalPriceFeedAsync,
-  deployHistoricalPriceFeedV2Async,
+  deployLinearizedPriceDataSourceAsync,
   deployMedianizerAsync,
   deployMovingAverageOracleAsync,
+  deployTimeSeriesFeedAsync,
   updateMedianizerPriceAsync,
   increaseChainTimeAsync,
 } from '@test/helpers';
@@ -137,7 +139,7 @@ describe('OracleAPI', () => {
     });
   });
 
-  describe('getRollingHistoricalFeedNextAvailableUpdateAsync', async () => {
+  describe('getRollingHistoricalFeedNextEarliestUpdateAsync', async () => {
     let subjectPriceFeedAddress: Address;
 
     beforeEach(async () => {
@@ -150,17 +152,17 @@ describe('OracleAPI', () => {
         SetTestUtils.generateTimestamp(1000),
       );
 
-      const historicalPriceFeed: HistoricalPriceFeedV2Contract = await deployHistoricalPriceFeedV2Async(
+      const timeSeriesFeed: TimeSeriesFeedContract = await deployTimeSeriesFeedAsync(
         web3,
         medianizer.address,
         priceFeedUpdateFrequency
       );
 
-      subjectPriceFeedAddress = historicalPriceFeed.address;
+      subjectPriceFeedAddress = timeSeriesFeed.address;
     });
 
     async function subject(): Promise<BigNumber> {
-      return await oracleAPI.getRollingHistoricalFeedNextAvailableUpdateAsync(
+      return await oracleAPI.getRollingHistoricalFeedNextEarliestUpdateAsync(
         subjectPriceFeedAddress,
       );
     }
@@ -217,13 +219,18 @@ describe('OracleAPI', () => {
       expect(JSON.stringify(prices)).to.equal(JSON.stringify(expectedPrices));
     });
 
-    describe('when price feed is v2', async () => {
+    describe('when price feed is TimeSeriesFeed', async () => {
       beforeEach(async () => {
-        const historicalPriceFeed: HistoricalPriceFeedV2Contract = await deployHistoricalPriceFeedV2Async(
+        const linearizedPriceDataSource: LinearizedPriceDataSourceContract =
+          await deployLinearizedPriceDataSourceAsync(
+            web3,
+            medianizer.address,
+          );
+
+        const timeSeriesFeed: TimeSeriesFeedContract = await deployTimeSeriesFeedAsync(
           web3,
-          medianizer.address,
+          linearizedPriceDataSource.address,
           priceFeedUpdateFrequency,
-          undefined,
           undefined,
           undefined,
           seededPriceFeedPrices
@@ -231,13 +238,14 @@ describe('OracleAPI', () => {
 
         increaseChainTimeAsync(web3, new BigNumber(10000000));
 
-        subjectPriceFeedAddress = historicalPriceFeed.address;
+        subjectPriceFeedAddress = timeSeriesFeed.address;
+        subjectDayCount = new BigNumber(seededPriceFeedPrices.length);
       });
 
       test('gets the correct data for the number of data days in reverse', async () => {
         const prices = await subject();
 
-        const expectedPrices = [initialMedianizerEthPrice].concat(seededPriceFeedPrices.reverse());
+        const expectedPrices = seededPriceFeedPrices.reverse();
         expect(JSON.stringify(prices)).to.equal(JSON.stringify(expectedPrices));
       });
     });
@@ -301,13 +309,18 @@ describe('OracleAPI', () => {
       expect(mostRecentPrice).to.bignumber.equal(newMedianizerPrice);
     });
 
-    describe('when price feed is v2', async () => {
+    describe('when price feed is TimeSeriesFeed', async () => {
       beforeEach(async () => {
-        const historicalPriceFeed: HistoricalPriceFeedV2Contract = await deployHistoricalPriceFeedV2Async(
+        const linearizedPriceDataSource: LinearizedPriceDataSourceContract =
+          await deployLinearizedPriceDataSourceAsync(
+            web3,
+            medianizer.address,
+          );
+
+        const timeSeriesFeed: TimeSeriesFeedContract = await deployTimeSeriesFeedAsync(
           web3,
-          medianizer.address,
+          linearizedPriceDataSource.address,
           priceFeedUpdateFrequency,
-          undefined,
           undefined,
           undefined,
           seededPriceFeedPrices
@@ -321,9 +334,9 @@ describe('OracleAPI', () => {
           SetTestUtils.generateTimestamp(1000),
         );
 
-        increaseChainTimeAsync(web3, new BigNumber(10000000));
+        increaseChainTimeAsync(web3, priceFeedUpdateFrequency);
 
-        subjectPriceFeedAddress = historicalPriceFeed.address;
+        subjectPriceFeedAddress = timeSeriesFeed.address;
       });
 
       test('adds another data point to the price feed equivalent to the current price on the medianizer', async () => {

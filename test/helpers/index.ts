@@ -33,10 +33,11 @@ export {
 export {
   addPriceFeedOwnerToMedianizer,
   deployHistoricalPriceFeedAsync,
-  deployHistoricalPriceFeedV2Async,
+  deployLinearizedPriceDataSourceAsync,
   deployMedianizerAsync,
   deployMovingAverageOracleAsync,
-  updateMedianizerPriceAsync
+  deployTimeSeriesFeedAsync,
+  updateMedianizerPriceAsync,
 } from './oracleHelpers';
 
 export {

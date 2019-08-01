@@ -29,7 +29,7 @@ import { Address } from '../../types/common';
  * The HistoricalPriceFeedV2Wrapper handles interactions with Set's price feed for moving averages
  *
  */
-export class HistoricalPriceFeedV2Wrapper {
+export class TimeSeriesFeedWrapper {
   private web3: Web3;
   private contracts: StrategyContractWrapper;
 
@@ -39,14 +39,14 @@ export class HistoricalPriceFeedV2Wrapper {
   }
 
   /**
-   * Fetch the Unix timestamp of the next available update
+   * Fetch the Unix timestamp of the next earliest update
    *
-   * @param  historicalPriceFeedAddress    Address of the HistoricalPriceFeed contract to fetch date from
+   * @param  timeSeriesFeedAddress         Address of the TimeSeriesFeed contract to fetch date from
    * @return                               Unix time
    */
-  public async nextAvailableUpdate(historicalPriceFeedAddress: Address): Promise<BigNumber> {
-    const historicalPriceFeed = await this.contracts.loadHistoricalPriceFeedV2Contract(historicalPriceFeedAddress);
+  public async nextEarliestUpdate(timeSeriesFeedAddress: Address): Promise<BigNumber> {
+    const timeSeriesFeed = await this.contracts.loadTimeSeriesFeedContract(timeSeriesFeedAddress);
 
-    return await historicalPriceFeed.nextAvailableUpdate.callAsync();
+    return await timeSeriesFeed.nextEarliestUpdate.callAsync();
   }
 }
