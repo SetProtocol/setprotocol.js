@@ -23,7 +23,6 @@ import {
   AuthorizableWrapper,
   ProtocolContractWrapper,
   CoreWrapper,
-  PriceFeedWrapper,
   TimeLockUpgradeWrapper,
   WhitelistWrapper,
 } from '../wrappers';
@@ -41,7 +40,7 @@ import {
  * @title SystemAPI
  * @author Set Protocol
  *
- * A library for issuing and redeeming Sets
+ * A library for interacting with admin portions of Set Protocol system
  */
 export class SystemAPI {
   private web3: Web3;
@@ -49,7 +48,6 @@ export class SystemAPI {
   private config: SetProtocolConfig;
   private core: CoreWrapper;
   private authorizable: AuthorizableWrapper;
-  private priceFeed: PriceFeedWrapper;
   private timeLockUpgrade: TimeLockUpgradeWrapper;
   private whitelist: WhitelistWrapper;
 
@@ -68,7 +66,6 @@ export class SystemAPI {
     this.contract = new ProtocolContractWrapper(web3);
     this.config = config;
     this.authorizable = new AuthorizableWrapper(web3);
-    this.priceFeed = new PriceFeedWrapper(web3);
     this.timeLockUpgrade = new TimeLockUpgradeWrapper(web3);
     this.whitelist = new WhitelistWrapper(web3);
   }
@@ -198,18 +195,6 @@ export class SystemAPI {
       vault: vaultOwner,
       transferProxy: transferProxyOwner,
     };
-  }
-
-  /**
-   * Returns the current price feed price
-   *
-   * @param medianizerAddress    Address of the medianizer to ping
-   * @return                     Price in base decimal of the asset represented by the medianizer
-   */
-  public async getFeedPriceAsync(medianizerAddress: Address): Promise<BigNumber> {
-    const priceFeedUpdateHex = await this.priceFeed.read(medianizerAddress);
-
-    return new BigNumber(priceFeedUpdateHex);
   }
 
   /**

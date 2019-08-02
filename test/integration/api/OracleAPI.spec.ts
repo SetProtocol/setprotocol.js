@@ -32,8 +32,6 @@ import { MedianContract } from 'set-protocol-contracts';
 import { Core } from 'set-protocol-contracts';
 import {
   HistoricalPriceFeedContract,
-  LinearizedPriceDataSourceContract,
-  TimeSeriesFeedContract,
   MovingAverageOracleContract
 } from 'set-protocol-strategies';
 
@@ -45,12 +43,9 @@ import { TX_DEFAULTS } from '@src/constants';
 import {
   addPriceFeedOwnerToMedianizer,
   deployHistoricalPriceFeedAsync,
-  deployLinearizedPriceDataSourceAsync,
   deployMedianizerAsync,
   deployMovingAverageOracleAsync,
-  deployTimeSeriesFeedAsync,
   updateMedianizerPriceAsync,
-  increaseChainTimeAsync,
 } from '@test/helpers';
 
 ChaiSetup.configure();
@@ -100,259 +95,6 @@ describe('OracleAPI', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('getRollingHistoricalFeedLastUpdatedAsync', async () => {
-    let subjectPriceFeedAddress: Address;
-
-    beforeEach(async () => {
-      const medianizer: MedianContract = await deployMedianizerAsync(web3);
-      await addPriceFeedOwnerToMedianizer(medianizer, DEFAULT_ACCOUNT);
-      await updateMedianizerPriceAsync(
-        web3,
-        medianizer,
-        initialMedianizerEthPrice,
-        SetTestUtils.generateTimestamp(1000),
-      );
-
-      const historicalPriceFeed: HistoricalPriceFeedContract = await deployHistoricalPriceFeedAsync(
-        web3,
-        priceFeedUpdateFrequency,
-        medianizer.address,
-        priceFeedDataDescription,
-        seededPriceFeedPrices
-      );
-
-      subjectPriceFeedAddress = historicalPriceFeed.address;
-    });
-
-    async function subject(): Promise<BigNumber> {
-      return await oracleAPI.getRollingHistoricalFeedLastUpdatedAsync(
-        subjectPriceFeedAddress,
-      );
-    }
-
-    test('fetches the correct timestamp', async () => {
-      const lastUpdatedTimestamp = await subject();
-
-      const blockNumber = await web3.eth.getBlockNumber();
-      const { timestamp } = await web3.eth.getBlock(blockNumber);
-      expect(lastUpdatedTimestamp).to.bignumber.equal(timestamp);
-    });
-  });
-
-  describe('getTimeSeriesFeedNextEarliestUpdateAsync', async () => {
-    let subjectPriceFeedAddress: Address;
-
-    beforeEach(async () => {
-      const medianizer: MedianContract = await deployMedianizerAsync(web3);
-      await addPriceFeedOwnerToMedianizer(medianizer, DEFAULT_ACCOUNT);
-      await updateMedianizerPriceAsync(
-        web3,
-        medianizer,
-        initialMedianizerEthPrice,
-        SetTestUtils.generateTimestamp(1000),
-      );
-
-      const timeSeriesFeed: TimeSeriesFeedContract = await deployTimeSeriesFeedAsync(
-        web3,
-        medianizer.address,
-        priceFeedUpdateFrequency
-      );
-
-      subjectPriceFeedAddress = timeSeriesFeed.address;
-    });
-
-    async function subject(): Promise<BigNumber> {
-      return await oracleAPI.geTimeSeriesFeedNextEarliestUpdateAsync(
-        subjectPriceFeedAddress,
-      );
-    }
-
-    test('fetches the correct timestamp', async () => {
-      const lastUpdatedTimestamp = await subject();
-
-      const blockNumber = await web3.eth.getBlockNumber();
-      const { timestamp } = await web3.eth.getBlock(blockNumber);
-      const expectedTimestamp = new BigNumber(timestamp).add(priceFeedUpdateFrequency);
-      expect(lastUpdatedTimestamp).to.bignumber.equal(expectedTimestamp);
-    });
-  });
-
-  describe('getRollingHistoricalFeedPricesAsync', async () => {
-    let medianizer: MedianContract;
-
-    let subjectPriceFeedAddress: Address;
-    let subjectDayCount: BigNumber;
-
-    beforeEach(async () => {
-      medianizer = await deployMedianizerAsync(web3);
-      await addPriceFeedOwnerToMedianizer(medianizer, DEFAULT_ACCOUNT);
-      await updateMedianizerPriceAsync(
-        web3,
-        medianizer,
-        initialMedianizerEthPrice,
-        SetTestUtils.generateTimestamp(1000),
-      );
-
-      const historicalPriceFeed: HistoricalPriceFeedContract = await deployHistoricalPriceFeedAsync(
-        web3,
-        priceFeedUpdateFrequency,
-        medianizer.address,
-        priceFeedDataDescription,
-        seededPriceFeedPrices
-      );
-
-      subjectPriceFeedAddress = historicalPriceFeed.address;
-      subjectDayCount = new BigNumber(seededPriceFeedPrices.length + 1);
-    });
-
-    async function subject(): Promise<BigNumber[]> {
-      return await oracleAPI.getRollingHistoricalFeedPricesAsync(
-        subjectPriceFeedAddress,
-        subjectDayCount
-      );
-    }
-
-    test('gets the correct data for the number of data days in reverse', async () => {
-      const prices = await subject();
-
-      const expectedPrices = [initialMedianizerEthPrice].concat(seededPriceFeedPrices.reverse());
-      expect(JSON.stringify(prices)).to.equal(JSON.stringify(expectedPrices));
-    });
-
-    describe('when price feed is TimeSeriesFeed', async () => {
-      beforeEach(async () => {
-        const linearizedPriceDataSource: LinearizedPriceDataSourceContract =
-          await deployLinearizedPriceDataSourceAsync(
-            web3,
-            medianizer.address,
-          );
-
-        const timeSeriesFeed: TimeSeriesFeedContract = await deployTimeSeriesFeedAsync(
-          web3,
-          linearizedPriceDataSource.address,
-          priceFeedUpdateFrequency,
-          undefined,
-          undefined,
-          seededPriceFeedPrices
-        );
-
-        increaseChainTimeAsync(web3, new BigNumber(10000000));
-
-        subjectPriceFeedAddress = timeSeriesFeed.address;
-        subjectDayCount = new BigNumber(seededPriceFeedPrices.length);
-      });
-
-      test('gets the correct data for the number of data days in reverse', async () => {
-        const prices = await subject();
-
-        const expectedPrices = seededPriceFeedPrices.reverse();
-        expect(JSON.stringify(prices)).to.equal(JSON.stringify(expectedPrices));
-      });
-    });
-  });
-
-  describe('updateRollingHistoricalFeedPriceAsync', async () => {
-    let medianizer: MedianContract;
-    let newMedianizerPrice: BigNumber;
-
-    let subjectPriceFeedAddress: Address;
-    let subjectCaller: Address;
-
-    beforeEach(async () => {
-      medianizer = await deployMedianizerAsync(web3);
-      await addPriceFeedOwnerToMedianizer(medianizer, DEFAULT_ACCOUNT);
-      await updateMedianizerPriceAsync(
-        web3,
-        medianizer,
-        initialMedianizerEthPrice,
-        SetTestUtils.generateTimestamp(1000),
-      );
-
-      const historicalPriceFeed: HistoricalPriceFeedContract = await deployHistoricalPriceFeedAsync(
-        web3,
-        priceFeedUpdateFrequency,
-        medianizer.address,
-        priceFeedDataDescription,
-        seededPriceFeedPrices
-      );
-
-      newMedianizerPrice = new BigNumber(10 ** 18);
-      await updateMedianizerPriceAsync(
-        web3,
-        medianizer,
-        newMedianizerPrice,
-        SetTestUtils.generateTimestamp(1000),
-      );
-
-      increaseChainTimeAsync(web3, new BigNumber(10000000));
-
-      subjectPriceFeedAddress = historicalPriceFeed.address;
-      subjectCaller = DEFAULT_ACCOUNT;
-    });
-
-    async function subject(): Promise<string> {
-      return await oracleAPI.updateRollingHistoricalFeedPriceAsync(
-        subjectPriceFeedAddress,
-        { from: subjectCaller }
-      );
-    }
-
-    test('adds another data point to the price feed equivalent to the current price on the medianizer', async () => {
-      await subject();
-
-      const dataPointsToRead = new BigNumber(1);
-      const [mostRecentPrice] = await oracleAPI.getRollingHistoricalFeedPricesAsync(
-        subjectPriceFeedAddress,
-        dataPointsToRead
-      );
-
-      expect(mostRecentPrice).to.bignumber.equal(newMedianizerPrice);
-    });
-
-    describe('when price feed is TimeSeriesFeed', async () => {
-      beforeEach(async () => {
-        const linearizedPriceDataSource: LinearizedPriceDataSourceContract =
-          await deployLinearizedPriceDataSourceAsync(
-            web3,
-            medianizer.address,
-          );
-
-        const timeSeriesFeed: TimeSeriesFeedContract = await deployTimeSeriesFeedAsync(
-          web3,
-          linearizedPriceDataSource.address,
-          priceFeedUpdateFrequency,
-          undefined,
-          undefined,
-          seededPriceFeedPrices
-        );
-
-        newMedianizerPrice = new BigNumber(10 ** 18);
-        await updateMedianizerPriceAsync(
-          web3,
-          medianizer,
-          newMedianizerPrice,
-          SetTestUtils.generateTimestamp(1000),
-        );
-
-        increaseChainTimeAsync(web3, priceFeedUpdateFrequency);
-
-        subjectPriceFeedAddress = timeSeriesFeed.address;
-      });
-
-      test('adds another data point to the price feed equivalent to the current price on the medianizer', async () => {
-        await subject();
-
-        const dataPointsToRead = new BigNumber(1);
-        const [mostRecentPrice] = await oracleAPI.getRollingHistoricalFeedPricesAsync(
-          subjectPriceFeedAddress,
-          dataPointsToRead
-        );
-
-        expect(mostRecentPrice).to.bignumber.equal(newMedianizerPrice);
-      });
-    });
-  });
-
   describe('getMovingAverageOraclePrice', async () => {
     let subjectMovingAverageOracleAddress: Address;
     let subjectDataPoints: BigNumber;
@@ -397,6 +139,40 @@ describe('OracleAPI', () => {
 
       const expectAverage = new BigNumber(2666666);
       expect(priceAverage).to.bignumber.equal(expectAverage);
+    });
+  });
+
+  describe('getFeedPriceAsync', async () => {
+    let subjectMedianizerAddress: Address;
+
+    let btcMedianizer: MedianContract;
+    let btcPrice: BigNumber;
+
+    beforeEach(async () => {
+      btcMedianizer = await deployMedianizerAsync(web3);
+      await addPriceFeedOwnerToMedianizer(btcMedianizer, DEFAULT_ACCOUNT);
+
+      btcPrice = new BigNumber(4082 * 10 ** 18);
+      await updateMedianizerPriceAsync(
+        web3,
+        btcMedianizer,
+        btcPrice,
+        SetTestUtils.generateTimestamp(1000),
+      );
+
+      subjectMedianizerAddress = btcMedianizer.address;
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await oracleAPI.getFeedPriceAsync(
+        subjectMedianizerAddress
+      );
+    }
+
+    test('gets the correct price', async () => {
+      const price = await subject();
+
+      expect(price).to.bignumber.equal(btcPrice);
     });
   });
 });
