@@ -23,6 +23,7 @@ import { ExchangeIssuanceAPI } from './ExchangeIssuanceAPI';
 import { FactoryAPI } from './FactoryAPI';
 import { IssuanceAPI } from './IssuanceAPI';
 import { OracleAPI } from './OracleAPI';
+import { PriceFeedAPI } from './PriceFeedAPI';
 import { RebalancingAPI } from './RebalancingAPI';
 import { RebalancingManagerAPI } from './RebalancingManagerAPI';
 export { RebalancingSetIssuanceAPI } from './RebalancingSetIssuanceAPI';
@@ -37,6 +38,7 @@ export {
   FactoryAPI,
   IssuanceAPI,
   OracleAPI,
+  PriceFeedAPI,
   RebalancingAPI,
   RebalancingManagerAPI,
   SetTokenAPI,

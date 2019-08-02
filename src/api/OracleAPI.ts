@@ -20,26 +20,23 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 
 import {
-  HistoricalPriceFeedWrapper,
-  HistoricalPriceFeedV2Wrapper,
-  MovingAverageOracleWrapper
+  MovingAverageOracleWrapper,
+  MedianizerWrapper,
 } from '../wrappers';
 import { BigNumber } from '../util';
 import {
-  Address,
-  Tx
+  Address
 } from '../types/common';
 
 /**
  * @title OracleAPI
  * @author Set Protocol
  *
- * A library for reading and updating price oracles
+ * A library for reading oracles
  */
 export class OracleAPI {
-  private historicalPriceFeedWrapper: HistoricalPriceFeedWrapper;
-  private historicalPriceFeedV2Wrapper: HistoricalPriceFeedV2Wrapper;
   private movingAverageOracleWrapper: MovingAverageOracleWrapper;
+  private medianizer: MedianizerWrapper;
 
   /**
    * Instantiates a new OracleAPI instance that contains methods for interacting with and updating price oracles
@@ -48,59 +45,25 @@ export class OracleAPI {
    *                      with the Ethereum network
    */
   constructor(web3: Web3) {
-    this.historicalPriceFeedWrapper = new HistoricalPriceFeedWrapper(web3);
-    this.historicalPriceFeedV2Wrapper = new HistoricalPriceFeedV2Wrapper(web3);
     this.movingAverageOracleWrapper = new MovingAverageOracleWrapper(web3);
+    this.medianizer = new MedianizerWrapper(web3);
   }
 
   /**
-   * Returns the Unix timestamp of when the price feed was last updated
+   * Returns the current price feed price
    *
-   * @param  historicalPriceFeed    Address of the HistoricalPriceFeed contract to poll
-   * @return                        Timestamp of when the price feed was last updated
+   * @param medianizerAddress    Address of the medianizer to ping
+   * @return                     Price in base decimal of the asset represented by the medianizer
    */
-  public async getRollingHistoricalFeedLastUpdatedAsync(historicalPriceFeed: Address): Promise<BigNumber> {
-    return await this.historicalPriceFeedWrapper.lastUpdatedAt(historicalPriceFeed);
-  }
+  public async getFeedPriceAsync(medianizerAddress: Address): Promise<BigNumber> {
+    const medianizerUpdateHex = await this.medianizer.read(medianizerAddress);
 
-  /**
-   * Returns the Unix timestamp of when price can feed can next be updated
-   *
-   * @param  historicalPriceFeed    Address of the HistoricalPriceFeedV2 contract to poll
-   * @return                        Timestamp of when the price feed can be updated next
-   */
-  public async getRollingHistoricalFeedNextAvailableUpdateAsync(historicalPriceFeed: Address): Promise<BigNumber> {
-    return await this.historicalPriceFeedV2Wrapper.nextAvailableUpdate(historicalPriceFeed);
-  }
-
-  /**
-   * Returns the current price feed prices for dayCount number of days
-   *
-   * @param  historicalPriceFeed    Address of the HistoricalPriceFeed contract to update
-   * @param  dayCount               Number of days to fetch price data for
-   * @return                        List of prices recorded on the feed
-   */
-  public async getRollingHistoricalFeedPricesAsync(
-    historicalPriceFeed: Address,
-    dayCount: BigNumber
-  ): Promise<BigNumber[]> {
-    return await this.historicalPriceFeedWrapper.read(historicalPriceFeed, dayCount);
-  }
-
-  /**
-   * Updates the price feed to record the current price from another Medianizer oracle
-   *
-   * @param  historicalPriceFeed    Address of the historicalPriceFeed contract to update
-   * @param  txOpts                 The options for executing the transaction
-   * @return                        Transaction hash
-   */
-  public async updateRollingHistoricalFeedPriceAsync(historicalPriceFeedAddress: Address, txOpts: Tx): Promise<string> {
-    return await this.historicalPriceFeedWrapper.poke(historicalPriceFeedAddress, txOpts);
+    return new BigNumber(medianizerUpdateHex);
   }
 
   /**
    * Get the average price of a sequential list of asset prices stored on the MovingAverageOracle's connected
-   * HistoricalPriceFeed contract
+   * HistoricalPriceFeed or TimesSeriesFeed contract
    *
    * @param  movingAverageOracle    Address of the MovingAverageOracle contract
    * @param  txOpts                 The options for executing the transaction

@@ -25,7 +25,7 @@ export {
  RebalancingSetExchangeIssuanceModuleWrapper
 } from './set_protocol/RebalancingSetExchangeIssuanceModuleWrapper';
 export { RebalancingSetIssuanceModuleWrapper } from './set_protocol/RebalancingSetIssuanceModuleWrapper';
-export { PriceFeedWrapper } from './set_protocol/PriceFeedWrapper';
+export { MedianizerWrapper } from './set_protocol/MedianizerWrapper';
 export { ProtocolContractWrapper } from './set_protocol/ProtocolContractWrapper';
 export { RebalancingAuctionModuleWrapper } from './set_protocol/RebalancingAuctionModuleWrapper';
 export { RebalancingSetTokenWrapper } from './set_protocol/RebalancingSetTokenWrapper';
@@ -37,8 +37,8 @@ export { VaultWrapper } from './set_protocol/VaultWrapper';
 export { BTCDAIRebalancingManagerWrapper } from './strategies/BTCDAIRebalancingManagerWrapper';
 export { BTCETHRebalancingManagerWrapper } from './strategies/BTCETHRebalancingManagerWrapper';
 export { ETHDAIRebalancingManagerWrapper } from './strategies/ETHDAIRebalancingManagerWrapper';
-export { HistoricalPriceFeedV2Wrapper } from './strategies/HistoricalPriceFeedV2Wrapper';
 export { HistoricalPriceFeedWrapper } from './strategies/HistoricalPriceFeedWrapper';
 export { MovingAverageOracleWrapper } from './strategies/MovingAverageOracleWrapper';
 export { MACOStrategyManagerWrapper } from './strategies/MACOStrategyManagerWrapper';
 export { StrategyContractWrapper } from './strategies/StrategyContractWrapper';
+export { TimeSeriesFeedWrapper } from './strategies/TimeSeriesFeedWrapper';

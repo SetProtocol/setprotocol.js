@@ -26,16 +26,16 @@ import * as chai from 'chai';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
 import { MedianContract } from 'set-protocol-contracts';
-import { HistoricalPriceFeedV2Contract } from 'set-protocol-strategies';
+import { TimeSeriesFeedContract } from 'set-protocol-strategies';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
-import { HistoricalPriceFeedV2Wrapper } from '@src/wrappers';
+import { TimeSeriesFeedWrapper } from '@src/wrappers';
 import { BigNumber } from '@src/util';
 import {
   addPriceFeedOwnerToMedianizer,
-  deployHistoricalPriceFeedV2Async,
   deployMedianizerAsync,
+  deployTimeSeriesFeedAsync,
   updateMedianizerPriceAsync
 } from '@test/helpers';
 
@@ -49,9 +49,9 @@ const web3Utils = new Web3Utils(web3);
 let currentSnapshotId: number;
 
 
-describe('historicalPriceFeedWrapper', () => {
-  let dailyPriceFeed: HistoricalPriceFeedV2Contract;
-  let historicalPriceFeedWrapper: HistoricalPriceFeedV2Wrapper;
+describe('TimeSeriesFeedWrapper', () => {
+  let dailyPriceFeed: TimeSeriesFeedContract;
+  let timeSeriesFeedWrapper: TimeSeriesFeedWrapper;
 
   const priceFeedUpdateFrequency: BigNumber = new BigNumber(10);
   const initialMedianizerEthPrice: BigNumber = new BigNumber(1000000);
@@ -75,24 +75,25 @@ describe('historicalPriceFeedWrapper', () => {
       SetTestUtils.generateTimestamp(1000),
     );
 
-    dailyPriceFeed = await deployHistoricalPriceFeedV2Async(
+    // Since not testing data quality just use deployed medianizer as dataSource
+    const dataSourceAddress = medianizer.address;
+    dailyPriceFeed = await deployTimeSeriesFeedAsync(
       web3,
-      medianizer.address,
+      dataSourceAddress,
       priceFeedUpdateFrequency,
-      undefined,
       undefined,
       undefined,
       seededPriceFeedPrices
     );
 
-    historicalPriceFeedWrapper = new HistoricalPriceFeedV2Wrapper(web3);
+    timeSeriesFeedWrapper = new TimeSeriesFeedWrapper(web3);
   });
 
   afterEach(async () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('nextAvailableUpdate', async () => {
+  describe('nextEarliestUpdate', async () => {
     let subjectPriceFeedAddress: Address;
 
     beforeEach(async () => {
@@ -100,7 +101,7 @@ describe('historicalPriceFeedWrapper', () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await historicalPriceFeedWrapper.nextAvailableUpdate(
+      return await timeSeriesFeedWrapper.nextEarliestUpdate(
         subjectPriceFeedAddress
       );
     }

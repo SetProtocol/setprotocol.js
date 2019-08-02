@@ -23,13 +23,13 @@ import { Address } from '../../types/common';
 import { Bytes } from 'set-protocol-utils';
 
 /**
- * @title  PriceFeedWrapper
+ * @title  MedianizerWrapper
  * @author Set Protocol
  *
- * The PriceFeedWrapper handles all functions on the Medianzer and PriceFeed smart contracts.
+ * The MedianizerWrapper handles all functions on the Medianzer smart contracts.
  *
  */
-export class PriceFeedWrapper {
+export class MedianizerWrapper {
   private web3: Web3;
   private contracts: ProtocolContractWrapper;
 
