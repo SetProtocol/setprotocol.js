@@ -28,7 +28,7 @@ import Web3 from 'web3';
 import { MedianContract } from 'set-protocol-contracts';
 import { Address, Bytes } from 'set-protocol-utils';
 
-import { PriceFeedWrapper } from '@src/wrappers';
+import { MedianizerWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT } from '@src/constants';
 import { BigNumber } from '@src/util';
 import { deployMedianizerAsync, addPriceFeedOwnerToMedianizer, updateMedianizerPriceAsync } from '@test/helpers';
@@ -44,12 +44,12 @@ let currentSnapshotId: number;
 
 
 describe('PriceFeedWrapper', () => {
-  let priceFeedWrapper: PriceFeedWrapper;
+  let medianizerWrapper: MedianizerWrapper;
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    priceFeedWrapper = new PriceFeedWrapper(web3);
+    medianizerWrapper = new MedianizerWrapper(web3);
   });
 
   afterEach(async () => {
@@ -78,7 +78,7 @@ describe('PriceFeedWrapper', () => {
     });
 
     async function subject(): Promise<Bytes> {
-      return await priceFeedWrapper.read(
+      return await medianizerWrapper.read(
         subjectMedianizerAddress
       );
     }

@@ -25,7 +25,7 @@ export {
  RebalancingSetExchangeIssuanceModuleWrapper
 } from './set_protocol/RebalancingSetExchangeIssuanceModuleWrapper';
 export { RebalancingSetIssuanceModuleWrapper } from './set_protocol/RebalancingSetIssuanceModuleWrapper';
-export { PriceFeedWrapper } from './set_protocol/PriceFeedWrapper';
+export { MedianizerWrapper } from './set_protocol/MedianizerWrapper';
 export { ProtocolContractWrapper } from './set_protocol/ProtocolContractWrapper';
 export { RebalancingAuctionModuleWrapper } from './set_protocol/RebalancingAuctionModuleWrapper';
 export { RebalancingSetTokenWrapper } from './set_protocol/RebalancingSetTokenWrapper';

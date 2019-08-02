@@ -26,7 +26,7 @@ import {
   ETHDAIRebalancingManagerWrapper,
   MACOStrategyManagerWrapper,
   MovingAverageOracleWrapper,
-  PriceFeedWrapper,
+  MedianizerWrapper,
   SetTokenWrapper,
   RebalancingSetTokenWrapper,
 } from '../wrappers';
@@ -57,7 +57,7 @@ export class RebalancingManagerAPI {
   private assert: Assertions;
   private setToken: SetTokenWrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
-  private priceFeed: PriceFeedWrapper;
+  private medianizer: MedianizerWrapper;
   private movingAverageOracleWrapper: MovingAverageOracleWrapper;
 
   private btcEthRebalancingManager: BTCETHRebalancingManagerWrapper;
@@ -80,7 +80,7 @@ export class RebalancingManagerAPI {
 
     this.assert = assertions;
     this.setToken = new SetTokenWrapper(web3);
-    this.priceFeed = new PriceFeedWrapper(web3);
+    this.medianizer = new MedianizerWrapper(web3);
     this.movingAverageOracleWrapper = new MovingAverageOracleWrapper(web3);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(web3);
   }
@@ -423,8 +423,8 @@ export class RebalancingManagerAPI {
     ]);
 
     const [btcPrice, ethPrice] = await Promise.all([
-      this.priceFeed.read(btcPriceFeed),
-      this.priceFeed.read(ethPriceFeed),
+      this.medianizer.read(btcPriceFeed),
+      this.medianizer.read(ethPriceFeed),
     ]);
 
     const btcAllocationAmount = this.computeSetTokenAllocation(
@@ -463,7 +463,7 @@ export class RebalancingManagerAPI {
       this.setToken.getUnits(collateralSet),
     ]);
 
-    const btcPrice = await this.priceFeed.read(btcPriceFeed);
+    const btcPrice = await this.medianizer.read(btcPriceFeed);
 
     const daiAllocationAmount = this.computeSetTokenAllocation(
       collateralUnits,
@@ -501,7 +501,7 @@ export class RebalancingManagerAPI {
       this.setToken.getUnits(collateralSet),
     ]);
 
-    const ethPrice = await this.priceFeed.read(ethPriceFeed);
+    const ethPrice = await this.medianizer.read(ethPriceFeed);
 
     const daiAllocationAmount = this.computeSetTokenAllocation(
       collateralUnits,
@@ -591,7 +591,7 @@ export class RebalancingManagerAPI {
       currentPrice,
       movingAverage,
     ] = await Promise.all([
-      this.priceFeed.read(riskCollateralPriceFeed),
+      this.medianizer.read(riskCollateralPriceFeed),
       this.movingAverageOracleWrapper.read(movingAveragePriceFeed, movingAverageDays),
     ]);
 

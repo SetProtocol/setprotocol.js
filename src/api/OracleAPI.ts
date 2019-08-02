@@ -21,7 +21,7 @@ import Web3 from 'web3';
 
 import {
   MovingAverageOracleWrapper,
-  PriceFeedWrapper,
+  MedianizerWrapper,
 } from '../wrappers';
 import { BigNumber } from '../util';
 import {
@@ -36,7 +36,7 @@ import {
  */
 export class OracleAPI {
   private movingAverageOracleWrapper: MovingAverageOracleWrapper;
-  private priceFeed: PriceFeedWrapper;
+  private medianizer: MedianizerWrapper;
 
   /**
    * Instantiates a new OracleAPI instance that contains methods for interacting with and updating price oracles
@@ -46,7 +46,7 @@ export class OracleAPI {
    */
   constructor(web3: Web3) {
     this.movingAverageOracleWrapper = new MovingAverageOracleWrapper(web3);
-    this.priceFeed = new PriceFeedWrapper(web3);
+    this.medianizer = new MedianizerWrapper(web3);
   }
 
   /**
@@ -56,9 +56,9 @@ export class OracleAPI {
    * @return                     Price in base decimal of the asset represented by the medianizer
    */
   public async getFeedPriceAsync(medianizerAddress: Address): Promise<BigNumber> {
-    const priceFeedUpdateHex = await this.priceFeed.read(medianizerAddress);
+    const medianizerUpdateHex = await this.medianizer.read(medianizerAddress);
 
-    return new BigNumber(priceFeedUpdateHex);
+    return new BigNumber(medianizerUpdateHex);
   }
 
   /**
