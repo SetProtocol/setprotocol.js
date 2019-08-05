@@ -140,6 +140,7 @@ class SetProtocol {
     this.erc20 = new ERC20API(this.web3, assertions);
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
+    this.priceFeed = new PriceFeedAPI(this.web3);
     this.oracle = new OracleAPI(this.web3);
     this.setToken = new SetTokenAPI(this.web3, assertions);
     this.system = new SystemAPI(this.web3, this.core, config);
