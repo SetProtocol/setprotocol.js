@@ -27,6 +27,7 @@ import {
   FactoryAPI,
   IssuanceAPI,
   OracleAPI,
+  PriceFeedAPI,
   RebalancingAPI,
   RebalancingManagerAPI,
   RebalancingSetIssuanceAPI,
@@ -77,10 +78,15 @@ class SetProtocol {
   public exchangeIssuance: ExchangeIssuanceAPI;
 
   /**
+   * An instance of the PriceFeedAPI class containing methods for interacting
+   * with various Price Feed contracts and their data sources
+   */
+  public priceFeed: PriceFeedAPI;
+
+  /**
    * An instance of the RebalancingAPI class containing methods for rebalancing Sets
    */
   public rebalancing: RebalancingAPI;
-
 
   /**
    * An instance of the RebalancingSetIssuanceAPI class containing methods for rebalancing Set issuances.
@@ -103,7 +109,7 @@ class SetProtocol {
   public system: SystemAPI;
 
   /**
-   * An instance of the OracleAPI class containing methods for interacting with Price Feeds and Moving Average Oracles
+   * An instance of the OracleAPI class containing methods for interacting with Medianzer and Moving Average Oracles
    */
   public oracle: OracleAPI;
 
