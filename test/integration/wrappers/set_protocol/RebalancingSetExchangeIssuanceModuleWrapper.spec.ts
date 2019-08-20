@@ -53,6 +53,7 @@ import {
   DEFAULT_UNIT_SHARES,
   DEFAULT_GAS_LIMIT,
   DEFAULT_REBALANCING_NATURAL_UNIT,
+  UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
 } from '@src/constants';
 import {
   addAuthorizationAsync,
@@ -68,6 +69,8 @@ import {
   deployTokensSpecifyingDecimals,
   deployWethMockAsync,
   deployZeroExExchangeWrapperContract,
+  getGasUsageInEth,
+  transferTokenAsync,
 } from '@test/helpers';
 import { BigNumber, ether } from '@src/util';
 import { Address, ZeroExSignedFillOrder, KyberTrade } from '@src/types/common';
@@ -93,6 +96,8 @@ const kyberNetworkHelper = new KyberNetworkHelper();
 
 const ownerAccount = DEFAULT_ACCOUNT;
 const kyberReserveOperator = ACCOUNTS[1].address;
+const functionCaller = ACCOUNTS[2].address;
+const zeroExOrderMaker = ACCOUNTS[3].address;
 
 describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
   let transferProxy: TransferProxyContract;
@@ -372,14 +377,14 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
         zeroExTakerAssetAmount,                                               // amount of zeroExOrder to fill
       );
 
-      await erc20Helper.approveTransfersAsync(
+      await approveForTransferAsync(
         [baseSetComponent],
         SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
         zeroExOrderMaker
       );
 
       // Fund zero Ex Order Maker
-      await erc20Helper.transferTokenAsync(
+      await transferTokenAsync(
         baseSetComponent,
         zeroExOrderMaker,
         zeroExMakerAssetAmount,
@@ -419,7 +424,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       );
 
       // Fund Kyber Reserve Operator
-      await erc20Helper.transferTokenAsync(
+      await transferTokenAsync(
         baseSetComponent2,
         kyberReserveOperator,
         kyberTrade.maxDestinationQuantity,
@@ -435,7 +440,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       subjectExchangeIssuanceParams = exchangeIssuanceParams;
       subjectExchangeOrdersData = setUtils.generateSerializedOrders([zeroExOrder, kyberTrade]);
       subjectKeepChangeInVault = false;
-      subjectCaller = tokenPurchaser;
+      subjectCaller = functionCaller;
       subjectEtherValue = totalEther.toString();
     });
 
@@ -448,7 +453,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     });
 
     async function subject(): Promise<string> {
-      return rebalancingSetExchangeIssuanceModule.rebalancingSetExchangeIssuanceModuleWrapper.sendTransactionAsync(
+      return rebalancingSetExchangeIssuanceModule.issueRebalancingSetWithEther.sendTransactionAsync(
         subjectRebalancingSetAddress,
         subjectRebalancingSetQuantity,
         subjectExchangeIssuanceParams,
@@ -472,7 +477,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       const previousEthBalance: BigNumber = new BigNumber(await web3.eth.getBalance(subjectCaller));
 
       const txHash = await subject();
-      const totalGasInEth = await getGasUsageInEth(txHash);
+      const totalGasInEth = await getGasUsageInEth(web3, txHash);
       const expectedEthBalance = previousEthBalance
                                   .sub(exchangeIssuanceSendTokenQuantity)
                                   .sub(wethRequiredToIssueBaseSet)
@@ -486,7 +491,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       const excessEth = new BigNumber(10 ** 10);
 
       describe('', async () => {
-        before(async () => {
+        beforeAll(async () => {
           customExchangeIssuanceSendTokenQuantity = new BigNumber(2).mul(10 ** 18).plus(excessEth);
         });
 
@@ -494,7 +499,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
           const previousEthBalance: BigNumber = new BigNumber(await web3.eth.getBalance(subjectCaller));
 
           const txHash = await subject();
-          const totalGasInEth = await getGasUsageInEth(txHash);
+          const totalGasInEth = await getGasUsageInEth(web3, txHash);
           const expectedEthBalance = previousEthBalance
                                       .sub(exchangeIssuanceSendTokenQuantity)
                                       .add(excessEth)
@@ -504,235 +509,6 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
           const currentEthBalance = await web3.eth.getBalance(subjectCaller);
           expect(currentEthBalance).to.bignumber.equal(expectedEthBalance);
         });
-      });
-
-      describe('', async () => {
-        before(async () => {
-          customExchangeIssuanceSendTokenQuantity = new BigNumber(2).mul(10 ** 18).plus(excessEth);
-        });
-
-        it('emits log with correct refund quantity', async () => {
-          const txHash = await subject();
-          const expectedEthBalance = excessEth;
-
-          const formattedLogs = await setTestUtils.getLogsFromTxHash(txHash);
-          const expectedLogs = LogPayableExchangeIssue(
-            subjectRebalancingSetAddress,
-            subjectCaller,
-            weth.address,
-            subjectRebalancingSetQuantity,
-            expectedEthBalance,
-            rebalancingSetExchangeIssuanceModule.address,
-          );
-
-          await SetTestUtils.assertLogEquivalence(formattedLogs, expectedLogs);
-        });
-      });
-    });
-
-    describe('when zeroEx sendToken amount is greater than amount needed to execute 0x trade', async () => {
-      before(async () => {
-        customWethUsedInZeroExTrade = new BigNumber(10 ** 18);
-        customZeroExSendTokenQuantity = new BigNumber(10 ** 18).times(2);
-      });
-
-      it('refunds the unused Ether from the 0x trade', async () => {
-        const previousEthBalance: BigNumber = new BigNumber(await web3.eth.getBalance(subjectCaller));
-
-        const txHash = await subject();
-        const totalGasInEth = await getGasUsageInEth(txHash);
-        const expectedEthBalance = previousEthBalance
-                                    .sub(customWethUsedInZeroExTrade)
-                                    .sub(kyberSendTokenQuantity)
-                                    .sub(wethRequiredToIssueBaseSet)
-                                    .sub(totalGasInEth);
-
-        const currentEthBalance = await web3.eth.getBalance(subjectCaller);
-        expect(currentEthBalance).to.bignumber.equal(expectedEthBalance);
-      });
-    });
-
-    describe('when the base Set quantity minted is greater than required for Rebalancing Set issuance', async () => {
-      const excessBaseSetIssued = new BigNumber(10 ** 17);
-
-      describe('and keepChangeInVault is false', async () => {
-        before(async () => {
-          customRebalancingSetIssueQuantity = DEFAULT_REBALANCING_NATURAL_UNIT;
-          customExchangeIssuanceBaseSetIssueQuantity = new BigNumber(10 ** 18).plus(excessBaseSetIssued);
-        });
-
-        it('refunds the caller the excess base Set', async () => {
-          await subject();
-
-          const ownerBalance = await baseSetToken.balanceOf.callAsync(subjectCaller);
-
-          expect(ownerBalance).to.bignumber.equal(excessBaseSetIssued);
-        });
-      });
-
-      describe('and keepChangeInVault is true', async () => {
-        beforeEach(async () => {
-          subjectKeepChangeInVault = true;
-        });
-
-        before(async () => {
-          customRebalancingSetIssueQuantity = DEFAULT_REBALANCING_NATURAL_UNIT;
-          customExchangeIssuanceBaseSetIssueQuantity = new BigNumber(10 ** 18).plus(excessBaseSetIssued);
-        });
-
-        it('sends to the Vault the excess base Set with ownership attributed to the caller', async () => {
-          await subject();
-
-          const ownerBalance = await vault.getOwnerBalance.callAsync(
-            baseSetToken.address,
-            subjectCaller
-          );
-
-          expect(ownerBalance).to.bignumber.equal(excessBaseSetIssued);
-        });
-      });
-    });
-
-    describe('when the amount of receive token from trade exceeds receive token amount', async () => {
-      before(async () => {
-        // Amount exceeds any calculable quantity of component token
-        customZeroExReceiveTokenAmount = ether(10);
-      });
-
-      it('returns the user the leftover receive token amount', async () => {
-        const previousBalance = await baseSetComponent.balanceOf.callAsync(subjectCaller);
-
-        await subject();
-
-        const expectedOwnerBalance = previousBalance
-                                       .add(customZeroExReceiveTokenAmount)
-                                       .sub(zeroExMakerAssetAmount);
-        const ownerBalance = await baseSetComponent.balanceOf.callAsync(subjectCaller);
-
-        expect(ownerBalance).to.bignumber.equal(expectedOwnerBalance);
-      });
-    });
-
-    describe('when the wrapper does not have enough allowance to transfer weth', async () => {
-      beforeEach(async () => {
-        await weth.changeAllowanceProxy.sendTransactionAsync(
-          rebalancingSetExchangeIssuanceModule.address,
-          transferProxy.address,
-          new BigNumber(0),
-          { gas: DEFAULT_GAS }
-        );
-      });
-
-      it('resets the transferProxy allowance', async () => {
-        const wethAllowance = await weth.allowance.callAsync(
-          rebalancingSetExchangeIssuanceModule.address,
-          transferProxy.address
-        );
-        expect(wethAllowance).to.bignumber.equal(ZERO);
-
-        await subject();
-
-        const expectedWethAllowance = UNLIMITED_ALLOWANCE_IN_BASE_UNITS;
-        const newWethAllowance = await weth.allowance.callAsync(
-          rebalancingSetExchangeIssuanceModule.address,
-          transferProxy.address
-        );
-        expect(newWethAllowance).to.bignumber.equal(expectedWethAllowance);
-      });
-    });
-
-    describe('when a send token address is not wrapped ether', async () => {
-      beforeEach(async () => {
-        const baseSetComponent = await erc20Helper.deployTokenAsync(zeroExOrderMaker);
-        subjectExchangeIssuanceParams.sendTokens = [baseSetComponent.address, weth.address];
-        subjectExchangeIssuanceParams.sendTokenAmounts = [new BigNumber(1), new BigNumber(1)];
-      });
-
-      it('should revert', async () => {
-        await expectRevertError(subject());
-      });
-    });
-
-    describe('when the exchangeIssuanceParams setAddress is not the Rebalancing Sets currentSet', async () => {
-      beforeEach(async () => {
-        subjectExchangeIssuanceParams.setAddress = weth.address;
-      });
-
-      it('should revert', async () => {
-        await expectRevertError(subject());
-      });
-    });
-
-    describe('when the eth sent is insufficient', async () => {
-      before(async () => {
-        customWethRequiredToIssueBaseSet = new BigNumber(0);
-      });
-
-      it('should revert', async () => {
-        await expectRevertError(subject());
-      });
-    });
-
-    describe('when the rebalancingSetQuantity is zero', async () => {
-      beforeEach(async () => {
-        subjectRebalancingSetQuantity = ZERO;
-      });
-
-      it('should revert', async () => {
-        await expectRevertError(subject());
-      });
-    });
-
-    describe('when the rebalancingSetQuantity is not a multiple of the natural unit', async () => {
-      beforeEach(async () => {
-        subjectRebalancingSetQuantity = DEFAULT_REBALANCING_NATURAL_UNIT.mul(1.5);
-      });
-
-      it('should revert', async () => {
-        await expectRevertError(subject());
-      });
-    });
-
-    describe('when the rebalancingSetAddress is not tracked by Core', async () => {
-      beforeEach(async () => {
-        const proposalPeriod = ONE_DAY_IN_SECONDS;
-        const rebalanceInterval = ONE_DAY_IN_SECONDS;
-        const unTrackedSetToken = await rebalancingHelper.deployRebalancingSetTokenAsync(
-          rebalancingSetTokenFactory.address,
-          ownerAccount,
-          baseSetToken.address,
-          DEFAULT_UNIT_SHARES,
-          DEFAULT_REBALANCING_NATURAL_UNIT,
-          proposalPeriod,
-          rebalanceInterval,
-          whitelist,
-        );
-        subjectRebalancingSetAddress = unTrackedSetToken.address;
-      });
-
-      it('should revert', async () => {
-        await expectRevertError(subject());
-      });
-    });
-
-    describe('when the Set is only made of two components', async () => {
-      before(async () => {
-        customBaseSetComponent = await erc20Helper.deployTokenAsync(ownerAccount);
-        customBaseSetComponent2 = await erc20Helper.deployTokenAsync(ownerAccount);
-
-        customComponents = [customBaseSetComponent.address, customBaseSetComponent2.address];
-        customComponentUnits = [new BigNumber(10 ** 18), new BigNumber(10 ** 18)];
-        customWethRequiredToIssueBaseSet = new BigNumber(0);
-      });
-
-      it('issues the rebalancing Set to the caller', async () => {
-        const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
-        const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(rebalancingSetIssueQuantity);
-
-        await subject();
-
-        const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
-        expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
       });
     });
   });

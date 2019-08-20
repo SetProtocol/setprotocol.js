@@ -470,7 +470,7 @@ export const deployTokenSpecifyingDecimalAsync = async (
   web3: Web3,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<StandardTokenMockContract> => {
-  const tokens = deployTokensSpecifyingDecimals(1, [decimalCount], web3, owner);
+  const tokens = await deployTokensSpecifyingDecimals(1, [decimalCount], web3, owner);
 
   return tokens[0];
 };
@@ -604,6 +604,19 @@ export const approveForTransferAsync = async (
   );
 
   await Promise.all(approvePromises);
+};
+
+export const transferTokenAsync = async (
+  token: StandardTokenMockContract,
+  spender: Address,
+  quantity: BigNumber,
+  from: Address = DEFAULT_ACCOUNT,
+) => {
+  await token.transfer.sendTransactionAsync(
+    spender,
+    quantity,
+    { from },
+  );
 };
 
 export const addAuthorizationAsync = async (
