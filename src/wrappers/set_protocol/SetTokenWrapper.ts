@@ -18,9 +18,9 @@
 
 import Web3 from 'web3';
 
-import { ProtocolContractWrapper } from './ProtocolContractWrapper';
-import { BigNumber } from '../../util';
 import { Address } from '../../types/common';
+import { BigNumber } from '../../util';
+import { ProtocolContractWrapper } from './ProtocolContractWrapper';
 
 /**
  * @title  SetTokenWrapper

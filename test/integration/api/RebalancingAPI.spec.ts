@@ -283,18 +283,12 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Rebalance state', async () => {
       beforeEach(async () => {
         // Transition to rebalance state
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           subjectAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
       });
 
@@ -447,18 +441,12 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToProposeAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
 
         // Fast forward to allow rebalance to be called
@@ -535,18 +523,12 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Default state', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
       });
 
@@ -639,18 +621,12 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToProposeAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
       });
 
@@ -664,18 +640,12 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Rebalance state and enough sets have been rebalanced', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
 
         await rebalanceAuctionModule.bid.sendTransactionAsync(
@@ -720,18 +690,12 @@ describe('RebalancingAPI', () => {
     not enough sets have been rebalanced', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
       });
       it('throw', async () => {
@@ -828,18 +792,12 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToProposeAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
       });
 
@@ -853,21 +811,15 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Rebalance state and is before the pivot time', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
 
-        pivotTime = setAuctionTimeToPivot;
+        pivotTime = new BigNumber(100000);
       });
 
       it('throw', async () => {
@@ -886,8 +838,6 @@ describe('RebalancingAPI', () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
@@ -895,8 +845,6 @@ describe('RebalancingAPI', () => {
           nextSetToken.address,
           setAuctionPriceCurveAddress,
           setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
 
         // Calculate pivot time start
@@ -948,8 +896,6 @@ describe('RebalancingAPI', () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
@@ -957,8 +903,6 @@ describe('RebalancingAPI', () => {
           nextSetToken.address,
           setAuctionPriceCurveAddress,
           setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
 
         await rebalanceAuctionModule.bid.sendTransactionAsync(
@@ -989,9 +933,6 @@ describe('RebalancingAPI', () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
-
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
@@ -999,8 +940,6 @@ describe('RebalancingAPI', () => {
           nextSetToken.address,
           setAuctionPriceCurveAddress,
           setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
 
         // Calculate pivot time start
@@ -1147,18 +1086,12 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToProposeAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
       });
 
@@ -1172,18 +1105,12 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Rebalance state', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
       });
 
@@ -1514,18 +1441,12 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToProposeAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
       });
 
@@ -1539,18 +1460,12 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Rebalance state', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
         );
       });
 
@@ -1564,9 +1479,6 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Drawdown state', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         const setBidAmount = ether(1);
 
         await transitionToDrawdownAsync(
@@ -1575,9 +1487,6 @@ describe('RebalancingAPI', () => {
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice,
           rebalanceAuctionModule,
           setBidAmount,
         );
@@ -1685,18 +1594,12 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToProposeAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
-          setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
+          setAuctionPriceCurveAddress
         );
       });
 
@@ -1710,18 +1613,12 @@ describe('RebalancingAPI', () => {
     describe('when the Rebalancing Set Token is in Rebalance state', async () => {
       beforeEach(async () => {
         const setAuctionPriceCurveAddress = priceCurve.address;
-        const setAuctionTimeToPivot = new BigNumber(100000);
-        const setAuctionStartPrice = new BigNumber(500);
-        const setAuctionPivotPrice = new BigNumber(1000);
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
-          setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
+          setAuctionPriceCurveAddress
         );
       });
 
@@ -2148,10 +2045,7 @@ describe('RebalancingAPI', () => {
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
-          setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice
+          setAuctionPriceCurveAddress
         );
       });
 
@@ -2245,25 +2139,14 @@ describe('RebalancingAPI', () => {
     });
 
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
-      let setAuctionPriceCurveAddress: Address;
-      let setAuctionTimeToPivot: BigNumber;
-      let setAuctionStartPrice: BigNumber;
-      let setAuctionPivotPrice: BigNumber;
-
       beforeEach(async () => {
-        setAuctionPriceCurveAddress = priceCurve.address;
-        setAuctionTimeToPivot = new BigNumber(100000);
-        setAuctionStartPrice = new BigNumber(500);
-        setAuctionPivotPrice = new BigNumber(1000);
+        const setAuctionPriceCurveAddress = priceCurve.address;
         await transitionToProposeAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice,
         );
       });
 
@@ -2394,25 +2277,14 @@ describe('RebalancingAPI', () => {
     });
 
     describe('when the Rebalancing Set Token is in Proposal state', async () => {
-      let setAuctionPriceCurveAddress: Address;
-      let setAuctionTimeToPivot: BigNumber;
-      let setAuctionStartPrice: BigNumber;
-      let setAuctionPivotPrice: BigNumber;
-
       beforeEach(async () => {
-        setAuctionPriceCurveAddress = priceCurve.address;
-        setAuctionTimeToPivot = new BigNumber(100000);
-        setAuctionStartPrice = new BigNumber(500);
-        setAuctionPivotPrice = new BigNumber(1000);
+        const setAuctionPriceCurveAddress = priceCurve.address;
         await transitionToProposeAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice,
         );
       });
 
@@ -2424,25 +2296,14 @@ describe('RebalancingAPI', () => {
     });
 
     describe('when the Rebalancing Set Token is in Rebalance state', async () => {
-      let setAuctionPriceCurveAddress: Address;
-      let setAuctionTimeToPivot: BigNumber;
-      let setAuctionStartPrice: BigNumber;
-      let setAuctionPivotPrice: BigNumber;
-
       beforeEach(async () => {
-        setAuctionPriceCurveAddress = priceCurve.address;
-        setAuctionTimeToPivot = new BigNumber(100000);
-        setAuctionStartPrice = new BigNumber(500);
-        setAuctionPivotPrice = new BigNumber(1000);
+        const setAuctionPriceCurveAddress = priceCurve.address;
         await transitionToRebalanceAsync(
           web3,
           rebalancingSetToken,
           managerAddress,
           nextSetToken.address,
           setAuctionPriceCurveAddress,
-          setAuctionTimeToPivot,
-          setAuctionStartPrice,
-          setAuctionPivotPrice,
         );
       });
 
