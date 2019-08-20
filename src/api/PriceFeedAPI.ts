@@ -19,6 +19,8 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
 
+import { TimeSeriesFeedState } from 'set-protocol-utils';
+
 import {
   HistoricalPriceFeedWrapper,
   TimeSeriesFeedWrapper,
@@ -67,8 +69,18 @@ export class PriceFeedAPI {
    * @param  timeSeriesFeed         Address of the TimeSeriesFeed contract to poll
    * @return                        Timestamp of when the price feed can be updated next
    */
-  public async geTimeSeriesFeedNextEarliestUpdateAsync(timeSeriesFeed: Address): Promise<BigNumber> {
+  public async getTimeSeriesFeedNextEarliestUpdateAsync(timeSeriesFeed: Address): Promise<BigNumber> {
     return await this.timeSeriesFeedWrapper.nextEarliestUpdate(timeSeriesFeed);
+  }
+
+  /**
+   * Fetch TimeSeriesFeed state (nextEarliestUpdate, updateInterval, all logged prices)
+   *
+   * @param  timeSeriesFeed         Address of the TimeSeriesFeed contract to fetch data from
+   * @return                        TimeSeriesFeedState type
+   */
+  public async getTimeSeriesFeedState(timeSeriesFeed: Address): Promise<TimeSeriesFeedState> {
+    return await this.timeSeriesFeedWrapper.getTimeSeriesFeedState(timeSeriesFeed);
   }
 
   /**

@@ -26,7 +26,7 @@ import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import Web3 from 'web3';
-import { Address, Web3Utils } from 'set-protocol-utils';
+import { Address, TimeSeriesFeedState, Web3Utils } from 'set-protocol-utils';
 import * as setProtocolUtils from 'set-protocol-utils';
 import { MedianContract } from 'set-protocol-contracts';
 import { Core } from 'set-protocol-contracts';
@@ -137,7 +137,7 @@ describe('PriceFeedAPI', () => {
     });
   });
 
-  describe('getTimeSeriesFeedNextEarliestUpdateAsync', async () => {
+  describe.only('getTimeSeriesFeedNextEarliestUpdateAsync', async () => {
     let subjectPriceFeedAddress: Address;
 
     beforeEach(async () => {
@@ -153,6 +153,7 @@ describe('PriceFeedAPI', () => {
       const timeSeriesFeed: TimeSeriesFeedContract = await deployTimeSeriesFeedAsync(
         web3,
         medianizer.address,
+        seededPriceFeedPrices,
         priceFeedUpdateFrequency
       );
 
@@ -160,7 +161,7 @@ describe('PriceFeedAPI', () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await priceFeedAPI.geTimeSeriesFeedNextEarliestUpdateAsync(
+      return await priceFeedAPI.getTimeSeriesFeedNextEarliestUpdateAsync(
         subjectPriceFeedAddress,
       );
     }
@@ -172,6 +173,49 @@ describe('PriceFeedAPI', () => {
       const { timestamp } = await web3.eth.getBlock(blockNumber);
       const expectedTimestamp = new BigNumber(timestamp).add(priceFeedUpdateFrequency);
       expect(lastUpdatedTimestamp).to.bignumber.equal(expectedTimestamp);
+    });
+  });
+
+  describe.only('getTimeSeriesFeedState', async () => {
+    let subjectPriceFeedAddress: Address;
+
+    beforeEach(async () => {
+      const medianizer: MedianContract = await deployMedianizerAsync(web3);
+      await addPriceFeedOwnerToMedianizer(medianizer, DEFAULT_ACCOUNT);
+      await updateMedianizerPriceAsync(
+        web3,
+        medianizer,
+        initialMedianizerEthPrice,
+        SetTestUtils.generateTimestamp(1000),
+      );
+
+      const timeSeriesFeed: TimeSeriesFeedContract = await deployTimeSeriesFeedAsync(
+        web3,
+        medianizer.address,
+        seededPriceFeedPrices,
+        priceFeedUpdateFrequency,
+      );
+
+      subjectPriceFeedAddress = timeSeriesFeed.address;
+    });
+
+    async function subject(): Promise<TimeSeriesFeedState> {
+      return await priceFeedAPI.getTimeSeriesFeedState(
+        subjectPriceFeedAddress,
+      );
+    }
+
+    test('fetches the correct TimeSeriesFeedState', async () => {
+      const timeSeriesFeedState = await subject();
+
+      const blockNumber = await web3.eth.getBlockNumber();
+      const { timestamp } = await web3.eth.getBlock(blockNumber);
+      const expectedUpdateTimestamp = new BigNumber(timestamp).add(priceFeedUpdateFrequency);
+
+      expect(timeSeriesFeedState.nextEarliestUpdate).to.bignumber.equal(expectedUpdateTimestamp);
+      expect(timeSeriesFeedState.updateInterval).to.bignumber.equal(priceFeedUpdateFrequency);
+      expect(JSON.stringify(timeSeriesFeedState.timeSeriesDataArray))
+        .to.equal(JSON.stringify(seededPriceFeedPrices.reverse()));
     });
   });
 
@@ -228,10 +272,8 @@ describe('PriceFeedAPI', () => {
         const timeSeriesFeed: TimeSeriesFeedContract = await deployTimeSeriesFeedAsync(
           web3,
           linearizedPriceDataSource.address,
+          seededPriceFeedPrices,
           priceFeedUpdateFrequency,
-          undefined,
-          undefined,
-          seededPriceFeedPrices
         );
 
         increaseChainTimeAsync(web3, new BigNumber(10000000));
@@ -318,10 +360,8 @@ describe('PriceFeedAPI', () => {
         const timeSeriesFeed: TimeSeriesFeedContract = await deployTimeSeriesFeedAsync(
           web3,
           linearizedPriceDataSource.address,
+          seededPriceFeedPrices,
           priceFeedUpdateFrequency,
-          undefined,
-          undefined,
-          seededPriceFeedPrices
         );
 
         newMedianizerPrice = new BigNumber(10 ** 18);
