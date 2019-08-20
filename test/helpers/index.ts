@@ -15,6 +15,7 @@ export {
   deploySetTokenFactoryContract,
   deployTokenAsync,
   deployTokensAsync,
+  deployTokenSpecifyingDecimalAsync,
   deployTokensSpecifyingDecimals,
   deployTransferProxyContract,
   deployVaultContract,

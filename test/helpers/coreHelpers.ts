@@ -11,7 +11,6 @@ import {
   RebalancingSetExchangeIssuanceModule,
   RebalancingSetIssuanceModule,
   RebalanceAuctionModule,
-  RebalancingLibrary,
   RebalancingSetTokenFactory,
   SetTokenFactory,
   FailAuctionLibrary,
@@ -202,48 +201,21 @@ const linkRebalancingLibrariesAsync = async (
     contractToLink: any,
     web3: Web3,
   ): Promise<void> => {
-  const truffleRebalancingLibraryContract = setDefaultTruffleContract(web3, RebalancingLibrary);
-  const truffleRebalancingLibrary = await truffleRebalancingLibraryContract.new();
-
   const truffleProposeLibraryContract = setDefaultTruffleContract(web3, ProposeLibrary);
-  await truffleProposeLibraryContract.link(
-    'RebalancingLibrary',
-    truffleRebalancingLibrary.address
-  );
   const truffleProposeLibrary = await truffleProposeLibraryContract.new();
 
   const truffleStartRebalanceLibraryContract = setDefaultTruffleContract(web3, StartRebalanceLibrary);
-  await truffleStartRebalanceLibraryContract.link(
-    'RebalancingLibrary',
-    truffleRebalancingLibrary.address
-  );
   const truffleStartRebalanceLibrary = await truffleStartRebalanceLibraryContract.new();
 
   const trufflePlaceBidLibraryContract = setDefaultTruffleContract(web3, PlaceBidLibrary);
-  await trufflePlaceBidLibraryContract.link(
-    'RebalancingLibrary',
-    truffleRebalancingLibrary.address
-  );
   const trufflePlaceBidLibrary = await trufflePlaceBidLibraryContract.new();
 
   const truffleSettleRebalanceLibraryContract = setDefaultTruffleContract(web3, SettleRebalanceLibrary);
-  await truffleSettleRebalanceLibraryContract.link(
-    'RebalancingLibrary',
-    truffleRebalancingLibrary.address
-  );
   const truffleSettleRebalanceLibrary = await truffleSettleRebalanceLibraryContract.new();
 
   const truffleFailAuctionLibraryContract = setDefaultTruffleContract(web3, FailAuctionLibrary);
-  await truffleFailAuctionLibraryContract.link(
-    'RebalancingLibrary',
-    truffleRebalancingLibrary.address
-  );
   const truffleFailAuctionLibrary = await truffleFailAuctionLibraryContract.new();
-
-  await contractToLink.link(
-    'RebalancingLibrary',
-    truffleRebalancingLibrary.address
-  );
+    
   await contractToLink.link(
     'ProposeLibrary',
     truffleProposeLibrary.address
@@ -491,6 +463,16 @@ export const deployTokensAsync = async (
   _.times(tokenCount, () => decimals.push(_.random(4, 18)));
 
   return deployTokensSpecifyingDecimals(tokenCount, decimals, web3, owner);
+};
+
+export const deployTokenSpecifyingDecimalAsync = async (
+  decimalCount: number,
+  web3: Web3,
+  owner: Address = DEFAULT_ACCOUNT,
+): Promise<StandardTokenMockContract> => {
+  const tokens = deployTokensSpecifyingDecimals(1, [decimalCount], web3, owner);
+
+  return tokens[0];
 };
 
 export const deployTokensSpecifyingDecimals = async (
