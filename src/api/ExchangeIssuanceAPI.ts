@@ -129,6 +129,7 @@ export class ExchangeIssuanceAPI {
       rebalancingSetQuantity,
       exchangeIssuanceParams,
       orderData,
+      false, // TODO in future PR allow passing in of this parameter
       txOpts,
     );
   }
@@ -165,6 +166,7 @@ export class ExchangeIssuanceAPI {
       rebalancingSetQuantity,
       exchangeIssuanceParams,
       orderData,
+      false, // TODO in future PR allow passing in of this parameter
       txOpts,
     );
   }

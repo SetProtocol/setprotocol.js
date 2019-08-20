@@ -49,13 +49,16 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to issue
    * @param  exchangeIssuanceData     Struct containing data around the base Set issuance
    * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
-   * @param  txOpts                    The options for executing the transaction
+   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transferred to the user
+   *                                     or left in the vault
+   * @param  txOpts                   The options for executing the transaction
    */
   public async issueRebalancingSetWithEther(
     rebalancingSetAddress: Address,
     rebalancingSetQuantity: BigNumber,
     exchangeIssuanceParams: ExchangeIssuanceParams,
     orderData: Bytes,
+    keepChangeInVault: boolean,
     txOpts?: Tx,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
@@ -69,6 +72,52 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
       rebalancingSetQuantity,
       exchangeIssuanceParams,
       orderData,
+      keepChangeInVault,
+      txSettings,
+    );
+  }
+
+  /**
+   * Issue a Rebalancing Set using a specified ERC20 payment token. The payment token is used in ExchangeIssue
+   * to acquire the base SetToken components and issue the base SetToken. The base SetToken is then used to
+   * issue the Rebalancing SetToken. The payment token can be utilized as a component of the base SetToken.
+   * All remaining tokens / change are flushed and returned to the user.
+   * Ahead of calling this function, the user must approve their paymentToken to the transferProxy.
+   *
+   * @param  rebalancingSetAddress     Address of the rebalancing Set to issue
+   * @param  rebalancingSetQuantity    Quantity of the rebalancing Set
+   * @param  paymentTokenAddress       Address of the ERC20 token to pay with
+   * @param  paymentTokenQuantity      Quantity of the payment token
+   * @param  exchangeIssuanceParams    Struct containing data around the base Set issuance
+   * @param  orderData                 Bytecode formatted data with exchange data for acquiring base set components
+   * @param  keepChangeInVault         Boolean signifying whether excess base SetToken is transfered to the user
+   *                                     or left in the vault
+   * @param  txOpts                    The options for executing the transaction
+   */
+  public async issueRebalancingSetWithERC20(
+    rebalancingSetAddress: Address,
+    rebalancingSetQuantity: BigNumber,
+    paymentTokenAddress: Address,
+    paymentTokenQuantity: BigNumber,
+    exchangeIssuanceParams: ExchangeIssuanceParams,
+    orderData: Bytes,
+    keepChangeInVault: boolean,
+    txOpts?: Tx,
+  ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+    const rebalancingSetExchangeIssuanceModuleInstance =
+      await this.contracts.loadRebalancingSetExchangeIssuanceModuleAsync(
+        this.rebalancingSetExchangeIssuanceModule
+      );
+
+    return await rebalancingSetExchangeIssuanceModuleInstance.issueRebalancingSetWithERC20.sendTransactionAsync(
+      rebalancingSetAddress,
+      rebalancingSetQuantity,
+      paymentTokenAddress,
+      paymentTokenQuantity,
+      exchangeIssuanceParams,
+      orderData,
+      keepChangeInVault,
       txSettings,
     );
   }
@@ -81,6 +130,8 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
    * @param  exchangeIssuanceData     Struct containing data around the base Set issuance
    * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
+   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transferred to the user
+   *                                     or left in the vault
    * @param  txOpts                    The options for executing the transaction
    */
   public async redeemRebalancingSetIntoEther(
@@ -88,6 +139,7 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
     rebalancingSetQuantity: BigNumber,
     exchangeIssuanceParams: ExchangeIssuanceParams,
     orderData: Bytes,
+    keepChangeInVault: boolean,
     txOpts?: Tx,
   ): Promise<string> {
     const txSettings = await generateTxOpts(this.web3, txOpts);
@@ -101,6 +153,46 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
       rebalancingSetQuantity,
       exchangeIssuanceParams,
       orderData,
+      keepChangeInVault,
+      txSettings,
+    );
+  }
+
+  /**
+   * Redeems a Rebalancing Set into a specified ERC20 token. The Rebalancing Set is redeemed into the Base Set, and
+   * Base Set components are traded for the ERC20 and sent to the caller.
+   *
+   * @param  rebalancingSetAddress     Address of the rebalancing Set
+   * @param  rebalancingSetQuantity    Quantity of rebalancing Set to redeem
+   * @param  outputTokenAddress        Address of the resulting ERC20 token sent to the user
+   * @param  exchangeIssuanceParams    Struct containing data around the base Set issuance
+   * @param  orderData                 Bytecode formatted data with exchange data for disposing base set components
+   * @param  keepChangeInVault         Boolean signifying whether excess base SetToken is transfered to the user
+   *                                     or left in the vault
+   * @param  txOpts                    The options for executing the transaction
+   */
+  public async redeemRebalancingSetIntoERC20(
+    rebalancingSetAddress: Address,
+    rebalancingSetQuantity: BigNumber,
+    paymentTokenAddress: Address,
+    exchangeIssuanceParams: ExchangeIssuanceParams,
+    orderData: Bytes,
+    keepChangeInVault: boolean,
+    txOpts?: Tx,
+  ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+    const rebalancingSetExchangeIssuanceModuleInstance =
+      await this.contracts.loadRebalancingSetExchangeIssuanceModuleAsync(
+        this.rebalancingSetExchangeIssuanceModule
+      );
+
+    return await rebalancingSetExchangeIssuanceModuleInstance.redeemRebalancingSetIntoERC20.sendTransactionAsync(
+      rebalancingSetAddress,
+      rebalancingSetQuantity,
+      paymentTokenAddress,
+      exchangeIssuanceParams,
+      orderData,
+      keepChangeInVault,
       txSettings,
     );
   }

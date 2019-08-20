@@ -15,6 +15,7 @@ export {
   deploySetTokenFactoryContract,
   deployTokenAsync,
   deployTokensAsync,
+  deployTokenSpecifyingDecimalAsync,
   deployTokensSpecifyingDecimals,
   deployTransferProxyContract,
   deployVaultContract,
@@ -22,6 +23,7 @@ export {
   deployWhitelistContract,
   getTokenBalances,
   registerExchange,
+  transferTokenAsync,
   tokenDeployedOnSnapshot,
 } from './coreHelpers';
 
@@ -64,3 +66,5 @@ export {
 } from './strategyHelpers';
 
 export { getVaultBalances } from './vaultHelpers';
+
+export { getGasUsageInEth } from './web3Helpers';
