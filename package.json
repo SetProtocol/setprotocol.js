@@ -12,9 +12,7 @@
   ],
   "main": "dist/src/index.js",
   "typings": "dist/types/src/index.d.ts",
-  "bin": {
-    "set-chain": "bin/chain"
-  },
+  "bin": {},
   "scripts": {
     "prod": "yarn run build",
     "chain": "bash scripts/init_chain_internal.sh",
