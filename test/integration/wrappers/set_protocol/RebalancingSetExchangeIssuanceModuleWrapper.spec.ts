@@ -50,7 +50,6 @@ import {
   TX_DEFAULTS,
   ZERO,
   ONE_DAY_IN_SECONDS,
-  DEFAULT_UNIT_SHARES,
   DEFAULT_GAS_LIMIT,
   DEFAULT_REBALANCING_NATURAL_UNIT,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
@@ -66,7 +65,6 @@ import {
   deployRebalancingSetExchangeIssuanceModuleAsync,
   deploySetTokenAsync,
   deployTokenSpecifyingDecimalAsync,
-  deployTokensSpecifyingDecimals,
   deployWethMockAsync,
   deployZeroExExchangeWrapperContract,
   getGasUsageInEth,
@@ -197,10 +195,6 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let rebalancingUnitShares: BigNumber;
 
-    let customComponents: Address[];
-    let customComponentUnits: BigNumber[];
-    let customBaseSetComponent: StandardTokenMockContract;
-    let customBaseSetComponent2: StandardTokenMockContract;
 
     // ----------------------------------------------------------------------
     // Issuance Details
@@ -210,9 +204,6 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
 
     let wethRequiredToIssueBaseSet: BigNumber;
 
-    let customWethRequiredToIssueBaseSet: BigNumber;
-    let customRebalancingSetIssueQuantity: BigNumber;
-
     // ----------------------------------------------------------------------
     // Payment / Send Token Details
     // ----------------------------------------------------------------------
@@ -221,10 +212,6 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     let zeroExSendTokenQuantity: BigNumber;
     let kyberSendTokenQuantity: BigNumber;
     let exchangeIssuanceSendTokenQuantity: BigNumber;
-
-    let customExchangeIssuanceSendTokenQuantity: BigNumber;
-    let customWethUsedInZeroExTrade: BigNumber;
-    let customZeroExSendTokenQuantity: BigNumber;
 
     // ----------------------------------------------------------------------
     // Exchange Issuance Variables
@@ -237,16 +224,12 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     let exchangeIssueReceiveTokens: Address[];
     let exchangeIssueReceiveTokenAmounts: BigNumber[];
 
-    let customExchangeIssuanceBaseSetIssueQuantity: BigNumber;
-
     // ----------------------------------------------------------------------
     // 0x Order Variables
     // ----------------------------------------------------------------------
     let zeroExOrder: ZeroExSignedFillOrder;
     let zeroExMakerAssetAmount: BigNumber;
     let zeroExTakerAssetAmount: BigNumber;
-
-    let customZeroExReceiveTokenAmount: BigNumber;
 
     // ----------------------------------------------------------------------
     // Kyber Trade Variables
@@ -261,14 +244,14 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       // ----------------------------------------------------------------------
 
       // Create non-wrapped Ether component tokens
-      baseSetComponent = customBaseSetComponent || await deployTokenSpecifyingDecimalAsync(18, web3, ownerAccount);
-      baseSetComponent2 = customBaseSetComponent2 || await deployTokenSpecifyingDecimalAsync(18, web3, ownerAccount);
+      baseSetComponent = await deployTokenSpecifyingDecimalAsync(18, web3, ownerAccount);
+      baseSetComponent2 = await deployTokenSpecifyingDecimalAsync(18, web3, ownerAccount);
 
       // Create the Set (default is 3 components)
-      const componentAddresses = customComponents || [
+      const componentAddresses = [
         baseSetComponent.address, baseSetComponent2.address, weth.address,
       ];
-      const componentUnits = customComponentUnits || [
+      const componentUnits = [
         new BigNumber(10 ** 18), new BigNumber(10 ** 18), new BigNumber(10 ** 18),
       ];
       baseSetNaturalUnit = new BigNumber(10 ** 17);
@@ -303,9 +286,9 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
         .mul(DEFAULT_REBALANCING_NATURAL_UNIT)
         .div(rebalancingUnitShares);
 
-      rebalancingSetIssueQuantity = customRebalancingSetIssueQuantity || impliedRebalancingSetQuantityFromBaseSet;
+      rebalancingSetIssueQuantity = impliedRebalancingSetQuantityFromBaseSet;
 
-      wethRequiredToIssueBaseSet = customWethRequiredToIssueBaseSet ||
+      wethRequiredToIssueBaseSet =
         baseSetIssueQuantity.mul(componentUnits[2]).div(baseSetNaturalUnit);
 
       // ----------------------------------------------------------------------
@@ -313,9 +296,9 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       // ----------------------------------------------------------------------
 
       kyberSendTokenQuantity = new BigNumber(10 ** 18);
-      zeroExSendTokenQuantity = customZeroExSendTokenQuantity || new BigNumber(10 ** 18);
+      zeroExSendTokenQuantity = new BigNumber(10 ** 18);
 
-      exchangeIssuanceSendTokenQuantity = customExchangeIssuanceSendTokenQuantity ||
+      exchangeIssuanceSendTokenQuantity =
         kyberSendTokenQuantity.plus(zeroExSendTokenQuantity);
 
       totalEther = exchangeIssuanceSendTokenQuantity.plus(wethRequiredToIssueBaseSet);
@@ -326,7 +309,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
 
       // Generate exchange issue data
       exchangeIssueSetAddress = baseSetToken.address;
-      exchangeIssueQuantity = customExchangeIssuanceBaseSetIssueQuantity || baseSetIssueQuantity;
+      exchangeIssueQuantity = baseSetIssueQuantity;
       exchangeIssueSendTokenExchangeIds = [SetUtils.EXCHANGES.ZERO_EX, SetUtils.EXCHANGES.KYBER];
       exchangeIssueSendTokens = [weth.address, weth.address];
       exchangeIssueSendTokenAmounts = [zeroExSendTokenQuantity, kyberSendTokenQuantity];
@@ -357,8 +340,8 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       const makerAsset = exchangeIssueReceiveTokens[0];
       const takerAsset = exchangeIssueSendTokens[0];
 
-      zeroExMakerAssetAmount = customZeroExReceiveTokenAmount || exchangeIssueReceiveTokenAmounts[0];
-      zeroExTakerAssetAmount = customWethUsedInZeroExTrade || exchangeIssueSendTokenAmounts[0];
+      zeroExMakerAssetAmount = exchangeIssueReceiveTokenAmounts[0];
+      zeroExTakerAssetAmount = exchangeIssueSendTokenAmounts[0];
 
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
         NULL_ADDRESS,                                                         // senderAddress
@@ -444,16 +427,8 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       subjectEtherValue = totalEther.toString();
     });
 
-    afterEach(async () => {
-      customExchangeIssuanceSendTokenQuantity = undefined;
-      customExchangeIssuanceBaseSetIssueQuantity = undefined;
-      customComponents = undefined;
-      customComponentUnits = undefined;
-      customWethRequiredToIssueBaseSet = undefined;
-    });
-
     async function subject(): Promise<string> {
-      return rebalancingSetExchangeIssuanceModule.issueRebalancingSetWithEther.sendTransactionAsync(
+      return rebalancingSetExchangeIssuanceModuleWrapper.issueRebalancingSetWithEther(
         subjectRebalancingSetAddress,
         subjectRebalancingSetQuantity,
         subjectExchangeIssuanceParams,
@@ -496,7 +471,6 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     let subjectExchangeIssuanceParams: ExchangeIssuanceParams;
     let subjectExchangeOrdersData: Bytes;
     let subjectKeepChangeInVault: boolean;
-    let subjectEtherValue: string;
     let subjectCaller: Address;
 
     // ----------------------------------------------------------------------
@@ -509,10 +483,6 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let rebalancingUnitShares: BigNumber;
 
-    let customComponents: Address[];
-    let customComponentUnits: BigNumber[];
-    let customBaseSetComponent: StandardTokenMockContract;
-    let customBaseSetComponent2: StandardTokenMockContract;
 
     // ----------------------------------------------------------------------
     // Issuance Details
@@ -522,9 +492,6 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
 
     let wethRequiredToIssueBaseSet: BigNumber;
 
-    let customWethRequiredToIssueBaseSet: BigNumber;
-    let customRebalancingSetIssueQuantity: BigNumber;
-
     // ----------------------------------------------------------------------
     // Payment / Send Token Details
     // ----------------------------------------------------------------------
@@ -533,10 +500,6 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     let zeroExSendTokenQuantity: BigNumber;
     let kyberSendTokenQuantity: BigNumber;
     let exchangeIssuanceSendTokenQuantity: BigNumber;
-
-    let customExchangeIssuanceSendTokenQuantity: BigNumber;
-    let customWethUsedInZeroExTrade: BigNumber;
-    let customZeroExSendTokenQuantity: BigNumber;
 
     // ----------------------------------------------------------------------
     // Exchange Issuance Variables
@@ -549,16 +512,12 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     let exchangeIssueReceiveTokens: Address[];
     let exchangeIssueReceiveTokenAmounts: BigNumber[];
 
-    let customExchangeIssuanceBaseSetIssueQuantity: BigNumber;
-
     // ----------------------------------------------------------------------
     // 0x Order Variables
     // ----------------------------------------------------------------------
     let zeroExOrder: ZeroExSignedFillOrder;
     let zeroExMakerAssetAmount: BigNumber;
     let zeroExTakerAssetAmount: BigNumber;
-
-    let customZeroExReceiveTokenAmount: BigNumber;
 
     // ----------------------------------------------------------------------
     // Kyber Trade Variables
@@ -573,14 +532,14 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       // ----------------------------------------------------------------------
 
       // Create non-wrapped Ether component tokens
-      baseSetComponent = customBaseSetComponent || await deployTokenSpecifyingDecimalAsync(18, web3, ownerAccount);
-      baseSetComponent2 = customBaseSetComponent2 || await deployTokenSpecifyingDecimalAsync(18, web3, ownerAccount);
+      baseSetComponent = await deployTokenSpecifyingDecimalAsync(18, web3, ownerAccount);
+      baseSetComponent2 = await deployTokenSpecifyingDecimalAsync(18, web3, ownerAccount);
 
       // Create the Set (default is 3 components)
-      const componentAddresses = customComponents || [
+      const componentAddresses = [
         baseSetComponent.address, baseSetComponent2.address, weth.address,
       ];
-      const componentUnits = customComponentUnits || [
+      const componentUnits = [
         new BigNumber(10 ** 18), new BigNumber(10 ** 18), new BigNumber(10 ** 18),
       ];
       baseSetNaturalUnit = new BigNumber(10 ** 17);
@@ -615,9 +574,9 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
         .mul(DEFAULT_REBALANCING_NATURAL_UNIT)
         .div(rebalancingUnitShares);
 
-      rebalancingSetIssueQuantity = customRebalancingSetIssueQuantity || impliedRebalancingSetQuantityFromBaseSet;
+      rebalancingSetIssueQuantity = impliedRebalancingSetQuantityFromBaseSet;
 
-      wethRequiredToIssueBaseSet = customWethRequiredToIssueBaseSet ||
+      wethRequiredToIssueBaseSet =
         baseSetIssueQuantity.mul(componentUnits[2]).div(baseSetNaturalUnit);
 
       // ----------------------------------------------------------------------
@@ -625,9 +584,9 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       // ----------------------------------------------------------------------
 
       kyberSendTokenQuantity = new BigNumber(10 ** 18);
-      zeroExSendTokenQuantity = customZeroExSendTokenQuantity || new BigNumber(10 ** 18);
+      zeroExSendTokenQuantity = new BigNumber(10 ** 18);
 
-      exchangeIssuanceSendTokenQuantity = customExchangeIssuanceSendTokenQuantity ||
+      exchangeIssuanceSendTokenQuantity =
         kyberSendTokenQuantity.plus(zeroExSendTokenQuantity);
 
       totalWrappedEther = exchangeIssuanceSendTokenQuantity.plus(wethRequiredToIssueBaseSet);
@@ -638,7 +597,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
 
       // Generate exchange issue data
       exchangeIssueSetAddress = baseSetToken.address;
-      exchangeIssueQuantity = customExchangeIssuanceBaseSetIssueQuantity || baseSetIssueQuantity;
+      exchangeIssueQuantity = baseSetIssueQuantity;
       exchangeIssueSendTokenExchangeIds = [SetUtils.EXCHANGES.ZERO_EX, SetUtils.EXCHANGES.KYBER];
       exchangeIssueSendTokens = [weth.address, weth.address];
       exchangeIssueSendTokenAmounts = [zeroExSendTokenQuantity, kyberSendTokenQuantity];
@@ -669,8 +628,8 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       const makerAsset = exchangeIssueReceiveTokens[0];
       const takerAsset = exchangeIssueSendTokens[0];
 
-      zeroExMakerAssetAmount = customZeroExReceiveTokenAmount || exchangeIssueReceiveTokenAmounts[0];
-      zeroExTakerAssetAmount = customWethUsedInZeroExTrade || exchangeIssueSendTokenAmounts[0];
+      zeroExMakerAssetAmount = exchangeIssueReceiveTokenAmounts[0];
+      zeroExTakerAssetAmount = exchangeIssueSendTokenAmounts[0];
 
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
         NULL_ADDRESS,                                                         // senderAddress
@@ -772,16 +731,8 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
       );
     });
 
-    afterEach(async () => {
-      customExchangeIssuanceSendTokenQuantity = undefined;
-      customExchangeIssuanceBaseSetIssueQuantity = undefined;
-      customComponents = undefined;
-      customComponentUnits = undefined;
-      customWethRequiredToIssueBaseSet = undefined;
-    });
-
     async function subject(): Promise<string> {
-      return rebalancingSetExchangeIssuanceModule.issueRebalancingSetWithERC20.sendTransactionAsync(
+      return rebalancingSetExchangeIssuanceModuleWrapper.issueRebalancingSetWithERC20(
         subjectRebalancingSetAddress,
         subjectRebalancingSetQuantity,
         subjectPaymentTokenAddress,
@@ -814,5 +765,652 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     });
   });
 
+  describe('#redeemRebalancingSetIntoEther', async () => {
+    let subjectRebalancingSetAddress: Address;
+    let subjectRebalancingSetQuantity: BigNumber;
+    let subjectExchangeIssuanceParams: ExchangeIssuanceParams;
+    let subjectExchangeOrdersData: Bytes;
+    let subjectKeepChangeInVault: boolean;
+    let subjectCaller: Address;
+
+
+
+    // ----------------------------------------------------------------------
+    // Component and Rebalancing Set
+    // ----------------------------------------------------------------------
+    let baseSetComponent: StandardTokenMockContract;
+    let baseSetComponent2: StandardTokenMockContract;
+    let baseSetToken: SetTokenContract;
+    let baseSetNaturalUnit: BigNumber;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let rebalancingUnitShares: BigNumber;
+
+    // ----------------------------------------------------------------------
+    // Issuance Details
+    // ----------------------------------------------------------------------
+    let rebalancingSetRedeemQuantity: BigNumber;
+    let baseSetRedeemQuantity: BigNumber;
+
+    // ----------------------------------------------------------------------
+    // Payment / Send Token Details
+    // ----------------------------------------------------------------------
+    let wethRequiredToIssueBaseSet: BigNumber;
+
+    let zeroExReceiveTokenQuantity: BigNumber;
+    let kyberReceiveTokenQuantity: BigNumber;
+    let exchangeIssuanceReceiveTokenQuantity: BigNumber;
+
+    let zeroExSendTokenQuantity: BigNumber;
+    let kyberSendTokenQuantity: BigNumber;
+
+    let totalEtherToReceive: BigNumber;
+
+
+    // ----------------------------------------------------------------------
+    // Exchange Issuance Variables
+    // ----------------------------------------------------------------------
+    let exchangeRedeemSetAddress: Address;
+    let exchangeRedeemQuantity: BigNumber;
+    let exchangeRedeemSendTokenExchangeIds: BigNumber[];
+    let exchangeRedeemSendTokens: Address[];
+    let exchangeRedeemSendTokenAmounts: BigNumber[];
+    let exchangeRedeemReceiveTokens: Address[];
+    let exchangeRedeemReceiveTokenAmounts: BigNumber[];
+
+    // ----------------------------------------------------------------------
+    // 0x Order Variables
+    // ----------------------------------------------------------------------
+    let zeroExOrder: ZeroExSignedFillOrder;
+    let zeroExMakerAssetAmount: BigNumber;
+    let zeroExTakerAssetAmount: BigNumber;
+
+    // ----------------------------------------------------------------------
+    // Kyber Trade Variables
+    // ----------------------------------------------------------------------
+    let kyberTrade: KyberTrade;
+    let kyberConversionRatePower: BigNumber;
+
+    beforeEach(async () => {
+      // ----------------------------------------------------------------------
+      // Component and Rebalancing Set Deployment
+      // ----------------------------------------------------------------------
+
+      // Create component token
+      baseSetComponent = await deployTokenSpecifyingDecimalAsync(18, web3, functionCaller);
+      baseSetComponent2 = await deployTokenSpecifyingDecimalAsync(18, web3, functionCaller);
+
+      // Create the Set (2 component where one is WETH)
+      const componentAddresses = [baseSetComponent.address, baseSetComponent2.address, weth.address];
+      const componentUnits =
+        [new BigNumber(10 ** 18), new BigNumber(10 ** 18), new BigNumber(10 ** 18)];
+      baseSetNaturalUnit = new BigNumber(10 ** 17);
+      baseSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        componentUnits,
+        baseSetNaturalUnit,
+      );
+
+      // Create the Rebalancing Set
+      rebalancingUnitShares = new BigNumber(10 ** 18);
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        ownerAccount,
+        baseSetToken.address,
+        ONE_DAY_IN_SECONDS,
+        rebalancingUnitShares,
+      );
+
+      // ----------------------------------------------------------------------
+      // Issuance Details
+      // ----------------------------------------------------------------------
+      baseSetRedeemQuantity = new BigNumber(10 ** 18);
+
+      rebalancingSetRedeemQuantity = baseSetRedeemQuantity
+                                       .mul(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                       .div(rebalancingUnitShares);
+
+      wethRequiredToIssueBaseSet =
+        componentUnits[2].mul(baseSetRedeemQuantity).div(baseSetNaturalUnit);
+
+      // ----------------------------------------------------------------------
+      // Payment / Send and Receive Token Details
+      // ----------------------------------------------------------------------
+
+      kyberReceiveTokenQuantity = ether(1);
+      zeroExReceiveTokenQuantity = ether(1);
+
+      exchangeIssuanceReceiveTokenQuantity = zeroExReceiveTokenQuantity.plus(kyberReceiveTokenQuantity);
+
+      totalEtherToReceive = exchangeIssuanceReceiveTokenQuantity.plus(wethRequiredToIssueBaseSet);
+
+      // ----------------------------------------------------------------------
+      // Exchange Issuance Set up
+      // ----------------------------------------------------------------------
+
+      // Generate exchangeRedeem data
+      exchangeRedeemSetAddress = baseSetToken.address;
+      exchangeRedeemQuantity = baseSetRedeemQuantity;
+      exchangeRedeemSendTokenExchangeIds = [SetUtils.EXCHANGES.ZERO_EX, SetUtils.EXCHANGES.KYBER];
+      exchangeRedeemSendTokens = [componentAddresses[0], componentAddresses[1]];
+
+      zeroExSendTokenQuantity =
+        componentUnits[0].mul(exchangeRedeemQuantity).div(baseSetNaturalUnit);
+      kyberSendTokenQuantity = componentUnits[1].mul(exchangeRedeemQuantity).div(baseSetNaturalUnit);
+
+      exchangeRedeemSendTokenAmounts = [zeroExSendTokenQuantity, kyberSendTokenQuantity];
+      exchangeRedeemReceiveTokens = [weth.address];
+      exchangeRedeemReceiveTokenAmounts = [exchangeIssuanceReceiveTokenQuantity];
+
+      const exchangeIssuanceParams = {
+        setAddress:             exchangeRedeemSetAddress,
+        sendTokenExchangeIds:   exchangeRedeemSendTokenExchangeIds,
+        sendTokens:             exchangeRedeemSendTokens,
+        sendTokenAmounts:       exchangeRedeemSendTokenAmounts,
+        quantity:               exchangeRedeemQuantity,
+        receiveTokens:          exchangeRedeemReceiveTokens,
+        receiveTokenAmounts:    exchangeRedeemReceiveTokenAmounts,
+      };
+
+      // ----------------------------------------------------------------------
+      // 0x Order Set up
+      // ----------------------------------------------------------------------
+
+      const makerAsset = exchangeRedeemReceiveTokens[0];
+      const takerAsset = exchangeRedeemSendTokens[0];
+
+      zeroExMakerAssetAmount = zeroExReceiveTokenQuantity;
+      zeroExTakerAssetAmount = exchangeRedeemSendTokenAmounts[0];
+
+      zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
+        NULL_ADDRESS,                                                         // senderAddress
+        zeroExOrderMaker,                                                     // makerAddress
+        NULL_ADDRESS,                                                         // takerAddress
+        ZERO,                                                                 // makerFee
+        ZERO,                                                                 // takerFee
+        zeroExMakerAssetAmount,                                               // makerAssetAmount
+        zeroExTakerAssetAmount,                                               // takerAssetAmount
+        makerAsset,                                                           // makerAssetAddress
+        takerAsset,                                                           // takerAssetAddress
+        SetUtils.generateSalt(),                                              // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,                                // exchangeAddress
+        NULL_ADDRESS,                                                         // feeRecipientAddress
+        SetTestUtils.generateTimestamp(10000),                                // expirationTimeSeconds
+        zeroExTakerAssetAmount,                                               // amount of zeroExOrder to fill
+      );
+
+      // Approve weth to the transfer proxy
+      await weth.approve.sendTransactionAsync(
+        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        zeroExMakerAssetAmount,
+        { from: zeroExOrderMaker, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      // Deposit weth
+      await weth.deposit.sendTransactionAsync(
+        { from: zeroExOrderMaker, value: zeroExMakerAssetAmount.toString(), gas: DEFAULT_GAS_LIMIT }
+      );
+
+      // ----------------------------------------------------------------------
+      // Kyber Trade Set up
+      // ----------------------------------------------------------------------
+      const maxDestinationQuantity = kyberReceiveTokenQuantity;
+
+      const destinationTokenDecimals = (await weth.decimals.callAsync()).toNumber();
+      const sourceTokenDecimals = (await baseSetComponent2.decimals.callAsync()).toNumber();
+      kyberConversionRatePower = new BigNumber(10).pow(18 + sourceTokenDecimals - destinationTokenDecimals);
+      const minimumConversionRate = maxDestinationQuantity.div(kyberSendTokenQuantity)
+                                                          .mul(kyberConversionRatePower)
+                                                          .round();
+
+      kyberTrade = {
+        sourceToken: baseSetComponent2.address,
+        destinationToken: weth.address,
+        sourceTokenQuantity: kyberSendTokenQuantity,
+        minimumConversionRate: minimumConversionRate,
+        maxDestinationQuantity: maxDestinationQuantity,
+      } as KyberTrade;
+
+      await weth.approve.sendTransactionAsync(
+        kyberNetworkHelper.kyberReserve,
+        UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+        { from: kyberReserveOperator, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      // Deposit weth
+      await weth.deposit.sendTransactionAsync(
+        { from: kyberReserveOperator, value: maxDestinationQuantity.toString(), gas: DEFAULT_GAS_LIMIT }
+      );
+
+      await kyberNetworkHelper.setConversionRates(
+        baseSetComponent2.address,
+        weth.address,
+        kyberSendTokenQuantity,
+        maxDestinationQuantity,
+      );
+
+      // ----------------------------------------------------------------------
+      // Rebalancing Set Issuance
+      // ----------------------------------------------------------------------
+
+      // Approve base component to transfer proxy
+      await approveForTransferAsync(
+        [baseSetComponent, baseSetComponent2],
+        transferProxy.address,
+        functionCaller
+      );
+
+      if (wethRequiredToIssueBaseSet.gt(0)) {
+        // Approve Weth to the transferProxy
+        await weth.approve.sendTransactionAsync(
+          transferProxy.address,
+          wethRequiredToIssueBaseSet,
+          { from: functionCaller, gas: DEFAULT_GAS_LIMIT }
+        );
+
+        // Generate wrapped Ether for the caller
+        await weth.deposit.sendTransactionAsync(
+          { from: functionCaller, value: wethRequiredToIssueBaseSet.toString(), gas: DEFAULT_GAS_LIMIT }
+        );
+      }
+
+      // Issue the Base Set to the vault
+      await core.issueInVault.sendTransactionAsync(
+        baseSetToken.address,
+        baseSetRedeemQuantity,
+        { from: functionCaller, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      await core.issue.sendTransactionAsync(
+        rebalancingSetToken.address,
+        rebalancingSetRedeemQuantity,
+        { from: functionCaller, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      // ----------------------------------------------------------------------
+      // Subject Parameter Definitions
+      // ----------------------------------------------------------------------
+
+      subjectRebalancingSetAddress = rebalancingSetToken.address;
+      subjectRebalancingSetQuantity = rebalancingSetRedeemQuantity;
+      subjectExchangeIssuanceParams = exchangeIssuanceParams;
+      subjectExchangeOrdersData = setUtils.generateSerializedOrders([zeroExOrder, kyberTrade]);
+      subjectKeepChangeInVault = false;
+      subjectCaller = functionCaller;
+    });
+
+    async function subject(): Promise<string> {
+      return rebalancingSetExchangeIssuanceModuleWrapper.redeemRebalancingSetIntoEther(
+        subjectRebalancingSetAddress,
+        subjectRebalancingSetQuantity,
+        subjectExchangeIssuanceParams,
+        subjectExchangeOrdersData,
+        subjectKeepChangeInVault,
+        { from: subjectCaller, gas: DEFAULT_GAS_LIMIT },
+      );
+    }
+
+    it('redeems the rebalancing Set', async () => {
+      const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.sub(subjectRebalancingSetQuantity);
+
+      await subject();
+
+      const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
+
+    it('should increment the users eth balance by the correct quantity', async () => {
+      const previousEthBalance = new BigNumber(await web3.eth.getBalance(subjectCaller));
+
+      const txHash = await subject();
+      const totalGasInEth = await getGasUsageInEth(web3, txHash);
+
+      const expectedEthBalance = previousEthBalance
+                                   .add(totalEtherToReceive)
+                                   .sub(totalGasInEth);
+      const currentEthBalance =  await web3.eth.getBalance(subjectCaller);
+
+      expect(currentEthBalance).to.bignumber.equal(expectedEthBalance);
+    });
+
+    it('increases the 0x makers send token quantity properly', async () => {
+      const previousTakerTokenBalance = await baseSetComponent.balanceOf.callAsync(zeroExOrderMaker);
+      const expectedTakerTokenBalance = previousTakerTokenBalance.add(exchangeRedeemSendTokenAmounts[0]);
+
+      await subject();
+
+      const currentTakerTokenBalance = await baseSetComponent.balanceOf.callAsync(zeroExOrderMaker);
+      expect(expectedTakerTokenBalance).to.bignumber.equal(currentTakerTokenBalance);
+    });
+  });
+
+  describe('#redeemRebalancingSetIntoERC20', async () => {
+    let subjectRebalancingSetAddress: Address;
+    let subjectRebalancingSetQuantity: BigNumber;
+    let subjectReceiveTokenAddress: Address;
+    let subjectExchangeIssuanceParams: ExchangeIssuanceParams;
+    let subjectExchangeOrdersData: Bytes;
+    let subjectKeepChangeInVault: boolean;
+    let subjectCaller: Address;
+
+
+
+    // ----------------------------------------------------------------------
+    // Component and Rebalancing Set
+    // ----------------------------------------------------------------------
+    let baseSetComponent: StandardTokenMockContract;
+    let baseSetComponent2: StandardTokenMockContract;
+    let baseSetToken: SetTokenContract;
+    let baseSetNaturalUnit: BigNumber;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let rebalancingUnitShares: BigNumber;
+
+    // ----------------------------------------------------------------------
+    // Issuance Details
+    // ----------------------------------------------------------------------
+    let rebalancingSetRedeemQuantity: BigNumber;
+    let baseSetRedeemQuantity: BigNumber;
+
+    // ----------------------------------------------------------------------
+    // Payment / Send Token Details
+    // ----------------------------------------------------------------------
+    let wethRequiredToIssueBaseSet: BigNumber;
+
+    let zeroExReceiveTokenQuantity: BigNumber;
+    let kyberReceiveTokenQuantity: BigNumber;
+    let exchangeIssuanceReceiveTokenQuantity: BigNumber;
+
+    let zeroExSendTokenQuantity: BigNumber;
+    let kyberSendTokenQuantity: BigNumber;
+
+    let totalWrappedEtherToReceive: BigNumber;
+
+
+    // ----------------------------------------------------------------------
+    // Exchange Issuance Variables
+    // ----------------------------------------------------------------------
+    let exchangeRedeemSetAddress: Address;
+    let exchangeRedeemQuantity: BigNumber;
+    let exchangeRedeemSendTokenExchangeIds: BigNumber[];
+    let exchangeRedeemSendTokens: Address[];
+    let exchangeRedeemSendTokenAmounts: BigNumber[];
+    let exchangeRedeemReceiveTokens: Address[];
+    let exchangeRedeemReceiveTokenAmounts: BigNumber[];
+
+    // ----------------------------------------------------------------------
+    // 0x Order Variables
+    // ----------------------------------------------------------------------
+    let zeroExOrder: ZeroExSignedFillOrder;
+    let zeroExMakerAssetAmount: BigNumber;
+    let zeroExTakerAssetAmount: BigNumber;
+
+    // ----------------------------------------------------------------------
+    // Kyber Trade Variables
+    // ----------------------------------------------------------------------
+    let kyberTrade: KyberTrade;
+    let kyberConversionRatePower: BigNumber;
+
+    beforeEach(async () => {
+      // ----------------------------------------------------------------------
+      // Component and Rebalancing Set Deployment
+      // ----------------------------------------------------------------------
+
+      // Create component token
+      baseSetComponent = await deployTokenSpecifyingDecimalAsync(18, web3, functionCaller);
+      baseSetComponent2 = await deployTokenSpecifyingDecimalAsync(18, web3, functionCaller);
+
+      // Create the Set (2 component where one is WETH)
+      const componentAddresses = [baseSetComponent.address, baseSetComponent2.address, weth.address];
+      const componentUnits =
+        [new BigNumber(10 ** 18), new BigNumber(10 ** 18), new BigNumber(10 ** 18)];
+      baseSetNaturalUnit = new BigNumber(10 ** 17);
+      baseSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        componentAddresses,
+        componentUnits,
+        baseSetNaturalUnit,
+      );
+
+      // Create the Rebalancing Set
+      rebalancingUnitShares = new BigNumber(10 ** 18);
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        ownerAccount,
+        baseSetToken.address,
+        ONE_DAY_IN_SECONDS,
+        rebalancingUnitShares,
+      );
+
+      // ----------------------------------------------------------------------
+      // Issuance Details
+      // ----------------------------------------------------------------------
+      baseSetRedeemQuantity = new BigNumber(10 ** 18);
+
+      rebalancingSetRedeemQuantity = baseSetRedeemQuantity
+                                       .mul(DEFAULT_REBALANCING_NATURAL_UNIT)
+                                       .div(rebalancingUnitShares);
+
+      wethRequiredToIssueBaseSet =
+        componentUnits[2].mul(baseSetRedeemQuantity).div(baseSetNaturalUnit);
+
+      // ----------------------------------------------------------------------
+      // Payment / Send and Receive Token Details
+      // ----------------------------------------------------------------------
+
+      kyberReceiveTokenQuantity = ether(1);
+      zeroExReceiveTokenQuantity = ether(1);
+
+      exchangeIssuanceReceiveTokenQuantity = zeroExReceiveTokenQuantity.plus(kyberReceiveTokenQuantity);
+
+      totalWrappedEtherToReceive = exchangeIssuanceReceiveTokenQuantity.plus(wethRequiredToIssueBaseSet);
+
+      // ----------------------------------------------------------------------
+      // Exchange Issuance Set up
+      // ----------------------------------------------------------------------
+
+      // Generate exchangeRedeem data
+      exchangeRedeemSetAddress = baseSetToken.address;
+      exchangeRedeemQuantity = baseSetRedeemQuantity;
+      exchangeRedeemSendTokenExchangeIds = [SetUtils.EXCHANGES.ZERO_EX, SetUtils.EXCHANGES.KYBER];
+      exchangeRedeemSendTokens = [componentAddresses[0], componentAddresses[1]];
+
+      zeroExSendTokenQuantity =
+        componentUnits[0].mul(exchangeRedeemQuantity).div(baseSetNaturalUnit);
+      kyberSendTokenQuantity = componentUnits[1].mul(exchangeRedeemQuantity).div(baseSetNaturalUnit);
+
+      exchangeRedeemSendTokenAmounts = [zeroExSendTokenQuantity, kyberSendTokenQuantity];
+      exchangeRedeemReceiveTokens = [weth.address];
+      exchangeRedeemReceiveTokenAmounts = [exchangeIssuanceReceiveTokenQuantity];
+
+      const exchangeIssuanceParams = {
+        setAddress:             exchangeRedeemSetAddress,
+        sendTokenExchangeIds:   exchangeRedeemSendTokenExchangeIds,
+        sendTokens:             exchangeRedeemSendTokens,
+        sendTokenAmounts:       exchangeRedeemSendTokenAmounts,
+        quantity:               exchangeRedeemQuantity,
+        receiveTokens:          exchangeRedeemReceiveTokens,
+        receiveTokenAmounts:    exchangeRedeemReceiveTokenAmounts,
+      };
+
+      // ----------------------------------------------------------------------
+      // 0x Order Set up
+      // ----------------------------------------------------------------------
+
+      const makerAsset = exchangeRedeemReceiveTokens[0];
+      const takerAsset = exchangeRedeemSendTokens[0];
+
+      zeroExMakerAssetAmount = zeroExReceiveTokenQuantity;
+      zeroExTakerAssetAmount = exchangeRedeemSendTokenAmounts[0];
+
+      zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
+        NULL_ADDRESS,                                                         // senderAddress
+        zeroExOrderMaker,                                                     // makerAddress
+        NULL_ADDRESS,                                                         // takerAddress
+        ZERO,                                                                 // makerFee
+        ZERO,                                                                 // takerFee
+        zeroExMakerAssetAmount,                                               // makerAssetAmount
+        zeroExTakerAssetAmount,                                               // takerAssetAmount
+        makerAsset,                                                           // makerAssetAddress
+        takerAsset,                                                           // takerAssetAddress
+        SetUtils.generateSalt(),                                              // salt
+        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,                                // exchangeAddress
+        NULL_ADDRESS,                                                         // feeRecipientAddress
+        SetTestUtils.generateTimestamp(10000),                                // expirationTimeSeconds
+        zeroExTakerAssetAmount,                                               // amount of zeroExOrder to fill
+      );
+
+      // Approve weth to the transfer proxy
+      await weth.approve.sendTransactionAsync(
+        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+        zeroExMakerAssetAmount,
+        { from: zeroExOrderMaker, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      // Deposit weth
+      await weth.deposit.sendTransactionAsync(
+        { from: zeroExOrderMaker, value: zeroExMakerAssetAmount.toString(), gas: DEFAULT_GAS_LIMIT }
+      );
+
+      // ----------------------------------------------------------------------
+      // Kyber Trade Set up
+      // ----------------------------------------------------------------------
+      const maxDestinationQuantity = kyberReceiveTokenQuantity;
+
+      const destinationTokenDecimals = (await weth.decimals.callAsync()).toNumber();
+      const sourceTokenDecimals = (await baseSetComponent2.decimals.callAsync()).toNumber();
+      kyberConversionRatePower = new BigNumber(10).pow(18 + sourceTokenDecimals - destinationTokenDecimals);
+      const minimumConversionRate = maxDestinationQuantity.div(kyberSendTokenQuantity)
+                                                          .mul(kyberConversionRatePower)
+                                                          .round();
+
+      kyberTrade = {
+        sourceToken: baseSetComponent2.address,
+        destinationToken: weth.address,
+        sourceTokenQuantity: kyberSendTokenQuantity,
+        minimumConversionRate: minimumConversionRate,
+        maxDestinationQuantity: maxDestinationQuantity,
+      } as KyberTrade;
+
+      await weth.approve.sendTransactionAsync(
+        kyberNetworkHelper.kyberReserve,
+        UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+        { from: kyberReserveOperator, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      // Deposit weth
+      await weth.deposit.sendTransactionAsync(
+        { from: kyberReserveOperator, value: maxDestinationQuantity.toString(), gas: DEFAULT_GAS_LIMIT }
+      );
+
+      await kyberNetworkHelper.setConversionRates(
+        baseSetComponent2.address,
+        weth.address,
+        kyberSendTokenQuantity,
+        maxDestinationQuantity,
+      );
+
+      // ----------------------------------------------------------------------
+      // Rebalancing Set Issuance
+      // ----------------------------------------------------------------------
+
+      // Approve base component to transfer proxy
+      await approveForTransferAsync(
+        [baseSetComponent, baseSetComponent2],
+        transferProxy.address,
+        functionCaller
+      );
+
+      if (wethRequiredToIssueBaseSet.gt(0)) {
+        // Approve Weth to the transferProxy
+        await weth.approve.sendTransactionAsync(
+          transferProxy.address,
+          wethRequiredToIssueBaseSet,
+          { from: functionCaller, gas: DEFAULT_GAS_LIMIT }
+        );
+
+        // Generate wrapped Ether for the caller
+        await weth.deposit.sendTransactionAsync(
+          { from: functionCaller, value: wethRequiredToIssueBaseSet.toString(), gas: DEFAULT_GAS_LIMIT }
+        );
+      }
+
+      // Issue the Base Set to the vault
+      await core.issueInVault.sendTransactionAsync(
+        baseSetToken.address,
+        baseSetRedeemQuantity,
+        { from: functionCaller, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      await core.issue.sendTransactionAsync(
+        rebalancingSetToken.address,
+        rebalancingSetRedeemQuantity,
+        { from: functionCaller, gas: DEFAULT_GAS_LIMIT }
+      );
+
+      // ----------------------------------------------------------------------
+      // Subject Parameter Definitions
+      // ----------------------------------------------------------------------
+
+      subjectRebalancingSetAddress = rebalancingSetToken.address;
+      subjectRebalancingSetQuantity = rebalancingSetRedeemQuantity;
+      subjectReceiveTokenAddress = weth.address;
+      subjectExchangeIssuanceParams = exchangeIssuanceParams;
+      subjectExchangeOrdersData = setUtils.generateSerializedOrders([zeroExOrder, kyberTrade]);
+      subjectKeepChangeInVault = false;
+      subjectCaller = functionCaller;
+    });
+
+    async function subject(): Promise<string> {
+      return rebalancingSetExchangeIssuanceModuleWrapper.redeemRebalancingSetIntoERC20(
+        subjectRebalancingSetAddress,
+        subjectRebalancingSetQuantity,
+        subjectReceiveTokenAddress,
+        subjectExchangeIssuanceParams,
+        subjectExchangeOrdersData,
+        subjectKeepChangeInVault,
+        { from: subjectCaller, gas: DEFAULT_GAS_LIMIT },
+      );
+    }
+
+    it('redeems the rebalancing Set', async () => {
+      const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      const expectedRBSetTokenBalance = previousRBSetTokenBalance.sub(subjectRebalancingSetQuantity);
+
+      await subject();
+
+      const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+      expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
+
+    it('should increment the users weth balance by the correct quantity', async () => {
+      const previousWethBalance = await weth.balanceOf.callAsync(subjectCaller);
+
+      await subject();
+
+      const expectedWethBalance = previousWethBalance.add(totalWrappedEtherToReceive);
+      const currentWethBalance = await weth.balanceOf.callAsync(subjectCaller);
+
+      expect(currentWethBalance).to.bignumber.equal(expectedWethBalance);
+    });
+
+    it('increases the 0x makers send token quantity properly', async () => {
+      const previousTakerTokenBalance = await baseSetComponent.balanceOf.callAsync(zeroExOrderMaker);
+      const expectedTakerTokenBalance = previousTakerTokenBalance.add(exchangeRedeemSendTokenAmounts[0]);
+
+      await subject();
+
+      const currentTakerTokenBalance = await baseSetComponent.balanceOf.callAsync(zeroExOrderMaker);
+      expect(expectedTakerTokenBalance).to.bignumber.equal(currentTakerTokenBalance);
+    });
+  });
 
 });
