@@ -591,7 +591,7 @@ export const registerExchange = async (
 };
 
 export const approveForTransferAsync = async (
-  tokens: StandardTokenMockContract[],
+  tokens: (StandardTokenMockContract | WethMockContract)[],
   spender: Address,
   from: Address = DEFAULT_ACCOUNT,
 ) => {
