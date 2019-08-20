@@ -740,7 +740,7 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
         subjectExchangeIssuanceParams,
         subjectExchangeOrdersData,
         subjectKeepChangeInVault,
-        { from: subjectCaller, gas: DEFAULT_GAS_LIMIT, value: subjectEtherValue },
+        { from: subjectCaller, gas: DEFAULT_GAS_LIMIT },
       );
     }
 
@@ -772,8 +772,6 @@ describe('RebalancingSetExchangeIssuanceModuleWrapper', () => {
     let subjectExchangeOrdersData: Bytes;
     let subjectKeepChangeInVault: boolean;
     let subjectCaller: Address;
-
-
 
     // ----------------------------------------------------------------------
     // Component and Rebalancing Set

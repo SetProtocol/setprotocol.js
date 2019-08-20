@@ -215,7 +215,7 @@ const linkRebalancingLibrariesAsync = async (
 
   const truffleFailAuctionLibraryContract = setDefaultTruffleContract(web3, FailAuctionLibrary);
   const truffleFailAuctionLibrary = await truffleFailAuctionLibraryContract.new();
-    
+
   await contractToLink.link(
     'ProposeLibrary',
     truffleProposeLibrary.address

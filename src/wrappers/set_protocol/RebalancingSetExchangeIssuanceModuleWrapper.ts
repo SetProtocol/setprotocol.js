@@ -49,9 +49,9 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to issue
    * @param  exchangeIssuanceData     Struct containing data around the base Set issuance
    * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
-   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transferred to the user 
+   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transferred to the user
    *                                     or left in the vault
-   * @param  txOpts                    The options for executing the transaction
+   * @param  txOpts                   The options for executing the transaction
    */
   public async issueRebalancingSetWithEther(
     rebalancingSetAddress: Address,
@@ -90,7 +90,7 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
    * @param  paymentTokenQuantity      Quantity of the payment token
    * @param  exchangeIssuanceParams    Struct containing data around the base Set issuance
    * @param  orderData                 Bytecode formatted data with exchange data for acquiring base set components
-   * @param  keepChangeInVault         Boolean signifying whether excess base SetToken is transfered to the user 
+   * @param  keepChangeInVault         Boolean signifying whether excess base SetToken is transfered to the user
    *                                     or left in the vault
    * @param  txOpts                    The options for executing the transaction
    */
@@ -130,7 +130,7 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
    * @param  exchangeIssuanceData     Struct containing data around the base Set issuance
    * @param  orderData                Bytecode formatted data with exchange data for acquiring base set components
-   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transferred to the user 
+   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transferred to the user
    *                                     or left in the vault
    * @param  txOpts                    The options for executing the transaction
    */
@@ -167,7 +167,7 @@ export class RebalancingSetExchangeIssuanceModuleWrapper {
    * @param  outputTokenAddress        Address of the resulting ERC20 token sent to the user
    * @param  exchangeIssuanceParams    Struct containing data around the base Set issuance
    * @param  orderData                 Bytecode formatted data with exchange data for disposing base set components
-   * @param  keepChangeInVault         Boolean signifying whether excess base SetToken is transfered to the user 
+   * @param  keepChangeInVault         Boolean signifying whether excess base SetToken is transfered to the user
    *                                     or left in the vault
    * @param  txOpts                    The options for executing the transaction
    */
