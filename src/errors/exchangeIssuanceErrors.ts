@@ -23,14 +23,16 @@ export const exchangeIssuanceErrors = {
     `The quantity of base set redeemable from the quantity of the rebalancing set: ` +
     `${quantityFromRebalancingSetQuantity} must be greater or equal to the amount required for the redemption ` +
     `trades: ${quantityToTrade}`,
-  PAYMENT_TOKEN_NOT_WETH: (paymentToken: string, wethAddress: string) => `Payment token at ${paymentToken} is ` +
-    `not the expected wrapped ether token at ${wethAddress}`,
+  INVALID_SEND_TOKEN: (sendToken: string, paymentToken: string) => `Send token at ${sendToken} is ` +
+    `not the payment token at ${paymentToken}`,
+  INVALID_RECEIVE_TOKEN: (receiveToken: string, outputToken: string) => `Receive token at ${receiveToken} is ` +
+    `not the output token at ${outputToken}`,
   ISSUING_SET_NOT_BASE_SET: (setAddress: string, currentSet: string) => `Set token at ${setAddress} is ` +
     `not the expected rebalancing set token current Set at ${currentSet}`,
   REDEEMING_SET_NOT_BASE_SET: (setAddress: string, currentSet: string) => `Set token at ${setAddress} is ` +
     `not the expected rebalancing set token current Set at ${currentSet}`,
-  ETHER_VALUE_NOT_UNDEFINED: () =>
-    `Ether value should not be undefined`,
+  PAYMENT_TOKEN_QUANTITY_NOT_UNDEFINED: () =>
+    `Payment Token quantity value should not be undefined (txOpts.value if Wrapped Ether)`,
   TRADE_TOKENS_NOT_COMPONENT: (setAddress: string, componentAddress: string) => `Component at ${componentAddress} ` +
     `is not part of the collateralizing set at ${setAddress}`,
 };

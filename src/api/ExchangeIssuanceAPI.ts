@@ -124,7 +124,12 @@ export class ExchangeIssuanceAPI {
     keepChangeInVault: boolean,
     txOpts: Tx
   ): Promise<string> {
-    await this.assertIssueRebalancingSetWithEther(rebalancingSetAddress, exchangeIssuanceParams, orders, txOpts);
+    await this.assertIssueRebalancingSetWithEther(
+      rebalancingSetAddress,
+      exchangeIssuanceParams,
+      orders,
+      txOpts,
+    );
 
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
     return this.rebalancingSetExchangeIssuanceModule.issueRebalancingSetWithEther(
@@ -164,7 +169,14 @@ export class ExchangeIssuanceAPI {
     keepChangeInVault: boolean,
     txOpts: Tx
   ): Promise<string> {
-    // TODO - Add assertions
+    await this.assertIssueRebalancingSetWithERC20(
+      rebalancingSetAddress,
+      paymentTokenAddress,
+      paymentTokenQuantity,
+      exchangeIssuanceParams,
+      orders,
+      txOpts,
+    );
 
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
     return this.rebalancingSetExchangeIssuanceModule.issueRebalancingSetWithERC20(
@@ -200,9 +212,10 @@ export class ExchangeIssuanceAPI {
     keepChangeInVault: boolean,
     txOpts: Tx
   ): Promise<string> {
-    await this.assertRedeemRebalancingSetIntoEther(
+    await this.assertRedeemRebalancingSetIntoERC20(
       rebalancingSetAddress,
       rebalancingSetQuantity,
+      this.wrappedEther,
       exchangeIssuanceParams,
       orders,
       txOpts,
@@ -235,19 +248,26 @@ export class ExchangeIssuanceAPI {
   public async redeemRebalancingSetIntoERC20Async(
     rebalancingSetAddress: Address,
     rebalancingSetQuantity: BigNumber,
-    paymentTokenAddress: Address,
+    outputTokenAddress: Address,
     exchangeIssuanceParams: ExchangeIssuanceParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
     keepChangeInVault: boolean,
     txOpts: Tx
   ): Promise<string> {
-    // TODO: Add assertions
+    await this.assertRedeemRebalancingSetIntoERC20(
+      rebalancingSetAddress,
+      rebalancingSetQuantity,
+      outputTokenAddress,
+      exchangeIssuanceParams,
+      orders,
+      txOpts,
+    );
 
     const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
     return this.rebalancingSetExchangeIssuanceModule.redeemRebalancingSetIntoERC20(
       rebalancingSetAddress,
       rebalancingSetQuantity,
-      paymentTokenAddress,
+      outputTokenAddress,
       exchangeIssuanceParams,
       orderData,
       keepChangeInVault,
@@ -304,6 +324,26 @@ export class ExchangeIssuanceAPI {
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
     txOpts: Tx,
   ) {
+    this.assert.common.isNotUndefined(txOpts.value, exchangeIssuanceErrors.PAYMENT_TOKEN_QUANTITY_NOT_UNDEFINED());
+
+    await this.assertIssueRebalancingSetWithERC20(
+      rebalancingSetAddress,
+      this.wrappedEther,
+      new BigNumber(txOpts.value),
+      exchangeIssuanceParams,
+      orders,
+      txOpts,
+    );
+  }
+
+  private async assertIssueRebalancingSetWithERC20(
+    rebalancingSetAddress: Address,
+    paymentTokenAddress: Address,
+    paymentTokenQuantity: BigNumber,
+    exchangeIssuanceParams: ExchangeIssuanceParams,
+    orders: (KyberTrade | ZeroExSignedFillOrder)[],
+    txOpts: Tx,
+  ) {
     const {
       setAddress,
       sendTokens,
@@ -311,7 +351,7 @@ export class ExchangeIssuanceAPI {
     } = exchangeIssuanceParams;
 
     // Assert valid parameters were passed into issueRebalancingSetWithEther
-    this.assert.common.isNotUndefined(txOpts.value, exchangeIssuanceErrors.ETHER_VALUE_NOT_UNDEFINED());
+    this.assert.common.isNotUndefined(paymentTokenQuantity, exchangeIssuanceErrors.PAYMENT_TOKEN_QUANTITY_NOT_UNDEFINED());
     this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     this.assert.schema.isValidAddress('rebalancingSetAddress', rebalancingSetAddress);
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
@@ -335,23 +375,24 @@ export class ExchangeIssuanceAPI {
       );
     });
 
-    // TODO add assertion that all payment tokens are wrapped Ether
-
-    // Assert payment token is wrapped ether
-    const paymentToken = sendTokens[0];
-    this.assert.common.isEqualAddress(
-      paymentToken,
-      this.wrappedEther,
-      exchangeIssuanceErrors.PAYMENT_TOKEN_NOT_WETH(paymentToken, this.wrappedEther)
-    );
+    // Assert that all payment tokens are wrapped Ether
+    sendTokens.forEach(currentSendToken => {
+      // Assert payment token is wrapped ether
+      this.assert.common.isEqualAddress(
+        currentSendToken,
+        paymentTokenAddress,
+        exchangeIssuanceErrors.INVALID_SEND_TOKEN(currentSendToken, paymentTokenAddress)
+      );
+    });
 
     // Assert valid exchange trade and order parameters
     await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
   }
 
-  private async assertRedeemRebalancingSetIntoEther(
+  private async assertRedeemRebalancingSetIntoERC20(
     rebalancingSetAddress: Address,
     rebalancingSetQuantity: BigNumber,
+    outputTokenAddress: Address,
     exchangeIssuanceParams: ExchangeIssuanceParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
     txOpts: Tx,
@@ -405,8 +446,8 @@ export class ExchangeIssuanceAPI {
     const receiveToken = receiveTokens[0];
     this.assert.common.isEqualAddress(
       receiveToken,
-      this.wrappedEther,
-      exchangeIssuanceErrors.PAYMENT_TOKEN_NOT_WETH(receiveToken, this.wrappedEther)
+      outputTokenAddress,
+      exchangeIssuanceErrors.INVALID_RECEIVE_TOKEN(receiveToken, outputTokenAddress)
     );
 
     // Assert valid exchange trade and order parameters
