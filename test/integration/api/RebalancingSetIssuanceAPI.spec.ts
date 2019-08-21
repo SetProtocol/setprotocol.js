@@ -617,7 +617,7 @@ describe('RebalancingSetIssuanceAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `Ether value should not be undefined`
+          `Payment Token quantity value should not be undefined (txOpts.value if Wrapped Ether)`
         );
       });
     });
