@@ -195,7 +195,7 @@ export class RebalancingSetIssuanceAPI {
     rebalancingSetQuantity: BigNumber,
     txOpts: Tx,
   ) {
-    this.assert.common.isNotUndefined(txOpts.value, exchangeIssuanceErrors.ETHER_VALUE_NOT_UNDEFINED());
+    this.assert.common.isNotUndefined(txOpts.value, exchangeIssuanceErrors.PAYMENT_TOKEN_QUANTITY_NOT_UNDEFINED());
 
     await this.assert.issuance.assertRebalancingSetTokenIssueWrappingEther(
       rebalancingSetAddress,

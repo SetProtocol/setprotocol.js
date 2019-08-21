@@ -1322,8 +1322,6 @@ describe('ExchangeIssuanceAPI', () => {
 
       exchangeIssuanceReceiveTokenQuantity = zeroExReceiveTokenQuantity.plus(kyberReceiveTokenQuantity);
 
-      totalEtherToReceive = exchangeIssuanceReceiveTokenQuantity.plus(wethRequiredToIssueBaseSet);
-
       // ----------------------------------------------------------------------
       // Exchange Issuance Set up
       // ----------------------------------------------------------------------
@@ -1733,8 +1731,6 @@ describe('ExchangeIssuanceAPI', () => {
       zeroExReceiveTokenQuantity = ether(1);
 
       exchangeIssuanceReceiveTokenQuantity = zeroExReceiveTokenQuantity.plus(kyberReceiveTokenQuantity);
-
-      totalWrappedEtherToReceive = exchangeIssuanceReceiveTokenQuantity.plus(wethRequiredToIssueBaseSet);
 
       // ----------------------------------------------------------------------
       // Exchange Issuance Set up

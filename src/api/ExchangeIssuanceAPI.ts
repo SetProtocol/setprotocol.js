@@ -351,7 +351,10 @@ export class ExchangeIssuanceAPI {
     } = exchangeIssuanceParams;
 
     // Assert valid parameters were passed into issueRebalancingSetWithEther
-    this.assert.common.isNotUndefined(paymentTokenQuantity, exchangeIssuanceErrors.PAYMENT_TOKEN_QUANTITY_NOT_UNDEFINED());
+    this.assert.common.isNotUndefined(
+      paymentTokenQuantity,
+      exchangeIssuanceErrors.PAYMENT_TOKEN_QUANTITY_NOT_UNDEFINED(),
+    );
     this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     this.assert.schema.isValidAddress('rebalancingSetAddress', rebalancingSetAddress);
     this.assert.common.isNotEmptyArray(orders, coreAPIErrors.EMPTY_ARRAY('orders'));
