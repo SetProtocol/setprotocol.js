@@ -166,6 +166,7 @@ describe('ExchangeIssuanceAPI', () => {
       rebalancingSetIssuanceModule: NULL_ADDRESS,
       rebalancingSetExchangeIssuanceModule: rebalancingSetExchangeIssuanceModule.address,
       wrappedEtherAddress: weth.address,
+      protocolViewerAddress: NULL_ADDRESS,
     } as SetProtocolConfig;
 
     const assertions = new Assertions(web3);

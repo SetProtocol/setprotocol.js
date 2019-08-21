@@ -34,7 +34,15 @@ import { ERC20API } from '@src/api';
 import { DEFAULT_ACCOUNT, DEPLOYED_TOKEN_QUANTITY, TX_DEFAULTS } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber } from '@src/util';
-import { deployBaseContracts, deployTokenAsync } from '@test/helpers';
+import { SetProtocolConfig } from '@src/types/common';
+import {
+  deployBaseContracts,
+  deployTokenAsync,
+  deployTokensAsync,
+  deployProtocolViewerAsync,
+  getTokenBalances,
+  getTokenSupplies,
+} from '@test/helpers';
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');
@@ -52,9 +60,11 @@ describe('ERC20API', () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
     await deployBaseContracts(web3);
+    const protocolViewer = await deployProtocolViewerAsync(web3);
 
     const assertions = new Assertions(web3);
-    erc20API = new ERC20API(web3, assertions);
+    const config = { protocolViewerAddress:  protocolViewer.address } as SetProtocolConfig;
+    erc20API = new ERC20API(web3, assertions, config);
   });
 
   afterEach(async () => {
@@ -108,6 +118,49 @@ describe('ERC20API', () => {
     });
   });
 
+  describe('getTotalSuppliesAsync', async () => {
+    let tokens: StandardTokenMockContract[];
+
+    let subjectTokenAddress: Address[];
+
+    beforeEach(async () => {
+      tokens = await deployTokensAsync(3, web3, DEFAULT_ACCOUNT);
+
+      subjectTokenAddress = tokens.map(token => token.address);
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return await erc20API.getTotalSuppliesAsync(
+        subjectTokenAddress,
+      );
+    }
+
+    test('fetches the supplies correctly', async () => {
+      const tokenSupplies = await subject();
+
+      const expectedTokenSupplies = await getTokenSupplies(tokens);
+      expect(JSON.stringify(tokenSupplies)).to.equal(JSON.stringify(expectedTokenSupplies));
+    });
+
+    describe('when the token address is invalid', async () => {
+      beforeEach(async () => {
+        subjectTokenAddress = ['InvalidTokenAddress'];
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        Expected tokenAddress to conform to schema /Address.
+
+        Encountered: "InvalidTokenAddress"
+
+        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
+      `
+        );
+      });
+    });
+  });
+
   describe('getBalanceOfAsync', async () => {
     let token: StandardTokenMockContract;
 
@@ -137,6 +190,70 @@ describe('ERC20API', () => {
     describe('when the token address is invalid', async () => {
       beforeEach(async () => {
         subjectTokenAddress = 'InvalidTokenAddress';
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        Expected tokenAddress to conform to schema /Address.
+
+        Encountered: "InvalidTokenAddress"
+
+        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
+      `
+        );
+      });
+    });
+
+    describe('when the transaction caller address is invalid', async () => {
+      beforeEach(async () => {
+        subjectTokenOwner = 'InvalidTokenOwnerAddress';
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        Expected userAddress to conform to schema /Address.
+
+        Encountered: "InvalidTokenOwnerAddress"
+
+        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
+      `
+        );
+      });
+    });
+  });
+
+  describe('getBalancesOfAsync', async () => {
+    let tokens: StandardTokenMockContract[];
+
+    let subjectTokenAddress: Address[];
+    let subjectTokenOwner: Address;
+
+    beforeEach(async () => {
+      tokens = await deployTokensAsync(3, web3, DEFAULT_ACCOUNT);
+
+      subjectTokenAddress = tokens.map(token => token.address);
+      subjectTokenOwner = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return await erc20API.getBalancesOfAsync(
+        subjectTokenAddress,
+        subjectTokenOwner,
+      );
+    }
+
+    test('fetches the balances correctly', async () => {
+      const tokenBalances = await subject();
+
+      const expectedTokenBalances = await getTokenBalances(tokens, subjectTokenOwner);
+      expect(JSON.stringify(tokenBalances)).to.equal(JSON.stringify(expectedTokenBalances));
+    });
+
+    describe('when the token address is invalid', async () => {
+      beforeEach(async () => {
+        subjectTokenAddress = ['InvalidTokenAddress'];
       });
 
       test('throws', async () => {

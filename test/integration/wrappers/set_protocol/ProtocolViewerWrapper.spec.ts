@@ -55,7 +55,7 @@ import {
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
   deployConstantAuctionPriceCurveAsync,
-  deployProtocolViewerContract,
+  deployProtocolViewerAsync,
   deploySetTokensAsync,
   getTokenBalances,
   getTokenSupplies,
@@ -137,7 +137,7 @@ describe('ProtocolViewer', () => {
       priceCurve.address
     );
 
-    const protocolViewer = await deployProtocolViewerContract(web3);
+    const protocolViewer = await deployProtocolViewerAsync(web3);
     protocolViewerWrapper = new ProtocolViewerWrapper(web3, protocolViewer.address);
   });
 
@@ -213,10 +213,12 @@ describe('ProtocolViewer', () => {
       expect(auctionLibraryAddress).to.equal(NULL_ADDRESS);
 
       const [
+        proposalStartTime,
         auctionTimeToPivot,
         auctionStartPrice,
         auctionPivotPrice,
       ] = rebalanceProposalState[2];
+      expect(proposalStartTime).to.be.bignumber.equal(ZERO);
       expect(auctionTimeToPivot).to.be.bignumber.equal(ZERO);
       expect(auctionStartPrice).to.be.bignumber.equal(ZERO);
       expect(auctionPivotPrice).to.be.bignumber.equal(ZERO);
@@ -258,6 +260,7 @@ describe('ProtocolViewer', () => {
         expect(auctionLibraryAddress).to.equal(priceCurve.address);
 
         const [
+          proposalStartTime,
           auctionTimeToPivot,
           auctionStartPrice,
           auctionPivotPrice,
@@ -265,6 +268,9 @@ describe('ProtocolViewer', () => {
         expect(auctionTimeToPivot).to.be.bignumber.equal(setAuctionTimeToPivot);
         expect(auctionStartPrice).to.be.bignumber.equal(setAuctionStartPrice);
         expect(auctionPivotPrice).to.be.bignumber.equal(setAuctionPivotPrice);
+
+        const proposedAt = await rebalancingSetToken.proposalStartTime.callAsync();
+        expect(proposalStartTime).to.bignumber.equal(proposedAt);
       });
     });
   });

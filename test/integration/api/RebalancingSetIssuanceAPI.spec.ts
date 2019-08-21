@@ -122,6 +122,7 @@ describe('RebalancingSetIssuanceAPI', () => {
       rebalancingSetExchangeIssuanceModule: NULL_ADDRESS,
       rebalancingSetIssuanceModule: rebalancingSetIssuanceModule.address,
       wrappedEtherAddress: wethMock.address,
+      protocolViewerAddress: NULL_ADDRESS,
     } as SetProtocolConfig;
 
     const assertions = new Assertions(web3);
