@@ -450,6 +450,7 @@ describe('ExchangeIssuanceAPI', () => {
     let subjectRebalancingSetQuantity: BigNumber;
     let subjectExchangeIssuanceData: ExchangeIssuanceParams;
     let subjectExchangeOrders: (KyberTrade | ZeroExSignedFillOrder)[];
+    let subjectKeepChangeInVault: boolean;
     let subjectCaller: Address;
     let subjectTransactionEtherValue: string;
 
@@ -555,6 +556,7 @@ describe('ExchangeIssuanceAPI', () => {
       subjectRebalancingSetAddress = rebalancingSetToken.address;
       subjectCaller = ACCOUNTS[1].address;
       subjectTransactionEtherValue = etherValue.toString();
+      subjectKeepChangeInVault = false;
     });
 
     async function subject(): Promise<string> {
@@ -563,6 +565,7 @@ describe('ExchangeIssuanceAPI', () => {
         subjectRebalancingSetQuantity,
         subjectExchangeIssuanceData,
         subjectExchangeOrders,
+        subjectKeepChangeInVault,
         { from: subjectCaller, value: subjectTransactionEtherValue }
       );
     }
@@ -691,6 +694,7 @@ describe('ExchangeIssuanceAPI', () => {
     let subjectRebalancingSetQuantity: BigNumber;
     let subjectExchangeIssuanceData: ExchangeIssuanceParams;
     let subjectExchangeOrders: (KyberTrade | ZeroExSignedFillOrder)[];
+    let subjectKeepChangeInVault: boolean;
     let subjectCaller: Address;
     let subjectTransactionEtherValue: BigNumber;
 
@@ -817,6 +821,8 @@ describe('ExchangeIssuanceAPI', () => {
         subjectRebalancingSetQuantity,
         { from: subjectCaller }
       );
+
+      subjectKeepChangeInVault = false;
     });
 
     async function subject(): Promise<string> {
@@ -825,6 +831,7 @@ describe('ExchangeIssuanceAPI', () => {
         subjectRebalancingSetQuantity,
         subjectExchangeIssuanceData,
         subjectExchangeOrders,
+        subjectKeepChangeInVault,
         { from: subjectCaller }
       );
     }

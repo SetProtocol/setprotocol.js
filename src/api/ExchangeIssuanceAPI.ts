@@ -111,6 +111,8 @@ export class ExchangeIssuanceAPI {
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to issue
    * @param  exchangeIssuanceParams   Parameters required to facilitate an exchange issuance
    * @param  orders                   A list of signed 0x orders or kyber trades
+   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transferred to the user
+   *                                     or left in the vault
    * @param  txOpts                   Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                          Transaction hash
    */
@@ -119,6 +121,7 @@ export class ExchangeIssuanceAPI {
     rebalancingSetQuantity: BigNumber,
     exchangeIssuanceParams: ExchangeIssuanceParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
+    keepChangeInVault: boolean,
     txOpts: Tx
   ): Promise<string> {
     await this.assertIssueRebalancingSetWithEther(rebalancingSetAddress, exchangeIssuanceParams, orders, txOpts);
@@ -129,7 +132,49 @@ export class ExchangeIssuanceAPI {
       rebalancingSetQuantity,
       exchangeIssuanceParams,
       orderData,
-      false, // TODO in future PR allow passing in of this parameter
+      keepChangeInVault,
+      txOpts,
+    );
+  }
+
+  /**
+   * Issue a Rebalancing Set using a specified ERC20 payment token. The payment token is used in ExchangeIssue
+   * to acquire the base SetToken components and issue the base SetToken. The base SetToken is then used to
+   * issue the Rebalancing SetToken. The payment token can be utilized as a component of the base SetToken.
+   * All remaining tokens / change are flushed and returned to the user.
+   * Ahead of calling this function, the user must approve their paymentToken to the transferProxy.
+   *
+   * @param  rebalancingSetAddress     Address of the rebalancing Set to issue
+   * @param  rebalancingSetQuantity    Quantity of the rebalancing Set
+   * @param  paymentTokenAddress       Address of the ERC20 token to pay with
+   * @param  paymentTokenQuantity      Quantity of the payment token
+   * @param  exchangeIssuanceParams    Struct containing data around the base Set issuance
+   * @param  orderData                 Bytecode formatted data with exchange data for acquiring base set components
+   * @param  keepChangeInVault         Boolean signifying whether excess base SetToken is transfered to the user
+   *                                     or left in the vault
+   * @param  txOpts                    The options for executing the transaction
+   */
+  public async issueRebalancingSetWithERC20Async(
+    rebalancingSetAddress: Address,
+    rebalancingSetQuantity: BigNumber,
+    paymentTokenAddress: Address,
+    paymentTokenQuantity: BigNumber,
+    exchangeIssuanceParams: ExchangeIssuanceParams,
+    orders: (KyberTrade | ZeroExSignedFillOrder)[],
+    keepChangeInVault: boolean,
+    txOpts: Tx
+  ): Promise<string> {
+    // TODO - Add assertions
+
+    const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
+    return this.rebalancingSetExchangeIssuanceModule.issueRebalancingSetWithERC20(
+      rebalancingSetAddress,
+      rebalancingSetQuantity,
+      paymentTokenAddress,
+      paymentTokenQuantity,
+      exchangeIssuanceParams,
+      orderData,
+      keepChangeInVault,
       txOpts,
     );
   }
@@ -142,6 +187,8 @@ export class ExchangeIssuanceAPI {
    * @param  rebalancingSetQuantity   Quantity of the rebalancing Set to redeem
    * @param  exchangeIssuanceParams   Parameters required to facilitate an exchange issuance
    * @param  orders                   A list of signed 0x orders or kyber trades
+   * @param  keepChangeInVault        Boolean signifying whether excess base SetToken is transferred to the user
+   *                                     or left in the vault
    * @param  txOpts                   Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return                          Transaction hash
    */
@@ -150,6 +197,7 @@ export class ExchangeIssuanceAPI {
     rebalancingSetQuantity: BigNumber,
     exchangeIssuanceParams: ExchangeIssuanceParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
+    keepChangeInVault: boolean,
     txOpts: Tx
   ): Promise<string> {
     await this.assertRedeemRebalancingSetIntoEther(
@@ -166,7 +214,43 @@ export class ExchangeIssuanceAPI {
       rebalancingSetQuantity,
       exchangeIssuanceParams,
       orderData,
-      false, // TODO in future PR allow passing in of this parameter
+      keepChangeInVault,
+      txOpts,
+    );
+  }
+
+  /**
+   * Redeems a Rebalancing Set into a specified ERC20 token. The Rebalancing Set is redeemed into the Base Set, and
+   * Base Set components are traded for the ERC20 and sent to the caller.
+   *
+   * @param  rebalancingSetAddress     Address of the rebalancing Set
+   * @param  rebalancingSetQuantity    Quantity of rebalancing Set to redeem
+   * @param  outputTokenAddress        Address of the resulting ERC20 token sent to the user
+   * @param  exchangeIssuanceParams    Struct containing data around the base Set issuance
+   * @param  orderData                 Bytecode formatted data with exchange data for disposing base set components
+   * @param  keepChangeInVault         Boolean signifying whether excess base SetToken is transfered to the user
+   *                                     or left in the vault
+   * @param  txOpts                    The options for executing the transaction
+   */
+  public async redeemRebalancingSetIntoERC20Async(
+    rebalancingSetAddress: Address,
+    rebalancingSetQuantity: BigNumber,
+    paymentTokenAddress: Address,
+    exchangeIssuanceParams: ExchangeIssuanceParams,
+    orders: (KyberTrade | ZeroExSignedFillOrder)[],
+    keepChangeInVault: boolean,
+    txOpts: Tx
+  ): Promise<string> {
+    // TODO: Add assertions
+
+    const orderData: Bytes = await this.setProtocolUtils.generateSerializedOrders(orders);
+    return this.rebalancingSetExchangeIssuanceModule.redeemRebalancingSetIntoERC20(
+      rebalancingSetAddress,
+      rebalancingSetQuantity,
+      paymentTokenAddress,
+      exchangeIssuanceParams,
+      orderData,
+      keepChangeInVault,
       txOpts,
     );
   }
