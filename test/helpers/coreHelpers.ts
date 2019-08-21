@@ -659,7 +659,6 @@ export const addWhiteListedTokenAsync = async (
   );
 };
 
-
 export const getTokenBalances = async (
   tokens: StandardTokenMockContract[],
   owner: Address
@@ -674,6 +673,21 @@ export const getTokenBalances = async (
   });
 
   return ownerBalances;
+};
+
+export const getTokenSupplies = async (
+  tokens: StandardTokenMockContract[],
+): Promise<BigNumber[]> => {
+  const supplyPromises = _.map(tokens, token => {
+    return token.totalSupply.callAsync();
+  });
+
+  let supplies: BigNumber[] = new Array(tokens.length).fill(SetProtocolUtils.CONSTANTS.ZERO);
+  await Promise.all(supplyPromises).then(fetchedSupplyBalances => {
+    supplies = fetchedSupplyBalances;
+  });
+
+  return supplies;
 };
 
 export const setDefaultTruffleContract = (web3: Web3, contractInstance: any): any => {

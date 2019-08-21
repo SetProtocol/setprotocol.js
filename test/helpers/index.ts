@@ -22,6 +22,7 @@ export {
   deployWethMockAsync,
   deployWhitelistContract,
   getTokenBalances,
+  getTokenSupplies,
   registerExchange,
   transferTokenAsync,
   tokenDeployedOnSnapshot,
@@ -41,6 +42,10 @@ export {
   deployTimeSeriesFeedAsync,
   updateMedianizerPriceAsync,
 } from './oracleHelpers';
+
+export {
+  deployProtocolViewerContract,
+} from './protocolViewerHelpers';
 
 export {
   addPriceCurveToCoreAsync,
