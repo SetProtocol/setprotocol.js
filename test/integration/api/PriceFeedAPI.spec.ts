@@ -137,7 +137,7 @@ describe('PriceFeedAPI', () => {
     });
   });
 
-  describe.only('getTimeSeriesFeedNextEarliestUpdateAsync', async () => {
+  describe('getTimeSeriesFeedNextEarliestUpdateAsync', async () => {
     let subjectPriceFeedAddress: Address;
 
     beforeEach(async () => {
@@ -176,7 +176,7 @@ describe('PriceFeedAPI', () => {
     });
   });
 
-  describe.only('getTimeSeriesFeedState', async () => {
+  describe('getTimeSeriesFeedState', async () => {
     let subjectPriceFeedAddress: Address;
 
     beforeEach(async () => {
