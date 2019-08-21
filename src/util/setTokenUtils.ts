@@ -28,3 +28,19 @@ export const estimateIssueRedeemGasCost = (numComponents: BigNumber): number => 
     .plus(baseIssueRedeemGasCost)
     .toNumber();
 };
+
+export const parseRebalanceState = (contractRebalanceState: BigNumber): string => {
+  switch (contractRebalanceState.valueOf()) {
+    case '0':
+      return 'Default';
+
+    case '1':
+      return 'Proposal';
+
+    case '2':
+      return 'Rebalance';
+
+    default:
+      return 'Drawdown';
+  }
+};

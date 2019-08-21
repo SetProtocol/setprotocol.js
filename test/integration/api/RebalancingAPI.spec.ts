@@ -58,22 +58,23 @@ import { BigNumber, ether } from '@src/util';
 import { Assertions } from '@src/assertions';
 import ChaiSetup from '@test/helpers/chaiSetup';
 import {
-  addWhiteListedTokenAsync,
   addPriceCurveToCoreAsync,
+  addWhiteListedTokenAsync,
   approveForTransferAsync,
-  constructInflowOutflowArraysAsync,
   constructInflowOutflowAddressesArraysAsync,
+  constructInflowOutflowArraysAsync,
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
   deployConstantAuctionPriceCurveAsync,
+  deployProtocolViewerAsync,
   deploySetTokensAsync,
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync,
   getVaultBalances,
   increaseChainTimeAsync,
+  transitionToDrawdownAsync,
   transitionToProposeAsync,
   transitionToRebalanceAsync,
-  transitionToDrawdownAsync,
 } from '@test/helpers';
 import {
   Address,
@@ -131,6 +132,7 @@ describe('RebalancingAPI', () => {
       vault.address,
     );
 
+    const protocolViewer = await deployProtocolViewerAsync(web3);
     erc20Wrapper = new ERC20Wrapper(web3);
     rebalancingSetTokenWrapper = new RebalancingSetTokenWrapper(web3);
 
@@ -146,6 +148,7 @@ describe('RebalancingAPI', () => {
       rebalancingSetIssuanceModule: NULL_ADDRESS,
       rebalancingSetExchangeIssuanceModule: NULL_ADDRESS,
       wrappedEtherAddress: NULL_ADDRESS,
+      protocolViewerAddress: protocolViewer.address,
     };
 
     const assertions = new Assertions(web3);
@@ -2018,14 +2021,15 @@ describe('RebalancingAPI', () => {
       it('returns the proper proposal details', async () => {
         const proposalDetails = await subject();
 
-        const proposedAt = await rebalancingSetToken.proposalStartTime.callAsync();
-        expect(proposalDetails.proposedAt).to.bignumber.equal(proposedAt);
-
+        expect(proposalDetails.state).to.equal('Proposal');
         expect(proposalDetails.nextSetAddress).eql(nextSetToken.address);
-        expect(proposalDetails.startingPrice).to.bignumber.equal(setAuctionStartPrice);
         expect(proposalDetails.pricingLibraryAddress).eql(setAuctionPriceCurveAddress);
         expect(proposalDetails.timeToPivot).to.bignumber.equal(setAuctionTimeToPivot);
+        expect(proposalDetails.startingPrice).to.bignumber.equal(setAuctionStartPrice);
         expect(proposalDetails.auctionPivotPrice).to.bignumber.equal(setAuctionPivotPrice);
+
+        const proposedAt = await rebalancingSetToken.proposalStartTime.callAsync();
+        expect(proposalDetails.proposalStartTime).to.bignumber.equal(proposedAt);
       });
     });
 
@@ -2052,14 +2056,15 @@ describe('RebalancingAPI', () => {
       it('returns the proper proposal details', async () => {
         const proposalDetails = await subject();
 
-        const proposedAt = await rebalancingSetToken.proposalStartTime.callAsync();
-        expect(proposalDetails.proposedAt).to.bignumber.equal(proposedAt);
-
+        expect(proposalDetails.state).to.equal('Rebalance');
         expect(proposalDetails.nextSetAddress).eql(nextSetToken.address);
-        expect(proposalDetails.startingPrice).to.bignumber.equal(setAuctionStartPrice);
         expect(proposalDetails.pricingLibraryAddress).eql(setAuctionPriceCurveAddress);
         expect(proposalDetails.timeToPivot).to.bignumber.equal(setAuctionTimeToPivot);
+        expect(proposalDetails.startingPrice).to.bignumber.equal(setAuctionStartPrice);
         expect(proposalDetails.auctionPivotPrice).to.bignumber.equal(setAuctionPivotPrice);
+
+        const proposedAt = await rebalancingSetToken.proposalStartTime.callAsync();
+        expect(proposalDetails.proposalStartTime).to.bignumber.equal(proposedAt);
       });
     });
   });
@@ -2185,6 +2190,8 @@ describe('RebalancingAPI', () => {
       it('returns the proper rebalancing details', async () => {
         const rebalanceDetails = await subject();
 
+        expect(rebalanceDetails.state).to.equal('Rebalance');
+
         const [rebalancingStartedAt] = await rebalancingSetToken.getAuctionPriceParameters.callAsync();
         expect(rebalanceDetails.rebalancingStartedAt).to.bignumber.equal(rebalancingStartedAt);
 
@@ -2192,11 +2199,6 @@ describe('RebalancingAPI', () => {
         expect(rebalanceDetails.remainingCurrentSet).to.bignumber.equal(remainingCurrentSets);
         expect(rebalanceDetails.minimumBid).to.bignumber.equal(minimumBid);
 
-        expect(rebalanceDetails.nextSetAddress).eql(nextSetToken.address);
-        expect(rebalanceDetails.startingPrice).to.bignumber.equal(setAuctionStartPrice);
-        expect(rebalanceDetails.pricingLibraryAddress).eql(setAuctionPriceCurveAddress);
-        expect(rebalanceDetails.timeToPivot).to.bignumber.equal(setAuctionTimeToPivot);
-        expect(rebalanceDetails.auctionPivotPrice).to.bignumber.equal(setAuctionPivotPrice);
         expect(rebalanceDetails.startingCurrentSetAmount).to.bignumber.equal(setCurrentSetStartingQuantity);
       });
     });

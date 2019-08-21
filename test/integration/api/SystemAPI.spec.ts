@@ -123,6 +123,7 @@ describe('SystemAPI', () => {
       rebalancingSetIssuanceModule: NULL_ADDRESS,
       rebalancingSetExchangeIssuanceModule: NULL_ADDRESS,
       wrappedEtherAddress: NULL_ADDRESS,
+      protocolViewerAddress: NULL_ADDRESS,
     };
 
     systemAPI = new SystemAPI(web3, coreWrapper, setProtocolConfig);

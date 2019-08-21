@@ -48,24 +48,21 @@ export interface SetDetails {
 }
 
 export interface RebalancingProposalDetails {
-  proposedAt: BigNumber;
+  state: string;
   nextSetAddress: Address;
   pricingLibraryAddress: Address;
+  proposalStartTime: BigNumber;
   timeToPivot: BigNumber;
   startingPrice: BigNumber;
   auctionPivotPrice: BigNumber;
 }
 
 export interface RebalancingProgressDetails {
-  rebalancingStartedAt: BigNumber;
-  nextSetAddress: Address;
-  pricingLibraryAddress: Address;
-  timeToPivot: BigNumber;
-  startingPrice: BigNumber;
-  auctionPivotPrice: BigNumber;
-  remainingCurrentSet: BigNumber;
-  minimumBid: BigNumber;
+  state: string;
   startingCurrentSetAmount: BigNumber;
+  rebalancingStartedAt: BigNumber;
+  minimumBid: BigNumber;
+  remainingCurrentSet: BigNumber;
 }
 
 export interface RebalancingSetDetails {
@@ -88,6 +85,7 @@ export interface SetProtocolConfig {
   coreAddress: Address;
   exchangeIssuanceModuleAddress: Address;
   kyberNetworkWrapperAddress: Address;
+  protocolViewerAddress: Address;
   rebalanceAuctionModuleAddress: Address;
   rebalancingSetExchangeIssuanceModule: Address;
   rebalancingSetIssuanceModule: Address;

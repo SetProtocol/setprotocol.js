@@ -22,7 +22,7 @@ export { getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '.
 export { instantiateWeb3 } from './provider';
 export { IntervalManager } from './intervalManager';
 export { calculatePartialAmount, calculatePercentDifference } from './commonMath';
-export { estimateIssueRedeemGasCost } from './setTokenUtils';
+export { estimateIssueRedeemGasCost, parseRebalanceState } from './setTokenUtils';
 export { getFormattedLogsFromReceipt } from './logs';
 export { generateFutureTimestamp } from './timeStampUtils';
 export { generateTxOpts, getGasUsageInEth } from './transactionUtils';

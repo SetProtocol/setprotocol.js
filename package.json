@@ -66,7 +66,7 @@
     "lodash": "^4.17.4",
     "lodash.compact": "^3.0.1",
     "moment": "^2.22.2",
-    "set-protocol-contracts": "1.2.4",
+    "set-protocol-contracts": "1.2.5",
     "set-protocol-strategies": "1.1.0",
     "set-protocol-utils": "1.0.0-beta.32",
     "timekeeper": "^2.1.2",
