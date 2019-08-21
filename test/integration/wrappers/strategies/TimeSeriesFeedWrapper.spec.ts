@@ -27,7 +27,7 @@ import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
 import { MedianContract } from 'set-protocol-contracts';
 import { TimeSeriesFeedContract } from 'set-protocol-strategies';
-import { Address, Web3Utils } from 'set-protocol-utils';
+import { Address, TimeSeriesFeedState, Web3Utils } from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { TimeSeriesFeedWrapper } from '@src/wrappers';
@@ -80,10 +80,8 @@ describe('TimeSeriesFeedWrapper', () => {
     dailyPriceFeed = await deployTimeSeriesFeedAsync(
       web3,
       dataSourceAddress,
-      priceFeedUpdateFrequency,
-      undefined,
-      undefined,
-      seededPriceFeedPrices
+      seededPriceFeedPrices,
+      priceFeedUpdateFrequency
     );
 
     timeSeriesFeedWrapper = new TimeSeriesFeedWrapper(web3);
@@ -113,6 +111,33 @@ describe('TimeSeriesFeedWrapper', () => {
       const { timestamp } = await web3.eth.getBlock(blockNumber);
       const expectedTimestamp = new BigNumber(timestamp).add(priceFeedUpdateFrequency);
       expect(nextAvailableUpdate).to.bignumber.equal(expectedTimestamp);
+    });
+  });
+
+  describe('getTimeSeriesFeedState', async () => {
+    let subjectTimeSeriesFeedAddress: Address;
+
+    beforeEach(async () => {
+      subjectTimeSeriesFeedAddress = dailyPriceFeed.address;
+    });
+
+    async function subject(): Promise<TimeSeriesFeedState> {
+      return await timeSeriesFeedWrapper.getTimeSeriesFeedState(
+        subjectTimeSeriesFeedAddress
+      );
+    }
+
+    test('fetches the correct TimeSeriesFeedState', async () => {
+      const timeSeriesFeedState = await subject();
+
+      const blockNumber = await web3.eth.getBlockNumber();
+      const { timestamp } = await web3.eth.getBlock(blockNumber);
+      const expectedUpdateTimestamp = new BigNumber(timestamp).add(priceFeedUpdateFrequency);
+
+      expect(timeSeriesFeedState.nextEarliestUpdate).to.bignumber.equal(expectedUpdateTimestamp);
+      expect(timeSeriesFeedState.updateInterval).to.bignumber.equal(priceFeedUpdateFrequency);
+      expect(JSON.stringify(timeSeriesFeedState.timeSeriesDataArray))
+        .to.equal(JSON.stringify(seededPriceFeedPrices.reverse()));
     });
   });
 });
