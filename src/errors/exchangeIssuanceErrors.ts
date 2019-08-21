@@ -18,7 +18,6 @@
 
 
 export const exchangeIssuanceErrors = {
-  ONLY_ONE_SEND_TOKEN: () => `Only one send token is allowed in Payable Exchange Issuance`,
   ONLY_ONE_RECEIVE_TOKEN: () => `Only one receive token is allowed in Payable Exchange Redemption`,
   REDEEM_AND_TRADE_QUANTITIES_MISMATCH: (quantityFromRebalancingSetQuantity: string, quantityToTrade: string) =>
     `The quantity of base set redeemable from the quantity of the rebalancing set: ` +

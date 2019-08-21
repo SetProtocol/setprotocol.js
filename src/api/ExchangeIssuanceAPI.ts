@@ -311,7 +311,6 @@ export class ExchangeIssuanceAPI {
     } = exchangeIssuanceParams;
 
     // Assert valid parameters were passed into issueRebalancingSetWithEther
-    this.assert.common.isValidLength(sendTokens, 1, exchangeIssuanceErrors.ONLY_ONE_SEND_TOKEN());
     this.assert.common.isNotUndefined(txOpts.value, exchangeIssuanceErrors.ETHER_VALUE_NOT_UNDEFINED());
     this.assert.schema.isValidAddress('txOpts.from', txOpts.from);
     this.assert.schema.isValidAddress('rebalancingSetAddress', rebalancingSetAddress);
@@ -335,6 +334,8 @@ export class ExchangeIssuanceAPI {
         exchangeIssuanceErrors.TRADE_TOKENS_NOT_COMPONENT(setAddress, receiveToken)
       );
     });
+
+    // TODO add assertion that all payment tokens are wrapped Ether
 
     // Assert payment token is wrapped ether
     const paymentToken = sendTokens[0];
