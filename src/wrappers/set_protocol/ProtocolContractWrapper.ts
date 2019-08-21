@@ -24,6 +24,7 @@ import {
   ERC20DetailedContract,
   ExchangeIssuanceModuleContract,
   KyberNetworkWrapperContract,
+  ProtocolViewerContract,
   RebalancingSetIssuanceModuleContract,
   RebalancingSetExchangeIssuanceModuleContract,
   RebalanceAuctionModuleContract,
@@ -433,6 +434,32 @@ export class ProtocolContractWrapper {
       );
       this.cache[cacheKey] = medianizerContract;
       return medianizerContract;
+    }
+  }
+
+  /**
+   * Load a ProtocolViewer contract
+   *
+   * @param  protocolViewer               Address of the ProtocolViewer contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The ProtocolViewer Contract
+   */
+  public async loadProtocolViewerContract(
+    protocolViewer: Address,
+    transactionOptions: object = {},
+  ): Promise<ProtocolViewerContract> {
+    const cacheKey = `ProtocolViewer_${protocolViewer}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as ProtocolViewerContract;
+    } else {
+      const protocolViewerContract = await ProtocolViewerContract.at(
+        protocolViewer,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = protocolViewerContract;
+      return protocolViewerContract;
     }
   }
 }

@@ -15,7 +15,10 @@ import {
 
 import { TokenFlows, TokenFlowsDetails, Component } from '@src/types/common';
 import {
+  DEFAULT_AUCTION_PIVOT_PRICE,
   DEFAULT_AUCTION_PRICE_DENOMINATOR,
+  DEFAULT_AUCTION_START_PRICE,
+  DEFAULT_AUCTION_TIME_TO_PIVOT,
   DEFAULT_GAS_LIMIT,
   DEFAULT_REBALANCING_NATURAL_UNIT,
   DEFAULT_UNIT_SHARES,
@@ -184,9 +187,9 @@ export const transitionToProposeAsync = async(
   manager: Address,
   nextSetToken: Address,
   auctionPriceCurve: Address,
-  auctionTimeToPivot: BigNumber,
-  auctionStartPrice: BigNumber,
-  auctionPivotPrice: BigNumber,
+  auctionTimeToPivot: BigNumber = DEFAULT_AUCTION_TIME_TO_PIVOT,
+  auctionStartPrice: BigNumber = DEFAULT_AUCTION_START_PRICE,
+  auctionPivotPrice: BigNumber = DEFAULT_AUCTION_PIVOT_PRICE,
 ): Promise<void> => {
   // Transition to propose
   await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS.add(1));
@@ -206,9 +209,9 @@ export const transitionToRebalanceAsync = async(
   manager: Address,
   nextSetToken: Address,
   auctionPriceCurve: Address,
-  auctionTimeToPivot: BigNumber,
-  auctionStartPrice: BigNumber,
-  auctionPivotPrice: BigNumber,
+  auctionTimeToPivot: BigNumber = DEFAULT_AUCTION_TIME_TO_PIVOT,
+  auctionStartPrice: BigNumber = DEFAULT_AUCTION_START_PRICE,
+  auctionPivotPrice: BigNumber = DEFAULT_AUCTION_PIVOT_PRICE,
 ): Promise<void> => {
   // Transition to propose
   await transitionToProposeAsync(
@@ -235,11 +238,11 @@ export const transitionToDrawdownAsync = async(
   manager: Address,
   nextSetToken: Address,
   auctionPriceCurve: Address,
-  auctionTimeToPivot: BigNumber,
-  auctionStartPrice: BigNumber,
-  auctionPivotPrice: BigNumber,
   rebalanceAuctionModule: RebalanceAuctionModuleContract,
   bidAmount: BigNumber,
+  auctionTimeToPivot: BigNumber = DEFAULT_AUCTION_TIME_TO_PIVOT,
+  auctionStartPrice: BigNumber = DEFAULT_AUCTION_START_PRICE,
+  auctionPivotPrice: BigNumber = DEFAULT_AUCTION_PIVOT_PRICE,
 ): Promise<void> => {
   // Transition to rebalance
   await transitionToRebalanceAsync(

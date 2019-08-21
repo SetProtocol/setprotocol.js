@@ -512,11 +512,11 @@ describe('RebalancingAuctionModuleWrapper', () => {
         managerAddress,
         nextSetToken.address,
         auctionPriceCurveAddress,
+        rebalanceAuctionModule,
+        setBidAmount,
         setAuctionTimeToPivot,
         setAuctionStartPrice,
         setAuctionPivotPrice,
-        rebalanceAuctionModule,
-        setBidAmount,
       );
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
