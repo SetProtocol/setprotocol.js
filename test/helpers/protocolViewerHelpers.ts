@@ -9,7 +9,7 @@ import { TX_DEFAULTS } from '@src/constants';
 
 const contract = require('truffle-contract');
 
-export const deployProtocolViewerContract = async (
+export const deployProtocolViewerAsync = async (
   web3: Web3
 ): Promise<ProtocolViewerContract> => {
   const truffleProtocolWrapperContract = contract(ProtocolViewer);

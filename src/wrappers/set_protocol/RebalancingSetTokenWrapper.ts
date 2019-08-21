@@ -20,7 +20,7 @@ import Web3 from 'web3';
 import { Address, TokenFlows, Tx } from '../../types/common';
 
 import { ProtocolContractWrapper } from './ProtocolContractWrapper';
-import { BigNumber } from '../../util';
+import { BigNumber, parseRebalanceState } from '../../util';
 
 /**
  * @title  RebalancingSetTokenWrapper
@@ -202,7 +202,7 @@ export class RebalancingSetTokenWrapper {
     const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenAsync(rebalancingSetAddress);
 
     const stateNumber = await rebalancingSetTokenInstance.rebalanceState.callAsync();
-    return this.parseState(stateNumber);
+    return parseRebalanceState(stateNumber);
   }
 
   /**
@@ -455,17 +455,5 @@ export class RebalancingSetTokenWrapper {
     const [, , , auctionPivotPrice] = await rebalancingSetTokenInstance.getAuctionPriceParameters.callAsync();
 
     return auctionPivotPrice;
-  }
-
-  private parseState(stateNumber: BigNumber): string {
-    if (stateNumber.eq(new BigNumber(0))) {
-      return 'Default';
-    } else if (stateNumber.eq(new BigNumber(1))) {
-      return 'Proposal';
-    } else if (stateNumber.eq(new BigNumber(2))) {
-      return 'Rebalance';
-    } else {
-      return 'Drawdown';
-    }
   }
 }

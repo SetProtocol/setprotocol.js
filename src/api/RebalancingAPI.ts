@@ -22,13 +22,14 @@ import Web3 from 'web3';
 import { coreAPIErrors } from '../errors';
 import { Assertions } from '../assertions';
 import {
+  CoreWrapper,
   ERC20Wrapper,
+  ProtocolViewerWrapper,
   SetTokenWrapper,
   RebalancingAuctionModuleWrapper,
   RebalancingSetTokenWrapper,
-  CoreWrapper,
 } from '../wrappers';
-import { BigNumber } from '../util';
+import { BigNumber, parseRebalanceState } from '../util';
 import {
   Address,
   RebalancingProgressDetails,
@@ -51,6 +52,7 @@ export class RebalancingAPI {
   private assert: Assertions;
   private core: CoreWrapper;
   private erc20: ERC20Wrapper;
+  private protocolViewer: ProtocolViewerWrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private rebalancingAuctionModule: RebalancingAuctionModuleWrapper;
   private setToken: SetTokenWrapper;
@@ -62,6 +64,7 @@ export class RebalancingAPI {
    * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
    *                      the Ethereum network
    * @param assertions  An instance of the Assertion library
+   * @param config      Configuration object conforming to SetProtocolConfig with Set Protocol's contract addresses
    */
   constructor(
     web3: Web3,
@@ -80,6 +83,7 @@ export class RebalancingAPI {
     this.erc20 = new ERC20Wrapper(this.web3);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
     this.setToken = new SetTokenWrapper(this.web3);
+    this.protocolViewer = new ProtocolViewerWrapper(this.web3, config.protocolViewerAddress);
   }
 
   /**
@@ -357,24 +361,19 @@ export class RebalancingAPI {
     await this.assertGetProposalDetails(rebalancingSetTokenAddress);
 
     const [
-      proposedAt,
-      nextSetAddress,
-      pricingLibraryAddress,
-      auctionParameters,
-    ] = await Promise.all([
-      this.rebalancingSetToken.proposalStartTime(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.nextSet(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.auctionLibrary(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.auctionParameters(rebalancingSetTokenAddress),
-    ]);
+      rebalanceState,
+      [nextSetAddress, pricingLibraryAddress],
+      [proposalStartTime, timeToPivot, startingPrice, auctionPivotPrice],
+    ] = await this.protocolViewer.fetchRebalanceProposalStateAsync(rebalancingSetTokenAddress);
 
     return {
-      proposedAt,
+      state: parseRebalanceState(rebalanceState),
       nextSetAddress,
       pricingLibraryAddress,
-      timeToPivot: auctionParameters[1],
-      startingPrice: auctionParameters[2],
-      auctionPivotPrice: auctionParameters[3],
+      proposalStartTime,
+      timeToPivot,
+      startingPrice,
+      auctionPivotPrice,
     } as RebalancingProposalDetails;
   }
 
@@ -389,31 +388,16 @@ export class RebalancingAPI {
     await this.assertGetRebalanceDetails(rebalancingSetTokenAddress);
 
     const [
-      nextSetAddress,
-      pricingLibraryAddress,
-      auctionParameters,
-      remainingCurrentSet,
-      minimumBid,
-      startingCurrentSetAmount,
-    ] = await Promise.all([
-      this.rebalancingSetToken.nextSet(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.auctionLibrary(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.auctionParameters(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.remainingCurrentSets(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.minimumBid(rebalancingSetTokenAddress),
-      this.rebalancingSetToken.startingCurrentSetAmount(rebalancingSetTokenAddress),
-    ]);
+      rebalanceState,
+      [startingCurrentSetAmount, rebalancingStartedAt, minimumBid, remainingCurrentSet],
+    ] =  await this.protocolViewer.fetchRebalanceAuctionStateAsync(rebalancingSetTokenAddress);
 
     return {
-      rebalancingStartedAt: auctionParameters[0],
-      nextSetAddress,
-      pricingLibraryAddress,
-      timeToPivot: auctionParameters[1],
-      startingPrice: auctionParameters[2],
-      auctionPivotPrice: auctionParameters[3],
+      state: parseRebalanceState(rebalanceState),
       startingCurrentSetAmount,
-      remainingCurrentSet,
+      rebalancingStartedAt,
       minimumBid,
+      remainingCurrentSet,
     } as RebalancingProgressDetails;
   }
 

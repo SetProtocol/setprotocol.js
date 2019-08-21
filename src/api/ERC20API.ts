@@ -20,9 +20,9 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 
 import { Assertions } from '../assertions';
-import { ERC20Wrapper } from '../wrappers';
+import { ERC20Wrapper, ProtocolViewerWrapper } from '../wrappers';
 import { BigNumber } from '../util';
-import { Address, Tx } from '../types/common';
+import { Address, SetProtocolConfig, Tx } from '../types/common';
 
 /**
  * @title ERC20API
@@ -33,18 +33,21 @@ import { Address, Tx } from '../types/common';
 export class ERC20API {
   private assert: Assertions;
   private erc20Wrapper: ERC20Wrapper;
+  private protocolViewerWrapper: ProtocolViewerWrapper;
 
   /**
    * Instantiates a new IssuanceAPI instance that contains methods for transferring balances in the vault
    *
-   * @param web3        Web3.js Provider instance you would like the SetProtocol.js library to use for interacting with
-   *                      the Ethereum network
-   * @param assertions  An instance of the Assertion library
+   * @param web3          Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
+   *                        with the Ethereum network
+   * @param assertions    An instance of the Assertion library
+   * @param config        Configuration object conforming to SetProtocolConfig with Set Protocol's contract addresses
    */
-  constructor(web3: Web3, assertions: Assertions) {
+  constructor(web3: Web3, assertions: Assertions, config: SetProtocolConfig) {
     this.assert = assertions;
 
     this.erc20Wrapper = new ERC20Wrapper(web3);
+    this.protocolViewerWrapper = new ProtocolViewerWrapper(web3, config.protocolViewerAddress);
   }
 
   /**
@@ -58,6 +61,19 @@ export class ERC20API {
     this.assertGetBalanceOf(tokenAddress, userAddress);
 
     return await this.erc20Wrapper.balanceOf(tokenAddress, userAddress);
+  }
+
+  /**
+   * Fetches an addresses balance of multiple ERC20 tokens
+   *
+   * @param  tokenAddresses    Address of the ERC20 token
+   * @param  userAddress       Wallet address of the user
+   * @return                   Balance of the ERC20 token
+   */
+  public async getBalancesOfAsync(tokenAddresses: Address[], userAddress: Address): Promise<BigNumber[]> {
+    this.assertGetBalancesOf(tokenAddresses, userAddress);
+
+    return await this.protocolViewerWrapper.batchFetchBalancesOf(tokenAddresses, userAddress);
   }
 
   /**
@@ -94,6 +110,19 @@ export class ERC20API {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
 
     return await this.erc20Wrapper.totalSupply(tokenAddress);
+  }
+
+  /**
+   * Fetches the total supply of multiple ERC20 token contracts, returned in the
+   * order the addresses were submitted to the request
+   *
+   * @param  tokenAddresses    Addresses of the ERC20 tokens
+   * @return                   Total supply property of multiple ERC20 contracts
+   */
+  public async getTotalSuppliesAsync(tokenAddresses: Address[]): Promise<BigNumber[]> {
+    this.assertGetTotalSuppliesAsync(tokenAddresses);
+
+    return await this.protocolViewerWrapper.batchFetchSupplies(tokenAddresses);
   }
 
   /**
@@ -197,6 +226,13 @@ export class ERC20API {
     this.assert.schema.isValidAddress('userAddress', userAddress);
   }
 
+  private assertGetBalancesOf(tokenAddresses: Address[], userAddress: Address) {
+    this.assert.schema.isValidAddress('userAddress', userAddress);
+    tokenAddresses.forEach(tokenAddress => {
+      this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    });
+  }
+
   private assertGetAllowance(tokenAddress: Address, ownerAddress: Address, spenderAddress: Address) {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     this.assert.schema.isValidAddress('ownerAddress', ownerAddress);
@@ -217,5 +253,11 @@ export class ERC20API {
   private assertApprove(tokenAddress: Address, spenderAddress: Address) {
     this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     this.assert.schema.isValidAddress('spenderAddress', spenderAddress);
+  }
+
+  private assertGetTotalSuppliesAsync(tokenAddresses: Address[]) {
+    tokenAddresses.forEach(tokenAddress => {
+      this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    });
   }
 }

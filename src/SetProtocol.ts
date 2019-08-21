@@ -137,7 +137,7 @@ class SetProtocol {
 
     this.accounting = new AccountingAPI(this.core, assertions);
     this.blockchain = new BlockchainAPI(this.web3, assertions);
-    this.erc20 = new ERC20API(this.web3, assertions);
+    this.erc20 = new ERC20API(this.web3, assertions, config);
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
     this.priceFeed = new PriceFeedAPI(this.web3);

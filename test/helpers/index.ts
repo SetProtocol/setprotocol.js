@@ -44,7 +44,7 @@ export {
 } from './oracleHelpers';
 
 export {
-  deployProtocolViewerContract,
+  deployProtocolViewerAsync,
 } from './protocolViewerHelpers';
 
 export {

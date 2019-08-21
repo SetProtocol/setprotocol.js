@@ -95,10 +95,10 @@ export const deployHistoricalPriceFeedAsync = async(
 export const deployTimeSeriesFeedAsync = async(
   web3: Web3,
   dataSourceAddress: Address,
+  seededValues: BigNumber[] = [new BigNumber(200 * 10 ** 18)],
   updateFrequency: BigNumber = ONE_DAY_IN_SECONDS,
   maxDataPoints: BigNumber = new BigNumber(200),
   dataDescription: string = '200DailyETHPrice',
-  seededValues: BigNumber[] = [new BigNumber(200 * 10 ** 18)],
   from: Address = TX_DEFAULTS.from,
 ): Promise<TimeSeriesFeedContract> => {
   const truffleTimeSeriesFeedContract = contract(TimeSeriesFeed);

@@ -18,6 +18,8 @@
 
 import Web3 from 'web3';
 
+import { TimeSeriesFeedState } from 'set-protocol-utils';
+
 import { StrategyContractWrapper } from './StrategyContractWrapper';
 import { BigNumber } from '../../util';
 import { Address } from '../../types/common';
@@ -41,12 +43,26 @@ export class TimeSeriesFeedWrapper {
   /**
    * Fetch the Unix timestamp of the next earliest update
    *
-   * @param  timeSeriesFeedAddress         Address of the TimeSeriesFeed contract to fetch date from
+   * @param  timeSeriesFeedAddress         Address of the TimeSeriesFeed contract to fetch data from
    * @return                               Unix time
    */
   public async nextEarliestUpdate(timeSeriesFeedAddress: Address): Promise<BigNumber> {
     const timeSeriesFeed = await this.contracts.loadTimeSeriesFeedContract(timeSeriesFeedAddress);
 
     return await timeSeriesFeed.nextEarliestUpdate.callAsync();
+  }
+
+  /**
+   * Fetch TimeSeriesFeed state (nextEarliestUpdate, updateInterval, all logged prices)
+   *
+   * @param  timeSeriesFeedAddress         Address of the TimeSeriesFeed contract to fetch data from
+   * @return                               TimeSeriesFeedState type
+   */
+  public async getTimeSeriesFeedState(timeSeriesFeedAddress: Address): Promise<TimeSeriesFeedState> {
+    const timeSeriesFeed = await this.contracts.loadTimeSeriesFeedContract(timeSeriesFeedAddress);
+
+    const rawTimeSeriesObject = await timeSeriesFeed.getTimeSeriesFeedState.callAsync();
+
+    return rawTimeSeriesObject as TimeSeriesFeedState;
   }
 }
