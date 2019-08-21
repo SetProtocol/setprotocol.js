@@ -49,7 +49,6 @@ import {
   NULL_ADDRESS,
   ZERO,
   ONE_DAY_IN_SECONDS,
-  DEFAULT_UNIT_SHARES,
   DEFAULT_REBALANCING_NATURAL_UNIT,
   DEFAULT_GAS_LIMIT,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
@@ -828,7 +827,6 @@ describe('ExchangeIssuanceAPI', () => {
     let subjectExchangeIssuanceParams: ExchangeIssuanceParams;
     let subjectExchangeOrders: (KyberTrade | ZeroExSignedFillOrder)[];
     let subjectKeepChangeInVault: boolean;
-    let subjectEtherValue: string;
     let subjectCaller: Address;
 
     // ----------------------------------------------------------------------
@@ -1201,7 +1199,7 @@ describe('ExchangeIssuanceAPI', () => {
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `Send token at ${notPaymentToken} is not the payment ` + 
+          `Send token at ${notPaymentToken} is not the payment ` +
           `token at ${subjectPaymentTokenAddress}`
         );
       });
@@ -1243,9 +1241,6 @@ describe('ExchangeIssuanceAPI', () => {
 
     let zeroExSendTokenQuantity: BigNumber;
     let kyberSendTokenQuantity: BigNumber;
-
-    let totalEtherToReceive: BigNumber;
-
 
     // ----------------------------------------------------------------------
     // Exchange Issuance Variables
@@ -1658,9 +1653,6 @@ describe('ExchangeIssuanceAPI', () => {
 
     let zeroExSendTokenQuantity: BigNumber;
     let kyberSendTokenQuantity: BigNumber;
-
-    let totalWrappedEtherToReceive: BigNumber;
-
 
     // ----------------------------------------------------------------------
     // Exchange Issuance Variables
