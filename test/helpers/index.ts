@@ -35,10 +35,14 @@ export {
 
 export {
   addPriceFeedOwnerToMedianizer,
+  approveContractToOracleProxy,
   deployHistoricalPriceFeedAsync,
+  deployLegacyMakerOracleAdapterAsync,
   deployLinearizedPriceDataSourceAsync,
   deployMedianizerAsync,
+  deployMovingAverageOracleV2Async,
   deployMovingAverageOracleAsync,
+  deployOracleProxyAsync,
   deployTimeSeriesFeedAsync,
   updateMedianizerPriceAsync,
 } from './oracleHelpers';
@@ -67,6 +71,7 @@ export {
   deployBtcEthManagerContractAsync,
   deployEthDaiManagerContractAsync,
   deployMovingAverageStrategyManagerAsync,
+  deployMovingAverageStrategyManagerV2Async,
   initializeMovingAverageStrategyManagerAsync,
 } from './strategyHelpers';
 

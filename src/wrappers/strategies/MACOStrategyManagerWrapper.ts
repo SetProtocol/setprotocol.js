@@ -89,7 +89,7 @@ export class MACOStrategyManagerWrapper {
   public async movingAveragePriceFeed(managerAddress: Address): Promise<Address> {
     const macoStrategyManagerInstance = await this.contracts.loadMACOStrategyManagerContractAsync(managerAddress);
 
-    return await macoStrategyManagerInstance.movingAveragePriceFeed.callAsync();
+    return await macoStrategyManagerInstance.movingAveragePriceFeedInstance.callAsync();
   }
 
   public async stableAssetAddress(managerAddress: Address): Promise<Address> {

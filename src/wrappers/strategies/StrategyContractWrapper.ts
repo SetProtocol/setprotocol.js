@@ -25,7 +25,7 @@ import {
   ETHDaiRebalancingManagerContract,
   HistoricalPriceFeedContract,
   TimeSeriesFeedContract,
-  MACOStrategyManagerContract,
+  MACOStrategyManagerV2Contract,
   MovingAverageOracleContract
 } from 'set-protocol-strategies';
 
@@ -213,13 +213,13 @@ export class StrategyContractWrapper {
   public async loadMACOStrategyManagerContractAsync(
     macoStrategyManager: Address,
     transactionOptions: object = {},
-  ): Promise<MACOStrategyManagerContract> {
+  ): Promise<MACOStrategyManagerV2Contract> {
     const cacheKey = `macoStrategyManager_${macoStrategyManager}`;
 
     if (cacheKey in this.cache) {
-      return this.cache[cacheKey] as MACOStrategyManagerContract;
+      return this.cache[cacheKey] as MACOStrategyManagerV2Contract;
     } else {
-      const macoStrategyManagerContract = await MACOStrategyManagerContract.at(
+      const macoStrategyManagerContract = await MACOStrategyManagerV2Contract.at(
         macoStrategyManager,
         this.web3,
         transactionOptions,
