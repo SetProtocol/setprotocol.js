@@ -927,9 +927,9 @@ describe('RebalancingManagerAPI', () => {
         subjectManagerAddress = macoManager.address;
         subjectCaller = DEFAULT_ACCOUNT;
 
-        const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
-        const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
-        nextRebalanceAvailableInSeconds = lastRebalancedTimestampSeconds.plus(rebalanceInterval);
+        // const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+        // const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+        // nextRebalanceAvailableInSeconds = lastRebalancedTimestampSeconds.plus(rebalanceInterval);
       });
 
       afterEach(async () => {

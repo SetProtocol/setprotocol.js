@@ -25,7 +25,6 @@ import {
   BTCETHRebalancingManagerWrapper,
   ETHDAIRebalancingManagerWrapper,
   MACOStrategyManagerWrapper,
-  MovingAverageOracleWrapper,
   MedianizerWrapper,
   SetTokenWrapper,
   RebalancingSetTokenWrapper,
@@ -80,7 +79,7 @@ export class RebalancingManagerAPI {
     this.assert = assertions;
     this.setToken = new SetTokenWrapper(web3);
     this.medianizer = new MedianizerWrapper(web3);
-    this.movingAverageOracleWrapper = new MovingAverageOracleWrapper(web3);
+    // this.movingAverageOracleWrapper = new MovingAverageOracleWrapper(web3);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(web3);
   }
 
