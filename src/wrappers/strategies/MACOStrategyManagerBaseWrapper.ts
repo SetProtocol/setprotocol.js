@@ -23,14 +23,14 @@ import { BigNumber, generateTxOpts } from '../../util';
 import { Address, Tx } from '../../types/common';
 
 /**
- * @title  SharedMACOStrategyManagerWrapper
+ * @title  MACOStrategyManagerBaseWrapper
  * @author Set Protocol
  *
- * The SharedMACOStrategyManagerWrapper handles all functions shared on the MACOStrategyManager
+ * The MACOStrategyManagerBaseWrapper handles all functions shared on the MACOStrategyManager
  * V1 and V2 smart contract.
  *
  */
-export class SharedMACOStrategyManagerWrapper {
+export class MACOStrategyManagerBaseWrapper {
   protected web3: Web3;
   protected contracts: StrategyContractWrapper;
 

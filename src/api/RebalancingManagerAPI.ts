@@ -139,9 +139,7 @@ export class RebalancingManagerAPI {
     macoManager: Address,
     txOpts: Tx
   ): Promise<string> {
-    if (managerType == ManagerType.MACO) {
-      await this.assertInitialPropose(macoManager);
-    }
+    await this.assertInitialPropose(managerType, macoManager);
 
     // If current timestamp > 12 hours since the last, call initialPropose
     return await this.macoStrategyManager.initialPropose(macoManager, txOpts);
@@ -152,9 +150,7 @@ export class RebalancingManagerAPI {
     macoManager: Address,
     txOpts: Tx
   ): Promise<string> {
-    if (managerType == ManagerType.MACO) {
-      await this.assertConfirmPropose(macoManager);
-    }
+    await this.assertConfirmPropose(managerType, macoManager);
 
     return await this.macoStrategyManager.confirmPropose(macoManager, txOpts);
   }
@@ -546,9 +542,8 @@ export class RebalancingManagerAPI {
 
   // MACO Assertions
 
-  private async assertInitialPropose(macoManagerAddress: Address) {
-    await this.assertMACOPropose(macoManagerAddress);
-
+  private async assertInitialPropose(managerType: BigNumber, macoManagerAddress: Address) {
+    await this.assertMACOPropose(managerType, macoManagerAddress);
 
     const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
     const lastCrossoverConfirmationTimestamp =
@@ -563,8 +558,8 @@ export class RebalancingManagerAPI {
     }
   }
 
-  private async assertConfirmPropose(macoManagerAddress: Address) {
-    await this.assertMACOPropose(macoManagerAddress);
+  private async assertConfirmPropose(managerType: BigNumber, macoManagerAddress: Address) {
+    await this.assertMACOPropose(managerType, macoManagerAddress);
 
     // Check the current block.timestamp
     const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
@@ -592,14 +587,19 @@ export class RebalancingManagerAPI {
     }
   }
 
-  private async assertMACOPropose(macoManagerAddress: Address) {
+  private async assertMACOPropose(managerType: BigNumber, macoManagerAddress: Address) {
+    const rebalancingSetAddress = await this.macoStrategyManagerV2.rebalancingSetTokenAddress(macoManagerAddress);
+    await this.assertGeneralPropose(macoManagerAddress, rebalancingSetAddress);
+
+    if (managerType == ManagerType.MACOV2) {
+      return;
+    }
+
     const [
-      rebalancingSetAddress,
       movingAverageDays,
       movingAveragePriceFeed,
       isUsingRiskCollateral,
     ] = await Promise.all([
-      this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
       this.macoStrategyManager.movingAverageDays(macoManagerAddress),
       this.macoStrategyManager.movingAveragePriceFeed(macoManagerAddress),
       this.isUsingRiskComponent(macoManagerAddress),
@@ -607,7 +607,7 @@ export class RebalancingManagerAPI {
 
     await this.assertGeneralPropose(macoManagerAddress, rebalancingSetAddress);
 
-    // Get the current price
+    // Get the current price feed
     const riskCollateralPriceFeed = await this.movingAverageOracleWrapper.getSourceMedianizer(
       movingAveragePriceFeed
     );
@@ -623,24 +623,36 @@ export class RebalancingManagerAPI {
     const currentPriceBN = new BigNumber(currentPrice);
     const movingAverageBN = new BigNumber(movingAverage);
 
+    this.assertCrossoverTriggerMet(
+      isUsingRiskCollateral,
+      currentPriceBN,
+      movingAverageBN
+    );
+  }
+
+  // Helper functions
+
+  private assertCrossoverTriggerMet(
+    isUsingRiskCollateral: boolean,
+    currentPrice: BigNumber,
+    movingAverage: BigNumber,
+  ): void {
     if (isUsingRiskCollateral) {
       // Assert currentPrice < moving average
       this.assert.common.isGreaterThan(
-        movingAverageBN,
-        currentPriceBN,
-        `Current Price ${currentPriceBN.toString()} must be less than Moving Average ${movingAverageBN.toString()}`
+        movingAverage,
+        currentPrice,
+        `Current Price ${currentPrice.toString()} must be less than Moving Average ${movingAverage.toString()}`
       );
     } else {
       // Assert currentPrice > moving average
       this.assert.common.isGreaterThan(
-        currentPriceBN,
-        movingAverageBN,
-        `Current Price ${currentPriceBN.toString()} must be greater than Moving Average ${movingAverageBN.toString()}`
+        currentPrice,
+        movingAverage,
+        `Current Price ${currentPrice.toString()} must be greater than Moving Average ${movingAverage.toString()}`
       );
     }
   }
-
-  // Helper functions
 
   private computeSetTokenAllocation(
     units: BigNumber[],

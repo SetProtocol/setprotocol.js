@@ -19,7 +19,7 @@
 import Web3 from 'web3';
 
 import { Address } from '../../types/common';
-import { SharedMACOStrategyManagerWrapper } from './SharedMACOStrategyManagerWrapper';
+import { MACOStrategyManagerBaseWrapper } from './MACOStrategyManagerBaseWrapper';
 
 /**
  * @title  MACOStrategyManagerWrapper
@@ -28,7 +28,7 @@ import { SharedMACOStrategyManagerWrapper } from './SharedMACOStrategyManagerWra
  * The MACOStrategyManagerWrapper handles all functions on the MACOStrategyManager smart contract.
  *
  */
-export class MACOStrategyManagerWrapper extends SharedMACOStrategyManagerWrapper {
+export class MACOStrategyManagerWrapper extends MACOStrategyManagerBaseWrapper {
   public constructor(web3: Web3) {
     super(web3);
   }
