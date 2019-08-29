@@ -25,6 +25,8 @@ import {
   BTCETHRebalancingManagerWrapper,
   ETHDAIRebalancingManagerWrapper,
   MACOStrategyManagerWrapper,
+  MACOStrategyManagerV2Wrapper,
+  MovingAverageOracleWrapper,
   MedianizerWrapper,
   SetTokenWrapper,
   RebalancingSetTokenWrapper,
@@ -57,11 +59,13 @@ export class RebalancingManagerAPI {
   private setToken: SetTokenWrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private medianizer: MedianizerWrapper;
+  private movingAverageOracleWrapper: MovingAverageOracleWrapper;
 
   private btcEthRebalancingManager: BTCETHRebalancingManagerWrapper;
   private btcDaiRebalancingManager: BTCDAIRebalancingManagerWrapper;
   private ethDaiRebalancingManager: ETHDAIRebalancingManagerWrapper;
   private macoStrategyManager: MACOStrategyManagerWrapper;
+  private macoStrategyManagerV2: MACOStrategyManagerV2Wrapper;
 
   /**
    * Instantiates a new RebalancingManagerAPI instance that contains methods for issuing and redeeming Sets
@@ -75,11 +79,12 @@ export class RebalancingManagerAPI {
     this.btcDaiRebalancingManager = new BTCDAIRebalancingManagerWrapper(web3);
     this.ethDaiRebalancingManager = new ETHDAIRebalancingManagerWrapper(web3);
     this.macoStrategyManager = new MACOStrategyManagerWrapper(web3);
+    this.macoStrategyManagerV2 = new MACOStrategyManagerV2Wrapper(web3);
 
     this.assert = assertions;
     this.setToken = new SetTokenWrapper(web3);
     this.medianizer = new MedianizerWrapper(web3);
-    // this.movingAverageOracleWrapper = new MovingAverageOracleWrapper(web3);
+    this.movingAverageOracleWrapper = new MovingAverageOracleWrapper(web3);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(web3);
   }
 
@@ -129,15 +134,27 @@ export class RebalancingManagerAPI {
    * @param  txOpts        Transaction options object conforming to `Tx` with signer, gas, and gasPrice data
    * @return               Transaction hash
    */
-  public async initiateCrossoverProposeAsync(macoManager: Address, txOpts: Tx): Promise<string> {
-    await this.assertInitialPropose(macoManager);
+  public async initiateCrossoverProposeAsync(
+    managerType: BigNumber,
+    macoManager: Address,
+    txOpts: Tx
+  ): Promise<string> {
+    if (managerType == ManagerType.MACO) {
+      await this.assertInitialPropose(macoManager);
+    }
 
     // If current timestamp > 12 hours since the last, call initialPropose
     return await this.macoStrategyManager.initialPropose(macoManager, txOpts);
   }
 
-  public async confirmCrossoverProposeAsync(macoManager: Address, txOpts: Tx): Promise<string> {
-    await this.assertConfirmPropose(macoManager);
+  public async confirmCrossoverProposeAsync(
+    managerType: BigNumber,
+    macoManager: Address,
+    txOpts: Tx
+  ): Promise<string> {
+    if (managerType == ManagerType.MACO) {
+      await this.assertConfirmPropose(macoManager);
+    }
 
     return await this.macoStrategyManager.confirmPropose(macoManager, txOpts);
   }
@@ -326,14 +343,23 @@ export class RebalancingManagerAPI {
    * @param  macoManager         Address of the Moving Average Crossover Manager contract
    * @return                     Object containing the state information related to the manager
    */
-  public async getMovingAverageManagerDetailsAsync(macoManager: Address): Promise<MovingAverageManagerDetails> {
+  public async getMovingAverageManagerDetailsAsync(
+    managerType: BigNumber,
+    macoManager: Address
+  ): Promise<MovingAverageManagerDetails> {
+    let movingAveragePriceFeed;
+    if (managerType == ManagerType.MACO) {
+      movingAveragePriceFeed = await this.macoStrategyManager.movingAveragePriceFeed(macoManager);
+    } else {
+      movingAveragePriceFeed = await this.macoStrategyManagerV2.movingAveragePriceFeed(macoManager);
+    }
+
     const [
       auctionLibrary,
       auctionTimeToPivot,
       core,
       lastCrossoverConfirmationTimestamp,
       movingAverageDays,
-      movingAveragePriceFeed,
       rebalancingSetToken,
     ] = await Promise.all([
       this.macoStrategyManager.auctionLibrary(macoManager),
@@ -341,7 +367,6 @@ export class RebalancingManagerAPI {
       this.macoStrategyManager.coreAddress(macoManager),
       this.macoStrategyManager.lastCrossoverConfirmationTimestamp(macoManager),
       this.macoStrategyManager.movingAverageDays(macoManager),
-      this.macoStrategyManager.movingAveragePriceFeed(macoManager),
       this.macoStrategyManager.rebalancingSetTokenAddress(macoManager),
     ]);
 
@@ -522,7 +547,7 @@ export class RebalancingManagerAPI {
   // MACO Assertions
 
   private async assertInitialPropose(macoManagerAddress: Address) {
-    // await this.assertMACOPropose(macoManagerAddress);
+    await this.assertMACOPropose(macoManagerAddress);
 
 
     const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
@@ -539,7 +564,7 @@ export class RebalancingManagerAPI {
   }
 
   private async assertConfirmPropose(macoManagerAddress: Address) {
-    // await this.assertMACOPropose(macoManagerAddress);
+    await this.assertMACOPropose(macoManagerAddress);
 
     // Check the current block.timestamp
     const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
@@ -567,54 +592,53 @@ export class RebalancingManagerAPI {
     }
   }
 
-  // private async assertMACOPropose(macoManagerAddress: Address) {
-  //   const [
-  //     rebalancingSetAddress,
-  //     movingAverageDays,
-  //     movingAveragePriceFeed,
-  //     isUsingRiskCollateral,
-  //   ] = await Promise.all([
-  //     this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
-  //     this.macoStrategyManager.movingAverageDays(macoManagerAddress),
-  //     this.macoStrategyManager.movingAveragePriceFeed(macoManagerAddress),
-  //     this.isUsingRiskComponent(macoManagerAddress),
-  //   ]);
+  private async assertMACOPropose(macoManagerAddress: Address) {
+    const [
+      rebalancingSetAddress,
+      movingAverageDays,
+      movingAveragePriceFeed,
+      isUsingRiskCollateral,
+    ] = await Promise.all([
+      this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
+      this.macoStrategyManager.movingAverageDays(macoManagerAddress),
+      this.macoStrategyManager.movingAveragePriceFeed(macoManagerAddress),
+      this.isUsingRiskComponent(macoManagerAddress),
+    ]);
 
-  //   await this.assertGeneralPropose(macoManagerAddress, rebalancingSetAddress);
+    await this.assertGeneralPropose(macoManagerAddress, rebalancingSetAddress);
 
-  //   // Get the current price
-    // const riskCollateralPriceFeed = await this.movingAverageOracleWrapper.getSourceMedianizer(
-    //   movingAveragePriceFeed
-    // );
+    // Get the current price
+    const riskCollateralPriceFeed = await this.movingAverageOracleWrapper.getSourceMedianizer(
+      movingAveragePriceFeed
+    );
 
-  //   const [
-  //     currentPrice,
-  //     movingAverage,
-  //   ] = await Promise.all([
-  //     this.medianizer.read(riskCollateralPriceFeed),
-  //     this.movingAverageOracleWrapper.read(movingAveragePriceFeed, movingAverageDays),
-  //   ]);
+    const [
+      currentPrice,
+      movingAverage,
+    ] = await Promise.all([
+      this.medianizer.read(riskCollateralPriceFeed),
+      this.movingAverageOracleWrapper.read(movingAveragePriceFeed, movingAverageDays),
+    ]);
 
-  //   const currentPriceBN = new BigNumber(currentPrice);
-  //   const movingAverageBN = new BigNumber(movingAverage);
+    const currentPriceBN = new BigNumber(currentPrice);
+    const movingAverageBN = new BigNumber(movingAverage);
 
-  //   if (isUsingRiskCollateral) {
-  //     // Assert currentPrice < moving average
-  //     this.assert.common.isGreaterThan(
-  //       movingAverageBN,
-  //       currentPriceBN,
-  //       `Current Price ${currentPriceBN.toString()} must be less than Moving Average ${movingAverageBN.toString()}`
-  //     );
-  //   } else {
-  //     // Assert currentPrice > moving average
-  //     this.assert.common.isGreaterThan(
-  //       currentPriceBN,
-  //       movingAverageBN,
-  //       `Current Price ${currentPriceBN.toString()} must be greater than Moving Average
-  //         ${movingAverageBN.toString()}`
-  //     );
-  //   }
-  // }
+    if (isUsingRiskCollateral) {
+      // Assert currentPrice < moving average
+      this.assert.common.isGreaterThan(
+        movingAverageBN,
+        currentPriceBN,
+        `Current Price ${currentPriceBN.toString()} must be less than Moving Average ${movingAverageBN.toString()}`
+      );
+    } else {
+      // Assert currentPrice > moving average
+      this.assert.common.isGreaterThan(
+        currentPriceBN,
+        movingAverageBN,
+        `Current Price ${currentPriceBN.toString()} must be greater than Moving Average ${movingAverageBN.toString()}`
+      );
+    }
+  }
 
   // Helper functions
 
@@ -655,18 +679,18 @@ export class RebalancingManagerAPI {
              .round(0, 3);
   }
 
-  // private async isUsingRiskComponent(macoManagerAddress: Address): Promise<boolean> {
-  //   const [
-  //     rebalancingSetToken,
-  //     riskComponent,
-  //   ] = await Promise.all([
-  //     this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
-  //     this.macoStrategyManager.riskAssetAddress(macoManagerAddress),
-  //   ]);
+  private async isUsingRiskComponent(macoManagerAddress: Address): Promise<boolean> {
+    const [
+      rebalancingSetToken,
+      riskComponent,
+    ] = await Promise.all([
+      this.macoStrategyManager.rebalancingSetTokenAddress(macoManagerAddress),
+      this.macoStrategyManager.riskAssetAddress(macoManagerAddress),
+    ]);
 
-  //   const rebalancingSetCurrentCollateral = await this.rebalancingSetToken.currentSet(rebalancingSetToken);
-  //   const [collateralComponent] = await this.setToken.getComponents(rebalancingSetCurrentCollateral);
+    const rebalancingSetCurrentCollateral = await this.rebalancingSetToken.currentSet(rebalancingSetToken);
+    const [collateralComponent] = await this.setToken.getComponents(rebalancingSetCurrentCollateral);
 
-  //   return riskComponent.toLowerCase() === collateralComponent.toLowerCase();
-  // }
+    return riskComponent.toLowerCase() === collateralComponent.toLowerCase();
+  }
 }

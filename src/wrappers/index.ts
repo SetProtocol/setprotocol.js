@@ -41,5 +41,6 @@ export { ETHDAIRebalancingManagerWrapper } from './strategies/ETHDAIRebalancingM
 export { HistoricalPriceFeedWrapper } from './strategies/HistoricalPriceFeedWrapper';
 export { MovingAverageOracleWrapper } from './strategies/MovingAverageOracleWrapper';
 export { MACOStrategyManagerWrapper } from './strategies/MACOStrategyManagerWrapper';
+export { MACOStrategyManagerV2Wrapper } from './strategies/MACOStrategyManagerV2Wrapper';
 export { StrategyContractWrapper } from './strategies/StrategyContractWrapper';
 export { TimeSeriesFeedWrapper } from './strategies/TimeSeriesFeedWrapper';

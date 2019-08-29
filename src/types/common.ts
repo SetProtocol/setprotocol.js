@@ -31,6 +31,8 @@ export const ManagerType = {
   BTCETH: new BigNumber(0),
   BTCDAI: new BigNumber(1),
   ETHDAI: new BigNumber(2),
+  MACO: new BigNumber(3),
+  MACOV2: new BigNumber(4),
 };
 
 export interface SetUnits {

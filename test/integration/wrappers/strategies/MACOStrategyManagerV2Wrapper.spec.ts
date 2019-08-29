@@ -1,9 +1,12 @@
 /*
   Copyright 2018 Set Labs Inc.
+
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
+
   http://www.apache.org/licenses/LICENSE-2.0
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,13 +42,13 @@ import {
 } from 'set-protocol-contracts';
 
 import {
-  MACOStrategyManagerContract,
-  HistoricalPriceFeedContract,
-  MovingAverageOracleContract,
+  MACOStrategyManagerV2Contract,
+  MovingAverageOracleV2Contract,
+  OracleProxyContract,
 } from 'set-protocol-strategies';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
-import { MACOStrategyManagerWrapper } from '@src/wrappers';
+import { MACOStrategyManagerV2Wrapper } from '@src/wrappers';
 import {
   E18,
   TX_DEFAULTS,
@@ -58,15 +61,19 @@ import {
   addPriceCurveToCoreAsync,
   addPriceFeedOwnerToMedianizer,
   addWhiteListedTokenAsync,
+  approveContractToOracleProxy,
   approveForTransferAsync,
   createDefaultRebalancingSetTokenAsync,
-  deployBaseContracts,
-  deployHistoricalPriceFeedAsync,
-  deployMovingAverageStrategyManagerAsync,
-  deployMovingAverageOracleAsync,
   deployConstantAuctionPriceCurveAsync,
-  deploySetTokenAsync,
+  deployBaseContracts,
+  deployLegacyMakerOracleAdapterAsync,
+  deployLinearizedPriceDataSourceAsync,
   deployMedianizerAsync,
+  deployMovingAverageStrategyManagerV2Async,
+  deployMovingAverageOracleV2Async,
+  deployOracleProxyAsync,
+  deploySetTokenAsync,
+  deployTimeSeriesFeedAsync,
   deployTokensSpecifyingDecimals,
   increaseChainTimeAsync,
   initializeMovingAverageStrategyManagerAsync,
@@ -92,15 +99,16 @@ coreContract.defaults(TX_DEFAULTS);
 let currentSnapshotId: number;
 
 
-describe('MACOStrategyManagerWrapper', () => {
+describe('MACOStrategyManagerV2Wrapper', () => {
   let core: CoreContract;
   let transferProxy: TransferProxyContract;
   let factory: SetTokenFactoryContract;
   let rebalancingFactory: RebalancingSetTokenFactoryContract;
   let constantAuctionPriceCurve: ConstantAuctionPriceCurveContract;
-  let macoManager: MACOStrategyManagerContract;
-  let movingAverageOracle: MovingAverageOracleContract;
+  let macoManager: MACOStrategyManagerV2Contract;
+  let movingAverageOracle: MovingAverageOracleV2Contract;
   let ethMedianizer: MedianContract;
+  let ethOracleProxy: OracleProxyContract;
   let usdc: StandardTokenMockContract;
   let wrappedETH: StandardTokenMockContract;
   let whitelist: WhiteListContract;
@@ -108,23 +116,16 @@ describe('MACOStrategyManagerWrapper', () => {
   let initialRiskCollateral: SetTokenContract;
   let rebalancingSetToken: RebalancingSetTokenContract;
 
+  let seededPriceFeedPrices: BigNumber[];
   let auctionTimeToPivot: BigNumber;
 
-  let macoStrategyManagerWrapper: MACOStrategyManagerWrapper;
+  let macoStrategyManagerWrapper: MACOStrategyManagerV2Wrapper;
 
   const crossoverConfirmationMinTime = ONE_HOUR_IN_SECONDS.mul(6);
   const crossoverConfirmationMaxTime = ONE_HOUR_IN_SECONDS.mul(12);
 
-  const priceFeedUpdateFrequency: BigNumber = new BigNumber(10);
   const initialMedianizerEthPrice: BigNumber = E18;
   const priceFeedDataDescription: string = '200DailyETHPrice';
-  const seededPriceFeedPrices: BigNumber[] = [
-    E18.mul(1),
-    E18.mul(2),
-    E18.mul(3),
-    E18.mul(4),
-    E18.mul(5),
-  ];
 
   const movingAverageDays = new BigNumber(5);
   const stableCollateralUnit = new BigNumber(250);
@@ -162,17 +163,38 @@ describe('MACOStrategyManagerWrapper', () => {
       SetTestUtils.generateTimestamp(1000),
     );
 
-    const dailyPriceFeed: HistoricalPriceFeedContract = await deployHistoricalPriceFeedAsync(
+    const medianizerAdapter = await deployLegacyMakerOracleAdapterAsync(
       web3,
-      priceFeedUpdateFrequency,
-      ethMedianizer.address,
-      priceFeedDataDescription,
+      ethMedianizer.address
+    );
+
+    ethOracleProxy = await deployOracleProxyAsync(
+      web3,
+      medianizerAdapter.address
+    );
+
+    const dataSource = await deployLinearizedPriceDataSourceAsync(
+      web3,
+      ethOracleProxy.address,
+      ONE_HOUR_IN_SECONDS,
+      ''
+    );
+
+    await approveContractToOracleProxy(
+      ethOracleProxy,
+      dataSource.address
+    );
+
+    seededPriceFeedPrices = _.map(new Array(20), function(el, i) {return new BigNumber((150 + i) * 10 ** 18); });
+    const timeSeriesFeed = await deployTimeSeriesFeedAsync(
+      web3,
+      dataSource.address,
       seededPriceFeedPrices
     );
 
-    movingAverageOracle = await deployMovingAverageOracleAsync(
+    movingAverageOracle = await deployMovingAverageOracleV2Async(
       web3,
-      dailyPriceFeed.address,
+      timeSeriesFeed.address,
       priceFeedDataDescription
     );
 
@@ -196,7 +218,7 @@ describe('MACOStrategyManagerWrapper', () => {
       DEFAULT_AUCTION_PRICE_DENOMINATOR,
     );
 
-    addPriceCurveToCoreAsync(
+    await addPriceCurveToCoreAsync(
       core,
       constantAuctionPriceCurve.address,
     );
@@ -223,10 +245,11 @@ describe('MACOStrategyManagerWrapper', () => {
       riskCollateralNaturalUnit,
     );
 
-    macoManager = await deployMovingAverageStrategyManagerAsync(
+    macoManager = await deployMovingAverageStrategyManagerV2Async(
       web3,
       core.address,
       movingAverageOracle.address,
+      ethOracleProxy.address,
       usdc.address,
       wrappedETH.address,
       initialStableCollateral.address,
@@ -237,6 +260,11 @@ describe('MACOStrategyManagerWrapper', () => {
       auctionTimeToPivot,
       crossoverConfirmationMinTime,
       crossoverConfirmationMaxTime,
+    );
+
+    await approveContractToOracleProxy(
+      ethOracleProxy,
+      macoManager.address
     );
 
     rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
@@ -253,7 +281,7 @@ describe('MACOStrategyManagerWrapper', () => {
       rebalancingSetToken.address
     );
 
-    macoStrategyManagerWrapper = new MACOStrategyManagerWrapper(web3);
+    macoStrategyManagerWrapper = new MACOStrategyManagerV2Wrapper(web3);
   });
 
   afterEach(async () => {
@@ -314,6 +342,25 @@ describe('MACOStrategyManagerWrapper', () => {
     test('gets the correct movingAveragePriceFeed', async () => {
       const address = await subject();
       expect(address).to.equal(movingAverageOracle.address);
+    });
+  });
+
+  describe('riskAssetOracle', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = macoManager.address;
+    });
+
+    async function subject(): Promise<Address> {
+      return await macoStrategyManagerWrapper.riskAssetOracle(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct movingAveragePriceFeed', async () => {
+      const address = await subject();
+      expect(address).to.equal(ethOracleProxy.address);
     });
   });
 
