@@ -24,10 +24,11 @@ import {
   BTCETHRebalancingManagerContract,
   ETHDaiRebalancingManagerContract,
   HistoricalPriceFeedContract,
-  TimeSeriesFeedContract,
   MACOStrategyManagerContract,
   MACOStrategyManagerV2Contract,
-  MovingAverageOracleContract
+  MovingAverageOracleContract,
+  OracleProxyContract,
+  TimeSeriesFeedContract,
 } from 'set-protocol-strategies';
 
 import { Address } from '../../types/common';
@@ -103,7 +104,7 @@ export class StrategyContractWrapper {
   /**
    * Load a MovingAverageOracle contract
    *
-   * @param  movingAveragesOracle         Address of the MovingAveragesOracle contract
+   * @param  oracleProxy         Address of the MovingAveragesOracle contract
    * @param  transactionOptions           Options sent into the contract deployed method
    * @return                              The MovingAveragesOracle Contract
    */
@@ -123,6 +124,32 @@ export class StrategyContractWrapper {
       );
       this.cache[cacheKey] = movingAverageOracleContract;
       return movingAverageOracleContract;
+    }
+  }
+
+  /**
+   * Load an OracleProxy contract
+   *
+   * @param  OracleProxy contract         Address of the OracleProxy contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The OracleProxy Contract
+   */
+  public async loadOracleProxyContract(
+    oracleProxy: Address,
+    transactionOptions: object = {},
+  ): Promise<OracleProxyContract> {
+    const cacheKey = `OracleProxy_${oracleProxy}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as OracleProxyContract;
+    } else {
+      const oracleProxyContract = await OracleProxyContract.at(
+        oracleProxy,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = oracleProxyContract;
+      return oracleProxyContract;
     }
   }
 
