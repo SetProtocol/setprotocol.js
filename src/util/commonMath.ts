@@ -23,7 +23,7 @@ export const calculatePartialAmount = (
   numerator: BigNumber,
   denominator: BigNumber,
 ): BigNumber => {
-  return quantity.mul(numerator).div(denominator);
+  return quantity.mul(numerator).div(denominator).round(0, 3);
 };
 
 export const calculatePercentDifference = (
