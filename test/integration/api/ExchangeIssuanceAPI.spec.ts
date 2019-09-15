@@ -472,6 +472,7 @@ describe('ExchangeIssuanceAPI', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let rebalancingUnitShares: BigNumber;
 
+    let customBaseSetComponentUnits: BigNumber;
 
     // ----------------------------------------------------------------------
     // Issuance Details
@@ -507,6 +508,11 @@ describe('ExchangeIssuanceAPI', () => {
     let zeroExOrder: ZeroExSignedFillOrder;
     let zeroExMakerAssetAmount: BigNumber;
     let zeroExTakerAssetAmount: BigNumber;
+    let zeroExFillAmount: BigNumber;
+
+    let customZeroExMakerAssetAmount: BigNumber;
+    let customZeroExTakerAssetAmount: BigNumber;
+    let customZeroExFillAmount: BigNumber;
 
     // ----------------------------------------------------------------------
     // Kyber Trade Variables
@@ -528,8 +534,11 @@ describe('ExchangeIssuanceAPI', () => {
       const componentAddresses = [
         baseSetComponent.address, baseSetComponent2.address, weth.address,
       ];
+
+      const baseSetComponentUnits = customBaseSetComponentUnits || new BigNumber(10 ** 18);
+
       const componentUnits = [
-        new BigNumber(10 ** 18), new BigNumber(10 ** 18), new BigNumber(10 ** 18),
+        baseSetComponentUnits, new BigNumber(10 ** 18), new BigNumber(10 ** 18),
       ];
       baseSetNaturalUnit = new BigNumber(10 ** 17);
       baseSetToken = await deploySetTokenAsync(
@@ -573,7 +582,7 @@ describe('ExchangeIssuanceAPI', () => {
       // ----------------------------------------------------------------------
 
       kyberSendTokenQuantity = new BigNumber(10 ** 18);
-      zeroExSendTokenQuantity = new BigNumber(10 ** 18);
+      zeroExSendTokenQuantity = customZeroExFillAmount || new BigNumber(10 ** 18);
 
       exchangeIssuanceSendTokenQuantity =
         kyberSendTokenQuantity.plus(zeroExSendTokenQuantity);
@@ -617,8 +626,9 @@ describe('ExchangeIssuanceAPI', () => {
       const makerAsset = exchangeIssueReceiveTokens[0];
       const takerAsset = exchangeIssueSendTokens[0];
 
-      zeroExMakerAssetAmount = exchangeIssueReceiveTokenAmounts[0];
-      zeroExTakerAssetAmount = exchangeIssueSendTokenAmounts[0];
+      zeroExMakerAssetAmount = customZeroExMakerAssetAmount || exchangeIssueReceiveTokenAmounts[0];
+      zeroExTakerAssetAmount = customZeroExTakerAssetAmount || exchangeIssueSendTokenAmounts[0];
+      zeroExFillAmount = exchangeIssueSendTokenAmounts[0];
 
       zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
         NULL_ADDRESS,                                                         // senderAddress
@@ -634,7 +644,7 @@ describe('ExchangeIssuanceAPI', () => {
         SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,                                // exchangeAddress
         NULL_ADDRESS,                                                         // feeRecipientAddress
         SetTestUtils.generateTimestamp(10000),                                // expirationTimeSeconds
-        zeroExTakerAssetAmount,                                               // amount of zeroExOrder to fill
+        zeroExFillAmount,                                                     // amount of zeroExOrder to fill
       );
 
       await approveForTransferAsync(
@@ -704,6 +714,13 @@ describe('ExchangeIssuanceAPI', () => {
       subjectEtherValue = totalEther.toString();
     });
 
+    afterEach(async () => {
+      customBaseSetComponentUnits = undefined;
+      customZeroExMakerAssetAmount = undefined;
+      customZeroExTakerAssetAmount = undefined;
+      customZeroExFillAmount = undefined;
+    });
+
     async function subject(): Promise<string> {
       return exchangeIssuanceAPI.issueRebalancingSetWithEtherAsync(
         subjectRebalancingSetAddress,
@@ -723,6 +740,25 @@ describe('ExchangeIssuanceAPI', () => {
 
       const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
       expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+    });
+
+    describe('when the 0x order is partial-filled (with potential rounding issues)', async () => {
+      beforeAll(async () => {
+        customBaseSetComponentUnits = new BigNumber(1803900);
+        customZeroExMakerAssetAmount = new BigNumber(26886250);
+        customZeroExTakerAssetAmount = new BigNumber('150795079659399001');
+        customZeroExFillAmount = new BigNumber('101174111003799287');
+      });
+
+      test('issues the rebalancing Set to the caller', async () => {
+        const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+        const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(subjectRebalancingSetQuantity);
+
+        await subject();
+
+        const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+        expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+      });
     });
 
     describe('when a from transaction parameter is not passed in', async () => {
