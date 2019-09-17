@@ -178,7 +178,7 @@ export class ExchangeAssertions {
         exchangeErrors.INSUFFIENT_LIQUIDITY_FOR_REQUIRED_COMPONENT(normalizedTokenAddress),
       );
 
-      this.commonAssertions.isEqualBigNumber(
+      this.commonAssertions.isGreaterOrEqualThan(
         componentAmountsFromLiquidity[normalizedTokenAddress],
         receiveTokenAmountForFillQuantity,
         exchangeErrors.INSUFFICIENT_COMPONENT_AMOUNT_FROM_LIQUIDITY(
