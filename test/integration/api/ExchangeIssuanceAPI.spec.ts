@@ -761,6 +761,25 @@ describe('ExchangeIssuanceAPI', () => {
       });
     });
 
+    describe('when the receive token quantity is greater than required to mint the base Set', async () => {
+      beforeAll(async () => {
+        customBaseSetComponentUnits = new BigNumber('86518799416500000194');
+        customZeroExMakerAssetAmount = new BigNumber('907388370400000000000');
+        customZeroExTakerAssetAmount = new BigNumber('4334853164879882320');
+        customZeroExFillAmount = new BigNumber('4133249925904304290');
+      });
+
+      test('issues the rebalancing Set to the caller', async () => {
+        const previousRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+        const expectedRBSetTokenBalance = previousRBSetTokenBalance.add(subjectRebalancingSetQuantity);
+
+        await subject();
+
+        const currentRBSetTokenBalance = await rebalancingSetToken.balanceOf.callAsync(subjectCaller);
+        expect(expectedRBSetTokenBalance).to.bignumber.equal(currentRBSetTokenBalance);
+      });
+    });
+
     describe('when a from transaction parameter is not passed in', async () => {
       beforeEach(async () => {
         subjectCaller = undefined;
