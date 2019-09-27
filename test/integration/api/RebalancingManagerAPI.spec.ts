@@ -49,7 +49,10 @@ import {
   ETHDaiRebalancingManagerContract,
   HistoricalPriceFeedContract,
   MACOStrategyManagerContract,
+  MACOStrategyManagerV2Contract,
   MovingAverageOracleContract,
+  MovingAverageOracleV2Contract,
+  OracleProxyContract,
 } from 'set-protocol-strategies';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
@@ -69,6 +72,7 @@ import {
   addPriceCurveToCoreAsync,
   addPriceFeedOwnerToMedianizer,
   addWhiteListedTokenAsync,
+  approveContractToOracleProxy,
   approveForTransferAsync,
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
@@ -77,10 +81,16 @@ import {
   deployConstantAuctionPriceCurveAsync,
   deployEthDaiManagerContractAsync,
   deployHistoricalPriceFeedAsync,
+  deployLegacyMakerOracleAdapterAsync,
+  deployLinearizedPriceDataSourceAsync,
   deployMedianizerAsync,
   deployMovingAverageOracleAsync,
+  deployMovingAverageOracleV2Async,
   deployMovingAverageStrategyManagerAsync,
+  deployMovingAverageStrategyManagerV2Async,
+  deployOracleProxyAsync,
   deploySetTokenAsync,
+  deployTimeSeriesFeedAsync,
   deployTokensSpecifyingDecimals,
   increaseChainTimeAsync,
   initializeMovingAverageStrategyManagerAsync,
@@ -587,6 +597,7 @@ describe('RebalancingManagerAPI', () => {
 
       async function subject(): Promise<MovingAverageManagerDetails> {
         return await rebalancingManagerAPI.getMovingAverageManagerDetailsAsync(
+          ManagerType.MACO,
           subjectManagerAddress,
         );
       }
@@ -703,6 +714,7 @@ describe('RebalancingManagerAPI', () => {
 
       async function subject(): Promise<string> {
         return await rebalancingManagerAPI.initiateCrossoverProposeAsync(
+          ManagerType.MACO,
           subjectManagerAddress,
           { from: subjectCaller },
         );
@@ -908,6 +920,7 @@ describe('RebalancingManagerAPI', () => {
 
       async function subject(): Promise<string> {
         return await rebalancingManagerAPI.confirmCrossoverProposeAsync(
+          ManagerType.MACO,
           subjectManagerAddress,
           { from: subjectCaller },
         );
@@ -1101,7 +1114,7 @@ describe('RebalancingManagerAPI', () => {
           await updateMedianizerPriceAsync(
             web3,
             ethMedianizer,
-            initialMedianizerEthPrice.mul(5),
+            currentPrice,
             SetTestUtils.generateTimestamp(1000),
           );
 
@@ -1180,6 +1193,561 @@ describe('RebalancingManagerAPI', () => {
           return expect(subject()).to.be.rejectedWith(
             `Current Price ${currentPriceThatIsBelowMA.toString()} must be ` +
             `greater than Moving Average ${movingAverage.toString()}`
+          );
+        });
+      });
+    });
+  });
+
+  describe.only('MACOStrategyManagerV2', async () => {
+    let macoManager: MACOStrategyManagerV2Contract;
+    let ethOracleProxy: OracleProxyContract;
+    let movingAverageOracle: MovingAverageOracleV2Contract;
+    let initialStableCollateral: SetTokenContract;
+    let initialRiskCollateral: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+
+    let auctionTimeToPivot: BigNumber;
+    let crossoverConfirmationMinTime: BigNumber;
+    let crossoverConfirmationMaxTime: BigNumber;
+
+    const seededPriceFeedPrices: BigNumber[] = [
+      E18.mul(1),
+      E18.mul(2),
+      E18.mul(3),
+      E18.mul(4),
+      E18.mul(5),
+    ];
+    const initialMedianizerEthPrice: BigNumber = E18;
+    const priceFeedDataDescription: string = '200DailyETHPrice';
+
+    const movingAverageDays = new BigNumber(5);
+    const stableCollateralUnit = new BigNumber(250);
+    const stableCollateralNaturalUnit = new BigNumber(10 ** 12);
+
+    const riskCollateralUnit = new BigNumber(10 ** 6);
+    const riskCollateralNaturalUnit = new BigNumber(10 ** 6);
+    const initializedProposalTimestamp = new BigNumber(0);
+
+    beforeEach(async () => {
+      crossoverConfirmationMinTime = ONE_HOUR_IN_SECONDS.mul(6);
+      crossoverConfirmationMaxTime = ONE_HOUR_IN_SECONDS.mul(12);
+
+      await updateMedianizerPriceAsync(
+        web3,
+        ethMedianizer,
+        initialMedianizerEthPrice,
+        SetTestUtils.generateTimestamp(1000),
+      );
+
+      const medianizerAdapter = await deployLegacyMakerOracleAdapterAsync(
+        web3,
+        ethMedianizer.address
+      );
+
+      ethOracleProxy = await deployOracleProxyAsync(
+        web3,
+        medianizerAdapter.address
+      );
+
+      const dataSource = await deployLinearizedPriceDataSourceAsync(
+        web3,
+        ethOracleProxy.address,
+        ONE_HOUR_IN_SECONDS,
+        ''
+      );
+
+      await approveContractToOracleProxy(
+        ethOracleProxy,
+        dataSource.address
+      );
+
+      const timeSeriesFeed = await deployTimeSeriesFeedAsync(
+        web3,
+        dataSource.address,
+        seededPriceFeedPrices
+      );
+
+      movingAverageOracle = await deployMovingAverageOracleV2Async(
+        web3,
+        timeSeriesFeed.address,
+        priceFeedDataDescription
+      );
+
+      auctionTimeToPivot = ONE_DAY_IN_SECONDS;
+
+      // Create Stable Collateral Set
+      initialStableCollateral = await deploySetTokenAsync(
+        web3,
+        core,
+        factory.address,
+        [usdc.address],
+        [stableCollateralUnit],
+        stableCollateralNaturalUnit,
+      );
+
+      // Create Risk Collateral Set
+      initialRiskCollateral = await deploySetTokenAsync(
+        web3,
+        core,
+        factory.address,
+        [wrappedETH.address],
+        [riskCollateralUnit],
+        riskCollateralNaturalUnit,
+      );
+
+      macoManager = await deployMovingAverageStrategyManagerV2Async(
+        web3,
+        core.address,
+        movingAverageOracle.address,
+        ethOracleProxy.address,
+        usdc.address,
+        wrappedETH.address,
+        initialStableCollateral.address,
+        initialRiskCollateral.address,
+        factory.address,
+        constantAuctionPriceCurve.address,
+        movingAverageDays,
+        auctionTimeToPivot,
+        crossoverConfirmationMinTime,
+        crossoverConfirmationMaxTime,
+      );
+
+      await approveContractToOracleProxy(
+        ethOracleProxy,
+        macoManager.address
+      );
+
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingFactory.address,
+        macoManager.address,
+        initialRiskCollateral.address,
+        ONE_DAY_IN_SECONDS,
+      );
+
+      await initializeMovingAverageStrategyManagerAsync(
+        macoManager,
+        rebalancingSetToken.address
+      );
+    });
+
+    describe('getMovingAverageManagerDetailsAsync', async () => {
+      let subjectManagerAddress: Address;
+
+      beforeEach(async () => {
+        subjectManagerAddress = macoManager.address;
+      });
+
+      async function subject(): Promise<MovingAverageManagerDetails> {
+        return await rebalancingManagerAPI.getMovingAverageManagerDetailsAsync(
+          ManagerType.MACOV2,
+          subjectManagerAddress,
+        );
+      }
+
+      test('gets the correct auctionLibrary address', async () => {
+        const details = await subject();
+        expect(details.auctionLibrary).to.equal(constantAuctionPriceCurve.address);
+      });
+
+      test('gets the correct auctionTimeToPivot address', async () => {
+        const details = await subject();
+        expect(details.auctionTimeToPivot).to.bignumber.equal(auctionTimeToPivot);
+      });
+
+      test('gets the correct core address', async () => {
+        const details = await subject();
+        expect(details.core).to.equal(core.address);
+      });
+
+      test('gets the correct lastCrossoverConfirmationTimestamp', async () => {
+        const details = await subject();
+        expect(details.lastCrossoverConfirmationTimestamp).to.bignumber.equal(initializedProposalTimestamp);
+      });
+
+      test('gets the correct movingAverageDays', async () => {
+        const details = await subject();
+        expect(details.movingAverageDays).to.bignumber.equal(movingAverageDays);
+      });
+
+      test('gets the correct movingAveragePriceFeed', async () => {
+        const details = await subject();
+        expect(details.movingAveragePriceFeed).to.equal(movingAverageOracle.address);
+      });
+
+      test('gets the correct rebalancingSetToken', async () => {
+        const details = await subject();
+        expect(details.rebalancingSetToken).to.equal(rebalancingSetToken.address);
+      });
+
+      test('gets the correct riskAsset', async () => {
+        const details = await subject();
+        expect(details.riskAsset).to.equal(wrappedETH.address);
+      });
+
+      test('gets the correct riskCollateral', async () => {
+        const details = await subject();
+        expect(details.riskCollateral).to.equal(initialRiskCollateral.address);
+      });
+
+      test('gets the correct setTokenFactory', async () => {
+        const details = await subject();
+        expect(details.setTokenFactory).to.equal(factory.address);
+      });
+
+      test('gets the correct stableAsset', async () => {
+        const details = await subject();
+        expect(details.stableAsset).to.equal(usdc.address);
+      });
+
+      test('gets the correct stableCollateral', async () => {
+        const details = await subject();
+        expect(details.stableCollateral).to.equal(initialStableCollateral.address);
+      });
+
+      test('gets the correct crossoverConfirmationMinTime', async () => {
+        const details = await subject();
+        expect(details.crossoverConfirmationMinTime).to.bignumber.equal(crossoverConfirmationMinTime);
+      });
+
+      test('gets the correct crossoverConfirmationMaxTime', async () => {
+        const details = await subject();
+        expect(details.crossoverConfirmationMaxTime).to.bignumber.equal(crossoverConfirmationMaxTime);
+      });
+    });
+
+    describe('getLastCrossoverConfirmationTimestampAsync', async () => {
+      let subjectManagerAddress: Address;
+
+      beforeEach(async () => {
+        subjectManagerAddress = macoManager.address;
+      });
+
+      async function subject(): Promise<BigNumber> {
+        return await rebalancingManagerAPI.getLastCrossoverConfirmationTimestampAsync(
+          subjectManagerAddress,
+        );
+      }
+
+      test('gets the correct lastCrossoverConfirmationTimestamp', async () => {
+        const lastCrossoverConfirmationTimestamp = await subject();
+        expect(lastCrossoverConfirmationTimestamp).to.bignumber.equal(initializedProposalTimestamp);
+      });
+    });
+
+    describe('initiateCrossoverProposeAsync', async () => {
+      let subjectManagerAddress: Address;
+      let subjectCaller: Address;
+
+      let nextRebalanceAvailableInSeconds: BigNumber;
+      const macoManagerWrapper: MACOStrategyManagerWrapper = new MACOStrategyManagerWrapper(web3);
+
+      beforeEach(async () => {
+        subjectManagerAddress = macoManager.address;
+        subjectCaller = DEFAULT_ACCOUNT;
+
+        const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+        const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+        nextRebalanceAvailableInSeconds = lastRebalancedTimestampSeconds.plus(rebalanceInterval);
+      });
+
+      afterEach(async () => {
+        timeKeeper.reset();
+      });
+
+      async function subject(): Promise<string> {
+        return await rebalancingManagerAPI.initiateCrossoverProposeAsync(
+          ManagerType.MACOV2,
+          subjectManagerAddress,
+          { from: subjectCaller },
+        );
+      }
+
+      describe('when more than 12 hours has elapsed since the last Proposal timestamp', async () => {
+        beforeEach(async () => {
+          // Elapse the rebalance interval
+          await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+          await updateMedianizerPriceAsync(
+            web3,
+            ethMedianizer,
+            initialMedianizerEthPrice.div(10),
+            SetTestUtils.generateTimestamp(1000),
+          );
+
+          // Free time at the rebalance interval minimum
+          timeKeeper.freeze(nextRebalanceAvailableInSeconds.toNumber() * 1000);
+        });
+
+        test('calls initialPropose and sets the lastCrossoverConfirmationTimestamp properly', async () => {
+          const txnHash = await subject();
+          const { blockNumber } = await web3.eth.getTransactionReceipt(txnHash);
+          const { timestamp } = await web3.eth.getBlock(blockNumber);
+
+          const lastTimestamp = await macoManagerWrapper.lastCrossoverConfirmationTimestamp(
+            subjectManagerAddress,
+          );
+          expect(lastTimestamp).to.bignumber.equal(timestamp);
+        });
+      });
+
+      describe('when the RebalancingSet is not in Default state', async () => {
+        beforeEach(async () => {
+          // Elapse the rebalance interval
+          await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+          await updateMedianizerPriceAsync(
+            web3,
+            ethMedianizer,
+            initialMedianizerEthPrice.div(10),
+            SetTestUtils.generateTimestamp(1000),
+          );
+
+          // Call initialPropose to set the timestamp
+          await macoManagerWrapper.initialPropose(subjectManagerAddress);
+
+          // Elapse signal confirmation period
+          await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(7));
+
+          // Put the rebalancing set into proposal state
+          await macoManagerWrapper.confirmPropose(subjectManagerAddress);
+
+          // Freeze the time at rebalance interval + 3 hours
+          const newDesiredTimestamp = nextRebalanceAvailableInSeconds.plus(ONE_HOUR_IN_SECONDS.mul(7));
+          timeKeeper.freeze(newDesiredTimestamp.toNumber() * 1000);
+        });
+
+        test('throws', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Rebalancing token at ${rebalancingSetToken.address} must be in Default state to call that function.`
+          );
+        });
+      });
+
+      describe('when insufficient time has elapsed since the last rebalance', async () => {
+        beforeEach(async () => {
+          // Freeze the time at rebalance interval
+          const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+          timeKeeper.freeze(lastRebalancedTimestampSeconds.toNumber() * 1000);
+        });
+
+        test('throws', async () => {
+          const lastRebalanceTime = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+          const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+          const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval).mul(1000);
+          const nextRebalanceFormattedDate = moment(nextAvailableRebalance.toNumber())
+          .format('dddd, MMMM Do YYYY, h:mm:ss a');
+
+          return expect(subject()).to.be.rejectedWith(
+            `Attempting to rebalance too soon. Rebalancing next ` +
+            `available on ${nextRebalanceFormattedDate}`
+          );
+        });
+      });
+    });
+
+    describe('confirmCrossoverProposeAsync', async () => {
+      let subjectManagerAddress: Address;
+      let subjectCaller: Address;
+      let nextRebalanceAvailableInSeconds: BigNumber;
+
+      const macoManagerWrapper: MACOStrategyManagerWrapper = new MACOStrategyManagerWrapper(web3);
+
+      beforeEach(async () => {
+        subjectManagerAddress = macoManager.address;
+        subjectCaller = DEFAULT_ACCOUNT;
+
+        const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+        const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+        nextRebalanceAvailableInSeconds = lastRebalancedTimestampSeconds.plus(rebalanceInterval);
+      });
+
+      afterEach(async () => {
+        timeKeeper.reset();
+      });
+
+      async function subject(): Promise<string> {
+        return await rebalancingManagerAPI.confirmCrossoverProposeAsync(
+          ManagerType.MACOV2,
+          subjectManagerAddress,
+          { from: subjectCaller },
+        );
+      }
+
+      describe('when 6 hours has elapsed since the lastCrossoverConfirmationTimestamp', async () => {
+        beforeEach(async () => {
+           // Elapse the rebalance interval
+          await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+          await updateMedianizerPriceAsync(
+            web3,
+            ethMedianizer,
+            initialMedianizerEthPrice.div(10),
+            SetTestUtils.generateTimestamp(1000),
+          );
+
+          // Call initialPropose to set the timestamp
+          await macoManagerWrapper.initialPropose(subjectManagerAddress);
+
+          // Elapse 7 hours
+          await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(7));
+
+          // Need to perform a transaction to further the timestamp
+          await updateMedianizerPriceAsync(
+            web3,
+            ethMedianizer,
+            initialMedianizerEthPrice.div(10),
+            SetTestUtils.generateTimestamp(2000),
+          );
+
+          // Freeze the time at rebalance interval + 7 hours
+          const lastCrossoverConfirmationTimestamp =
+            await macoManager.lastCrossoverConfirmationTimestamp.callAsync(macoManager);
+          const newDesiredTimestamp = lastCrossoverConfirmationTimestamp.plus(ONE_HOUR_IN_SECONDS.mul(7));
+          timeKeeper.freeze(newDesiredTimestamp.toNumber() * 1000);
+        });
+
+        test('sets the rebalancing Set into proposal period', async () => {
+          await subject();
+          const proposalStateEnum = new BigNumber(1);
+          const rebalancingSetState = await rebalancingSetToken.rebalanceState.callAsync();
+
+          expect(rebalancingSetState).to.bignumber.equal(proposalStateEnum);
+        });
+      });
+
+      describe('when more than 12 hours has not elapsed since the lastCrossoverConfirmationTimestamp', async () => {
+        beforeEach(async () => {
+           // Elapse the rebalance interval
+          await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+          await updateMedianizerPriceAsync(
+            web3,
+            ethMedianizer,
+            initialMedianizerEthPrice.div(10),
+            SetTestUtils.generateTimestamp(1000),
+          );
+
+          // Call initialPropose to set the timestamp
+          await macoManagerWrapper.initialPropose(subjectManagerAddress);
+
+          // Elapse 3 hours
+          await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(13));
+
+          // Need to perform a transaction to further the timestamp
+          await updateMedianizerPriceAsync(
+            web3,
+            ethMedianizer,
+            initialMedianizerEthPrice.div(10),
+            SetTestUtils.generateTimestamp(2000),
+          );
+
+          // Freeze the time at rebalance interval + 3 hours
+          const lastCrossoverConfirmationTimestamp =
+            await macoManager.lastCrossoverConfirmationTimestamp.callAsync(macoManager);
+          const newDesiredTimestamp = lastCrossoverConfirmationTimestamp.plus(ONE_HOUR_IN_SECONDS.mul(3));
+          timeKeeper.freeze(newDesiredTimestamp.toNumber() * 1000);
+        });
+
+        test('throws', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Confirm Crossover Propose is not called in the confirmation period since last proposal timestamp`
+          );
+        });
+      });
+
+      describe('when 6 hours has not elapsed since the lastCrossoverConfirmationTimestamp', async () => {
+        beforeEach(async () => {
+           // Elapse the rebalance interval
+          await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+          await updateMedianizerPriceAsync(
+            web3,
+            ethMedianizer,
+            initialMedianizerEthPrice.div(10),
+            SetTestUtils.generateTimestamp(1000),
+          );
+
+          // Call initialPropose to set the timestamp
+          await macoManagerWrapper.initialPropose(subjectManagerAddress);
+
+          // Elapse 3 hours
+          await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(3));
+
+          // Need to perform a transaction to further the timestamp
+          await updateMedianizerPriceAsync(
+            web3,
+            ethMedianizer,
+            initialMedianizerEthPrice.div(10),
+            SetTestUtils.generateTimestamp(2000),
+          );
+
+          // Freeze the time at rebalance interval + 3 hours
+          const lastCrossoverConfirmationTimestamp =
+            await macoManager.lastCrossoverConfirmationTimestamp.callAsync(macoManager);
+          const newDesiredTimestamp = lastCrossoverConfirmationTimestamp.plus(ONE_HOUR_IN_SECONDS.mul(3));
+          timeKeeper.freeze(newDesiredTimestamp.toNumber() * 1000);
+        });
+
+        test('throws', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Confirm Crossover Propose is not called in the confirmation period since last proposal timestamp`
+          );
+        });
+      });
+
+      describe('when the RebalancingSet is not in Default state', async () => {
+        beforeEach(async () => {
+          // Elapse the rebalance interval
+          await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+          await updateMedianizerPriceAsync(
+            web3,
+            ethMedianizer,
+            initialMedianizerEthPrice.div(10),
+            SetTestUtils.generateTimestamp(1000),
+          );
+
+          // Call initialPropose to set the timestamp
+          await macoManagerWrapper.initialPropose(subjectManagerAddress);
+
+          // Elapse signal confirmation period
+          await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(7));
+
+          // Put the rebalancing set into proposal state
+          await macoManagerWrapper.confirmPropose(subjectManagerAddress);
+
+          // Freeze the time at rebalance interval + 3 hours
+          const newDesiredTimestamp = nextRebalanceAvailableInSeconds.plus(ONE_HOUR_IN_SECONDS.mul(7));
+          timeKeeper.freeze(newDesiredTimestamp.toNumber() * 1000);
+        });
+
+        test('throws', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Rebalancing token at ${rebalancingSetToken.address} must be in Default state to call that function.`
+          );
+        });
+      });
+
+      describe('when insufficient time has elapsed since the last rebalance', async () => {
+        beforeEach(async () => {
+          // Freeze the time at rebalance interval
+          const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+          timeKeeper.freeze(lastRebalancedTimestampSeconds.toNumber() * 1000);
+        });
+
+        test('throws', async () => {
+          const lastRebalanceTime = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
+          const rebalanceInterval = await rebalancingSetToken.rebalanceInterval.callAsync();
+          const nextAvailableRebalance = lastRebalanceTime.add(rebalanceInterval).mul(1000);
+          const nextRebalanceFormattedDate = moment(nextAvailableRebalance.toNumber())
+          .format('dddd, MMMM Do YYYY, h:mm:ss a');
+
+          return expect(subject()).to.be.rejectedWith(
+            `Attempting to rebalance too soon. Rebalancing next ` +
+            `available on ${nextRebalanceFormattedDate}`
           );
         });
       });

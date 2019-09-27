@@ -24,9 +24,11 @@ import {
   BTCETHRebalancingManagerContract,
   ETHDaiRebalancingManagerContract,
   HistoricalPriceFeedContract,
-  TimeSeriesFeedContract,
   MACOStrategyManagerContract,
-  MovingAverageOracleContract
+  MACOStrategyManagerV2Contract,
+  MovingAverageOracleContract,
+  OracleProxyContract,
+  TimeSeriesFeedContract,
 } from 'set-protocol-strategies';
 
 import { Address } from '../../types/common';
@@ -102,7 +104,7 @@ export class StrategyContractWrapper {
   /**
    * Load a MovingAverageOracle contract
    *
-   * @param  movingAveragesOracle         Address of the MovingAveragesOracle contract
+   * @param  oracleProxy         Address of the MovingAveragesOracle contract
    * @param  transactionOptions           Options sent into the contract deployed method
    * @return                              The MovingAveragesOracle Contract
    */
@@ -122,6 +124,32 @@ export class StrategyContractWrapper {
       );
       this.cache[cacheKey] = movingAverageOracleContract;
       return movingAverageOracleContract;
+    }
+  }
+
+  /**
+   * Load an OracleProxy contract
+   *
+   * @param  OracleProxy contract         Address of the OracleProxy contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The OracleProxy Contract
+   */
+  public async loadOracleProxyContract(
+    oracleProxy: Address,
+    transactionOptions: object = {},
+  ): Promise<OracleProxyContract> {
+    const cacheKey = `OracleProxy_${oracleProxy}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as OracleProxyContract;
+    } else {
+      const oracleProxyContract = await OracleProxyContract.at(
+        oracleProxy,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = oracleProxyContract;
+      return oracleProxyContract;
     }
   }
 
@@ -220,6 +248,32 @@ export class StrategyContractWrapper {
       return this.cache[cacheKey] as MACOStrategyManagerContract;
     } else {
       const macoStrategyManagerContract = await MACOStrategyManagerContract.at(
+        macoStrategyManager,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = macoStrategyManagerContract;
+      return macoStrategyManagerContract;
+    }
+  }
+
+  /**
+   * Load a MACOStrategyManagerV2 contract
+   *
+   * @param  macoStrategyManager          Address of the MACOStrategyManager contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The MACOStrategyManager Contract
+   */
+  public async loadMACOStrategyManagerV2ContractAsync(
+    macoStrategyManager: Address,
+    transactionOptions: object = {},
+  ): Promise<MACOStrategyManagerV2Contract> {
+    const cacheKey = `macoStrategyManager_${macoStrategyManager}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as MACOStrategyManagerV2Contract;
+    } else {
+      const macoStrategyManagerContract = await MACOStrategyManagerV2Contract.at(
         macoStrategyManager,
         this.web3,
         transactionOptions,

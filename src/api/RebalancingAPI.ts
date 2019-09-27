@@ -32,6 +32,7 @@ import {
 import { BigNumber, parseRebalanceState } from '../util';
 import {
   Address,
+  BidPlacedEvent,
   RebalancingProgressDetails,
   RebalancingProposalDetails,
   RebalancingSetDetails,
@@ -288,6 +289,51 @@ export class RebalancingAPI {
       inflow,
       outflow,
     } as TokenFlowsDetails;
+  }
+
+  /**
+   * Fetches BidPlaced event logs including information about the transactionHash, rebalancingSetToken,
+   * bidder, executionQuantity, combinedTokenAddresses, etc.
+   *
+   * This fetch can be filtered by block and by rebalancingSetToken.
+   *
+   * @param  fromBlock                     The beginning block to retrieve events from
+   * @param  toBlock                       The ending block to retrieve events (default is latest)
+   * @param  rebalancingSetToken           Addresses of rebalancing set token to filter events for
+   * @return                               An array of objects conforming to the BidPlacedEvent interface
+   */
+  public async getBidPlacedEventsAsync(
+    fromBlock: number,
+    toBlock?: any,
+    rebalancingSetToken?: Address,
+  ): Promise<BidPlacedEvent[]> {
+    const events: any[] = await this.rebalancingAuctionModule.bidPlacedEvent(
+      fromBlock,
+      toBlock,
+      rebalancingSetToken,
+    );
+
+    const formattedEvents: BidPlacedEvent[] = events.map(event => {
+      const returnValues = event.returnValues;
+      const rebalancingSetToken = returnValues['rebalancingSetToken'];
+      const bidder = returnValues['bidder'];
+      const executionQuantity = returnValues['executionQuantity'];
+      const combinedTokenAddresses = returnValues['combinedTokenAddresses'];
+      const inflowTokenUnits = returnValues['inflowTokenUnits'];
+      const outflowTokenUnits = returnValues['outflowTokenUnits'];
+
+      return {
+        transactionHash: event.transactionHash,
+        rebalancingSetToken,
+        bidder,
+        executionQuantity: new BigNumber(executionQuantity),
+        combinedTokenAddresses,
+        inflowTokenUnits: inflowTokenUnits.map((unit: string) => new BigNumber(unit)),
+        outflowTokenUnits: outflowTokenUnits.map((unit: string) => new BigNumber(unit)),
+      };
+    });
+
+    return formattedEvents;
   }
 
   /**

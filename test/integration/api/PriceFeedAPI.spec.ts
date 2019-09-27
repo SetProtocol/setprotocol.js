@@ -214,8 +214,8 @@ describe('PriceFeedAPI', () => {
 
       expect(timeSeriesFeedState.nextEarliestUpdate).to.bignumber.equal(expectedUpdateTimestamp);
       expect(timeSeriesFeedState.updateInterval).to.bignumber.equal(priceFeedUpdateFrequency);
-      expect(JSON.stringify(timeSeriesFeedState.timeSeriesDataArray))
-        .to.equal(JSON.stringify(seededPriceFeedPrices.reverse()));
+      expect(JSON.stringify(timeSeriesFeedState.timeSeriesData.dataArray))
+        .to.equal(JSON.stringify(seededPriceFeedPrices));
     });
   });
 

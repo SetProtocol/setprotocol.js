@@ -10,6 +10,8 @@ import {
   ETHDaiRebalancingManagerContract,
   MACOStrategyManager,
   MACOStrategyManagerContract,
+  MACOStrategyManagerV2,
+  MACOStrategyManagerV2Contract
 } from 'set-protocol-strategies';
 
 import { TX_DEFAULTS } from '@src/constants';
@@ -171,8 +173,51 @@ export const deployMovingAverageStrategyManagerAsync = async(
   );
 };
 
+export const deployMovingAverageStrategyManagerV2Async = async(
+  web3: Web3,
+  coreAddress: Address,
+  movingAveragePriceFeed: Address,
+  riskAssetOracle: Address,
+  stableAssetAddress: Address,
+  riskAssetAddress: Address,
+  initialStableCollateralAddress: Address,
+  initialRiskCollateralAddress: Address,
+  setTokenFactory: Address,
+  auctionLibrary: Address,
+  movingAverageDays: BigNumber,
+  auctionTimeToPivot: BigNumber,
+  crossoverConfirmationMinTime: BigNumber,
+  crossoverConfirmationMaxTime: BigNumber,
+  from: Address = TX_DEFAULTS.from,
+): Promise<MACOStrategyManagerV2Contract> => {
+  const truffleMacoManagerContract = contract(MACOStrategyManagerV2);
+  truffleMacoManagerContract.setProvider(web3.currentProvider);
+  truffleMacoManagerContract.setNetwork(50);
+  truffleMacoManagerContract.defaults(TX_DEFAULTS);
+
+  // Deploy MACO Strategy Manager V2
+  const deployedMacoStrategyInstance = await truffleMacoManagerContract.new(
+    coreAddress,
+    movingAveragePriceFeed,
+    riskAssetOracle,
+    stableAssetAddress,
+    riskAssetAddress,
+    [initialStableCollateralAddress, initialRiskCollateralAddress],
+    setTokenFactory,
+    auctionLibrary,
+    movingAverageDays,
+    auctionTimeToPivot,
+    [crossoverConfirmationMinTime, crossoverConfirmationMaxTime],
+  );
+  return await MACOStrategyManagerV2Contract.at(
+    deployedMacoStrategyInstance.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
 export const initializeMovingAverageStrategyManagerAsync = async(
-  macoManager: MACOStrategyManagerContract,
+  macoManager: MACOStrategyManagerContract | MACOStrategyManagerV2Contract,
   rebalancingSetTokenAddress: Address,
 ): Promise<void> => {
   await macoManager.initialize.sendTransactionAsync(rebalancingSetTokenAddress);

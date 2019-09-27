@@ -19,6 +19,8 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
 
+import { RebalanceAuctionModule } from 'set-protocol-contracts';
+
 import { ProtocolContractWrapper } from './ProtocolContractWrapper';
 import { Address, Tx } from '../../types/common';
 import { BigNumber, generateTxOpts } from '../../util';
@@ -44,6 +46,41 @@ export class RebalancingAuctionModuleWrapper {
     this.contracts = new ProtocolContractWrapper(this.web3);
 
     this.rebalanceAuctionModuleAddress = rebalanceAuctionModule;
+  }
+
+
+  /**
+   * Asynchronously retrieve BidPlaced events from the Rebalancing Auction Module
+   * Optionally, you can filter by a specific rebalancing SetToken
+   *
+   * @param  fromBlock                     The beginning block to retrieve events from
+   * @param  toBlock                       The ending block to retrieve events (default is latest)
+   * @param  rebalancingSetToken           Addresses of rebalancing set token to filter events for
+   * @return                               An array of raw events
+   */
+  public async bidPlacedEvent(
+    fromBlock: number,
+    toBlock: any = 'latest',
+    rebalancingSetToken?: Address,
+  ): Promise<any> {
+    const rebalanceAuctionModuleInstance = new this.web3.eth.Contract(
+      RebalanceAuctionModule.abi,
+      this.rebalanceAuctionModuleAddress
+    );
+
+    const filter: any = {};
+
+    if (rebalancingSetToken) {
+      filter['rebalancingSetToken'] = rebalancingSetToken;
+    }
+
+    const events = await rebalanceAuctionModuleInstance.getPastEvents('BidPlaced', {
+      'fromBlock': fromBlock,
+      'toBlock': toBlock,
+      'filter': filter,
+    });
+
+    return events;
   }
 
   /**

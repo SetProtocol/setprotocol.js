@@ -1,6 +1,6 @@
 {
   "name": "setprotocol.js",
-  "version": "1.2.2-rc5",
+  "version": "1.2.2-rc12",
   "description": "A javascript library for interacting with the Set protocol",
   "keywords": [
     "setProtocol.js",
@@ -67,8 +67,8 @@
     "lodash.compact": "^3.0.1",
     "moment": "^2.22.2",
     "set-protocol-contracts": "1.2.5",
-    "set-protocol-strategies": "1.1.0",
-    "set-protocol-utils": "1.0.0-beta.38",
+    "set-protocol-strategies": "1.1.2",
+    "set-protocol-utils": "1.0.0-beta.39",
     "timekeeper": "^2.1.2",
     "tiny-promisify": "^1.0.0",
     "truffle-contract": "^4.0.0",

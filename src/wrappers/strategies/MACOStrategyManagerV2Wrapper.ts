@@ -22,20 +22,26 @@ import { Address } from '../../types/common';
 import { MACOStrategyManagerBaseWrapper } from './MACOStrategyManagerBaseWrapper';
 
 /**
- * @title  MACOStrategyManagerWrapper
+ * @title  MACOStrategyManagerV2Wrapper
  * @author Set Protocol
  *
- * The MACOStrategyManagerWrapper handles all functions on the MACOStrategyManager smart contract.
+ * The MACOStrategyManagerV2Wrapper handles all functions on the MACOStrategyManagerV2 smart contract.
  *
  */
-export class MACOStrategyManagerWrapper extends MACOStrategyManagerBaseWrapper {
+export class MACOStrategyManagerV2Wrapper extends MACOStrategyManagerBaseWrapper {
   public constructor(web3: Web3) {
     super(web3);
   }
 
   public async movingAveragePriceFeed(managerAddress: Address): Promise<Address> {
-    const macoStrategyManagerInstance = await this.contracts.loadMACOStrategyManagerContractAsync(managerAddress);
+    const macoStrategyManagerInstance = await this.contracts.loadMACOStrategyManagerV2ContractAsync(managerAddress);
 
-    return await macoStrategyManagerInstance.movingAveragePriceFeed.callAsync();
+    return await macoStrategyManagerInstance.movingAveragePriceFeedInstance.callAsync();
+  }
+
+  public async riskAssetOracle(managerAddress: Address): Promise<Address> {
+    const macoStrategyManagerInstance = await this.contracts.loadMACOStrategyManagerV2ContractAsync(managerAddress);
+
+    return await macoStrategyManagerInstance.riskAssetOracleInstance.callAsync();
   }
 }

@@ -15,6 +15,16 @@ export {
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 
+export interface BidPlacedEvent {
+  transactionHash: string;
+  rebalancingSetToken: Address;
+  bidder: Address;
+  executionQuantity: BigNumber;
+  combinedTokenAddresses: Address[];
+  inflowTokenUnits: BigNumber[];
+  outflowTokenUnits: BigNumber[];
+}
+
 export interface Component {
   address: Address;
   unit: BigNumber;
@@ -31,6 +41,8 @@ export const ManagerType = {
   BTCETH: new BigNumber(0),
   BTCDAI: new BigNumber(1),
   ETHDAI: new BigNumber(2),
+  MACO: new BigNumber(3),
+  MACOV2: new BigNumber(4),
 };
 
 export interface SetUnits {
