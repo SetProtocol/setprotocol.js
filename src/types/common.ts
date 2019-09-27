@@ -15,6 +15,16 @@ export {
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 
+export interface BidPlacedEvent {
+  transactionHash: string;
+  rebalancingSetToken: Address;
+  bidder: Address;
+  executionQuantity: BigNumber;
+  combinedTokenAddresses: Address[];
+  inflowTokenUnits: BigNumber[];
+  outflowTokenUnits: BigNumber[];
+}
+
 export interface Component {
   address: Address;
   unit: BigNumber;
