@@ -35,7 +35,7 @@ $ npm i --save setprotocol.js@^1.2.2-rc4
 ```
 
 ##### Setup
-For the most up to date steps on how to initialize and use `setProtocol.js`, please refer to our [installation guide](https://docs.setprotocol.com/getting-started#installation).
+For the most up to date steps on how to initialize and use `setProtocol.js`, please refer to our [installation guide](https://docs.setprotocol.com/#/getting-started#installation).
 
 ## :raising_hand: Contributing
 ### Testing
