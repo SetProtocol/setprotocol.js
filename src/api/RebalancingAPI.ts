@@ -306,6 +306,7 @@ export class RebalancingAPI {
     fromBlock: number,
     toBlock?: any,
     rebalancingSetToken?: Address,
+    getTimestamp?: boolean,
   ): Promise<BidPlacedEvent[]> {
     const events: any[] = await this.rebalancingAuctionModule.bidPlacedEvent(
       fromBlock,
@@ -313,7 +314,7 @@ export class RebalancingAPI {
       rebalancingSetToken,
     );
 
-    const formattedEvents: BidPlacedEvent[] = events.map(event => {
+    const formattedEventPromises: Promise<BidPlacedEvent>[] = events.map(async event => {
       const returnValues = event.returnValues;
       const rebalancingSetToken = returnValues['rebalancingSetToken'];
       const bidder = returnValues['bidder'];
@@ -321,6 +322,12 @@ export class RebalancingAPI {
       const combinedTokenAddresses = returnValues['combinedTokenAddresses'];
       const inflowTokenUnits = returnValues['inflowTokenUnits'];
       const outflowTokenUnits = returnValues['outflowTokenUnits'];
+
+      let timestamp = undefined;
+      if (getTimestamp) {
+        const block = await this.web3.eth.getBlock(event.blockNumber);
+        timestamp = block.timestamp;
+      }
 
       return {
         transactionHash: event.transactionHash,
@@ -330,10 +337,11 @@ export class RebalancingAPI {
         combinedTokenAddresses,
         inflowTokenUnits: inflowTokenUnits.map((unit: string) => new BigNumber(unit)),
         outflowTokenUnits: outflowTokenUnits.map((unit: string) => new BigNumber(unit)),
+        timestamp,
       };
     });
 
-    return formattedEvents;
+    return Promise.all(formattedEventPromises);
   }
 
   /**
