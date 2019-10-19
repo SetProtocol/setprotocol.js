@@ -23,6 +23,7 @@ export interface BidPlacedEvent {
   combinedTokenAddresses: Address[];
   inflowTokenUnits: BigNumber[];
   outflowTokenUnits: BigNumber[];
+  timestamp: number;
 }
 
 export interface Component {
