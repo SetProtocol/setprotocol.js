@@ -27,6 +27,7 @@ import {
   ProtocolViewerWrapper,
   SetTokenWrapper,
   RebalancingAuctionModuleWrapper,
+  RebalancingSetEthBidderWrapper,
   RebalancingSetTokenWrapper,
 } from '../wrappers';
 import { BigNumber, parseRebalanceState } from '../util';
@@ -56,7 +57,9 @@ export class RebalancingAPI {
   private protocolViewer: ProtocolViewerWrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private rebalancingAuctionModule: RebalancingAuctionModuleWrapper;
+  private rebalancingSetEthBidder: RebalancingSetEthBidderWrapper;
   private setToken: SetTokenWrapper;
+  private config: SetProtocolConfig;
 
   /**
    * Instantiates a new RebalancingAPI instance that contains methods
@@ -84,7 +87,10 @@ export class RebalancingAPI {
     this.erc20 = new ERC20Wrapper(this.web3);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
     this.setToken = new SetTokenWrapper(this.web3);
+    this.rebalancingSetEthBidder = new RebalancingSetEthBidderWrapper(this.web3, config.rebalancingSetEthBidderAddress);
     this.protocolViewer = new ProtocolViewerWrapper(this.web3, config.protocolViewerAddress);
+
+    this.config = config;
   }
 
   /**
@@ -211,6 +217,34 @@ export class RebalancingAPI {
         txOpts,
       );
     }
+  }
+
+  /**
+   * Allows user to bid on a rebalance auction while sending and receiving Ether instead of Wrapped Ether. This
+   * encompasses all functionality in bidAsync.
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
+   * @param  allowPartialFill               Boolean to complete fill if quantity is less than available
+   *                                        Defaults to true
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
+   *                                        gasPrice data
+   * @return                                Transaction hash
+   */
+  public async bidWithEtherAsync(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    allowPartialFill: boolean = true,
+    txOpts: Tx
+  ): Promise<string> {
+    await this.assertBidWithEther(rebalancingSetTokenAddress, bidQuantity, txOpts);
+
+    return await this.rebalancingSetEthBidder.bidAndWithdrawWithEther(
+      rebalancingSetTokenAddress,
+      bidQuantity,
+      allowPartialFill,
+      txOpts,
+    );
   }
 
   /**
@@ -574,6 +608,44 @@ export class RebalancingAPI {
       rebalancingSetTokenAddress,
       txOpts.from,
       bidQuantity
+    );
+  }
+
+  private async assertBidWithEther(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: Tx) {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+    this.assert.common.greaterThanZero(
+      bidQuantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(bidQuantity)
+    );
+
+    await this.assert.setToken.isValidSetToken(this.core.coreAddress, rebalancingSetTokenAddress);
+    await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
+    await this.assert.rebalancing.bidAmountLessThanRemainingSets(rebalancingSetTokenAddress, bidQuantity);
+    await this.assert.rebalancing.bidIsMultipleOfMinimumBid(rebalancingSetTokenAddress, bidQuantity);
+
+    // Assert non-WETH components have sufficient allowances
+    await this.assert.rebalancing.hasSufficientAllowances(
+      rebalancingSetTokenAddress,
+      txOpts.from,
+      this.config.rebalancingSetEthBidderAddress,
+      bidQuantity,
+      [this.config.wrappedEtherAddress],
+    );
+
+    // Assert non-WETH components have sufficient balances
+    await this.assert.rebalancing.hasSufficientBalances(
+      rebalancingSetTokenAddress,
+      txOpts.from,
+      bidQuantity,
+      [this.config.wrappedEtherAddress],
+    );
+
+    // Assert Ether value sent is greater than WETH component units
+    await this.assert.rebalancing.hasRequiredEtherValue(
+      rebalancingSetTokenAddress,
+      bidQuantity,
+      this.config.wrappedEtherAddress,
+      new BigNumber(txOpts.value),
     );
   }
 

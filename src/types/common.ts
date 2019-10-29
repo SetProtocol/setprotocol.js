@@ -100,6 +100,7 @@ export interface SetProtocolConfig {
   kyberNetworkWrapperAddress: Address;
   protocolViewerAddress: Address;
   rebalanceAuctionModuleAddress: Address;
+  rebalancingSetEthBidderAddress?: Address;
   rebalancingSetExchangeIssuanceModule: Address;
   rebalancingSetIssuanceModule: Address;
   rebalancingSetTokenFactoryAddress: Address;

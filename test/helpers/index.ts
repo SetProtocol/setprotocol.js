@@ -67,6 +67,10 @@ export {
 } from './rebalancingHelpers';
 
 export {
+  deployRebalancingSetEthBidderAsync,
+} from './rebalancingSetBidderHelpers';
+
+export {
   deployBtcDaiManagerContractAsync,
   deployBtcEthManagerContractAsync,
   deployEthDaiManagerContractAsync,

@@ -30,18 +30,26 @@ import {
   CoreContract,
   ERC20DetailedContract,
   RebalanceAuctionModuleContract,
+  RebalancingSetEthBidderContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
+  StandardTokenMockContract,
   TransferProxyContract,
   VaultContract,
   WhiteListContract,
+  WethMockContract,
 } from 'set-protocol-contracts';
 import { Web3Utils } from 'set-protocol-utils';
 
 import { RebalancingAPI } from '@src/api';
-import { RebalancingSetTokenWrapper, CoreWrapper, ERC20Wrapper, RebalancingAuctionModuleWrapper } from '@src/wrappers';
+import {
+  RebalancingSetTokenWrapper,
+  CoreWrapper,
+  ERC20Wrapper,
+  RebalancingAuctionModuleWrapper,
+} from '@src/wrappers';
 import {
   DEFAULT_ACCOUNT,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
@@ -52,6 +60,7 @@ import {
   NULL_ADDRESS,
   TX_DEFAULTS,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+  ZERO,
 } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber, ether } from '@src/util';
@@ -67,9 +76,14 @@ import {
   deployBaseContracts,
   deployConstantAuctionPriceCurveAsync,
   deployProtocolViewerAsync,
+  deployRebalancingSetEthBidderAsync,
+  deploySetTokenAsync,
   deploySetTokensAsync,
+  deployTokenAsync,
+  deployWethMockAsync,
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync,
+  getGasUsageInEth,
   getVaultBalances,
   increaseChainTimeAsync,
   transitionToDrawdownAsync,
@@ -105,12 +119,15 @@ describe('RebalancingAPI', () => {
   let setTokenFactory: SetTokenFactoryContract;
   let rebalancingSetTokenFactory: RebalancingSetTokenFactoryContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
+  let rebalancingSetEthBidder: RebalancingSetEthBidderContract;
   let whitelist: WhiteListContract;
 
   let erc20Wrapper: ERC20Wrapper;
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
   let rebalancingAuctionModuleWrapper: RebalancingAuctionModuleWrapper;
   let rebalancingAPI: RebalancingAPI;
+
+  let weth: WethMockContract;
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
@@ -124,6 +141,15 @@ describe('RebalancingAPI', () => {
       rebalanceAuctionModule,
       whitelist,
     ] = await deployBaseContracts(web3);
+
+    weth = await deployWethMockAsync(web3, NULL_ADDRESS, ZERO);
+
+    rebalancingSetEthBidder = await deployRebalancingSetEthBidderAsync(
+      web3,
+      rebalanceAuctionModule,
+      transferProxy,
+      weth,
+    );
 
     setTokenFactory = setTokenFactory;
 
@@ -152,8 +178,9 @@ describe('RebalancingAPI', () => {
       rebalanceAuctionModuleAddress: rebalanceAuctionModule.address,
       exchangeIssuanceModuleAddress: NULL_ADDRESS,
       rebalancingSetIssuanceModule: NULL_ADDRESS,
+      rebalancingSetEthBidderAddress: rebalancingSetEthBidder.address,
       rebalancingSetExchangeIssuanceModule: NULL_ADDRESS,
-      wrappedEtherAddress: NULL_ADDRESS,
+      wrappedEtherAddress: weth.address,
       protocolViewerAddress: protocolViewer.address,
     };
 
@@ -1300,6 +1327,364 @@ describe('RebalancingAPI', () => {
 
         when required balance is ${inflowArray[2]} at token address ${components[2]}.
       `
+          );
+        });
+      });
+    });
+  });
+
+  describe('bidWithEtherAsync', async () => {
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let defaultSetToken: SetTokenContract;
+    let wethSetToken: SetTokenContract;
+    let managerAddress: Address;
+    let priceCurve: ConstantAuctionPriceCurveContract;
+
+    let defaultBaseSetComponent: StandardTokenMockContract | WethMockContract;
+    let defaultBaseSetComponent2: StandardTokenMockContract | WethMockContract;
+    let wethBaseSetComponent: StandardTokenMockContract | WethMockContract;
+    let wethBaseSetComponent2: StandardTokenMockContract | WethMockContract;
+
+    let subjectRebalancingSetTokenAddress: Address;
+    let subjectBidQuantity: BigNumber;
+    let subjectAllowPartialFill: boolean;
+    let subjectCaller: Address;
+    let subjectEthQuantity: BigNumber;
+
+    beforeEach(async () => {
+      // Create component tokens for default Set
+      defaultBaseSetComponent = await deployTokenAsync(web3);
+      defaultBaseSetComponent2 = await deployTokenAsync(web3);
+
+      // Create the Set (default is 2 components)
+      const defaultComponentAddresses = [
+        defaultBaseSetComponent.address, defaultBaseSetComponent2.address,
+      ];
+      const defaultComponentUnits = [
+        ether(0.01), ether(0.01),
+      ];
+
+      const defaultBaseSetNaturalUnit = ether(0.001);
+      defaultSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        defaultComponentAddresses,
+        defaultComponentUnits,
+        defaultBaseSetNaturalUnit,
+      );
+
+      // Create component tokens for Set containing weth
+      wethBaseSetComponent = weth;
+      wethBaseSetComponent2 = await deployTokenAsync(web3);
+
+      // Create the next Set containing WETH
+      const nextComponentAddresses = [
+        wethBaseSetComponent.address, wethBaseSetComponent2.address,
+      ];
+
+      const wethComponentUnits = ether(0.01);
+      const nextComponentUnits = [
+        wethComponentUnits, ether(0.01),
+      ];
+
+      const wethBaseSetNaturalUnit = ether(0.001);
+      wethSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        nextComponentAddresses,
+        nextComponentUnits,
+        wethBaseSetNaturalUnit,
+      );
+
+      // Create the Rebalancing Set without WETH component
+      const proposalPeriod = ONE_DAY_IN_SECONDS;
+      managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        defaultSetToken.address,
+        proposalPeriod
+      );
+
+      // Approve tokens and issue defaultSetToken
+      const baseSetIssueQuantity = ether(1);
+
+      await approveForTransferAsync([
+        defaultBaseSetComponent,
+        defaultBaseSetComponent2,
+      ], transferProxy.address);
+
+      await core.issue.sendTransactionAsync(
+        defaultSetToken.address,
+        baseSetIssueQuantity,
+        TX_DEFAULTS,
+      );
+
+      // Use issued defaultSetToken to issue rebalancingSetToken
+      await approveForTransferAsync([defaultSetToken], transferProxy.address);
+
+      const rebalancingSetTokenQuantityToIssue = ether(1);
+
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await wethSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
+      // Deploy price curve used in auction
+      priceCurve = await deployConstantAuctionPriceCurveAsync(
+        web3,
+        DEFAULT_AUCTION_PRICE_NUMERATOR,
+        DEFAULT_AUCTION_PRICE_DENOMINATOR
+      );
+
+      addPriceCurveToCoreAsync(
+        core,
+        priceCurve.address
+      );
+
+      // Determine minimum bid
+      const decOne = await defaultSetToken.naturalUnit.callAsync();
+      const decTwo = await wethSetToken.naturalUnit.callAsync();
+      const minBid = new BigNumber(Math.max(decOne.toNumber(), decTwo.toNumber()) * 1000);
+
+      // Approve tokens to rebalancingSetEthBidder contract
+      await approveForTransferAsync([
+        wethBaseSetComponent,
+        wethBaseSetComponent2,
+      ], rebalancingSetEthBidder.address);
+
+      subjectEthQuantity = baseSetIssueQuantity.mul(wethComponentUnits).div(wethBaseSetNaturalUnit);
+      subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
+      subjectBidQuantity = minBid;
+      subjectAllowPartialFill = false;
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await rebalancingAPI.bidWithEtherAsync(
+        subjectRebalancingSetTokenAddress,
+        subjectBidQuantity,
+        subjectAllowPartialFill,
+        { from: subjectCaller, value: subjectEthQuantity.toNumber() }
+      );
+    }
+
+    describe('when the Rebalancing Set Token is in Default state', async () => {
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Rebalance state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Proposal state', async () => {
+      beforeEach(async () => {
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        await transitionToProposeAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          wethSetToken.address,
+          setAuctionPriceCurveAddress,
+        );
+      });
+
+      it('throw', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Rebalance state to call that function.`
+        );
+      });
+    });
+
+    describe('when the Rebalancing Set Token is in Rebalance state', async () => {
+      beforeEach(async () => {
+        const setAuctionPriceCurveAddress = priceCurve.address;
+        await transitionToRebalanceAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          wethSetToken.address,
+          setAuctionPriceCurveAddress,
+        );
+      });
+
+      test('subtract correct amount from remainingCurrentSets', async () => {
+        const [, existingRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
+
+        await subject();
+
+        const expectedRemainingCurrentSets = existingRemainingCurrentSets.sub(subjectBidQuantity);
+        const [, newRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
+        expect(newRemainingCurrentSets).to.eql(expectedRemainingCurrentSets);
+      });
+
+      test('transfers the correct amount of tokens from the bidder to the rebalancing token in Vault', async () => {
+        const expectedTokenFlows = await constructInflowOutflowArraysAsync(
+          rebalancingSetToken,
+          subjectBidQuantity,
+          DEFAULT_AUCTION_PRICE_NUMERATOR,
+        );
+        const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+        const oldSenderBalances = await getVaultBalances(
+          vault,
+          combinedTokenArray,
+          rebalancingSetToken.address
+        );
+
+        await subject();
+
+        const newSenderBalances = await getVaultBalances(
+          vault,
+          combinedTokenArray,
+          rebalancingSetToken.address
+        );
+        const expectedSenderBalances = _.map(oldSenderBalances, (balance, index) =>
+          balance.add(expectedTokenFlows['inflow'][index]).sub(expectedTokenFlows['outflow'][index])
+        );
+        expect(JSON.stringify(newSenderBalances)).to.equal(JSON.stringify(expectedSenderBalances));
+      });
+
+      test('transfers and withdraws the correct amount of tokens to the bidder wallet', async () => {
+        const expectedTokenFlows = await constructInflowOutflowArraysAsync(
+          rebalancingSetToken,
+          subjectBidQuantity,
+          DEFAULT_AUCTION_PRICE_NUMERATOR,
+        );
+        const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+        const oldReceiverTokenBalances = await Promise.all(
+          combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+        const oldEthBalance = new BigNumber(await web3.eth.getBalance(subjectCaller));
+
+        // Replace WETH balance with ETH balance
+        const oldReceiverTokenAndEthBalances = _.map(oldReceiverTokenBalances, (balance, index) =>
+          combinedTokenArray[index] === weth.address ? new BigNumber(oldEthBalance) : balance
+        );
+
+        const txHash = await subject();
+
+        const newEthBalance =  await web3.eth.getBalance(subjectCaller);
+        const newReceiverTokenBalances = await Promise.all(
+          combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+        // Replace WETH balance with ETH balance and factor in gas paid
+        const totalGasInEth = await getGasUsageInEth(web3, txHash);
+        const newReceiverTokenAndEthBalances = _.map(newReceiverTokenBalances, (balance, index) =>
+          combinedTokenArray[index] === weth.address ? totalGasInEth.add(newEthBalance) : balance
+        );
+
+        const expectedReceiverBalances = _.map(oldReceiverTokenAndEthBalances, (balance, index) =>
+          balance.add(expectedTokenFlows['outflow'][index]).sub(expectedTokenFlows['inflow'][index])
+        );
+
+        expect(JSON.stringify(newReceiverTokenAndEthBalances)).to.equal(JSON.stringify(expectedReceiverBalances));
+      });
+
+      describe('and the passed rebalancingSetToken is not tracked by Core', async () => {
+        beforeEach(async () => {
+          subjectRebalancingSetTokenAddress = ACCOUNTS[5].address;
+        });
+
+        it('throw', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Contract at ${subjectRebalancingSetTokenAddress} is not a valid Set token address.`
+          );
+        });
+      });
+
+      describe('and the bid amount is greater than remaining current sets', async () => {
+        beforeEach(async () => {
+          subjectBidQuantity = ether(10);
+        });
+
+        it('throw', async () => {
+          const [, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
+
+          return expect(subject()).to.be.rejectedWith(
+            `The submitted bid quantity, ${subjectBidQuantity}, exceeds the remaining current sets,` +
+              ` ${remainingCurrentSets}.`
+          );
+        });
+      });
+
+      describe('and the bid amount is not a multiple of the minimumBid', async () => {
+        let minimumBid: BigNumber;
+
+        beforeEach(async () => {
+          [minimumBid] = await rebalancingSetToken.getBiddingParameters.callAsync();
+          subjectBidQuantity = minimumBid.mul(0.5);
+        });
+
+        test('throw', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `The submitted bid quantity, ${subjectBidQuantity}, must be a multiple of the minimumBid, ${minimumBid}.`
+          );
+        });
+      });
+
+      describe('and the caller has not approved inflow tokens for transfer', async () => {
+        beforeEach(async () => {
+          subjectCaller = ACCOUNTS[3].address;
+        });
+
+        test('throw', async () => {
+          const [inflowArray] = await rebalancingSetToken.getBidPrice.callAsync(subjectBidQuantity);
+          const components = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+          return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${subjectCaller} has allowance of 0
+
+        when required allowance is ${inflowArray[3]} at token
+
+        address: ${components[3]} for spender: ${rebalancingSetEthBidder.address}.
+      `
+          );
+        });
+      });
+
+      describe('and the caller does not have the balance to transfer', async () => {
+        beforeEach(async () => {
+          subjectCaller = ACCOUNTS[3].address;
+          const components = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+          const approvalToken: ERC20DetailedContract = await ERC20DetailedContract.at(components[3], web3, {});
+          await approvalToken.approve.sendTransactionAsync(
+            rebalancingSetEthBidder.address,
+            UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+            { from: subjectCaller }
+          );
+        });
+
+        test('throw', async () => {
+          const [inflowArray] = await rebalancingSetToken.getBidPrice.callAsync(subjectBidQuantity);
+          const components = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+          return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${subjectCaller} has balance of 0
+
+        when required balance is ${inflowArray[3]} at token address ${components[3]}.
+      `
+          );
+        });
+      });
+
+      describe('and the caller did not send enough Ether', async () => {
+        beforeEach(async () => {
+          subjectEthQuantity = ZERO;
+        });
+
+        test('throw', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Ether value must be greater than required wrapped ether quantity`
           );
         });
       });

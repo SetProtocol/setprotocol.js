@@ -347,20 +347,24 @@ export class RebalancingAssertions {
    * @param  rebalancingSetTokenAddress  The address of the Rebalancing Set Token contract
    * @param  ownerAddress                The address of the owner
    * @param  quantity                    Amount of a Set in base units
+   * @param  exclusions                  The addresses to exclude from checking
    */
   public async hasSufficientBalances(
     rebalancingSetTokenAddress: Address,
     ownerAddress: Address,
     quantity: BigNumber,
+    exclusions: Address[] = [],
   ): Promise<void> {
     const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
 
     const [inflowArray] = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
     const components = await rebalancingSetTokenInstance.getCombinedTokenArray.callAsync();
 
+    const componentsFilteredForExclusions: Address[] = _.difference(components, exclusions);
+
     // Create component ERC20 token instances
     const componentInstancePromises = _.map(
-      components,
+      componentsFilteredForExclusions,
       async component =>
         await ERC20DetailedContract.at(component, this.web3, { from: ownerAddress }),
     );
@@ -400,21 +404,25 @@ export class RebalancingAssertions {
    * @param  rebalancingSetTokenAddress  The address of the Rebalancing Set Token contract
    * @param  ownerAddress                The address of the owner
    * @param  quantity                    Amount of a Set in base units
+   * @param  exclusions                  The addresses to exclude from checking
    */
   public async hasSufficientAllowances(
     rebalancingSetTokenAddress: Address,
     ownerAddress: Address,
     spenderAddress: Address,
     quantity: BigNumber,
+    exclusions: Address[] = [],
   ): Promise<void> {
     const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
 
     const [inflowArray] = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
     const components = await rebalancingSetTokenInstance.getCombinedTokenArray.callAsync();
 
+    const componentsFilteredForExclusions: Address[] = _.difference(components, exclusions);
+
     // Create component ERC20 token instances
     const componentInstancePromises = _.map(
-      components,
+      componentsFilteredForExclusions,
       async component =>
         await ERC20DetailedContract.at(component, this.web3, { from: ownerAddress }),
     );
@@ -434,5 +442,37 @@ export class RebalancingAssertions {
       },
     );
     await Promise.all(userHasSufficientAllowancePromises);
+  }
+
+  /**
+   * Throws if the given user doesn't have a sufficient Ether value passed into function
+   * injected for a bid.
+   *
+   * @param  rebalancingSetTokenAddress  The address of the Rebalancing Set Token contract
+   * @param  quantity                    Amount of a Set in base units
+   * @param  wrappedEtherAddress         Wrapped Ether address
+   * @param  etherValue                  Ether value sent in transaction
+   */
+  public async hasRequiredEtherValue(
+    rebalancingSetTokenAddress: Address,
+    quantity: BigNumber,
+    wrappedEtherAddress: Address,
+    etherValue: BigNumber,
+  ): Promise<void> {
+    const rebalancingSetTokenInstance = await RebalancingSetTokenContract.at(rebalancingSetTokenAddress, this.web3, {});
+
+    const [inflowArray] = await rebalancingSetTokenInstance.getBidPrice.callAsync(quantity);
+    const components = await rebalancingSetTokenInstance.getCombinedTokenArray.callAsync();
+
+    const indexOfWrappedEther = components.indexOf(wrappedEtherAddress);
+    // If components not in bid skip assertion
+    if (indexOfWrappedEther >= 0) {
+      const requiredWrappedEtherQuantity = inflowArray[indexOfWrappedEther];
+      this.commonAssertions.isGreaterOrEqualThan(
+        etherValue,
+        requiredWrappedEtherQuantity,
+        'Ether value must be greater than required wrapped ether quantity',
+      );
+    }
   }
 }
