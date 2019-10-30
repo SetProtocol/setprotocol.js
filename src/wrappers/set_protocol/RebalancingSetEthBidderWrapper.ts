@@ -43,7 +43,7 @@ export class RebalancingSetEthBidderWrapper {
   }
 
   /**
-   * Asynchronously retrieve BidPlacedWithEthWithEth events from the RebalancingSetEthBidder contract
+   * Asynchronously retrieve BidPlacedWithEth events from the RebalancingSetEthBidder contract
    * Optionally, you can filter by a specific rebalancing SetToken
    *
    * @param  fromBlock                     The beginning block to retrieve events from
@@ -77,7 +77,7 @@ export class RebalancingSetEthBidderWrapper {
   }
 
   /**
-   * Asynchronously submit a bid and withdraw bids transaction in Eth
+   * Asynchronously submit a bid and withdraw bids while transacting in Eth
    * for a rebalancing auction on a rebalancingSetToken
    *
    * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
