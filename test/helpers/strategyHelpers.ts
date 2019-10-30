@@ -17,7 +17,7 @@ import {
 import { TX_DEFAULTS } from '@src/constants';
 import { BigNumber } from '@src/util';
 
-const contract = require('truffle-contract');
+import { setDefaultTruffleContract } from './coreHelpers';
 
 export const deployBtcEthManagerContractAsync = async(
   web3: Web3,
@@ -32,10 +32,7 @@ export const deployBtcEthManagerContractAsync = async(
   componentMultipliers: BigNumber[],
   allocationBounds: BigNumber[],
 ): Promise<BTCETHRebalancingManagerContract> => {
-  const truffleBTCETHRebalancingManagerContract = contract(BTCETHRebalancingManager);
-  truffleBTCETHRebalancingManagerContract.setProvider(web3.currentProvider);
-  truffleBTCETHRebalancingManagerContract.setNetwork(50);
-  truffleBTCETHRebalancingManagerContract.defaults(TX_DEFAULTS);
+  const truffleBTCETHRebalancingManagerContract = setDefaultTruffleContract(web3, BTCETHRebalancingManager);
 
   // Deploy BTCETHRebalancingManager
   const deployedBtcEthManagerInstance = await truffleBTCETHRebalancingManagerContract.new(
@@ -69,10 +66,7 @@ export const deployBtcDaiManagerContractAsync = async(
   componentMultipliers: BigNumber[],
   allocationBounds: BigNumber[],
 ): Promise<BTCDaiRebalancingManagerContract> => {
-  const truffleBTCDaiRebalancingManagerContract = contract(BTCDaiRebalancingManager);
-  truffleBTCDaiRebalancingManagerContract.setProvider(web3.currentProvider);
-  truffleBTCDaiRebalancingManagerContract.setNetwork(50);
-  truffleBTCDaiRebalancingManagerContract.defaults(TX_DEFAULTS);
+  const truffleBTCDaiRebalancingManagerContract = setDefaultTruffleContract(web3, BTCDaiRebalancingManager);
 
   // Deploy BTCDaiRebalancingManager
   const deployedBtcDaiManagerInstance = await truffleBTCDaiRebalancingManagerContract.new(
@@ -106,10 +100,7 @@ export const deployEthDaiManagerContractAsync = async(
   componentMultipliers: BigNumber[],
   allocationBounds: BigNumber[],
 ): Promise<ETHDaiRebalancingManagerContract> => {
-  const truffleETHDaiRebalancingManagerContract = contract(ETHDaiRebalancingManager);
-  truffleETHDaiRebalancingManagerContract.setProvider(web3.currentProvider);
-  truffleETHDaiRebalancingManagerContract.setNetwork(50);
-  truffleETHDaiRebalancingManagerContract.defaults(TX_DEFAULTS);
+  const truffleETHDaiRebalancingManagerContract = setDefaultTruffleContract(web3, ETHDaiRebalancingManager);
 
   // Deploy BTCDaiRebalancingManager
   const deployedBtcDaiManagerInstance = await truffleETHDaiRebalancingManagerContract.new(
@@ -147,10 +138,7 @@ export const deployMovingAverageStrategyManagerAsync = async(
   crossoverConfirmationMaxTime: BigNumber,
   from: Address = TX_DEFAULTS.from,
 ): Promise<MACOStrategyManagerContract> => {
-  const truffleMacoManagerContract = contract(MACOStrategyManager);
-  truffleMacoManagerContract.setProvider(web3.currentProvider);
-  truffleMacoManagerContract.setNetwork(50);
-  truffleMacoManagerContract.defaults(TX_DEFAULTS);
+  const truffleMacoManagerContract = setDefaultTruffleContract(web3, MACOStrategyManager);
 
   // Deploy MACO Strategy Manager
   const deployedMacoStrategyInstance = await truffleMacoManagerContract.new(
@@ -190,10 +178,7 @@ export const deployMovingAverageStrategyManagerV2Async = async(
   crossoverConfirmationMaxTime: BigNumber,
   from: Address = TX_DEFAULTS.from,
 ): Promise<MACOStrategyManagerV2Contract> => {
-  const truffleMacoManagerContract = contract(MACOStrategyManagerV2);
-  truffleMacoManagerContract.setProvider(web3.currentProvider);
-  truffleMacoManagerContract.setNetwork(50);
-  truffleMacoManagerContract.defaults(TX_DEFAULTS);
+  const truffleMacoManagerContract = setDefaultTruffleContract(web3, MACOStrategyManagerV2);
 
   // Deploy MACO Strategy Manager V2
   const deployedMacoStrategyInstance = await truffleMacoManagerContract.new(

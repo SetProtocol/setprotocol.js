@@ -15,7 +15,7 @@ import {
   TX_DEFAULTS,
 } from '@src/constants';
 
-const contract = require('truffle-contract');
+import { setDefaultTruffleContract } from './coreHelpers';
 
 export const deployRebalancingSetEthBidderAsync = async (
   web3: Web3,
@@ -24,15 +24,9 @@ export const deployRebalancingSetEthBidderAsync = async (
   wrappedEther: WethMockContract,
   owner: Address = DEFAULT_ACCOUNT,
 ): Promise<RebalancingSetEthBidderContract> => {
-  const truffleRebalancingSetEthBidderContract = contract(RebalancingSetEthBidder);
-  truffleRebalancingSetEthBidderContract.setProvider(web3.currentProvider);
-  truffleRebalancingSetEthBidderContract.setNetwork(50);
-  truffleRebalancingSetEthBidderContract.defaults(TX_DEFAULTS);
+  const truffleRebalancingSetEthBidderContract = setDefaultTruffleContract(web3, RebalancingSetEthBidder);
+  const truffleERC20WrapperContract = setDefaultTruffleContract(web3, ERC20Wrapper);
 
-  const truffleERC20WrapperContract = contract(ERC20Wrapper);
-  truffleERC20WrapperContract.setProvider(web3.currentProvider);
-  truffleERC20WrapperContract.setNetwork(50);
-  truffleERC20WrapperContract.defaults(TX_DEFAULTS);
   const deployedERC20Wrapper = await truffleERC20WrapperContract.new();
   await truffleRebalancingSetEthBidderContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
 

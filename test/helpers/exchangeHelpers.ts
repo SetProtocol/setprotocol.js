@@ -13,7 +13,7 @@ import { Address, SetProtocolUtils } from 'set-protocol-utils';
 
 import { TX_DEFAULTS } from '@src/constants';
 
-const contract = require('truffle-contract');
+import { setDefaultTruffleContract } from './coreHelpers';
 
 export const deployZeroExExchangeWrapperContract = async (
   web3: Web3,
@@ -23,15 +23,9 @@ export const deployZeroExExchangeWrapperContract = async (
   transferProxy: TransferProxyContract,
   core: CoreContract,
 ): Promise<ZeroExExchangeWrapperContract> => {
-  const truffleZeroExExchangeWrapperContract = contract(ZeroExExchangeWrapper);
-  truffleZeroExExchangeWrapperContract.setProvider(web3.currentProvider);
-  truffleZeroExExchangeWrapperContract.setNetwork(50);
-  truffleZeroExExchangeWrapperContract.defaults(TX_DEFAULTS);
+  const truffleZeroExExchangeWrapperContract = setDefaultTruffleContract(web3, ZeroExExchangeWrapper);
 
-  const truffleERC20WrapperContract = contract(ERC20Wrapper);
-  truffleERC20WrapperContract.setProvider(web3.currentProvider);
-  truffleERC20WrapperContract.setNetwork(50);
-  truffleERC20WrapperContract.defaults(TX_DEFAULTS);
+  const truffleERC20WrapperContract = setDefaultTruffleContract(web3, ERC20Wrapper);
 
   const deployedERC20Wrapper = await truffleERC20WrapperContract.new();
   await truffleZeroExExchangeWrapperContract.link('ERC20Wrapper', deployedERC20Wrapper.address);
@@ -65,15 +59,9 @@ export const deployKyberNetworkWrapperContract = async (
   transferProxy: TransferProxyContract,
   core: CoreContract,
 ): Promise<KyberNetworkWrapperContract> => {
-  const truffleKyberNetworkWrapperContract = contract(KyberNetworkWrapper);
-  truffleKyberNetworkWrapperContract.setProvider(web3.currentProvider);
-  truffleKyberNetworkWrapperContract.setNetwork(50);
-  truffleKyberNetworkWrapperContract.defaults(TX_DEFAULTS);
+  const truffleKyberNetworkWrapperContract = setDefaultTruffleContract(web3, KyberNetworkWrapper);
 
-  const truffleERC20WrapperContract = contract(ERC20Wrapper);
-  truffleERC20WrapperContract.setProvider(web3.currentProvider);
-  truffleERC20WrapperContract.setNetwork(50);
-  truffleERC20WrapperContract.defaults(TX_DEFAULTS);
+  const truffleERC20WrapperContract = setDefaultTruffleContract(web3, ERC20Wrapper);
 
   const deployedERC20Wrapper = await truffleERC20WrapperContract.new();
   await truffleKyberNetworkWrapperContract.link('ERC20Wrapper', deployedERC20Wrapper.address);

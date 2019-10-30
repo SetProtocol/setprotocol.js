@@ -22,16 +22,12 @@ import {
 import { ONE_DAY_IN_SECONDS, TX_DEFAULTS } from '@src/constants';
 import { BigNumber } from '@src/util';
 
-const contract = require('truffle-contract');
-
+import { setDefaultTruffleContract } from './coreHelpers';
 
 export const deployMedianizerAsync = async(
   web3: Web3,
 ): Promise<MedianContract> => {
-  const truffleMedianContract = contract(Median);
-  truffleMedianContract.setProvider(web3.currentProvider);
-  truffleMedianContract.setNetwork(50);
-  truffleMedianContract.defaults(TX_DEFAULTS);
+  const truffleMedianContract = setDefaultTruffleContract(web3, Median);
 
   // Deploy Median
   const deployedMedianInstance = await truffleMedianContract.new();
@@ -79,10 +75,7 @@ export const deployHistoricalPriceFeedAsync = async(
   seededValues: BigNumber[] = [],
   from: Address = TX_DEFAULTS.from,
 ): Promise<HistoricalPriceFeedContract> => {
-  const truffleHistoricalPriceFeedContract = contract(HistoricalPriceFeed);
-  truffleHistoricalPriceFeedContract.setProvider(web3.currentProvider);
-  truffleHistoricalPriceFeedContract.setNetwork(50);
-  truffleHistoricalPriceFeedContract.defaults(TX_DEFAULTS);
+  const truffleHistoricalPriceFeedContract = setDefaultTruffleContract(web3, HistoricalPriceFeed);
 
   // Deploy HistoricalPriceFeed
   const deployedMedianInstance = await truffleHistoricalPriceFeedContract.new(
@@ -102,10 +95,7 @@ export const deployLegacyMakerOracleAdapterAsync = async(
   web3: Web3,
   medianizerInstance: Address
 ): Promise<LegacyMakerOracleAdapterContract> => {
-  const truffleAdapterContract = contract(LegacyMakerOracleAdapter);
-  truffleAdapterContract.setProvider(web3.currentProvider);
-  truffleAdapterContract.setNetwork(50);
-  truffleAdapterContract.defaults(TX_DEFAULTS);
+  const truffleAdapterContract = setDefaultTruffleContract(web3, LegacyMakerOracleAdapter);
 
   // Deploy LegacyMakerOracleAdapter
   const deployedAdapterContractInstance = await truffleAdapterContract.new(
@@ -122,10 +112,7 @@ export const deployOracleProxyAsync = async(
   web3: Web3,
   oracleInstance: Address
 ): Promise<OracleProxyContract> => {
-  const truffleOracleProxy = contract(OracleProxy);
-  truffleOracleProxy.setProvider(web3.currentProvider);
-  truffleOracleProxy.setNetwork(50);
-  truffleOracleProxy.defaults(TX_DEFAULTS);
+  const truffleOracleProxy = setDefaultTruffleContract(web3, OracleProxy);
 
   // Deploy OracleProxy
   const deployedOracleProxyInstance = await truffleOracleProxy.new(
@@ -147,10 +134,7 @@ export const deployTimeSeriesFeedAsync = async(
   dataDescription: string = '200DailyETHPrice',
   from: Address = TX_DEFAULTS.from,
 ): Promise<TimeSeriesFeedContract> => {
-  const truffleTimeSeriesFeedContract = contract(TimeSeriesFeed);
-  truffleTimeSeriesFeedContract.setProvider(web3.currentProvider);
-  truffleTimeSeriesFeedContract.setNetwork(50);
-  truffleTimeSeriesFeedContract.defaults(TX_DEFAULTS);
+  const truffleTimeSeriesFeedContract = setDefaultTruffleContract(web3, TimeSeriesFeed);
 
   // Deploy TimeSeriesFeed
   const deployedTimeSeriesFeedInstance = await truffleTimeSeriesFeedContract.new(
@@ -174,10 +158,7 @@ export const deployLinearizedPriceDataSourceAsync = async(
   dataDescription: string = '200DailyETHPrice',
   from: Address = TX_DEFAULTS.from,
 ): Promise<LinearizedPriceDataSourceContract> => {
-  const truffleLinearizedPriceDataSourceContract = contract(LinearizedPriceDataSource);
-  truffleLinearizedPriceDataSourceContract.setProvider(web3.currentProvider);
-  truffleLinearizedPriceDataSourceContract.setNetwork(50);
-  truffleLinearizedPriceDataSourceContract.defaults(TX_DEFAULTS);
+  const truffleLinearizedPriceDataSourceContract = setDefaultTruffleContract(web3, LinearizedPriceDataSource);
 
   // Deploy LinearizedPriceDataSource
   const deployedDataSourceInstance = await truffleLinearizedPriceDataSourceContract.new(
@@ -198,10 +179,7 @@ export const deployMovingAverageOracleAsync = async(
   dataDescription: string,
   from: Address = TX_DEFAULTS.from,
 ): Promise<MovingAverageOracleContract> => {
-  const truffleMovingAveragesOracleContract = contract(MovingAverageOracle);
-  truffleMovingAveragesOracleContract.setProvider(web3.currentProvider);
-  truffleMovingAveragesOracleContract.setNetwork(50);
-  truffleMovingAveragesOracleContract.defaults(TX_DEFAULTS);
+  const truffleMovingAveragesOracleContract = setDefaultTruffleContract(web3, MovingAverageOracle);
 
   // Deploy HistoricalPriceFeed
   const deployedMovingAverageOracleInstance = await truffleMovingAveragesOracleContract.new(
@@ -221,10 +199,7 @@ export const deployMovingAverageOracleV2Async = async(
   dataDescription: string,
   from: Address = TX_DEFAULTS.from,
 ): Promise<MovingAverageOracleV2Contract> => {
-  const truffleMovingAveragesOracleContract = contract(MovingAverageOracleV2);
-  truffleMovingAveragesOracleContract.setProvider(web3.currentProvider);
-  truffleMovingAveragesOracleContract.setNetwork(50);
-  truffleMovingAveragesOracleContract.defaults(TX_DEFAULTS);
+  const truffleMovingAveragesOracleContract = setDefaultTruffleContract(web3, MovingAverageOracleV2);
 
   // Deploy HistoricalPriceFeed
   const deployedMovingAverageOracleV2Instance = await truffleMovingAveragesOracleContract.new(
