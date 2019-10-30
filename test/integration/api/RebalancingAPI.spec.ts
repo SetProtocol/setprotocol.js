@@ -1855,6 +1855,7 @@ describe('RebalancingAPI', () => {
 
     let earlyTxnHash: string;
     let earlyBlockNumber: number;
+    let earlyBlockTimestamp: number;
 
     let bidQuantity: BigNumber;
     let allowPartialFill: boolean;
@@ -1865,6 +1866,7 @@ describe('RebalancingAPI', () => {
     let subjectFromBlock: number;
     let subjectToBlock: any;
     let subjectRebalancingSetToken: Address;
+    let subjectGetTimestamp: boolean;
 
     beforeEach(async () => {
       const setTokens = await deploySetTokensAsync(
@@ -1979,12 +1981,18 @@ describe('RebalancingAPI', () => {
       const earlyTransaction = await web3.eth.getTransaction(earlyTxnHash);
       earlyBlockNumber = earlyTransaction['blockNumber'];
 
+      const firstBidTransaction = await web3.eth.getTransaction(bid1TxnHash);
+      const bid1BlockNumber = firstBidTransaction['blockNumber'];
+      const bid1Block = await web3.eth.getBlock(bid1BlockNumber);
+      earlyBlockTimestamp = bid1Block.timestamp;
+
       const lastBidTransaction = await web3.eth.getTransaction(bid2TxnHash);
       const bidBlockNumber = lastBidTransaction['blockNumber'];
 
       subjectFromBlock = earlyBlockNumber;
       subjectToBlock = bidBlockNumber;
       subjectRebalancingSetToken = undefined;
+      subjectGetTimestamp = true;
     });
 
     async function subject(): Promise<BidPlacedEvent[]> {
@@ -1992,6 +2000,7 @@ describe('RebalancingAPI', () => {
         subjectFromBlock,
         subjectToBlock,
         subjectRebalancingSetToken,
+        subjectGetTimestamp
       );
     }
 
@@ -2009,6 +2018,7 @@ describe('RebalancingAPI', () => {
       expect(bid1TxnHash).to.equal(firstEvent.transactionHash);
       expect(rebalancingSetToken.address).to.equal(firstEvent.rebalancingSetToken);
       expect(bidQuantity).to.bignumber.equal(firstEvent.executionQuantity);
+      expect(earlyBlockTimestamp).to.equal(firstEvent.timestamp);
     });
   });
 
