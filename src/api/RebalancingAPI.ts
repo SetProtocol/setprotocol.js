@@ -201,7 +201,7 @@ export class RebalancingAPI {
     allowPartialFill: boolean = true,
     txOpts: Tx
   ): Promise<string> {
-    await this.assertBid(rebalancingSetTokenAddress, bidQuantity, txOpts);
+    await this.assertBid(rebalancingSetTokenAddress, bidQuantity, allowPartialFill, txOpts);
     if (shouldWithdraw) {
       return await this.rebalancingAuctionModule.bidAndWithdraw(
         rebalancingSetTokenAddress,
@@ -237,7 +237,7 @@ export class RebalancingAPI {
     allowPartialFill: boolean = true,
     txOpts: Tx
   ): Promise<string> {
-    await this.assertBidWithEther(rebalancingSetTokenAddress, bidQuantity, txOpts);
+    await this.assertBidWithEther(rebalancingSetTokenAddress, bidQuantity, allowPartialFill, txOpts);
 
     return await this.rebalancingSetEthBidder.bidAndWithdrawWithEther(
       rebalancingSetTokenAddress,
@@ -587,7 +587,12 @@ export class RebalancingAPI {
     await this.assert.rebalancing.isInDrawdownState(rebalancingSetTokenAddress);
   }
 
-  private async assertBid(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: Tx) {
+  private async assertBid(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    allowPartialFill: boolean,
+    txOpts: Tx
+  ) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
     this.assert.common.greaterThanZero(
       bidQuantity,
@@ -596,7 +601,9 @@ export class RebalancingAPI {
 
     await this.assert.setToken.isValidSetToken(this.core.coreAddress, rebalancingSetTokenAddress);
     await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
-    await this.assert.rebalancing.bidAmountLessThanRemainingSets(rebalancingSetTokenAddress, bidQuantity);
+    if (!allowPartialFill) {
+      await this.assert.rebalancing.bidAmountLessThanRemainingSets(rebalancingSetTokenAddress, bidQuantity);
+    }
     await this.assert.rebalancing.bidIsMultipleOfMinimumBid(rebalancingSetTokenAddress, bidQuantity);
     await this.assert.rebalancing.hasSufficientAllowances(
       rebalancingSetTokenAddress,
@@ -611,7 +618,12 @@ export class RebalancingAPI {
     );
   }
 
-  private async assertBidWithEther(rebalancingSetTokenAddress: Address, bidQuantity: BigNumber, txOpts: Tx) {
+  private async assertBidWithEther(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    allowPartialFill: boolean,
+    txOpts: Tx
+  ) {
     this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
     this.assert.common.greaterThanZero(
       bidQuantity,
@@ -620,7 +632,9 @@ export class RebalancingAPI {
 
     await this.assert.setToken.isValidSetToken(this.core.coreAddress, rebalancingSetTokenAddress);
     await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
-    await this.assert.rebalancing.bidAmountLessThanRemainingSets(rebalancingSetTokenAddress, bidQuantity);
+    if (!allowPartialFill) {
+      await this.assert.rebalancing.bidAmountLessThanRemainingSets(rebalancingSetTokenAddress, bidQuantity);
+    }
     await this.assert.rebalancing.bidIsMultipleOfMinimumBid(rebalancingSetTokenAddress, bidQuantity);
 
     // Assert non-WETH components have sufficient allowances
