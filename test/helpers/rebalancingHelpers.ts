@@ -30,7 +30,7 @@ import {
 import { deployTokensAsync, deploySetTokenAsync, approveForTransferAsync } from '@test/helpers';
 import { BigNumber, getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util';
 
-const contract = require('truffle-contract');
+import { setDefaultTruffleContract } from './coreHelpers';
 
 export const deploySetTokensAsync = async(
   web3: Web3,
@@ -91,10 +91,7 @@ export const deployConstantAuctionPriceCurveAsync = async(
   priceNumerator: BigNumber,
   priceDenominator: BigNumber,
 ): Promise<ConstantAuctionPriceCurveContract> => {
-  const truffleConstantAuctionPriceCurveContract = contract(ConstantAuctionPriceCurve);
-  truffleConstantAuctionPriceCurveContract.setProvider(web3.currentProvider);
-  truffleConstantAuctionPriceCurveContract.setNetwork(50);
-  truffleConstantAuctionPriceCurveContract.defaults(TX_DEFAULTS);
+  const truffleConstantAuctionPriceCurveContract = setDefaultTruffleContract(web3, ConstantAuctionPriceCurve);
 
   // Deploy ConstantAuctionPriceCurve
   const deployedConstantAuctionPriceCurveInstance = await truffleConstantAuctionPriceCurveContract.new(

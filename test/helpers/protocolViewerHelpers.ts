@@ -7,15 +7,12 @@ import {
 
 import { TX_DEFAULTS } from '@src/constants';
 
-const contract = require('truffle-contract');
+import { setDefaultTruffleContract } from './coreHelpers';
 
 export const deployProtocolViewerAsync = async (
   web3: Web3
 ): Promise<ProtocolViewerContract> => {
-  const truffleProtocolWrapperContract = contract(ProtocolViewer);
-  truffleProtocolWrapperContract.setProvider(web3.currentProvider);
-  truffleProtocolWrapperContract.setNetwork(50);
-  truffleProtocolWrapperContract.defaults(TX_DEFAULTS);
+  const truffleProtocolWrapperContract = setDefaultTruffleContract(web3, ProtocolViewer);
 
   const deployedProtocolViewerContract = await truffleProtocolWrapperContract.new(TX_DEFAULTS);
   const protocolViewerContract = await ProtocolViewerContract.at(

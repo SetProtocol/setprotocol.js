@@ -26,6 +26,7 @@ import {
   KyberNetworkWrapperContract,
   ProtocolViewerContract,
   RebalancingSetIssuanceModuleContract,
+  RebalancingSetEthBidderContract,
   RebalancingSetExchangeIssuanceModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
@@ -460,6 +461,32 @@ export class ProtocolContractWrapper {
       );
       this.cache[cacheKey] = protocolViewerContract;
       return protocolViewerContract;
+    }
+  }
+
+  /**
+   * Load a RebalancingSetEthBidder contract
+   *
+   * @param  RebalancingSetEthBidder      Address of the RebalancingSetEthBidder contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The RebalancingSetEthBidder Contract
+   */
+  public async loadRebalancingSetEthBidderContract(
+    rebalancingSetEthBidder: Address,
+    transactionOptions: object = {},
+  ): Promise<RebalancingSetEthBidderContract> {
+    const cacheKey = `RebalancingSetEthBidder_${rebalancingSetEthBidder}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as RebalancingSetEthBidderContract;
+    } else {
+      const rebalancingSetEthBidderContract = await RebalancingSetEthBidderContract.at(
+        rebalancingSetEthBidder,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = rebalancingSetEthBidderContract;
+      return rebalancingSetEthBidderContract;
     }
   }
 }
