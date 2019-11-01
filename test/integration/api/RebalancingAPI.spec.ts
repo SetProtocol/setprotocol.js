@@ -49,6 +49,7 @@ import {
   CoreWrapper,
   ERC20Wrapper,
   RebalancingAuctionModuleWrapper,
+  RebalancingSetEthBidderWrapper,
 } from '@src/wrappers';
 import {
   DEFAULT_ACCOUNT,
@@ -93,6 +94,7 @@ import {
 import {
   Address,
   BidPlacedEvent,
+  BidPlacedWithEthEvent,
   RebalancingProgressDetails,
   RebalancingProposalDetails,
   RebalancingSetDetails,
@@ -125,6 +127,7 @@ describe('RebalancingAPI', () => {
   let erc20Wrapper: ERC20Wrapper;
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
   let rebalancingAuctionModuleWrapper: RebalancingAuctionModuleWrapper;
+  let rebalancingSetEthBidderWrapper: RebalancingSetEthBidderWrapper;
   let rebalancingAPI: RebalancingAPI;
 
   let weth: WethMockContract;
@@ -166,6 +169,10 @@ describe('RebalancingAPI', () => {
     rebalancingAuctionModuleWrapper = new RebalancingAuctionModuleWrapper(
       web3,
       rebalanceAuctionModule.address,
+    );
+    rebalancingSetEthBidderWrapper = new RebalancingSetEthBidderWrapper(
+      web3,
+      rebalancingSetEthBidder.address,
     );
 
     const setProtocolConfig: SetProtocolConfig = {
@@ -2403,6 +2410,249 @@ describe('RebalancingAPI', () => {
       expect(bid1TxnHash).to.equal(firstEvent.transactionHash);
       expect(rebalancingSetToken.address).to.equal(firstEvent.rebalancingSetToken);
       expect(bidQuantity).to.bignumber.equal(firstEvent.executionQuantity);
+      expect(earlyBlockTimestamp).to.equal(firstEvent.timestamp);
+    });
+  });
+
+  describe('getBidPlacedWithEthEventsAsync', async () => {
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let defaultSetToken: SetTokenContract;
+    let wethSetToken: SetTokenContract;
+
+    let earlyTxnHash: string;
+    let earlyBlockNumber: number;
+    let earlyBlockTimestamp: number;
+
+    let defaultBaseSetComponent: StandardTokenMockContract | WethMockContract;
+    let defaultBaseSetComponent2: StandardTokenMockContract | WethMockContract;
+    let wethBaseSetComponent: StandardTokenMockContract | WethMockContract;
+    let wethBaseSetComponent2: StandardTokenMockContract | WethMockContract;
+
+    let bidQuantity: BigNumber;
+    let allowPartialFill: boolean;
+    let bidderAccount: Address;
+    let bid1TxnHash: string;
+    let bid2TxnHash: string;
+
+    let subjectFromBlock: number;
+    let subjectToBlock: any;
+    let subjectRebalancingSetToken: Address;
+    let subjectEthQuantity: BigNumber;
+    let subjectGetTimestamp: boolean;
+
+    beforeEach(async () => {
+      // Create component tokens for default Set
+      defaultBaseSetComponent = await deployTokenAsync(web3);
+      defaultBaseSetComponent2 = await deployTokenAsync(web3);
+
+      // Create the Set (default is 2 components)
+      const defaultComponentAddresses = [
+        defaultBaseSetComponent.address, defaultBaseSetComponent2.address,
+      ];
+      const defaultComponentUnits = [
+        ether(0.01), ether(0.01),
+      ];
+
+      const defaultBaseSetNaturalUnit = ether(0.001);
+      defaultSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        defaultComponentAddresses,
+        defaultComponentUnits,
+        defaultBaseSetNaturalUnit,
+      );
+
+      // Create component tokens for Set containing weth
+      wethBaseSetComponent = weth;
+      wethBaseSetComponent2 = await deployTokenAsync(web3);
+
+      // Create the Set (default is 2 components)
+      const nextComponentAddresses = [
+        wethBaseSetComponent.address, wethBaseSetComponent2.address,
+      ];
+
+      const wethComponentUnits = ether(0.01);
+      const nextComponentUnits = [
+        wethComponentUnits, ether(0.01),
+      ];
+
+      const wethBaseSetNaturalUnit = ether(0.001);
+      wethSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        nextComponentAddresses,
+        nextComponentUnits,
+        wethBaseSetNaturalUnit,
+      );
+
+      // Create the Rebalancing Set without WETH component
+      const proposalPeriod = ONE_DAY_IN_SECONDS;
+      const managerAddress = ACCOUNTS[1].address;
+
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        defaultSetToken.address,
+        proposalPeriod
+      );
+
+      // Approve tokens and issue defaultSetToken
+      const baseSetIssueQuantity = ether(1);
+
+      await approveForTransferAsync([
+        defaultBaseSetComponent,
+        defaultBaseSetComponent2,
+      ], transferProxy.address);
+
+      earlyTxnHash = await core.issue.sendTransactionAsync(
+        defaultSetToken.address,
+        baseSetIssueQuantity,
+        TX_DEFAULTS,
+      );
+
+      // Use issued defaultSetToken to issue rebalancingSetToken
+      await approveForTransferAsync([defaultSetToken], transferProxy.address);
+
+      const rebalancingSetTokenQuantityToIssue = ether(1);
+
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await wethSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
+      // Deploy price curve used in auction
+      const priceCurve = await deployConstantAuctionPriceCurveAsync(
+        web3,
+        DEFAULT_AUCTION_PRICE_NUMERATOR,
+        DEFAULT_AUCTION_PRICE_DENOMINATOR
+      );
+
+      addPriceCurveToCoreAsync(
+        core,
+        priceCurve.address
+      );
+
+      // Transition to rebalance state
+      const auctionPriceCurveAddress = priceCurve.address;
+      const setAuctionTimeToPivot = new BigNumber(100000);
+      const setAuctionStartPrice = new BigNumber(500);
+      const setAuctionPivotPrice = new BigNumber(1000);
+      await transitionToRebalanceAsync(
+        web3,
+        rebalancingSetToken,
+        managerAddress,
+        wethSetToken.address,
+        auctionPriceCurveAddress,
+        setAuctionTimeToPivot,
+        setAuctionStartPrice,
+        setAuctionPivotPrice,
+      );
+
+      // Determine minimum bid
+      const decOne = await defaultSetToken.naturalUnit.callAsync();
+      const decTwo = await wethSetToken.naturalUnit.callAsync();
+      const minBid = new BigNumber(Math.max(decOne.toNumber(), decTwo.toNumber()) * 1000);
+
+      bidQuantity = minBid;
+      allowPartialFill = false;
+      bidderAccount = DEFAULT_ACCOUNT;
+
+      // Approve tokens to rebalancingSetEthBidder contract
+      await approveForTransferAsync([
+        wethBaseSetComponent,
+        wethBaseSetComponent2,
+      ], rebalancingSetEthBidder.address);
+
+      subjectEthQuantity = baseSetIssueQuantity.mul(wethComponentUnits).div(wethBaseSetNaturalUnit);
+
+      bid1TxnHash = await rebalancingSetEthBidderWrapper.bidAndWithdrawWithEther(
+        rebalancingSetToken.address,
+        bidQuantity,
+        allowPartialFill,
+        { from: bidderAccount, value: subjectEthQuantity.toNumber() },
+      );
+
+      // Create a second bid transaction
+      const rebalancingSetToken2 = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        defaultSetToken.address,
+        proposalPeriod
+      );
+
+      // Issue defaultSetToken
+      await core.issue.sendTransactionAsync(defaultSetToken.address, ether(9), TX_DEFAULTS);
+      await approveForTransferAsync([defaultSetToken], transferProxy.address);
+
+      // Use issued defaultSetToken to issue rebalancingSetToken
+      await core.issue.sendTransactionAsync(rebalancingSetToken2.address, rebalancingSetTokenQuantityToIssue);
+
+      await transitionToRebalanceAsync(
+        web3,
+        rebalancingSetToken2,
+        managerAddress,
+        wethSetToken.address,
+        auctionPriceCurveAddress,
+        setAuctionTimeToPivot,
+        setAuctionStartPrice,
+        setAuctionPivotPrice,
+      );
+
+      bid2TxnHash = await rebalancingSetEthBidderWrapper.bidAndWithdrawWithEther(
+        rebalancingSetToken2.address,
+        bidQuantity,
+        allowPartialFill,
+        { from: bidderAccount, value: subjectEthQuantity.toNumber() },
+      );
+
+      const earlyTransaction = await web3.eth.getTransaction(earlyTxnHash);
+      earlyBlockNumber = earlyTransaction['blockNumber'];
+
+      const firstBidTransaction = await web3.eth.getTransaction(bid1TxnHash);
+      const bid1BlockNumber = firstBidTransaction['blockNumber'];
+      const bid1Block = await web3.eth.getBlock(bid1BlockNumber);
+      earlyBlockTimestamp = bid1Block.timestamp;
+
+      const lastBidTransaction = await web3.eth.getTransaction(bid2TxnHash);
+      const bidBlockNumber = lastBidTransaction['blockNumber'];
+
+      subjectFromBlock = earlyBlockNumber;
+      subjectToBlock = bidBlockNumber;
+      subjectRebalancingSetToken = undefined;
+      subjectGetTimestamp = true;
+    });
+
+    async function subject(): Promise<BidPlacedWithEthEvent[]> {
+      return await rebalancingAPI.getBidPlacedWithEthEventsAsync(
+        subjectFromBlock,
+        subjectToBlock,
+        subjectRebalancingSetToken,
+        subjectGetTimestamp
+      );
+    }
+
+    test('retrieves the right event logs length', async () => {
+      const events = await subject();
+
+      expect(events.length).to.equal(2);
+    });
+
+    test('retrieves the correct properties', async () => {
+      const events = await subject();
+
+      const [firstEvent] = events;
+
+      expect(bid1TxnHash).to.equal(firstEvent.transactionHash);
+      expect(bidderAccount).to.equal(firstEvent.bidder);
+      expect(rebalancingSetToken.address).to.equal(firstEvent.rebalancingSetToken);
       expect(earlyBlockTimestamp).to.equal(firstEvent.timestamp);
     });
   });

@@ -26,6 +26,13 @@ export interface BidPlacedEvent {
   timestamp: number;
 }
 
+export interface BidPlacedWithEthEvent {
+  transactionHash: string;
+  rebalancingSetToken: Address;
+  bidder: Address;
+  timestamp: number;
+}
+
 export interface Component {
   address: Address;
   unit: BigNumber;

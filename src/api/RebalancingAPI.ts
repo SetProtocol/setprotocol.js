@@ -34,6 +34,7 @@ import { BigNumber, parseRebalanceState } from '../util';
 import {
   Address,
   BidPlacedEvent,
+  BidPlacedWithEthEvent,
   RebalancingProgressDetails,
   RebalancingProposalDetails,
   RebalancingSetDetails,
@@ -371,6 +372,51 @@ export class RebalancingAPI {
         combinedTokenAddresses,
         inflowTokenUnits: inflowTokenUnits.map((unit: string) => new BigNumber(unit)),
         outflowTokenUnits: outflowTokenUnits.map((unit: string) => new BigNumber(unit)),
+        timestamp,
+      };
+    });
+
+    return Promise.all(formattedEventPromises);
+  }
+
+  /**
+   * Fetches BidPlacedWithEth event logs including information about the transactionHash, rebalancingSetToken,
+   * bidder and etc.
+   *
+   * This fetch can be filtered by block and by rebalancingSetToken.
+   *
+   * @param  fromBlock                     The beginning block to retrieve events from
+   * @param  toBlock                       The ending block to retrieve events (default is latest)
+   * @param  rebalancingSetToken           Addresses of rebalancing set token to filter events for
+   * @return                               An array of objects conforming to the BidPlacedWithEthEvent interface
+   */
+  public async getBidPlacedWithEthEventsAsync(
+    fromBlock: number,
+    toBlock?: any,
+    rebalancingSetToken?: Address,
+    getTimestamp?: boolean,
+  ): Promise<BidPlacedWithEthEvent[]> {
+    const events: any[] = await this.rebalancingSetEthBidder.bidPlacedWithEthEvent(
+      fromBlock,
+      toBlock,
+      rebalancingSetToken,
+    );
+
+    const formattedEventPromises: Promise<BidPlacedWithEthEvent>[] = events.map(async event => {
+      const returnValues = event.returnValues;
+      const rebalancingSetToken = returnValues['rebalancingSetToken'];
+      const bidder = returnValues['bidder'];
+
+      let timestamp = undefined;
+      if (getTimestamp) {
+        const block = await this.web3.eth.getBlock(event.blockNumber);
+        timestamp = block.timestamp;
+      }
+
+      return {
+        transactionHash: event.transactionHash,
+        rebalancingSetToken,
+        bidder,
         timestamp,
       };
     });
