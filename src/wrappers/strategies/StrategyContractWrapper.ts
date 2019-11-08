@@ -19,6 +19,7 @@
 import Web3 from 'web3';
 
 import {
+  AssetPairManagerContract,
   BaseContract,
   BTCDaiRebalancingManagerContract,
   BTCETHRebalancingManagerContract,
@@ -280,6 +281,32 @@ export class StrategyContractWrapper {
       );
       this.cache[cacheKey] = macoStrategyManagerContract;
       return macoStrategyManagerContract;
+    }
+  }
+
+  /**
+   * Load a AssetPairManager contract
+   *
+   * @param  assetPairManager             Address of the AssetPairManager contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The AssetPairManager Contract
+   */
+  public async loadAssetPairManagerContractAsync(
+    assetPairManager: Address,
+    transactionOptions: object = {},
+  ): Promise<AssetPairManagerContract> {
+    const cacheKey = `assetPairManager_${assetPairManager}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as AssetPairManagerContract;
+    } else {
+      const assetPairManagerContract = await AssetPairManagerContract.at(
+        assetPairManager,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = assetPairManagerContract;
+      return assetPairManagerContract;
     }
   }
 }

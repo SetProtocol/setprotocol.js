@@ -51,6 +51,7 @@ export const ManagerType = {
   ETHDAI: new BigNumber(2),
   MACO: new BigNumber(3),
   MACOV2: new BigNumber(4),
+  PAIR: new BigNumber(5),
 };
 
 export interface SetUnits {

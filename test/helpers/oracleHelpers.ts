@@ -3,6 +3,8 @@ import Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import { Median, MedianContract } from 'set-protocol-contracts';
 import {
+  ConstantPriceOracle,
+  ConstantPriceOracleContract,
   HistoricalPriceFeed,
   HistoricalPriceFeedContract,
   LegacyMakerOracleAdapter,
@@ -15,6 +17,8 @@ import {
   MovingAverageOracleV2Contract,
   OracleProxy,
   OracleProxyContract,
+  RSIOracle,
+  RSIOracleContract,
   TimeSeriesFeed,
   TimeSeriesFeedContract,
 } from 'set-protocol-strategies';
@@ -125,6 +129,22 @@ export const deployOracleProxyAsync = async(
   );
 };
 
+export const deployConstantPriceOracleAsync = async(
+  web3: Web3,
+  price: BigNumber
+): Promise<ConstantPriceOracleContract> => {
+  const truffleConstantPriceOracle = setDefaultTruffleContract(web3, ConstantPriceOracle);
+
+  const deployedConstantPriceOracle = await truffleConstantPriceOracle.new(
+    price
+  );
+  return await ConstantPriceOracleContract.at(
+    deployedConstantPriceOracle.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
 export const deployTimeSeriesFeedAsync = async(
   web3: Web3,
   dataSourceAddress: Address,
@@ -208,6 +228,26 @@ export const deployMovingAverageOracleV2Async = async(
   );
   return await MovingAverageOracleV2Contract.at(
     deployedMovingAverageOracleV2Instance.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
+export const deployRSIOracleAsync = async(
+  web3: Web3,
+  priceFeedAddress: Address,
+  dataDescription: string,
+  from: Address = TX_DEFAULTS.from,
+): Promise<RSIOracleContract> => {
+  const truffleRSIOracleContract = setDefaultTruffleContract(web3, RSIOracle);
+
+  // Deploy HistoricalPriceFeed
+  const deployedRSIOracleInstance = await truffleRSIOracleContract.new(
+    priceFeedAddress,
+    dataDescription
+  );
+  return await RSIOracleContract.at(
+    deployedRSIOracleInstance.address,
     web3,
     TX_DEFAULTS,
   );

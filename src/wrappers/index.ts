@@ -36,6 +36,7 @@ export { TimeLockUpgradeWrapper } from './set_protocol/TimeLockUpgradeWrapper';
 export { WhitelistWrapper } from './set_protocol/WhitelistWrapper';
 export { VaultWrapper } from './set_protocol/VaultWrapper';
 
+export { AssetPairManagerWrapper } from './strategies/AssetPairManagerWrapper';
 export { BTCDAIRebalancingManagerWrapper } from './strategies/BTCDAIRebalancingManagerWrapper';
 export { BTCETHRebalancingManagerWrapper } from './strategies/BTCETHRebalancingManagerWrapper';
 export { ETHDAIRebalancingManagerWrapper } from './strategies/ETHDAIRebalancingManagerWrapper';
