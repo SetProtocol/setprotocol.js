@@ -29,6 +29,7 @@ import {
   MACOStrategyManagerV2Contract,
   MovingAverageOracleContract,
   OracleProxyContract,
+  RSITrendingTriggerContract,
   TimeSeriesFeedContract,
 } from 'set-protocol-strategies';
 
@@ -307,6 +308,32 @@ export class StrategyContractWrapper {
       );
       this.cache[cacheKey] = assetPairManagerContract;
       return assetPairManagerContract;
+    }
+  }
+
+ /**
+   * Load a RSITrigger contract
+   *
+   * @param  rsiTrigger              Address of the RSITrigger contract
+   * @param  transactionOptions      Options sent into the contract deployed method
+   * @return                         The RSITrigger Contract
+   */
+  public async loadRSITriggerContractAsync(
+    rsiTrigger: Address,
+    transactionOptions: object = {},
+  ): Promise<RSITrendingTriggerContract> {
+    const cacheKey = `macoStrategyManager_${rsiTrigger}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as RSITrendingTriggerContract;
+    } else {
+      const rsiTriggerContract = await RSITrendingTriggerContract.at(
+        rsiTrigger,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = rsiTriggerContract;
+      return rsiTriggerContract;
     }
   }
 }
