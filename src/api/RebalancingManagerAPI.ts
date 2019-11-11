@@ -21,6 +21,7 @@ import Web3 from 'web3';
 
 import { BigNumber } from '../util';
 import {
+  AssetPairManagerWrapper,
   BTCDAIRebalancingManagerWrapper,
   BTCETHRebalancingManagerWrapper,
   ETHDAIRebalancingManagerWrapper,
@@ -42,6 +43,7 @@ import {
   WETH_FULL_TOKEN_UNITS,
 } from '../constants';
 import {
+  AssetPairManagerDetails,
   BTCDAIRebalancingManagerDetails,
   BTCETHRebalancingManagerDetails,
   ETHDAIRebalancingManagerDetails,
@@ -66,6 +68,7 @@ export class RebalancingManagerAPI {
   private ethDaiRebalancingManager: ETHDAIRebalancingManagerWrapper;
   private macoStrategyManager: MACOStrategyManagerWrapper;
   private macoStrategyManagerV2: MACOStrategyManagerV2Wrapper;
+  private assetPairManager: AssetPairManagerWrapper;
 
   /**
    * Instantiates a new RebalancingManagerAPI instance that contains methods for issuing and redeeming Sets
@@ -80,6 +83,7 @@ export class RebalancingManagerAPI {
     this.ethDaiRebalancingManager = new ETHDAIRebalancingManagerWrapper(web3);
     this.macoStrategyManager = new MACOStrategyManagerWrapper(web3);
     this.macoStrategyManagerV2 = new MACOStrategyManagerV2Wrapper(web3);
+    this.assetPairManager = new AssetPairManagerWrapper(web3);
 
     this.assert = assertions;
     this.setToken = new SetTokenWrapper(web3);
@@ -139,7 +143,12 @@ export class RebalancingManagerAPI {
     macoManager: Address,
     txOpts: Tx
   ): Promise<string> {
-    await this.assertInitialPropose(managerType, macoManager);
+    if (managerType == ManagerType.PAIR) {
+      await this.assertAssetPairInitialPropose(macoManager);
+    } else {
+      await this.assertInitialPropose(managerType, macoManager);
+      await this.assertMACOPropose(managerType, macoManager);
+    }
 
     // If current timestamp > 12 hours since the last, call initialPropose
     return await this.macoStrategyManager.initialPropose(macoManager, txOpts);
@@ -150,9 +159,38 @@ export class RebalancingManagerAPI {
     macoManager: Address,
     txOpts: Tx
   ): Promise<string> {
-    await this.assertConfirmPropose(managerType, macoManager);
+    if (managerType == ManagerType.PAIR) {
+      await this.assertAssetPairConfirmPropose(macoManager);
+    } else {
+      await this.assertConfirmPropose(managerType, macoManager);
+      await this.assertMACOPropose(managerType, macoManager);
+    }
 
     return await this.macoStrategyManager.confirmPropose(macoManager, txOpts);
+  }
+
+  /**
+   * Fetches if initialPropose can be called without revert on AssetPairManager
+   *
+   * @param  manager         Address of AssetPairManager contract
+   * @return                 Boolean if initialPropose can be called without revert
+   */
+  public async canInitialProposeAsync(
+    manager: Address
+  ): Promise<boolean> {
+    return await this.assetPairManager.canConfirmPropose(manager);
+  }
+
+  /**
+   * Fetches if confirmPropose can be called without revert on AssetPairManager
+   *
+   * @param  manager         Address of AssetPairManager contract
+   * @return                 Boolean if confirmPropose can be called without revert
+   */
+  public async canConfirmProposeAsync(
+    manager: Address
+  ): Promise<boolean> {
+    return await this.assetPairManager.canConfirmPropose(manager);
   }
 
   /**
@@ -161,10 +199,17 @@ export class RebalancingManagerAPI {
    * @param  macoManager         Address of the Moving Average Crossover Manager contract
    * @return                     BigNumber containing the lastCrossoverConfirmationTimestamp
    */
-  public async getLastCrossoverConfirmationTimestampAsync(macoManager: Address): Promise<BigNumber> {
-    this.assert.schema.isValidAddress('macoManager', macoManager);
+  public async getLastCrossoverConfirmationTimestampAsync(
+    managerType: BigNumber,
+    manager: Address
+  ): Promise<BigNumber> {
+    this.assert.schema.isValidAddress('manager', manager);
 
-    return await this.macoStrategyManager.lastCrossoverConfirmationTimestamp(macoManager);
+    if (managerType == ManagerType.PAIR) {
+      return await this.assetPairManager.lastInitialTriggerTimestamp(manager);
+    }
+
+    return await this.macoStrategyManager.lastCrossoverConfirmationTimestamp(manager);
   }
 
 
@@ -402,6 +447,69 @@ export class RebalancingManagerAPI {
     } as MovingAverageManagerDetails;
   }
 
+  /**
+   * Fetches the state variables of the Asset Pair Manager contract.
+   *
+   * @param  manager         Address of the AssetPairManager contract
+   * @return                 Object containing the state information related to the manager
+   */
+  public async getAssetPairManagerDetailsAsync(
+    manager: Address
+  ): Promise<AssetPairManagerDetails> {
+    const [
+      allocationPrecision,
+      allocator,
+      auctionEndPercentage,
+      auctionLibrary,
+      auctionStartPercentage,
+      auctionTimeToPivot,
+      baseAssetAllocation,
+      bullishBaseAssetAllocation,
+    ] = await Promise.all([
+      this.assetPairManager.allocationPrecision(manager),
+      this.assetPairManager.allocatorInstance(manager),
+      this.assetPairManager.auctionEndPercentage(manager),
+      this.assetPairManager.auctionLibraryInstance(manager),
+      this.assetPairManager.auctionStartPercentage(manager),
+      this.assetPairManager.auctionTimeToPivot(manager),
+      this.assetPairManager.baseAssetAllocation(manager),
+      this.assetPairManager.bullishBaseAssetAllocation(manager),
+    ]);
+
+    const [
+      core,
+      lastInitialTriggerTimestamp,
+      rebalancingSetToken,
+      signalConfirmationMinTime,
+      signalConfirmationMaxTime,
+      trigger,
+    ] = await Promise.all([
+      this.assetPairManager.coreInstance(manager),
+      this.assetPairManager.lastInitialTriggerTimestamp(manager),
+      this.assetPairManager.rebalancingSetTokenInstance(manager),
+      this.assetPairManager.signalConfirmationMinTime(manager),
+      this.assetPairManager.signalConfirmationMaxTime(manager),
+      this.assetPairManager.triggerInstance(manager),
+    ]);
+
+    return {
+      allocationPrecision,
+      allocator,
+      auctionEndPercentage,
+      auctionLibrary,
+      auctionStartPercentage,
+      auctionTimeToPivot,
+      baseAssetAllocation,
+      bullishBaseAssetAllocation,
+      core,
+      lastInitialTriggerTimestamp,
+      rebalancingSetToken,
+      signalConfirmationMinTime,
+      signalConfirmationMaxTime,
+      trigger,
+    } as AssetPairManagerDetails;
+  }
+
   /* ============ Private Functions ============ */
 
   private async assertPropose(managerAddress: Address, rebalancingSetAddress: Address) {
@@ -543,7 +651,8 @@ export class RebalancingManagerAPI {
   // MACO Assertions
 
   private async assertInitialPropose(managerType: BigNumber, macoManagerAddress: Address) {
-    await this.assertMACOPropose(managerType, macoManagerAddress);
+    const rebalancingSetAddress = await this.macoStrategyManagerV2.rebalancingSetTokenAddress(macoManagerAddress);
+    await this.assertGeneralPropose(macoManagerAddress, rebalancingSetAddress);
 
     const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
     const lastCrossoverConfirmationTimestamp =
@@ -559,7 +668,8 @@ export class RebalancingManagerAPI {
   }
 
   private async assertConfirmPropose(managerType: BigNumber, macoManagerAddress: Address) {
-    await this.assertMACOPropose(managerType, macoManagerAddress);
+    const rebalancingSetAddress = await this.macoStrategyManagerV2.rebalancingSetTokenAddress(macoManagerAddress);
+    await this.assertGeneralPropose(macoManagerAddress, rebalancingSetAddress);
 
     // Check the current block.timestamp
     const currentTimeStampInSeconds = new BigNumber(Date.now()).div(1000);
@@ -587,10 +697,27 @@ export class RebalancingManagerAPI {
     }
   }
 
-  private async assertMACOPropose(managerType: BigNumber, macoManagerAddress: Address) {
-    const rebalancingSetAddress = await this.macoStrategyManagerV2.rebalancingSetTokenAddress(macoManagerAddress);
-    await this.assertGeneralPropose(macoManagerAddress, rebalancingSetAddress);
+  private async assertAssetPairInitialPropose(managerAddress: Address) {
+    const canPropose = await this.assetPairManager.canInitialPropose(managerAddress);
 
+    if (!canPropose) {
+      throw new Error(
+        'initialPropose cannot be called because necessary conditions are not met.'
+      );
+    }
+  }
+
+  private async assertAssetPairConfirmPropose(managerAddress: Address) {
+    const canPropose = await this.assetPairManager.canConfirmPropose(managerAddress);
+
+    if (!canPropose) {
+      throw new Error(
+        'confirmPropose cannot be called because necessary conditions are not met.'
+      );
+    }
+  }
+
+  private async assertMACOPropose(managerType: BigNumber, macoManagerAddress: Address) {
     if (managerType == ManagerType.MACOV2) {
       return;
     }
@@ -604,8 +731,6 @@ export class RebalancingManagerAPI {
       this.macoStrategyManager.movingAveragePriceFeed(macoManagerAddress),
       this.isUsingRiskComponent(macoManagerAddress),
     ]);
-
-    await this.assertGeneralPropose(macoManagerAddress, rebalancingSetAddress);
 
     // Get the current price feed
     const riskCollateralPriceFeed = await this.movingAverageOracleWrapper.getSourceMedianizer(

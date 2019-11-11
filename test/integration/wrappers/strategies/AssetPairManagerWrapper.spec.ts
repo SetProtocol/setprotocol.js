@@ -157,6 +157,7 @@ describe('AssetPairManagerWrapper', () => {
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
+    seededPriceFeedPrices = _.map(new Array(15), function(el, i) {return new BigNumber((170 - i) * 10 ** 18); });
   });
 
   afterAll(() => {
@@ -210,7 +211,6 @@ describe('AssetPairManagerWrapper', () => {
       dataSource.address
     );
 
-    seededPriceFeedPrices = _.map(new Array(15), function(el, i) {return new BigNumber((170 - i) * 10 ** 18); });
     const timeSeriesFeed = await deployTimeSeriesFeedAsync(
       web3,
       dataSource.address,
@@ -601,7 +601,7 @@ describe('AssetPairManagerWrapper', () => {
     });
   });
 
-  describe.only('initialPropose', async () => {
+  describe('initialPropose', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
@@ -636,7 +636,7 @@ describe('AssetPairManagerWrapper', () => {
     });
   });
 
-  describe.only('confirmPropose', async () => {
+  describe('confirmPropose', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
@@ -673,7 +673,7 @@ describe('AssetPairManagerWrapper', () => {
     });
   });
 
-  describe.only('canInitialPropose', async () => {
+  describe('canInitialPropose', async () => {
     let subjectManagerAddress: Address;
     let subjectTimeFastForward: BigNumber;
 
@@ -707,7 +707,39 @@ describe('AssetPairManagerWrapper', () => {
         subjectTimeFastForward = ZERO;
       });
 
-      test('retrieves the right event logs length', async () => {
+      test('returns false', async () => {
+        const canInitialPropose = await subject();
+
+        expect(canInitialPropose).to.be.false;
+      });
+    });
+
+    describe('when canInitialPropose should throw a revert', async () => {
+      beforeAll(async () => {
+        seededPriceFeedPrices = [
+          new BigNumber(170 * 10 ** 18),
+          new BigNumber(150 * 10 ** 18),
+          new BigNumber(170 * 10 ** 18),
+          new BigNumber(150 * 10 ** 18),
+          new BigNumber(170 * 10 ** 18),
+          new BigNumber(150 * 10 ** 18),
+          new BigNumber(170 * 10 ** 18),
+          new BigNumber(150 * 10 ** 18),
+          new BigNumber(170 * 10 ** 18),
+          new BigNumber(150 * 10 ** 18),
+          new BigNumber(170 * 10 ** 18),
+          new BigNumber(150 * 10 ** 18),
+          new BigNumber(170 * 10 ** 18),
+          new BigNumber(150 * 10 ** 18),
+          new BigNumber(170 * 10 ** 18),
+        ];
+      });
+
+      afterAll(async () => {
+        seededPriceFeedPrices = _.map(new Array(15), function(el, i) {return new BigNumber((170 - i) * 10 ** 18); });
+      });
+
+      test('returns false', async () => {
         const canInitialPropose = await subject();
 
         expect(canInitialPropose).to.be.false;
@@ -715,7 +747,7 @@ describe('AssetPairManagerWrapper', () => {
     });
   });
 
-  describe.only('canConfirmPropose', async () => {
+  describe('canConfirmPropose', async () => {
     let subjectManagerAddress: Address;
     let subjectTimeFastForward: BigNumber;
 
@@ -754,7 +786,7 @@ describe('AssetPairManagerWrapper', () => {
         subjectTimeFastForward = ZERO;
       });
 
-      test('retrieves the right event logs length', async () => {
+      test('returns false', async () => {
         const canInitialPropose = await subject();
 
         expect(canInitialPropose).to.be.false;

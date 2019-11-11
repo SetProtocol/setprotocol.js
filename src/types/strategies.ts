@@ -33,6 +33,23 @@ export interface MovingAverageManagerDetails {
   stableCollateral: Address;
 }
 
+export interface AssetPairManagerDetails {
+  allocationPrecision: BigNumber;
+  allocator: Address;
+  auctionEndPercentage: BigNumber;
+  auctionLibrary: Address;
+  auctionStartPercentage: BigNumber;
+  auctionTimeToPivot: BigNumber;
+  baseAssetAllocation: BigNumber;
+  bullishBaseAssetAllocation: BigNumber;
+  core: Address;
+  lastInitialTriggerTimestamp: BigNumber;
+  rebalancingSetToken: Address;
+  signalConfirmationMinTime: BigNumber;
+  signalConfirmationMaxTime: BigNumber;
+  trigger: Address;
+}
+
 export interface BTCETHRebalancingManagerDetails {
   core: Address;
   btcPriceFeed: Address;
