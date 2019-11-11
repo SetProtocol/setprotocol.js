@@ -713,38 +713,6 @@ describe('AssetPairManagerWrapper', () => {
         expect(canInitialPropose).to.be.false;
       });
     });
-
-    describe('when canInitialPropose should throw a revert', async () => {
-      beforeAll(async () => {
-        seededPriceFeedPrices = [
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-        ];
-      });
-
-      afterAll(async () => {
-        seededPriceFeedPrices = _.map(new Array(15), function(el, i) {return new BigNumber((170 - i) * 10 ** 18); });
-      });
-
-      test('returns false', async () => {
-        const canInitialPropose = await subject();
-
-        expect(canInitialPropose).to.be.false;
-      });
-    });
   });
 
   describe('canConfirmPropose', async () => {

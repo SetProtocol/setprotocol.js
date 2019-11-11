@@ -84,9 +84,7 @@ export class AssetPairManagerWrapper {
   public async canInitialPropose(managerAddress: Address): Promise<boolean> {
     const assetPairManagerInstance = await this.contracts.loadAssetPairManagerContractAsync(managerAddress);
 
-    return await assetPairManagerInstance.canInitialPropose.callAsync()
-      .then(value => { return value; })
-      .catch(error => { return false; });
+    return await assetPairManagerInstance.canInitialPropose.callAsync();
   }
 
   /**
@@ -99,9 +97,7 @@ export class AssetPairManagerWrapper {
   public async canConfirmPropose(managerAddress: Address): Promise<boolean> {
     const assetPairManagerInstance = await this.contracts.loadAssetPairManagerContractAsync(managerAddress);
 
-    return await assetPairManagerInstance.canConfirmPropose.callAsync()
-      .then(value => { return value; })
-      .catch(error => { return false; });
+    return await assetPairManagerInstance.canConfirmPropose.callAsync();
   }
 
   public async coreInstance(managerAddress: Address): Promise<Address> {

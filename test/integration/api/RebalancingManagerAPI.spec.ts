@@ -58,6 +58,7 @@ import {
   OracleProxyContract,
   RSIOracleContract,
   RSITrendingTriggerContract,
+  TimeSeriesFeedContract,
 } from 'set-protocol-strategies';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
@@ -1817,12 +1818,13 @@ describe('RebalancingManagerAPI', () => {
     let trigger: RSITrendingTriggerContract;
     let ethOracleProxy: OracleProxyContract;
     let usdcOracle: ConstantPriceOracleContract;
+    let timeSeriesFeed: TimeSeriesFeedContract;
     let rsiOracle: RSIOracleContract;
     let initialQuoteCollateral: SetTokenContract;
     let initialBaseCollateral: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
+    let seededPriceFeedPrices: BigNumber[];
 
-    const seededPriceFeedPrices = _.map(new Array(15), function(el, i) {return new BigNumber((170 - i) * 10 ** 18); });
     const priceFeedDataDescription: string = 'ETHRSIValue';
 
     const stableCollateralUnit = new BigNumber(250);
@@ -1843,8 +1845,12 @@ describe('RebalancingManagerAPI', () => {
     const signalConfirmationMinTime = ONE_HOUR_IN_SECONDS.mul(6);
     const signalConfirmationMaxTime = ONE_HOUR_IN_SECONDS.mul(12);
 
+    beforeAll(async () => {
+      seededPriceFeedPrices = _.map(new Array(15), function(el, i) {return new BigNumber((170 - i) * 10 ** 18); });
+    });
+
     beforeEach(async () => {
-      const initialMedianizerEthPrice: BigNumber = E18;
+      const initialMedianizerEthPrice: BigNumber = E18.mul(70);
       await updateMedianizerPriceAsync(
         web3,
         ethMedianizer,
@@ -1879,7 +1885,7 @@ describe('RebalancingManagerAPI', () => {
         dataSource.address
       );
 
-      const timeSeriesFeed = await deployTimeSeriesFeedAsync(
+      timeSeriesFeed = await deployTimeSeriesFeedAsync(
         web3,
         dataSource.address,
         seededPriceFeedPrices
@@ -2279,6 +2285,38 @@ describe('RebalancingManagerAPI', () => {
 
         expect(apiOutput).to.equal(wrapperOutput);
       });
+
+      describe('when canInitialPropose should throw a revert', async () => {
+        beforeAll(async () => {
+          seededPriceFeedPrices = [
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+          ];
+        });
+
+        afterAll(async () => {
+          seededPriceFeedPrices = _.map(new Array(15), function(el, i) {return new BigNumber((170 - i) * 10 ** 18); });
+        });
+
+        test('returns false', async () => {
+          const canInitialPropose = await subject();
+
+          expect(canInitialPropose).to.be.false;
+        });
+      });
     });
 
     describe('canConfirmPropose', async () => {
@@ -2287,6 +2325,25 @@ describe('RebalancingManagerAPI', () => {
       const assetPairManagerWrapper: AssetPairManagerWrapper = new AssetPairManagerWrapper(web3);
 
       beforeEach(async () => {
+        await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+        await timeSeriesFeed.poke.sendTransactionAsync();
+
+        // Elapse the rebalance interval
+        await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+        await assetPairManager.initialPropose.sendTransactionAsync();
+
+        await updateMedianizerPriceAsync(
+          web3,
+          ethMedianizer,
+          E18.mul(100),
+          SetTestUtils.generateTimestamp(1000),
+        );
+        await timeSeriesFeed.poke.sendTransactionAsync();
+
+        await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(7));
+
         subjectManagerAddress = assetPairManager.address;
       });
 
@@ -2302,6 +2359,38 @@ describe('RebalancingManagerAPI', () => {
         const wrapperOutput = await assetPairManagerWrapper.canConfirmPropose(subjectManagerAddress);
 
         expect(apiOutput).to.equal(wrapperOutput);
+      });
+
+      describe('when canConfirmPropose should throw a revert', async () => {
+        beforeAll(async () => {
+          seededPriceFeedPrices = [
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+            new BigNumber(150 * 10 ** 18),
+            new BigNumber(170 * 10 ** 18),
+          ];
+        });
+
+        afterAll(async () => {
+          seededPriceFeedPrices = _.map(new Array(15), function(el, i) {return new BigNumber((170 - i) * 10 ** 18); });
+        });
+
+        test('returns false', async () => {
+          const canConfirmPropose = await subject();
+
+          expect(canConfirmPropose).to.be.false;
+        });
       });
     });
   });

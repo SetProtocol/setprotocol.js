@@ -178,7 +178,9 @@ export class RebalancingManagerAPI {
   public async canInitialProposeAsync(
     manager: Address
   ): Promise<boolean> {
-    return await this.assetPairManager.canConfirmPropose(manager);
+    return await this.assetPairManager.canInitialPropose(manager)
+      .then(value => { return value; })
+      .catch(error => { return false; });
   }
 
   /**
@@ -190,7 +192,9 @@ export class RebalancingManagerAPI {
   public async canConfirmProposeAsync(
     manager: Address
   ): Promise<boolean> {
-    return await this.assetPairManager.canConfirmPropose(manager);
+    return await this.assetPairManager.canConfirmPropose(manager)
+      .then(value => { return value; })
+      .catch(error => { return false; });
   }
 
   /**
@@ -698,7 +702,7 @@ export class RebalancingManagerAPI {
   }
 
   private async assertAssetPairInitialPropose(managerAddress: Address) {
-    const canPropose = await this.assetPairManager.canInitialPropose(managerAddress);
+    const canPropose = await this.canInitialProposeAsync(managerAddress);
 
     if (!canPropose) {
       throw new Error(
@@ -708,7 +712,7 @@ export class RebalancingManagerAPI {
   }
 
   private async assertAssetPairConfirmPropose(managerAddress: Address) {
-    const canPropose = await this.assetPairManager.canConfirmPropose(managerAddress);
+    const canPropose = await this.canConfirmProposeAsync(managerAddress);
 
     if (!canPropose) {
       throw new Error(
