@@ -311,7 +311,7 @@ export class StrategyContractWrapper {
     }
   }
 
- /**
+  /**
    * Load a RSITrigger contract
    *
    * @param  rsiTrigger              Address of the RSITrigger contract
