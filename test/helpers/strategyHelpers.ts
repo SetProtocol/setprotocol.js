@@ -2,6 +2,10 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 import {
+  AssetPairManager,
+  AssetPairManagerContract,
+  BinaryAllocator,
+  BinaryAllocatorContract,
   BTCDaiRebalancingManager,
   BTCDaiRebalancingManagerContract,
   BTCETHRebalancingManager,
@@ -11,7 +15,9 @@ import {
   MACOStrategyManager,
   MACOStrategyManagerContract,
   MACOStrategyManagerV2,
-  MACOStrategyManagerV2Contract
+  MACOStrategyManagerV2Contract,
+  RSITrendingTrigger,
+  RSITrendingTriggerContract,
 } from 'set-protocol-strategies';
 
 import { TX_DEFAULTS } from '@src/constants';
@@ -201,8 +207,97 @@ export const deployMovingAverageStrategyManagerV2Async = async(
   );
 };
 
-export const initializeMovingAverageStrategyManagerAsync = async(
-  macoManager: MACOStrategyManagerContract | MACOStrategyManagerV2Contract,
+export const deployAssetPairManagerAsync = async(
+  web3: Web3,
+  coreInstance: Address,
+  allocatorInstance: Address,
+  triggerInstance: Address,
+  auctionLibraryInstance: Address,
+  baseAssetAllocation: BigNumber,
+  allocationPrecision: BigNumber,
+  bullishBaseAssetAllocation: BigNumber,
+  auctionTimeToPivot: BigNumber,
+  auctionStartPercentage: BigNumber,
+  auctionEndPercentage: BigNumber,
+  signalConfirmationMinTime: BigNumber,
+  signalConfirmationMaxTime: BigNumber,
+): Promise<AssetPairManagerContract> => {
+  const truffleAssetPairManager = setDefaultTruffleContract(web3, AssetPairManager);
+
+  // Deploy MACO Strategy Manager V2
+  const deployedAssetPairManagerInstance = await truffleAssetPairManager.new(
+    coreInstance,
+    allocatorInstance,
+    triggerInstance,
+    auctionLibraryInstance,
+    baseAssetAllocation,
+    allocationPrecision,
+    bullishBaseAssetAllocation,
+    auctionTimeToPivot,
+    [auctionStartPercentage, auctionEndPercentage],
+    [signalConfirmationMinTime, signalConfirmationMaxTime],
+  );
+  return await AssetPairManagerContract.at(
+    deployedAssetPairManagerInstance.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
+export const deployBinaryAllocatorAsync = async(
+  web3: Web3,
+  baseAssetInstance: Address,
+  quoteAssetInstance: Address,
+  baseAssetOracleInstance: Address,
+  quoteAssetOracleInstance: Address,
+  baseAssetCollateralInstance: Address,
+  quoteAssetCollateralInstance: Address,
+  coreInstance: Address,
+  setTokenFactoryAddress: Address
+): Promise<BinaryAllocatorContract> => {
+  const truffleBinaryAllocator = setDefaultTruffleContract(web3, BinaryAllocator);
+
+  const deployedBinaryAllocator = await truffleBinaryAllocator.new(
+    baseAssetInstance,
+    quoteAssetInstance,
+    baseAssetOracleInstance,
+    quoteAssetOracleInstance,
+    baseAssetCollateralInstance,
+    quoteAssetCollateralInstance,
+    coreInstance,
+    setTokenFactoryAddress,
+  );
+  return await BinaryAllocatorContract.at(
+    deployedBinaryAllocator.address,
+    web3,
+    TX_DEFAULTS
+  );
+};
+
+export const deployRSITrendingTriggerAsync = async(
+  web3: Web3,
+  rsiOracle: Address,
+  lowerBound: BigNumber,
+  upperBound: BigNumber,
+  rsiTimePeriod: BigNumber,
+): Promise<RSITrendingTriggerContract> => {
+  const truffleRSITrendingTrigger = setDefaultTruffleContract(web3, RSITrendingTrigger);
+
+  const deployedRSITrendingTrigger = await truffleRSITrendingTrigger.new(
+    rsiOracle,
+    lowerBound,
+    upperBound,
+    rsiTimePeriod
+  );
+  return await RSITrendingTriggerContract.at(
+    deployedRSITrendingTrigger.address,
+    web3,
+    TX_DEFAULTS
+  );
+};
+
+export const initializeManagerAsync = async(
+  macoManager: MACOStrategyManagerContract | MACOStrategyManagerV2Contract | AssetPairManagerContract,
   rebalancingSetTokenAddress: Address,
 ): Promise<void> => {
   await macoManager.initialize.sendTransactionAsync(rebalancingSetTokenAddress);

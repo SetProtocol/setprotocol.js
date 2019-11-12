@@ -69,7 +69,7 @@ import {
   deployMedianizerAsync,
   deployTokensSpecifyingDecimals,
   increaseChainTimeAsync,
-  initializeMovingAverageStrategyManagerAsync,
+  initializeManagerAsync,
   updateMedianizerPriceAsync,
 } from '@test/helpers';
 import {
@@ -248,7 +248,7 @@ describe('MACOStrategyManagerWrapper', () => {
       ONE_DAY_IN_SECONDS,
     );
 
-    await initializeMovingAverageStrategyManagerAsync(
+    await initializeManagerAsync(
       macoManager,
       rebalancingSetToken.address
     );

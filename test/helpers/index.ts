@@ -36,6 +36,7 @@ export {
 export {
   addPriceFeedOwnerToMedianizer,
   approveContractToOracleProxy,
+  deployConstantPriceOracleAsync,
   deployHistoricalPriceFeedAsync,
   deployLegacyMakerOracleAdapterAsync,
   deployLinearizedPriceDataSourceAsync,
@@ -43,6 +44,7 @@ export {
   deployMovingAverageOracleV2Async,
   deployMovingAverageOracleAsync,
   deployOracleProxyAsync,
+  deployRSIOracleAsync,
   deployTimeSeriesFeedAsync,
   updateMedianizerPriceAsync,
 } from './oracleHelpers';
@@ -71,12 +73,15 @@ export {
 } from './rebalancingSetBidderHelpers';
 
 export {
+  deployAssetPairManagerAsync,
+  deployBinaryAllocatorAsync,
   deployBtcDaiManagerContractAsync,
   deployBtcEthManagerContractAsync,
   deployEthDaiManagerContractAsync,
   deployMovingAverageStrategyManagerAsync,
   deployMovingAverageStrategyManagerV2Async,
-  initializeMovingAverageStrategyManagerAsync,
+  deployRSITrendingTriggerAsync,
+  initializeManagerAsync,
 } from './strategyHelpers';
 
 export { getVaultBalances } from './vaultHelpers';
