@@ -33,6 +33,7 @@ import {
   RebalancingSetIssuanceAPI,
   SystemAPI,
   SetTokenAPI,
+  TriggerAPI,
 } from './api';
 import {
   CoreWrapper,
@@ -113,6 +114,11 @@ class SetProtocol {
    */
   public oracle: OracleAPI;
 
+  /**
+   * An instance of the TriggerAPI class containing methods for interacting with Trigger contracts
+   */
+  public trigger: TriggerAPI;
+
 
   /**
    * Instantiates a new SetProtocol instance that provides the public interface to the SetProtocol.js library
@@ -148,6 +154,7 @@ class SetProtocol {
     this.rebalancingManager = new RebalancingManagerAPI(this.web3, assertions);
     this.rebalancingSetIssuance = new RebalancingSetIssuanceAPI(this.web3, assertions, config);
     this.exchangeIssuance = new ExchangeIssuanceAPI(this.web3, assertions, config);
+    this.trigger = new TriggerAPI(this.web3);
   }
 
   /**

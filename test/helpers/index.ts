@@ -86,4 +86,4 @@ export {
 
 export { getVaultBalances } from './vaultHelpers';
 
-export { getGasUsageInEth } from './web3Helpers';
+export { getGasUsageInEth, expectRevertError } from './web3Helpers';

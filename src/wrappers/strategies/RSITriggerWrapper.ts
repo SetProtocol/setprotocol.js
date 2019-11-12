@@ -97,4 +97,18 @@ export class RSITriggerWrapper {
 
     return await rsiTriggerInstance.rsiTimePeriod.callAsync();
   }
+
+  /**
+   * Get whether the trigger is currently bullish or not
+   *
+   * @param  rsiTrigger           Address of the RSITrigger
+   * @return                      Time period RSI is being calculated over
+   */
+  public async isBullish(
+    rsiTrigger: Address
+  ): Promise<boolean> {
+    const rsiTriggerInstance = await this.contracts.loadRSITriggerContractAsync(rsiTrigger);
+
+    return await rsiTriggerInstance.isBullish.callAsync();
+  }
 }

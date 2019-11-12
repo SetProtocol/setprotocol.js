@@ -34,7 +34,7 @@ import {
 } from 'set-protocol-strategies';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
-import { RSITriggerWrapper } from '@src/wrappers';
+import { TriggerAPI } from '@src/api';
 import {
   ONE_HOUR_IN_SECONDS
 } from '@src/constants';
@@ -49,23 +49,26 @@ import {
   deployRSIOracleAsync,
   deployRSITrendingTriggerAsync,
   deployTimeSeriesFeedAsync,
-  expectRevertError,
 } from '@test/helpers';
 import { Address } from '@src/types/common';
 import {
   BigNumber,
 } from '@src/util';
+import {
+  RSITriggerDetails
+} from '@src/types/strategies';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
+
 const web3 = new Web3('http://localhost:8545');
 const { Web3Utils } = setProtocolUtils;
 const web3Utils = new Web3Utils(web3);
 
 let currentSnapshotId: number;
 
-describe('RSITriggerWrapper', () => {
+describe('TriggerAPI', () => {
   let ethMedianizer: MedianContract;
   let ethOracleProxy: OracleProxyContract;
 
@@ -78,7 +81,7 @@ describe('RSITriggerWrapper', () => {
 
   let seededPriceFeedPrices: BigNumber[];
 
-  let rsiTriggerWrapper: RSITriggerWrapper;
+  let triggerAPI: TriggerAPI;
 
   beforeAll(async () => {
     seededPriceFeedPrices = _.map(new Array(20), function(el, i) {return new BigNumber((150 + i) * 10 ** 18); });
@@ -133,137 +136,44 @@ describe('RSITriggerWrapper', () => {
       rsiTimePeriod
     );
 
-    rsiTriggerWrapper = new RSITriggerWrapper(web3);
+    triggerAPI = new TriggerAPI(web3);
   });
 
   afterEach(async () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('rsiOracle', async () => {
+  describe('getRSITriggerDetailsAsync', async () => {
     let subjectTriggerAddress: Address;
 
     beforeEach(async () => {
       subjectTriggerAddress = rsiTrigger.address;
     });
 
-    async function subject(): Promise<Address> {
-      return await rsiTriggerWrapper.rsiOracle(
+    async function subject(): Promise<RSITriggerDetails> {
+      return await triggerAPI.getRSITriggerDetailsAsync(
         subjectTriggerAddress,
       );
     }
 
-    test('gets the correct rsiOracle', async () => {
-      const address = await subject();
-      expect(address).to.equal(rsiOracle.address);
+    test('gets the correct dataOracle', async () => {
+      const details = await subject();
+      expect(details.dataOracle).to.equal(rsiOracle.address);
     });
-  });
-
-  describe('lowerBound', async () => {
-    let subjectTriggerAddress: Address;
-
-    beforeEach(async () => {
-      subjectTriggerAddress = rsiTrigger.address;
-    });
-
-    async function subject(): Promise<BigNumber> {
-      return await rsiTriggerWrapper.lowerBound(
-        subjectTriggerAddress,
-      );
-    }
 
     test('gets the correct lowerBound', async () => {
-      const lowerBound = await subject();
-      expect(lowerBound).to.be.bignumber.equal(rsiLowerBound);
+      const details = await subject();
+      expect(details.lowerBound).to.be.bignumber.equal(rsiLowerBound);
     });
-  });
-
-  describe('upperBound', async () => {
-    let subjectTriggerAddress: Address;
-
-    beforeEach(async () => {
-      subjectTriggerAddress = rsiTrigger.address;
-    });
-
-    async function subject(): Promise<BigNumber> {
-      return await rsiTriggerWrapper.upperBound(
-        subjectTriggerAddress,
-      );
-    }
 
     test('gets the correct upperBound', async () => {
-      const upperBound = await subject();
-      expect(upperBound).to.be.bignumber.equal(rsiUpperBound);
-    });
-  });
-
-  describe('rsiTimePeriod', async () => {
-    let subjectTriggerAddress: Address;
-
-    beforeEach(async () => {
-      subjectTriggerAddress = rsiTrigger.address;
+      const details = await subject();
+      expect(details.upperBound).to.be.bignumber.equal(rsiUpperBound);
     });
 
-    async function subject(): Promise<BigNumber> {
-      return await rsiTriggerWrapper.rsiTimePeriod(
-        subjectTriggerAddress,
-      );
-    }
-
-    test('gets the correct rsiTimePeriod', async () => {
-      const timePeriod = await subject();
-      expect(timePeriod).to.be.bignumber.equal(rsiTimePeriod);
-    });
-  });
-
-  describe('isBullish', async () => {
-    let subjectTriggerAddress: Address;
-
-    beforeEach(async () => {
-      subjectTriggerAddress = rsiTrigger.address;
-    });
-
-    async function subject(): Promise<boolean> {
-      return await rsiTriggerWrapper.isBullish(
-        subjectTriggerAddress,
-      );
-    }
-
-    test('returns correct isBullish value', async () => {
-      const isBullish = await subject();
-      const expectedIsBullish = await rsiTrigger.isBullish.callAsync();
-
-      expect(isBullish).to.equal(expectedIsBullish);
-    });
-
-    describe('when canConfirmPropose should throw a revert', async () => {
-      beforeAll(async () => {
-        seededPriceFeedPrices = [
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-          new BigNumber(150 * 10 ** 18),
-          new BigNumber(170 * 10 ** 18),
-        ];
-      });
-
-      afterAll(async () => {
-        seededPriceFeedPrices = _.map(new Array(15), function(el, i) {return new BigNumber((170 - i) * 10 ** 18); });
-      });
-
-      test('should revert', async () => {
-        await expectRevertError(subject());
-      });
+    test('gets the correct timePeriod', async () => {
+      const details = await subject();
+      expect(details.timePeriod).to.be.bignumber.equal(rsiTimePeriod);
     });
   });
 });

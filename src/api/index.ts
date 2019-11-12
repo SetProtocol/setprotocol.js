@@ -29,6 +29,7 @@ import { RebalancingManagerAPI } from './RebalancingManagerAPI';
 export { RebalancingSetIssuanceAPI } from './RebalancingSetIssuanceAPI';
 import { SetTokenAPI } from './SetTokenAPI';
 import { SystemAPI } from './SystemAPI';
+import { TriggerAPI } from './TriggerAPI';
 
 export {
   AccountingAPI,
@@ -42,5 +43,6 @@ export {
   RebalancingAPI,
   RebalancingManagerAPI,
   SetTokenAPI,
-  SystemAPI
+  SystemAPI,
+  TriggerAPI
 };

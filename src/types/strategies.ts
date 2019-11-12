@@ -15,6 +15,12 @@ export {
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 
+export interface RSITriggerDetails {
+  dataOracle: Address;
+  lowerBound: BigNumber;
+  upperBound: BigNumber;
+  timePeriod: BigNumber;
+}
 
 export interface MovingAverageManagerDetails {
   auctionLibrary: Address;
