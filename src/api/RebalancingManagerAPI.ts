@@ -210,7 +210,7 @@ export class RebalancingManagerAPI {
     this.assert.schema.isValidAddress('manager', manager);
 
     if (managerType == ManagerType.PAIR) {
-      return await this.assetPairManager.lastInitialTriggerTimestamp(manager);
+      return await this.assetPairManager.recentInitialProposeTimestamp(manager);
     }
 
     return await this.macoStrategyManager.lastCrossoverConfirmationTimestamp(manager);
@@ -461,52 +461,55 @@ export class RebalancingManagerAPI {
     manager: Address
   ): Promise<AssetPairManagerDetails> {
     const [
-      allocationPrecision,
+      allocationDenominator,
       allocator,
-      auctionEndPercentage,
+      auctionPivotPercentage,
       auctionLibrary,
       auctionStartPercentage,
       auctionTimeToPivot,
       baseAssetAllocation,
-      bullishBaseAssetAllocation,
     ] = await Promise.all([
-      this.assetPairManager.allocationPrecision(manager),
-      this.assetPairManager.allocatorInstance(manager),
-      this.assetPairManager.auctionEndPercentage(manager),
-      this.assetPairManager.auctionLibraryInstance(manager),
+      this.assetPairManager.allocationDenominator(manager),
+      this.assetPairManager.allocator(manager),
+      this.assetPairManager.auctionPivotPercentage(manager),
+      this.assetPairManager.auctionLibrary(manager),
       this.assetPairManager.auctionStartPercentage(manager),
       this.assetPairManager.auctionTimeToPivot(manager),
       this.assetPairManager.baseAssetAllocation(manager),
-      this.assetPairManager.bullishBaseAssetAllocation(manager),
     ]);
 
     const [
+      bullishBaseAssetAllocation,
+      bearishBaseAssetAllocation,
       core,
-      lastInitialTriggerTimestamp,
+      recentInitialProposeTimestamp,
       rebalancingSetToken,
       signalConfirmationMinTime,
       signalConfirmationMaxTime,
       trigger,
     ] = await Promise.all([
-      this.assetPairManager.coreInstance(manager),
-      this.assetPairManager.lastInitialTriggerTimestamp(manager),
-      this.assetPairManager.rebalancingSetTokenInstance(manager),
+      this.assetPairManager.bullishBaseAssetAllocation(manager),
+      this.assetPairManager.bearishBaseAssetAllocation(manager),
+      this.assetPairManager.core(manager),
+      this.assetPairManager.recentInitialProposeTimestamp(manager),
+      this.assetPairManager.rebalancingSetToken(manager),
       this.assetPairManager.signalConfirmationMinTime(manager),
       this.assetPairManager.signalConfirmationMaxTime(manager),
-      this.assetPairManager.triggerInstance(manager),
+      this.assetPairManager.trigger(manager),
     ]);
 
     return {
-      allocationPrecision,
+      allocationDenominator,
       allocator,
-      auctionEndPercentage,
+      auctionPivotPercentage,
       auctionLibrary,
       auctionStartPercentage,
       auctionTimeToPivot,
       baseAssetAllocation,
       bullishBaseAssetAllocation,
+      bearishBaseAssetAllocation,
       core,
-      lastInitialTriggerTimestamp,
+      recentInitialProposeTimestamp,
       rebalancingSetToken,
       signalConfirmationMinTime,
       signalConfirmationMaxTime,

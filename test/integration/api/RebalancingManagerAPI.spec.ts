@@ -1835,12 +1835,13 @@ describe('RebalancingManagerAPI', () => {
     const initializedProposalTimestamp = new BigNumber(0);
 
     const baseAssetAllocation = new BigNumber(100);
-    const allocationPrecision = new BigNumber(100);
+    const allocationDenominator = new BigNumber(100);
     const bullishBaseAssetAllocation = new BigNumber(100);
+    const bearishBaseAssetAllocation = allocationDenominator.sub(bullishBaseAssetAllocation);
 
     const auctionTimeToPivot = ONE_HOUR_IN_SECONDS.mul(6);
     const auctionStartPercentage = new BigNumber(2);
-    const auctionEndPercentage = new BigNumber(10);
+    const auctionPivotPercentage = new BigNumber(10);
 
     const signalConfirmationMinTime = ONE_HOUR_IN_SECONDS.mul(6);
     const signalConfirmationMaxTime = ONE_HOUR_IN_SECONDS.mul(12);
@@ -1947,11 +1948,11 @@ describe('RebalancingManagerAPI', () => {
         trigger.address,
         constantAuctionPriceCurve.address,
         baseAssetAllocation,
-        allocationPrecision,
+        allocationDenominator,
         bullishBaseAssetAllocation,
         auctionTimeToPivot,
         auctionStartPercentage,
-        auctionEndPercentage,
+        auctionPivotPercentage,
         signalConfirmationMinTime,
         signalConfirmationMaxTime
       );
@@ -1996,7 +1997,7 @@ describe('RebalancingManagerAPI', () => {
 
       test('gets the correct allocation precision', async () => {
         const details = await subject();
-        expect(details.allocationPrecision).to.be.bignumber.equal(allocationPrecision);
+        expect(details.allocationDenominator).to.be.bignumber.equal(allocationDenominator);
       });
 
       test('gets the correct allocator address', async () => {
@@ -2004,9 +2005,9 @@ describe('RebalancingManagerAPI', () => {
         expect(details.allocator).to.equal(allocator.address);
       });
 
-      test('gets the correct auctionEndPercentage', async () => {
+      test('gets the correct auctionPivotPercentage', async () => {
         const details = await subject();
-        expect(details.auctionEndPercentage).to.be.bignumber.equal(auctionEndPercentage);
+        expect(details.auctionPivotPercentage).to.be.bignumber.equal(auctionPivotPercentage);
       });
 
       test('gets the correct auctionLibrary address', async () => {
@@ -2034,9 +2035,14 @@ describe('RebalancingManagerAPI', () => {
         expect(details.bullishBaseAssetAllocation).to.bignumber.equal(bullishBaseAssetAllocation);
       });
 
-      test('gets the correct lastInitialTriggerTimestamp', async () => {
+      test('gets the correct bearishBaseAssetAllocation', async () => {
         const details = await subject();
-        expect(details.lastInitialTriggerTimestamp).to.bignumber.equal(initializedProposalTimestamp);
+        expect(details.bearishBaseAssetAllocation).to.bignumber.equal(bearishBaseAssetAllocation);
+      });
+
+      test('gets the correct recentInitialProposeTimestamp', async () => {
+        const details = await subject();
+        expect(details.recentInitialProposeTimestamp).to.bignumber.equal(initializedProposalTimestamp);
       });
 
       test('gets the correct rebalancingSetToken address', async () => {
@@ -2118,7 +2124,7 @@ describe('RebalancingManagerAPI', () => {
           const { blockNumber } = await web3.eth.getTransactionReceipt(txnHash);
           const { timestamp } = await web3.eth.getBlock(blockNumber);
 
-          const lastTimestamp = await assetPairManagerWrapper.lastInitialTriggerTimestamp(
+          const lastTimestamp = await assetPairManagerWrapper.recentInitialProposeTimestamp(
             subjectManagerAddress,
           );
           expect(lastTimestamp).to.bignumber.equal(timestamp);

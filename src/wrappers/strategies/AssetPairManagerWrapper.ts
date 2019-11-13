@@ -100,34 +100,34 @@ export class AssetPairManagerWrapper {
     return await assetPairManagerInstance.canConfirmPropose.callAsync();
   }
 
-  public async coreInstance(managerAddress: Address): Promise<Address> {
+  public async core(managerAddress: Address): Promise<Address> {
     const assetPairManagerInstance = await this.contracts.loadAssetPairManagerContractAsync(managerAddress);
 
-    return await assetPairManagerInstance.coreInstance.callAsync();
+    return await assetPairManagerInstance.core.callAsync();
   }
 
-  public async allocatorInstance(managerAddress: Address): Promise<Address> {
+  public async allocator(managerAddress: Address): Promise<Address> {
     const assetPairManagerInstance = await this.contracts.loadAssetPairManagerContractAsync(managerAddress);
 
-    return await assetPairManagerInstance.allocatorInstance.callAsync();
+    return await assetPairManagerInstance.allocator.callAsync();
   }
 
-  public async triggerInstance(managerAddress: Address): Promise<Address> {
+  public async trigger(managerAddress: Address): Promise<Address> {
     const assetPairManagerInstance = await this.contracts.loadAssetPairManagerContractAsync(managerAddress);
 
-    return await assetPairManagerInstance.triggerInstance.callAsync();
+    return await assetPairManagerInstance.trigger.callAsync();
   }
 
-  public async auctionLibraryInstance(managerAddress: Address): Promise<Address> {
+  public async auctionLibrary(managerAddress: Address): Promise<Address> {
     const assetPairManagerInstance = await this.contracts.loadAssetPairManagerContractAsync(managerAddress);
 
-    return await assetPairManagerInstance.auctionLibraryInstance.callAsync();
+    return await assetPairManagerInstance.auctionLibrary.callAsync();
   }
 
-  public async rebalancingSetTokenInstance(managerAddress: Address): Promise<Address> {
+  public async rebalancingSetToken(managerAddress: Address): Promise<Address> {
     const assetPairManagerInstance = await this.contracts.loadAssetPairManagerContractAsync(managerAddress);
 
-    return await assetPairManagerInstance.rebalancingSetTokenInstance.callAsync();
+    return await assetPairManagerInstance.rebalancingSetToken.callAsync();
   }
 
   public async baseAssetAllocation(managerAddress: Address): Promise<BigNumber> {
@@ -136,10 +136,10 @@ export class AssetPairManagerWrapper {
     return await assetPairManagerInstance.baseAssetAllocation.callAsync();
   }
 
-  public async allocationPrecision(managerAddress: Address): Promise<BigNumber> {
+  public async allocationDenominator(managerAddress: Address): Promise<BigNumber> {
     const assetPairManagerInstance = await this.contracts.loadAssetPairManagerContractAsync(managerAddress);
 
-    return await assetPairManagerInstance.allocationPrecision.callAsync();
+    return await assetPairManagerInstance.allocationDenominator.callAsync();
   }
 
   public async bullishBaseAssetAllocation(managerAddress: Address): Promise<BigNumber> {
@@ -148,16 +148,22 @@ export class AssetPairManagerWrapper {
     return await assetPairManagerInstance.bullishBaseAssetAllocation.callAsync();
   }
 
+  public async bearishBaseAssetAllocation(managerAddress: Address): Promise<BigNumber> {
+    const assetPairManagerInstance = await this.contracts.loadAssetPairManagerContractAsync(managerAddress);
+
+    return await assetPairManagerInstance.bearishBaseAssetAllocation.callAsync();
+  }
+
   public async auctionStartPercentage(managerAddress: Address): Promise<BigNumber> {
     const assetPairManagerInstance = await this.contracts.loadAssetPairManagerContractAsync(managerAddress);
 
     return await assetPairManagerInstance.auctionStartPercentage.callAsync();
   }
 
-  public async auctionEndPercentage(managerAddress: Address): Promise<BigNumber> {
+  public async auctionPivotPercentage(managerAddress: Address): Promise<BigNumber> {
     const assetPairManagerInstance = await this.contracts.loadAssetPairManagerContractAsync(managerAddress);
 
-    return await assetPairManagerInstance.auctionEndPercentage.callAsync();
+    return await assetPairManagerInstance.auctionPivotPercentage.callAsync();
   }
 
   public async auctionTimeToPivot(managerAddress: Address): Promise<BigNumber> {
@@ -178,11 +184,9 @@ export class AssetPairManagerWrapper {
     return await assetPairManagerInstance.signalConfirmationMaxTime.callAsync();
   }
 
-  public async lastInitialTriggerTimestamp(managerAddress: Address): Promise<BigNumber> {
+  public async recentInitialProposeTimestamp(managerAddress: Address): Promise<BigNumber> {
     const assetPairManagerInstance = await this.contracts.loadAssetPairManagerContractAsync(managerAddress);
 
-    return await assetPairManagerInstance.lastInitialTriggerTimestamp.callAsync();
+    return await assetPairManagerInstance.recentInitialProposeTimestamp.callAsync();
   }
 }
-
-

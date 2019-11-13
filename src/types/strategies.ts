@@ -34,16 +34,17 @@ export interface MovingAverageManagerDetails {
 }
 
 export interface AssetPairManagerDetails {
-  allocationPrecision: BigNumber;
+  allocationDenominator: BigNumber;
   allocator: Address;
-  auctionEndPercentage: BigNumber;
+  auctionPivotPercentage: BigNumber;
   auctionLibrary: Address;
   auctionStartPercentage: BigNumber;
   auctionTimeToPivot: BigNumber;
   baseAssetAllocation: BigNumber;
   bullishBaseAssetAllocation: BigNumber;
+  bearishBaseAssetAllocation: BigNumber;
   core: Address;
-  lastInitialTriggerTimestamp: BigNumber;
+  recentInitialProposeTimestamp: BigNumber;
   rebalancingSetToken: Address;
   signalConfirmationMinTime: BigNumber;
   signalConfirmationMaxTime: BigNumber;

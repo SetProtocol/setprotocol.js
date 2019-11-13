@@ -132,12 +132,13 @@ describe('AssetPairManagerWrapper', () => {
   let assetPairManagerWrapper: AssetPairManagerWrapper;
 
   const baseAssetAllocation = new BigNumber(100);
-  const allocationPrecision = new BigNumber(100);
+  const allocationDenominator = new BigNumber(100);
   const bullishBaseAssetAllocation = new BigNumber(100);
+  const bearishBaseAssetAllocation = allocationDenominator.sub(bullishBaseAssetAllocation);
 
   const auctionTimeToPivot = ONE_HOUR_IN_SECONDS.mul(6);
   const auctionStartPercentage = new BigNumber(2);
-  const auctionEndPercentage = new BigNumber(10);
+  const auctionPivotPercentage = new BigNumber(10);
 
   const signalConfirmationMinTime = ONE_HOUR_IN_SECONDS.mul(6);
   const signalConfirmationMaxTime = ONE_HOUR_IN_SECONDS.mul(12);
@@ -295,11 +296,11 @@ describe('AssetPairManagerWrapper', () => {
       trigger.address,
       constantAuctionPriceCurve.address,
       baseAssetAllocation,
-      allocationPrecision,
+      allocationDenominator,
       bullishBaseAssetAllocation,
       auctionTimeToPivot,
       auctionStartPercentage,
-      auctionEndPercentage,
+      auctionPivotPercentage,
       signalConfirmationMinTime,
       signalConfirmationMaxTime
     );
@@ -335,7 +336,7 @@ describe('AssetPairManagerWrapper', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe('coreInstance', async () => {
+  describe('core', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
@@ -343,7 +344,7 @@ describe('AssetPairManagerWrapper', () => {
     });
 
     async function subject(): Promise<Address> {
-      return await assetPairManagerWrapper.coreInstance(
+      return await assetPairManagerWrapper.core(
         subjectManagerAddress,
       );
     }
@@ -354,7 +355,7 @@ describe('AssetPairManagerWrapper', () => {
     });
   });
 
-  describe('allocatorInstance', async () => {
+  describe('allocator', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
@@ -362,7 +363,7 @@ describe('AssetPairManagerWrapper', () => {
     });
 
     async function subject(): Promise<Address> {
-      return await assetPairManagerWrapper.allocatorInstance(
+      return await assetPairManagerWrapper.allocator(
         subjectManagerAddress,
       );
     }
@@ -373,7 +374,7 @@ describe('AssetPairManagerWrapper', () => {
     });
   });
 
-  describe('triggerInstance', async () => {
+  describe('trigger', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
@@ -381,7 +382,7 @@ describe('AssetPairManagerWrapper', () => {
     });
 
     async function subject(): Promise<Address> {
-      return await assetPairManagerWrapper.triggerInstance(
+      return await assetPairManagerWrapper.trigger(
         subjectManagerAddress,
       );
     }
@@ -392,7 +393,7 @@ describe('AssetPairManagerWrapper', () => {
     });
   });
 
-  describe('auctionLibraryInstance', async () => {
+  describe('auctionLibrary', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
@@ -400,7 +401,7 @@ describe('AssetPairManagerWrapper', () => {
     });
 
     async function subject(): Promise<Address> {
-      return await assetPairManagerWrapper.auctionLibraryInstance(
+      return await assetPairManagerWrapper.auctionLibrary(
         subjectManagerAddress,
       );
     }
@@ -411,7 +412,7 @@ describe('AssetPairManagerWrapper', () => {
     });
   });
 
-  describe('rebalancingSetTokenInstance', async () => {
+  describe('rebalancingSetToken', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
@@ -419,12 +420,12 @@ describe('AssetPairManagerWrapper', () => {
     });
 
     async function subject(): Promise<Address> {
-      return await assetPairManagerWrapper.rebalancingSetTokenInstance(
+      return await assetPairManagerWrapper.rebalancingSetToken(
         subjectManagerAddress,
       );
     }
 
-    test('gets the correct rebalancingSetTokenInstance', async () => {
+    test('gets the correct rebalancingSetToken', async () => {
       const address = await subject();
       expect(address).to.equal(rebalancingSetToken.address);
     });
@@ -449,7 +450,7 @@ describe('AssetPairManagerWrapper', () => {
     });
   });
 
-  describe('allocationPrecision', async () => {
+  describe('allocationDenominator', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
@@ -457,14 +458,14 @@ describe('AssetPairManagerWrapper', () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await assetPairManagerWrapper.allocationPrecision(
+      return await assetPairManagerWrapper.allocationDenominator(
         subjectManagerAddress,
       );
     }
 
-    test('gets the correct allocationPrecision', async () => {
+    test('gets the correct allocationDenominator', async () => {
       const address = await subject();
-      expect(address).to.be.bignumber.equal(allocationPrecision);
+      expect(address).to.be.bignumber.equal(allocationDenominator);
     });
   });
 
@@ -487,6 +488,25 @@ describe('AssetPairManagerWrapper', () => {
     });
   });
 
+  describe('bearishBaseAssetAllocation', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = assetPairManager.address;
+    });
+
+    async function subject(): Promise<BigNumber> {
+      return await assetPairManagerWrapper.bearishBaseAssetAllocation(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct bearishBaseAssetAllocation', async () => {
+      const address = await subject();
+      expect(address).to.be.bignumber.equal(bearishBaseAssetAllocation);
+    });
+  });
+
   describe('auctionStartPercentage', async () => {
     let subjectManagerAddress: Address;
 
@@ -506,7 +526,7 @@ describe('AssetPairManagerWrapper', () => {
     });
   });
 
-  describe('auctionEndPercentage', async () => {
+  describe('auctionPivotPercentage', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
@@ -514,14 +534,14 @@ describe('AssetPairManagerWrapper', () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await assetPairManagerWrapper.auctionEndPercentage(
+      return await assetPairManagerWrapper.auctionPivotPercentage(
         subjectManagerAddress,
       );
     }
 
-    test('gets the correct auctionEndPercentage', async () => {
+    test('gets the correct auctionPivotPercentage', async () => {
       const address = await subject();
-      expect(address).to.be.bignumber.equal(auctionEndPercentage);
+      expect(address).to.be.bignumber.equal(auctionPivotPercentage);
     });
   });
 
@@ -582,7 +602,7 @@ describe('AssetPairManagerWrapper', () => {
     });
   });
 
-  describe('lastInitialTriggerTimestamp', async () => {
+  describe('recentInitialProposeTimestamp', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
@@ -590,12 +610,12 @@ describe('AssetPairManagerWrapper', () => {
     });
 
     async function subject(): Promise<BigNumber> {
-      return await assetPairManagerWrapper.lastInitialTriggerTimestamp(
+      return await assetPairManagerWrapper.recentInitialProposeTimestamp(
         subjectManagerAddress,
       );
     }
 
-    test('gets the correct lastInitialTriggerTimestamp', async () => {
+    test('gets the correct recentInitialProposeTimestamp', async () => {
       const address = await subject();
       expect(address).to.be.bignumber.equal(ZERO);
     });
@@ -624,12 +644,12 @@ describe('AssetPairManagerWrapper', () => {
       );
     }
 
-    test('sets the lastInitialTriggerTimestamp properly', async () => {
+    test('sets the recentInitialProposeTimestamp properly', async () => {
       const txnHash = await subject();
       const { blockNumber } = await web3.eth.getTransactionReceipt(txnHash);
       const { timestamp } = await web3.eth.getBlock(blockNumber);
 
-      const lastTimestamp = await assetPairManagerWrapper.lastInitialTriggerTimestamp(
+      const lastTimestamp = await assetPairManagerWrapper.recentInitialProposeTimestamp(
         subjectManagerAddress,
       );
       expect(lastTimestamp).to.bignumber.equal(timestamp);
@@ -696,7 +716,7 @@ describe('AssetPairManagerWrapper', () => {
       );
     }
 
-    test('sets the lastInitialTriggerTimestamp properly', async () => {
+    test('sets the recentInitialProposeTimestamp properly', async () => {
       const canInitialPropose = await subject();
 
       expect(canInitialPropose).to.be.true;
@@ -743,7 +763,7 @@ describe('AssetPairManagerWrapper', () => {
       );
     }
 
-    test('sets the lastInitialTriggerTimestamp properly', async () => {
+    test('sets the recentInitialProposeTimestamp properly', async () => {
       const canInitialPropose = await subject();
 
       expect(canInitialPropose).to.be.true;
