@@ -6475,9 +6475,10 @@ set-protocol-contracts@1.2.8:
     web3 "1.0.0-beta.36"
     web3-utils "1.0.0-beta.36"
 
-set-protocol-contracts@^1.2.3:
-  version "1.2.4"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.4.tgz#aa999e9268d8445cc70569accbab82b3f2c4507c"
+set-protocol-contracts@^1.2.9:
+  version "1.2.9"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.2.9.tgz#92ec40eab0ca019dd2cc36b210b00b8ed232f30d"
+  integrity sha512-EcXWh7yJgHqr5qrR/PGTurtORvDd5QRGvf6c5tomYB7/WTFu5ielQDHjM2T7InyG80OOrsNsYdNJhsVS3ZSndQ==
   dependencies:
     bn-chai "^1.0.1"
     canonical-weth "^1.3.1"
@@ -6490,18 +6491,19 @@ set-protocol-contracts@^1.2.3:
     lint-staged "^7.2.0"
     module-alias "^2.1.0"
     openzeppelin-solidity "^2.2"
-    set-protocol-utils "^1.0.0-beta.32"
+    set-protocol-utils "^1.0.0-beta.41"
     tiny-promisify "^1.0.0"
+    truffle-flattener "^1.4.0"
     ts-mocha "^6.0.0"
     ts-node "^8.0.2"
     tslint-eslint-rules "^5.3.1"
     web3 "1.0.0-beta.36"
     web3-utils "1.0.0-beta.36"
 
-set-protocol-strategies@1.1.10-beta.2:
-  version "1.1.10-beta.2"
-  resolved "https://registry.yarnpkg.com/set-protocol-strategies/-/set-protocol-strategies-1.1.10-beta.2.tgz#c39e861a1fbd98af11a114b817d25855e0adc1bc"
-  integrity sha512-WhS7AWtYgHlyEoYPbubWYgDt9YeFipvRAXS/do/apirk2HiZHO/amI+rBc1H2/Bghjy1juAApCrpjidckImiKA==
+set-protocol-strategies@1.1.14:
+  version "1.1.14"
+  resolved "https://registry.yarnpkg.com/set-protocol-strategies/-/set-protocol-strategies-1.1.14.tgz#55f41d800f220f7ab8b424e7b12fbf07aa0063af"
+  integrity sha512-gB44q+Yqk9Wr8hlrFY34ZkWd9tHzKKp0ZNdD4iqW5z3BQ/XA68k3blrcYx/CpnNhQgyoTxVutp9hduN03tq7Sg==
   dependencies:
     bn-chai "^1.0.1"
     canonical-weth "^1.3.1"
@@ -6514,7 +6516,7 @@ set-protocol-strategies@1.1.10-beta.2:
     lint-staged "^7.2.0"
     module-alias "^2.1.0"
     openzeppelin-solidity "^2.2"
-    set-protocol-contracts "^1.2.3"
+    set-protocol-contracts "^1.2.9"
     set-protocol-utils "^1.0.0-beta.39"
     tiny-promisify "^1.0.0"
     truffle-flattener "^1.4.2"
@@ -6559,6 +6561,38 @@ set-protocol-utils@1.0.0-beta.39, set-protocol-utils@^1.0.0-beta.39:
 set-protocol-utils@^1.0.0-beta.32:
   version "1.0.0-beta.36"
   resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-1.0.0-beta.36.tgz#c5a22433ffcdbad8f23f7f843c9ea6f080c3950d"
+  dependencies:
+    "@0xproject/base-contract" "^1.0.4"
+    "@0xproject/order-utils" "^1.0.1"
+    "@0xproject/types" "^1.0.7"
+    "@0xproject/web3-wrapper" "^1.1.2"
+    "@types/lodash" "4.14.104"
+    "@types/node" "^8.9.1"
+    "@types/web3" "^1.0.10"
+    abi-decoder "^1.0.9"
+    bignumber.js "~4.1.0"
+    bn-chai "^1.0.1"
+    bn.js "^4.11.8"
+    chai "^4.1.2"
+    chai-as-promised "^7.1.1"
+    chai-bignumber "^2.0.2"
+    ethereum-types "^1.0.0"
+    ethereumjs-util "^5.0.0"
+    ethers "3.0.22"
+    husky "^0.14.3"
+    js-sha3 "^0.7.0"
+    lint-staged "^7.2.0"
+    lodash "^4.17.4"
+    tiny-promisify "^1.0.0"
+    tslint-eslint-rules "^5.3.1"
+    types-bn "^0.0.1"
+    web3 "1.0.0-beta.36"
+    web3-utils "1.0.0-beta.36"
+
+set-protocol-utils@^1.0.0-beta.41:
+  version "1.0.0-beta.42"
+  resolved "https://registry.yarnpkg.com/set-protocol-utils/-/set-protocol-utils-1.0.0-beta.42.tgz#1501b8536d959570571ef745bf1e9aa79db56dd3"
+  integrity sha512-hx88I+z6lWPCV2DKoMTHBq2fgIckK+uMR/6sAdca46aUdt+DWRSBvI1cSwmHACrlqm/3vpzPnhz3AWWsukQkuw==
   dependencies:
     "@0xproject/base-contract" "^1.0.4"
     "@0xproject/order-utils" "^1.0.1"
