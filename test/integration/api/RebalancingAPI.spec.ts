@@ -2245,6 +2245,7 @@ describe('RebalancingAPI', () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
 
+    let bid1BlockNumber: number;
     let earlyTxnHash: string;
     let earlyBlockNumber: number;
     let earlyBlockTimestamp: number;
@@ -2374,7 +2375,7 @@ describe('RebalancingAPI', () => {
       earlyBlockNumber = earlyTransaction['blockNumber'];
 
       const firstBidTransaction = await web3.eth.getTransaction(bid1TxnHash);
-      const bid1BlockNumber = firstBidTransaction['blockNumber'];
+      bid1BlockNumber = firstBidTransaction['blockNumber'];
       const bid1Block = await web3.eth.getBlock(bid1BlockNumber);
       earlyBlockTimestamp = bid1Block.timestamp;
 
@@ -2407,10 +2408,11 @@ describe('RebalancingAPI', () => {
 
       const [firstEvent] = events;
 
-      expect(bid1TxnHash).to.equal(firstEvent.transactionHash);
-      expect(rebalancingSetToken.address).to.equal(firstEvent.rebalancingSetToken);
-      expect(bidQuantity).to.bignumber.equal(firstEvent.executionQuantity);
-      expect(earlyBlockTimestamp).to.equal(firstEvent.timestamp);
+      expect(firstEvent.transactionHash).to.equal(bid1TxnHash);
+      expect(firstEvent.rebalancingSetToken).to.equal(rebalancingSetToken.address);
+      expect(firstEvent.executionQuantity).to.bignumber.equal(bidQuantity);
+      expect(firstEvent.timestamp).to.equal(earlyBlockTimestamp);
+      expect(firstEvent.blockNumber).to.equal(bid1BlockNumber);
     });
   });
 

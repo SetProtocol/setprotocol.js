@@ -372,6 +372,7 @@ export class RebalancingAPI {
         combinedTokenAddresses,
         inflowTokenUnits: inflowTokenUnits.map((unit: string) => new BigNumber(unit)),
         outflowTokenUnits: outflowTokenUnits.map((unit: string) => new BigNumber(unit)),
+        blockNumber: event.blockNumber,
         timestamp,
       };
     });
