@@ -288,6 +288,70 @@ describe('ERC20API', () => {
     });
   });
 
+  describe('getUsersBalancesOfAsync', async () => {
+    let tokens: StandardTokenMockContract[];
+
+    let subjectTokenAddress: Address[];
+    let subjectTokenOwnerAddresses: Address[];
+
+    beforeEach(async () => {
+      tokens = await deployTokensAsync(3, web3, DEFAULT_ACCOUNT);
+
+      subjectTokenAddress = tokens.map(token => token.address);
+      subjectTokenOwnerAddresses = [DEFAULT_ACCOUNT, DEFAULT_ACCOUNT, DEFAULT_ACCOUNT];
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return await erc20API.getUsersBalancesOfAsync(
+        subjectTokenAddress,
+        subjectTokenOwnerAddresses,
+      );
+    }
+
+    test('fetches the balances correctly', async () => {
+      const tokenBalances = await subject();
+
+      const expectedTokenBalances = await getTokenBalances(tokens, DEFAULT_ACCOUNT);
+      expect(JSON.stringify(tokenBalances)).to.equal(JSON.stringify(expectedTokenBalances));
+    });
+
+    describe('when the token address is invalid', async () => {
+      beforeEach(async () => {
+        subjectTokenAddress = ['InvalidTokenAddress'];
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        Expected tokenAddress to conform to schema /Address.
+
+        Encountered: "InvalidTokenAddress"
+
+        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
+      `
+        );
+      });
+    });
+
+    describe('when the transaction caller address is invalid', async () => {
+      beforeEach(async () => {
+        subjectTokenOwnerAddresses = ['InvalidTokenOwnerAddress'];
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        Expected userAddress to conform to schema /Address.
+
+        Encountered: "InvalidTokenOwnerAddress"
+
+        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
+      `
+        );
+      });
+    });
+  });
+
   describe('getAllowanceAsync', async () => {
     let token: StandardTokenMockContract;
     let approveAllowance: BigNumber;

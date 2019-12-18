@@ -58,6 +58,23 @@ export class ProtocolViewerWrapper {
   }
 
   /**
+   * Fetches token balances for each tokenAddress, tokenOwner pair
+   *
+   * @param  tokenAddresses    Addresses of ERC20 contracts to check balance for
+   * @param  tokenOwners       Addresses of users sequential to tokenAddress to fetch balance for
+   */
+  public async batchFetchUsersBalances(
+    tokenAddresses: Address[],
+    tokenOwners: Address[],
+  ): Promise<BigNumber[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchUsersBalances.callAsync(tokenAddresses, tokenOwners);
+  }
+
+  /**
    * Fetches multiple supplies for passed in array of ERC20 contract addresses
    *
    * @param  tokenAddresses    Addresses of ERC20 contracts to check supply for
@@ -100,5 +117,20 @@ export class ProtocolViewerWrapper {
     );
 
     return await protocolViewerInstance.fetchRebalanceAuctionStateAsync.callAsync(rebalancingSetTokenAddress);
+  }
+
+  /**
+   * Fetches all rebalance states for an array of RebalancingSetToken contracts
+   *
+   * @param  rebalancingSetTokenAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchRebalanceStateAsync(
+    rebalancingSetTokenAddresses: Address[],
+  ): Promise<any> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchRebalanceStateAsync.callAsync(rebalancingSetTokenAddresses);
   }
 }

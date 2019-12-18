@@ -172,6 +172,48 @@ describe('ProtocolViewer', () => {
     });
   });
 
+  describe('#batchFetchUsersBalances', async () => {
+    let subjectTokenAddresses: Address[];
+    let subjectOwnerAddresses: Address[];
+
+    let firstOwner: Address;
+    let secondOwner: Address;
+
+    beforeEach(async () => {
+      firstOwner = ACCOUNTS[0].address;
+      secondOwner = ACCOUNTS[1].address;
+
+      subjectTokenAddresses = [currentSetToken.address, rebalancingSetToken.address, nextSetToken.address];
+      subjectOwnerAddresses = [firstOwner, secondOwner, firstOwner];
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return await protocolViewerWrapper.batchFetchUsersBalances(
+        subjectTokenAddresses,
+        subjectOwnerAddresses
+      );
+    }
+
+    test('fetches the balances of the token address, user address pairs', async () => {
+      const tokenBalances = await subject();
+
+      const expectedFirstOwnerBalances = await getTokenBalances(
+        [currentSetToken, rebalancingSetToken],
+        firstOwner
+      );
+      const expectedSecondOwnerBalances = await getTokenBalances(
+        [nextSetToken],
+        secondOwner
+      );
+      const expectedTokenBalances = [
+        expectedFirstOwnerBalances[0],
+        expectedSecondOwnerBalances[0],
+        expectedFirstOwnerBalances[1],
+      ];
+      expect(JSON.stringify(tokenBalances)).to.equal(JSON.stringify(expectedTokenBalances));
+    });
+  });
+
   describe('#batchFetchSupplies', async () => {
     let subjectTokenAddresses: Address[];
 
@@ -353,6 +395,60 @@ describe('ProtocolViewer', () => {
         expect(minimumBid).to.be.bignumber.equal(expectedMinimumBid);
         expect(expectedRemainingCurrentSets).to.be.bignumber.equal(expectedRemainingCurrentSets);
       });
+    });
+  });
+
+  describe('#batchFetchRebalanceStateAsync', async () => {
+    let subjectRebalancingSetTokenAddresses: Address[];
+
+    let managerAddress: Address;
+
+    beforeEach(async () => {
+      // Issue currentSetToken
+      const baseSetIssueQuantity = ether(7);
+      await core.issue.sendTransactionAsync(currentSetToken.address, baseSetIssueQuantity, TX_DEFAULTS);
+      await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      const rebalancingSetQuantityToIssue = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
+
+      const setAuctionPriceCurveAddress = priceCurve.address;
+      managerAddress = ACCOUNTS[1].address;
+      await transitionToRebalanceAsync(
+        web3,
+        rebalancingSetToken,
+        managerAddress,
+        nextSetToken.address,
+        setAuctionPriceCurveAddress,
+      );
+
+      // Create another rebalancing set token that is in Default state
+      const proposalPeriod = ONE_DAY_IN_SECONDS;
+      const defaultRebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      subjectRebalancingSetTokenAddresses = [rebalancingSetToken.address, defaultRebalancingSetToken.address];
+    });
+
+    async function subject(): Promise<any> {
+      return await protocolViewerWrapper.batchFetchRebalanceStateAsync(subjectRebalancingSetTokenAddresses);
+    }
+
+    test('fetches the rebalance auction state of the rebalancing set', async () => {
+      const rebalanceAuctionStates: BigNumber[] = await subject();
+
+      const firstRebalancingSetState = rebalanceAuctionStates[0];
+      expect(firstRebalancingSetState).to.be.bignumber.equal(SetUtils.REBALANCING_STATE.REBALANCE);
+
+      const secondRebalancingSetState = rebalanceAuctionStates[1];
+      expect(secondRebalancingSetState).to.be.bignumber.equal(SetUtils.REBALANCING_STATE.DEFAULT);
     });
   });
 });
