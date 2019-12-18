@@ -77,6 +77,19 @@ export class ERC20API {
   }
 
   /**
+   * Fetches token balances for each tokenAddress, userAddress pair
+   *
+   * @param  tokenAddresses    Addresses of the ERC20 tokens to fetch balances for
+   * @param  userAddresses     Addresses of users sequential to tokenAddressesto fetch balances for
+   * @return                   Balance of the ERC20 token
+   */
+  public async getUsersBalancesOfAsync(tokenAddresses: Address[], userAddresses: Address[]): Promise<BigNumber[]> {
+    this.assertGetUsersBalancesOf(tokenAddresses, userAddresses);
+
+    return await this.protocolViewerWrapper.batchFetchUsersBalances(tokenAddresses, userAddresses);
+  }
+
+  /**
    * Fetches the name of the ERC20 token
    *
    * @param  tokenAddress    Address of the ERC20 token
@@ -228,6 +241,16 @@ export class ERC20API {
 
   private assertGetBalancesOf(tokenAddresses: Address[], userAddress: Address) {
     this.assert.schema.isValidAddress('userAddress', userAddress);
+    tokenAddresses.forEach(tokenAddress => {
+      this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    });
+  }
+
+  private assertGetUsersBalancesOf(tokenAddresses: Address[], userAddresses: Address[]) {
+    userAddresses.forEach(userAddress => {
+      this.assert.schema.isValidAddress('userAddress', userAddress);
+    });
+
     tokenAddresses.forEach(tokenAddress => {
       this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
     });

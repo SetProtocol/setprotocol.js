@@ -549,6 +549,20 @@ export class RebalancingAPI {
   }
 
   /**
+   * Fetches the current states for multiple RebalancingSetToken contracts
+   *
+   * @param  rebalancingSetTokenAddresses    Addressses of the RebalancingSetToken contracts
+   * @return                                 Current state belonging to {'Default', 'Propose', 'Rebalance', 'Drawdown'}
+   */
+  public async getRebalanceStatesAsync(rebalancingSetTokenAddresses: Address[]): Promise<string[]> {
+    this.assertGetRebalanceStatesAsync(rebalancingSetTokenAddresses);
+
+    const statusEnums: BigNumber[] =
+      await this.protocolViewer.batchFetchRebalanceStateAsync(rebalancingSetTokenAddresses);
+    return statusEnums.map(statusEnum => parseRebalanceState(statusEnum));
+  }
+
+  /**
    * Fetches the current collateral set token address of a rebalancing set
    *
    * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
@@ -708,6 +722,12 @@ export class RebalancingAPI {
       this.config.wrappedEtherAddress,
       new BigNumber(txOpts.value),
     );
+  }
+
+  private assertGetRebalanceStatesAsync(tokenAddresses: Address[]) {
+    tokenAddresses.forEach(tokenAddress => {
+      this.assert.schema.isValidAddress('rebalancingSetTokenAddress', tokenAddress);
+    });
   }
 
   private async assertUpdateManager(rebalancingSetTokenAddress: Address, newManager: Address, txOpts: Tx) {

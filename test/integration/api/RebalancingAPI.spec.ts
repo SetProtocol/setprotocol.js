@@ -2173,14 +2173,75 @@ describe('RebalancingAPI', () => {
     }
 
     it('returns the rebalancing token state', async () => {
-      const state = await subject();
+      const states = await subject();
 
-      expect(state).to.eql('Default');
+      expect(states).to.eql('Default');
     });
 
     describe('when the rebalancing set address is invalid', async () => {
       beforeEach(async () => {
         subjectRebalancingSetTokenAddress = 'InvalidRebalancingSetTokenAddress';
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        Expected rebalancingSetTokenAddress to conform to schema /Address.
+
+        Encountered: "InvalidRebalancingSetTokenAddress"
+
+        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
+      `
+        );
+      });
+    });
+  });
+
+  describe('getRebalanceStatesAsync', async () => {
+    let currentSetToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let proposalPeriod: BigNumber;
+    let managerAddress: Address;
+
+    let subjectRebalancingSetTokenAddresses: Address[];
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 1;
+      [currentSetToken] = await deploySetTokensAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      proposalPeriod = ONE_DAY_IN_SECONDS;
+      managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      subjectRebalancingSetTokenAddresses = [rebalancingSetToken.address];
+    });
+
+    async function subject(): Promise<string[]> {
+      return await rebalancingAPI.getRebalanceStatesAsync(subjectRebalancingSetTokenAddresses);
+    }
+
+    it('returns the rebalancing token state', async () => {
+      const state = await subject();
+
+      expect(state).to.eql(['Default']);
+    });
+
+    describe('when the rebalancing set address is invalid', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetTokenAddresses = ['InvalidRebalancingSetTokenAddress'];
       });
 
       test('throws', async () => {
