@@ -53,7 +53,7 @@ import {
 import {
   addPriceLibraryAsync,
   deployBaseContracts,
-  deployWhitelistContract,
+  deployWhiteListContract,
   registerExchange,
 } from '@test/helpers';
 
@@ -319,7 +319,7 @@ describe('SystemAPI', () => {
     beforeEach(async () => {
       initializedWhitelistAddresses = [DEFAULT_ACCOUNT];
 
-      whitelistInstance = await deployWhitelistContract(initializedWhitelistAddresses, web3);
+      whitelistInstance = await deployWhiteListContract(initializedWhitelistAddresses, web3);
 
       subjectWhitelistContract = whitelistInstance.address;
     });

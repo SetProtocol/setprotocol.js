@@ -30,7 +30,7 @@ import { Address, Web3Utils } from 'set-protocol-utils';
 import { WhitelistWrapper } from '@src/wrappers';
 import { DEFAULT_ACCOUNT } from '@src/constants';
 import { BigNumber } from '@src/util';
-import { deployWhitelistContract } from '@test/helpers';
+import { deployWhiteListContract } from '@test/helpers';
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
@@ -62,7 +62,7 @@ describe('WhitelistWrapper', () => {
     beforeEach(async () => {
       initializedWhitelistAddresses = [DEFAULT_ACCOUNT];
 
-      whitelistInstance = await deployWhitelistContract(initializedWhitelistAddresses, web3);
+      whitelistInstance = await deployWhiteListContract(initializedWhitelistAddresses, web3);
 
       subjectWhitelistContract = whitelistInstance.address;
     });

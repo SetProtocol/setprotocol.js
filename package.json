@@ -68,7 +68,7 @@
     "moment": "^2.22.2",
     "set-protocol-contracts": "1.3.7-beta",
     "set-protocol-strategies": "1.1.19",
-    "set-protocol-utils": "1.0.0-beta.43",
+    "set-protocol-utils": "1.0.0-beta.45",
     "timekeeper": "^2.1.2",
     "tiny-promisify": "^1.0.0",
     "truffle-contract": "^4.0.0",

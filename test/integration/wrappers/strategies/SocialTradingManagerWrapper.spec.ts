@@ -81,8 +81,7 @@ chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
 const contract = require('truffle-contract');
 const web3 = new Web3('http://localhost:8545');
-const { Web3Utils, SetProtocolUtils: SetUtils } = setProtocolUtils;
-const web3Utils = new Web3Utils(web3);
+const { SetProtocolUtils: SetUtils } = setProtocolUtils;
 
 const coreContract = contract(Core);
 coreContract.setProvider(web3.currentProvider);
@@ -123,8 +122,6 @@ describe('SocialTradingManagerWrapper', () => {
   });
 
   beforeEach(async () => {
-    currentSnapshotId = await web3Utils.saveTestSnapshot();
-
     [
       core,
       transferProxy, ,
