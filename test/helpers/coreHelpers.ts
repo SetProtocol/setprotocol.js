@@ -2,11 +2,12 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import {
-  Core,
   CommonValidationsLibrary,
-  ERC20Wrapper,
-  ExchangeIssuanceModule,
+  Core,
   CoreIssuanceLibrary,
+  ERC20Wrapper,
+  FixedFeeCalculator,
+  ExchangeIssuanceModule,
   LinearAuctionLiquidator,
   NoDecimalTokenMock,
   OracleWhiteList,
@@ -32,6 +33,7 @@ import {
   AuthorizableContract,
   CoreContract,
   ExchangeIssuanceModuleContract,
+  FixedFeeCalculatorContract,
   LinearAuctionLiquidatorContract,
   NoDecimalTokenMockContract,
   OracleWhiteListContract,
@@ -215,6 +217,7 @@ export const deployRebalancingSetTokenV2FactoryContractAsync = async (
   core: CoreContract,
   componentWhitelist: WhiteListContract,
   liquidatorWhitelist: WhiteListContract,
+  feeCalculatorWhitelist: WhiteListContract,
   minimumRebalanceInterval: BigNumber = ONE_DAY_IN_SECONDS,
   minimumFailRebalancePeriod: BigNumber = ONE_DAY_IN_SECONDS.div(2),
   maximumFailRebalancePeriod: BigNumber = ONE_DAY_IN_SECONDS.mul(4),
@@ -228,6 +231,7 @@ export const deployRebalancingSetTokenV2FactoryContractAsync = async (
     core.address,
     componentWhitelist.address,
     liquidatorWhitelist.address,
+    feeCalculatorWhitelist.address,
     minimumRebalanceInterval,
     minimumFailRebalancePeriod,
     maximumFailRebalancePeriod,
@@ -279,6 +283,22 @@ export const deployLinearAuctionLiquidatorContractAsync = async (
   );
 
   return linearAuctionLiquidatorContract;
+};
+
+export const deployFixedFeeCalculatorAsync = async (
+  web3: Web3,
+): Promise<FixedFeeCalculatorContract> => {
+  const truffleFeeCalculator = setDefaultTruffleContract(web3, FixedFeeCalculator);
+
+  const deployedFeeCalculator = await truffleFeeCalculator.new();
+
+  const feeCalculatorContract = await FixedFeeCalculatorContract.at(
+    deployedFeeCalculator.address,
+    web3,
+    TX_DEFAULTS
+  );
+
+  return feeCalculatorContract;
 };
 
 const linkRebalancingLibrariesAsync = async (

@@ -7,6 +7,7 @@ export {
   deployBaseContracts,
   deployCoreContract,
   deployExchangeIssuanceModuleAsync,
+  deployFixedFeeCalculatorAsync,
   deployLinearAuctionLiquidatorContractAsync,
   deployNoDecimalTokenAsync,
   deployOracleWhiteListAsync,
