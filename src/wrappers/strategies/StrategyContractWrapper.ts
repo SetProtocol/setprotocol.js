@@ -29,6 +29,7 @@ import {
   MACOStrategyManagerV2Contract,
   MovingAverageOracleContract,
   OracleProxyContract,
+  SocialTradingManagerContract,
   TimeSeriesFeedContract,
 } from 'set-protocol-strategies';
 
@@ -307,6 +308,32 @@ export class StrategyContractWrapper {
       );
       this.cache[cacheKey] = assetPairManagerContract;
       return assetPairManagerContract;
+    }
+  }
+
+  /**
+   * Load a SocialTradingManager contract
+   *
+   * @param  socialTradingManager         Address of the SocialTradingManager contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The SocialTradingManager Contract
+   */
+  public async loadSocialTradingManagerContractAsync(
+    socialTradingManager: Address,
+    transactionOptions: object = {},
+  ): Promise<SocialTradingManagerContract> {
+    const cacheKey = `socialTradingManager_${socialTradingManager}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as SocialTradingManagerContract;
+    } else {
+      const socialTradingManagerContract = await SocialTradingManagerContract.at(
+        socialTradingManager,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = socialTradingManagerContract;
+      return socialTradingManagerContract;
     }
   }
 }

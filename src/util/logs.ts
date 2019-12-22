@@ -80,8 +80,8 @@ export function formatLogEntry(logs: ABIDecoder.DecodedLog): Log {
   };
 }
 
-export function extractNewSetTokenAddressFromLogs(logs: Log[]): Address {
-  const createLog = logs[logs.length - 1];
+export function extractNewSetTokenAddressFromLogs(logs: Log[], logIndex: number = 1): Address {
+  const createLog = logs[logs.length - logIndex];
   const args: CreateLogArgs = createLog.args;
   return args._setTokenAddress;
 }
