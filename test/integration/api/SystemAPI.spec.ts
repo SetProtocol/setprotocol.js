@@ -319,7 +319,7 @@ describe('SystemAPI', () => {
     beforeEach(async () => {
       initializedWhitelistAddresses = [DEFAULT_ACCOUNT];
 
-      whitelistInstance = await deployWhiteListContract(initializedWhitelistAddresses, web3);
+      whitelistInstance = await deployWhiteListContract(web3, initializedWhitelistAddresses);
 
       subjectWhitelistContract = whitelistInstance.address;
     });
