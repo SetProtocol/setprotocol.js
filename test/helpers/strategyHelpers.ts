@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { Address } from 'set-protocol-utils';
+import { Address, Bytes } from 'set-protocol-utils';
 import {
   AssetPairManager,
   AssetPairManagerContract,
@@ -18,6 +18,10 @@ import {
   MACOStrategyManagerV2Contract,
   RSITrendingTrigger,
   RSITrendingTriggerContract,
+  SocialAllocator,
+  SocialAllocatorContract,
+  SocialTradingManager,
+  SocialTradingManagerContract
 } from 'set-protocol-strategies';
 
 import { TX_DEFAULTS } from '@src/constants';
@@ -244,6 +248,25 @@ export const deployAssetPairManagerAsync = async(
   );
 };
 
+export const deploySocialTradingManagerAsync = async(
+  web3: Web3,
+  core: Address,
+  factory: Address,
+): Promise<SocialTradingManagerContract> => {
+  const truffleSocialTradingManager = setDefaultTruffleContract(web3, SocialTradingManager);
+
+  // Deploy MACO Strategy Manager V2
+  const deployedSocialTradingManagerInstance = await truffleSocialTradingManager.new(
+    core,
+    factory,
+  );
+  return await SocialTradingManagerContract.at(
+    deployedSocialTradingManagerInstance.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
 export const deployBinaryAllocatorAsync = async(
   web3: Web3,
   baseAssetInstance: Address,
@@ -269,6 +292,36 @@ export const deployBinaryAllocatorAsync = async(
   );
   return await BinaryAllocatorContract.at(
     deployedBinaryAllocator.address,
+    web3,
+    TX_DEFAULTS
+  );
+};
+
+export const deploySocialAllocatorAsync = async(
+  web3: Web3,
+  baseAsset: Address,
+  quoteAsset: Address,
+  oracleWhiteList: Address,
+  core: Address,
+  setTokenFactoryAddress: Address,
+  pricePrecision: BigNumber,
+  collateralName: Bytes,
+  collateralSymbol: Bytes,
+): Promise<SocialAllocatorContract> => {
+  const truffleSocialAllocator = setDefaultTruffleContract(web3, SocialAllocator);
+
+  const deployedSocialAllocator = await truffleSocialAllocator.new(
+    baseAsset,
+    quoteAsset,
+    oracleWhiteList,
+    core,
+    setTokenFactoryAddress,
+    pricePrecision,
+    collateralName,
+    collateralSymbol
+  );
+  return await SocialAllocatorContract.at(
+    deployedSocialAllocator.address,
     web3,
     TX_DEFAULTS
   );

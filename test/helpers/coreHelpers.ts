@@ -2,16 +2,20 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import {
-  Core,
   CommonValidationsLibrary,
-  ERC20Wrapper,
-  ExchangeIssuanceModule,
+  Core,
   CoreIssuanceLibrary,
+  ERC20Wrapper,
+  FixedFeeCalculator,
+  ExchangeIssuanceModule,
+  LinearAuctionLiquidator,
   NoDecimalTokenMock,
+  OracleWhiteList,
   RebalancingSetExchangeIssuanceModule,
   RebalancingSetIssuanceModule,
   RebalanceAuctionModule,
   RebalancingSetTokenFactory,
+  RebalancingSetTokenV2Factory,
   SetTokenFactory,
   FailAuctionLibrary,
   PlaceBidLibrary,
@@ -29,11 +33,15 @@ import {
   AuthorizableContract,
   CoreContract,
   ExchangeIssuanceModuleContract,
+  FixedFeeCalculatorContract,
+  LinearAuctionLiquidatorContract,
   NoDecimalTokenMockContract,
+  OracleWhiteListContract,
   RebalancingSetExchangeIssuanceModuleContract,
   RebalancingSetIssuanceModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
+  RebalancingSetTokenV2FactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -49,6 +57,7 @@ import {
   DEFAULT_REBALANCING_MINIMUM_NATURAL_UNIT,
   DEPLOYED_TOKEN_QUANTITY,
   ONE_DAY_IN_SECONDS,
+  ONE_HOUR_IN_SECONDS,
   TX_DEFAULTS,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
 } from '@src/constants';
@@ -165,6 +174,12 @@ export const deployRebalancingSetTokenFactoryContract = async (
   web3: Web3,
   core: CoreContract,
   whitelist: WhiteListContract,
+  minimumRebalanceInterval: BigNumber = ONE_DAY_IN_SECONDS,
+  minimumProposalPeriod: BigNumber = ONE_DAY_IN_SECONDS,
+  minimumTimeToPivot: BigNumber = ONE_DAY_IN_SECONDS.div(4),
+  maximumTimeToPivot: BigNumber = ONE_DAY_IN_SECONDS.mul(3),
+  minimumNaturalUnit: BigNumber = DEFAULT_REBALANCING_MINIMUM_NATURAL_UNIT,
+  maximumNaturalUnit: BigNumber = DEFAULT_REBALANCING_MAXIMUM_NATURAL_UNIT,
 ): Promise<RebalancingSetTokenFactoryContract> => {
   // Deploy SetTokenFactory contract
   const truffleRebalancingSetTokenFactoryContract = setDefaultTruffleContract(web3, RebalancingSetTokenFactory);
@@ -173,12 +188,12 @@ export const deployRebalancingSetTokenFactoryContract = async (
   const deployedRebalancingSetTokenFactory = await truffleRebalancingSetTokenFactoryContract.new(
     core.address,
     whitelist.address,
-    ONE_DAY_IN_SECONDS,
-    ONE_DAY_IN_SECONDS,
-    ONE_DAY_IN_SECONDS.div(4),
-    ONE_DAY_IN_SECONDS.mul(3),
-    DEFAULT_REBALANCING_MINIMUM_NATURAL_UNIT,
-    DEFAULT_REBALANCING_MAXIMUM_NATURAL_UNIT,
+    minimumRebalanceInterval,
+    minimumProposalPeriod,
+    minimumTimeToPivot,
+    maximumTimeToPivot,
+    minimumNaturalUnit,
+    maximumNaturalUnit
   );
 
   // Initialize typed contract class
@@ -195,6 +210,95 @@ export const deployRebalancingSetTokenFactoryContract = async (
   );
 
   return rebalancingSetTokenFactoryContract;
+};
+
+export const deployRebalancingSetTokenV2FactoryContractAsync = async (
+  web3: Web3,
+  core: CoreContract,
+  componentWhitelist: WhiteListContract,
+  liquidatorWhitelist: WhiteListContract,
+  feeCalculatorWhitelist: WhiteListContract,
+  minimumRebalanceInterval: BigNumber = ONE_DAY_IN_SECONDS,
+  minimumFailRebalancePeriod: BigNumber = ONE_DAY_IN_SECONDS.div(2),
+  maximumFailRebalancePeriod: BigNumber = ONE_DAY_IN_SECONDS.mul(4),
+  minimumNaturalUnit: BigNumber = DEFAULT_REBALANCING_MINIMUM_NATURAL_UNIT,
+  maximumNaturalUnit: BigNumber = DEFAULT_REBALANCING_MAXIMUM_NATURAL_UNIT,
+): Promise<RebalancingSetTokenV2FactoryContract> => {
+  // Deploy SetTokenFactory contract
+  const truffleRebalancingSetTokenV2FactoryContract = setDefaultTruffleContract(web3, RebalancingSetTokenV2Factory);
+
+  const deployedRebalancingSetTokenV2Factory = await truffleRebalancingSetTokenV2FactoryContract.new(
+    core.address,
+    componentWhitelist.address,
+    liquidatorWhitelist.address,
+    feeCalculatorWhitelist.address,
+    minimumRebalanceInterval,
+    minimumFailRebalancePeriod,
+    maximumFailRebalancePeriod,
+    minimumNaturalUnit,
+    maximumNaturalUnit,
+  );
+
+  // Initialize typed contract class
+  const rebalancingSetTokenV2FactoryContract = await RebalancingSetTokenV2FactoryContract.at(
+    deployedRebalancingSetTokenV2Factory.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  // Enable factory for provided core
+  await core.addFactory.sendTransactionAsync(
+    rebalancingSetTokenV2FactoryContract.address,
+    TX_DEFAULTS
+  );
+
+  return rebalancingSetTokenV2FactoryContract;
+};
+
+export const deployLinearAuctionLiquidatorContractAsync = async (
+  web3: Web3,
+  core: CoreContract,
+  oracleWhiteList: OracleWhiteListContract,
+  auctionPeriod: BigNumber = ONE_HOUR_IN_SECONDS.mul(2),
+  rangeStart: BigNumber = new BigNumber(3),
+  rangeEnd: BigNumber = new BigNumber(21),
+  name: string = 'Liquidator',
+): Promise<LinearAuctionLiquidatorContract> => {
+  const truffleLinearAuctionLiquidatorContract = setDefaultTruffleContract(web3, LinearAuctionLiquidator);
+
+  const deployedLinearAuctionLiquidator = await truffleLinearAuctionLiquidatorContract.new(
+    core.address,
+    oracleWhiteList.address,
+    auctionPeriod,
+    rangeStart,
+    rangeEnd,
+    name
+  );
+
+  // Initialize typed contract class
+  const linearAuctionLiquidatorContract = await LinearAuctionLiquidatorContract.at(
+    deployedLinearAuctionLiquidator.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  return linearAuctionLiquidatorContract;
+};
+
+export const deployFixedFeeCalculatorAsync = async (
+  web3: Web3,
+): Promise<FixedFeeCalculatorContract> => {
+  const truffleFeeCalculator = setDefaultTruffleContract(web3, FixedFeeCalculator);
+
+  const deployedFeeCalculator = await truffleFeeCalculator.new();
+
+  const feeCalculatorContract = await FixedFeeCalculatorContract.at(
+    deployedFeeCalculator.address,
+    web3,
+    TX_DEFAULTS
+  );
+
+  return feeCalculatorContract;
 };
 
 const linkRebalancingLibrariesAsync = async (
@@ -280,7 +384,7 @@ export const deployBaseContracts = async (
 
   const core = await deployCoreContract(web3, transferProxy.address, vault.address);
 
-  const whitelist = await deployWhitelistContract([], web3);
+  const whitelist = await deployWhiteListContract(web3, []);
 
   const [setTokenFactory, rebalancingSetTokenFactory] = await Promise.all([
     deploySetTokenFactoryContract(web3, core),
@@ -302,9 +406,9 @@ export const deployBaseContracts = async (
   ];
 };
 
-export const deployWhitelistContract = async (
-  initialAddresses: Address[],
+export const deployWhiteListContract = async (
   web3: Web3,
+  initialAddresses: Address[],
 ): Promise<WhiteListContract> => {
   // Deploy WhitelistContract contract
   const truffleWhitelistContract = setDefaultTruffleContract(web3, WhiteList);
@@ -320,6 +424,28 @@ export const deployWhitelistContract = async (
   );
 
   return whitelistContract;
+};
+
+export const deployOracleWhiteListAsync = async (
+  web3: Web3,
+  tokenAddresses: Address[],
+  oracleAddresses: Address[],
+): Promise<OracleWhiteListContract> => {
+  // Deploy WhitelistContract contract
+  const truffleOracleWhiteListContract = setDefaultTruffleContract(web3, OracleWhiteList);
+  const deployedOracleWhiteListContract = await truffleOracleWhiteListContract.new(
+    tokenAddresses,
+    oracleAddresses
+  );
+
+  // Initialize typed contract class
+  const whiteListContract = await OracleWhiteListContract.at(
+    deployedOracleWhiteListContract.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  return whiteListContract;
 };
 
 export const deployExchangeIssuanceModuleAsync = async (
