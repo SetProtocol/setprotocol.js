@@ -28,19 +28,32 @@ import Web3 from 'web3';
 import {
   CoreContract,
   ConstantAuctionPriceCurveContract,
+  FixedFeeCalculatorContract,
+  LinearAuctionLiquidatorContract,
+  OracleWhiteListContract,
   RebalancingSetTokenContract,
+  RebalancingSetTokenV2Contract,
   RebalancingSetTokenFactoryContract,
+  RebalancingSetTokenV2FactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
+  SocialTradingManagerMockContract,
+  StandardTokenMockContract,
   TransferProxyContract,
   WhiteListContract,
 } from 'set-protocol-contracts';
+import {
+  ConstantPriceOracleContract,
+} from 'set-protocol-strategies';
 import { Address } from 'set-protocol-utils';
 
 import { ProtocolViewerWrapper } from '@src/wrappers';
 import {
+  DEFAULT_ACCOUNT,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
   DEFAULT_AUCTION_PRICE_DENOMINATOR,
+  DEFAULT_UNIT_SHARES,
+  DEFAULT_REBALANCING_NATURAL_UNIT,
   ONE_DAY_IN_SECONDS,
   NULL_ADDRESS,
   TX_DEFAULTS,
@@ -53,10 +66,20 @@ import {
   addWhiteListedTokenAsync,
   approveForTransferAsync,
   createDefaultRebalancingSetTokenAsync,
+  createDefaultRebalancingSetTokenV2Async,
   deployBaseContracts,
   deployConstantAuctionPriceCurveAsync,
+  deployConstantPriceOracleAsync,
+  deployFixedFeeCalculatorAsync,
+  deployLinearAuctionLiquidatorContractAsync,
+  deployOracleWhiteListAsync,
   deployProtocolViewerAsync,
+  deployRebalancingSetTokenV2FactoryContractAsync,
+  deploySetTokenAsync,
   deploySetTokensAsync,
+  deploySocialTradingManagerMockAsync,
+  deployTokenAsync,
+  deployWhiteListContract,
   getTokenBalances,
   getTokenSupplies,
   transitionToProposeAsync,
@@ -449,6 +472,182 @@ describe('ProtocolViewer', () => {
 
       const secondRebalancingSetState = rebalanceAuctionStates[1];
       expect(secondRebalancingSetState).to.be.bignumber.equal(SetUtils.REBALANCING_STATE.DEFAULT);
+    });
+  });
+
+  describe.only('#fetchNewTradingPoolDetails', async () => {
+    let rebalancingSetTokenV2: RebalancingSetTokenV2Contract;
+
+    let rebalancingFactory: RebalancingSetTokenV2FactoryContract;
+    let rebalancingComponentWhiteList: WhiteListContract;
+    let liquidatorWhitelist: WhiteListContract;
+    let liquidator: LinearAuctionLiquidatorContract;
+    let fixedFeeCalculator: FixedFeeCalculatorContract;
+    let feeCalculatorWhitelist: WhiteListContract;
+
+    let name: string;
+    let auctionPeriod: BigNumber;
+    let rangeStart: BigNumber;
+    let rangeEnd: BigNumber;
+    let oracleWhiteList: OracleWhiteListContract;
+
+    let component1: StandardTokenMockContract;
+    let component2: StandardTokenMockContract;
+
+    let component1Price: BigNumber;
+    let component2Price: BigNumber;
+
+    let set1: SetTokenContract;
+
+    let set1Components: Address[];
+    let set1Units: BigNumber[];
+    let set1NaturalUnit: BigNumber;
+
+    let component1Oracle: ConstantPriceOracleContract;
+    let component2Oracle: ConstantPriceOracleContract;
+
+    let subjectTradingPool: Address;
+
+    let currentSetTokenV2: SetTokenContract;
+    let currentAllocation: BigNumber;
+    let lastRebalanceTimestamp: BigNumber;
+    let setManager: SocialTradingManagerMockContract;
+
+    const deployerAccount = DEFAULT_ACCOUNT;
+    const trader = ACCOUNTS[1].address;
+    const allocator = ACCOUNTS[2].address;
+    const feeRecipient = ACCOUNTS[3].address;
+
+    beforeEach(async () => {
+      component1 = await deployTokenAsync(web3, deployerAccount);
+      component2 = await deployTokenAsync(web3, deployerAccount);
+
+      const component1Decimal = await component1.decimals.callAsync();
+      const component2Decimal = await component2.decimals.callAsync();
+
+      set1Components = [component1.address, component2.address];
+      set1Units = [new BigNumber(10 ** 9), new BigNumber(10 ** 9)];
+      const naturalUnitExponent = 18 - Math.min(component1Decimal.toNumber(), component2Decimal.toNumber());
+      set1NaturalUnit = new BigNumber(10 ** naturalUnitExponent);
+
+      set1 = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        set1Components,
+        set1Units,
+        set1NaturalUnit,
+      );
+
+      component1Price = ether(1);
+      component2Price = ether(2);
+
+      component1Oracle = await deployConstantPriceOracleAsync(web3, component1Price);
+      component2Oracle = await deployConstantPriceOracleAsync(web3, component2Price);
+
+      oracleWhiteList = await deployOracleWhiteListAsync(
+        web3,
+        [component1.address, component2.address],
+        [component1Oracle.address, component2Oracle.address],
+      );
+
+      auctionPeriod = ONE_DAY_IN_SECONDS;
+      rangeStart = new BigNumber(10); // 10% above fair value
+      rangeEnd = new BigNumber(10); // 10% below fair value
+      name = 'liquidator';
+
+      liquidator = await deployLinearAuctionLiquidatorContractAsync(
+        web3,
+        core,
+        oracleWhiteList,
+        auctionPeriod,
+        rangeStart,
+        rangeEnd,
+        name,
+      );
+
+      fixedFeeCalculator = await deployFixedFeeCalculatorAsync(web3);
+
+      rebalancingComponentWhiteList = await deployWhiteListContract(web3, [component1.address, component2.address]);
+      liquidatorWhitelist = await deployWhiteListContract(web3, [liquidator.address]);
+      feeCalculatorWhitelist = await deployWhiteListContract(web3, [fixedFeeCalculator.address]);
+      rebalancingFactory = await deployRebalancingSetTokenV2FactoryContractAsync(
+        web3,
+        core,
+        rebalancingComponentWhiteList,
+        liquidatorWhitelist,
+        feeCalculatorWhitelist,
+      );
+
+      currentSetTokenV2 = set1;
+
+      setManager = await deploySocialTradingManagerMockAsync(web3);
+
+      const failPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      lastRebalanceTimestamp = new BigNumber(timestamp);
+
+      rebalancingSetTokenV2 = await createDefaultRebalancingSetTokenV2Async(
+        web3,
+        core,
+        rebalancingFactory.address,
+        setManager.address,
+        liquidator.address,
+        feeRecipient,
+        fixedFeeCalculator.address,
+        currentSetTokenV2.address,
+        failPeriod,
+        lastRebalanceTimestamp,
+      );
+
+      currentAllocation = ether(.6);
+      await setManager.updateRecord.sendTransactionAsync(
+        rebalancingSetTokenV2.address,
+        trader,
+        allocator,
+        currentAllocation
+      );
+
+      subjectTradingPool = rebalancingSetTokenV2.address;
+    });
+
+    async function subject(): Promise<any> {
+      return protocolViewerWrapper.fetchNewTradingPoolDetails(
+        subjectTradingPool
+      );
+    }
+
+    it('fetches the correct poolInfo data', async () => {
+      const [ poolInfo, , ] = await subject();
+
+      expect(poolInfo.trader).to.equal(trader);
+      expect(poolInfo.allocator).to.equal(allocator);
+      expect(poolInfo.currentAllocation).to.be.bignumber.equal(currentAllocation);
+    });
+
+    it('fetches the correct RebalancingSetTokenV2/TradingPool data', async () => {
+      const [ , rbSetData, ] = await subject();
+
+      expect(rbSetData.manager).to.equal(setManager.address);
+      expect(rbSetData.feeRecipient).to.equal(feeRecipient);
+      expect(rbSetData.currentSet).to.equal(currentSetTokenV2.address);
+      expect(rbSetData.name).to.equal('Rebalancing Set Token');
+      expect(rbSetData.symbol).to.equal('RBSET');
+      expect(rbSetData.unitShares).to.be.bignumber.equal(DEFAULT_UNIT_SHARES);
+      expect(rbSetData.naturalUnit).to.be.bignumber.equal(DEFAULT_REBALANCING_NATURAL_UNIT);
+      expect(rbSetData.rebalanceInterval).to.be.bignumber.equal(ONE_DAY_IN_SECONDS);
+      expect(rbSetData.entryFee).to.be.bignumber.equal(ZERO);
+      expect(rbSetData.rebalanceFee).to.be.bignumber.equal(ZERO);
+      expect(rbSetData.lastRebalanceTimestamp).to.be.bignumber.equal(lastRebalanceTimestamp);
+      expect(rbSetData.rebalanceState).to.be.bignumber.equal(ZERO);
+    });
+
+    it('fetches the correct CollateralSet data', async () => {
+      const [ , , collateralSetData ] = await subject();
+
+      expect(JSON.stringify(collateralSetData.components)).to.equal(JSON.stringify(set1Components));
+      expect(JSON.stringify(collateralSetData.units)).to.equal(JSON.stringify(set1Units));
+      expect(collateralSetData.naturalUnit).to.be.bignumber.equal(set1NaturalUnit);
     });
   });
 });

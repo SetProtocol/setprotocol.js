@@ -9,12 +9,14 @@ import {
   CoreContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
+  RebalancingSetTokenV2Contract,
   SetTokenContract,
   VaultContract
 } from 'set-protocol-contracts';
 
 import { TokenFlows, TokenFlowsDetails, Component } from '@src/types/common';
 import {
+  DEFAULT_ACCOUNT,
   DEFAULT_AUCTION_PIVOT_PRICE,
   DEFAULT_AUCTION_PRICE_DENOMINATOR,
   DEFAULT_AUCTION_START_PRICE,
@@ -149,6 +151,42 @@ export const createRebalancingSetTokenAsync = async(
   );
 };
 
+export const createRebalancingTokenV2Async = async(
+  web3: Web3,
+  core: CoreContract,
+  factory: Address,
+  componentAddresses: Address[],
+  units: BigNumber[],
+  naturalUnit: BigNumber,
+  callData: string = '',
+  name: string = 'Rebalancing Set Token',
+  symbol: string = 'RBSET',
+  from: Address = DEFAULT_ACCOUNT,
+): Promise<RebalancingSetTokenV2Contract> => {
+  const encodedName = SetProtocolUtils.stringToBytes(name);
+  const encodedSymbol = SetProtocolUtils.stringToBytes(symbol);
+
+  const txHash = await core.createSet.sendTransactionAsync(
+    factory,
+    componentAddresses,
+    units,
+    naturalUnit,
+    encodedName,
+    encodedSymbol,
+    callData,
+    { from },
+  );
+
+  const logs = await new SetProtocolTestUtils(web3).getLogsFromTxHash(txHash);
+  const setAddress = extractNewSetTokenAddressFromLogs(logs);
+
+  return await RebalancingSetTokenV2Contract.at(
+    setAddress,
+    web3,
+    { from }
+  );
+};
+
 export const createDefaultRebalancingSetTokenAsync = async(
   web3: Web3,
   core: CoreContract,
@@ -168,6 +206,49 @@ export const createDefaultRebalancingSetTokenAsync = async(
 
   // Create rebalancingSetToken
   return await createRebalancingSetTokenAsync(
+    web3,
+    core,
+    factory,
+    [initialSet],
+    [initialUnitShares],
+    DEFAULT_REBALANCING_NATURAL_UNIT,
+    callData,
+  );
+};
+
+export const createDefaultRebalancingSetTokenV2Async = async(
+  web3: Web3,
+  core: CoreContract,
+  factory: Address,
+  manager: Address,
+  liquidator: Address,
+  feeRecipient: Address,
+  rebalanceFeeCalculator: Address,
+  initialSet: Address,
+  failRebalancePeriod: BigNumber,
+  lastRebalanceTimestamp: BigNumber,
+  entryFee: BigNumber = ZERO,
+  rebalanceFee: BigNumber = ZERO,
+  initialUnitShares: BigNumber = DEFAULT_UNIT_SHARES,
+): Promise<RebalancingSetTokenV2Contract> => {
+  // Generate defualt rebalancingSetToken params
+  const rebalanceInterval = ONE_DAY_IN_SECONDS;
+  const rebalanceFeeCallData = SetProtocolUtils.generateFixedFeeCalculatorCalldata(rebalanceFee);
+
+  const callData = SetProtocolUtils.generateRebalancingSetTokenV2CallData(
+    manager,
+    liquidator,
+    feeRecipient,
+    rebalanceFeeCalculator,
+    rebalanceInterval,
+    failRebalancePeriod,
+    lastRebalanceTimestamp,
+    entryFee,
+    rebalanceFeeCallData,
+  );
+
+  // Create rebalancingSetToken
+  return await createRebalancingTokenV2Async(
     web3,
     core,
     factory,

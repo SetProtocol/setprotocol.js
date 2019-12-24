@@ -62,6 +62,7 @@ export {
   constructInflowOutflowArraysAsync,
   constructInflowOutflowAddressesArraysAsync,
   createDefaultRebalancingSetTokenAsync,
+  createDefaultRebalancingSetTokenV2Async,
   deployConstantAuctionPriceCurveAsync,
   deploySetTokensAsync,
   increaseChainTimeAsync,
@@ -87,6 +88,7 @@ export {
   deployRSITrendingTriggerAsync,
   deploySocialAllocatorAsync,
   deploySocialTradingManagerAsync,
+  deploySocialTradingManagerMockAsync,
   initializeManagerAsync,
 } from './strategyHelpers';
 

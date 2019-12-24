@@ -28,6 +28,7 @@ import { RebalancingAPI } from './RebalancingAPI';
 import { RebalancingManagerAPI } from './RebalancingManagerAPI';
 export { RebalancingSetIssuanceAPI } from './RebalancingSetIssuanceAPI';
 import { SetTokenAPI } from './SetTokenAPI';
+import { SocialTradingAPI } from './SocialTradingAPI';
 import { SystemAPI } from './SystemAPI';
 
 export {
@@ -42,5 +43,6 @@ export {
   RebalancingAPI,
   RebalancingManagerAPI,
   SetTokenAPI,
+  SocialTradingAPI,
   SystemAPI
 };

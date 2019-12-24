@@ -93,3 +93,9 @@ export interface ETHDAIRebalancingManagerDetails {
   maximumLowerThreshold: BigNumber;
   minimumUpperThreshold: BigNumber;
 }
+
+export interface PoolInfo {
+  trader: Address;
+  allocator: Address;
+  currentAllocation: BigNumber;
+}

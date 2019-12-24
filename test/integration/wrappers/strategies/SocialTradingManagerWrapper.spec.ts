@@ -311,7 +311,7 @@ describe('SocialTradingManagerWrapper', () => {
     });
   });
 
-  describe('updateAllocation', async () => {
+  describe.only('updateAllocation', async () => {
     let subjectManager: Address;
     let subjectTradingPool: Address;
     let subjectNewAllocation: BigNumber;
@@ -401,6 +401,10 @@ describe('SocialTradingManagerWrapper', () => {
 
     test('successfully updates tradingPool allocation', async () => {
       await subject();
+
+      const poolInfo: any = await setManager.pools.callAsync(subjectTradingPool);
+
+      expect(poolInfo.currentAllocation).to.be.bignumber.equal(subjectNewAllocation);
     });
   });
 
