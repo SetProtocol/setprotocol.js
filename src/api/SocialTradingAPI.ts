@@ -17,21 +17,15 @@
 'use strict';
 
 import * as _ from 'lodash';
-import Web3 from 'web3';
 import * as setProtocolUtils from 'set-protocol-utils';
+import Web3 from 'web3';
 
-import { BigNumber } from '@src/util';
-import {
-  ProtocolViewerWrapper,
-  SocialTradingManagerWrapper
-} from '@src/wrappers';
-import { Assertions } from '@src/assertions';
-import { coreAPIErrors } from '@src/errors';
-import { Address, Bytes, SetProtocolConfig, Tx } from '@src/types/common';
-import {
-  NewTradingPoolInfo,
-  TradingPoolRebalanceInfo,
-} from '../types/strategies';
+import { BigNumber } from '../util';
+import { ProtocolViewerWrapper, SocialTradingManagerWrapper } from '../wrappers';
+import { Assertions } from '../assertions';
+import { coreAPIErrors } from '../errors';
+import { Address, Bytes, SetProtocolConfig, Tx } from '../types/common';
+import { NewTradingPoolInfo, TradingPoolRebalanceInfo } from '../types/strategies';
 
 const { SetProtocolUtils: SetUtils } = setProtocolUtils;
 
