@@ -19,8 +19,8 @@
 import Web3 from 'web3';
 
 import { StrategyContractWrapper } from './StrategyContractWrapper';
-import { BigNumber, generateTxOpts } from '@src/util';
-import { Address, Bytes, Tx } from '@src/types/common';
+import { BigNumber, generateTxOpts } from '../../util';
+import { Address, Bytes, Tx } from '../../types/common';
 
 /**
  * @title  SocialTradingManagerWrapper
