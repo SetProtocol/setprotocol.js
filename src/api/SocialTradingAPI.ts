@@ -22,14 +22,16 @@ import * as setProtocolUtils from 'set-protocol-utils';
 
 import { BigNumber } from '@src/util';
 import {
+  ProtocolViewerWrapper,
   SocialTradingManagerWrapper
 } from '@src/wrappers';
 import { Assertions } from '@src/assertions';
 import { coreAPIErrors } from '@src/errors';
-import { Address, Bytes, Tx } from '@src/types/common';
+import { Address, Bytes, SetProtocolConfig, Tx } from '@src/types/common';
 import {
-  SetProtocolConfig
-} from '../types/common';
+  NewTradingPoolInfo,
+  TradingPoolRebalanceInfo,
+} from '../types/strategies';
 
 const { SetProtocolUtils: SetUtils } = setProtocolUtils;
 
@@ -41,7 +43,7 @@ const { SetProtocolUtils: SetUtils } = setProtocolUtils;
  */
 export class SocialTradingAPI {
   private assert: Assertions;
-  // private protocolViewer: ProtocolViewerWrapper;
+  private protocolViewer: ProtocolViewerWrapper;
   private socialTradingManager: SocialTradingManagerWrapper;
 
   /**
@@ -53,7 +55,7 @@ export class SocialTradingAPI {
    * @param config        Configuration object conforming to SetProtocolConfig with Set Protocol's contract addresses
    */
   constructor(web3: Web3, assertions: Assertions, config: SetProtocolConfig) {
-    // this.protocolViewer = new ProtocolViewerWrapper(web3, config.protocolViewerAddress);
+    this.protocolViewer = new ProtocolViewerWrapper(web3, config.protocolViewerAddress);
     this.socialTradingManager = new SocialTradingManagerWrapper(web3);
 
     this.assert = assertions;
@@ -105,6 +107,11 @@ export class SocialTradingAPI {
       rebalanceFee,
       tradingPoolName,
       tradingPoolSymbol,
+      manager,
+      allocatorAddress,
+      liquidator,
+      feeRecipient,
+      feeCalculator
     );
 
     const rebalanceFeeBytes = SetUtils.generateFixedFeeCalculatorCalldata(rebalanceFee);
@@ -164,6 +171,168 @@ export class SocialTradingAPI {
     );
   }
 
+  /**
+   * Calls SocialTradingManager's setTrader function. Passes pool premissions to new address.
+   *
+   * @param  manager                Address of the social trading manager contract
+   * @param  tradingPool            Address of tradingPool being updated
+   * @param  newTrader              New trading pool trader address
+   * @param  txOpts                 Transaction options object conforming to `Tx` with signer, gas, and
+   *                                  gasPrice data
+   * @return                        The hash of the resulting transaction.
+   */
+  public async setTraderAsync(
+    manager: Address,
+    tradingPool: Address,
+    newTrader: Address,
+    txOpts: Tx,
+  ): Promise<string> {
+    await this.assertAddressSetters(manager, tradingPool, newTrader, txOpts.from);
+
+    return this.socialTradingManager.setTrader(
+      manager,
+      tradingPool,
+      newTrader,
+      txOpts
+    );
+  }
+
+  /**
+   * Calls SocialTradingManager's setLiquidator function. Changes liquidator used in rebalances.
+   *
+   * @param  manager                Address of the social trading manager contract
+   * @param  tradingPool            Address of tradingPool being updated
+   * @param  newLiquidator          New liquidator address
+   * @param  txOpts                 Transaction options object conforming to `Tx` with signer, gas, and
+   *                                  gasPrice data
+   * @return                        The hash of the resulting transaction.
+   */
+  public async setLiquidatorAsync(
+    manager: Address,
+    tradingPool: Address,
+    newLiquidator: Address,
+    txOpts: Tx,
+  ): Promise<string> {
+    await this.assertAddressSetters(manager, tradingPool, newLiquidator, txOpts.from);
+
+    return this.socialTradingManager.setLiquidator(
+      manager,
+      tradingPool,
+      newLiquidator,
+      txOpts
+    );
+  }
+
+  /**
+   * Calls SocialTradingManager's setFeeRecipient function. Changes feeRecipient address.
+   *
+   * @param  manager                Address of the social trading manager contract
+   * @param  tradingPool            Address of tradingPool being updated
+   * @param  newFeeRecipient        New feeRecipient address
+   * @param  txOpts                 Transaction options object conforming to `Tx` with signer, gas, and
+   *                                  gasPrice data
+   * @return                        The hash of the resulting transaction.
+   */
+  public async setFeeRecipientAsync(
+    manager: Address,
+    tradingPool: Address,
+    newFeeRecipient: Address,
+    txOpts: Tx,
+  ): Promise<string> {
+    await this.assertAddressSetters(manager, tradingPool, newFeeRecipient, txOpts.from);
+
+    return this.socialTradingManager.setFeeRecipient(
+      manager,
+      tradingPool,
+      newFeeRecipient,
+      txOpts
+    );
+  }
+
+  /**
+   * Returns relevant details of newly created Trading Pools. Return object adheres to the
+   * NewTradingPoolInfo interface.
+   *
+   * @param  tradingPool            Address of tradingPool being updated
+   * @return                        NewTradingPoolInfo
+   */
+  public async fetchNewTradingPoolDetailsAsync(
+    tradingPool: Address
+  ): Promise<NewTradingPoolInfo> {
+    const newPoolInfo = await this.protocolViewer.fetchNewTradingPoolDetails(
+      tradingPool
+    );
+
+    return this.createNewTradingPoolObject(newPoolInfo);
+  }
+
+  /**
+   * Returns relevant details of Trading Pools being rebalance. Return object adheres to the
+   * TradingPoolRebalanceInfo interface.
+   *
+   * @param  tradingPool            Address of tradingPool being updated
+   * @return                        NewTradingPoolInfo
+   */
+  public async fetchTradingPoolRebalanceDetailsAsync(
+    tradingPool: Address
+  ): Promise<TradingPoolRebalanceInfo> {
+    const newPoolInfo = await this.protocolViewer.fetchTradingPoolRebalanceDetails(
+      tradingPool
+    );
+
+    return this.createTradingPoolRebalanceObject(newPoolInfo);
+  }
+
+  /* ============ Private Function ============ */
+
+  private createNewTradingPoolObject(
+    newPoolInfo: any,
+  ): NewTradingPoolInfo {
+    const [poolInfo, rbSetInfo, collateralInfo] = newPoolInfo;
+
+    return {
+      trader: poolInfo.trader,
+      allocator: poolInfo.allocator,
+      currentAllocation: poolInfo.currentAllocation,
+      manager: rbSetInfo.manager,
+      feeRecipient: rbSetInfo.feeRecipient,
+      currentSet: rbSetInfo.currentSet,
+      poolName: rbSetInfo.name,
+      poolSymbol: rbSetInfo.symbol,
+      unitShares: rbSetInfo.unitShares,
+      naturalUnit: rbSetInfo.naturalUnit,
+      rebalanceInterval: rbSetInfo.rebalanceInterval,
+      entryFee: rbSetInfo.entryFee,
+      rebalanceFee: rbSetInfo.rebalanceFee,
+      lastRebalanceTimestamp: rbSetInfo.lastRebalanceTimestamp,
+      rebalanceState: rbSetInfo.rebalanceState,
+      currentSetInfo: collateralInfo,
+    } as NewTradingPoolInfo;
+  }
+
+  private createTradingPoolRebalanceObject(
+    newPoolInfo: any,
+  ): TradingPoolRebalanceInfo {
+    const [poolInfo, rbSetInfo, collateralInfo] = newPoolInfo;
+
+    return {
+      trader: poolInfo.trader,
+      allocator: poolInfo.allocator,
+      currentAllocation: poolInfo.currentAllocation,
+      liquidator: rbSetInfo.liquidator,
+      nextSet: rbSetInfo.nextSet,
+      rebalanceStartTime: rbSetInfo.rebalanceStartTime,
+      timeToPivot: rbSetInfo.timeToPivot,
+      startPrice: rbSetInfo.startPrice,
+      endPrice: rbSetInfo.endPrice,
+      startingCurrentSets: rbSetInfo.startingCurrentSets,
+      remainingCurrentSets: rbSetInfo.remainingCurrentSets,
+      minimumBid: rbSetInfo.minimumBid,
+      rebalanceState: rbSetInfo.rebalanceState,
+      nextSetInfo: collateralInfo,
+    } as TradingPoolRebalanceInfo;
+  }
+
   /* ============ Private Assertions ============ */
   private async assertCreateTradingPool(
     allocation: BigNumber,
@@ -171,12 +340,36 @@ export class SocialTradingAPI {
     rebalanceFee: BigNumber,
     tradingPoolName: string,
     tradingPoolSymbol: string,
+    manager: Address,
+    allocatorAddress: Address,
+    liquidator: Address,
+    feeRecipient: Address,
+    feeCalculator: Address,
   ): Promise<void> {
+    this.assert.schema.isValidAddress('manager', manager);
+    this.assert.schema.isValidAddress('allocatorAddress', allocatorAddress);
+    this.assert.schema.isValidAddress('liquidator', liquidator);
+    this.assert.schema.isValidAddress('feeRecipient', feeRecipient);
+    this.assert.schema.isValidAddress('feeCalculator', feeCalculator);
+
     this.assertValidAllocation(allocation);
     this.assertValidFees(entryFee, rebalanceFee);
 
     this.assert.common.isValidString(tradingPoolName, coreAPIErrors.STRING_CANNOT_BE_EMPTY('name'));
     this.assert.common.isValidString(tradingPoolSymbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY('symbol'));
+  }
+
+  private async assertAddressSetters(
+    manager: Address,
+    tradingPool: Address,
+    newAddress: Address,
+    trader: Address,
+  ): Promise<void> {
+    this.assert.schema.isValidAddress('manager', manager);
+    this.assert.schema.isValidAddress('tradingPool', tradingPool);
+    this.assert.schema.isValidAddress('newAddress', newAddress);
+
+    await this.assert.socialTrading.isTrader(manager, tradingPool, trader);
   }
 
   private async assertUpdateAllocation(
@@ -185,6 +378,9 @@ export class SocialTradingAPI {
     newAllocation: BigNumber,
     txOpts: Tx,
   ): Promise<void> {
+    this.assert.schema.isValidAddress('manager', manager);
+    this.assert.schema.isValidAddress('tradingPool', tradingPool);
+
     await this.assert.rebalancing.isNotInRebalanceState(tradingPool);
     await this.assert.rebalancing.sufficientTimeBetweenRebalance(tradingPool);
     await this.assert.socialTrading.isTrader(manager, tradingPool, txOpts.from);

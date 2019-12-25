@@ -80,6 +80,7 @@ import {
   deploySocialTradingManagerMockAsync,
   deployTokenAsync,
   deployWhiteListContract,
+  increaseChainTimeAsync,
   getTokenBalances,
   getTokenSupplies,
   transitionToProposeAsync,
@@ -475,7 +476,7 @@ describe('ProtocolViewer', () => {
     });
   });
 
-  describe.only('#fetchNewTradingPoolDetails', async () => {
+  describe('#fetchNewTradingPoolDetails', async () => {
     let rebalancingSetTokenV2: RebalancingSetTokenV2Contract;
 
     let rebalancingFactory: RebalancingSetTokenV2FactoryContract;
@@ -498,17 +499,22 @@ describe('ProtocolViewer', () => {
     let component2Price: BigNumber;
 
     let set1: SetTokenContract;
+    let set2: SetTokenContract;
 
     let set1Components: Address[];
     let set1Units: BigNumber[];
     let set1NaturalUnit: BigNumber;
 
+    let set2Components: Address[];
+    let set2Units: BigNumber[];
+    let set2NaturalUnit: BigNumber;
+
     let component1Oracle: ConstantPriceOracleContract;
     let component2Oracle: ConstantPriceOracleContract;
 
-    let subjectTradingPool: Address;
-
     let currentSetTokenV2: SetTokenContract;
+    let nextSetTokenV2: SetTokenContract;
+
     let currentAllocation: BigNumber;
     let lastRebalanceTimestamp: BigNumber;
     let setManager: SocialTradingManagerMockContract;
@@ -521,14 +527,20 @@ describe('ProtocolViewer', () => {
     beforeEach(async () => {
       component1 = await deployTokenAsync(web3, deployerAccount);
       component2 = await deployTokenAsync(web3, deployerAccount);
+      await approveForTransferAsync([component1, component2], transferProxy.address);
 
       const component1Decimal = await component1.decimals.callAsync();
       const component2Decimal = await component2.decimals.callAsync();
 
       set1Components = [component1.address, component2.address];
       set1Units = [new BigNumber(10 ** 9), new BigNumber(10 ** 9)];
-      const naturalUnitExponent = 18 - Math.min(component1Decimal.toNumber(), component2Decimal.toNumber());
-      set1NaturalUnit = new BigNumber(10 ** naturalUnitExponent);
+      const set1NaturalUnitExponent = 18 - Math.min(component1Decimal.toNumber(), component2Decimal.toNumber());
+      set1NaturalUnit = new BigNumber(10 ** set1NaturalUnitExponent);
+
+      set2Components = [component1.address, component2.address];
+      set2Units = [new BigNumber(2 * 10 ** 9), new BigNumber(3 * 10 ** 9)];
+      const set2NaturalUnitExponent = 18 - Math.min(component1Decimal.toNumber(), component2Decimal.toNumber());
+      set2NaturalUnit = new BigNumber(2 * 10 ** set2NaturalUnitExponent);
 
       set1 = await deploySetTokenAsync(
         web3,
@@ -537,6 +549,15 @@ describe('ProtocolViewer', () => {
         set1Components,
         set1Units,
         set1NaturalUnit,
+      );
+
+      set2 = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        set2Components,
+        set2Units,
+        set2NaturalUnit,
       );
 
       component1Price = ether(1);
@@ -607,47 +628,130 @@ describe('ProtocolViewer', () => {
         allocator,
         currentAllocation
       );
-
-      subjectTradingPool = rebalancingSetTokenV2.address;
     });
 
-    async function subject(): Promise<any> {
-      return protocolViewerWrapper.fetchNewTradingPoolDetails(
-        subjectTradingPool
-      );
-    }
+    describe('#fetchNewTradingPoolDetails', async () => {
+      let subjectTradingPool: Address;
 
-    it('fetches the correct poolInfo data', async () => {
-      const [ poolInfo, , ] = await subject();
+      beforeEach(async () => {
+        subjectTradingPool = rebalancingSetTokenV2.address;
+      });
 
-      expect(poolInfo.trader).to.equal(trader);
-      expect(poolInfo.allocator).to.equal(allocator);
-      expect(poolInfo.currentAllocation).to.be.bignumber.equal(currentAllocation);
+      async function subject(): Promise<any> {
+        return protocolViewerWrapper.fetchNewTradingPoolDetails(
+          subjectTradingPool
+        );
+      }
+
+      it('fetches the correct poolInfo data', async () => {
+        const [ poolInfo, , ] = await subject();
+
+        expect(poolInfo.trader).to.equal(trader);
+        expect(poolInfo.allocator).to.equal(allocator);
+        expect(poolInfo.currentAllocation).to.be.bignumber.equal(currentAllocation);
+      });
+
+      it('fetches the correct RebalancingSetTokenV2/TradingPool data', async () => {
+        const [ , rbSetData, ] = await subject();
+
+        expect(rbSetData.manager).to.equal(setManager.address);
+        expect(rbSetData.feeRecipient).to.equal(feeRecipient);
+        expect(rbSetData.currentSet).to.equal(currentSetTokenV2.address);
+        expect(rbSetData.name).to.equal('Rebalancing Set Token');
+        expect(rbSetData.symbol).to.equal('RBSET');
+        expect(rbSetData.unitShares).to.be.bignumber.equal(DEFAULT_UNIT_SHARES);
+        expect(rbSetData.naturalUnit).to.be.bignumber.equal(DEFAULT_REBALANCING_NATURAL_UNIT);
+        expect(rbSetData.rebalanceInterval).to.be.bignumber.equal(ONE_DAY_IN_SECONDS);
+        expect(rbSetData.entryFee).to.be.bignumber.equal(ZERO);
+        expect(rbSetData.rebalanceFee).to.be.bignumber.equal(ZERO);
+        expect(rbSetData.lastRebalanceTimestamp).to.be.bignumber.equal(lastRebalanceTimestamp);
+        expect(rbSetData.rebalanceState).to.be.bignumber.equal(ZERO);
+      });
+
+      it('fetches the correct CollateralSet data', async () => {
+        const [ , , collateralSetData ] = await subject();
+
+        expect(JSON.stringify(collateralSetData.components)).to.equal(JSON.stringify(set1Components));
+        expect(JSON.stringify(collateralSetData.units)).to.equal(JSON.stringify(set1Units));
+        expect(collateralSetData.naturalUnit).to.be.bignumber.equal(set1NaturalUnit);
+      });
     });
 
-    it('fetches the correct RebalancingSetTokenV2/TradingPool data', async () => {
-      const [ , rbSetData, ] = await subject();
+    describe('#fetchTradingPoolRebalanceDetails', async () => {
+      let subjectTradingPool: Address;
 
-      expect(rbSetData.manager).to.equal(setManager.address);
-      expect(rbSetData.feeRecipient).to.equal(feeRecipient);
-      expect(rbSetData.currentSet).to.equal(currentSetTokenV2.address);
-      expect(rbSetData.name).to.equal('Rebalancing Set Token');
-      expect(rbSetData.symbol).to.equal('RBSET');
-      expect(rbSetData.unitShares).to.be.bignumber.equal(DEFAULT_UNIT_SHARES);
-      expect(rbSetData.naturalUnit).to.be.bignumber.equal(DEFAULT_REBALANCING_NATURAL_UNIT);
-      expect(rbSetData.rebalanceInterval).to.be.bignumber.equal(ONE_DAY_IN_SECONDS);
-      expect(rbSetData.entryFee).to.be.bignumber.equal(ZERO);
-      expect(rbSetData.rebalanceFee).to.be.bignumber.equal(ZERO);
-      expect(rbSetData.lastRebalanceTimestamp).to.be.bignumber.equal(lastRebalanceTimestamp);
-      expect(rbSetData.rebalanceState).to.be.bignumber.equal(ZERO);
-    });
+      let newAllocation: BigNumber;
+      beforeEach(async () => {
+        // Issue currentSetToken
+        await core.issue.sendTransactionAsync(
+          currentSetTokenV2.address,
+          ether(8),
+          {from: deployerAccount}
+        );
 
-    it('fetches the correct CollateralSet data', async () => {
-      const [ , , collateralSetData ] = await subject();
+        await approveForTransferAsync([currentSetTokenV2], transferProxy.address);
 
-      expect(JSON.stringify(collateralSetData.components)).to.equal(JSON.stringify(set1Components));
-      expect(JSON.stringify(collateralSetData.units)).to.equal(JSON.stringify(set1Units));
-      expect(collateralSetData.naturalUnit).to.be.bignumber.equal(set1NaturalUnit);
+        // Use issued currentSetToken to issue rebalancingSetToken
+        const rebalancingSetQuantityToIssue = ether(7);
+        await core.issue.sendTransactionAsync(rebalancingSetTokenV2.address, rebalancingSetQuantityToIssue);
+
+        await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+
+        const liquidatorData = '0x';
+        nextSetTokenV2 = set2;
+        newAllocation = ether(.4);
+        await setManager.rebalance.sendTransactionAsync(
+          rebalancingSetTokenV2.address,
+          nextSetTokenV2.address,
+          newAllocation,
+          liquidatorData
+        );
+
+        subjectTradingPool = rebalancingSetTokenV2.address;
+      });
+
+      async function subject(): Promise<any> {
+        return protocolViewerWrapper.fetchTradingPoolRebalanceDetails(
+          subjectTradingPool
+        );
+      }
+
+      it('fetches the correct poolInfo data', async () => {
+        const [ poolInfo, , ] = await subject();
+
+        expect(poolInfo.trader).to.equal(trader);
+        expect(poolInfo.allocator).to.equal(allocator);
+        expect(poolInfo.currentAllocation).to.be.bignumber.equal(newAllocation);
+      });
+
+      it('fetches the correct RebalancingSetTokenV2/TradingPool data', async () => {
+        const [ , rbSetData, ] = await subject();
+
+        const auctionPriceParams = await rebalancingSetTokenV2.getAuctionPriceParameters.callAsync();
+        const startingCurrentSets = await rebalancingSetTokenV2.startingCurrentSetAmount.callAsync();
+        const biddingParams = await rebalancingSetTokenV2.getBiddingParameters.callAsync();
+
+        expect(rbSetData.rebalanceStartTime).to.be.bignumber.equal(auctionPriceParams[0]);
+        expect(rbSetData.timeToPivot).to.be.bignumber.equal(auctionPriceParams[1]);
+        expect(rbSetData.startPrice).to.be.bignumber.equal(auctionPriceParams[2]);
+        expect(rbSetData.endPrice).to.be.bignumber.equal(auctionPriceParams[3]);
+        expect(rbSetData.startingCurrentSets).to.be.bignumber.equal(startingCurrentSets);
+        expect(rbSetData.remainingCurrentSets).to.be.bignumber.equal(biddingParams[1]);
+        expect(rbSetData.minimumBid).to.be.bignumber.equal(biddingParams[0]);
+        expect(rbSetData.rebalanceState).to.be.bignumber.equal(new BigNumber(2));
+        expect(rbSetData.nextSet).to.equal(nextSetTokenV2.address);
+        expect(rbSetData.liquidator).to.equal(liquidator.address);
+      });
+
+      it('fetches the correct CollateralSet data', async () => {
+        const [ , , collateralSetData ] = await subject();
+
+        expect(JSON.stringify(collateralSetData.components)).to.equal(JSON.stringify(set2Components));
+        expect(JSON.stringify(collateralSetData.units)).to.equal(JSON.stringify(set2Units));
+        expect(collateralSetData.naturalUnit).to.be.bignumber.equal(set2NaturalUnit);
+        expect(collateralSetData.name).to.equal('Set Token');
+        expect(collateralSetData.symbol).to.equal('SET');
+      });
     });
   });
 });
