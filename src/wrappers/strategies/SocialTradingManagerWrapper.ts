@@ -19,8 +19,8 @@
 import Web3 from 'web3';
 
 import { StrategyContractWrapper } from './StrategyContractWrapper';
-import { BigNumber, generateTxOpts } from '../../util';
-import { Address, Bytes, Tx } from '../../types/common';
+import { BigNumber, generateTxOpts } from '@src/util';
+import { Address, Bytes, Tx } from '@src/types/common';
 
 /**
  * @title  SocialTradingManagerWrapper
@@ -50,6 +50,8 @@ export class SocialTradingManagerWrapper {
    * @param  tradingPoolName                Name of tradingPool as appears on RebalancingSetTokenV2
    * @param  tradingPoolSymbol              Symbol of tradingPool as appears on RebalancingSetTokenV2
    * @param  rebalancingSetCallData         Call data passed to RebalancingSetTokenV2 factory to create tradingPool
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
+   *                                          gasPrice data
    * @return                                The hash of the resulting transaction.
    */
   public async createTradingPool(
@@ -84,6 +86,8 @@ export class SocialTradingManagerWrapper {
    * @param  tradingPool                    Address of tradingPool being updated
    * @param  newAllocation                  New base asset allocation of tradingPool
    * @param  liquidatorData                 Call data passed to RebalancingSetTokenV2 to set params on liquidator
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
+   *                                          gasPrice data
    * @return                                The hash of the resulting transaction.
    */
   public async updateAllocation(

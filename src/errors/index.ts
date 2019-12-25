@@ -23,4 +23,5 @@ export { exchangeErrors } from './exchangeErrors';
 export { rebalancingErrors } from './rebalancingErrors';
 export { schemaAssertionsError } from './schemaErrors';
 export { setTokenAssertionsErrors } from './setTokenErrors';
+export { socialTradingErrors } from './socialTradingErrors';
 export { vaultAssertionErrors } from './vaultErrors';

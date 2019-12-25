@@ -21,10 +21,14 @@ import {
   SocialAllocator,
   SocialAllocatorContract,
   SocialTradingManager,
-  SocialTradingManagerContract
+  SocialTradingManagerContract,
 } from 'set-protocol-strategies';
+import {
+  SocialTradingManagerMock,
+  SocialTradingManagerMockContract,
+} from 'set-protocol-contracts';
 
-import { TX_DEFAULTS } from '@src/constants';
+import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
 import { BigNumber } from '@src/util';
 
 import { setDefaultTruffleContract } from './coreHelpers';
@@ -262,6 +266,21 @@ export const deploySocialTradingManagerAsync = async(
   );
   return await SocialTradingManagerContract.at(
     deployedSocialTradingManagerInstance.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
+export const deploySocialTradingManagerMockAsync = async(
+  web3: Web3,
+  from: Address = DEFAULT_ACCOUNT
+): Promise<SocialTradingManagerMockContract> => {
+  const truffleSocialManager = setDefaultTruffleContract(web3, SocialTradingManagerMock);
+
+  const deployedSocialManager = await truffleSocialManager.new();
+
+  return await SocialTradingManagerMockContract.at(
+    deployedSocialManager.address,
     web3,
     TX_DEFAULTS,
   );

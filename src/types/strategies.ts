@@ -93,3 +93,47 @@ export interface ETHDAIRebalancingManagerDetails {
   maximumLowerThreshold: BigNumber;
   minimumUpperThreshold: BigNumber;
 }
+
+export interface CollateralSetInfo {
+  components: Address[];
+  units: BigNumber[];
+  naturalUnit: BigNumber;
+  name: string;
+  symbol: string;
+}
+
+export interface NewTradingPoolInfo {
+  trader: Address;
+  allocator: Address;
+  currentAllocation: BigNumber;
+  manager: Address;
+  feeRecipient: Address;
+  currentSet: Address;
+  poolName: string;
+  poolSymbol: string;
+  unitShares: BigNumber;
+  naturalUnit: BigNumber;
+  rebalanceInterval: BigNumber;
+  entryFee: BigNumber;
+  rebalanceFee: BigNumber;
+  lastRebalanceTimestamp: BigNumber;
+  rebalanceState: BigNumber;
+  currentSetInfo: CollateralSetInfo;
+}
+
+export interface TradingPoolRebalanceInfo {
+  trader: Address;
+  allocator: Address;
+  currentAllocation: BigNumber;
+  liquidator: Address;
+  nextSet: Address;
+  rebalanceStartTime: BigNumber;
+  timeToPivot: BigNumber;
+  startPrice: BigNumber;
+  endPrice: BigNumber;
+  startingCurrentSets: BigNumber;
+  remainingCurrentSets: BigNumber;
+  minimumBid: BigNumber;
+  rebalanceState: BigNumber;
+  nextSetInfo: CollateralSetInfo;
+}

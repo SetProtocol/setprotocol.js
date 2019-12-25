@@ -51,6 +51,18 @@ export class CommonAssertions {
     }
   }
 
+  public isLessOrEqualThan(quantity1: BigNumber, quantity2: BigNumber, errorMessage: string) {
+    if (quantity1.gt(quantity2)) {
+      throw new Error(errorMessage);
+    }
+  }
+
+  public isMultipleOf(quantity: BigNumber, baseQuantity: BigNumber, errorMessage: string) {
+    if (!quantity.modulo(baseQuantity).isZero()) {
+      throw new Error(errorMessage);
+    }
+  }
+
   public isValidString(value: string, errorMessage: string) {
     if (!value) {
       throw new Error(errorMessage);

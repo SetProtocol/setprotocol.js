@@ -29,6 +29,7 @@ import { IssuanceAssertions } from './IssuanceAssertions';
 import { RebalancingAssertions } from './RebalancingAssertions';
 import { SchemaAssertions } from './SchemaAssertions';
 import { SetTokenAssertions } from './SetTokenAssertions';
+import { SocialTradingAssertions } from './SocialTradingAssertions';
 import { VaultAssertions } from './VaultAssertions';
 
 export class Assertions {
@@ -41,6 +42,7 @@ export class Assertions {
   public rebalancing: RebalancingAssertions;
   public schema: SchemaAssertions;
   public setToken: SetTokenAssertions;
+  public socialTrading: SocialTradingAssertions;
   public vault: VaultAssertions;
 
   public constructor(web3: Web3) {
@@ -53,6 +55,7 @@ export class Assertions {
     this.rebalancing = new RebalancingAssertions(web3);
     this.schema = new SchemaAssertions();
     this.setToken = new SetTokenAssertions(web3);
+    this.socialTrading = new SocialTradingAssertions(web3);
     this.vault = new VaultAssertions(web3);
   }
 }

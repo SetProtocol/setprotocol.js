@@ -133,4 +133,35 @@ export class ProtocolViewerWrapper {
 
     return await protocolViewerInstance.batchFetchRebalanceStateAsync.callAsync(rebalancingSetTokenAddresses);
   }
+
+  /**
+   * Fetches state of trading pool info, underlying RebalancingSetTokenV2, and current collateralSet.
+   *
+   * @param  tradingPoolAddress      RebalancingSetTokenV2 contract address of tradingPool
+   */
+  public async fetchNewTradingPoolDetails(
+    tradingPoolAdddress: Address,
+  ): Promise<any> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.fetchNewTradingPoolDetails.callAsync(tradingPoolAdddress);
+  }
+
+  /**
+   * Fetches rebalance state of trading pool info, underlying RebalancingSetTokenV2, and current
+   * collateralSet.
+   *
+   * @param  tradingPoolAddress      RebalancingSetTokenV2 contract address of tradingPool
+   */
+  public async fetchTradingPoolRebalanceDetails(
+    tradingPoolAdddress: Address,
+  ): Promise<any> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.fetchTradingPoolRebalanceDetails.callAsync(tradingPoolAdddress);
+  }
 }
