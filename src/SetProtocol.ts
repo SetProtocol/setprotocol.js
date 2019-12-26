@@ -31,8 +31,9 @@ import {
   RebalancingAPI,
   RebalancingManagerAPI,
   RebalancingSetIssuanceAPI,
-  SystemAPI,
   SetTokenAPI,
+  SocialTradingAPI,
+  SystemAPI
 } from './api';
 import {
   CoreWrapper,
@@ -104,6 +105,11 @@ class SetProtocol {
   public setToken: SetTokenAPI;
 
   /**
+   * An instance of the SocialTradingAPI class containing methods for interacting with RebalancingSet Trading Pools
+   */
+  public socialTrading: SocialTradingAPI;
+
+  /**
    * An instance of the SystemAPI class containing methods for interacting with system state
    */
   public system: SystemAPI;
@@ -138,16 +144,17 @@ class SetProtocol {
     this.accounting = new AccountingAPI(this.core, assertions);
     this.blockchain = new BlockchainAPI(this.web3, assertions);
     this.erc20 = new ERC20API(this.web3, assertions, config);
+    this.exchangeIssuance = new ExchangeIssuanceAPI(this.web3, assertions, config);
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
-    this.priceFeed = new PriceFeedAPI(this.web3);
     this.oracle = new OracleAPI(this.web3);
-    this.setToken = new SetTokenAPI(this.web3, assertions);
-    this.system = new SystemAPI(this.web3, this.core, config);
+    this.priceFeed = new PriceFeedAPI(this.web3);
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, config);
     this.rebalancingManager = new RebalancingManagerAPI(this.web3, assertions);
     this.rebalancingSetIssuance = new RebalancingSetIssuanceAPI(this.web3, assertions, config);
-    this.exchangeIssuance = new ExchangeIssuanceAPI(this.web3, assertions, config);
+    this.setToken = new SetTokenAPI(this.web3, assertions);
+    this.socialTrading = new SocialTradingAPI(this.web3, assertions, config);
+    this.system = new SystemAPI(this.web3, this.core, config);
   }
 
   /**
