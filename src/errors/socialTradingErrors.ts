@@ -16,7 +16,7 @@
 
 'use strict';
 import { Address } from 'set-protocol-utils';
-import { BigNumber } from '@src/util';
+import { BigNumber } from '../util';
 
 export const socialTradingErrors = {
   ALLOCATION_EXCEEDS_ONE_HUNDERED_PERCENT: (allocation: BigNumber) => `Provided allocation ` +

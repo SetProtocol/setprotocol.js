@@ -25,8 +25,8 @@ import {
 } from 'set-protocol-strategies';
 
 import { CommonAssertions } from './CommonAssertions';
-import { coreAPIErrors, socialTradingErrors } from '@src/errors';
-import { BigNumber, ether } from '@src/util';
+import { coreAPIErrors, socialTradingErrors } from '../errors';
+import { BigNumber, ether } from '../util';
 
 export class SocialTradingAssertions {
   private web3: Web3;

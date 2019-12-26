@@ -28,9 +28,9 @@ import {
   RebalancingSetTokenContract,
   SetTokenContract,
 } from 'set-protocol-contracts';
-import { rebalancingErrors } from '@src/errors';
-import { BigNumber } from '@src/util';
-import { RebalancingState } from '@src/types/common';
+import { rebalancingErrors } from '../errors';
+import { BigNumber } from '../util';
+import { RebalancingState } from '../types/common';
 
 const moment = require('moment');
 
