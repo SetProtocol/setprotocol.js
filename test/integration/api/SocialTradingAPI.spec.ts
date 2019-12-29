@@ -219,7 +219,8 @@ describe('SocialTradingAPI', () => {
     setManager = await deploySocialTradingManagerAsync(
       web3,
       core.address,
-      rebalancingFactory.address
+      rebalancingFactory.address,
+      [allocator.address]
     );
 
     protocolViewer = await deployProtocolViewerAsync(web3);
@@ -333,6 +334,22 @@ describe('SocialTradingAPI', () => {
 
       expect(actualName).to.equal(subjectTradingPoolName);
       expect(actualSymbol).to.equal(subjectTradingPoolSymbol);
+    });
+
+    describe.only('when the passed allocation is equal to 0', async () => {
+      beforeEach(async () => {
+        subjectStartingBaseAssetAllocation = ZERO;
+      });
+
+      test('successfully sets currentAllocation', async () => {
+        const txHash = await subject();
+
+        const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+        const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+        const poolInfo: any = await setManager.pools.callAsync(tradingPoolAddress);
+
+        expect(poolInfo.currentAllocation).to.be.bignumber.equal(subjectStartingBaseAssetAllocation);
+      });
     });
 
     describe('when the passed allocation is less than 0', async () => {

@@ -208,7 +208,8 @@ describe('SocialTradingManagerWrapper', () => {
     setManager = await deploySocialTradingManagerAsync(
       web3,
       core.address,
-      rebalancingFactory.address
+      rebalancingFactory.address,
+      [allocator.address]
     );
 
     socialTradingManagerWrapper = new SocialTradingManagerWrapper(web3);
