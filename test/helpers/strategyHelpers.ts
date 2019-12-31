@@ -256,6 +256,7 @@ export const deploySocialTradingManagerAsync = async(
   web3: Web3,
   core: Address,
   factory: Address,
+  allocators: Address[],
 ): Promise<SocialTradingManagerContract> => {
   const truffleSocialTradingManager = setDefaultTruffleContract(web3, SocialTradingManager);
 
@@ -263,6 +264,7 @@ export const deploySocialTradingManagerAsync = async(
   const deployedSocialTradingManagerInstance = await truffleSocialTradingManager.new(
     core,
     factory,
+    allocators,
   );
   return await SocialTradingManagerContract.at(
     deployedSocialTradingManagerInstance.address,

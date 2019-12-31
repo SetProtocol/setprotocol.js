@@ -277,7 +277,7 @@ export class SocialTradingAPI {
     return this.createTradingPoolRebalanceObject(newPoolInfo);
   }
 
-  /* ============ Private Function ============ */
+  /* ============ Private Functions ============ */
 
   private createNewTradingPoolObject(
     newPoolInfo: any,
@@ -385,7 +385,7 @@ export class SocialTradingAPI {
   private assertValidAllocation(
     newAllocation: BigNumber
   ): void {
-    this.assert.socialTrading.allocationGreaterThanZero(newAllocation);
+    this.assert.socialTrading.allocationGreaterOrEqualToZero(newAllocation);
     this.assert.socialTrading.allocationLessThanOneHundred(newAllocation);
     this.assert.socialTrading.allocationMultipleOfOnePercent(newAllocation);
   }

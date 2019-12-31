@@ -27,6 +27,7 @@ import {
 import { CommonAssertions } from './CommonAssertions';
 import { coreAPIErrors, socialTradingErrors } from '../errors';
 import { BigNumber, ether } from '../util';
+import { ZERO } from '../constants';
 
 export class SocialTradingAssertions {
   private web3: Web3;
@@ -42,8 +43,12 @@ export class SocialTradingAssertions {
    *
    * @param  newAllocation   New allocation percentage to 18 decimals precision 10 ** 18 = 100%
    */
-  public allocationGreaterThanZero(newAllocation: BigNumber): void {
-    this.commonAssertions.greaterThanZero(newAllocation, coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(newAllocation));
+  public allocationGreaterOrEqualToZero(newAllocation: BigNumber): void {
+    this.commonAssertions.isGreaterOrEqualThan(
+      newAllocation,
+      ZERO,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(newAllocation)
+    );
   }
 
   /**
