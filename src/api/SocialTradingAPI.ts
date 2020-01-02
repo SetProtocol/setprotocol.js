@@ -326,6 +326,28 @@ export class SocialTradingAPI {
     return this.createTradingPoolRebalanceObject(newPoolInfo);
   }
 
+  /**
+   * Fetches all entry fees for an array of trading pools
+   *
+   * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchTradingPoolEntryFeesAsync(
+    tradingPoolAddresses: Address[],
+  ): Promise<BigNumber[]> {
+    return this.protocolViewer.batchFetchTradingPoolEntryFees(tradingPoolAddresses);
+  }
+
+  /**
+   * Fetches all rebalance fees for an array of trading pools
+   *
+   * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchTradingPoolRebalanceFeesAsync(
+    tradingPoolAddresses: Address[],
+  ): Promise<BigNumber[]> {
+    return this.protocolViewer.batchFetchTradingPoolRebalanceFees(tradingPoolAddresses);
+  }
+
   /* ============ Private Functions ============ */
 
   private createNewTradingPoolObject(

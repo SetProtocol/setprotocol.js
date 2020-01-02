@@ -164,4 +164,34 @@ export class ProtocolViewerWrapper {
 
     return await protocolViewerInstance.fetchTradingPoolRebalanceDetails.callAsync(tradingPoolAdddress);
   }
+
+  /**
+   * Fetches all entry fees for an array of trading pools
+   *
+   * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchTradingPoolEntryFees(
+    tradingPoolAddresses: Address[],
+  ): Promise<BigNumber[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchTradingPoolEntryFees.callAsync(tradingPoolAddresses);
+  }
+
+  /**
+   * Fetches all rebalance fees for an array of trading pools
+   *
+   * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchTradingPoolRebalanceFees(
+    tradingPoolAddresses: Address[],
+  ): Promise<BigNumber[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchTradingPoolRebalanceFees.callAsync(tradingPoolAddresses);
+  }
 }

@@ -753,5 +753,85 @@ describe('ProtocolViewer', () => {
         expect(collateralSetData.symbol).to.equal('SET');
       });
     });
+
+    describe('#batchFetchTradingPoolEntryFees', async () => {
+      let subjectTradingPools: Address[];
+
+      let secondRBSetV2: RebalancingSetTokenV2Contract;
+      let entryFee: BigNumber;
+      beforeEach(async () => {
+        const failPeriod = ONE_DAY_IN_SECONDS;
+        entryFee = ether(.02);
+        secondRBSetV2 = await createDefaultRebalancingSetTokenV2Async(
+          web3,
+          core,
+          rebalancingFactory.address,
+          setManager.address,
+          liquidator.address,
+          feeRecipient,
+          fixedFeeCalculator.address,
+          currentSetTokenV2.address,
+          failPeriod,
+          lastRebalanceTimestamp,
+          entryFee
+        );
+
+        subjectTradingPools = [rebalancingSetTokenV2.address, secondRBSetV2.address];
+      });
+
+      async function subject(): Promise<BigNumber[]> {
+        return protocolViewerWrapper.batchFetchTradingPoolEntryFees(
+          subjectTradingPools
+        );
+      }
+
+      it('fetches the correct poolInfo data', async () => {
+        const entryFees = await subject();
+        const expectedEntryFees = [ZERO, entryFee];
+
+        expect(JSON.stringify(entryFees)).to.equal(JSON.stringify(expectedEntryFees));
+      });
+    });
+
+    describe('#batchFetchTradingPoolRebalanceFees', async () => {
+      let subjectTradingPools: Address[];
+
+      let secondRBSetV2: RebalancingSetTokenV2Contract;
+      let rebalanceFee: BigNumber;
+      beforeEach(async () => {
+        const failPeriod = ONE_DAY_IN_SECONDS;
+        const entryFee = ether(.02);
+        rebalanceFee = ether(.02);
+        secondRBSetV2 = await createDefaultRebalancingSetTokenV2Async(
+          web3,
+          core,
+          rebalancingFactory.address,
+          setManager.address,
+          liquidator.address,
+          feeRecipient,
+          fixedFeeCalculator.address,
+          currentSetTokenV2.address,
+          failPeriod,
+          lastRebalanceTimestamp,
+          entryFee,
+          rebalanceFee
+        );
+
+        subjectTradingPools = [rebalancingSetTokenV2.address, secondRBSetV2.address];
+      });
+
+      async function subject(): Promise<BigNumber[]> {
+        return protocolViewerWrapper.batchFetchTradingPoolEntryFees(
+          subjectTradingPools
+        );
+      }
+
+      it('fetches the correct poolInfo data', async () => {
+        const rebalanceFees = await subject();
+        const expectedRebalanceFees = [ZERO, rebalanceFee];
+
+        expect(JSON.stringify(rebalanceFees)).to.equal(JSON.stringify(expectedRebalanceFees));
+      });
+    });
   });
 });

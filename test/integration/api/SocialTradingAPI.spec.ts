@@ -1390,4 +1390,170 @@ describe('SocialTradingAPI', () => {
       });
     });
   });
+
+  describe.only('batchFetchTradingPoolEntryFeesAsync', async () => {
+    let subjectTradingPools: Address[];
+
+    let entryFeeOne: BigNumber;
+    let entryFeeTwo: BigNumber;
+    beforeEach(async () => {
+      const allocatorAddress = allocator.address;
+      const startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = 'CoolPool';
+      const tradingPoolSymbol = 'COOL';
+
+      const feeRecipient = DEFAULT_ACCOUNT;
+      const feeCalculatorAddress = feeCalculator.address;
+      const rebalanceInterval = ONE_DAY_IN_SECONDS;
+      const failAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const lastRebalanceTimestamp = new BigNumber(timestamp);
+      const rebalanceFee = ether(.01);
+      const trader = DEFAULT_ACCOUNT;
+
+      entryFeeOne = ether(.01);
+      const txHashOne = await socialTradingAPI.createTradingPoolAsync(
+        setManager.address,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidator.address,
+        feeRecipient,
+        feeCalculatorAddress,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFeeOne,
+        rebalanceFee,
+        { from: trader }
+      );
+
+      const formattedLogsOne = await getFormattedLogsFromTxHash(web3, txHashOne);
+      const tradingPoolAddressOne = extractNewSetTokenAddressFromLogs(formattedLogsOne);
+
+      entryFeeTwo = ether(.02);
+      const txHashTwo = await socialTradingAPI.createTradingPoolAsync(
+        setManager.address,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidator.address,
+        feeRecipient,
+        feeCalculatorAddress,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFeeTwo,
+        rebalanceFee,
+        { from: trader }
+      );
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHashTwo);
+      const tradingPoolAddressTwo = extractNewSetTokenAddressFromLogs(formattedLogs);
+
+      subjectTradingPools = [tradingPoolAddressOne, tradingPoolAddressTwo];
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return await socialTradingAPI.batchFetchTradingPoolEntryFeesAsync(
+        subjectTradingPools
+      );
+    }
+
+    test('successfully updates tradingPool feeRecipient', async () => {
+      const entryFees = await subject();
+
+      const expectedEntryFees = [entryFeeOne, entryFeeTwo];
+
+      expect(JSON.stringify(entryFees)).to.equal(JSON.stringify(expectedEntryFees));
+    });
+  });
+
+  describe.only('batchFetchTradingPoolRebalanceFeesAsync', async () => {
+    let subjectTradingPools: Address[];
+
+    let rebalanceFeeOne: BigNumber;
+    let rebalanceFeeTwo: BigNumber;
+    beforeEach(async () => {
+      const allocatorAddress = allocator.address;
+      const startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = 'CoolPool';
+      const tradingPoolSymbol = 'COOL';
+
+      const feeRecipient = DEFAULT_ACCOUNT;
+      const feeCalculatorAddress = feeCalculator.address;
+      const rebalanceInterval = ONE_DAY_IN_SECONDS;
+      const failAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const lastRebalanceTimestamp = new BigNumber(timestamp);
+      const entryFee = ether(.01);
+      const trader = DEFAULT_ACCOUNT;
+
+      rebalanceFeeOne = ether(.01);
+      const txHashOne = await socialTradingAPI.createTradingPoolAsync(
+        setManager.address,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidator.address,
+        feeRecipient,
+        feeCalculatorAddress,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFee,
+        rebalanceFeeOne,
+        { from: trader }
+      );
+
+      const formattedLogsOne = await getFormattedLogsFromTxHash(web3, txHashOne);
+      const tradingPoolAddressOne = extractNewSetTokenAddressFromLogs(formattedLogsOne);
+
+      rebalanceFeeTwo = ether(.02);
+      const txHashTwo = await socialTradingAPI.createTradingPoolAsync(
+        setManager.address,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidator.address,
+        feeRecipient,
+        feeCalculatorAddress,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFee,
+        rebalanceFeeTwo,
+        { from: trader }
+      );
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHashTwo);
+      const tradingPoolAddressTwo = extractNewSetTokenAddressFromLogs(formattedLogs);
+
+      subjectTradingPools = [tradingPoolAddressOne, tradingPoolAddressTwo];
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return await socialTradingAPI.batchFetchTradingPoolRebalanceFeesAsync(
+        subjectTradingPools
+      );
+    }
+
+    test('successfully updates tradingPool feeRecipient', async () => {
+      const rebalanceFees = await subject();
+
+      const expectedRebalanceFees = [rebalanceFeeOne, rebalanceFeeTwo];
+
+      expect(JSON.stringify(rebalanceFees)).to.equal(JSON.stringify(expectedRebalanceFees));
+    });
+  });
 });
