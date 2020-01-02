@@ -1391,7 +1391,7 @@ describe('SocialTradingAPI', () => {
     });
   });
 
-  describe.only('batchFetchTradingPoolEntryFeesAsync', async () => {
+  describe('batchFetchTradingPoolEntryFeesAsync', async () => {
     let subjectTradingPools: Address[];
 
     let entryFeeOne: BigNumber;
@@ -1474,7 +1474,7 @@ describe('SocialTradingAPI', () => {
     });
   });
 
-  describe.only('batchFetchTradingPoolRebalanceFeesAsync', async () => {
+  describe('batchFetchTradingPoolRebalanceFeesAsync', async () => {
     let subjectTradingPools: Address[];
 
     let rebalanceFeeOne: BigNumber;
