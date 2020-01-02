@@ -28,8 +28,8 @@ import {
   SocialTradingManagerMockContract,
 } from 'set-protocol-contracts';
 
-import { DEFAULT_ACCOUNT, TX_DEFAULTS } from '@src/constants';
-import { BigNumber } from '@src/util';
+import { DEFAULT_ACCOUNT, ONE_DAY_IN_SECONDS, TX_DEFAULTS } from '@src/constants';
+import { BigNumber, ether } from '@src/util';
 
 import { setDefaultTruffleContract } from './coreHelpers';
 
@@ -257,6 +257,8 @@ export const deploySocialTradingManagerAsync = async(
   core: Address,
   factory: Address,
   allocators: Address[],
+  maxEntryFee: BigNumber = ether(.1),
+  feeUpdateTimelock: BigNumber = ONE_DAY_IN_SECONDS,
 ): Promise<SocialTradingManagerContract> => {
   const truffleSocialTradingManager = setDefaultTruffleContract(web3, SocialTradingManager);
 
@@ -265,6 +267,8 @@ export const deploySocialTradingManagerAsync = async(
     core,
     factory,
     allocators,
+    maxEntryFee,
+    feeUpdateTimelock
   );
   return await SocialTradingManagerContract.at(
     deployedSocialTradingManagerInstance.address,

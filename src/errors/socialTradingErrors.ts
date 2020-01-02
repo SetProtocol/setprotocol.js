@@ -25,5 +25,10 @@ export const socialTradingErrors = {
   `${allocation.toString()} is not multiple of 1% (10 ** 16)`,
   FEE_NOT_MULTIPLE_OF_ONE_BASIS_POINT: (fee: BigNumber) => `Provided fee ${fee.toString()} is not` +
   ` multiple of one basis point (10 ** 14)`,
+  FEE_EXCEEDS_MAX_FEE: (fee: BigNumber, maxFee: BigNumber) => `Provided fee ${fee.toString()} is not` +
+  ` less than max fee, ${maxFee.toString()}.`,
   NOT_TRADER: (caller: Address) => `Caller ${caller} is not trader of tradingPool.`,
+  FEE_UPDATE_NOT_INITIATED: () => `Must call initiateEntryFeeChange first to start fee update process.`,
+  INSUFFICIENT_TIME_PASSED: (validUpdateTimestamp: string) => `Attempting to finalize fee update too soon. ` +
+    `Update available at ${validUpdateTimestamp}`,
 };

@@ -312,7 +312,7 @@ describe('SocialTradingManagerWrapper', () => {
     });
   });
 
-  describe.only('updateAllocation', async () => {
+  describe('updateAllocation', async () => {
     let subjectManager: Address;
     let subjectTradingPool: Address;
     let subjectNewAllocation: BigNumber;
@@ -406,6 +406,172 @@ describe('SocialTradingManagerWrapper', () => {
       const poolInfo: any = await setManager.pools.callAsync(subjectTradingPool);
 
       expect(poolInfo.currentAllocation).to.be.bignumber.equal(subjectNewAllocation);
+    });
+  });
+
+  describe('initiateEntryFeeChange', async () => {
+    let subjectManager: Address;
+    let subjectTradingPool: Address;
+    let subjectNewEntryFee: BigNumber;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const managerAddress = setManager.address;
+      const allocatorAddress = allocator.address;
+      const startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = SetUtils.stringToBytes('CoolPool');
+      const tradingPoolSymbol = SetUtils.stringToBytes('COOL');
+
+      const callDataManagerAddress = setManager.address;
+      const callDataLiquidator = liquidator;
+      const callDataFeeRecipient = DEFAULT_ACCOUNT;
+      const callRebalanceFeeCalculator = feeCalculator.address;
+      const callDataRebalanceInterval = ONE_DAY_IN_SECONDS;
+      const callDataFailAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const callDataLastRebalanceTimestamp = new BigNumber(timestamp);
+      const callDataEntryFee = ether(.01);
+      const rebalanceFee = ether(.01);
+      const callDataRebalanceFeeCallData = SetUtils.generateFixedFeeCalculatorCalldata(rebalanceFee);
+      const rebalancingSetCallData = SetUtils.generateRebalancingSetTokenV2CallData(
+        callDataManagerAddress,
+        callDataLiquidator.address,
+        callDataFeeRecipient,
+        callRebalanceFeeCalculator,
+        callDataRebalanceInterval,
+        callDataFailAuctionPeriod,
+        callDataLastRebalanceTimestamp,
+        callDataEntryFee,
+        callDataRebalanceFeeCallData,
+      );
+
+      subjectCaller = DEFAULT_ACCOUNT;
+
+      const txHash = await socialTradingManagerWrapper.createTradingPool(
+        managerAddress,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        rebalancingSetCallData,
+        { from: subjectCaller }
+      );
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+
+      subjectManager = setManager.address;
+      subjectTradingPool = tradingPoolAddress;
+      subjectNewEntryFee = ether(.02);
+    });
+
+    async function subject(): Promise<string> {
+      return await socialTradingManagerWrapper.initiateEntryFeeChange(
+        subjectManager,
+        subjectTradingPool,
+        subjectNewEntryFee,
+        { from: subjectCaller }
+      );
+    }
+
+    test('successfully updates tradingPool newEntryFee', async () => {
+      await subject();
+
+      const poolInfo: any = await setManager.pools.callAsync(subjectTradingPool);
+
+      expect(poolInfo.newEntryFee).to.be.bignumber.equal(subjectNewEntryFee);
+    });
+  });
+
+  describe('finalizeEntryFeeChange', async () => {
+    let subjectManager: Address;
+    let subjectTradingPool: Address;
+    let subjectCaller: Address;
+
+    let newEntryFee: BigNumber;
+
+    beforeEach(async () => {
+      const managerAddress = setManager.address;
+      const allocatorAddress = allocator.address;
+      const startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = SetUtils.stringToBytes('CoolPool');
+      const tradingPoolSymbol = SetUtils.stringToBytes('COOL');
+
+      const callDataManagerAddress = setManager.address;
+      const callDataLiquidator = liquidator;
+      const callDataFeeRecipient = DEFAULT_ACCOUNT;
+      const callRebalanceFeeCalculator = feeCalculator.address;
+      const callDataRebalanceInterval = ONE_DAY_IN_SECONDS;
+      const callDataFailAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const callDataLastRebalanceTimestamp = new BigNumber(timestamp);
+      const callDataEntryFee = ether(.01);
+      const rebalanceFee = ether(.01);
+      const callDataRebalanceFeeCallData = SetUtils.generateFixedFeeCalculatorCalldata(rebalanceFee);
+      const rebalancingSetCallData = SetUtils.generateRebalancingSetTokenV2CallData(
+        callDataManagerAddress,
+        callDataLiquidator.address,
+        callDataFeeRecipient,
+        callRebalanceFeeCalculator,
+        callDataRebalanceInterval,
+        callDataFailAuctionPeriod,
+        callDataLastRebalanceTimestamp,
+        callDataEntryFee,
+        callDataRebalanceFeeCallData,
+      );
+
+      subjectCaller = DEFAULT_ACCOUNT;
+
+      const txHash = await socialTradingManagerWrapper.createTradingPool(
+        managerAddress,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        rebalancingSetCallData,
+        { from: subjectCaller }
+      );
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+
+      newEntryFee = ether(.02);
+      await socialTradingManagerWrapper.initiateEntryFeeChange(
+        setManager.address,
+        tradingPoolAddress,
+        newEntryFee,
+        { from: subjectCaller }
+      );
+
+      await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS.add(1));
+
+      subjectManager = setManager.address;
+      subjectTradingPool = tradingPoolAddress;
+    });
+
+    async function subject(): Promise<string> {
+      return await socialTradingManagerWrapper.finalizeEntryFeeChange(
+        subjectManager,
+        subjectTradingPool,
+        { from: subjectCaller }
+      );
+    }
+
+    test('successfully updates tradingPool newEntryFee', async () => {
+      await subject();
+
+      const tradingPoolInstance = await RebalancingSetTokenV2Contract.at(
+        subjectTradingPool,
+        web3,
+        TX_DEFAULTS
+      );
+      const actualNewFee = await tradingPoolInstance.entryFee.callAsync();
+
+      expect(actualNewFee).to.be.bignumber.equal(newEntryFee);
     });
   });
 
@@ -646,6 +812,83 @@ describe('SocialTradingManagerWrapper', () => {
       const actualFeeRecipient = await tradingPoolInstance.feeRecipient.callAsync();
 
       expect(actualFeeRecipient).to.equal(subjectNewFeeRecipient);
+    });
+  });
+
+  describe('pools', async () => {
+    let subjectManager: Address;
+    let subjectTradingPool: Address;
+
+    let allocatorAddress: Address;
+    let startingBaseAssetAllocation: BigNumber;
+    let trader: Address;
+
+    beforeEach(async () => {
+      const managerAddress = setManager.address;
+      allocatorAddress = allocator.address;
+      startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = SetUtils.stringToBytes('CoolPool');
+      const tradingPoolSymbol = SetUtils.stringToBytes('COOL');
+
+      const callDataManagerAddress = setManager.address;
+      const callDataLiquidator = liquidator;
+      const callDataFeeRecipient = DEFAULT_ACCOUNT;
+      const callRebalanceFeeCalculator = feeCalculator.address;
+      const callDataRebalanceInterval = ONE_DAY_IN_SECONDS;
+      const callDataFailAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const callDataLastRebalanceTimestamp = new BigNumber(timestamp);
+      const callDataEntryFee = ether(.01);
+      const rebalanceFee = ether(.01);
+      const callDataRebalanceFeeCallData = SetUtils.generateFixedFeeCalculatorCalldata(rebalanceFee);
+      const rebalancingSetCallData = SetUtils.generateRebalancingSetTokenV2CallData(
+        callDataManagerAddress,
+        callDataLiquidator.address,
+        callDataFeeRecipient,
+        callRebalanceFeeCalculator,
+        callDataRebalanceInterval,
+        callDataFailAuctionPeriod,
+        callDataLastRebalanceTimestamp,
+        callDataEntryFee,
+        callDataRebalanceFeeCallData,
+      );
+
+      trader = DEFAULT_ACCOUNT;
+
+      const txHash = await socialTradingManagerWrapper.createTradingPool(
+        managerAddress,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        rebalancingSetCallData,
+        { from: trader }
+      );
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+
+      subjectManager = setManager.address;
+      subjectTradingPool = tradingPoolAddress;
+    });
+
+    async function subject(): Promise<string> {
+      return await socialTradingManagerWrapper.pools(
+        subjectManager,
+        subjectTradingPool
+      );
+    }
+
+    test('successfully updates tradingPool feeRecipient', async () => {
+      await subject();
+
+      const actualPoolInfo: any = await setManager.pools.callAsync(subjectTradingPool);
+
+      expect(actualPoolInfo.allocator).to.equal(allocatorAddress);
+      expect(actualPoolInfo.currentAllocation).to.be.bignumber.equal(startingBaseAssetAllocation);
+      expect(actualPoolInfo.trader).to.equal(trader);
     });
   });
 });

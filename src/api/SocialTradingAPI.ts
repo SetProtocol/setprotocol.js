@@ -166,7 +166,56 @@ export class SocialTradingAPI {
   }
 
   /**
-   * Calls SocialTradingManager's setTrader function. Passes pool premissions to new address.
+   * Calls SocialTradingManager's initiateEntryFeeChange function. Starts entry fee update process.
+   *
+   * @param  manager                Address of the social trading manager contract
+   * @param  tradingPool            Address of tradingPool being updated
+   * @param  newEntryFee            New entry fee
+   * @param  txOpts                 Transaction options object conforming to `Tx` with signer, gas, and
+   *                                  gasPrice data
+   * @return                        The hash of the resulting transaction.
+   */
+  public async initiateEntryFeeChangeAsync(
+    manager: Address,
+    tradingPool: Address,
+    newEntryFee: BigNumber,
+    txOpts: Tx,
+  ): Promise<string> {
+    await this.assertInitiateEntryFeeChange(manager, tradingPool, newEntryFee, txOpts);
+
+    return this.socialTradingManager.initiateEntryFeeChange(
+      manager,
+      tradingPool,
+      newEntryFee,
+      txOpts
+    );
+  }
+
+  /**
+   * Calls SocialTradingManager's initiateEntryFeeChange function. Starts entry fee update process.
+   *
+   * @param  manager                Address of the social trading manager contract
+   * @param  tradingPool            Address of tradingPool being updated
+   * @param  txOpts                 Transaction options object conforming to `Tx` with signer, gas, and
+   *                                  gasPrice data
+   * @return                        The hash of the resulting transaction.
+   */
+  public async finalizeEntryFeeChangeAsync(
+    manager: Address,
+    tradingPool: Address,
+    txOpts: Tx,
+  ): Promise<string> {
+    await this.assertFinalizeEntryFeeChange(manager, tradingPool, txOpts);
+
+    return this.socialTradingManager.finalizeEntryFeeChange(
+      manager,
+      tradingPool,
+      txOpts
+    );
+  }
+
+  /**
+   * Calls SocialTradingManager's setTrader function. Passes pool permissions to new address.
    *
    * @param  manager                Address of the social trading manager contract
    * @param  tradingPool            Address of tradingPool being updated
@@ -363,7 +412,9 @@ export class SocialTradingAPI {
     this.assert.schema.isValidAddress('tradingPool', tradingPool);
     this.assert.schema.isValidAddress('newAddress', newAddress);
 
-    await this.assert.socialTrading.isTrader(manager, tradingPool, trader);
+    const poolInfo = await this.socialTradingManager.pools(manager, tradingPool);
+
+    this.assert.socialTrading.isTrader(poolInfo.trader, trader);
   }
 
   private async assertUpdateAllocation(
@@ -375,11 +426,44 @@ export class SocialTradingAPI {
     this.assert.schema.isValidAddress('manager', manager);
     this.assert.schema.isValidAddress('tradingPool', tradingPool);
 
+    const poolInfo = await this.socialTradingManager.pools(manager, tradingPool);
+
     await this.assert.rebalancing.isNotInRebalanceState(tradingPool);
     await this.assert.rebalancing.sufficientTimeBetweenRebalance(tradingPool);
-    await this.assert.socialTrading.isTrader(manager, tradingPool, txOpts.from);
+    this.assert.socialTrading.isTrader(poolInfo.trader, txOpts.from);
 
     this.assertValidAllocation(newAllocation);
+  }
+
+  private async assertInitiateEntryFeeChange(
+    manager: Address,
+    tradingPool: Address,
+    entryFee: BigNumber,
+    txOpts: Tx
+  ): Promise<void> {
+    this.assert.schema.isValidAddress('manager', manager);
+    this.assert.schema.isValidAddress('tradingPool', tradingPool);
+
+    const poolInfo = await this.socialTradingManager.pools(manager, tradingPool);
+
+    this.assert.socialTrading.isTrader(poolInfo.trader, txOpts.from);
+    this.assert.socialTrading.feeMultipleOfOneBasisPoint(entryFee);
+    await this.assert.socialTrading.feeDoesNotExceedMax(manager, entryFee);
+  }
+
+  private async assertFinalizeEntryFeeChange(
+    manager: Address,
+    tradingPool: Address,
+    txOpts: Tx
+  ): Promise<void> {
+    this.assert.schema.isValidAddress('manager', manager);
+    this.assert.schema.isValidAddress('tradingPool', tradingPool);
+
+    const poolInfo: any = await this.socialTradingManager.pools(manager, tradingPool);
+
+    this.assert.socialTrading.isTrader(poolInfo.trader, txOpts.from);
+    this.assert.socialTrading.feeChangeInitiated(new BigNumber(poolInfo.feeUpdateTimestamp));
+    this.assert.socialTrading.feeChangeTimelockElapsed(new BigNumber(poolInfo.feeUpdateTimestamp));
   }
 
   private assertValidAllocation(

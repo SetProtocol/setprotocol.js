@@ -29,6 +29,8 @@ import { coreAPIErrors, socialTradingErrors } from '../errors';
 import { BigNumber, ether } from '../util';
 import { ZERO } from '../constants';
 
+const moment = require('moment');
+
 export class SocialTradingAssertions {
   private web3: Web3;
   private commonAssertions: CommonAssertions;
@@ -96,20 +98,63 @@ export class SocialTradingAssertions {
   }
 
   /**
+   * Throws if the passed fee is not multiple of 1 basis point
+   *
+   * @param  newAllocation   New allocation percentage to 18 decimals precision 10 ** 18 = 100%
+   */
+  public async feeDoesNotExceedMax(manager: Address, fee: BigNumber): Promise<void> {
+    const socialTradingInstance = await SocialTradingManagerContract.at(manager, this.web3, {});
+
+    const maxFee = await socialTradingInstance.maxEntryFee.callAsync();
+
+    this.commonAssertions.isLessOrEqualThan(
+      fee,
+      maxFee,
+      socialTradingErrors.FEE_EXCEEDS_MAX_FEE(fee, maxFee)
+    );
+  }
+
+  /**
    * Throws if caller is not the trader of tradingPool
    *
-   * @param  manager        Address of manager contract
-   * @param  tradingPool    Address of trading pool
+   * @param  trader         Trader of trading pool
    * @param  caller         Caller of transaction
    */
-  public async isTrader(manager: Address, tradingPool: Address, caller: Address): Promise<void> {
-    const managerInstance = await SocialTradingManagerContract.at(manager, this.web3, {});
-
-    const poolInfo: any = await managerInstance.pools.callAsync(tradingPool);
+  public isTrader(trader: Address, caller: Address): void {
     this.commonAssertions.isEqualAddress(
-      poolInfo.trader,
+      trader,
       caller,
       socialTradingErrors.NOT_TRADER(caller)
     );
+  }
+
+  /**
+   * Throws if caller is not the trader of tradingPool
+   *
+   * @param  trader         Trader of trading pool
+   * @param  caller         Caller of transaction
+   */
+  public feeChangeInitiated(feeChangeTimestamp: BigNumber): void {
+    this.commonAssertions.greaterThanZero(
+      feeChangeTimestamp,
+      socialTradingErrors.FEE_UPDATE_NOT_INITIATED()
+    );
+  }
+
+  /**
+   * Throws if caller is not the trader of tradingPool
+   *
+   * @param  trader         Trader of trading pool
+   * @param  caller         Caller of transaction
+   */
+  public feeChangeTimelockElapsed(feeChangeTimestamp: BigNumber): void {
+    const validUpdateTime = feeChangeTimestamp.mul(1000);
+    const currentTimeStamp = new BigNumber(Date.now());
+
+    if (validUpdateTime.greaterThan(currentTimeStamp)) {
+      const validUpdateFormattedDate = moment(validUpdateTime.toNumber())
+        .format('dddd, MMMM Do YYYY, h:mm:ss a');
+      throw new Error(socialTradingErrors.INSUFFICIENT_TIME_PASSED(validUpdateFormattedDate));
+    }
   }
 }

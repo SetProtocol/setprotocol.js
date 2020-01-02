@@ -336,7 +336,7 @@ describe('SocialTradingAPI', () => {
       expect(actualSymbol).to.equal(subjectTradingPoolSymbol);
     });
 
-    describe.only('when the passed allocation is equal to 0', async () => {
+    describe('when the passed allocation is equal to 0', async () => {
       beforeEach(async () => {
         subjectStartingBaseAssetAllocation = ZERO;
       });
@@ -895,7 +895,251 @@ describe('SocialTradingAPI', () => {
     });
   });
 
-  describe('setTrader', async () => {
+  describe('initiateEntryFeeChangeAsync', async () => {
+    let subjectManager: Address;
+    let subjectTradingPool: Address;
+    let subjectNewEntryFee: BigNumber;
+    let subjectCaller: Address;
+
+    const maxFee = ether(.1);
+    beforeEach(async () => {
+      const allocatorAddress = allocator.address;
+      const startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = 'CoolPool';
+      const tradingPoolSymbol = 'COOL';
+
+      const feeRecipient = DEFAULT_ACCOUNT;
+      const feeCalculatorAddress = feeCalculator.address;
+      const rebalanceInterval = ONE_DAY_IN_SECONDS;
+      const failAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const lastRebalanceTimestamp = new BigNumber(timestamp);
+      const entryFee = ether(.01);
+      const rebalanceFee = ether(.01);
+
+      subjectCaller = DEFAULT_ACCOUNT;
+
+      const txHash = await socialTradingAPI.createTradingPoolAsync(
+        setManager.address,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidator.address,
+        feeRecipient,
+        feeCalculatorAddress,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFee,
+        rebalanceFee,
+        { from: subjectCaller }
+      );
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+
+      subjectManager = setManager.address;
+      subjectTradingPool = tradingPoolAddress;
+      subjectNewEntryFee = ether(.02);
+    });
+
+    async function subject(): Promise<string> {
+      return await socialTradingAPI.initiateEntryFeeChangeAsync(
+        subjectManager,
+        subjectTradingPool,
+        subjectNewEntryFee,
+        { from: subjectCaller }
+      );
+    }
+
+    test('successfully updates tradingPool newEntryFee', async () => {
+      await subject();
+
+      const poolInfo: any = await setManager.pools.callAsync(subjectTradingPool);
+
+      expect(poolInfo.newEntryFee).to.be.bignumber.equal(subjectNewEntryFee);
+    });
+
+    describe('when the caller is not the trader', async () => {
+      beforeEach(async () => {
+        subjectCaller = ACCOUNTS[3].address;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Caller ${subjectCaller} is not trader of tradingPool.`
+        );
+      });
+    });
+
+    describe('when the fee exceeds the entry fee', async () => {
+      beforeEach(async () => {
+        subjectNewEntryFee = ether(.15);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Provided fee ${subjectNewEntryFee} is not less than max fee, ${maxFee.toString()}.`
+        );
+      });
+    });
+
+    describe('when the passed entryFee is not a multiple of 1 basis point', async () => {
+      beforeEach(async () => {
+        subjectNewEntryFee = ether(.00011);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Provided fee ${subjectNewEntryFee.toString()} is not multiple of one basis point (10 ** 14)`
+        );
+      });
+    });
+  });
+
+  describe('finalizeEntryFeeChangeAsync', async () => {
+    let subjectManager: Address;
+    let subjectTradingPool: Address;
+    let subjectCaller: Address;
+
+    let isInitiated: boolean = true;
+    let newEntryFee: BigNumber;
+    let realTimeFallback: number = 0;
+    beforeEach(async () => {
+      const allocatorAddress = allocator.address;
+      const startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = 'CoolPool';
+      const tradingPoolSymbol = 'COOL';
+
+      const feeRecipient = DEFAULT_ACCOUNT;
+      const feeCalculatorAddress = feeCalculator.address;
+      const rebalanceInterval = ONE_DAY_IN_SECONDS;
+      const failAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const lastRebalanceTimestamp = new BigNumber(timestamp);
+      const entryFee = ether(.01);
+      const rebalanceFee = ether(.01);
+
+      subjectCaller = DEFAULT_ACCOUNT;
+
+      const txHash = await socialTradingAPI.createTradingPoolAsync(
+        setManager.address,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidator.address,
+        feeRecipient,
+        feeCalculatorAddress,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFee,
+        rebalanceFee,
+        { from: subjectCaller }
+      );
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+
+      if (isInitiated) {
+        newEntryFee = ether(.02);
+        await socialTradingAPI.initiateEntryFeeChangeAsync(
+          setManager.address,
+          tradingPoolAddress,
+          newEntryFee,
+          { from: subjectCaller }
+        );
+      }
+
+      const poolInfo: any = await setManager.pools.callAsync(tradingPoolAddress);
+      await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+      timeKeeper.freeze((poolInfo.feeUpdateTimestamp - realTimeFallback) * 1000);
+
+      subjectManager = setManager.address;
+      subjectTradingPool = tradingPoolAddress;
+    });
+
+    afterEach(async () => {
+      timeKeeper.reset();
+    });
+
+    async function subject(): Promise<string> {
+      return await socialTradingAPI.finalizeEntryFeeChangeAsync(
+        subjectManager,
+        subjectTradingPool,
+        { from: subjectCaller }
+      );
+    }
+
+    test('successfully updates tradingPool newEntryFee', async () => {
+      await subject();
+
+      const tradingPoolInstance = await RebalancingSetTokenV2Contract.at(
+        subjectTradingPool,
+        web3,
+        TX_DEFAULTS
+      );
+      const actualNewFee = await tradingPoolInstance.entryFee.callAsync();
+
+      expect(actualNewFee).to.be.bignumber.equal(newEntryFee);
+    });
+
+    describe('when the caller is not the trader', async () => {
+      beforeEach(async () => {
+        subjectCaller = ACCOUNTS[3].address;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Caller ${subjectCaller} is not trader of tradingPool.`
+        );
+      });
+    });
+
+    describe('when the fee update process has not been initiated', async () => {
+      beforeAll(async () => {
+        isInitiated = false;
+      });
+
+      afterAll(async () => {
+        isInitiated = true;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Must call initiateEntryFeeChange first to start fee update process.`
+        );
+      });
+    });
+
+    describe('when timelock period has not elapsed', async () => {
+      beforeAll(async () => {
+        realTimeFallback = 10;
+      });
+
+      afterAll(async () => {
+        realTimeFallback = 0;
+      });
+
+      test('throws', async () => {
+        const poolInfo: any = await setManager.pools.callAsync(subjectTradingPool);
+        const formattedDate = moment(parseInt(poolInfo.feeUpdateTimestamp) * 1000)
+          .format('dddd, MMMM Do YYYY, h:mm:ss a');
+
+        return expect(subject()).to.be.rejectedWith(
+          `Attempting to finalize fee update too soon. Update available at ${formattedDate}`,
+        );
+      });
+    });
+  });
+
+  describe('setTraderAsync', async () => {
     let subjectManager: Address;
     let subjectTradingPool: Address;
     let subjectNewTrader: Address;
@@ -975,7 +1219,7 @@ describe('SocialTradingAPI', () => {
     });
   });
 
-  describe('setLiquidator', async () => {
+  describe('setLiquidatorAsync', async () => {
     let subjectManager: Address;
     let subjectTradingPool: Address;
     let subjectNewLiquidator: Address;
@@ -1062,7 +1306,7 @@ describe('SocialTradingAPI', () => {
     });
   });
 
-  describe('setFeeRecipient', async () => {
+  describe('setFeeRecipientAsync', async () => {
     let subjectManager: Address;
     let subjectTradingPool: Address;
     let subjectNewFeeRecipient: Address;

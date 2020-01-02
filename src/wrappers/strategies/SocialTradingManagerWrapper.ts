@@ -109,6 +109,52 @@ export class SocialTradingManagerWrapper {
   }
 
   /**
+   * Calls SocialTradingManager's initiateEntryFeeChange function. Allows trader to change entryFee.
+   *
+   * @param  manager                        Address of the social trading manager contract
+   * @param  tradingPool                    Address of tradingPool being updated
+   * @param  newEntryFee                    New entry fee
+   * @return                                The hash of the resulting transaction.
+   */
+  public async initiateEntryFeeChange(
+    manager: Address,
+    tradingPool: Address,
+    newEntryFee: BigNumber,
+    txOpts?: Tx,
+  ): Promise<string> {
+    const socialTradingManagerInstance = await this.contracts.loadSocialTradingManagerContractAsync(manager);
+    const txOptions = await generateTxOpts(this.web3, txOpts);
+
+    return await socialTradingManagerInstance.initiateEntryFeeChange.sendTransactionAsync(
+      tradingPool,
+      newEntryFee,
+      txOptions
+    );
+  }
+
+  /**
+   * Calls SocialTradingManager's finalizeEntryFeeChange function. Allows trader to finalize entryFee, once timelock
+   * expires.
+   *
+   * @param  manager                        Address of the social trading manager contract
+   * @param  tradingPool                    Address of tradingPool being updated
+   * @return                                The hash of the resulting transaction.
+   */
+  public async finalizeEntryFeeChange(
+    manager: Address,
+    tradingPool: Address,
+    txOpts?: Tx,
+  ): Promise<string> {
+    const socialTradingManagerInstance = await this.contracts.loadSocialTradingManagerContractAsync(manager);
+    const txOptions = await generateTxOpts(this.web3, txOpts);
+
+    return await socialTradingManagerInstance.finalizeEntryFeeChange.sendTransactionAsync(
+      tradingPool,
+      txOptions
+    );
+  }
+
+  /**
    * Calls SocialTradingManager's setTrader function. Allows trader to change address that controls tradingPool. Can
    * only be called by current trader of the tradingPool.
    *
@@ -181,5 +227,21 @@ export class SocialTradingManagerWrapper {
       newFeeRecipient,
       txOptions
     );
+  }
+
+  /**
+   * Calls SocialTradingManager's pools function. Gets info related to passed tradingPool.
+   *
+   * @param  manager                        Address of the social trading manager contract
+   * @param  tradingPool                    Address of tradingPool being updated
+   * @return                                The hash of the resulting transaction.
+   */
+  public async pools(
+    manager: Address,
+    tradingPool: Address,
+  ): Promise<any> {
+    const socialTradingManagerInstance = await this.contracts.loadSocialTradingManagerContractAsync(manager);
+
+    return await socialTradingManagerInstance.pools.callAsync(tradingPool);
   }
 }
