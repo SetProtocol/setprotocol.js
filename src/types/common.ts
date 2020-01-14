@@ -34,6 +34,21 @@ export interface BidPlacedWithEthEvent {
   timestamp: number;
 }
 
+export interface EntryFeePaid {
+  transactionHash: string;
+  rebalancingSetToken: Address;
+  feeRecipient: Address;
+  feeQuantity: BigNumber;
+}
+
+export interface RebalanceFeePaid {
+  transactionHash: string;
+  rebalancingSetToken: Address;
+  rebalanceIndex: number;
+  feeRecipient: Address;
+  feeQuantity: BigNumber;
+}
+
 export interface Component {
   address: Address;
   unit: BigNumber;
