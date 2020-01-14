@@ -21,8 +21,6 @@ import { Address } from '../../types/common';
 
 import { RebalancingSetTokenV2 } from 'set-protocol-contracts';
 
-import { ProtocolContractWrapper } from './ProtocolContractWrapper';
-
 /**
  * @title  RebalancingSetTokenV2Wrapper
  * @author Set Protocol
@@ -32,11 +30,9 @@ import { ProtocolContractWrapper } from './ProtocolContractWrapper';
  */
 export class RebalancingSetTokenV2Wrapper {
   private web3: Web3;
-  private contracts: ProtocolContractWrapper;
 
   public constructor(web3: Web3) {
     this.web3 = web3;
-    this.contracts = new ProtocolContractWrapper(this.web3);
   }
 
   /**

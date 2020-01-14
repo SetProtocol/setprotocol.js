@@ -1622,7 +1622,7 @@ describe('SocialTradingAPI', () => {
         rbSetRebalanceFee,
       );
 
-      earlyTxnHash = await core.issue.sendTransactionAsync(setToken.address, ether(9), TX_DEFAULTS);
+      await core.issue.sendTransactionAsync(setToken.address, ether(9), TX_DEFAULTS);
       await approveForTransferAsync([setToken], transferProxy.address);
 
       rebalancingSetQuantityToIssue1 = ether(7);
