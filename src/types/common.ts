@@ -36,17 +36,17 @@ export interface BidPlacedWithEthEvent {
 
 export interface EntryFeePaid {
   transactionHash: string;
-  rebalancingSetToken: Address;
   feeRecipient: Address;
   feeQuantity: BigNumber;
+  timestamp: number;
 }
 
 export interface RebalanceFeePaid {
   transactionHash: string;
-  rebalancingSetToken: Address;
   rebalanceIndex: number;
   feeRecipient: Address;
   feeQuantity: BigNumber;
+  timestamp: number;
 }
 
 export interface Component {

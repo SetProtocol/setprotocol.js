@@ -377,7 +377,6 @@ export class SocialTradingAPI {
 
     const formattedEventPromises: Promise<EntryFeePaid>[] = events.map(async event => {
       const returnValues = event.returnValues;
-      const rebalancingSetToken = returnValues['rebalancingSetToken'];
       const feeRecipient = returnValues['feeRecipient'];
       const feeQuantity = returnValues['feeQuantity'];
 
@@ -389,7 +388,6 @@ export class SocialTradingAPI {
 
       return {
         transactionHash: event.transactionHash,
-        rebalancingSetToken,
         feeRecipient,
         feeQuantity: new BigNumber(feeQuantity),
         timestamp,
@@ -424,7 +422,6 @@ export class SocialTradingAPI {
 
     const formattedEventPromises: Promise<RebalanceFeePaid>[] = events.map(async event => {
       const returnValues = event.returnValues;
-      const rebalancingSetToken = returnValues['rebalancingSetToken'];
       const rebalanceIndex = returnValues['rebalanceIndex'];
       const feeRecipient = returnValues['feeRecipient'];
       const feeQuantity = returnValues['feeQuantity'];
@@ -437,7 +434,6 @@ export class SocialTradingAPI {
 
       return {
         transactionHash: event.transactionHash,
-        rebalancingSetToken,
         rebalanceIndex,
         feeRecipient,
         feeQuantity: new BigNumber(feeQuantity),
