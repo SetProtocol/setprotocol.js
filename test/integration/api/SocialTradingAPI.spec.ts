@@ -36,6 +36,7 @@ import {
   ProtocolViewerContract,
   RebalancingSetTokenV2Contract,
   RebalancingSetTokenV2FactoryContract,
+  RebalanceAuctionModuleContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -57,10 +58,13 @@ import {
   TX_DEFAULTS,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
   ZERO,
+  DEFAULT_REBALANCING_NATURAL_UNIT,
+  DEFAULT_UNIT_SHARES,
 } from '@src/constants';
 import {
   addWhiteListedTokenAsync,
   approveForTransferAsync,
+  createDefaultRebalancingSetTokenV2Async,
   deployBaseContracts,
   deployConstantPriceOracleAsync,
   deployFixedFeeCalculatorAsync,
@@ -68,6 +72,7 @@ import {
   deployOracleWhiteListAsync,
   deployProtocolViewerAsync,
   deployRebalancingSetTokenV2FactoryContractAsync,
+  deploySetTokenAsync,
   deploySocialAllocatorAsync,
   deploySocialTradingManagerAsync,
   deployTokensSpecifyingDecimals,
@@ -81,7 +86,7 @@ import {
   getFormattedLogsFromTxHash
 } from '@src/util';
 import { Assertions } from '@src/assertions';
-import { Address, Bytes, SetProtocolConfig } from '@src/types/common';
+import { Address, Bytes, SetProtocolConfig, EntryFeePaid } from '@src/types/common';
 import { NewTradingPoolInfo, TradingPoolRebalanceInfo } from '@src/types/strategies';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
@@ -114,6 +119,7 @@ describe('SocialTradingAPI', () => {
   let oracleWhiteList: OracleWhiteListContract;
   let liquidatorWhiteList: WhiteListContract;
   let feeCalculatorWhiteList: WhiteListContract;
+  let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
   let ethOracleProxy: ConstantPriceOracleContract;
   let btcOracleProxy: ConstantPriceOracleContract;
@@ -146,7 +152,8 @@ describe('SocialTradingAPI', () => {
       core,
       transferProxy, ,
       factory,
-      , ,
+      ,
+      rebalanceAuctionModule,
       rebalancingComponentWhiteList,
     ] = await deployBaseContracts(web3);
 
@@ -1556,4 +1563,268 @@ describe('SocialTradingAPI', () => {
       expect(JSON.stringify(rebalanceFees)).to.equal(JSON.stringify(expectedRebalanceFees));
     });
   });
+
+  describe('fetchEntryFeeEvents', async () => {
+    let issueOneTransactionHash: string;
+    let issueOneBlockNumber: number;
+    let issueOneBlockTimestamp: number;
+
+    let subjectFromBlock: number;
+    let subjectToBlock: any;
+    let subjectRebalancingSetTokenV2: Address;
+    let subjectGetTimestamp: boolean;
+
+    let rebalancingSetQuantityToIssue1: BigNumber;
+    let rebalancingSetQuantityToIssue2: BigNumber;
+
+    let rbSetFeeRecipient: string;
+    let rbSetEntryFee: BigNumber;
+    let rbSetRebalanceFee: BigNumber;
+
+    let setToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenV2Contract;
+
+    beforeEach(async () => {
+      // Deploy a Set
+      const setTokenComponents = [wrappedBTC.address, wrappedETH.address];
+      const setTokenUnits = [initialEthPrice.div(1e18), initialBtcPrice.div(1e18)];
+      const naturalUnit = new BigNumber(1e10);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        factory.address,
+        setTokenComponents,
+        setTokenUnits,
+        naturalUnit,
+      );
+
+      // Deploy a RB Set
+      const managerAddress = DEFAULT_ACCOUNT;
+      rbSetFeeRecipient = ACCOUNTS[2].address;
+      const rebalanceFeeCalculator = feeCalculator.address;
+      const failRebalancePeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const lastRebalanceTimestamp = new BigNumber(timestamp);
+      rbSetEntryFee = ether(.01);
+      rbSetRebalanceFee = ether(.02);
+      rebalancingSetToken = await createDefaultRebalancingSetTokenV2Async(
+        web3,
+        core,
+        rebalancingFactory.address,
+        managerAddress,
+        liquidator.address,
+        rbSetFeeRecipient,
+        rebalanceFeeCalculator,
+        setToken.address,
+        failRebalancePeriod,
+        lastRebalanceTimestamp,
+        rbSetEntryFee,
+        rbSetRebalanceFee,
+      );
+
+      await core.issue.sendTransactionAsync(setToken.address, ether(9), TX_DEFAULTS);
+      await approveForTransferAsync([setToken], transferProxy.address);
+
+      rebalancingSetQuantityToIssue1 = ether(7);
+      issueOneTransactionHash = await core.issue.sendTransactionAsync(
+        rebalancingSetToken.address, rebalancingSetQuantityToIssue1
+      );
+
+      // Issue setToken
+      await core.issue.sendTransactionAsync(setToken.address, ether(9), TX_DEFAULTS);
+      rebalancingSetQuantityToIssue2 = ether(1);
+      const lastTxnHash = await core.issue.sendTransactionAsync(
+        rebalancingSetToken.address,
+        rebalancingSetQuantityToIssue2,
+      );
+
+      const issueOneTransaction = await web3.eth.getTransaction(issueOneTransactionHash);
+      issueOneBlockNumber = issueOneTransaction['blockNumber'];
+      const issueOneBlock = await web3.eth.getBlock(issueOneBlockNumber);
+      issueOneBlockTimestamp = issueOneBlock.timestamp;
+
+      const earlyBlockNumber = issueOneTransaction['blockNumber'];
+
+      const lastTransaction = await web3.eth.getTransaction(lastTxnHash);
+      const recentIssueBlockNumber = lastTransaction['blockNumber'];
+
+      subjectFromBlock = earlyBlockNumber;
+      subjectToBlock = recentIssueBlockNumber;
+      subjectRebalancingSetTokenV2 = rebalancingSetToken.address;
+      subjectGetTimestamp = true;
+    });
+
+    async function subject(): Promise<EntryFeePaid[]> {
+      return await socialTradingAPI.fetchEntryFeeEvents(
+        subjectRebalancingSetTokenV2,
+        subjectFromBlock,
+        subjectToBlock,
+        subjectGetTimestamp
+      );
+    }
+
+    test('retrieves the right event logs length', async () => {
+      const events = await subject();
+
+      expect(events.length).to.equal(2);
+    });
+
+    test('retrieves the correct first log EntryFeePaid properties', async () => {
+      const events = await subject();
+
+      const [firstEvent] = events;
+      const expectedFee = rebalancingSetQuantityToIssue1.mul(rbSetEntryFee).div(1e18);
+
+      expect(issueOneTransactionHash).to.equal(firstEvent.transactionHash);
+      expect(rbSetFeeRecipient).to.equal(firstEvent.feeRecipient);
+      expect(expectedFee).to.bignumber.equal(firstEvent.feeQuantity);
+      expect(issueOneBlockTimestamp).to.equal(firstEvent.timestamp);
+    });
+  });
+
+  describe('fetchRebalanceFeePaidEvents', async () => {
+    let earlyTxnHash: string;
+    let earlyBlockNumber: number;
+    let lastTransactionTimestamp: number;
+
+    let subjectFromBlock: number;
+    let subjectToBlock: any;
+    let subjectRebalancingSetTokenV2: Address;
+    let subjectGetTimestamp: boolean;
+
+    let rebalancingSetQuantityToIssue1: BigNumber;
+    let currentSetQuantity: BigNumber;
+
+    let nextSetToken: SetTokenContract;
+    let liquidatorData: string;
+
+    let rbSetFeeRecipient: string;
+    let rbSetEntryFee: BigNumber;
+    let rbSetRebalanceFee: BigNumber;
+
+    let setToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenV2Contract;
+
+    beforeEach(async () => {
+      // Deploy a Set
+      const setTokenComponents1 = [wrappedBTC.address, wrappedETH.address];
+      const setTokenUnits1 = [initialEthPrice.div(1e18), initialBtcPrice.div(1e18)];
+      const naturalUnit1 = new BigNumber(1e10);
+      setToken = await deploySetTokenAsync(
+        web3,
+        core,
+        factory.address,
+        setTokenComponents1,
+        setTokenUnits1,
+        naturalUnit1,
+      );
+
+      // Deploy a RB Set
+      const managerAddress = DEFAULT_ACCOUNT;
+      rbSetFeeRecipient = ACCOUNTS[2].address;
+      const rebalanceFeeCalculator = feeCalculator.address;
+      const failRebalancePeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const lastRebalanceTimestamp = new BigNumber(timestamp);
+      rbSetEntryFee = ether(.01);
+      rbSetRebalanceFee = ether(.02);
+      rebalancingSetToken = await createDefaultRebalancingSetTokenV2Async(
+        web3,
+        core,
+        rebalancingFactory.address,
+        managerAddress,
+        liquidator.address,
+        rbSetFeeRecipient,
+        rebalanceFeeCalculator,
+        setToken.address,
+        failRebalancePeriod,
+        lastRebalanceTimestamp,
+        rbSetEntryFee,
+        rbSetRebalanceFee,
+      );
+
+      earlyTxnHash = await core.issue.sendTransactionAsync(setToken.address, ether(9), TX_DEFAULTS);
+      await approveForTransferAsync([setToken], transferProxy.address);
+
+      rebalancingSetQuantityToIssue1 = ether(7);
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue1);
+
+      const earlyTransaction = await web3.eth.getTransaction(earlyTxnHash);
+      earlyBlockNumber = earlyTransaction['blockNumber'];
+
+      // Deploy a Set
+      const setTokenComponents2 = [wrappedBTC.address, wrappedETH.address];
+      const setTokenUnits2 = [initialEthPrice.div(1e18).div(2), initialBtcPrice.div(1e18)];
+      const naturalUnit3 = new BigNumber(1e10);
+      nextSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        factory.address,
+        setTokenComponents2,
+        setTokenUnits2,
+        naturalUnit3,
+      );
+
+      await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS.add(1));
+      liquidatorData = '0x00';
+      await rebalancingSetToken.startRebalance.sendTransactionAsync(
+        nextSetToken.address,
+        liquidatorData,
+        TX_DEFAULTS,
+      );
+
+      currentSetQuantity = rebalancingSetQuantityToIssue1
+        .mul(DEFAULT_UNIT_SHARES)
+        .div(DEFAULT_REBALANCING_NATURAL_UNIT);
+      await rebalanceAuctionModule.bid.sendTransactionAsync(
+        rebalancingSetToken.address,
+        currentSetQuantity,
+        true,
+        TX_DEFAULTS
+      );
+
+      const lastTxnHash = await rebalancingSetToken.settleRebalance.sendTransactionAsync(
+        TX_DEFAULTS,
+      );
+
+      const lastTransaction = await web3.eth.getTransaction(lastTxnHash);
+      const recentIssueBlockNumber = lastTransaction['blockNumber'];
+      const lastTxnBlock = await web3.eth.getBlock(recentIssueBlockNumber);
+      lastTransactionTimestamp = lastTxnBlock.timestamp;
+
+      subjectFromBlock = earlyBlockNumber;
+      subjectToBlock = recentIssueBlockNumber;
+      subjectRebalancingSetTokenV2 = rebalancingSetToken.address;
+      subjectGetTimestamp = true;
+    });
+
+    async function subject(): Promise<any> {
+      return await socialTradingAPI.fetchRebalanceFeePaidEvents(
+        subjectRebalancingSetTokenV2,
+        subjectFromBlock,
+        subjectToBlock,
+        subjectGetTimestamp,
+      );
+    }
+
+    test('retrieves the right event logs length', async () => {
+      const events = await subject();
+
+      expect(events.length).to.equal(1);
+    });
+
+    test('retrieves the correct first log RebalanceSettled properties', async () => {
+      const events = await subject();
+
+      const [firstEvent] = events;
+      expect(firstEvent.feeRecipient).to.equal(rbSetFeeRecipient);
+      expect(firstEvent.rebalanceIndex).to.bignumber.equal(0);
+      const expectedFeeQuantity = rebalancingSetQuantityToIssue1
+                                    .mul(rbSetRebalanceFee)
+                                    .div(new BigNumber(1e18).sub(rbSetRebalanceFee)).round(0, 3);
+      expect(firstEvent.feeQuantity).to.bignumber.equal(expectedFeeQuantity);
+      expect(firstEvent.timestamp).to.equal(lastTransactionTimestamp);
+    });
+  });
+
 });

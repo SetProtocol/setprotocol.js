@@ -21,10 +21,10 @@ import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
 
 import { BigNumber } from '../util';
-import { ProtocolViewerWrapper, SocialTradingManagerWrapper } from '../wrappers';
+import { ProtocolViewerWrapper, SocialTradingManagerWrapper, RebalancingSetTokenV2Wrapper } from '../wrappers';
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
-import { Address, Bytes, SetProtocolConfig, Tx } from '../types/common';
+import { Address, Bytes, SetProtocolConfig, Tx, EntryFeePaid, RebalanceFeePaid } from '../types/common';
 import { NewTradingPoolInfo, TradingPoolRebalanceInfo } from '../types/strategies';
 
 const { SetProtocolUtils: SetUtils } = setProtocolUtils;
@@ -36,9 +36,11 @@ const { SetProtocolUtils: SetUtils } = setProtocolUtils;
  * A library for interacting with Social Trading contracts
  */
 export class SocialTradingAPI {
+  private web3: Web3;
   private assert: Assertions;
   private protocolViewer: ProtocolViewerWrapper;
   private socialTradingManager: SocialTradingManagerWrapper;
+  private rebalancingSetV2: RebalancingSetTokenV2Wrapper;
 
   /**
    * Instantiates a new RebalancingManagerAPI instance that contains methods for issuing and redeeming Sets
@@ -49,8 +51,10 @@ export class SocialTradingAPI {
    * @param config        Configuration object conforming to SetProtocolConfig with Set Protocol's contract addresses
    */
   constructor(web3: Web3, assertions: Assertions, config: SetProtocolConfig) {
+    this.web3 = web3;
     this.protocolViewer = new ProtocolViewerWrapper(web3, config.protocolViewerAddress);
     this.socialTradingManager = new SocialTradingManagerWrapper(web3);
+    this.rebalancingSetV2 = new RebalancingSetTokenV2Wrapper(web3);
 
     this.assert = assertions;
   }
@@ -346,6 +350,98 @@ export class SocialTradingAPI {
     tradingPoolAddresses: Address[],
   ): Promise<BigNumber[]> {
     return this.protocolViewer.batchFetchTradingPoolRebalanceFees(tradingPoolAddresses);
+  }
+
+  /**
+   * Fetches EntryFeePaid event logs including information about the transactionHash, rebalancingSetToken,
+   * feeRecipient, and feeQuantity.
+   *
+   * This fetch can be filtered by block.
+   *
+   * @param  tradingPoolAddress            Address of trading pool to pull events for
+   * @param  fromBlock                     The beginning block to retrieve events from
+   * @param  toBlock                       The ending block to retrieve events (default is latest)
+   * @return                               An array of objects conforming to the EntryFeePaid interface
+   */
+  public async fetchEntryFeeEvents(
+    tradingPoolAddress: Address,
+    fromBlock: number,
+    toBlock?: any,
+    getTimestamp?: boolean,
+  ): Promise<EntryFeePaid[]> {
+    const events: any[] = await this.rebalancingSetV2.entryFeePaidEvent(
+      tradingPoolAddress,
+      fromBlock,
+      toBlock,
+    );
+
+    const formattedEventPromises: Promise<EntryFeePaid>[] = events.map(async event => {
+      const returnValues = event.returnValues;
+      const feeRecipient = returnValues['feeRecipient'];
+      const feeQuantity = returnValues['feeQuantity'];
+
+      let timestamp = undefined;
+      if (getTimestamp) {
+        const block = await this.web3.eth.getBlock(event.blockNumber);
+        timestamp = block.timestamp;
+      }
+
+      return {
+        transactionHash: event.transactionHash,
+        feeRecipient,
+        feeQuantity: new BigNumber(feeQuantity),
+        timestamp,
+      };
+    });
+
+    return Promise.all(formattedEventPromises);
+  }
+
+  /**
+   * Fetches RebalanceFeePaid event logs including information about the transactionHash, rebalancingSetToken,
+   * rebalanceIndex, feeRecipient, feeQuantity
+   *
+   * This fetch can be filtered by block.
+   *
+   * @param  tradingPoolAddress            Address of trading pool to pull events for
+   * @param  fromBlock                     The beginning block to retrieve events from
+   * @param  toBlock                       The ending block to retrieve events (default is latest)
+   * @return                               An array of objects conforming to the RebalanceFeePaid interface
+   */
+  public async fetchRebalanceFeePaidEvents(
+    tradingPoolAddress: Address,
+    fromBlock: number,
+    toBlock?: any,
+    getTimestamp?: boolean,
+  ): Promise<RebalanceFeePaid[]> {
+    const events: any[] = await this.rebalancingSetV2.rebalanceSettledEvent(
+      tradingPoolAddress,
+      fromBlock,
+      toBlock,
+    );
+
+    const formattedEventPromises: Promise<RebalanceFeePaid>[] = events.map(async event => {
+      const returnValues = event.returnValues;
+      const rebalanceIndex = returnValues['rebalanceIndex'];
+      const feeRecipient = returnValues['feeRecipient'];
+      const feeQuantity = returnValues['feeQuantity'];
+
+      let timestamp = undefined;
+      if (getTimestamp) {
+        const block = await this.web3.eth.getBlock(event.blockNumber);
+        timestamp = block.timestamp;
+      }
+
+      return {
+        transactionHash: event.transactionHash,
+        rebalanceIndex,
+        feeRecipient,
+        feeQuantity: new BigNumber(feeQuantity),
+        timestamp,
+      };
+    });
+
+    return Promise.all(formattedEventPromises);
   }
 
   /* ============ Private Functions ============ */
