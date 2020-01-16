@@ -27,11 +27,11 @@ Note: This is Alpha software, and is subject to non-backwards compatible changes
 ### setprotocol.js
 ##### Using yarn:
 ```shell
-$ yarn add setprotocol.js@^1.2.2-rc25
+$ yarn add setprotocol.js@^1.2.2-rc28
 ```
 ##### Using npm:
 ```shell
-$ npm i --save setprotocol.js@^1.2.2-rc25
+$ npm i --save setprotocol.js@^1.2.2-rc28
 ```
 
 ##### Setup
