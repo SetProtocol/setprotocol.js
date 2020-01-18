@@ -78,7 +78,7 @@ import {
   deploySetTokenAsync,
   deploySetTokensAsync,
   deploySocialTradingManagerMockAsync,
-  deployTokenAsync,
+  deployTokensSpecifyingDecimals,
   deployWhiteListContract,
   increaseChainTimeAsync,
   getTokenBalances,
@@ -525,20 +525,19 @@ describe('ProtocolViewer', () => {
     const feeRecipient = ACCOUNTS[3].address;
 
     beforeEach(async () => {
-      component1 = await deployTokenAsync(web3, deployerAccount);
-      component2 = await deployTokenAsync(web3, deployerAccount);
+      [component1, component2] = await deployTokensSpecifyingDecimals(2, [18, 18], web3, DEFAULT_ACCOUNT);
       await approveForTransferAsync([component1, component2], transferProxy.address);
 
       const component1Decimal = await component1.decimals.callAsync();
       const component2Decimal = await component2.decimals.callAsync();
 
       set1Components = [component1.address, component2.address];
-      set1Units = [new BigNumber(10 ** 9), new BigNumber(10 ** 9)];
+      set1Units = [new BigNumber(1), new BigNumber(1)];
       const set1NaturalUnitExponent = 18 - Math.min(component1Decimal.toNumber(), component2Decimal.toNumber());
       set1NaturalUnit = new BigNumber(10 ** set1NaturalUnitExponent);
 
       set2Components = [component1.address, component2.address];
-      set2Units = [new BigNumber(2 * 10 ** 9), new BigNumber(3 * 10 ** 9)];
+      set2Units = [new BigNumber(2), new BigNumber(3)];
       const set2NaturalUnitExponent = 18 - Math.min(component1Decimal.toNumber(), component2Decimal.toNumber());
       set2NaturalUnit = new BigNumber(2 * 10 ** set2NaturalUnitExponent);
 
