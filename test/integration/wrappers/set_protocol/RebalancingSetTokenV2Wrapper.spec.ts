@@ -196,8 +196,8 @@ describe('RebalancingSetTokenV2Wrapper', () => {
     );
 
     // Deploy a Set
-    const setTokenComponents = [wrappedBTC.address, wrappedETH.address];
-    const setTokenUnits = [initialEthPrice.div(1e18), initialBtcPrice.div(1e18)];
+    const setTokenComponents = [wrappedETH.address, wrappedBTC.address];
+    const setTokenUnits = [initialBtcPrice.mul(1e10).div(initialEthPrice).round(0, 3), new BigNumber(1)];
     const naturalUnit = new BigNumber(1e10);
     setToken = await deploySetTokenAsync(
       web3,
@@ -348,8 +348,8 @@ describe('RebalancingSetTokenV2Wrapper', () => {
       earlyBlockNumber = earlyTransaction['blockNumber'];
 
       // Deploy a Set
-      const setTokenComponents = [wrappedBTC.address, wrappedETH.address];
-      const setTokenUnits = [initialEthPrice.div(1e18).div(2), initialBtcPrice.div(1e18)];
+      const setTokenComponents = [wrappedETH.address, wrappedBTC.address];
+      const setTokenUnits = [initialBtcPrice.mul(1e10).div(initialEthPrice).round(0, 3), new BigNumber(3)];
       const naturalUnit = new BigNumber(1e10);
       nextSetToken = await deploySetTokenAsync(
         web3,
@@ -431,8 +431,8 @@ describe('RebalancingSetTokenV2Wrapper', () => {
       earlyBlockNumber = earlyTransaction['blockNumber'];
 
       // Deploy a Set
-      const setTokenComponents = [wrappedBTC.address, wrappedETH.address];
-      const setTokenUnits = [initialEthPrice.div(1e18).div(2), initialBtcPrice.div(1e18)];
+      const setTokenComponents = [wrappedETH.address, wrappedBTC.address];
+      const setTokenUnits = [initialBtcPrice.mul(1e10).div(initialEthPrice).round(0, 3), new BigNumber(3)];
       const naturalUnit = new BigNumber(1e10);
       nextSetToken = await deploySetTokenAsync(
         web3,

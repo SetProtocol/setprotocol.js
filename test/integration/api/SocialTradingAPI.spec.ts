@@ -524,7 +524,7 @@ describe('SocialTradingAPI', () => {
       subjectLiquidatorData = SetUtils.stringToBytes('');
 
       await core.issue.sendTransactionAsync(collateralAddress, ether(2), { from: subjectCaller });
-      await core.issue.sendTransactionAsync(subjectTradingPool, ether(2), { from: subjectCaller });
+      await core.issue.sendTransactionAsync(subjectTradingPool, ether(5), { from: subjectCaller });
     });
 
     afterEach(async () => {
@@ -1707,8 +1707,8 @@ describe('SocialTradingAPI', () => {
 
     beforeEach(async () => {
       // Deploy a Set
-      const setTokenComponents1 = [wrappedBTC.address, wrappedETH.address];
-      const setTokenUnits1 = [initialEthPrice.div(1e18), initialBtcPrice.div(1e18)];
+      const setTokenComponents1 = [wrappedETH.address, wrappedBTC.address];
+      const setTokenUnits1 = [initialBtcPrice.mul(1e10).div(initialEthPrice).round(0, 3), new BigNumber(1)];
       const naturalUnit1 = new BigNumber(1e10);
       setToken = await deploySetTokenAsync(
         web3,
@@ -1753,8 +1753,8 @@ describe('SocialTradingAPI', () => {
       earlyBlockNumber = earlyTransaction['blockNumber'];
 
       // Deploy a Set
-      const setTokenComponents2 = [wrappedBTC.address, wrappedETH.address];
-      const setTokenUnits2 = [initialEthPrice.div(1e18).div(2), initialBtcPrice.div(1e18)];
+      const setTokenComponents2 = [wrappedETH.address, wrappedBTC.address];
+      const setTokenUnits2 = [initialBtcPrice.mul(1e10).div(initialEthPrice).round(0, 3), new BigNumber(3)];
       const naturalUnit3 = new BigNumber(1e10);
       nextSetToken = await deploySetTokenAsync(
         web3,
