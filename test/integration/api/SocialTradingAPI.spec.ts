@@ -1682,7 +1682,7 @@ describe('SocialTradingAPI', () => {
     });
   });
 
-  describe.only('fetchRebalanceFeePaidEvents', async () => {
+  describe('fetchRebalanceFeePaidEvents', async () => {
     let earlyTxnHash: string;
     let earlyBlockNumber: number;
     let lastTransactionTimestamp: number;
