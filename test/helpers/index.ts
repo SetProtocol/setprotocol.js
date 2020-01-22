@@ -26,6 +26,7 @@ export {
   deployWethMockAsync,
   deployWhiteListContract,
   getTokenBalances,
+  getTokenInstances,
   getTokenSupplies,
   registerExchange,
   transferTokenAsync,
@@ -74,6 +75,7 @@ export {
 } from './rebalancingHelpers';
 
 export {
+  deployRebalancingSetCTokenBidderAsync,
   deployRebalancingSetEthBidderAsync,
 } from './rebalancingSetBidderHelpers';
 
