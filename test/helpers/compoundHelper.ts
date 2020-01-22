@@ -1,23 +1,15 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { Address, SetProtocolUtils } from 'set-protocol-utils';
+import { Address } from 'set-protocol-utils';
 
-import {
-  StandardTokenMock,
-} from 'set-protocol-contracts';
-import {
-  StandardTokenMockContract,
-} from 'set-protocol-contracts';
 
 import {
   DEFAULT_ACCOUNT,
   DEFAULT_GAS_LIMIT,
 } from '@src/constants';
-import { 
+import {
   BigNumber,
-  ether,
-  getFormattedLogsFromTxHash,
-  extractNewSetTokenAddressFromLogs
+  ether
 } from '@src/util';
 
 const contract = require('truffle-contract');
@@ -156,7 +148,7 @@ export class CompoundHelper {
     decimals: BigNumber,
     admin: Address,
   ): Promise<string> {
-    console.log(underlying, comptroller, interestRateModel, initialExchangeRate, symbol, name, decimals, admin)
+    console.log(underlying, comptroller, interestRateModel, initialExchangeRate, symbol, name, decimals, admin);
     const instance = await new web3.eth.Contract(CErc20ABI).deploy({
       data: BYTECODE.CErc20,
       arguments: [
@@ -170,7 +162,7 @@ export class CompoundHelper {
         admin,
       ],
     }).send({ from: admin, gas: DEFAULT_GAS_LIMIT });
-    console.log(admin, instance)
+    console.log(admin, instance);
     return instance.options.address;
   }
 
