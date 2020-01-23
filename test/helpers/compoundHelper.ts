@@ -12,8 +12,6 @@ import {
   ether
 } from '@src/util';
 
-const contract = require('truffle-contract');
-
 import { ComptrollerABI } from '../external/abis/compound/ComptrollerABI';
 import { CErc20ABI } from '../external/abis/compound/CErc20ABI';
 import { InterestRateModelABI } from '../external/abis/compound/InterestRateModelABI';
@@ -148,7 +146,6 @@ export class CompoundHelper {
     decimals: BigNumber,
     admin: Address,
   ): Promise<string> {
-    console.log(underlying, comptroller, interestRateModel, initialExchangeRate, symbol, name, decimals, admin);
     const instance = await new web3.eth.Contract(CErc20ABI).deploy({
       data: BYTECODE.CErc20,
       arguments: [
@@ -162,7 +159,6 @@ export class CompoundHelper {
         admin,
       ],
     }).send({ from: admin, gas: DEFAULT_GAS_LIMIT });
-    console.log(admin, instance);
     return instance.options.address;
   }
 

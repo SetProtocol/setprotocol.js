@@ -388,11 +388,12 @@ describe('RebalancingSetEthBidderWrapper', () => {
       const events = await subject();
 
       const { returnValues } = events[0];
-      const { bidder } = returnValues;
+      const { bidder, quantity } = returnValues;
       const returnedRebalancingSetToken = returnValues['rebalancingSetToken'];
 
       expect(returnedRebalancingSetToken).to.equal(rebalancingSetToken.address);
       expect(bidder).to.equal(bidderAccount);
+      expect(quantity).to.equal(bidQuantity.toString());
     });
 
     describe('when a rebalancingSetToken filter is enabled', async () => {

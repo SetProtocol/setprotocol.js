@@ -40,7 +40,6 @@ import {
   TransferProxyContract,
   VaultContract,
   WhiteListContract,
-  WethMockContract,
 } from 'set-protocol-contracts';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
@@ -49,9 +48,7 @@ import {
   RebalancingSetCTokenBidderWrapper,
 } from '@src/wrappers';
 import {
-  NULL_ADDRESS,
   TX_DEFAULTS,
-  ZERO,
   ONE_DAY_IN_SECONDS,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
   DEFAULT_AUCTION_PRICE_DENOMINATOR,
@@ -68,10 +65,9 @@ import {
   deploySetTokenAsync,
   deployTokenAsync,
   deployTokensSpecifyingDecimals,
-  deployWethMockAsync,
   getTokenInstances,
-  getGasUsageInEth,
   getVaultBalances,
+  replaceFlowsWithCTokenUnderlyingAsync,
   transitionToRebalanceAsync,
 } from '@test/helpers';
 
@@ -137,7 +133,7 @@ describe('RebalancingSetCTokenBidderWrapper', () => {
       rebalanceAuctionModule,
       whitelist,
     ] = await deployBaseContracts(web3);
-    console.log('1')
+
     const usdcDecimals = 6;
     const daiDecimals = 18;
     const underlyingInstances = await deployTokensSpecifyingDecimals(
@@ -145,11 +141,11 @@ describe('RebalancingSetCTokenBidderWrapper', () => {
       [usdcDecimals, daiDecimals],
       web3,
     );
+
     usdcInstance = underlyingInstances[0];
     daiInstance = underlyingInstances[1];
-    console.log('2', underlyingInstances[0].address)
+
     const cUSDCAddress = await compoundHelper.deployMockCUSDC(usdcInstance.address, DEFAULT_ACCOUNT);
-    console.log('3', cUSDCAddress)
     await compoundHelper.enableCToken(cUSDCAddress);
     // Set the Borrow Rate
     await compoundHelper.setBorrowRate(cUSDCAddress, new BigNumber('43084603999'));
@@ -158,12 +154,11 @@ describe('RebalancingSetCTokenBidderWrapper', () => {
     await compoundHelper.enableCToken(cDAIAddress);
     // Set the Borrow Rate
     await compoundHelper.setBorrowRate(cDAIAddress, new BigNumber('29313252165'));
-    console.log(cUSDCAddress, cDAIAddress)
-    const cTokenInstances = await getTokenInstances(web3, [cUSDCAddress, cDAIAddress])
+    const cTokenInstances = await getTokenInstances(web3, [cUSDCAddress, cDAIAddress]);
     cUSDCInstance = cTokenInstances[0];
     cDAIInstance = cTokenInstances[1];
 
-    dataDescription = 'cDAI cUSDC Bidder Contract'
+    dataDescription = 'cDAI cUSDC Bidder Contract';
     rebalancingSetCTokenBidder = await deployRebalancingSetCTokenBidderAsync(
       web3,
       rebalanceAuctionModule,
@@ -420,11 +415,12 @@ describe('RebalancingSetCTokenBidderWrapper', () => {
       const events = await subject();
 
       const { returnValues } = events[0];
-      const { bidder } = returnValues;
+      const { bidder, quantity } = returnValues;
       const returnedRebalancingSetToken = returnValues['rebalancingSetToken'];
 
       expect(returnedRebalancingSetToken).to.equal(rebalancingSetToken.address);
       expect(bidder).to.equal(bidderAccount);
+      expect(quantity).to.equal(bidQuantity.toString());
     });
 
     describe('when a rebalancingSetToken filter is enabled', async () => {
@@ -440,468 +436,776 @@ describe('RebalancingSetCTokenBidderWrapper', () => {
     });
   });
 
-  // describe('bidAndWithdraw', async () => {
-  //   let rebalancingSetToken: RebalancingSetTokenContract;
-  //   let defaultSetToken: SetTokenContract;
-  //   let cTokenSetToken: SetTokenContract;
-
-  //   let defaultBaseSetComponent: StandardTokenMockContract;
-  //   let defaultBaseSetComponent2: StandardTokenMockContract;
-  //   let cTokenBaseSetComponent: StandardTokenMockContract;
-  //   let cTokenBaseSetComponent2: StandardTokenMockContract;
-
-  //   let cTokenComponentUnits: BigNumber;
-  //   let cTokenBaseSetNaturalUnit: BigNumber;
-
-  //   let subjectRebalancingSetToken: Address;
-  //   let subjectBidQuantity: BigNumber;
-  //   let subjectAllowPartialFill: boolean;
-  //   let subjectCaller: Address;
-
-  //   beforeEach(async () => {
-  //     // Create component tokens for default Set
-  //     defaultBaseSetComponent = await deployTokenAsync(web3);
-  //     defaultBaseSetComponent2 = await deployTokenAsync(web3);
-
-  //     // Create the Set (default is 2 components)
-  //     const defaultComponentAddresses = [
-  //       defaultBaseSetComponent.address, defaultBaseSetComponent2.address,
-  //     ];
-  //     const defaultComponentUnits = [
-  //       ether(0.01), ether(0.01),
-  //     ];
-
-  //     const defaultBaseSetNaturalUnit = ether(0.001);
-  //     defaultSetToken = await deploySetTokenAsync(
-  //       web3,
-  //       core,
-  //       setTokenFactory.address,
-  //       defaultComponentAddresses,
-  //       defaultComponentUnits,
-  //       defaultBaseSetNaturalUnit,
-  //     );
-
-  //     // Create component tokens for Set containing cTokens
-  //     cTokenBaseSetComponent = cUSDCInstance;
-  //     cTokenBaseSetComponent2 = cDAIInstance;
-
-  //     // Create the Set (default is 2 components)
-  //     const nextComponentAddresses = [
-  //       cTokenBaseSetComponent.address, cTokenBaseSetComponent2.address,
-  //     ];
-
-  //     const nextComponentUnits = [
-  //       ether(0.001), ether(1),
-  //     ];
-
-  //     cTokenBaseSetNaturalUnit = ether(0.001);
-  //     cTokenSetToken = await deploySetTokenAsync(
-  //       web3,
-  //       core,
-  //       setTokenFactory.address,
-  //       nextComponentAddresses,
-  //       nextComponentUnits,
-  //       cTokenBaseSetNaturalUnit,
-  //     );
-  //   });
-
-  //   async function subject(): Promise<string> {
-  //     return await rebalancingSetCTokenBidderWrapper.bidAndWithdraw(
-  //       subjectRebalancingSetToken,
-  //       subjectBidQuantity,
-  //       subjectAllowPartialFill,
-  //       { from: subjectCaller },
-  //     );
-  //   }
-
-  //   describe('when cTokens are inflows in a bid', async () => {
-  //     beforeEach(async () => {
-  //       // Create the Rebalancing Set without cToken component
-  //       const proposalPeriod = ONE_DAY_IN_SECONDS;
-  //       const managerAddress = ACCOUNTS[1].address;
-
-  //       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
-  //         web3,
-  //         core,
-  //         rebalancingSetTokenFactory.address,
-  //         managerAddress,
-  //         defaultSetToken.address,
-  //         proposalPeriod
-  //       );
-
-  //       // Approve tokens and issue defaultSetToken
-  //       const baseSetIssueQuantity = ether(1);
-
-  //       await approveForTransferAsync([
-  //         defaultBaseSetComponent,
-  //         defaultBaseSetComponent2,
-  //       ], transferProxy.address);
-
-  //       await core.issue.sendTransactionAsync(
-  //         defaultSetToken.address,
-  //         baseSetIssueQuantity,
-  //         TX_DEFAULTS,
-  //       );
-
-  //       // Use issued defaultSetToken to issue rebalancingSetToken
-  //       await approveForTransferAsync([defaultSetToken], transferProxy.address);
-
-  //       const rebalancingSetTokenQuantityToIssue = ether(1);
-
-  //       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
-
-  //       // Approve proposed Set's components to the whitelist;
-  //       const [proposalComponentOne, proposalComponentTwo] = await cTokenSetToken.getComponents.callAsync();
-  //       await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-  //       await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
-
-  //       // Deploy price curve used in auction
-  //       const priceCurve = await deployConstantAuctionPriceCurveAsync(
-  //         web3,
-  //         DEFAULT_AUCTION_PRICE_NUMERATOR,
-  //         DEFAULT_AUCTION_PRICE_DENOMINATOR
-  //       );
-
-  //       addPriceCurveToCoreAsync(
-  //         core,
-  //         priceCurve.address
-  //       );
-
-  //       // Transition to rebalance state
-  //       const auctionPriceCurveAddress = priceCurve.address;
-  //       const setAuctionTimeToPivot = new BigNumber(100000);
-  //       const setAuctionStartPrice = new BigNumber(500);
-  //       const setAuctionPivotPrice = new BigNumber(1000);
-  //       await transitionToRebalanceAsync(
-  //         web3,
-  //         rebalancingSetToken,
-  //         managerAddress,
-  //         cTokenSetToken.address,
-  //         auctionPriceCurveAddress,
-  //         setAuctionTimeToPivot,
-  //         setAuctionStartPrice,
-  //         setAuctionPivotPrice,
-  //       );
-
-  //       // Approve tokens to rebalancingSetCTokenBidder contract
-  //       await approveForTransferAsync([
-  //         cTokenBaseSetComponent,
-  //         cTokenBaseSetComponent2,
-  //       ], rebalancingSetCTokenBidder.address);
-
-  //       subjectRebalancingSetToken = rebalancingSetToken.address;
-  //       subjectBidQuantity = ether(1);
-  //       subjectAllowPartialFill = false;
-  //       subjectCaller = DEFAULT_ACCOUNT;
-  //     });
-
-  //     test('subtract correct amount from remainingCurrentSets', async () => {
-  //       const [, existingRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
-
-  //       await subject();
-
-  //       const expectedRemainingCurrentSets = existingRemainingCurrentSets.sub(subjectBidQuantity);
-  //       const [, newRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
-  //       expect(newRemainingCurrentSets).to.eql(expectedRemainingCurrentSets);
-  //     });
-
-  //     test('transfers the correct amount of tokens from the bidder to the rebalancing token in Vault', async () => {
-  //       const expectedTokenFlows = await constructInflowOutflowArraysAsync(
-  //         rebalancingSetToken,
-  //         subjectBidQuantity,
-  //         DEFAULT_AUCTION_PRICE_NUMERATOR,
-  //       );
-  //       const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
-
-  //       const oldSenderBalances = await getVaultBalances(
-  //         vault,
-  //         combinedTokenArray,
-  //         rebalancingSetToken.address
-  //       );
-
-  //       await subject();
-
-  //       const newSenderBalances = await getVaultBalances(
-  //         vault,
-  //         combinedTokenArray,
-  //         rebalancingSetToken.address
-  //       );
-  //       const expectedSenderBalances = _.map(oldSenderBalances, (balance, index) =>
-  //         balance.add(expectedTokenFlows['inflow'][index]).sub(expectedTokenFlows['outflow'][index])
-  //       );
-  //       expect(JSON.stringify(newSenderBalances)).to.equal(JSON.stringify(expectedSenderBalances));
-  //     });
-
-  //     test('transfers and withdraws the correct amount of tokens to the bidder wallet', async () => {
-  //       const expectedTokenFlows = await constructInflowOutflowArraysAsync(
-  //         rebalancingSetToken,
-  //         subjectBidQuantity,
-  //         DEFAULT_AUCTION_PRICE_NUMERATOR,
-  //       );
-  //       const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
-
-  //       const oldReceiverTokenBalances = await Promise.all(
-  //         combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
-  //       );
-  //       const oldEthBalance = new BigNumber(await web3.eth.getBalance(subjectCaller));
-
-  //       // Replace WETH balance with ETH balance
-  //       const oldReceiverTokenAndEthBalances = _.map(oldReceiverTokenBalances, (balance, index) =>
-  //         combinedTokenArray[index] === weth.address ? new BigNumber(oldEthBalance) : balance
-  //       );
-
-  //       const txHash = await subject();
-
-  //       const newEthBalance =  await web3.eth.getBalance(subjectCaller);
-  //       const newReceiverTokenBalances = await Promise.all(
-  //         combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
-  //       );
-  //       // Replace WETH balance with ETH balance and factor in gas paid
-  //       const totalGasInEth = await getGasUsageInEth(web3, txHash);
-  //       const newReceiverTokenAndEthBalances = _.map(newReceiverTokenBalances, (balance, index) =>
-  //         combinedTokenArray[index] === weth.address ? totalGasInEth.add(newEthBalance) : balance
-  //       );
-
-  //       const expectedReceiverBalances = _.map(oldReceiverTokenAndEthBalances, (balance, index) =>
-  //         balance.add(expectedTokenFlows['outflow'][index]).sub(expectedTokenFlows['inflow'][index])
-  //       );
-
-  //       expect(JSON.stringify(newReceiverTokenAndEthBalances)).to.equal(JSON.stringify(expectedReceiverBalances));
-  //     });
-  //   });
-
-  //   describe('when WETH is an outflow in a bid', async () => {
-  //     beforeEach(async () => {
-  //       // Create the Rebalancing Set with WETH component
-  //       const proposalPeriod = ONE_DAY_IN_SECONDS;
-  //       const managerAddress = ACCOUNTS[1].address;
-
-  //       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
-  //         web3,
-  //         core,
-  //         rebalancingSetTokenFactory.address,
-  //         managerAddress,
-  //         cTokenSetToken.address,
-  //         proposalPeriod
-  //       );
-
-  //       // Approve tokens and issue cTokenSetToken
-
-
-  //       await approveForTransferAsync([
-  //         cTokenBaseSetComponent,
-  //         cTokenBaseSetComponent2,
-  //       ], transferProxy.address);
-
-  //       await core.issue.sendTransactionAsync(
-  //         cTokenSetToken.address,
-  //         baseSetIssueQuantity,
-  //         TX_DEFAULTS,
-  //       );
-
-  //       // Use issued cTokenSetToken to issue rebalancingSetToken
-  //       await approveForTransferAsync([cTokenSetToken], transferProxy.address);
-
-  //       const rebalancingSetTokenQuantityToIssue = ether(1);
-
-  //       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
-
-  //       // Approve proposed Set's components to the whitelist;
-  //       const [proposalComponentOne, proposalComponentTwo] = await defaultSetToken.getComponents.callAsync();
-  //       await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-  //       await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
-
-  //       // Deploy price curve used in auction
-  //       const priceCurve = await deployConstantAuctionPriceCurveAsync(
-  //         web3,
-  //         DEFAULT_AUCTION_PRICE_NUMERATOR,
-  //         DEFAULT_AUCTION_PRICE_DENOMINATOR
-  //       );
-
-  //       addPriceCurveToCoreAsync(
-  //         core,
-  //         priceCurve.address
-  //       );
-
-  //       // Transition to rebalance state
-  //       const auctionPriceCurveAddress = priceCurve.address;
-  //       const setAuctionTimeToPivot = new BigNumber(100000);
-  //       const setAuctionStartPrice = new BigNumber(500);
-  //       const setAuctionPivotPrice = new BigNumber(1000);
-  //       await transitionToRebalanceAsync(
-  //         web3,
-  //         rebalancingSetToken,
-  //         managerAddress,
-  //         defaultSetToken.address,
-  //         auctionPriceCurveAddress,
-  //         setAuctionTimeToPivot,
-  //         setAuctionStartPrice,
-  //         setAuctionPivotPrice,
-  //       );
-
-  //       // Approve tokens to rebalancingSetCTokenBidder contract
-  //       await approveForTransferAsync([
-  //         defaultBaseSetComponent,
-  //         defaultBaseSetComponent2,
-  //       ], rebalancingSetCTokenBidder.address);
-
-  //       subjectRebalancingSetToken = rebalancingSetToken.address;
-  //       subjectBidQuantity = ether(1);
-  //       subjectAllowPartialFill = false;
-  //       subjectCaller = DEFAULT_ACCOUNT;
-  //     });
-
-  //     test('transfers and withdraws the correct amount of tokens to the bidder wallet', async () => {
-  //       const expectedTokenFlows = await constructInflowOutflowArraysAsync(
-  //         rebalancingSetToken,
-  //         subjectBidQuantity,
-  //         DEFAULT_AUCTION_PRICE_NUMERATOR,
-  //       );
-  //       const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
-
-  //       const oldReceiverTokenBalances = await Promise.all(
-  //         combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
-  //       );
-  //       const oldEthBalance = new BigNumber(await web3.eth.getBalance(subjectCaller));
-
-  //       // Replace WETH balance with ETH balance
-  //       const oldReceiverTokenAndEthBalances = _.map(oldReceiverTokenBalances, (balance, index) =>
-  //         combinedTokenArray[index] === weth.address ? new BigNumber(oldEthBalance) : balance
-  //       );
-
-  //       const txHash = await subject();
-
-  //       const newEthBalance =  await web3.eth.getBalance(subjectCaller);
-  //       const newReceiverTokenBalances = await Promise.all(
-  //         combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
-  //       );
-  //       // Replace WETH balance with ETH balance and factor in gas paid
-  //       const totalGasInEth = await getGasUsageInEth(web3, txHash);
-  //       const newReceiverTokenAndEthBalances = _.map(newReceiverTokenBalances, (balance, index) =>
-  //         combinedTokenArray[index] === weth.address ? totalGasInEth.add(newEthBalance) : balance
-  //       );
-
-  //       const expectedReceiverBalances = _.map(oldReceiverTokenAndEthBalances, (balance, index) =>
-  //         balance.add(expectedTokenFlows['outflow'][index]).sub(expectedTokenFlows['inflow'][index])
-  //       );
-
-  //       expect(JSON.stringify(newReceiverTokenAndEthBalances)).to.equal(JSON.stringify(expectedReceiverBalances));
-  //     });
-  //   });
-
-  //   describe('when WETH is neither an inflow nor outflow in a bid', async () => {
-  //     beforeEach(async () => {
-  //       // Create the Rebalancing Set without WETH component
-  //       const proposalPeriod = ONE_DAY_IN_SECONDS;
-  //       const managerAddress = ACCOUNTS[1].address;
-
-  //       rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
-  //         web3,
-  //         core,
-  //         rebalancingSetTokenFactory.address,
-  //         managerAddress,
-  //         defaultSetToken.address,
-  //         proposalPeriod
-  //       );
-
-  //       // Approve tokens and issue defaultSetToken
-  //       const baseSetIssueQuantity = ether(1);
-
-  //       await approveForTransferAsync([
-  //         defaultBaseSetComponent,
-  //         defaultBaseSetComponent2,
-  //       ], transferProxy.address);
-
-  //       await core.issue.sendTransactionAsync(
-  //         defaultSetToken.address,
-  //         baseSetIssueQuantity,
-  //         TX_DEFAULTS,
-  //       );
-
-  //       // Use issued defaultSetToken to issue rebalancingSetToken
-  //       await approveForTransferAsync([defaultSetToken], transferProxy.address);
-
-  //       const rebalancingSetTokenQuantityToIssue = ether(1);
-
-  //       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
-
-  //       // Create new next Set with no weth component
-  //       const defaultNextBaseSetComponent = await deployTokenAsync(web3);
-  //       const defaultNextBaseSetComponent2 = await deployTokenAsync(web3);
-  //       const defaultNextComponentAddresses = [
-  //         defaultNextBaseSetComponent.address, defaultNextBaseSetComponent2.address,
-  //       ];
-  //       const defaultNextComponentUnits = [
-  //         ether(0.01), ether(0.01),
-  //       ];
-  //       const defaultBaseSetNaturalUnit = ether(0.001);
-  //       const defaultNextSetToken = await deploySetTokenAsync(
-  //         web3,
-  //         core,
-  //         setTokenFactory.address,
-  //         defaultNextComponentAddresses,
-  //         defaultNextComponentUnits,
-  //         defaultBaseSetNaturalUnit,
-  //       );
-
-  //       // Approve proposed Set's components to the whitelist;
-  //       const [proposalComponentOne, proposalComponentTwo] = await defaultNextSetToken.getComponents.callAsync();
-  //       await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-  //       await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
-
-  //       // Deploy price curve used in auction
-  //       const priceCurve = await deployConstantAuctionPriceCurveAsync(
-  //         web3,
-  //         DEFAULT_AUCTION_PRICE_NUMERATOR,
-  //         DEFAULT_AUCTION_PRICE_DENOMINATOR
-  //       );
-
-  //       addPriceCurveToCoreAsync(
-  //         core,
-  //         priceCurve.address
-  //       );
-
-  //       // Transition to rebalance state
-  //       const auctionPriceCurveAddress = priceCurve.address;
-  //       const setAuctionTimeToPivot = new BigNumber(100000);
-  //       const setAuctionStartPrice = new BigNumber(500);
-  //       const setAuctionPivotPrice = new BigNumber(1000);
-  //       await transitionToRebalanceAsync(
-  //         web3,
-  //         rebalancingSetToken,
-  //         managerAddress,
-  //         defaultNextSetToken.address,
-  //         auctionPriceCurveAddress,
-  //         setAuctionTimeToPivot,
-  //         setAuctionStartPrice,
-  //         setAuctionPivotPrice,
-  //       );
-
-  //       // Approve tokens to rebalancingSetCTokenBidder contract
-  //       await approveForTransferAsync([
-  //         defaultNextBaseSetComponent,
-  //         defaultNextBaseSetComponent2,
-  //       ], rebalancingSetCTokenBidder.address);
-
-  //       subjectRebalancingSetToken = rebalancingSetToken.address;
-  //       subjectBidQuantity = ether(1);
-  //       subjectAllowPartialFill = false;
-  //       subjectCaller = DEFAULT_ACCOUNT;
-  //     });
-
-  //     test('returns the amount of ETH minus gas cost', async () => {
-  //       const previousEthBalance: BigNumber = new BigNumber(await web3.eth.getBalance(subjectCaller));
-
-  //       const txHash = await subject();
-
-  //       const currentEthBalance =  await web3.eth.getBalance(subjectCaller);
-
-  //       const totalGasInEth = await getGasUsageInEth(web3, txHash);
-
-  //       const expectedEthBalance = previousEthBalance.sub(totalGasInEth);
-
-  //       expect(expectedEthBalance).to.bignumber.equal(currentEthBalance);
-  //     });
-  //   });
-  // });
+  describe('bidAndWithdraw', async () => {
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let defaultSetToken: SetTokenContract;
+    let cTokenSetToken: SetTokenContract;
+
+    let defaultBaseSetComponent: StandardTokenMockContract;
+    let defaultBaseSetComponent2: StandardTokenMockContract;
+    let cTokenBaseSetComponent: StandardTokenMockContract;
+    let cTokenBaseSetComponent2: StandardTokenMockContract;
+
+    let cTokenBaseSetNaturalUnit: BigNumber;
+
+    let subjectRebalancingSetToken: Address;
+    let subjectBidQuantity: BigNumber;
+    let subjectAllowPartialFill: boolean;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      // Create component tokens for default Set
+      defaultBaseSetComponent = await deployTokenAsync(web3);
+      defaultBaseSetComponent2 = await deployTokenAsync(web3);
+
+      // Create the Set (default is 2 components)
+      const defaultComponentAddresses = [
+        defaultBaseSetComponent.address, defaultBaseSetComponent2.address,
+      ];
+      const defaultComponentUnits = [
+        ether(0.01), ether(0.01),
+      ];
+
+      const defaultBaseSetNaturalUnit = ether(0.001);
+      defaultSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        defaultComponentAddresses,
+        defaultComponentUnits,
+        defaultBaseSetNaturalUnit,
+      );
+
+      // Create component tokens for Set containing cTokens
+      cTokenBaseSetComponent = cUSDCInstance;
+      cTokenBaseSetComponent2 = cDAIInstance;
+
+      // Create the Set (default is 2 components)
+      const nextComponentAddresses = [
+        cTokenBaseSetComponent.address, cTokenBaseSetComponent2.address,
+      ];
+
+      const nextComponentUnits = [
+        ether(0.001), ether(1),
+      ];
+
+      cTokenBaseSetNaturalUnit = ether(0.001);
+      cTokenSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        nextComponentAddresses,
+        nextComponentUnits,
+        cTokenBaseSetNaturalUnit,
+      );
+    });
+
+    async function subject(): Promise<string> {
+      return await rebalancingSetCTokenBidderWrapper.bidAndWithdraw(
+        subjectRebalancingSetToken,
+        subjectBidQuantity,
+        subjectAllowPartialFill,
+        { from: subjectCaller },
+      );
+    }
+
+    describe('when cTokens are inflows in a bid', async () => {
+      beforeEach(async () => {
+        // Create the Rebalancing Set without cToken component
+        const proposalPeriod = ONE_DAY_IN_SECONDS;
+        const managerAddress = ACCOUNTS[1].address;
+
+        rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+          web3,
+          core,
+          rebalancingSetTokenFactory.address,
+          managerAddress,
+          defaultSetToken.address,
+          proposalPeriod
+        );
+
+        // Approve tokens and issue defaultSetToken
+        const baseSetIssueQuantity = ether(1);
+
+        await approveForTransferAsync([
+          defaultBaseSetComponent,
+          defaultBaseSetComponent2,
+        ], transferProxy.address);
+
+        await core.issue.sendTransactionAsync(
+          defaultSetToken.address,
+          baseSetIssueQuantity,
+          TX_DEFAULTS,
+        );
+
+        // Use issued defaultSetToken to issue rebalancingSetToken
+        await approveForTransferAsync([defaultSetToken], transferProxy.address);
+
+        const rebalancingSetTokenQuantityToIssue = ether(1);
+
+        await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
+
+        // Approve proposed Set's components to the whitelist;
+        const [proposalComponentOne, proposalComponentTwo] = await cTokenSetToken.getComponents.callAsync();
+        await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+        await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
+        // Deploy price curve used in auction
+        const priceCurve = await deployConstantAuctionPriceCurveAsync(
+          web3,
+          DEFAULT_AUCTION_PRICE_NUMERATOR,
+          DEFAULT_AUCTION_PRICE_DENOMINATOR
+        );
+
+        addPriceCurveToCoreAsync(
+          core,
+          priceCurve.address
+        );
+
+        // Transition to rebalance state
+        const auctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToRebalanceAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          cTokenSetToken.address,
+          auctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice,
+        );
+
+        // Determine minimum bid
+        const decOne = await defaultSetToken.naturalUnit.callAsync();
+        const decTwo = await cTokenSetToken.naturalUnit.callAsync();
+        const minBid = new BigNumber(Math.max(decOne.toNumber(), decTwo.toNumber()) * 1000);
+
+        // Approve tokens to rebalancingSetCTokenBidder contract
+        await approveForTransferAsync([
+          usdcInstance,
+          daiInstance,
+        ], rebalancingSetCTokenBidder.address);
+
+        subjectRebalancingSetToken = rebalancingSetToken.address;
+        subjectBidQuantity = minBid;
+        subjectAllowPartialFill = false;
+        subjectCaller = DEFAULT_ACCOUNT;
+      });
+
+      test('subtract correct amount from remainingCurrentSets', async () => {
+        const [, existingRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
+
+        await subject();
+
+        const expectedRemainingCurrentSets = existingRemainingCurrentSets.sub(subjectBidQuantity);
+        const [, newRemainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
+        expect(newRemainingCurrentSets).to.eql(expectedRemainingCurrentSets);
+      });
+
+      test('transfers the correct amount of tokens from the bidder to the rebalancing token in Vault', async () => {
+        const expectedTokenFlows = await constructInflowOutflowArraysAsync(
+          rebalancingSetToken,
+          subjectBidQuantity,
+          DEFAULT_AUCTION_PRICE_NUMERATOR,
+        );
+        const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+        const oldSenderBalances = await getVaultBalances(
+          vault,
+          combinedTokenArray,
+          rebalancingSetToken.address
+        );
+
+        await subject();
+
+        const newSenderBalances = await getVaultBalances(
+          vault,
+          combinedTokenArray,
+          rebalancingSetToken.address
+        );
+        const expectedSenderBalances = _.map(oldSenderBalances, (balance, index) =>
+          balance.add(expectedTokenFlows['inflow'][index]).sub(expectedTokenFlows['outflow'][index])
+        );
+        expect(JSON.stringify(newSenderBalances)).to.equal(JSON.stringify(expectedSenderBalances));
+      });
+
+      test('transfers and withdraws the correct amount of tokens to the bidder wallet', async () => {
+        const expectedTokenFlows = await constructInflowOutflowArraysAsync(
+          rebalancingSetToken,
+          subjectBidQuantity,
+          DEFAULT_AUCTION_PRICE_NUMERATOR
+        );
+        const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+        // Get current exchange rate
+        const cUSDCExchangeRate = await compoundHelper.getExchangeRateCurrent(cUSDCInstance.address);
+        const cDAIExchangeRate = await compoundHelper.getExchangeRateCurrent(cDAIInstance.address);
+        // Replace expected token flow arrays with cToken underlying
+        const expectedTokenFlowsUnderlying = replaceFlowsWithCTokenUnderlyingAsync(
+          expectedTokenFlows,
+          combinedTokenArray,
+          [cUSDCInstance.address, cDAIInstance.address],
+          [usdcInstance.address, daiInstance.address],
+          [cUSDCExchangeRate, cDAIExchangeRate],
+        );
+
+        const oldReceiverTokenBalances = await Promise.all(
+          combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+
+        const oldUnderlyingTokenBalances = await Promise.all(
+          [
+            usdcInstance.address,
+            daiInstance.address,
+          ].map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+
+        // Replace cToken balance with underlying token balance
+        const oldReceiverTokenUnderlyingBalances = _.map(oldReceiverTokenBalances, (balance, index) => {
+          if (combinedTokenArray[index] === cUSDCInstance.address) {
+            return oldUnderlyingTokenBalances[0];
+          } else if (combinedTokenArray[index] === cDAIInstance.address) {
+            return oldUnderlyingTokenBalances[1];
+          } else {
+            return balance;
+          }
+        });
+
+        await subject();
+
+        const newReceiverTokenBalances = await Promise.all(
+          combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+        const newUnderlyingTokenBalances = await Promise.all(
+          [
+            usdcInstance.address,
+            daiInstance.address,
+          ].map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+        // Replace cToken balance with underlying token balance
+        const newReceiverTokenUnderlyingBalances = _.map(newReceiverTokenBalances, (balance, index) => {
+          if (combinedTokenArray[index] === cUSDCInstance.address) {
+            return newUnderlyingTokenBalances[0];
+          } else if (combinedTokenArray[index] === cDAIInstance.address) {
+            return newUnderlyingTokenBalances[1];
+          } else {
+            return balance;
+          }
+        });
+        const expectedReceiverBalances = _.map(oldReceiverTokenUnderlyingBalances, (balance, index) =>
+          balance
+          .add(expectedTokenFlowsUnderlying['outflow'][index])
+          .sub(expectedTokenFlowsUnderlying['inflow'][index])
+        );
+
+        expect(JSON.stringify(newReceiverTokenUnderlyingBalances)).to.equal(JSON.stringify(expectedReceiverBalances));
+      });
+    });
+
+    describe('when cTokens are outflows in a bid', async () => {
+      beforeEach(async () => {
+        // Create the Rebalancing Set with no cToken component
+        const proposalPeriod = ONE_DAY_IN_SECONDS;
+        const managerAddress = ACCOUNTS[1].address;
+
+        rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+          web3,
+          core,
+          rebalancingSetTokenFactory.address,
+          managerAddress,
+          cTokenSetToken.address,
+          proposalPeriod
+        );
+
+        // Approve tokens, mint cToken and issue cTokenSetToken
+        const baseSetIssueQuantity = ether(1);
+
+        await approveForTransferAsync([usdcInstance], cTokenBaseSetComponent.address);
+        await approveForTransferAsync([daiInstance], cTokenBaseSetComponent2.address);
+        await compoundHelper.mintCToken(
+          cTokenBaseSetComponent.address,
+          new BigNumber(10 ** 18)
+        );
+        await compoundHelper.mintCToken(
+          cTokenBaseSetComponent2.address,
+          new BigNumber(10 ** 22)
+        );
+
+        await approveForTransferAsync([
+          cTokenBaseSetComponent,
+          cTokenBaseSetComponent2,
+        ], transferProxy.address);
+
+        await core.issue.sendTransactionAsync(
+          cTokenSetToken.address,
+          baseSetIssueQuantity,
+          TX_DEFAULTS,
+        );
+
+        // Use issued cTokenSetToken to issue rebalancingSetToken
+        await approveForTransferAsync([cTokenSetToken], transferProxy.address);
+
+        const rebalancingSetTokenQuantityToIssue = ether(1);
+
+        await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
+
+        // Approve proposed Set's components to the whitelist;
+        const [proposalComponentOne, proposalComponentTwo] = await defaultSetToken.getComponents.callAsync();
+        await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+        await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
+        // Deploy price curve used in auction
+        const priceCurve = await deployConstantAuctionPriceCurveAsync(
+          web3,
+          DEFAULT_AUCTION_PRICE_NUMERATOR,
+          DEFAULT_AUCTION_PRICE_DENOMINATOR
+        );
+
+        addPriceCurveToCoreAsync(
+          core,
+          priceCurve.address
+        );
+
+        // Transition to rebalance state
+        const auctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToRebalanceAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          defaultSetToken.address,
+          auctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice,
+        );
+
+        // Determine minimum bid
+        const decOne = await defaultSetToken.naturalUnit.callAsync();
+        const decTwo = await cTokenSetToken.naturalUnit.callAsync();
+        const minBid = new BigNumber(Math.max(decOne.toNumber(), decTwo.toNumber()) * 1000);
+
+        // Approve tokens to rebalancingSetCTokenBidder contract
+        await approveForTransferAsync([
+          defaultBaseSetComponent,
+          defaultBaseSetComponent2,
+        ], rebalancingSetCTokenBidder.address);
+
+        subjectRebalancingSetToken = rebalancingSetToken.address;
+        subjectBidQuantity = minBid;
+        subjectAllowPartialFill = false;
+        subjectCaller = DEFAULT_ACCOUNT;
+      });
+
+      test('transfers and withdraws the correct amount of tokens to the bidder wallet', async () => {
+        const expectedTokenFlows = await constructInflowOutflowArraysAsync(
+          rebalancingSetToken,
+          subjectBidQuantity,
+          DEFAULT_AUCTION_PRICE_NUMERATOR
+        );
+
+        const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+
+        const cUSDCExchangeRate = await compoundHelper.getExchangeRateCurrent(cUSDCInstance.address);
+        const cDAIExchangeRate = await compoundHelper.getExchangeRateCurrent(cDAIInstance.address);
+        // Replace expected token flow arrays with cToken underlying
+        const expectedTokenFlowsUnderlying = replaceFlowsWithCTokenUnderlyingAsync(
+          expectedTokenFlows,
+          combinedTokenArray,
+          [cUSDCInstance.address, cDAIInstance.address],
+          [usdcInstance.address, daiInstance.address],
+          [cUSDCExchangeRate, cDAIExchangeRate],
+        );
+
+        const oldReceiverTokenBalances = await Promise.all(
+          combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+
+        const oldUnderlyingTokenBalances = await Promise.all(
+          [
+            usdcInstance.address,
+            daiInstance.address,
+          ].map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+        // Replace cToken balance with underlying token balance
+        const oldReceiverTokenUnderlyingBalances = _.map(oldReceiverTokenBalances, (balance, index) => {
+          if (combinedTokenArray[index] === cUSDCInstance.address) {
+            return oldUnderlyingTokenBalances[0];
+          } else if (combinedTokenArray[index] === cDAIInstance.address) {
+            return oldUnderlyingTokenBalances[1];
+          } else {
+            return balance;
+          }
+        });
+
+        await subject();
+
+        console.log('here');
+
+        const newReceiverTokenBalances = await Promise.all(
+          combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+        const newUnderlyingTokenBalances = await Promise.all(
+          [
+            usdcInstance.address,
+            daiInstance.address,
+          ].map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+        // Replace cToken balance with underlying token balance
+        const newReceiverTokenUnderlyingBalances = _.map(newReceiverTokenBalances, (balance, index) => {
+          if (combinedTokenArray[index] === cUSDCInstance.address) {
+            return newUnderlyingTokenBalances[0];
+          } else if (combinedTokenArray[index] === cDAIInstance.address) {
+            return newUnderlyingTokenBalances[1];
+          } else {
+            return balance;
+          }
+        });
+
+        const expectedReceiverBalances = _.map(oldReceiverTokenUnderlyingBalances, (balance, index) =>
+          balance
+          .add(expectedTokenFlowsUnderlying['outflow'][index])
+          .sub(expectedTokenFlowsUnderlying['inflow'][index])
+        );
+
+        expect(JSON.stringify(newReceiverTokenUnderlyingBalances)).to.equal(JSON.stringify(expectedReceiverBalances));
+      });
+    });
+
+    describe('when cToken is neither an inflow nor outflow in a bid', async () => {
+      beforeEach(async () => {
+        // Create the Rebalancing Set with default component
+        const proposalPeriod = ONE_DAY_IN_SECONDS;
+        const managerAddress = ACCOUNTS[1].address;
+
+        rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+          web3,
+          core,
+          rebalancingSetTokenFactory.address,
+          managerAddress,
+          defaultSetToken.address,
+          proposalPeriod
+        );
+
+        // Approve tokens and issue defaultSetToken
+        const baseSetIssueQuantity = ether(1);
+
+        await approveForTransferAsync([
+          defaultBaseSetComponent,
+          defaultBaseSetComponent2,
+        ], transferProxy.address);
+
+        await core.issue.sendTransactionAsync(
+          defaultSetToken.address,
+          baseSetIssueQuantity,
+          TX_DEFAULTS,
+        );
+
+        // Use issued defaultSetToken to issue rebalancingSetToken
+        await approveForTransferAsync([defaultSetToken], transferProxy.address);
+
+        const rebalancingSetTokenQuantityToIssue = ether(1);
+
+        await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
+
+        // Create new next Set with no cToken component
+        const defaultNextBaseSetComponent = await deployTokenAsync(web3);
+        const defaultNextBaseSetComponent2 = await deployTokenAsync(web3);
+        const defaultNextComponentAddresses = [
+          defaultNextBaseSetComponent.address, defaultNextBaseSetComponent2.address,
+        ];
+        const defaultNextComponentUnits = [
+          ether(0.01), ether(0.01),
+        ];
+        const defaultBaseSetNaturalUnit = ether(0.001);
+        const defaultNextSetToken = await deploySetTokenAsync(
+          web3,
+          core,
+          setTokenFactory.address,
+          defaultNextComponentAddresses,
+          defaultNextComponentUnits,
+          defaultBaseSetNaturalUnit,
+        );
+
+        // Approve proposed Set's components to the whitelist;
+        const [proposalComponentOne, proposalComponentTwo] = await defaultNextSetToken.getComponents.callAsync();
+        await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+        await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
+        // Deploy price curve used in auction
+        const priceCurve = await deployConstantAuctionPriceCurveAsync(
+          web3,
+          DEFAULT_AUCTION_PRICE_NUMERATOR,
+          DEFAULT_AUCTION_PRICE_DENOMINATOR
+        );
+
+        addPriceCurveToCoreAsync(
+          core,
+          priceCurve.address
+        );
+
+        // Transition to rebalance state
+        const auctionPriceCurveAddress = priceCurve.address;
+        const setAuctionTimeToPivot = new BigNumber(100000);
+        const setAuctionStartPrice = new BigNumber(500);
+        const setAuctionPivotPrice = new BigNumber(1000);
+        await transitionToRebalanceAsync(
+          web3,
+          rebalancingSetToken,
+          managerAddress,
+          defaultNextSetToken.address,
+          auctionPriceCurveAddress,
+          setAuctionTimeToPivot,
+          setAuctionStartPrice,
+          setAuctionPivotPrice,
+        );
+
+        // Approve tokens to rebalancingSetCTokenBidder contract
+        await approveForTransferAsync([
+          defaultNextBaseSetComponent,
+          defaultNextBaseSetComponent2,
+        ], rebalancingSetCTokenBidder.address);
+
+        subjectRebalancingSetToken = rebalancingSetToken.address;
+        subjectBidQuantity = ether(1);
+        subjectAllowPartialFill = false;
+        subjectCaller = DEFAULT_ACCOUNT;
+      });
+
+      test("transfers the correct amount of tokens to the bidder's wallet", async () => {
+        const expectedTokenFlows = await constructInflowOutflowArraysAsync(
+          rebalancingSetToken,
+          subjectBidQuantity,
+          DEFAULT_AUCTION_PRICE_NUMERATOR
+        );
+
+        const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+        const oldReceiverTokenBalances = await Promise.all(
+          combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+
+        await subject();
+
+        const newReceiverBalances = await Promise.all(
+          combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+        );
+
+        const expectedReceiverBalances = _.map(oldReceiverTokenBalances, (balance, index) =>
+          balance
+          .add(expectedTokenFlows['outflow'][index])
+          .sub(expectedTokenFlows['inflow'][index])
+        );
+
+        expect(JSON.stringify(newReceiverBalances)).to.equal(JSON.stringify(expectedReceiverBalances));
+      });
+    });
+  });
+
+  describe('#getAddressAndBidPriceArray', async () => {
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let defaultSetToken: SetTokenContract;
+    let cTokenSetToken: SetTokenContract;
+
+    let defaultBaseSetComponent: StandardTokenMockContract;
+    let defaultBaseSetComponent2: StandardTokenMockContract;
+    let cTokenBaseSetComponent: StandardTokenMockContract;
+    let cTokenBaseSetComponent2: StandardTokenMockContract;
+
+    let cTokenBaseSetNaturalUnit: BigNumber;
+
+    let subjectRebalancingSetToken: Address;
+    let subjectBidQuantity: BigNumber;
+
+    beforeEach(async () => {
+      // Create component tokens for default Set
+      defaultBaseSetComponent = await deployTokenAsync(web3);
+      defaultBaseSetComponent2 = await deployTokenAsync(web3);
+
+      // Create the Set (default is 2 components)
+      const defaultComponentAddresses = [
+        defaultBaseSetComponent.address, defaultBaseSetComponent2.address,
+      ];
+      const defaultComponentUnits = [
+        ether(0.01), ether(0.01),
+      ];
+
+      const defaultBaseSetNaturalUnit = ether(0.001);
+      defaultSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        defaultComponentAddresses,
+        defaultComponentUnits,
+        defaultBaseSetNaturalUnit,
+      );
+
+      // Create component tokens for Set containing cTokens
+      cTokenBaseSetComponent = cUSDCInstance;
+      cTokenBaseSetComponent2 = cDAIInstance;
+
+      // Create the Set (default is 2 components)
+      const nextComponentAddresses = [
+        cTokenBaseSetComponent.address, cTokenBaseSetComponent2.address,
+      ];
+
+      const nextComponentUnits = [
+        ether(0.001), ether(1),
+      ];
+
+      cTokenBaseSetNaturalUnit = ether(0.001);
+      cTokenSetToken = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        nextComponentAddresses,
+        nextComponentUnits,
+        cTokenBaseSetNaturalUnit,
+      );
+
+      // Create the Rebalancing Set without cToken component
+      const proposalPeriod = ONE_DAY_IN_SECONDS;
+      const managerAddress = ACCOUNTS[1].address;
+
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        defaultSetToken.address,
+        proposalPeriod
+      );
+
+      // Approve tokens and issue defaultSetToken
+      const baseSetIssueQuantity = ether(1);
+
+      await approveForTransferAsync([
+        defaultBaseSetComponent,
+        defaultBaseSetComponent2,
+      ], transferProxy.address);
+
+      await core.issue.sendTransactionAsync(
+        defaultSetToken.address,
+        baseSetIssueQuantity,
+        TX_DEFAULTS,
+      );
+
+      // Use issued defaultSetToken to issue rebalancingSetToken
+      await approveForTransferAsync([defaultSetToken], transferProxy.address);
+
+      const rebalancingSetTokenQuantityToIssue = ether(1);
+
+      await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
+
+      // Approve proposed Set's components to the whitelist;
+      const [proposalComponentOne, proposalComponentTwo] = await cTokenSetToken.getComponents.callAsync();
+      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
+      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+
+      // Deploy price curve used in auction
+      const priceCurve = await deployConstantAuctionPriceCurveAsync(
+        web3,
+        DEFAULT_AUCTION_PRICE_NUMERATOR,
+        DEFAULT_AUCTION_PRICE_DENOMINATOR
+      );
+
+      addPriceCurveToCoreAsync(
+        core,
+        priceCurve.address
+      );
+
+      // Transition to rebalance state
+      const auctionPriceCurveAddress = priceCurve.address;
+      const setAuctionTimeToPivot = new BigNumber(100000);
+      const setAuctionStartPrice = new BigNumber(500);
+      const setAuctionPivotPrice = new BigNumber(1000);
+      await transitionToRebalanceAsync(
+        web3,
+        rebalancingSetToken,
+        managerAddress,
+        cTokenSetToken.address,
+        auctionPriceCurveAddress,
+        setAuctionTimeToPivot,
+        setAuctionStartPrice,
+        setAuctionPivotPrice,
+      );
+
+      // Determine minimum bid
+      const decOne = await defaultSetToken.naturalUnit.callAsync();
+      const decTwo = await cTokenSetToken.naturalUnit.callAsync();
+      const minBid = new BigNumber(Math.max(decOne.toNumber(), decTwo.toNumber()) * 1000);
+
+      // Approve tokens to rebalancingSetCTokenBidder contract
+      await approveForTransferAsync([
+        usdcInstance,
+        daiInstance,
+      ], rebalancingSetCTokenBidder.address);
+
+      subjectRebalancingSetToken = rebalancingSetToken.address;
+      subjectBidQuantity = minBid;
+    });
+
+    async function subject(): Promise<any> {
+      return rebalancingSetCTokenBidder.getAddressAndBidPriceArray.callAsync(
+        subjectRebalancingSetToken,
+        subjectBidQuantity,
+      );
+    }
+
+    it('should return the correct inflow, outflow and address arrays', async () => {
+      const [
+        actualAddressArray,
+        actualInflowUnitArray,
+        actualOutflowUnitArray,
+      ] = await subject();
+
+      const expectedTokenFlows = await constructInflowOutflowArraysAsync(
+        rebalancingSetToken,
+        subjectBidQuantity,
+        DEFAULT_AUCTION_PRICE_NUMERATOR
+      );
+
+      const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
+      const expectedCombinedTokenArray = _.map(combinedTokenArray, token => {
+        if (token === cUSDCInstance.address) {
+          return usdcInstance.address;
+        } else if (token === cDAIInstance.address) {
+          return daiInstance.address;
+        } else {
+          return token;
+        }
+      });
+      // Get exchange rate stored
+      const cUSDCExchangeRate = await compoundHelper.getExchangeRate(cUSDCInstance.address);
+      const cDAIExchangeRate = await compoundHelper.getExchangeRate(cDAIInstance.address);
+      // Replace expected token flow arrays with cToken underlying
+      const expectedTokenFlowsUnderlying = replaceFlowsWithCTokenUnderlyingAsync(
+        expectedTokenFlows,
+        combinedTokenArray,
+        [cUSDCInstance.address, cDAIInstance.address],
+        [usdcInstance.address, daiInstance.address],
+        [cUSDCExchangeRate, cDAIExchangeRate],
+      );
+
+      expect(
+        JSON.stringify(actualInflowUnitArray)
+      ).to.equal(
+        JSON.stringify(expectedTokenFlowsUnderlying['inflow'])
+      );
+      expect(
+        JSON.stringify(actualOutflowUnitArray)
+      ).to.equal(
+        JSON.stringify(expectedTokenFlowsUnderlying['outflow'])
+      );
+      expect(
+        JSON.stringify(actualAddressArray)
+      ).to.equal(
+        JSON.stringify(expectedCombinedTokenArray)
+      );
+    });
+  });
 });
