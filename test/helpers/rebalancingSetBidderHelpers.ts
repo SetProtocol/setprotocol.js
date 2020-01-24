@@ -18,7 +18,9 @@ import {
   DEFAULT_ACCOUNT,
   TX_DEFAULTS,
 } from '@src/constants';
+import { TokenFlowsDetails, Component } from '@src/types/common';
 import { BigNumber } from '@src/util';
+
 
 import { setDefaultTruffleContract } from './coreHelpers';
 
@@ -147,4 +149,47 @@ export const constructObjectFromArray = (
       [currentValue]: array2[index],
     };
   }, {});
+};
+
+export const replaceDetailFlowsWithCTokenUnderlyingAsync = (
+  expectedTokenFlowsDetails: any,
+  cTokenAddressesArray: Address[],
+  underlyingAddressesArray: Address[],
+  cTokenExchangeRateArray: BigNumber[],
+): TokenFlowsDetails => {
+  const cTokenToUnderlyingObject = constructObjectFromArray(
+    cTokenAddressesArray,
+    underlyingAddressesArray
+  );
+
+  const cTokenToExchangeRateObject = constructObjectFromArray(
+    cTokenAddressesArray,
+    cTokenExchangeRateArray
+  );
+
+  const newInflow = expectedTokenFlowsDetails['inflow'].map((component: Component) => {
+    if (cTokenToUnderlyingObject[component.address]) {
+      const cTokenConversion = cTokenToExchangeRateObject[component.address].div(10 ** 18);
+      const newAddress = cTokenToUnderlyingObject[component.address];
+      const newUnit = component.unit.mul(cTokenConversion).round(0, BigNumber.ROUND_DOWN);
+
+      return { address: newAddress, unit: newUnit };
+    } else {
+      return component;
+    }
+  });
+
+  const newOutflow = expectedTokenFlowsDetails['outflow'].map((component: Component) => {
+    if (cTokenToUnderlyingObject[component.address]) {
+      const cTokenConversion = cTokenToExchangeRateObject[component.address].div(10 ** 18);
+      const newAddress = cTokenToUnderlyingObject[component.address];
+      const newUnit = component.unit.mul(cTokenConversion).round(0, BigNumber.ROUND_DOWN);
+
+      return { address: newAddress, unit: newUnit };
+    } else {
+      return component;
+    }
+  });
+
+  return { inflow: newInflow, outflow: newOutflow };
 };

@@ -1150,18 +1150,14 @@ describe('RebalancingSetCTokenBidderWrapper', () => {
     });
 
     async function subject(): Promise<any> {
-      return rebalancingSetCTokenBidder.getAddressAndBidPriceArray.callAsync(
+      return rebalancingSetCTokenBidderWrapper.getAddressAndBidPriceArray(
         subjectRebalancingSetToken,
         subjectBidQuantity,
       );
     }
 
     it('should return the correct inflow, outflow and address arrays', async () => {
-      const [
-        actualAddressArray,
-        actualInflowUnitArray,
-        actualOutflowUnitArray,
-      ] = await subject();
+      const actualTokenFlows = await subject();
 
       const expectedTokenFlows = await constructInflowOutflowArraysAsync(
         rebalancingSetToken,
@@ -1192,17 +1188,17 @@ describe('RebalancingSetCTokenBidderWrapper', () => {
       );
 
       expect(
-        JSON.stringify(actualInflowUnitArray)
+        JSON.stringify(actualTokenFlows.inflow)
       ).to.equal(
         JSON.stringify(expectedTokenFlowsUnderlying['inflow'])
       );
       expect(
-        JSON.stringify(actualOutflowUnitArray)
+        JSON.stringify(actualTokenFlows.outflow)
       ).to.equal(
         JSON.stringify(expectedTokenFlowsUnderlying['outflow'])
       );
       expect(
-        JSON.stringify(actualAddressArray)
+        JSON.stringify(actualTokenFlows.combinedTokenAddresses)
       ).to.equal(
         JSON.stringify(expectedCombinedTokenArray)
       );

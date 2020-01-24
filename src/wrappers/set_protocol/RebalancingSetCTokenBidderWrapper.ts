@@ -21,7 +21,7 @@ import Web3 from 'web3';
 import { RebalancingSetCTokenBidder } from 'set-protocol-contracts';
 
 import { ProtocolContractWrapper } from './ProtocolContractWrapper';
-import { Address, Tx } from '../../types/common';
+import { Address, AddressTokenFlows, Tx } from '../../types/common';
 import { BigNumber, generateTxOpts } from '../../util';
 
 /**
@@ -103,5 +103,34 @@ export class RebalancingSetCTokenBidderWrapper {
       allowPartialFill,
       txSettings,
     );
+  }
+
+  /**
+   * Asynchronously submit a bid and withdraw bids while transacting in underlying of cTokens
+   * for a rebalancing auction on a rebalancingSetToken
+   *
+   * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
+   * @param  quantity                      Amount of currentSetToken the bidder wants to rebalance
+   * @param  allowPartialFill              Boolean that signifies whether to bid if full amount is not possible
+   * @param  txOpts                        The options for executing the transaction
+   * @return                               A transaction hash
+   */
+  public async getAddressAndBidPriceArray(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+  ): Promise<AddressTokenFlows> {
+    const rebalancingSetCTokenBidderInstance = await this.contracts.loadRebalancingSetCTokenBidderContract(
+      this.rebalancingSetCTokenBidderAddress
+    );
+
+    const addressTokenFlows = await rebalancingSetCTokenBidderInstance.getAddressAndBidPriceArray.callAsync(
+      rebalancingSetTokenAddress,
+      bidQuantity,
+    );
+    return {
+      combinedTokenAddresses: addressTokenFlows[0],
+      inflow: addressTokenFlows[1],
+      outflow: addressTokenFlows[2],
+    } as AddressTokenFlows;
   }
 }

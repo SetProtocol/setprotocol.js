@@ -77,6 +77,7 @@ export {
 export {
   deployRebalancingSetCTokenBidderAsync,
   deployRebalancingSetEthBidderAsync,
+  replaceDetailFlowsWithCTokenUnderlyingAsync,
   replaceFlowsWithCTokenUnderlyingAsync,
 } from './rebalancingSetBidderHelpers';
 
