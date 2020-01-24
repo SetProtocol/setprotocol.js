@@ -811,11 +811,11 @@ export const getTokenInstances = async (
         tokenAddress,
         web3,
         TX_DEFAULTS,
-      )
+      );
     })
   );
   return tokenInstances;
-}
+};
 
 export const getTokenSupplies = async (
   tokens: StandardTokenMockContract[],

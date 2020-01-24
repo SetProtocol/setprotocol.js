@@ -106,14 +106,11 @@ export class RebalancingSetCTokenBidderWrapper {
   }
 
   /**
-   * Asynchronously submit a bid and withdraw bids while transacting in underlying of cTokens
-   * for a rebalancing auction on a rebalancingSetToken
+   * Fetches the current cToken underlying component addresses, token inflows and outflows for a given bid quantity
    *
    * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
-   * @param  quantity                      Amount of currentSetToken the bidder wants to rebalance
-   * @param  allowPartialFill              Boolean that signifies whether to bid if full amount is not possible
-   * @param  txOpts                        The options for executing the transaction
-   * @return                               A transaction hash
+   * @param  bidQuantity                   Amount of currentSetToken the bidder wants to rebalance
+   * @return                               Object conforming to `AddressTokenFlows` interface
    */
   public async getAddressAndBidPriceArray(
     rebalancingSetTokenAddress: Address,
