@@ -120,18 +120,13 @@ export class KyberNetworkHelper {
       gas: DEFAULT_GAS_LIMIT,
     });
 
-    const listedTokens = await ConversionRatesContract.methods.getListedTokens().call();
-    const tokenIsListed = _.includes(listedTokens, _tokenAddress);
-
-    if (!tokenIsListed) {
-      const addTokenTxData = ConversionRatesContract.methods.addToken(_tokenAddress).encodeABI();
-      await web3.eth.sendTransaction({
-        from: KYBER_PERMISSIONED_ACCOUNTS.admin,
-        to: KYBER_CONTRACTS.ConversionRates,
-        data: addTokenTxData,
-        gas: DEFAULT_GAS_LIMIT,
-      });
-    }
+    const addTokenTxData = ConversionRatesContract.methods.addToken(_tokenAddress).encodeABI();
+    await web3.eth.sendTransaction({
+      from: KYBER_PERMISSIONED_ACCOUNTS.admin,
+      to: KYBER_CONTRACTS.ConversionRates,
+      data: addTokenTxData,
+      gas: DEFAULT_GAS_LIMIT,
+    });
 
     const setTokenControlInfoTxData = ConversionRatesContract.methods.setTokenControlInfo(
       _tokenAddress,

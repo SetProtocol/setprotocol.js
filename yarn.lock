@@ -3125,10 +3125,10 @@ function-bind@^1.0.2, function-bind@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/function-bind/-/function-bind-1.1.1.tgz#a56899d3ea3c9bab874bb9773b7c5ede92f4895d"
 
-ganache-cli@6.3.0:
-  version "6.3.0"
-  resolved "https://registry.yarnpkg.com/ganache-cli/-/ganache-cli-6.3.0.tgz#574f9d35aaec8da6e01c2be49db8fe73129eb561"
-  integrity sha512-8SyzfX2ipRVBx1fBZLg3j8I3E334U3Vazk5mEpYcWqnIjC2ace6jtOXHG4aTuAvSz3+HzQ8p8pRjOJxdDZ2pnQ==
+ganache-cli@6.4.0:
+  version "6.4.0"
+  resolved "https://registry.yarnpkg.com/ganache-cli/-/ganache-cli-6.4.0.tgz#1443a14429726d5a1d10c2127efc9503b2f32122"
+  integrity sha512-aujOqrN6tDaoKGpP6cPZR33r9Ko529FCHHG0/0dNB9a9e4lY/rilMXqrc4KfjEWcKvD5ts+4fcFKYFhT6W8HAw==
   dependencies:
     bn.js "4.11.8"
     source-map-support "0.5.9"
