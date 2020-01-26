@@ -15,12 +15,6 @@ export {
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 
-export interface AddressTokenFlows {
-  combinedTokenAddresses: Address[];
-  inflow: BigNumber[];
-  outflow: BigNumber[];
-}
-
 export interface BidPlacedEvent {
   transactionHash: string;
   rebalancingSetToken: Address;
@@ -165,6 +159,7 @@ export interface SystemTimeLockPeriodState {
 }
 
 export interface TokenFlows {
+  tokens?: Address[];
   inflow: BigNumber[];
   outflow: BigNumber[];
 }

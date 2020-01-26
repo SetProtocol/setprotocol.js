@@ -21,7 +21,7 @@ import Web3 from 'web3';
 import { RebalancingSetCTokenBidder } from 'set-protocol-contracts';
 
 import { ProtocolContractWrapper } from './ProtocolContractWrapper';
-import { Address, AddressTokenFlows, Tx } from '../../types/common';
+import { Address, TokenFlows, Tx } from '../../types/common';
 import { BigNumber, generateTxOpts } from '../../util';
 
 /**
@@ -110,24 +110,24 @@ export class RebalancingSetCTokenBidderWrapper {
    *
    * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
    * @param  bidQuantity                   Amount of currentSetToken the bidder wants to rebalance
-   * @return                               Object conforming to `AddressTokenFlows` interface
+   * @return                               Object conforming to `TokenFlows` interface
    */
   public async getAddressAndBidPriceArray(
     rebalancingSetTokenAddress: Address,
     bidQuantity: BigNumber,
-  ): Promise<AddressTokenFlows> {
+  ): Promise<TokenFlows> {
     const rebalancingSetCTokenBidderInstance = await this.contracts.loadRebalancingSetCTokenBidderContract(
       this.rebalancingSetCTokenBidderAddress
     );
 
-    const addressTokenFlows = await rebalancingSetCTokenBidderInstance.getAddressAndBidPriceArray.callAsync(
+    const tokenFlows = await rebalancingSetCTokenBidderInstance.getAddressAndBidPriceArray.callAsync(
       rebalancingSetTokenAddress,
       bidQuantity,
     );
     return {
-      combinedTokenAddresses: addressTokenFlows[0],
-      inflow: addressTokenFlows[1],
-      outflow: addressTokenFlows[2],
-    } as AddressTokenFlows;
+      tokens: tokenFlows[0],
+      inflow: tokenFlows[1],
+      outflow: tokenFlows[2],
+    } as TokenFlows;
   }
 }

@@ -1198,7 +1198,7 @@ describe('RebalancingSetCTokenBidderWrapper', () => {
         JSON.stringify(expectedTokenFlowsUnderlying['outflow'])
       );
       expect(
-        JSON.stringify(actualTokenFlows.combinedTokenAddresses)
+        JSON.stringify(actualTokenFlows.tokens)
       ).to.equal(
         JSON.stringify(expectedCombinedTokenArray)
       );

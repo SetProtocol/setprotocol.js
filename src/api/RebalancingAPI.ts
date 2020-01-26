@@ -328,27 +328,27 @@ export class RebalancingAPI {
   ): Promise<TokenFlowsDetails> {
     await this.assertGetBidPrice(rebalancingSetTokenAddress, bidQuantity);
 
-    const addressesAndTokenFlows = await this.rebalancingSetCTokenBidder.getAddressAndBidPriceArray(
+    const tokenFlows = await this.rebalancingSetCTokenBidder.getAddressAndBidPriceArray(
       rebalancingSetTokenAddress,
       bidQuantity
     );
 
-    const inflow = addressesAndTokenFlows.inflow.reduce((accumulator, unit, index) => {
+    const inflow = tokenFlows.inflow.reduce((accumulator, unit, index) => {
       const bigNumberUnit = new BigNumber(unit);
       if (bigNumberUnit.gt(0)) {
         accumulator.push({
-          address: addressesAndTokenFlows.combinedTokenAddresses[index],
+          address: tokenFlows.tokens[index],
           unit,
         });
       }
       return accumulator;
     }, []);
 
-    const outflow = addressesAndTokenFlows.outflow.reduce((accumulator, unit, index) => {
+    const outflow = tokenFlows.outflow.reduce((accumulator, unit, index) => {
       const bigNumberUnit = new BigNumber(unit);
       if (bigNumberUnit.gt(0)) {
         accumulator.push({
-          address: addressesAndTokenFlows.combinedTokenAddresses[index],
+          address: tokenFlows.tokens[index],
           unit,
         });
       }
@@ -837,25 +837,25 @@ export class RebalancingAPI {
     }
     await this.assert.rebalancing.bidIsMultipleOfMinimumBid(rebalancingSetTokenAddress, bidQuantity);
 
-    const addressTokenFlows = await this.rebalancingSetCTokenBidder.getAddressAndBidPriceArray(
+    const tokenFlows = await this.rebalancingSetCTokenBidder.getAddressAndBidPriceArray(
       rebalancingSetTokenAddress,
       bidQuantity
     );
 
-    await Promise.all(addressTokenFlows.combinedTokenAddresses.map((tokenAddress: Address, index: number) =>
+    await Promise.all(tokenFlows.tokens.map((tokenAddress: Address, index: number) =>
       this.assert.erc20.hasSufficientAllowanceAsync(
         tokenAddress,
         txOpts.from,
         this.config.rebalancingSetCTokenBidderAddress,
-        addressTokenFlows.inflow[index]
+        tokenFlows.inflow[index]
       )
     ));
 
-    await Promise.all(addressTokenFlows.combinedTokenAddresses.map((tokenAddress: Address, index: number) =>
+    await Promise.all(tokenFlows.tokens.map((tokenAddress: Address, index: number) =>
       this.assert.erc20.hasSufficientBalanceAsync(
         tokenAddress,
         txOpts.from,
-        addressTokenFlows.inflow[index]
+        tokenFlows.inflow[index]
       )
     ));
   }
