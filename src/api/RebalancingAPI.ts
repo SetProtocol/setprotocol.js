@@ -27,14 +27,16 @@ import {
   ProtocolViewerWrapper,
   SetTokenWrapper,
   RebalancingAuctionModuleWrapper,
+  RebalancingSetCTokenBidderWrapper,
   RebalancingSetEthBidderWrapper,
   RebalancingSetTokenWrapper,
 } from '../wrappers';
 import { BigNumber, parseRebalanceState } from '../util';
 import {
   Address,
+  BidderHelperType,
   BidPlacedEvent,
-  BidPlacedWithEthEvent,
+  BidPlacedHelperEvent,
   RebalancingProgressDetails,
   RebalancingProposalDetails,
   RebalancingSetDetails,
@@ -59,6 +61,7 @@ export class RebalancingAPI {
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private rebalancingAuctionModule: RebalancingAuctionModuleWrapper;
   private rebalancingSetEthBidder: RebalancingSetEthBidderWrapper;
+  private rebalancingSetCTokenBidder: RebalancingSetCTokenBidderWrapper;
   private setToken: SetTokenWrapper;
   private config: SetProtocolConfig;
 
@@ -88,6 +91,8 @@ export class RebalancingAPI {
     this.erc20 = new ERC20Wrapper(this.web3);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(this.web3);
     this.setToken = new SetTokenWrapper(this.web3);
+    this.rebalancingSetCTokenBidder =
+      new RebalancingSetCTokenBidderWrapper(this.web3, config.rebalancingSetCTokenBidderAddress);
     this.rebalancingSetEthBidder = new RebalancingSetEthBidderWrapper(this.web3, config.rebalancingSetEthBidderAddress);
     this.protocolViewer = new ProtocolViewerWrapper(this.web3, config.protocolViewerAddress);
 
@@ -192,7 +197,7 @@ export class RebalancingAPI {
    * @param  allowPartialFill               Boolean to complete fill if quantity is less than available
    *                                        Defaults to true
    * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
-   *                                          gasPrice data
+   *                                        gasPrice data
    * @return                                Transaction hash
    */
   public async bidAsync(
@@ -249,6 +254,34 @@ export class RebalancingAPI {
   }
 
   /**
+   * Allows user to bid on a rebalance auction containing Compound cTokens while sending and
+   * receiving the underlying. This encompasses all functionality in bidAsync.
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
+   * @param  allowPartialFill               Boolean to complete fill if quantity is less than available
+   *                                        Defaults to true
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
+   *                                        gasPrice data
+   * @return                                Transaction hash
+   */
+  public async bidWithCTokenUnderlyingAsync(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    allowPartialFill: boolean = true,
+    txOpts: Tx
+  ): Promise<string> {
+    await this.assertBidCToken(rebalancingSetTokenAddress, bidQuantity, allowPartialFill, txOpts);
+
+    return await this.rebalancingSetCTokenBidder.bidAndWithdraw(
+      rebalancingSetTokenAddress,
+      bidQuantity,
+      allowPartialFill,
+      txOpts,
+    );
+  }
+
+  /**
    * Allows current manager to change manager address to a new address
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
@@ -279,6 +312,53 @@ export class RebalancingAPI {
     await this.assertRedeemFromFailedRebalance(rebalancingSetTokenAddress, txOpts);
 
     return await this.rebalancingAuctionModule.redeemFromFailedRebalance(rebalancingSetTokenAddress, txOpts);
+  }
+
+  /**
+   * Fetches the current cToken underlying component addresses, token inflows and outflows for a given bid quantity,
+   * returns `Component` objects reflecting token inflows and outflows. Tokens flows of 0 are omitted
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
+   * @return                                Object conforming to `TokenFlowsDetails` interface
+   */
+  public async getBidPriceCTokenUnderlyingAsync(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+  ): Promise<TokenFlowsDetails> {
+    await this.assertGetBidPrice(rebalancingSetTokenAddress, bidQuantity);
+
+    const tokenFlows = await this.rebalancingSetCTokenBidder.getAddressAndBidPriceArray(
+      rebalancingSetTokenAddress,
+      bidQuantity
+    );
+
+    const inflow = tokenFlows.inflow.reduce((accumulator, unit, index) => {
+      const bigNumberUnit = new BigNumber(unit);
+      if (bigNumberUnit.gt(0)) {
+        accumulator.push({
+          address: tokenFlows.tokens[index],
+          unit,
+        });
+      }
+      return accumulator;
+    }, []);
+
+    const outflow = tokenFlows.outflow.reduce((accumulator, unit, index) => {
+      const bigNumberUnit = new BigNumber(unit);
+      if (bigNumberUnit.gt(0)) {
+        accumulator.push({
+          address: tokenFlows.tokens[index],
+          unit,
+        });
+      }
+      return accumulator;
+    }, []);
+
+    return {
+      inflow,
+      outflow,
+    } as TokenFlowsDetails;
   }
 
   /**
@@ -381,32 +461,45 @@ export class RebalancingAPI {
   }
 
   /**
-   * Fetches BidPlacedWithEth event logs including information about the transactionHash, rebalancingSetToken,
-   * bidder and etc.
+   * Fetches bid event logs from ETH bidder or cToken bidder contracts including information about the
+   * transactionHash, rebalancingSetToken, bidder and etc.
    *
    * This fetch can be filtered by block and by rebalancingSetToken.
    *
+   * @param  bidderHelperType              BigNumber indicating which kind of bidder helper contract to call
    * @param  fromBlock                     The beginning block to retrieve events from
    * @param  toBlock                       The ending block to retrieve events (default is latest)
    * @param  rebalancingSetToken           Addresses of rebalancing set token to filter events for
-   * @return                               An array of objects conforming to the BidPlacedWithEthEvent interface
+   * @param  getTimestamp                  Boolean for returning the timestamp of the event
+   * @return                               An array of objects conforming to the BidPlacedHelperEvent interface
    */
-  public async getBidPlacedWithEthEventsAsync(
+  public async getBidPlacedHelperEventsAsync(
+    bidderHelperType: BigNumber,
     fromBlock: number,
     toBlock?: any,
     rebalancingSetToken?: Address,
     getTimestamp?: boolean,
-  ): Promise<BidPlacedWithEthEvent[]> {
-    const events: any[] = await this.rebalancingSetEthBidder.bidPlacedWithEthEvent(
-      fromBlock,
-      toBlock,
-      rebalancingSetToken,
-    );
+  ): Promise<BidPlacedHelperEvent[]> {
+    let events: any[];
+    if (bidderHelperType.eq(BidderHelperType.ETH)) {
+      events = await this.rebalancingSetEthBidder.bidPlacedWithEthEvent(
+        fromBlock,
+        toBlock,
+        rebalancingSetToken,
+      );
+    } else if (bidderHelperType.eq(BidderHelperType.CTOKEN)) {
+      events = await this.rebalancingSetCTokenBidder.bidPlacedCTokenEvent(
+        fromBlock,
+        toBlock,
+        rebalancingSetToken,
+      );
+    }
 
-    const formattedEventPromises: Promise<BidPlacedWithEthEvent>[] = events.map(async event => {
+    const formattedEventPromises: Promise<BidPlacedHelperEvent>[] = events.map(async event => {
       const returnValues = event.returnValues;
       const rebalancingSetToken = returnValues['rebalancingSetToken'];
       const bidder = returnValues['bidder'];
+      const quantity = returnValues['quantity'];
 
       let timestamp = undefined;
       if (getTimestamp) {
@@ -418,6 +511,7 @@ export class RebalancingAPI {
         transactionHash: event.transactionHash,
         rebalancingSetToken,
         bidder,
+        quantity,
         timestamp,
       };
     });
@@ -722,6 +816,48 @@ export class RebalancingAPI {
       this.config.wrappedEtherAddress,
       new BigNumber(txOpts.value),
     );
+  }
+
+  private async assertBidCToken(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    allowPartialFill: boolean,
+    txOpts: Tx
+  ) {
+    this.assert.schema.isValidAddress('rebalancingSetTokenAddress', rebalancingSetTokenAddress);
+    this.assert.common.greaterThanZero(
+      bidQuantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(bidQuantity)
+    );
+
+    await this.assert.setToken.isValidSetToken(this.core.coreAddress, rebalancingSetTokenAddress);
+    await this.assert.rebalancing.isInRebalanceState(rebalancingSetTokenAddress);
+    if (!allowPartialFill) {
+      await this.assert.rebalancing.bidAmountLessThanRemainingSets(rebalancingSetTokenAddress, bidQuantity);
+    }
+    await this.assert.rebalancing.bidIsMultipleOfMinimumBid(rebalancingSetTokenAddress, bidQuantity);
+
+    const tokenFlows = await this.rebalancingSetCTokenBidder.getAddressAndBidPriceArray(
+      rebalancingSetTokenAddress,
+      bidQuantity
+    );
+
+    await Promise.all(tokenFlows.tokens.map((tokenAddress: Address, index: number) =>
+      this.assert.erc20.hasSufficientAllowanceAsync(
+        tokenAddress,
+        txOpts.from,
+        this.config.rebalancingSetCTokenBidderAddress,
+        tokenFlows.inflow[index]
+      )
+    ));
+
+    await Promise.all(tokenFlows.tokens.map((tokenAddress: Address, index: number) =>
+      this.assert.erc20.hasSufficientBalanceAsync(
+        tokenAddress,
+        txOpts.from,
+        tokenFlows.inflow[index]
+      )
+    ));
   }
 
   private assertGetRebalanceStatesAsync(tokenAddresses: Address[]) {

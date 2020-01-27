@@ -27,12 +27,18 @@ export interface BidPlacedEvent {
   timestamp: number;
 }
 
-export interface BidPlacedWithEthEvent {
+export interface BidPlacedHelperEvent {
   transactionHash: string;
   rebalancingSetToken: Address;
   bidder: Address;
+  quantity: BigNumber;
   timestamp: number;
 }
+
+export const BidderHelperType = {
+  ETH: new BigNumber(0),
+  CTOKEN: new BigNumber(1),
+};
 
 export interface EntryFeePaid {
   transactionHash: string;
@@ -124,6 +130,7 @@ export interface SetProtocolConfig {
   kyberNetworkWrapperAddress: Address;
   protocolViewerAddress: Address;
   rebalanceAuctionModuleAddress: Address;
+  rebalancingSetCTokenBidderAddress?: Address;
   rebalancingSetEthBidderAddress?: Address;
   rebalancingSetExchangeIssuanceModule: Address;
   rebalancingSetIssuanceModule: Address;
@@ -152,6 +159,7 @@ export interface SystemTimeLockPeriodState {
 }
 
 export interface TokenFlows {
+  tokens?: Address[];
   inflow: BigNumber[];
   outflow: BigNumber[];
 }

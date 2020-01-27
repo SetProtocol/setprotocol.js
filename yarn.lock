@@ -3125,11 +3125,14 @@ function-bind@^1.0.2, function-bind@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/function-bind/-/function-bind-1.1.1.tgz#a56899d3ea3c9bab874bb9773b7c5ede92f4895d"
 
-ganache-cli@6.1.7:
-  version "6.1.7"
-  resolved "https://registry.yarnpkg.com/ganache-cli/-/ganache-cli-6.1.7.tgz#9298305a427cf79edf46f063bf38f122e76de839"
+ganache-cli@6.4.0:
+  version "6.4.0"
+  resolved "https://registry.yarnpkg.com/ganache-cli/-/ganache-cli-6.4.0.tgz#1443a14429726d5a1d10c2127efc9503b2f32122"
+  integrity sha512-aujOqrN6tDaoKGpP6cPZR33r9Ko529FCHHG0/0dNB9a9e4lY/rilMXqrc4KfjEWcKvD5ts+4fcFKYFhT6W8HAw==
   dependencies:
-    source-map-support "^0.5.3"
+    bn.js "4.11.8"
+    source-map-support "0.5.9"
+    yargs "11.1.0"
 
 gauge@~2.7.3:
   version "2.7.4"
@@ -6833,10 +6836,10 @@ set-blocking@^2.0.0, set-blocking@~2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/set-blocking/-/set-blocking-2.0.0.tgz#045f9782d011ae9a6803ddd382b24392b3d890f7"
 
-set-protocol-contracts@1.3.19-beta:
-  version "1.3.19-beta"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.3.19-beta.tgz#dad26821e64d62c0134a7146f6d6e396d6d9a82e"
-  integrity sha512-eblW15IY5CXxLM6PWek+OUhSc+jKkvvB2DSSn2jAXof/x9C9woa6Ctj+OI46f4Rkn9MNS7mGAVyYG+bJbcyLSw==
+set-protocol-contracts@1.3.21-beta:
+  version "1.3.21-beta"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.3.21-beta.tgz#80af315dc1a8532d2994bc9be7868ea6c4f09e4e"
+  integrity sha512-JG677GcIDONvgNg1kGSSQAZ9DenDEb3L+RyLaJiE3fQDLWUyVlj/eZedO5wKIToTx04l2irznc6a0YplEK0mBQ==
   dependencies:
     bn-chai "^1.0.1"
     canonical-weth "^1.3.1"
@@ -7279,13 +7282,21 @@ source-map-resolve@^0.5.0:
     source-map-url "^0.4.0"
     urix "^0.1.0"
 
+source-map-support@0.5.9:
+  version "0.5.9"
+  resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.5.9.tgz#41bc953b2534267ea2d605bccfa7bfa3111ced5f"
+  integrity sha512-gR6Rw4MvUlYy83vP0vxoVNzM6t8MUXqNuRsuBmBHQDu1Fh6X015FrLdgoDKcNdkwGubozq0P4N0Q37UyFVr1EA==
+  dependencies:
+    buffer-from "^1.0.0"
+    source-map "^0.6.0"
+
 source-map-support@^0.4.15:
   version "0.4.18"
   resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.4.18.tgz#0286a6de8be42641338594e97ccea75f0a2c585f"
   dependencies:
     source-map "^0.5.6"
 
-source-map-support@^0.5.0, source-map-support@^0.5.3, source-map-support@^0.5.6:
+source-map-support@^0.5.0, source-map-support@^0.5.6:
   version "0.5.12"
   resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.5.12.tgz#b4f3b10d51857a5af0138d3ce8003b201613d599"
   dependencies:
@@ -9295,6 +9306,31 @@ yargs-parser@^8.1.0:
   resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-8.1.0.tgz#f1376a33b6629a5d063782944da732631e966950"
   dependencies:
     camelcase "^4.1.0"
+
+yargs-parser@^9.0.2:
+  version "9.0.2"
+  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-9.0.2.tgz#9ccf6a43460fe4ed40a9bb68f48d43b8a68cc077"
+  integrity sha1-nM9qQ0YP5O1Aqbto9I1DuKaMwHc=
+  dependencies:
+    camelcase "^4.1.0"
+
+yargs@11.1.0:
+  version "11.1.0"
+  resolved "https://registry.yarnpkg.com/yargs/-/yargs-11.1.0.tgz#90b869934ed6e871115ea2ff58b03f4724ed2d77"
+  integrity sha512-NwW69J42EsCSanF8kyn5upxvjp5ds+t3+udGBeTbFnERA+lF541DDpMawzo4z6W/QrzNM18D+BPMiOBibnFV5A==
+  dependencies:
+    cliui "^4.0.0"
+    decamelize "^1.1.1"
+    find-up "^2.1.0"
+    get-caller-file "^1.0.1"
+    os-locale "^2.0.0"
+    require-directory "^2.1.1"
+    require-main-filename "^1.0.1"
+    set-blocking "^2.0.0"
+    string-width "^2.0.0"
+    which-module "^2.0.0"
+    y18n "^3.2.1"
+    yargs-parser "^9.0.2"
 
 yargs@^10.0.3:
   version "10.1.2"

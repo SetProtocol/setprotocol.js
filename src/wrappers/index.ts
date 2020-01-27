@@ -21,6 +21,7 @@ export { CoreWrapper } from './set_protocol/CoreWrapper';
 export { ERC20Wrapper } from './set_protocol/ERC20Wrapper';
 export { ExchangeIssuanceModuleWrapper } from './set_protocol/ExchangeIssuanceModuleWrapper';
 export { KyberNetworkWrapper } from './set_protocol/KyberNetworkWrapper';
+export { RebalancingSetCTokenBidderWrapper } from './set_protocol/RebalancingSetCTokenBidderWrapper';
 export { RebalancingSetEthBidderWrapper } from './set_protocol/RebalancingSetEthBidderWrapper';
 export { RebalancingSetTokenV2Wrapper } from './set_protocol/RebalancingSetTokenV2Wrapper';
 export {

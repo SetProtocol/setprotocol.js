@@ -801,6 +801,22 @@ export const getTokenBalances = async (
   return ownerBalances;
 };
 
+export const getTokenInstances = async (
+  web3: Web3,
+  tokenAddresses: Address[],
+): Promise<StandardTokenMockContract[]> => {
+  const tokenInstances = await Promise.all(
+    tokenAddresses.map(tokenAddress => {
+      return StandardTokenMockContract.at(
+        tokenAddress,
+        web3,
+        TX_DEFAULTS,
+      );
+    })
+  );
+  return tokenInstances;
+};
+
 export const getTokenSupplies = async (
   tokens: StandardTokenMockContract[],
 ): Promise<BigNumber[]> => {
