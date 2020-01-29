@@ -79,7 +79,7 @@ export class SocialTradingManagerWrapper {
   }
 
   /**
-   * Calls SocialTradingManager's updateAllocation function. This function creates  newcollateral Set and
+   * Calls SocialTradingManager's updateAllocation function. This function creates a new collateral Set and
    * calls startRebalance on RebalancingSetTokenV2. Updates allocation state on Manager contract.
    *
    * @param  manager                        Address of the social trading manager contract
