@@ -139,9 +139,8 @@ export class SocialTradingAPI {
   }
 
   /**
-   * Calls SocialTradingManager's createTradingPool function. This function creates a new tradingPool for
-   * the sender. Creates collateral Set and RebalancingSetTokenV2 then stores data relevant for updating
-   * allocations in mapping indexed by created RebalancingSetTokenV2 address.
+   * Calls SocialTradingManager's updateAllocation function. This function creates a new collateral Set and
+   * calls startRebalance on RebalancingSetTokenV2. Updates allocation state on Manager contract.
    *
    * @param  manager                Address of the social trading manager contract
    * @param  tradingPool            Address of tradingPool being updated
