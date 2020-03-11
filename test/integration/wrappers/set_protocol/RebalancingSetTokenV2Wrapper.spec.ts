@@ -45,7 +45,7 @@ import {
 
 import {
   ConstantPriceOracleContract,
-} from 'set-protocol-strategies';
+} from 'set-protocol-oracles';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import {

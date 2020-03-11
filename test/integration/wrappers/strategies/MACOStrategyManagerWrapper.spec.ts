@@ -28,7 +28,6 @@ import {
   Core,
   CoreContract,
   ConstantAuctionPriceCurveContract,
-  MedianContract,
   SetTokenContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
@@ -40,9 +39,13 @@ import {
 
 import {
   MACOStrategyManagerContract,
+} from 'set-protocol-strategies';
+
+import {
+  MedianContract,
   HistoricalPriceFeedContract,
   MovingAverageOracleContract,
-} from 'set-protocol-strategies';
+} from 'set-protocol-oracles';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { MACOStrategyManagerWrapper } from '@src/wrappers';

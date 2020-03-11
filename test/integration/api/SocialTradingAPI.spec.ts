@@ -33,7 +33,6 @@ import {
   FixedFeeCalculatorContract,
   LinearAuctionLiquidatorContract,
   OracleWhiteListContract,
-  ProtocolViewerContract,
   RebalancingSetTokenV2Contract,
   RebalancingSetTokenV2FactoryContract,
   RebalanceAuctionModuleContract,
@@ -45,10 +44,17 @@ import {
 } from 'set-protocol-contracts';
 
 import {
-  ConstantPriceOracleContract,
   SocialAllocatorContract,
   SocialTradingManagerContract
 } from 'set-protocol-strategies';
+
+import {
+  ConstantPriceOracleContract,
+} from 'set-protocol-oracles';
+
+import {
+  ProtocolViewerContract,
+} from 'set-protocol-viewers';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { SocialTradingAPI } from '@src/api';

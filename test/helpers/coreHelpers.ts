@@ -2,6 +2,7 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import {
+  Bytes32Library,
   CommonValidationsLibrary,
   Core,
   CoreIssuanceLibrary,
@@ -152,6 +153,13 @@ export const deploySetTokenFactoryContract = async (
     deployedCommonValidationsLibraryContract.address
   );
 
+  const truffleBytes32LibraryContract = setDefaultTruffleContract(web3, Bytes32Library);
+  const deployedBytes32LibraryContract = await truffleBytes32LibraryContract.new();
+  await truffleSetTokenFactoryContract.link(
+    'Bytes32Library',
+    deployedBytes32LibraryContract.address
+  );
+
   const deployedSetTokenFactory = await truffleSetTokenFactoryContract.new(core.address);
 
   // Initialize typed contract class
@@ -184,6 +192,13 @@ export const deployRebalancingSetTokenFactoryContract = async (
   // Deploy SetTokenFactory contract
   const truffleRebalancingSetTokenFactoryContract = setDefaultTruffleContract(web3, RebalancingSetTokenFactory);
   await linkRebalancingLibrariesAsync(truffleRebalancingSetTokenFactoryContract, web3);
+
+  const truffleBytes32LibraryContract = setDefaultTruffleContract(web3, Bytes32Library);
+  const deployedBytes32LibraryContract = await truffleBytes32LibraryContract.new();
+  await truffleRebalancingSetTokenFactoryContract.link(
+    'Bytes32Library',
+    deployedBytes32LibraryContract.address
+  );
 
   const deployedRebalancingSetTokenFactory = await truffleRebalancingSetTokenFactoryContract.new(
     core.address,
@@ -226,6 +241,13 @@ export const deployRebalancingSetTokenV2FactoryContractAsync = async (
 ): Promise<RebalancingSetTokenV2FactoryContract> => {
   // Deploy SetTokenFactory contract
   const truffleRebalancingSetTokenV2FactoryContract = setDefaultTruffleContract(web3, RebalancingSetTokenV2Factory);
+
+  const truffleBytes32LibraryContract = setDefaultTruffleContract(web3, Bytes32Library);
+  const deployedBytes32LibraryContract = await truffleBytes32LibraryContract.new();
+  await truffleRebalancingSetTokenV2FactoryContract.link(
+    'Bytes32Library',
+    deployedBytes32LibraryContract.address
+  );
 
   const deployedRebalancingSetTokenV2Factory = await truffleRebalancingSetTokenV2FactoryContract.new(
     core.address,

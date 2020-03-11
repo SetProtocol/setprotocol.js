@@ -845,8 +845,6 @@ describe('RebalancingSetCTokenBidderWrapper', () => {
 
         await subject();
 
-        console.log('here');
-
         const newReceiverTokenBalances = await Promise.all(
           combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
         );

@@ -24,20 +24,28 @@ import {
   ERC20DetailedContract,
   ExchangeIssuanceModuleContract,
   KyberNetworkWrapperContract,
-  ProtocolViewerContract,
   RebalancingSetIssuanceModuleContract,
   RebalancingSetEthBidderContract,
   RebalancingSetCTokenBidderContract,
   RebalancingSetExchangeIssuanceModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
-  MedianContract,
   SetTokenContract,
   TimeLockUpgradeContract,
   TransferProxyContract,
   WhiteListContract,
   VaultContract,
 } from 'set-protocol-contracts';
+
+import {
+  BaseContract as OracleBaseContract,
+  MedianContract
+} from 'set-protocol-oracles';
+
+import {
+  BaseContract as ViewerBaseContract,
+  ProtocolViewerContract,
+} from 'set-protocol-viewers';
 
 import { Address } from '../../types/common';
 
@@ -50,7 +58,7 @@ import { Address } from '../../types/common';
  */
 export class ProtocolContractWrapper {
   private web3: Web3;
-  private cache: { [contractName: string]: CoreBaseContract };
+  private cache: { [contractName: string]: CoreBaseContract | OracleBaseContract | ViewerBaseContract };
 
   public constructor(web3: Web3) {
     this.web3 = web3;

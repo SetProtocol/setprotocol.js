@@ -31,7 +31,6 @@ import {
   Core,
   CoreContract,
   ConstantAuctionPriceCurveContract,
-  MedianContract,
   SetTokenContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
@@ -43,9 +42,13 @@ import {
 
 import {
   MACOStrategyManagerV2Contract,
+} from 'set-protocol-strategies';
+
+import {
+  MedianContract,
   MovingAverageOracleV2Contract,
   OracleProxyContract,
-} from 'set-protocol-strategies';
+} from 'set-protocol-oracles';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { MACOStrategyManagerV2Wrapper } from '@src/wrappers';

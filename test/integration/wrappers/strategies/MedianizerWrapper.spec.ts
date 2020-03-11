@@ -25,7 +25,7 @@ jest.setTimeout(30000);
 import * as chai from 'chai';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
-import { MedianContract } from 'set-protocol-contracts';
+import { MedianContract } from 'set-protocol-oracles';
 import { Address, Bytes } from 'set-protocol-utils';
 
 import { MedianizerWrapper } from '@src/wrappers';
