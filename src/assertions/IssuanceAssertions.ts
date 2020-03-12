@@ -101,7 +101,7 @@ export class IssuanceAssertions {
     rebalancingSetTokenQuantity: BigNumber,
     transactionCaller: Address,
     transferProxyAddress: Address,
-    cTokenWhiteListAddress: Address,
+    cTokenWhiteListAddress?: Address,
   ): Promise<void> {
     this.schemaAssertions.isValidAddress('transactionCaller', transactionCaller);
     this.schemaAssertions.isValidAddress('setAddress', rebalancingSetTokenAddress);
@@ -124,23 +124,39 @@ export class IssuanceAssertions {
       rebalancingSetTokenQuantity,
     );
 
-    // Get valid cToken addresses and exclude from checks
-    const cTokenAddresses = await this.addressToAddressWhiteList.validAddresses(cTokenWhiteListAddress);
+    // If Whitelist exists, then fetch ctokens and exclude from checks
+    if (cTokenWhiteListAddress) {
+      // Get valid cToken addresses and exclude from checks
+      const cTokenAddresses = await this.addressToAddressWhiteList.validAddresses(cTokenWhiteListAddress);
 
-    await this.setTokenAssertions.hasSufficientBalances(
-      baseSetTokenAddress,
-      transactionCaller,
-      baseSetTokenQuantity,
-      cTokenAddresses,
-    );
+      await this.setTokenAssertions.hasSufficientBalances(
+        baseSetTokenAddress,
+        transactionCaller,
+        baseSetTokenQuantity,
+        cTokenAddresses,
+      );
 
-    await this.setTokenAssertions.hasSufficientAllowances(
-      baseSetTokenAddress,
-      transactionCaller,
-      transferProxyAddress,
-      baseSetTokenQuantity,
-      cTokenAddresses,
-    );
+      await this.setTokenAssertions.hasSufficientAllowances(
+        baseSetTokenAddress,
+        transactionCaller,
+        transferProxyAddress,
+        baseSetTokenQuantity,
+        cTokenAddresses,
+      );
+    } else {
+      await this.setTokenAssertions.hasSufficientBalances(
+        baseSetTokenAddress,
+        transactionCaller,
+        baseSetTokenQuantity,
+      );
+
+      await this.setTokenAssertions.hasSufficientAllowances(
+        baseSetTokenAddress,
+        transactionCaller,
+        transferProxyAddress,
+        baseSetTokenQuantity,
+      );
+    }
   }
 
   /**
@@ -182,25 +198,45 @@ export class IssuanceAssertions {
       rebalancingSetTokenQuantity,
     );
 
-    // Get valid cToken addresses and exclude from checks
-    const cTokenAddresses = await this.addressToAddressWhiteList.validAddresses(cTokenWhiteListAddress);
+    // If Whitelist exists, then fetch ctokens and exclude from checks
+    if (cTokenWhiteListAddress) {
+      // Get valid cToken addresses and exclude from checks
+      const cTokenAddresses = await this.addressToAddressWhiteList.validAddresses(cTokenWhiteListAddress);
 
-    // Check sufficient base Set components, excluding Ether
-    await this.setTokenAssertions.hasSufficientBalances(
-      baseSetTokenAddress,
-      transactionCaller,
-      baseSetTokenQuantity,
-      [...cTokenAddresses, wrappedEtherAddress],
-    );
+      // Check sufficient base Set components, excluding Ether and cTokens from whitelist
+      await this.setTokenAssertions.hasSufficientBalances(
+        baseSetTokenAddress,
+        transactionCaller,
+        baseSetTokenQuantity,
+        [...cTokenAddresses, wrappedEtherAddress],
+      );
 
-    // Check sufficient base Set components, excluding Ether
-    await this.setTokenAssertions.hasSufficientAllowances(
-      baseSetTokenAddress,
-      transactionCaller,
-      transferProxyAddress,
-      baseSetTokenQuantity,
-      [...cTokenAddresses, wrappedEtherAddress],
-    );
+      // Check sufficient base Set components, excluding Ether and cTokens
+      await this.setTokenAssertions.hasSufficientAllowances(
+        baseSetTokenAddress,
+        transactionCaller,
+        transferProxyAddress,
+        baseSetTokenQuantity,
+        [...cTokenAddresses, wrappedEtherAddress],
+      );
+    } else {
+      // Check sufficient base Set components, excluding Ether
+      await this.setTokenAssertions.hasSufficientBalances(
+        baseSetTokenAddress,
+        transactionCaller,
+        baseSetTokenQuantity,
+        [wrappedEtherAddress],
+      );
+
+      // Check sufficient base Set components, excluding Ether
+      await this.setTokenAssertions.hasSufficientAllowances(
+        baseSetTokenAddress,
+        transactionCaller,
+        transferProxyAddress,
+        baseSetTokenQuantity,
+        [wrappedEtherAddress],
+      );
+    }
 
     // Check that a base SetToken component is ether
     await this.setTokenAssertions.isComponent(
