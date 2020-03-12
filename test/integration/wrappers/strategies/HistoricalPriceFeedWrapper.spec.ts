@@ -23,11 +23,17 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as chai from 'chai';
-import * as setProtocolUtils from 'set-protocol-utils';
+import {
+  Address,
+  Web3Utils,
+  SetProtocolTestUtils as SetTestUtils
+} from 'set-protocol-utils';
+
 import Web3 from 'web3';
-import { MedianContract } from 'set-protocol-contracts';
-import { HistoricalPriceFeedContract } from 'set-protocol-strategies';
-import { Address, Web3Utils } from 'set-protocol-utils';
+import {
+  HistoricalPriceFeedContract,
+  MedianContract
+} from 'set-protocol-oracles';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { HistoricalPriceFeedWrapper } from '@src/wrappers';
@@ -40,7 +46,6 @@ import {
   updateMedianizerPriceAsync
 } from '@test/helpers';
 
-const { SetProtocolTestUtils: SetTestUtils } = setProtocolUtils;
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;

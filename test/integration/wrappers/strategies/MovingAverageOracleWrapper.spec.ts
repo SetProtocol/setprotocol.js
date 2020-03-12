@@ -25,8 +25,11 @@ jest.setTimeout(30000);
 import * as chai from 'chai';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
-import { MedianContract } from 'set-protocol-contracts';
-import { HistoricalPriceFeedContract, MovingAverageOracleContract } from 'set-protocol-strategies';
+import {
+  HistoricalPriceFeedContract,
+  MedianContract,
+  MovingAverageOracleContract
+} from 'set-protocol-oracles';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';

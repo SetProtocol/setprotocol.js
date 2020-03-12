@@ -19,18 +19,22 @@
 import Web3 from 'web3';
 
 import {
+  BaseContract as OracleBaseContract,
+  HistoricalPriceFeedContract,
+  MovingAverageOracleContract,
+  OracleProxyContract,
+  TimeSeriesFeedContract,
+} from 'set-protocol-oracles';
+
+import {
   AssetPairManagerContract,
-  BaseContract,
+  BaseContract as StrategyBaseContract,
   BTCDaiRebalancingManagerContract,
   BTCETHRebalancingManagerContract,
   ETHDaiRebalancingManagerContract,
-  HistoricalPriceFeedContract,
   MACOStrategyManagerContract,
   MACOStrategyManagerV2Contract,
-  MovingAverageOracleContract,
-  OracleProxyContract,
   SocialTradingManagerContract,
-  TimeSeriesFeedContract,
 } from 'set-protocol-strategies';
 
 import { Address } from '../../types/common';
@@ -44,7 +48,7 @@ import { Address } from '../../types/common';
  */
 export class StrategyContractWrapper {
   private web3: Web3;
-  private cache: { [contractName: string]: BaseContract };
+  private cache: { [contractName: string]: StrategyBaseContract | OracleBaseContract };
 
   public constructor(web3: Web3) {
     this.web3 = web3;

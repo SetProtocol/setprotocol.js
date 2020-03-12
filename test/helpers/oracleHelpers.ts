@@ -1,7 +1,6 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
-import { Median, MedianContract } from 'set-protocol-contracts';
 import {
   ConstantPriceOracle,
   ConstantPriceOracleContract,
@@ -11,6 +10,8 @@ import {
   LegacyMakerOracleAdapterContract,
   LinearizedPriceDataSource,
   LinearizedPriceDataSourceContract,
+  Median,
+  MedianContract,
   MovingAverageOracle,
   MovingAverageOracleContract,
   MovingAverageOracleV2,
@@ -21,7 +22,7 @@ import {
   RSIOracleContract,
   TimeSeriesFeed,
   TimeSeriesFeedContract,
-} from 'set-protocol-strategies';
+} from 'set-protocol-oracles';
 
 import { ONE_DAY_IN_SECONDS, TX_DEFAULTS } from '@src/constants';
 import { BigNumber } from '@src/util';

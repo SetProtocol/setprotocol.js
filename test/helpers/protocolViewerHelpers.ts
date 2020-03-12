@@ -3,7 +3,7 @@ import Web3 from 'web3';
 import {
   ProtocolViewer,
   ProtocolViewerContract
-} from 'set-protocol-contracts';
+} from 'set-protocol-viewers';
 
 import { TX_DEFAULTS } from '@src/constants';
 

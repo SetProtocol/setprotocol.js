@@ -31,7 +31,6 @@ import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
   ConstantAuctionPriceCurveContract,
-  MedianContract,
   SetTokenContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
@@ -44,6 +43,10 @@ import {
 import {
   ETHDaiRebalancingManagerContract,
 } from 'set-protocol-strategies';
+
+import {
+  MedianContract,
+} from 'set-protocol-oracles';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { ETHDAIRebalancingManagerWrapper } from '@src/wrappers';

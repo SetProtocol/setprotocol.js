@@ -33,7 +33,6 @@ import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
   ConstantAuctionPriceCurveContract,
-  MedianContract,
   SetTokenContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
@@ -48,18 +47,22 @@ import {
   BinaryAllocatorContract,
   BTCDaiRebalancingManagerContract,
   BTCETHRebalancingManagerContract,
-  ConstantPriceOracleContract,
   ETHDaiRebalancingManagerContract,
-  HistoricalPriceFeedContract,
   MACOStrategyManagerContract,
   MACOStrategyManagerV2Contract,
+  RSITrendingTriggerContract,
+} from 'set-protocol-strategies';
+
+import {
+  ConstantPriceOracleContract,
+  HistoricalPriceFeedContract,
+  MedianContract,
   MovingAverageOracleContract,
   MovingAverageOracleV2Contract,
   OracleProxyContract,
   RSIOracleContract,
-  RSITrendingTriggerContract,
   TimeSeriesFeedContract,
-} from 'set-protocol-strategies';
+} from 'set-protocol-oracles';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';

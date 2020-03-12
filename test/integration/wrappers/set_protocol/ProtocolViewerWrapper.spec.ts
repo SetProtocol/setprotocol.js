@@ -44,7 +44,7 @@ import {
 } from 'set-protocol-contracts';
 import {
   ConstantPriceOracleContract,
-} from 'set-protocol-strategies';
+} from 'set-protocol-oracles';
 import { Address } from 'set-protocol-utils';
 
 import { ProtocolViewerWrapper } from '@src/wrappers';

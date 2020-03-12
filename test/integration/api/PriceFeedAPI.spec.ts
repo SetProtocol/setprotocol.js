@@ -28,13 +28,13 @@ import * as chai from 'chai';
 import Web3 from 'web3';
 import { Address, TimeSeriesFeedState, Web3Utils } from 'set-protocol-utils';
 import * as setProtocolUtils from 'set-protocol-utils';
-import { MedianContract } from 'set-protocol-contracts';
 import { Core } from 'set-protocol-contracts';
 import {
   HistoricalPriceFeedContract,
   LinearizedPriceDataSourceContract,
+  MedianContract,
   TimeSeriesFeedContract,
-} from 'set-protocol-strategies';
+} from 'set-protocol-oracles';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { PriceFeedAPI } from '@src/api';

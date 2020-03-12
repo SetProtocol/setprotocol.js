@@ -31,7 +31,6 @@ import {
   Core,
   CoreContract,
   ConstantAuctionPriceCurveContract,
-  MedianContract,
   SetTokenContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
@@ -44,11 +43,15 @@ import {
 import {
   AssetPairManagerContract,
   BinaryAllocatorContract,
-  ConstantPriceOracleContract,
-  RSIOracleContract,
-  OracleProxyContract,
   RSITrendingTriggerContract
 } from 'set-protocol-strategies';
+
+import {
+  ConstantPriceOracleContract,
+  MedianContract,
+  RSIOracleContract,
+  OracleProxyContract,
+} from 'set-protocol-oracles';
 
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import { AssetPairManagerWrapper } from '@src/wrappers';
