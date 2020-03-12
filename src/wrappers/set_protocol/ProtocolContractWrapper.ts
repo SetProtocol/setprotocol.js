@@ -18,6 +18,7 @@
 
 import Web3 from 'web3';
 import {
+  AddressToAddressWhiteListContract,
   AuthorizableContract,
   BaseContract as CoreBaseContract,
   CoreContract,
@@ -314,6 +315,32 @@ export class ProtocolContractWrapper {
       );
       this.cache[cacheKey] = rebalancingSetIssuanceModuleContract;
       return rebalancingSetIssuanceModuleContract;
+    }
+  }
+
+  /**
+   * Load an AddressToAddressWhiteList contract
+   *
+   * @param  whiteListAddress       Address of the AddressToAddressWhiteList contract
+   * @param  transactionOptions     Options sent into the contract deployed method
+   * @return                        The AddressToAddressWhiteList Contract
+   */
+  public async loadAddressToAddressWhiteListAsync(
+    whiteListAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<AddressToAddressWhiteListContract> {
+    const cacheKey = `AddressToAddressWhiteList_${whiteListAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as AddressToAddressWhiteListContract;
+    } else {
+      const addressToAddressWhiteListContract = await AddressToAddressWhiteListContract.at(
+        whiteListAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = addressToAddressWhiteListContract;
+      return addressToAddressWhiteListContract;
     }
   }
 

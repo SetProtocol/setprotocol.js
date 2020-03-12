@@ -20,6 +20,7 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 
 import {
+  AddressToAddressWhiteListWrapper,
   AuthorizableWrapper,
   ProtocolContractWrapper,
   CoreWrapper,
@@ -50,6 +51,7 @@ export class SystemAPI {
   private authorizable: AuthorizableWrapper;
   private timeLockUpgrade: TimeLockUpgradeWrapper;
   private whitelist: WhitelistWrapper;
+  private addressToAddressWhiteList: AddressToAddressWhiteListWrapper;
 
 
   /**
@@ -68,6 +70,7 @@ export class SystemAPI {
     this.authorizable = new AuthorizableWrapper(web3);
     this.timeLockUpgrade = new TimeLockUpgradeWrapper(web3);
     this.whitelist = new WhitelistWrapper(web3);
+    this.addressToAddressWhiteList = new AddressToAddressWhiteListWrapper(web3);
   }
 
   /**
@@ -205,6 +208,17 @@ export class SystemAPI {
    */
   public async getWhitelistedAddressesAsync(whitelistAddress: Address): Promise<Address[]> {
     return await this.whitelist.validAddresses(whitelistAddress);
+  }
+
+  /**
+   * Fetches value type addresses from keys on an AddressToAddressWhiteList contract.
+   *
+   * @param whitelistAddress    The address of the whitelist contract
+   * @param keys                The array of key type addresses
+   * @return                    An array of value type addresses
+   */
+  public async getWhitelistedValuesAsync(whitelistAddress: Address, keys: Address[]): Promise<Address[]> {
+    return await this.addressToAddressWhiteList.getValues(whitelistAddress, keys);
   }
 
   /**

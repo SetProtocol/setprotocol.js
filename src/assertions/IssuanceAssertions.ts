@@ -24,7 +24,11 @@ import { CommonAssertions } from './CommonAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
 import { SchemaAssertions } from './SchemaAssertions';
 import { SetTokenAssertions } from './SetTokenAssertions';
-import { RebalancingSetTokenWrapper, SetTokenWrapper } from '../wrappers';
+import {
+  AddressToAddressWhiteListWrapper,
+  RebalancingSetTokenWrapper,
+  SetTokenWrapper,
+} from '../wrappers';
 import { BigNumber } from '../util';
 import { Address } from '../types/common';
 
@@ -35,6 +39,7 @@ export class IssuanceAssertions {
   private setTokenAssertions: SetTokenAssertions;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private setToken: SetTokenWrapper;
+  private addressToAddressWhiteList: AddressToAddressWhiteListWrapper;
 
   constructor(web3: Web3) {
     this.erc20Assertions = new ERC20Assertions(web3);
@@ -43,6 +48,7 @@ export class IssuanceAssertions {
     this.setTokenAssertions = new SetTokenAssertions(web3);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(web3);
     this.setToken = new SetTokenWrapper(web3);
+    this.addressToAddressWhiteList = new AddressToAddressWhiteListWrapper(web3);
   }
 
   /**
@@ -95,6 +101,7 @@ export class IssuanceAssertions {
     rebalancingSetTokenQuantity: BigNumber,
     transactionCaller: Address,
     transferProxyAddress: Address,
+    cTokenWhiteListAddress: Address,
   ): Promise<void> {
     this.schemaAssertions.isValidAddress('transactionCaller', transactionCaller);
     this.schemaAssertions.isValidAddress('setAddress', rebalancingSetTokenAddress);
@@ -117,10 +124,14 @@ export class IssuanceAssertions {
       rebalancingSetTokenQuantity,
     );
 
+    // Get valid cToken addresses and exclude from checks
+    const cTokenAddresses = await this.addressToAddressWhiteList.validAddresses(cTokenWhiteListAddress);
+
     await this.setTokenAssertions.hasSufficientBalances(
       baseSetTokenAddress,
       transactionCaller,
       baseSetTokenQuantity,
+      cTokenAddresses,
     );
 
     await this.setTokenAssertions.hasSufficientAllowances(
@@ -128,6 +139,7 @@ export class IssuanceAssertions {
       transactionCaller,
       transferProxyAddress,
       baseSetTokenQuantity,
+      cTokenAddresses,
     );
   }
 
@@ -146,6 +158,7 @@ export class IssuanceAssertions {
     transferProxyAddress: Address,
     wrappedEtherAddress: Address,
     etherValue: BigNumber,
+    cTokenWhiteListAddress: Address,
   ): Promise<void> {
     // Do all the normal asserts
     this.schemaAssertions.isValidAddress('transactionCaller', transactionCaller);
@@ -169,12 +182,15 @@ export class IssuanceAssertions {
       rebalancingSetTokenQuantity,
     );
 
+    // Get valid cToken addresses and exclude from checks
+    const cTokenAddresses = await this.addressToAddressWhiteList.validAddresses(cTokenWhiteListAddress);
+
     // Check sufficient base Set components, excluding Ether
     await this.setTokenAssertions.hasSufficientBalances(
       baseSetTokenAddress,
       transactionCaller,
       baseSetTokenQuantity,
-      [wrappedEtherAddress],
+      [...cTokenAddresses, wrappedEtherAddress],
     );
 
     // Check sufficient base Set components, excluding Ether
@@ -183,7 +199,7 @@ export class IssuanceAssertions {
       transactionCaller,
       transferProxyAddress,
       baseSetTokenQuantity,
-      [wrappedEtherAddress],
+      [...cTokenAddresses, wrappedEtherAddress],
     );
 
     // Check that a base SetToken component is ether

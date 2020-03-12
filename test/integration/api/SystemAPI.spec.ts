@@ -29,6 +29,7 @@ import Web3 from 'web3';
 import { Address, Web3Utils } from 'set-protocol-utils';
 import * as setProtocolUtils from 'set-protocol-utils';
 import {
+  AddressToAddressWhiteListContract,
   CoreContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
@@ -52,6 +53,7 @@ import {
 } from '@src/types/common';
 import {
   addPriceLibraryAsync,
+  deployAddressToAddressWhiteListContract,
   deployBaseContracts,
   deployWhiteListContract,
   registerExchange,
@@ -334,6 +336,40 @@ describe('SystemAPI', () => {
       // whitelistAddresses = whitelistAddresses.map(address => address.toLowerCase());
 
       expect(JSON.stringify(whitelistAddresses)).to.equal(JSON.stringify(initializedWhitelistAddresses));
+    });
+  });
+
+  describe('getWhitelistedValuesAsync', async () => {
+    let whitelistInstance: AddressToAddressWhiteListContract;
+    let initialKeyAddresses: Address[];
+    let initialValueAddresses: Address[];
+
+    let subjectWhitelistContract: Address;
+
+    beforeEach(async () => {
+      initialKeyAddresses = [ACCOUNTS[0].address, ACCOUNTS[1].address];
+      initialValueAddresses = [ACCOUNTS[2].address, ACCOUNTS[3].address];
+
+      whitelistInstance = await deployAddressToAddressWhiteListContract(
+        web3,
+        initialKeyAddresses,
+        initialValueAddresses
+      );
+
+      subjectWhitelistContract = whitelistInstance.address;
+    });
+
+    async function subject(): Promise<Address[]> {
+      return await systemAPI.getWhitelistedValuesAsync(
+        subjectWhitelistContract,
+        initialKeyAddresses
+      );
+    }
+
+    test('gets the correct valid value type addresses', async () => {
+      const valueTypeAddresses = await subject();
+
+      expect(JSON.stringify(valueTypeAddresses)).to.equal(JSON.stringify(initialValueAddresses));
     });
   });
 

@@ -37,6 +37,7 @@ import { exchangeIssuanceErrors } from '../errors';
 export class RebalancingSetIssuanceAPI {
   private web3: Web3;
   private assert: Assertions;
+  private cTokenWhiteList: Address;
   private rebalancingSetIssuanceModule: RebalancingSetIssuanceModuleWrapper;
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private wrappedEther: Address;
@@ -57,6 +58,7 @@ export class RebalancingSetIssuanceAPI {
   ) {
     this.web3 = web3;
     this.assert = assertions;
+    this.cTokenWhiteList = config.cTokenWhiteListAddress;
     this.transferProxy = config.transferProxyAddress;
     this.rebalancingSetIssuanceModule = new RebalancingSetIssuanceModuleWrapper(
       web3,
@@ -87,6 +89,7 @@ export class RebalancingSetIssuanceAPI {
       rebalancingSetQuantity,
       txOpts.from,
       this.transferProxy,
+      this.cTokenWhiteList,
     );
 
     return this.rebalancingSetIssuanceModule.issueRebalancingSet(
@@ -204,6 +207,7 @@ export class RebalancingSetIssuanceAPI {
       this.transferProxy,
       this.wrappedEther,
       new BigNumber(txOpts.value),
+      this.cTokenWhiteList
     );
   }
 

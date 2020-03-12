@@ -126,6 +126,7 @@ export interface RebalancingSetDetails {
 
 export interface SetProtocolConfig {
   coreAddress: Address;
+  cTokenWhiteListAddress?: Address;
   exchangeIssuanceModuleAddress: Address;
   kyberNetworkWrapperAddress: Address;
   protocolViewerAddress: Address;

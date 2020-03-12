@@ -87,6 +87,8 @@ import {
   transitionToRebalanceAsync,
 } from '@test/helpers';
 
+import { CompoundHelper } from '@test/helpers/compoundHelper';
+
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
 const { SetProtocolUtils: SetUtils, Web3Utils } = setProtocolUtils;
@@ -95,7 +97,7 @@ const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 
 let currentSnapshotId: number;
-
+const compoundHelper = new CompoundHelper();
 
 describe('ProtocolViewer', () => {
   let transferProxy: TransferProxyContract;
@@ -831,6 +833,53 @@ describe('ProtocolViewer', () => {
 
         expect(JSON.stringify(rebalanceFees)).to.equal(JSON.stringify(expectedRebalanceFees));
       });
+    });
+  });
+
+  describe('#batchFetchExchangeRateStored', async () => {
+    let cUSDCAddress: Address;
+    let cDAIAddress: Address;
+
+    let subjectCTokenAddresses: Address[];
+
+    beforeEach(async () => {
+      const usdcDecimals = 6;
+      const daiDecimals = 18;
+      const underlyingInstances = await deployTokensSpecifyingDecimals(
+        2,
+        [usdcDecimals, daiDecimals],
+        web3,
+      );
+
+      const usdcInstance = underlyingInstances[0];
+      const daiInstance = underlyingInstances[1];
+
+      cUSDCAddress = await compoundHelper.deployMockCUSDC(usdcInstance.address, DEFAULT_ACCOUNT);
+      await compoundHelper.enableCToken(cUSDCAddress);
+      // Set the Borrow Rate
+      await compoundHelper.setBorrowRate(cUSDCAddress, new BigNumber('43084603999'));
+
+      cDAIAddress = await compoundHelper.deployMockCDAI(daiInstance.address, DEFAULT_ACCOUNT);
+      await compoundHelper.enableCToken(cDAIAddress);
+      // Set the Borrow Rate
+      await compoundHelper.setBorrowRate(cDAIAddress, new BigNumber('29313252165'));
+
+      subjectCTokenAddresses = [cUSDCAddress, cDAIAddress];
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return protocolViewerWrapper.batchFetchExchangeRateStored(
+        subjectCTokenAddresses
+      );
+    }
+
+    it('fetches the correct exchangeRates data', async () => {
+      const exchangeRates = await subject();
+      const cUSDCExchangeRate = await compoundHelper.getExchangeRate(cUSDCAddress);
+      const cDAIExchangeRate = await compoundHelper.getExchangeRate(cDAIAddress);
+
+      const expectedExchangeRates = [cUSDCExchangeRate, cDAIExchangeRate];
+      expect(JSON.stringify(exchangeRates)).to.equal(JSON.stringify(expectedExchangeRates));
     });
   });
 });

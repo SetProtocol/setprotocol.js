@@ -194,4 +194,19 @@ export class ProtocolViewerWrapper {
 
     return await protocolViewerInstance.batchFetchTradingPoolRebalanceFees.callAsync(tradingPoolAddresses);
   }
+
+  /**
+   * Fetches cToken exchange rate stored for an array of cToken addresses
+   *
+   * @param  cTokenAddresses[]    CToken contract instance addresses
+   */
+  public async batchFetchExchangeRateStored(
+    cTokenAddresses: Address[],
+  ): Promise<BigNumber[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchExchangeRateStored.callAsync(cTokenAddresses);
+  }
 }
