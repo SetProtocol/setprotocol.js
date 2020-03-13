@@ -77,6 +77,18 @@ export class ERC20API {
   }
 
   /**
+   * Fetches exchange rate stored for a given array of cToken addresses
+   *
+   * @param  cTokenAddresses    Addresses of the cToken to fetch exchange rates for
+   * @return                    Exchange rate of cTokens
+   */
+  public async getCTokenExchangeRatesAsync(cTokenAddresses: Address[]): Promise<BigNumber[]> {
+    this.assertGetCTokenExchangeRates(cTokenAddresses);
+
+    return await this.protocolViewerWrapper.batchFetchExchangeRateStored(cTokenAddresses);
+  }
+
+  /**
    * Fetches token balances for each tokenAddress, userAddress pair
    *
    * @param  tokenAddresses    Addresses of the ERC20 tokens to fetch balances for
@@ -253,6 +265,12 @@ export class ERC20API {
 
     tokenAddresses.forEach(tokenAddress => {
       this.assert.schema.isValidAddress('tokenAddress', tokenAddress);
+    });
+  }
+
+  private assertGetCTokenExchangeRates(cTokenAddresses: Address[]) {
+    cTokenAddresses.forEach(cTokenAddress => {
+      this.assert.schema.isValidAddress('cTokenAddress', cTokenAddress);
     });
   }
 

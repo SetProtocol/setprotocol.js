@@ -96,6 +96,10 @@ export {
   initializeManagerAsync,
 } from './strategyHelpers';
 
+export {
+  deployAddressToAddressWhiteListContract
+} from './utilsHelpers';
+
 export { getVaultBalances } from './vaultHelpers';
 
 export { getGasUsageInEth } from './web3Helpers';

@@ -16,6 +16,7 @@
 
 'use strict';
 
+export { AddressToAddressWhiteListWrapper } from './set_protocol/AddressToAddressWhiteListWrapper';
 export { AuthorizableWrapper } from './set_protocol/AuthorizableWrapper';
 export { CoreWrapper } from './set_protocol/CoreWrapper';
 export { ERC20Wrapper } from './set_protocol/ERC20Wrapper';
