@@ -53,7 +53,7 @@ export class AddressToAddressWhiteListWrapper {
   }
 
   /**
-   * Fetches the valid addresses in the whitelist contract
+   * Fetches the value type addresses for a given array of keys
    *
    * @param  keys                 Key type addresses to fetch mapping for
    * @return                      An array of value type addresses
