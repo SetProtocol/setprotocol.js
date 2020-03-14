@@ -21,7 +21,12 @@ import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
 
 import { BigNumber } from '../util';
-import { ProtocolViewerWrapper, SocialTradingManagerWrapper, RebalancingSetTokenV2Wrapper } from '../wrappers';
+import {
+  PerformanceFeeCalculatorWrapper,
+  ProtocolViewerWrapper,
+  RebalancingSetTokenV2Wrapper,
+  SocialTradingManagerWrapper
+} from '../wrappers';
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
 import { Address, Bytes, SetProtocolConfig, Tx, EntryFeePaid, RebalanceFeePaid } from '../types/common';
@@ -41,6 +46,7 @@ export class SocialTradingAPI {
   private protocolViewer: ProtocolViewerWrapper;
   private socialTradingManager: SocialTradingManagerWrapper;
   private rebalancingSetV2: RebalancingSetTokenV2Wrapper;
+  private performanceFeeCalculator: PerformanceFeeCalculatorWrapper;
 
   /**
    * Instantiates a new RebalancingManagerAPI instance that contains methods for issuing and redeeming Sets
@@ -55,6 +61,7 @@ export class SocialTradingAPI {
     this.protocolViewer = new ProtocolViewerWrapper(web3, config.protocolViewerAddress);
     this.socialTradingManager = new SocialTradingManagerWrapper(web3);
     this.rebalancingSetV2 = new RebalancingSetTokenV2Wrapper(web3);
+    this.performanceFeeCalculator = new PerformanceFeeCalculatorWrapper(web3);
 
     this.assert = assertions;
   }
@@ -101,15 +108,15 @@ export class SocialTradingAPI {
   ): Promise<string> {
     await this.assertCreateTradingPool(
       startingBaseAssetAllocation,
-      entryFee,
-      rebalanceFee,
       tradingPoolName,
       tradingPoolSymbol,
       manager,
       allocatorAddress,
       liquidator,
       feeRecipient,
-      feeCalculator
+      feeCalculator,
+      entryFee,
+      rebalanceFee,
     );
 
     const rebalanceFeeBytes = SetUtils.generateFixedFeeCalculatorCalldata(rebalanceFee);
@@ -124,6 +131,100 @@ export class SocialTradingAPI {
       lastRebalanceTimestamp,
       entryFee,
       rebalanceFeeBytes
+    );
+
+    return this.socialTradingManager.createTradingPool(
+      manager,
+      allocatorAddress,
+      startingBaseAssetAllocation,
+      startingUSDValue,
+      SetUtils.stringToBytes(tradingPoolName),
+      SetUtils.stringToBytes(tradingPoolSymbol),
+      rebalancingSetV2CallData,
+      txOpts
+    );
+  }
+
+  /**
+   * Calls SocialTradingManager's createTradingPool function. This function creates a new tradingPool for
+   * the sender. Creates collateral Set and RebalancingSetTokenV2 then stores data relevant for updating
+   * allocations in mapping indexed by created RebalancingSetTokenV2 address.
+   *
+   * @param  manager                        Address of the social trading manager contract
+   * @param  allocatorAddress               Address of allocator to be used for pool, proxy for trading pair
+   * @param  startingBaseAssetAllocation    Starting base asset allocation of tradingPool
+   * @param  startingUSDValue               Starting USD value of one share of tradingPool
+   * @param  tradingPoolName                Name of tradingPool as appears on RebalancingSetTokenV2
+   * @param  tradingPoolSymbol              Symbol of tradingPool as appears on RebalancingSetTokenV2
+   * @param  liquidator                     Address of liquidator contract
+   * @param  feeRecipient                   Address receiving fees from contract
+   * @param  feeCalculator                  Rebalance fee calculator being used
+   * @param  rebalanceInterval              Time required between rebalances
+   * @param  failAuctionPeriod              Time before auction can be failed
+   * @param  lastRebalanceTimestamp         Passed time of last rebalance
+   * @param  entryFee                       Trading Pool entrance fee
+   * @param  streamingFee                   Trading Pool streaming fee
+   * @param  profitFee                      Trading Pool profit fee
+   * @param  profitFeePeriod                Period between actualizing profit fees
+   * @param  highWatermarkResetPeriod       Time between last profit fee actualization before high watermark
+   *                                        can be reset
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
+   *                                          gasPrice data
+   * @return                                The hash of the resulting transaction.
+   */
+  public async createTradingPoolV2Async(
+    manager: Address,
+    allocatorAddress: Address,
+    startingBaseAssetAllocation: BigNumber,
+    startingUSDValue: BigNumber,
+    tradingPoolName: string,
+    tradingPoolSymbol: string,
+    liquidator: Address,
+    feeRecipient: Address,
+    feeCalculator: Address,
+    rebalanceInterval: BigNumber,
+    failAuctionPeriod: BigNumber,
+    lastRebalanceTimestamp: BigNumber,
+    entryFee: BigNumber,
+    profitFeePeriod: BigNumber,
+    highWatermarkResetPeriod: BigNumber,
+    profitFee: BigNumber,
+    streamingFee: BigNumber,
+    txOpts: Tx,
+  ): Promise<string> {
+    await this.assertCreateTradingPoolV2(
+      startingBaseAssetAllocation,
+      tradingPoolName,
+      tradingPoolSymbol,
+      manager,
+      allocatorAddress,
+      liquidator,
+      feeRecipient,
+      feeCalculator,
+      entryFee,
+      profitFeePeriod,
+      highWatermarkResetPeriod,
+      profitFee,
+      streamingFee,
+    );
+
+    const feeCalculatorBytes = SetUtils.generatePerformanceFeeCallDataBuffer(
+      profitFeePeriod,
+      highWatermarkResetPeriod,
+      profitFee,
+      streamingFee
+    );
+
+    const rebalancingSetV2CallData = SetUtils.generateRebalancingSetTokenV3CallData(
+      manager,
+      liquidator,
+      feeRecipient,
+      feeCalculator,
+      rebalanceInterval,
+      failAuctionPeriod,
+      lastRebalanceTimestamp,
+      entryFee,
+      feeCalculatorBytes
     );
 
     return this.socialTradingManager.createTradingPool(
@@ -496,8 +597,6 @@ export class SocialTradingAPI {
   /* ============ Private Assertions ============ */
   private async assertCreateTradingPool(
     allocation: BigNumber,
-    entryFee: BigNumber,
-    rebalanceFee: BigNumber,
     tradingPoolName: string,
     tradingPoolSymbol: string,
     manager: Address,
@@ -505,6 +604,8 @@ export class SocialTradingAPI {
     liquidator: Address,
     feeRecipient: Address,
     feeCalculator: Address,
+    entryFee: BigNumber,
+    rebalanceFee: BigNumber,
   ): Promise<void> {
     this.assert.schema.isValidAddress('manager', manager);
     this.assert.schema.isValidAddress('allocatorAddress', allocatorAddress);
@@ -514,6 +615,42 @@ export class SocialTradingAPI {
 
     this.assertValidAllocation(allocation);
     this.assertValidFees(entryFee, rebalanceFee);
+
+    this.assert.common.isValidString(tradingPoolName, coreAPIErrors.STRING_CANNOT_BE_EMPTY('name'));
+    this.assert.common.isValidString(tradingPoolSymbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY('symbol'));
+  }
+
+  private async assertCreateTradingPoolV2(
+    allocation: BigNumber,
+    tradingPoolName: string,
+    tradingPoolSymbol: string,
+    manager: Address,
+    allocatorAddress: Address,
+    liquidator: Address,
+    feeRecipient: Address,
+    feeCalculator: Address,
+    entryFee: BigNumber,
+    profitFeePeriod: BigNumber,
+    highWatermarkResetPeriod: BigNumber,
+    profitFee: BigNumber,
+    streamingFee: BigNumber,
+  ): Promise<void> {
+    this.assert.schema.isValidAddress('manager', manager);
+    this.assert.schema.isValidAddress('allocatorAddress', allocatorAddress);
+    this.assert.schema.isValidAddress('liquidator', liquidator);
+    this.assert.schema.isValidAddress('feeRecipient', feeRecipient);
+    this.assert.schema.isValidAddress('feeCalculator', feeCalculator);
+
+    this.assertValidAllocation(allocation);
+
+    await this.assertValidPerformanceFees(
+      feeCalculator,
+      profitFeePeriod,
+      highWatermarkResetPeriod,
+      entryFee,
+      profitFee,
+      streamingFee
+    );
 
     this.assert.common.isValidString(tradingPoolName, coreAPIErrors.STRING_CANNOT_BE_EMPTY('name'));
     this.assert.common.isValidString(tradingPoolSymbol, coreAPIErrors.STRING_CANNOT_BE_EMPTY('symbol'));
@@ -597,5 +734,30 @@ export class SocialTradingAPI {
   ): void {
     this.assert.socialTrading.feeMultipleOfOneBasisPoint(entryFee);
     this.assert.socialTrading.feeMultipleOfOneBasisPoint(rebalanceFee);
+  }
+
+  private async assertValidPerformanceFees(
+    feeCalculator: Address,
+    profitFeePeriod: BigNumber,
+    highWatermarkResetPeriod: BigNumber,
+    entryFee: BigNumber,
+    profitFee: BigNumber,
+    streamingFee: BigNumber,
+  ): Promise<void> {
+    this.assert.socialTrading.feeMultipleOfOneBasisPoint(entryFee);
+    this.assert.socialTrading.feeMultipleOfOneBasisPoint(profitFee);
+    this.assert.socialTrading.feeMultipleOfOneBasisPoint(streamingFee);
+
+    this.assert.common.isGreaterOrEqualThan(
+      highWatermarkResetPeriod,
+      profitFeePeriod,
+      'High watermark reset must be greater than profit fee period.'
+    );
+
+    const maxProfitFeePercentage = await this.performanceFeeCalculator.maximumProfitFeePercentage(feeCalculator);
+    const maxStreamingFeePercentage = await this.performanceFeeCalculator.maximumStreamingFeePercentage(feeCalculator);
+
+    this.assert.socialTrading.feeDoesNotExceedMaximumOnCalculator(profitFee, maxProfitFeePercentage);
+    this.assert.socialTrading.feeDoesNotExceedMaximumOnCalculator(streamingFee, maxStreamingFeePercentage);
   }
 }

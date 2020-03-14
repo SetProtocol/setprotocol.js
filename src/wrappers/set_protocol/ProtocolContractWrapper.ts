@@ -25,6 +25,7 @@ import {
   ERC20DetailedContract,
   ExchangeIssuanceModuleContract,
   KyberNetworkWrapperContract,
+  PerformanceFeeCalculatorContract,
   RebalancingSetIssuanceModuleContract,
   RebalancingSetEthBidderContract,
   RebalancingSetCTokenBidderContract,
@@ -549,6 +550,32 @@ export class ProtocolContractWrapper {
       );
       this.cache[cacheKey] = rebalancingSetCTokenBidderContract;
       return rebalancingSetCTokenBidderContract;
+    }
+  }
+
+  /**
+   * Load a PerformanceFeeCalculator contract
+   *
+   * @param  performanceFeeCalculator     Address of the PerformanceFeeCalculator contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The ProtocolViewer Contract
+   */
+  public async loadPerformanceFeeCalculatorContract(
+    performanceFeeCalculator: Address,
+    transactionOptions: object = {},
+  ): Promise<PerformanceFeeCalculatorContract> {
+    const cacheKey = `PerformanceFeeCalculator${performanceFeeCalculator}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as PerformanceFeeCalculatorContract;
+    } else {
+      const performanceFeeCalculatorContract = await PerformanceFeeCalculatorContract.at(
+        performanceFeeCalculator,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = performanceFeeCalculatorContract;
+      return performanceFeeCalculatorContract;
     }
   }
 }

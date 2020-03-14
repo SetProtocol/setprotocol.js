@@ -30,6 +30,7 @@ export {
 } from './set_protocol/RebalancingSetExchangeIssuanceModuleWrapper';
 export { RebalancingSetIssuanceModuleWrapper } from './set_protocol/RebalancingSetIssuanceModuleWrapper';
 export { MedianizerWrapper } from './set_protocol/MedianizerWrapper';
+export { PerformanceFeeCalculatorWrapper } from './set_protocol/PerformanceFeeCalculatorWrapper';
 export { ProtocolContractWrapper } from './set_protocol/ProtocolContractWrapper';
 export { ProtocolViewerWrapper } from './set_protocol/ProtocolViewerWrapper';
 export { RebalancingAuctionModuleWrapper } from './set_protocol/RebalancingAuctionModuleWrapper';

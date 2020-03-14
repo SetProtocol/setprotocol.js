@@ -92,6 +92,7 @@ export {
   deployRSITrendingTriggerAsync,
   deploySocialAllocatorAsync,
   deploySocialTradingManagerAsync,
+  deploySocialTradingManagerV2Async,
   deploySocialTradingManagerMockAsync,
   initializeManagerAsync,
 } from './strategyHelpers';
