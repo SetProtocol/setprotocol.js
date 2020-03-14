@@ -25,6 +25,7 @@ import {
   PerformanceFeeCalculatorWrapper,
   ProtocolViewerWrapper,
   RebalancingSetTokenV2Wrapper,
+  RebalancingSetTokenV3Wrapper,
   SocialTradingManagerWrapper
 } from '../wrappers';
 import { Assertions } from '../assertions';
@@ -46,6 +47,7 @@ export class SocialTradingAPI {
   private protocolViewer: ProtocolViewerWrapper;
   private socialTradingManager: SocialTradingManagerWrapper;
   private rebalancingSetV2: RebalancingSetTokenV2Wrapper;
+  private rebalancingSetV3: RebalancingSetTokenV3Wrapper;
   private performanceFeeCalculator: PerformanceFeeCalculatorWrapper;
 
   /**
@@ -61,6 +63,7 @@ export class SocialTradingAPI {
     this.protocolViewer = new ProtocolViewerWrapper(web3, config.protocolViewerAddress);
     this.socialTradingManager = new SocialTradingManagerWrapper(web3);
     this.rebalancingSetV2 = new RebalancingSetTokenV2Wrapper(web3);
+    this.rebalancingSetV3 = new RebalancingSetTokenV3Wrapper(web3);
     this.performanceFeeCalculator = new PerformanceFeeCalculatorWrapper(web3);
 
     this.assert = assertions;
@@ -267,6 +270,19 @@ export class SocialTradingAPI {
       liquidatorData,
       txOpts
     );
+  }
+
+  /**
+   * Calls tradingPool to accrue fees to manager.
+   *
+   * @param  rebalancingSetAddress    Address of tradingPool
+   * @return                          The hash of the resulting transaction.
+   */
+  public async actualizeFeesAsync(
+    tradingPool: Address,
+    txOpts: Tx,
+  ): Promise<string> {
+    return this.rebalancingSetV3.actualizeFee(tradingPool, txOpts);
   }
 
   /**

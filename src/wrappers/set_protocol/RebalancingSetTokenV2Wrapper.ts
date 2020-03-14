@@ -29,7 +29,7 @@ import { RebalancingSetTokenV2 } from 'set-protocol-contracts';
  *
  */
 export class RebalancingSetTokenV2Wrapper {
-  public web3: Web3;
+  private web3: Web3;
 
   public constructor(web3: Web3) {
     this.web3 = web3;

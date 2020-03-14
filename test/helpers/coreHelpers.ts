@@ -7,6 +7,7 @@ import {
   Core,
   CoreIssuanceLibrary,
   ERC20Wrapper,
+  FactoryUtilsLibrary,
   FixedFeeCalculator,
   ExchangeIssuanceModule,
   LinearAuctionLiquidator,
@@ -17,6 +18,7 @@ import {
   RebalanceAuctionModule,
   RebalancingSetTokenFactory,
   RebalancingSetTokenV2Factory,
+  RebalancingSetTokenV3Factory,
   SetTokenFactory,
   FailAuctionLibrary,
   PlaceBidLibrary,
@@ -43,6 +45,7 @@ import {
   RebalanceAuctionModuleContract,
   RebalancingSetTokenFactoryContract,
   RebalancingSetTokenV2FactoryContract,
+  RebalancingSetTokenV3FactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
@@ -264,6 +267,63 @@ export const deployRebalancingSetTokenV2FactoryContractAsync = async (
   // Initialize typed contract class
   const rebalancingSetTokenV2FactoryContract = await RebalancingSetTokenV2FactoryContract.at(
     deployedRebalancingSetTokenV2Factory.address,
+    web3,
+    TX_DEFAULTS,
+  );
+
+  // Enable factory for provided core
+  await core.addFactory.sendTransactionAsync(
+    rebalancingSetTokenV2FactoryContract.address,
+    TX_DEFAULTS
+  );
+
+  return rebalancingSetTokenV2FactoryContract;
+};
+
+export const deployRebalancingSetTokenV3FactoryContractAsync = async (
+  web3: Web3,
+  core: CoreContract,
+  componentWhitelist: WhiteListContract,
+  liquidatorWhitelist: WhiteListContract,
+  feeCalculatorWhitelist: WhiteListContract,
+  minimumRebalanceInterval: BigNumber = ONE_DAY_IN_SECONDS,
+  minimumFailRebalancePeriod: BigNumber = ONE_DAY_IN_SECONDS.div(2),
+  maximumFailRebalancePeriod: BigNumber = ONE_DAY_IN_SECONDS.mul(4),
+  minimumNaturalUnit: BigNumber = DEFAULT_REBALANCING_MINIMUM_NATURAL_UNIT,
+  maximumNaturalUnit: BigNumber = DEFAULT_REBALANCING_MAXIMUM_NATURAL_UNIT,
+): Promise<RebalancingSetTokenV3FactoryContract> => {
+  // Deploy SetTokenFactory contract
+  const truffleRebalancingSetTokenV3FactoryContract = setDefaultTruffleContract(web3, RebalancingSetTokenV3Factory);
+
+  const truffleBytes32LibraryContract = setDefaultTruffleContract(web3, Bytes32Library);
+  const deployedBytes32LibraryContract = await truffleBytes32LibraryContract.new();
+  await truffleRebalancingSetTokenV3FactoryContract.link(
+    'Bytes32Library',
+    deployedBytes32LibraryContract.address
+  );
+
+  const truffleFactoryUtilsLibraryContract = setDefaultTruffleContract(web3, FactoryUtilsLibrary);
+  const deployedFactoryUtilsLibraryContract = await truffleFactoryUtilsLibraryContract.new();
+  await truffleRebalancingSetTokenV3FactoryContract.link(
+    'FactoryUtilsLibrary',
+    deployedFactoryUtilsLibraryContract.address
+  );
+
+  const deployedRebalancingSetTokenV3Factory = await truffleRebalancingSetTokenV3FactoryContract.new(
+    core.address,
+    componentWhitelist.address,
+    liquidatorWhitelist.address,
+    feeCalculatorWhitelist.address,
+    minimumRebalanceInterval,
+    minimumFailRebalancePeriod,
+    maximumFailRebalancePeriod,
+    minimumNaturalUnit,
+    maximumNaturalUnit,
+  );
+
+  // Initialize typed contract class
+  const rebalancingSetTokenV2FactoryContract = await RebalancingSetTokenV3FactoryContract.at(
+    deployedRebalancingSetTokenV3Factory.address,
     web3,
     TX_DEFAULTS,
   );

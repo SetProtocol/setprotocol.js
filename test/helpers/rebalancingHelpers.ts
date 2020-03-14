@@ -10,6 +10,7 @@ import {
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenV2Contract,
+  RebalancingSetTokenV3Contract,
   SetTokenContract,
   VaultContract
 } from 'set-protocol-contracts';
@@ -187,6 +188,42 @@ export const createRebalancingTokenV2Async = async(
   );
 };
 
+export const createRebalancingTokenV3Async = async(
+  web3: Web3,
+  core: CoreContract,
+  factory: Address,
+  componentAddresses: Address[],
+  units: BigNumber[],
+  naturalUnit: BigNumber,
+  callData: string = '',
+  name: string = 'Rebalancing Set Token',
+  symbol: string = 'RBSET',
+  from: Address = DEFAULT_ACCOUNT,
+): Promise<RebalancingSetTokenV3Contract> => {
+  const encodedName = SetProtocolUtils.stringToBytes(name);
+  const encodedSymbol = SetProtocolUtils.stringToBytes(symbol);
+
+  const txHash = await core.createSet.sendTransactionAsync(
+    factory,
+    componentAddresses,
+    units,
+    naturalUnit,
+    encodedName,
+    encodedSymbol,
+    callData,
+    { from },
+  );
+
+  const logs = await new SetProtocolTestUtils(web3).getLogsFromTxHash(txHash);
+  const setAddress = extractNewSetTokenAddressFromLogs(logs);
+
+  return await RebalancingSetTokenV3Contract.at(
+    setAddress,
+    web3,
+    { from }
+  );
+};
+
 export const createDefaultRebalancingSetTokenAsync = async(
   web3: Web3,
   core: CoreContract,
@@ -249,6 +286,57 @@ export const createDefaultRebalancingSetTokenV2Async = async(
 
   // Create rebalancingSetToken
   return await createRebalancingTokenV2Async(
+    web3,
+    core,
+    factory,
+    [initialSet],
+    [initialUnitShares],
+    DEFAULT_REBALANCING_NATURAL_UNIT,
+    callData,
+  );
+};
+
+export const createDefaultRebalancingSetTokenV3Async = async(
+  web3: Web3,
+  core: CoreContract,
+  factory: Address,
+  manager: Address,
+  liquidator: Address,
+  feeRecipient: Address,
+  rebalanceFeeCalculator: Address,
+  initialSet: Address,
+  failRebalancePeriod: BigNumber,
+  lastRebalanceTimestamp: BigNumber,
+  entryFee: BigNumber = ZERO,
+  profitFee: BigNumber = ZERO,
+  streamingFee: BigNumber = ZERO,
+  profitFeePeriod: BigNumber = ONE_DAY_IN_SECONDS.mul(30),
+  highWatermarkResetPeriod: BigNumber = ONE_DAY_IN_SECONDS.mul(365),
+  initialUnitShares: BigNumber = DEFAULT_UNIT_SHARES,
+): Promise<RebalancingSetTokenV3Contract> => {
+  // Generate defualt rebalancingSetToken params
+  const rebalanceInterval = ONE_DAY_IN_SECONDS;
+  const rebalanceFeeCallData = SetProtocolUtils.generatePerformanceFeeCallDataBuffer(
+    profitFeePeriod,
+    highWatermarkResetPeriod,
+    profitFee,
+    streamingFee
+  );
+
+  const callData = SetProtocolUtils.generateRebalancingSetTokenV3CallData(
+    manager,
+    liquidator,
+    feeRecipient,
+    rebalanceFeeCalculator,
+    rebalanceInterval,
+    failRebalancePeriod,
+    lastRebalanceTimestamp,
+    entryFee,
+    rebalanceFeeCallData,
+  );
+
+  // Create rebalancingSetToken
+  return await createRebalancingTokenV3Async(
     web3,
     core,
     factory,

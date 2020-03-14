@@ -15,6 +15,7 @@ export {
   deployRebalancingSetIssuanceModuleAsync,
   deployRebalancingSetTokenFactoryContract,
   deployRebalancingSetTokenV2FactoryContractAsync,
+  deployRebalancingSetTokenV3FactoryContractAsync,
   deploySetTokenAsync,
   deploySetTokenFactoryContract,
   deployTokenAsync,
@@ -51,6 +52,7 @@ export {
   deployOracleProxyAsync,
   deployRSIOracleAsync,
   deployTimeSeriesFeedAsync,
+  deployUpdatableOracleMockAsync,
   updateMedianizerPriceAsync,
 } from './oracleHelpers';
 
@@ -64,6 +66,7 @@ export {
   constructInflowOutflowAddressesArraysAsync,
   createDefaultRebalancingSetTokenAsync,
   createDefaultRebalancingSetTokenV2Async,
+  createDefaultRebalancingSetTokenV3Async,
   deployConstantAuctionPriceCurveAsync,
   deploySetTokensAsync,
   increaseChainTimeAsync,

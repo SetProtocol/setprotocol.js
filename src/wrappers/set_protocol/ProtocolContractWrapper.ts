@@ -32,6 +32,7 @@ import {
   RebalancingSetExchangeIssuanceModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
+  RebalancingSetTokenV3Contract,
   SetTokenContract,
   TimeLockUpgradeContract,
   TransferProxyContract,
@@ -136,6 +137,32 @@ export class ProtocolContractWrapper {
       return this.cache[cacheKey] as RebalancingSetTokenContract;
     } else {
       const rebalancingSetTokenContract = await RebalancingSetTokenContract.at(
+        rebalancingSetTokenAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = rebalancingSetTokenContract;
+      return rebalancingSetTokenContract;
+    }
+  }
+
+  /**
+   * Load Rebalancing Set Token contract
+   *
+   * @param  rebalancingSetTokenAddress    Address of the Set Token contract
+   * @param  transactionOptions            Options sent into the contract deployed method
+   * @return                               The Set Token Contract
+   */
+  public async loadRebalancingSetTokenV3Async(
+    rebalancingSetTokenAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<RebalancingSetTokenV3Contract> {
+    const cacheKey = `RebalancingSetTokenV3_${rebalancingSetTokenAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as RebalancingSetTokenV3Contract;
+    } else {
+      const rebalancingSetTokenContract = await RebalancingSetTokenV3Contract.at(
         rebalancingSetTokenAddress,
         this.web3,
         transactionOptions,

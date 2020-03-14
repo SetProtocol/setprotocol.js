@@ -38,6 +38,7 @@ import {
   RebalancingSetTokenV2Contract,
   RebalancingSetTokenV2FactoryContract,
   RebalancingSetTokenV3Contract,
+  RebalancingSetTokenV3FactoryContract,
   RebalanceAuctionModuleContract,
   SetTokenContract,
   SetTokenFactoryContract,
@@ -53,7 +54,7 @@ import {
 } from 'set-protocol-strategies';
 
 import {
-  ConstantPriceOracleContract,
+  UpdatableOracleMockContract,
 } from 'set-protocol-oracles';
 
 import {
@@ -76,17 +77,18 @@ import {
   approveForTransferAsync,
   createDefaultRebalancingSetTokenV2Async,
   deployBaseContracts,
-  deployConstantPriceOracleAsync,
   deployFixedFeeCalculatorAsync,
   deployLinearAuctionLiquidatorContractAsync,
   deployOracleWhiteListAsync,
   deployProtocolViewerAsync,
   deployRebalancingSetTokenV2FactoryContractAsync,
+  deployRebalancingSetTokenV3FactoryContractAsync,
   deploySetTokenAsync,
   deploySocialAllocatorAsync,
   deploySocialTradingManagerAsync,
   deploySocialTradingManagerV2Async,
   deployTokensSpecifyingDecimals,
+  deployUpdatableOracleMockAsync,
   deployWhiteListContract,
   increaseChainTimeAsync,
 } from '@test/helpers';
@@ -128,13 +130,14 @@ describe('SocialTradingAPI', () => {
   let feeCalculator: FixedFeeCalculatorContract;
   let performanceFeeCalculator: PerformanceFeeCalculatorContract;
   let rebalancingFactory: RebalancingSetTokenV2FactoryContract;
+  let rebalancingV3Factory: RebalancingSetTokenV3FactoryContract;
   let oracleWhiteList: OracleWhiteListContract;
   let liquidatorWhiteList: WhiteListContract;
   let feeCalculatorWhiteList: WhiteListContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
-  let ethOracleProxy: ConstantPriceOracleContract;
-  let btcOracleProxy: ConstantPriceOracleContract;
+  let ethOracleProxy: UpdatableOracleMockContract;
+  let btcOracleProxy: UpdatableOracleMockContract;
 
   let allocator: SocialAllocatorContract;
 
@@ -192,12 +195,12 @@ describe('SocialTradingAPI', () => {
       wrappedETH.address,
     );
 
-    ethOracleProxy = await deployConstantPriceOracleAsync(
+    ethOracleProxy = await deployUpdatableOracleMockAsync(
       web3,
       initialEthPrice
     );
 
-    btcOracleProxy = await deployConstantPriceOracleAsync(
+    btcOracleProxy = await deployUpdatableOracleMockAsync(
       web3,
       initialBtcPrice
     );
@@ -238,6 +241,14 @@ describe('SocialTradingAPI', () => {
       feeCalculatorWhiteList
     );
 
+    rebalancingV3Factory = await deployRebalancingSetTokenV3FactoryContractAsync(
+      web3,
+      core,
+      rebalancingComponentWhiteList,
+      liquidatorWhiteList,
+      feeCalculatorWhiteList
+    );
+
     pricePrecision = new BigNumber(100);
     const collateralName = SetUtils.stringToBytes('Collateral');
     const collateralSymbol = SetUtils.stringToBytes('COL');
@@ -262,7 +273,7 @@ describe('SocialTradingAPI', () => {
     setManagerV2 = await deploySocialTradingManagerV2Async(
       web3,
       core.address,
-      rebalancingFactory.address,
+      rebalancingV3Factory.address,
       [allocator.address]
     );
 
@@ -904,6 +915,97 @@ describe('SocialTradingAPI', () => {
           `available on ${nextRebalanceFormattedDate}`
         );
       });
+    });
+  });
+
+  describe('acutalizeFeeAsync', async () => {
+    let subjectTradingPool: Address;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const manager = setManagerV2.address;
+      const allocatorAddress = allocator.address;
+      const startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = 'CoolPool';
+      const tradingPoolSymbol = 'COOL';
+      const liquidatorAddress = liquidator.address;
+      const feeRecipient = DEFAULT_ACCOUNT;
+      const feeCalculator = performanceFeeCalculator.address;
+      const rebalanceInterval = ONE_DAY_IN_SECONDS;
+      const failAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const lastRebalanceTimestamp = new BigNumber(timestamp);
+      const entryFee = ether(.0001);
+      const profitFeePeriod = ONE_DAY_IN_SECONDS.mul(30);
+      const highWatermarkResetPeriod = ONE_DAY_IN_SECONDS.mul(365);
+      const profitFee = ether(.2);
+      const streamingFee = ether(.02);
+      const trader = DEFAULT_ACCOUNT;
+
+      const txHash = await socialTradingAPI.createTradingPoolV2Async(
+        manager,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidatorAddress,
+        feeRecipient,
+        feeCalculator,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFee,
+        profitFeePeriod,
+        highWatermarkResetPeriod,
+        profitFee,
+        streamingFee,
+        { from: trader }
+      );
+
+      await increaseChainTimeAsync(web3, profitFeePeriod);
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const collateralAddress = extractNewSetTokenAddressFromLogs(formattedLogs, 2);
+      const collateralInstance = await SetTokenContract.at(
+        collateralAddress,
+        web3,
+        TX_DEFAULTS
+      );
+
+      await collateralInstance.approve.sendTransactionAsync(
+        transferProxy.address,
+        UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+        { from: subjectCaller }
+      );
+
+      const tradingPool = extractNewSetTokenAddressFromLogs(formattedLogs);
+
+      await core.issue.sendTransactionAsync(collateralAddress, ether(2), { from: subjectCaller });
+      await core.issue.sendTransactionAsync(tradingPool, ether(5), { from: subjectCaller });
+
+      const newEthPrice = ether(250);
+      await ethOracleProxy.updatePrice.sendTransactionAsync(newEthPrice);
+
+      subjectTradingPool = tradingPool;
+      subjectCaller = trader;
+    });
+
+    async function subject(): Promise<string> {
+      return await socialTradingAPI.actualizeFeesAsync(
+        subjectTradingPool,
+        { from: subjectCaller }
+      );
+    }
+
+    test('successfully creates poolInfo', async () => {
+      await subject();
+
+      const { timestamp } = await web3.eth.getBlock('latest');
+
+      const feeState: any = await performanceFeeCalculator.feeState.callAsync(subjectTradingPool);
+      expect(feeState.lastProfitFeeTimestamp).to.be.bignumber.equal(timestamp);
     });
   });
 
