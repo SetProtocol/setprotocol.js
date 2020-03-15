@@ -773,7 +773,15 @@ export class SocialTradingAPI {
     const maxProfitFeePercentage = await this.performanceFeeCalculator.maximumProfitFeePercentage(feeCalculator);
     const maxStreamingFeePercentage = await this.performanceFeeCalculator.maximumStreamingFeePercentage(feeCalculator);
 
-    this.assert.socialTrading.feeDoesNotExceedMaximumOnCalculator(profitFee, maxProfitFeePercentage);
-    this.assert.socialTrading.feeDoesNotExceedMaximumOnCalculator(streamingFee, maxStreamingFeePercentage);
+    this.assert.common.isGreaterOrEqualThan(
+      maxProfitFeePercentage,
+      profitFee,
+      'Passed fee exceeds allowed maximum.'
+    );
+    this.assert.common.isGreaterOrEqualThan(
+      maxStreamingFeePercentage,
+      streamingFee,
+      'Passed fee exceeds allowed maximum.'
+    );
   }
 }

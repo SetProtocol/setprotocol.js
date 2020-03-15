@@ -157,15 +157,4 @@ export class SocialTradingAssertions {
       throw new Error(socialTradingErrors.INSUFFICIENT_TIME_PASSED(validUpdateFormattedDate));
     }
   }
-
-  public feeDoesNotExceedMaximumOnCalculator(
-    feePercentage: BigNumber,
-    feeMaxPercentage: BigNumber
-  ): void {
-    this.commonAssertions.isGreaterOrEqualThan(
-      feeMaxPercentage,
-      feePercentage,
-      'Passed fee exceeds allowed maximum.'
-    );
-  }
 }
