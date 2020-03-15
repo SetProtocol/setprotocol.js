@@ -25,12 +25,14 @@ import {
   ERC20DetailedContract,
   ExchangeIssuanceModuleContract,
   KyberNetworkWrapperContract,
+  PerformanceFeeCalculatorContract,
   RebalancingSetIssuanceModuleContract,
   RebalancingSetEthBidderContract,
   RebalancingSetCTokenBidderContract,
   RebalancingSetExchangeIssuanceModuleContract,
   RebalanceAuctionModuleContract,
   RebalancingSetTokenContract,
+  RebalancingSetTokenV3Contract,
   SetTokenContract,
   TimeLockUpgradeContract,
   TransferProxyContract,
@@ -135,6 +137,32 @@ export class ProtocolContractWrapper {
       return this.cache[cacheKey] as RebalancingSetTokenContract;
     } else {
       const rebalancingSetTokenContract = await RebalancingSetTokenContract.at(
+        rebalancingSetTokenAddress,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = rebalancingSetTokenContract;
+      return rebalancingSetTokenContract;
+    }
+  }
+
+  /**
+   * Load Rebalancing Set Token contract
+   *
+   * @param  rebalancingSetTokenAddress    Address of the Set Token contract
+   * @param  transactionOptions            Options sent into the contract deployed method
+   * @return                               The Set Token Contract
+   */
+  public async loadRebalancingSetTokenV3Async(
+    rebalancingSetTokenAddress: Address,
+    transactionOptions: object = {},
+  ): Promise<RebalancingSetTokenV3Contract> {
+    const cacheKey = `RebalancingSetTokenV3_${rebalancingSetTokenAddress}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as RebalancingSetTokenV3Contract;
+    } else {
+      const rebalancingSetTokenContract = await RebalancingSetTokenV3Contract.at(
         rebalancingSetTokenAddress,
         this.web3,
         transactionOptions,
@@ -549,6 +577,32 @@ export class ProtocolContractWrapper {
       );
       this.cache[cacheKey] = rebalancingSetCTokenBidderContract;
       return rebalancingSetCTokenBidderContract;
+    }
+  }
+
+  /**
+   * Load a PerformanceFeeCalculator contract
+   *
+   * @param  performanceFeeCalculator     Address of the PerformanceFeeCalculator contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The ProtocolViewer Contract
+   */
+  public async loadPerformanceFeeCalculatorContract(
+    performanceFeeCalculator: Address,
+    transactionOptions: object = {},
+  ): Promise<PerformanceFeeCalculatorContract> {
+    const cacheKey = `PerformanceFeeCalculator${performanceFeeCalculator}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as PerformanceFeeCalculatorContract;
+    } else {
+      const performanceFeeCalculatorContract = await PerformanceFeeCalculatorContract.at(
+        performanceFeeCalculator,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = performanceFeeCalculatorContract;
+      return performanceFeeCalculatorContract;
     }
   }
 }

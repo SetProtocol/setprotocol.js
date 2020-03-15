@@ -25,11 +25,13 @@ export { KyberNetworkWrapper } from './set_protocol/KyberNetworkWrapper';
 export { RebalancingSetCTokenBidderWrapper } from './set_protocol/RebalancingSetCTokenBidderWrapper';
 export { RebalancingSetEthBidderWrapper } from './set_protocol/RebalancingSetEthBidderWrapper';
 export { RebalancingSetTokenV2Wrapper } from './set_protocol/RebalancingSetTokenV2Wrapper';
+export { RebalancingSetTokenV3Wrapper } from './set_protocol/RebalancingSetTokenV3Wrapper';
 export {
  RebalancingSetExchangeIssuanceModuleWrapper
 } from './set_protocol/RebalancingSetExchangeIssuanceModuleWrapper';
 export { RebalancingSetIssuanceModuleWrapper } from './set_protocol/RebalancingSetIssuanceModuleWrapper';
 export { MedianizerWrapper } from './set_protocol/MedianizerWrapper';
+export { PerformanceFeeCalculatorWrapper } from './set_protocol/PerformanceFeeCalculatorWrapper';
 export { ProtocolContractWrapper } from './set_protocol/ProtocolContractWrapper';
 export { ProtocolViewerWrapper } from './set_protocol/ProtocolViewerWrapper';
 export { RebalancingAuctionModuleWrapper } from './set_protocol/RebalancingAuctionModuleWrapper';

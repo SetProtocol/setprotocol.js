@@ -22,6 +22,8 @@ import {
   SocialAllocatorContract,
   SocialTradingManager,
   SocialTradingManagerContract,
+  SocialTradingManagerV2,
+  SocialTradingManagerV2Contract,
 } from 'set-protocol-strategies';
 import {
   SocialTradingManagerMock,
@@ -271,6 +273,31 @@ export const deploySocialTradingManagerAsync = async(
     feeUpdateTimelock
   );
   return await SocialTradingManagerContract.at(
+    deployedSocialTradingManagerInstance.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
+export const deploySocialTradingManagerV2Async = async(
+  web3: Web3,
+  core: Address,
+  factory: Address,
+  allocators: Address[],
+  maxEntryFee: BigNumber = ether(.1),
+  feeUpdateTimelock: BigNumber = ONE_DAY_IN_SECONDS,
+): Promise<SocialTradingManagerV2Contract> => {
+  const truffleSocialTradingManager = setDefaultTruffleContract(web3, SocialTradingManagerV2);
+
+  // Deploy MACO Strategy Manager V2
+  const deployedSocialTradingManagerInstance = await truffleSocialTradingManager.new(
+    core,
+    factory,
+    allocators,
+    maxEntryFee,
+    feeUpdateTimelock
+  );
+  return await SocialTradingManagerV2Contract.at(
     deployedSocialTradingManagerInstance.address,
     web3,
     TX_DEFAULTS,

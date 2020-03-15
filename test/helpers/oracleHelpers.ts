@@ -22,6 +22,8 @@ import {
   RSIOracleContract,
   TimeSeriesFeed,
   TimeSeriesFeedContract,
+  UpdatableOracleMock,
+  UpdatableOracleMockContract
 } from 'set-protocol-oracles';
 
 import { ONE_DAY_IN_SECONDS, TX_DEFAULTS } from '@src/constants';
@@ -140,6 +142,22 @@ export const deployConstantPriceOracleAsync = async(
     price
   );
   return await ConstantPriceOracleContract.at(
+    deployedConstantPriceOracle.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
+export const deployUpdatableOracleMockAsync = async(
+  web3: Web3,
+  price: BigNumber
+): Promise<UpdatableOracleMockContract> => {
+  const truffleConstantPriceOracle = setDefaultTruffleContract(web3, UpdatableOracleMock);
+
+  const deployedConstantPriceOracle = await truffleConstantPriceOracle.new(
+    price
+  );
+  return await UpdatableOracleMockContract.at(
     deployedConstantPriceOracle.address,
     web3,
     TX_DEFAULTS,

@@ -30,11 +30,15 @@ import Web3 from 'web3';
 import {
   Core,
   CoreContract,
+  FeeCalculatorHelper,
   FixedFeeCalculatorContract,
   LinearAuctionLiquidatorContract,
   OracleWhiteListContract,
+  PerformanceFeeCalculatorContract,
   RebalancingSetTokenV2Contract,
   RebalancingSetTokenV2FactoryContract,
+  RebalancingSetTokenV3Contract,
+  RebalancingSetTokenV3FactoryContract,
   RebalanceAuctionModuleContract,
   SetTokenContract,
   SetTokenFactoryContract,
@@ -45,11 +49,12 @@ import {
 
 import {
   SocialAllocatorContract,
-  SocialTradingManagerContract
+  SocialTradingManagerContract,
+  SocialTradingManagerV2Contract
 } from 'set-protocol-strategies';
 
 import {
-  ConstantPriceOracleContract,
+  UpdatableOracleMockContract,
 } from 'set-protocol-oracles';
 
 import {
@@ -72,16 +77,18 @@ import {
   approveForTransferAsync,
   createDefaultRebalancingSetTokenV2Async,
   deployBaseContracts,
-  deployConstantPriceOracleAsync,
   deployFixedFeeCalculatorAsync,
   deployLinearAuctionLiquidatorContractAsync,
   deployOracleWhiteListAsync,
   deployProtocolViewerAsync,
   deployRebalancingSetTokenV2FactoryContractAsync,
+  deployRebalancingSetTokenV3FactoryContractAsync,
   deploySetTokenAsync,
   deploySocialAllocatorAsync,
   deploySocialTradingManagerAsync,
+  deploySocialTradingManagerV2Async,
   deployTokensSpecifyingDecimals,
+  deployUpdatableOracleMockAsync,
   deployWhiteListContract,
   increaseChainTimeAsync,
 } from '@test/helpers';
@@ -121,14 +128,16 @@ describe('SocialTradingAPI', () => {
 
   let liquidator: LinearAuctionLiquidatorContract;
   let feeCalculator: FixedFeeCalculatorContract;
+  let performanceFeeCalculator: PerformanceFeeCalculatorContract;
   let rebalancingFactory: RebalancingSetTokenV2FactoryContract;
+  let rebalancingV3Factory: RebalancingSetTokenV3FactoryContract;
   let oracleWhiteList: OracleWhiteListContract;
   let liquidatorWhiteList: WhiteListContract;
   let feeCalculatorWhiteList: WhiteListContract;
   let rebalanceAuctionModule: RebalanceAuctionModuleContract;
 
-  let ethOracleProxy: ConstantPriceOracleContract;
-  let btcOracleProxy: ConstantPriceOracleContract;
+  let ethOracleProxy: UpdatableOracleMockContract;
+  let btcOracleProxy: UpdatableOracleMockContract;
 
   let allocator: SocialAllocatorContract;
 
@@ -136,12 +145,18 @@ describe('SocialTradingAPI', () => {
   let initialBtcPrice: BigNumber;
   let pricePrecision: BigNumber;
 
+  let maxProfitFeePercentage: BigNumber;
+  let maxStreamingFeePercentage: BigNumber;
+
   let setManager: SocialTradingManagerContract;
+  let setManagerV2: SocialTradingManagerV2Contract;
   let protocolViewer: ProtocolViewerContract;
 
   let assertions: Assertions;
 
   let socialTradingAPI: SocialTradingAPI;
+
+  const feeCalculatorHelper = new FeeCalculatorHelper(DEFAULT_ACCOUNT);
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -180,12 +195,12 @@ describe('SocialTradingAPI', () => {
       wrappedETH.address,
     );
 
-    ethOracleProxy = await deployConstantPriceOracleAsync(
+    ethOracleProxy = await deployUpdatableOracleMockAsync(
       web3,
       initialEthPrice
     );
 
-    btcOracleProxy = await deployConstantPriceOracleAsync(
+    btcOracleProxy = await deployUpdatableOracleMockAsync(
       web3,
       initialBtcPrice
     );
@@ -204,9 +219,29 @@ describe('SocialTradingAPI', () => {
     liquidatorWhiteList = await deployWhiteListContract(web3, [liquidator.address]);
 
     feeCalculator = await deployFixedFeeCalculatorAsync(web3);
-    feeCalculatorWhiteList = await deployWhiteListContract(web3, [feeCalculator.address]);
+
+    maxProfitFeePercentage = ether(.4);
+    maxStreamingFeePercentage = ether(.07);
+    performanceFeeCalculator = await feeCalculatorHelper.deployPerformanceFeeCalculatorAsync(
+      core.address,
+      oracleWhiteList.address,
+      maxProfitFeePercentage,
+      maxStreamingFeePercentage,
+    );
+    feeCalculatorWhiteList = await deployWhiteListContract(
+      web3,
+      [feeCalculator.address, performanceFeeCalculator.address]
+    );
 
     rebalancingFactory = await deployRebalancingSetTokenV2FactoryContractAsync(
+      web3,
+      core,
+      rebalancingComponentWhiteList,
+      liquidatorWhiteList,
+      feeCalculatorWhiteList
+    );
+
+    rebalancingV3Factory = await deployRebalancingSetTokenV3FactoryContractAsync(
       web3,
       core,
       rebalancingComponentWhiteList,
@@ -233,6 +268,12 @@ describe('SocialTradingAPI', () => {
       web3,
       core.address,
       rebalancingFactory.address,
+      [allocator.address]
+    );
+    setManagerV2 = await deploySocialTradingManagerV2Async(
+      web3,
+      core.address,
+      rebalancingV3Factory.address,
       [allocator.address]
     );
 
@@ -336,7 +377,7 @@ describe('SocialTradingAPI', () => {
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
-      const tradingPoolInstance = await RebalancingSetTokenV2Contract.at(
+      const tradingPoolInstance = await RebalancingSetTokenV3Contract.at(
         tradingPoolAddress,
         web3,
         TX_DEFAULTS
@@ -421,6 +462,250 @@ describe('SocialTradingAPI', () => {
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
           `Provided fee ${subjectRebalanceFee.toString()} is not multiple of one basis point (10 ** 14)`
+        );
+      });
+    });
+
+    describe('when the passed tradingPoolName is an empty string', async () => {
+      beforeEach(async () => {
+        subjectTradingPoolName = '';
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The string name cannot be empty.`
+        );
+      });
+    });
+
+    describe('when the passed tradingPoolSymbol is an empty string', async () => {
+      beforeEach(async () => {
+        subjectTradingPoolSymbol = '';
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The string symbol cannot be empty.`
+        );
+      });
+    });
+  });
+
+  describe('createTradingPoolV2Async', async () => {
+    let subjectManager: Address;
+    let subjectAllocatorAddress: Address;
+    let subjectStartingBaseAssetAllocation: BigNumber;
+    let subjectStartingUSDValue: BigNumber;
+    let subjectTradingPoolName: string;
+    let subjectTradingPoolSymbol: string;
+    let subjectLiquidator: Address;
+    let subjectFeeRecipient: Address;
+    let subjectFeeCalculator: Address;
+    let subjectRebalanceInterval: BigNumber;
+    let subjectFailAuctionPeriod: BigNumber;
+    let subjectLastRebalanceTimestamp: BigNumber;
+    let subjectEntryFee: BigNumber;
+    let subjectProfitFeePeriod: BigNumber;
+    let subjectHighWatermarkResetPeriod: BigNumber;
+    let subjectProfitFee: BigNumber;
+    let subjectStreamingFee: BigNumber;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      subjectManager = setManagerV2.address;
+      subjectAllocatorAddress = allocator.address;
+      subjectStartingBaseAssetAllocation = ether(0.72);
+      subjectStartingUSDValue = ether(100);
+      subjectTradingPoolName = 'CoolPool';
+      subjectTradingPoolSymbol = 'COOL';
+      subjectLiquidator = liquidator.address;
+      subjectFeeRecipient = DEFAULT_ACCOUNT;
+      subjectFeeCalculator = performanceFeeCalculator.address;
+      subjectRebalanceInterval = ONE_DAY_IN_SECONDS;
+      subjectFailAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      subjectLastRebalanceTimestamp = new BigNumber(timestamp);
+      subjectEntryFee = ether(.0001);
+      subjectProfitFeePeriod = ONE_DAY_IN_SECONDS.mul(30);
+      subjectHighWatermarkResetPeriod = ONE_DAY_IN_SECONDS.mul(365);
+      subjectProfitFee = ether(.2);
+      subjectStreamingFee = ether(.02);
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await socialTradingAPI.createTradingPoolV2Async(
+        subjectManager,
+        subjectAllocatorAddress,
+        subjectStartingBaseAssetAllocation,
+        subjectStartingUSDValue,
+        subjectTradingPoolName,
+        subjectTradingPoolSymbol,
+        subjectLiquidator,
+        subjectFeeRecipient,
+        subjectFeeCalculator,
+        subjectRebalanceInterval,
+        subjectFailAuctionPeriod,
+        subjectLastRebalanceTimestamp,
+        subjectEntryFee,
+        subjectProfitFeePeriod,
+        subjectHighWatermarkResetPeriod,
+        subjectProfitFee,
+        subjectStreamingFee,
+        { from: subjectCaller }
+      );
+    }
+
+    test('successfully creates poolInfo', async () => {
+      const txHash = await subject();
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+      const poolInfo: any = await setManagerV2.pools.callAsync(tradingPoolAddress);
+
+      expect(poolInfo.trader).to.equal(subjectCaller);
+      expect(poolInfo.allocator).to.equal(subjectAllocatorAddress);
+      expect(poolInfo.currentAllocation).to.be.bignumber.equal(subjectStartingBaseAssetAllocation);
+    });
+
+    test('successfully creates tradingPool', async () => {
+      const txHash = await subject();
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+      const tradingPoolInstance = await RebalancingSetTokenV2Contract.at(
+        tradingPoolAddress,
+        web3,
+        TX_DEFAULTS
+      );
+
+      const actualName = await tradingPoolInstance.name.callAsync();
+      const actualSymbol = await tradingPoolInstance.symbol.callAsync();
+
+      expect(actualName).to.equal(subjectTradingPoolName);
+      expect(actualSymbol).to.equal(subjectTradingPoolSymbol);
+    });
+
+    describe('when the passed allocation is equal to 0', async () => {
+      beforeEach(async () => {
+        subjectStartingBaseAssetAllocation = ZERO;
+      });
+
+      test('successfully sets currentAllocation', async () => {
+        const txHash = await subject();
+
+        const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+        const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+        const poolInfo: any = await setManager.pools.callAsync(tradingPoolAddress);
+
+        expect(poolInfo.currentAllocation).to.be.bignumber.equal(subjectStartingBaseAssetAllocation);
+      });
+    });
+
+    describe('when the passed allocation is less than 0', async () => {
+      beforeEach(async () => {
+        subjectStartingBaseAssetAllocation = new BigNumber(-1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The quantity ${subjectStartingBaseAssetAllocation.toString()} inputted needs to be greater than zero.`
+        );
+      });
+    });
+
+    describe('when the passed allocation is greater than 100', async () => {
+      beforeEach(async () => {
+        subjectStartingBaseAssetAllocation = ether(1.1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Provided allocation ${subjectStartingBaseAssetAllocation.toString()} is greater than 100%.`
+        );
+      });
+    });
+
+    describe('when the passed allocation is not a multiple of 1%', async () => {
+      beforeEach(async () => {
+        subjectStartingBaseAssetAllocation = ether(.012);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Provided allocation ${subjectStartingBaseAssetAllocation.toString()} is not multiple of 1% (10 ** 16)`
+        );
+      });
+    });
+
+    describe('when the passed entryFee is not a multiple of 1 basis point', async () => {
+      beforeEach(async () => {
+        subjectEntryFee = ether(.00011);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Provided fee ${subjectEntryFee.toString()} is not multiple of one basis point (10 ** 14)`
+        );
+      });
+    });
+
+    describe('when the passed profitFee is not a multiple of 1 basis point', async () => {
+      beforeEach(async () => {
+        subjectProfitFee = ether(.00011);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Provided fee ${subjectProfitFee.toString()} is not multiple of one basis point (10 ** 14)`
+        );
+      });
+    });
+
+    describe('when the passed streamingFee is not a multiple of 1 basis point', async () => {
+      beforeEach(async () => {
+        subjectStreamingFee = ether(.00011);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Provided fee ${subjectStreamingFee.toString()} is not multiple of one basis point (10 ** 14)`
+        );
+      });
+    });
+
+    describe('when the passed profitFee is greater than maximum', async () => {
+      beforeEach(async () => {
+        subjectProfitFee = ether(.5);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Passed fee exceeds allowed maximum.`
+        );
+      });
+    });
+
+    describe('when the passed streamingFee is greater than maximum', async () => {
+      beforeEach(async () => {
+        subjectStreamingFee = ether(.1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Passed fee exceeds allowed maximum.`
+        );
+      });
+    });
+
+    describe('when the passed highWatermarkResetPeriod is less than profitFeePeriod', async () => {
+      beforeEach(async () => {
+        subjectHighWatermarkResetPeriod = ONE_DAY_IN_SECONDS;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `High watermark reset must be greater than profit fee period.`
         );
       });
     });
@@ -630,6 +915,97 @@ describe('SocialTradingAPI', () => {
           `available on ${nextRebalanceFormattedDate}`
         );
       });
+    });
+  });
+
+  describe('acutalizeFeeAsync', async () => {
+    let subjectTradingPool: Address;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const manager = setManagerV2.address;
+      const allocatorAddress = allocator.address;
+      const startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = 'CoolPool';
+      const tradingPoolSymbol = 'COOL';
+      const liquidatorAddress = liquidator.address;
+      const feeRecipient = DEFAULT_ACCOUNT;
+      const feeCalculator = performanceFeeCalculator.address;
+      const rebalanceInterval = ONE_DAY_IN_SECONDS;
+      const failAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const lastRebalanceTimestamp = new BigNumber(timestamp);
+      const entryFee = ether(.0001);
+      const profitFeePeriod = ONE_DAY_IN_SECONDS.mul(30);
+      const highWatermarkResetPeriod = ONE_DAY_IN_SECONDS.mul(365);
+      const profitFee = ether(.2);
+      const streamingFee = ether(.02);
+      const trader = DEFAULT_ACCOUNT;
+
+      const txHash = await socialTradingAPI.createTradingPoolV2Async(
+        manager,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidatorAddress,
+        feeRecipient,
+        feeCalculator,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFee,
+        profitFeePeriod,
+        highWatermarkResetPeriod,
+        profitFee,
+        streamingFee,
+        { from: trader }
+      );
+
+      await increaseChainTimeAsync(web3, profitFeePeriod);
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const collateralAddress = extractNewSetTokenAddressFromLogs(formattedLogs, 2);
+      const collateralInstance = await SetTokenContract.at(
+        collateralAddress,
+        web3,
+        TX_DEFAULTS
+      );
+
+      await collateralInstance.approve.sendTransactionAsync(
+        transferProxy.address,
+        UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+        { from: subjectCaller }
+      );
+
+      const tradingPool = extractNewSetTokenAddressFromLogs(formattedLogs);
+
+      await core.issue.sendTransactionAsync(collateralAddress, ether(2), { from: subjectCaller });
+      await core.issue.sendTransactionAsync(tradingPool, ether(5), { from: subjectCaller });
+
+      const newEthPrice = ether(250);
+      await ethOracleProxy.updatePrice.sendTransactionAsync(newEthPrice);
+
+      subjectTradingPool = tradingPool;
+      subjectCaller = trader;
+    });
+
+    async function subject(): Promise<string> {
+      return await socialTradingAPI.actualizeFeesAsync(
+        subjectTradingPool,
+        { from: subjectCaller }
+      );
+    }
+
+    test('successfully creates poolInfo', async () => {
+      await subject();
+
+      const { timestamp } = await web3.eth.getBlock('latest');
+
+      const feeState: any = await performanceFeeCalculator.feeState.callAsync(subjectTradingPool);
+      expect(feeState.lastProfitFeeTimestamp).to.be.bignumber.equal(timestamp);
     });
   });
 
