@@ -102,6 +102,16 @@ export interface CollateralSetInfo {
   symbol: string;
 }
 
+export interface PerformanceFeeInfo {
+  profitFeePeriod: BigNumber;
+  highWatermarkResetPeriod: BigNumber;
+  profitFeePercentage: BigNumber;
+  streamingFeePercentage: BigNumber;
+  highWatermark: BigNumber;
+  lastProfitFeeTimestamp: BigNumber;
+  lastStreamingFeeTimestamp: BigNumber;
+}
+
 export interface NewTradingPoolInfo {
   trader: Address;
   allocator: Address;
@@ -119,6 +129,27 @@ export interface NewTradingPoolInfo {
   lastRebalanceTimestamp: BigNumber;
   rebalanceState: BigNumber;
   currentSetInfo: CollateralSetInfo;
+}
+
+export interface NewTradingPoolV2Info {
+  trader: Address;
+  allocator: Address;
+  currentAllocation: BigNumber;
+  manager: Address;
+  feeRecipient: Address;
+  currentSet: Address;
+  poolName: string;
+  poolSymbol: string;
+  unitShares: BigNumber;
+  naturalUnit: BigNumber;
+  rebalanceInterval: BigNumber;
+  entryFee: BigNumber;
+  rebalanceFee: BigNumber;
+  lastRebalanceTimestamp: BigNumber;
+  rebalanceState: BigNumber;
+  currentSetInfo: CollateralSetInfo;
+  performanceFeeInfo: PerformanceFeeInfo;
+  performanceFeeCalculatorAddress: Address;
 }
 
 export interface TradingPoolRebalanceInfo {

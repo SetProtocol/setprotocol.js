@@ -140,13 +140,29 @@ export class ProtocolViewerWrapper {
    * @param  tradingPoolAddress      RebalancingSetTokenV2 contract address of tradingPool
    */
   public async fetchNewTradingPoolDetails(
-    tradingPoolAdddress: Address,
+    tradingPoolAddress: Address,
   ): Promise<any> {
     const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
       this.protocolViewerAddress
     );
 
-    return await protocolViewerInstance.fetchNewTradingPoolDetails.callAsync(tradingPoolAdddress);
+    return await protocolViewerInstance.fetchNewTradingPoolDetails.callAsync(tradingPoolAddress);
+  }
+
+  /**
+   * Fetches state of trading pool v2 info, underlying RebalancingSetTokenV3, performance fee info
+   * and current collateralSet.
+   *
+   * @param  tradingPoolAddress      RebalancingSetTokenV3 contract address of tradingPool
+   */
+  public async fetchNewTradingPoolV2Details(
+    tradingPoolAddress: Address,
+  ): Promise<any> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.fetchNewTradingPoolV2Details.callAsync(tradingPoolAddress);
   }
 
   /**
@@ -156,13 +172,28 @@ export class ProtocolViewerWrapper {
    * @param  tradingPoolAddress      RebalancingSetTokenV2 contract address of tradingPool
    */
   public async fetchTradingPoolRebalanceDetails(
-    tradingPoolAdddress: Address,
+    tradingPoolAddress: Address,
   ): Promise<any> {
     const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
       this.protocolViewerAddress
     );
 
-    return await protocolViewerInstance.fetchTradingPoolRebalanceDetails.callAsync(tradingPoolAdddress);
+    return await protocolViewerInstance.fetchTradingPoolRebalanceDetails.callAsync(tradingPoolAddress);
+  }
+
+  /**
+   * Fetches all trading pool operators for an array of trading pools
+   *
+   * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchTradingPoolOperator(
+    tradingPoolAddresses: Address[],
+  ): Promise<string[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchTradingPoolOperator.callAsync(tradingPoolAddresses);
   }
 
   /**
@@ -193,6 +224,36 @@ export class ProtocolViewerWrapper {
     );
 
     return await protocolViewerInstance.batchFetchTradingPoolRebalanceFees.callAsync(tradingPoolAddresses);
+  }
+
+  /**
+   * Fetches all profit and streaming fees for an array of trading pools
+   *
+   * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchTradingPoolAccumulation(
+    tradingPoolAddresses: Address[],
+  ): Promise<any[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchTradingPoolAccumulation.callAsync(tradingPoolAddresses);
+  }
+
+  /**
+   * Fetches all performance fee state info for an array of trading pools
+   *
+   * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchTradingPoolFeeState(
+    tradingPoolAddresses: Address[],
+  ): Promise<any[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchTradingPoolFeeState.callAsync(tradingPoolAddresses);
   }
 
   /**
