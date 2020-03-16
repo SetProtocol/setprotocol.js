@@ -31,7 +31,7 @@ import {
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
 import { Address, Bytes, SetProtocolConfig, Tx, EntryFeePaid, RebalanceFeePaid } from '../types/common';
-import { NewTradingPoolInfo, TradingPoolRebalanceInfo } from '../types/strategies';
+import { NewTradingPoolInfo, NewTradingPoolV2Info, TradingPoolRebalanceInfo } from '../types/strategies';
 
 const { SetProtocolUtils: SetUtils } = setProtocolUtils;
 
@@ -430,6 +430,23 @@ export class SocialTradingAPI {
   }
 
   /**
+   * Returns relevant details of newly created Trading Pools V2 with performance fees. Return object adheres to the
+   * NewTradingPoolV2Info interface.
+   *
+   * @param  tradingPool            Address of tradingPool being updated
+   * @return                        NewTradingPoolInfo
+   */
+  public async fetchNewTradingPoolV2DetailsAsync(
+    tradingPool: Address
+  ): Promise<NewTradingPoolV2Info> {
+    const newPoolInfo = await this.protocolViewer.fetchNewTradingPoolV2Details(
+      tradingPool
+    );
+
+    return this.createNewTradingPoolV2Object(newPoolInfo);
+  }
+
+  /**
    * Returns relevant details of Trading Pools being rebalance. Return object adheres to the
    * TradingPoolRebalanceInfo interface.
    *
@@ -585,6 +602,39 @@ export class SocialTradingAPI {
       rebalanceState: rbSetInfo.rebalanceState,
       currentSetInfo: collateralInfo,
     } as NewTradingPoolInfo;
+  }
+
+  private createNewTradingPoolV2Object(
+    newPoolV2Info: any,
+  ): NewTradingPoolV2Info {
+    const [
+      poolInfo,
+      rbSetInfo,
+      perfFeeInfo,
+      collateralInfo,
+      perfFeeCalculator,
+    ] = newPoolV2Info;
+
+    return {
+      trader: poolInfo.trader,
+      allocator: poolInfo.allocator,
+      currentAllocation: poolInfo.currentAllocation,
+      manager: rbSetInfo.manager,
+      feeRecipient: rbSetInfo.feeRecipient,
+      currentSet: rbSetInfo.currentSet,
+      poolName: rbSetInfo.name,
+      poolSymbol: rbSetInfo.symbol,
+      unitShares: rbSetInfo.unitShares,
+      naturalUnit: rbSetInfo.naturalUnit,
+      rebalanceInterval: rbSetInfo.rebalanceInterval,
+      entryFee: rbSetInfo.entryFee,
+      rebalanceFee: rbSetInfo.rebalanceFee,
+      lastRebalanceTimestamp: rbSetInfo.lastRebalanceTimestamp,
+      rebalanceState: rbSetInfo.rebalanceState,
+      currentSetInfo: collateralInfo,
+      performanceFeeInfo: perfFeeInfo,
+      performanceFeeCalculatorAddress: perfFeeCalculator,
+    } as NewTradingPoolV2Info;
   }
 
   private createTradingPoolRebalanceObject(

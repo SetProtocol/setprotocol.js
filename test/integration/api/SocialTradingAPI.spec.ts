@@ -100,7 +100,11 @@ import {
 } from '@src/util';
 import { Assertions } from '@src/assertions';
 import { Address, Bytes, SetProtocolConfig, EntryFeePaid } from '@src/types/common';
-import { NewTradingPoolInfo, TradingPoolRebalanceInfo } from '@src/types/strategies';
+import {
+  NewTradingPoolInfo,
+  NewTradingPoolV2Info,
+  TradingPoolRebalanceInfo
+} from '@src/types/strategies';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 ChaiSetup.configure();
@@ -1133,6 +1137,170 @@ describe('SocialTradingAPI', () => {
       expect(newPoolInfo.rebalanceState).to.be.bignumber.equal(ZERO);
       expect(newPoolInfo.poolName).to.equal(name);
       expect(newPoolInfo.poolSymbol).to.equal(symbol);
+    });
+  });
+
+  describe('fetchNewTradingPoolV2DetailsAsync', async () => {
+    let subjectTradingPool: Address;
+
+    let manager: Address;
+    let allocatorAddress: Address;
+    let startingBaseAssetAllocation: BigNumber;
+    let tradingPoolName: string;
+    let tradingPoolSymbol: string;
+    let liquidatorAddress: Address;
+    let feeRecipient: Address;
+    let rebalanceInterval: BigNumber;
+    let entryFee: BigNumber;
+    let lastRebalanceTimestamp: BigNumber;
+    let profitFeePeriod: BigNumber;
+    let highWatermarkResetPeriod: BigNumber;
+    let profitFee: BigNumber;
+    let streamingFee: BigNumber;
+
+    let collateralInstance: SetTokenContract;
+    let tradingPoolInstance: RebalancingSetTokenV3Contract;
+
+    beforeEach(async () => {
+      manager = setManager.address;
+      allocatorAddress = allocator.address;
+      startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      tradingPoolName = 'CoolPool';
+      tradingPoolSymbol = 'COOL';
+      liquidatorAddress = liquidator.address;
+      feeRecipient = DEFAULT_ACCOUNT;
+      const feeCalculatorAddress = performanceFeeCalculator.address;
+      rebalanceInterval = ONE_DAY_IN_SECONDS;
+      const failAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      lastRebalanceTimestamp = new BigNumber(timestamp);
+      entryFee = ether(.01);
+      profitFeePeriod = ONE_DAY_IN_SECONDS.mul(30);
+      highWatermarkResetPeriod = ONE_DAY_IN_SECONDS.mul(365);
+      profitFee = ether(.2);
+      streamingFee = ether(.02);
+
+      const txHash = await socialTradingAPI.createTradingPoolV2Async(
+        manager,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidatorAddress,
+        feeRecipient,
+        feeCalculatorAddress,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFee,
+        profitFeePeriod,
+        highWatermarkResetPeriod,
+        profitFee,
+        streamingFee,
+        { from: DEFAULT_ACCOUNT }
+      );
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const collateralAddress = extractNewSetTokenAddressFromLogs(formattedLogs, 2);
+      collateralInstance = await SetTokenContract.at(
+        collateralAddress,
+        web3,
+        TX_DEFAULTS
+      );
+
+      const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+      tradingPoolInstance = await RebalancingSetTokenV3Contract.at(
+        tradingPoolAddress,
+        web3,
+        TX_DEFAULTS
+      );
+
+      subjectTradingPool = tradingPoolAddress;
+    });
+
+    async function subject(): Promise<NewTradingPoolV2Info> {
+      return await socialTradingAPI.fetchNewTradingPoolV2DetailsAsync(
+        subjectTradingPool,
+      );
+    }
+
+    test('successfully gets info from manager', async () => {
+      const newPoolInfo = await subject();
+
+      const poolInfo: any = await setManager.pools.callAsync(subjectTradingPool);
+
+      expect(newPoolInfo.trader).to.equal(poolInfo.trader);
+      expect(newPoolInfo.allocator).to.equal(poolInfo.allocator);
+      expect(newPoolInfo.currentAllocation).to.be.bignumber.equal(poolInfo.currentAllocation);
+    });
+
+    test('successfully gets info from collateral Set', async () => {
+      const newPoolInfo = await subject();
+
+      const components = await collateralInstance.getComponents.callAsync();
+      const units = await collateralInstance.getUnits.callAsync();
+      const naturalUnit = await collateralInstance.naturalUnit.callAsync();
+      const name = await collateralInstance.name.callAsync();
+      const symbol = await collateralInstance.symbol.callAsync();
+
+      expect(JSON.stringify(newPoolInfo.currentSetInfo.components)).to.equal(JSON.stringify(components));
+      expect(JSON.stringify(newPoolInfo.currentSetInfo.units)).to.equal(JSON.stringify(units));
+      expect(newPoolInfo.currentSetInfo.naturalUnit).to.be.bignumber.equal(naturalUnit);
+      expect(newPoolInfo.currentSetInfo.name).to.equal(name);
+      expect(newPoolInfo.currentSetInfo.symbol).to.equal(symbol);
+    });
+
+    test('successfully gets info from RebalancingSetTokenV3', async () => {
+      const newPoolInfo = await subject();
+
+      const currentSet = await tradingPoolInstance.currentSet.callAsync();
+      const unitShares = await tradingPoolInstance.unitShares.callAsync();
+      const naturalUnit = await tradingPoolInstance.naturalUnit.callAsync();
+      const name = await tradingPoolInstance.name.callAsync();
+      const symbol = await tradingPoolInstance.symbol.callAsync();
+
+      expect(newPoolInfo.manager).to.equal(setManager.address);
+      expect(newPoolInfo.feeRecipient).to.equal(feeRecipient);
+      expect(newPoolInfo.currentSet).to.equal(currentSet);
+      expect(newPoolInfo.unitShares).to.be.bignumber.equal(unitShares);
+      expect(newPoolInfo.naturalUnit).to.be.bignumber.equal(naturalUnit);
+      expect(newPoolInfo.rebalanceInterval).to.be.bignumber.equal(rebalanceInterval);
+      expect(newPoolInfo.entryFee).to.be.bignumber.equal(entryFee);
+      expect(newPoolInfo.lastRebalanceTimestamp).to.be.bignumber.equal(lastRebalanceTimestamp);
+      expect(newPoolInfo.rebalanceState).to.be.bignumber.equal(ZERO);
+      expect(newPoolInfo.poolName).to.equal(name);
+      expect(newPoolInfo.poolSymbol).to.equal(symbol);
+    });
+
+    it('fetches the correct RebalancingSetTokenV3/Performance Fee data', async () => {
+      const newPoolInfo = await subject();
+      const {
+        profitFeePeriod,
+        highWatermarkResetPeriod,
+        profitFeePercentage,
+        streamingFeePercentage,
+        highWatermark,
+        lastProfitFeeTimestamp,
+        lastStreamingFeeTimestamp,
+      } = newPoolInfo.performanceFeeInfo;
+
+      const expectedFeeStates: any = await performanceFeeCalculator.feeState.callAsync(tradingPoolInstance.address);
+
+      expect(profitFeePeriod).to.equal(expectedFeeStates.profitFeePeriod);
+      expect(highWatermarkResetPeriod).to.equal(expectedFeeStates.highWatermarkResetPeriod);
+      expect(profitFeePercentage).to.equal(expectedFeeStates.profitFeePercentage);
+      expect(streamingFeePercentage).to.equal(expectedFeeStates.streamingFeePercentage);
+      expect(highWatermark).to.equal(expectedFeeStates.highWatermark);
+      expect(lastProfitFeeTimestamp).to.equal(expectedFeeStates.lastProfitFeeTimestamp);
+      expect(lastStreamingFeeTimestamp).to.equal(expectedFeeStates.lastStreamingFeeTimestamp);
+    });
+
+    it('fetches the correct PerformanceFeeCalculator address', async () => {
+      const newPoolInfo = await subject();
+
+      expect(newPoolInfo.performanceFeeCalculatorAddress).to.equal(performanceFeeCalculator.address);
     });
   });
 
