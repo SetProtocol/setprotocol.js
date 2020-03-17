@@ -22,12 +22,15 @@
 jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
+import * as _ from 'lodash';
 import * as chai from 'chai';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
 import {
   CoreContract,
+  CoreHelper,
   ConstantAuctionPriceCurveContract,
+  ERC20Helper,
   FeeCalculatorHelper,
   FixedFeeCalculatorContract,
   LinearAuctionLiquidatorContract,
@@ -44,10 +47,16 @@ import {
   SocialTradingManagerMockContract,
   StandardTokenMockContract,
   TransferProxyContract,
+  ValuationHelper,
   WhiteListContract,
 } from 'set-protocol-contracts';
 import {
+  AssetPairManagerContract,
+  MACOStrategyManagerV2Contract,
+} from 'set-protocol-strategies';
+import {
   ConstantPriceOracleContract,
+  OracleHelper,
 } from 'set-protocol-oracles';
 import { Address } from 'set-protocol-utils';
 
@@ -59,6 +68,7 @@ import {
   DEFAULT_UNIT_SHARES,
   DEFAULT_REBALANCING_NATURAL_UNIT,
   ONE_DAY_IN_SECONDS,
+  ONE_YEAR_IN_SECONDS,
   NULL_ADDRESS,
   TX_DEFAULTS,
   ZERO,
@@ -72,11 +82,13 @@ import {
   createDefaultRebalancingSetTokenAsync,
   createDefaultRebalancingSetTokenV2Async,
   createDefaultRebalancingSetTokenV3Async,
+  deployAssetPairManagerAsync,
   deployBaseContracts,
   deployConstantAuctionPriceCurveAsync,
   deployConstantPriceOracleAsync,
   deployFixedFeeCalculatorAsync,
   deployLinearAuctionLiquidatorContractAsync,
+  deployMovingAverageStrategyManagerV2Async,
   deployOracleWhiteListAsync,
   deployProtocolViewerAsync,
   deployRebalancingSetTokenV2FactoryContractAsync,
@@ -104,6 +116,10 @@ const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 
 let currentSnapshotId: number;
+const coreHelper = new CoreHelper(DEFAULT_ACCOUNT, DEFAULT_ACCOUNT);
+const erc20Helper = new ERC20Helper(DEFAULT_ACCOUNT);
+const oracleHelper = new OracleHelper(DEFAULT_ACCOUNT);
+const valuationHelper = new ValuationHelper(DEFAULT_ACCOUNT, coreHelper, erc20Helper, oracleHelper);
 const compoundHelper = new CompoundHelper();
 const feeCalculatorHelper = new FeeCalculatorHelper(DEFAULT_ACCOUNT);
 
@@ -1208,13 +1224,15 @@ describe('ProtocolViewer', () => {
       });
     });
 
-    describe.only('#batchFetchTradingPoolAccumulation', async () => {
+    describe('#batchFetchTradingPoolAccumulation', async () => {
       let subjectTradingPools: Address[];
 
       let secondRBSetV3: RebalancingSetTokenV3Contract;
       let secondEntryFee: BigNumber;
       let secondProfitFee: BigNumber;
       let secondStreamingFee: BigNumber;
+
+      let subjectIncreaseChainTime: BigNumber;
 
       beforeEach(async () => {
         const failPeriod = ONE_DAY_IN_SECONDS;
@@ -1238,11 +1256,12 @@ describe('ProtocolViewer', () => {
         );
 
         subjectTradingPools = [rebalancingSetTokenV3.address, secondRBSetV3.address];
+        subjectIncreaseChainTime = ONE_YEAR_IN_SECONDS;
       });
 
       async function subject(): Promise<string[]> {
         await increaseChainTimeAsync(web3, subjectIncreaseChainTime);
-        await mineBlockAsync();
+        await mineBlockAsync(web3);
         return protocolViewerWrapper.batchFetchTradingPoolAccumulation(
           subjectTradingPools
         );
@@ -1294,6 +1313,73 @@ describe('ProtocolViewer', () => {
         expect(JSON.stringify(actualProfitFeeArray)).to.equal(JSON.stringify(expectedProfitFeeArray));
       });
     });
+
+    describe('#batchFetchTradingPoolFeeState', async () => {
+      let subjectTradingPools: Address[];
+
+      let secondRBSetV3: RebalancingSetTokenV3Contract;
+      let secondEntryFee: BigNumber;
+      let secondProfitFee: BigNumber;
+      let secondStreamingFee: BigNumber;
+
+      let subjectIncreaseChainTime: BigNumber;
+
+      beforeEach(async () => {
+        const failPeriod = ONE_DAY_IN_SECONDS;
+        secondEntryFee = ether(.01);
+        secondProfitFee = ether(.2);
+        secondStreamingFee = ether(.02);
+        secondRBSetV3 = await await createDefaultRebalancingSetTokenV3Async(
+          web3,
+          core,
+          rebalancingFactory.address,
+          setManager.address,
+          liquidator.address,
+          trader,
+          performanceFeeCalculator.address,
+          currentSetTokenV3.address,
+          failPeriod,
+          lastRebalanceTimestamp,
+          secondEntryFee,
+          secondProfitFee,
+          secondStreamingFee,
+        );
+
+        subjectTradingPools = [rebalancingSetTokenV3.address, secondRBSetV3.address];
+        subjectIncreaseChainTime = ONE_YEAR_IN_SECONDS;
+      });
+
+      async function subject(): Promise<any[]> {
+        await increaseChainTimeAsync(web3, subjectIncreaseChainTime);
+        await mineBlockAsync(web3);
+        return protocolViewerWrapper.batchFetchTradingPoolFeeState(
+          subjectTradingPools
+        );
+      }
+
+      it('fetches the correct performanceFee array', async () => {
+        const tradingPoolFeeStates = await subject();
+
+        const firstFeeState: any = await performanceFeeCalculator.feeState.callAsync(rebalancingSetTokenV3.address);
+        const secondFeeState: any = await performanceFeeCalculator.feeState.callAsync(
+          secondRBSetV3.address
+        );
+
+        const expectedFeeStateInfo = _.map([firstFeeState, secondFeeState], feeStates =>
+          [
+            feeStates.profitFeePeriod,
+            feeStates.highWatermarkResetPeriod,
+            feeStates.profitFeePercentage,
+            feeStates.streamingFeePercentage,
+            feeStates.highWatermark,
+            feeStates.lastProfitFeeTimestamp,
+            feeStates.lastStreamingFeeTimestamp,
+          ]
+        );
+
+        expect(JSON.stringify(tradingPoolFeeStates)).to.equal(JSON.stringify(expectedFeeStateInfo));
+      });
+    });
   });
 
   describe('#batchFetchExchangeRateStored', async () => {
@@ -1340,6 +1426,139 @@ describe('ProtocolViewer', () => {
 
       const expectedExchangeRates = [cUSDCExchangeRate, cDAIExchangeRate];
       expect(JSON.stringify(exchangeRates)).to.equal(JSON.stringify(expectedExchangeRates));
+    });
+  });
+
+  describe('#batchFetchMACOV2CrossoverTimestamp', async () => {
+    let macoManager1: MACOStrategyManagerV2Contract;
+    let macoManager2: MACOStrategyManagerV2Contract;
+
+    let subjectManagerAddresses: Address[];
+
+    beforeEach(async () => {
+      // Set up MACO manager
+      const [usdc, wrappedETH] = await deployTokensSpecifyingDecimals(2, [6, 18], web3, DEFAULT_ACCOUNT);
+      const initialStableCollateral = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        [usdc.address],
+        [new BigNumber(250)],
+        new BigNumber(10 ** 12),
+      );
+      const initialRiskCollateral = await deploySetTokenAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        [wrappedETH.address],
+        [new BigNumber(10 ** 6)],
+        new BigNumber(10 ** 6),
+      );
+
+      macoManager1 = await deployMovingAverageStrategyManagerV2Async(
+        web3,
+        core.address,
+        DEFAULT_ACCOUNT,
+        DEFAULT_ACCOUNT,
+        usdc.address,
+        wrappedETH.address,
+        initialStableCollateral.address,
+        initialRiskCollateral.address,
+        setTokenFactory.address,
+        priceCurve.address,
+        new BigNumber(20),
+        new BigNumber(3600),
+        new BigNumber(0),
+        new BigNumber(3600),
+      );
+
+      macoManager2 = await deployMovingAverageStrategyManagerV2Async(
+        web3,
+        core.address,
+        DEFAULT_ACCOUNT,
+        DEFAULT_ACCOUNT,
+        usdc.address,
+        wrappedETH.address,
+        initialStableCollateral.address,
+        initialRiskCollateral.address,
+        setTokenFactory.address,
+        priceCurve.address,
+        new BigNumber(20),
+        new BigNumber(3600),
+        new BigNumber(0),
+        new BigNumber(3600),
+      );
+
+      subjectManagerAddresses = [macoManager1.address, macoManager2.address];
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return protocolViewerWrapper.batchFetchMACOV2CrossoverTimestamp(
+        subjectManagerAddresses
+      );
+    }
+
+    it('fetches the lastCrossoverConfirmationTimestamp of the MACO Managers', async () => {
+      const actualCrossoverArray = await subject();
+
+      const expectedCrossoverArray = [new BigNumber(0), new BigNumber(0)];
+      expect(JSON.stringify(actualCrossoverArray)).to.equal(JSON.stringify(expectedCrossoverArray));
+    });
+  });
+
+  describe('#batchFetchAssetPairCrossoverTimestamp', async () => {
+    let assetPairManager1: AssetPairManagerContract;
+    let assetPairManager2: AssetPairManagerContract;
+
+    let subjectManagerAddresses: Address[];
+
+    beforeEach(async () => {
+      assetPairManager1 = await deployAssetPairManagerAsync(
+        web3,
+        core.address,
+        DEFAULT_ACCOUNT,
+        DEFAULT_ACCOUNT,
+        priceCurve.address,
+        new BigNumber(100),
+        new BigNumber(100),
+        new BigNumber(100),
+        new BigNumber(3600),
+        new BigNumber(3),
+        new BigNumber(21),
+        new BigNumber(0),
+        new BigNumber(3600)
+      );
+
+      assetPairManager2 = await deployAssetPairManagerAsync(
+        web3,
+        core.address,
+        DEFAULT_ACCOUNT,
+        DEFAULT_ACCOUNT,
+        priceCurve.address,
+        new BigNumber(100),
+        new BigNumber(100),
+        new BigNumber(100),
+        new BigNumber(3600),
+        new BigNumber(3),
+        new BigNumber(21),
+        new BigNumber(0),
+        new BigNumber(3600)
+      );
+
+      subjectManagerAddresses = [assetPairManager1.address, assetPairManager2.address];
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return protocolViewerWrapper.batchFetchAssetPairCrossoverTimestamp(
+        subjectManagerAddresses
+      );
+    }
+
+    it('fetches the lastCrossoverConfirmationTimestamp of the MACO Managers', async () => {
+      const actualCrossoverArray = await subject();
+
+      const expectedCrossoverArray = [new BigNumber(0), new BigNumber(0)];
+      expect(JSON.stringify(actualCrossoverArray)).to.equal(JSON.stringify(expectedCrossoverArray));
     });
   });
 });
