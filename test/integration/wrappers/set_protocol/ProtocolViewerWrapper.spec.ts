@@ -87,6 +87,7 @@ import {
   deployTokensSpecifyingDecimals,
   deployWhiteListContract,
   increaseChainTimeAsync,
+  mineBlockAsync,
   getTokenBalances,
   getTokenSupplies,
   transitionToProposeAsync,
@@ -841,6 +842,57 @@ describe('ProtocolViewer', () => {
         expect(JSON.stringify(rebalanceFees)).to.equal(JSON.stringify(expectedRebalanceFees));
       });
     });
+
+    describe('#batchFetchTradingPoolOperator', async () => {
+      let subjectTradingPools: Address[];
+
+      let secondRBSetV2: RebalancingSetTokenV2Contract;
+      let secondOperatorAddress: Address;
+
+      beforeEach(async () => {
+        const failPeriod = ONE_DAY_IN_SECONDS;
+        const entryFee = ether(.02);
+        const rebalanceFee = ether(.02);
+        secondOperatorAddress = feeRecipient;
+        secondRBSetV2 = await createDefaultRebalancingSetTokenV2Async(
+          web3,
+          core,
+          rebalancingFactory.address,
+          setManager.address,
+          liquidator.address,
+          feeRecipient,
+          fixedFeeCalculator.address,
+          currentSetTokenV2.address,
+          failPeriod,
+          lastRebalanceTimestamp,
+          entryFee,
+          rebalanceFee
+        );
+
+        const currentAllocation = ether(.5);
+        await setManager.updateRecord.sendTransactionAsync(
+          secondRBSetV2.address,
+          secondOperatorAddress,
+          allocator,
+          currentAllocation
+        );
+
+        subjectTradingPools = [rebalancingSetTokenV2.address, secondRBSetV2.address];
+      });
+
+      async function subject(): Promise<string[]> {
+        return protocolViewerWrapper.batchFetchTradingPoolOperator(
+          subjectTradingPools
+        );
+      }
+
+      it('fetches the correct operator addresses', async () => {
+        const operators = await subject();
+        const expectedOperators = [trader, secondOperatorAddress];
+
+        expect(JSON.stringify(operators)).to.equal(JSON.stringify(expectedOperators));
+      });
+    });
   });
 
   describe('Trading Pool V2 Tests', async () => {
@@ -1153,6 +1205,93 @@ describe('ProtocolViewer', () => {
         expect(collateralSetData.naturalUnit).to.be.bignumber.equal(set2NaturalUnit);
         expect(collateralSetData.name).to.equal('Set Token');
         expect(collateralSetData.symbol).to.equal('SET');
+      });
+    });
+
+    describe.only('#batchFetchTradingPoolAccumulation', async () => {
+      let subjectTradingPools: Address[];
+
+      let secondRBSetV3: RebalancingSetTokenV3Contract;
+      let secondEntryFee: BigNumber;
+      let secondProfitFee: BigNumber;
+      let secondStreamingFee: BigNumber;
+
+      beforeEach(async () => {
+        const failPeriod = ONE_DAY_IN_SECONDS;
+        secondEntryFee = ether(.01);
+        secondProfitFee = ether(.2);
+        secondStreamingFee = ether(.02);
+        secondRBSetV3 = await await createDefaultRebalancingSetTokenV3Async(
+          web3,
+          core,
+          rebalancingFactory.address,
+          setManager.address,
+          liquidator.address,
+          trader,
+          performanceFeeCalculator.address,
+          currentSetTokenV3.address,
+          failPeriod,
+          lastRebalanceTimestamp,
+          secondEntryFee,
+          secondProfitFee,
+          secondStreamingFee,
+        );
+
+        subjectTradingPools = [rebalancingSetTokenV3.address, secondRBSetV3.address];
+      });
+
+      async function subject(): Promise<string[]> {
+        await increaseChainTimeAsync(web3, subjectIncreaseChainTime);
+        await mineBlockAsync();
+        return protocolViewerWrapper.batchFetchTradingPoolAccumulation(
+          subjectTradingPools
+        );
+      }
+
+      it('fetches the correct profit/streaming fee accumulation array', async () => {
+        const feeState1: any = await performanceFeeCalculator.feeState.callAsync(rebalancingSetTokenV3.address);
+        const feeState2: any = await performanceFeeCalculator.feeState.callAsync(secondRBSetV3.address);
+
+        const [
+          actualStreamingFeeArray,
+          actualProfitFeeArray,
+        ] = await subject();
+
+        const lastBlock = await web3.eth.getBlock('latest');
+
+        const rebalancingSetValue1 = await valuationHelper.calculateRebalancingSetTokenValueAsync(
+          rebalancingSetTokenV3,
+          oracleWhiteList,
+        );
+        const rebalancingSetValue2 = await valuationHelper.calculateRebalancingSetTokenValueAsync(
+          secondRBSetV3,
+          oracleWhiteList,
+        );
+        const expectedStreamingFee1 = await feeCalculatorHelper.calculateAccruedStreamingFee(
+          feeState1.streamingFeePercentage,
+          new BigNumber(lastBlock.timestamp).sub(feeState1.lastStreamingFeeTimestamp)
+        );
+        const expectedStreamingFee2 = await feeCalculatorHelper.calculateAccruedStreamingFee(
+          feeState2.streamingFeePercentage,
+          new BigNumber(lastBlock.timestamp).sub(feeState2.lastStreamingFeeTimestamp)
+        );
+
+        const expectedProfitFee1 = await feeCalculatorHelper.calculateAccruedProfitFeeAsync(
+          feeState1,
+          rebalancingSetValue1,
+          new BigNumber(lastBlock.timestamp)
+        );
+        const expectedProfitFee2 = await feeCalculatorHelper.calculateAccruedProfitFeeAsync(
+          feeState2,
+          rebalancingSetValue2,
+          new BigNumber(lastBlock.timestamp)
+        );
+
+        const expectedStreamingFeeArray = [expectedStreamingFee1, expectedStreamingFee2];
+        const expectedProfitFeeArray = [expectedProfitFee1, expectedProfitFee2];
+
+        expect(JSON.stringify(actualStreamingFeeArray)).to.equal(JSON.stringify(expectedStreamingFeeArray));
+        expect(JSON.stringify(actualProfitFeeArray)).to.equal(JSON.stringify(expectedProfitFeeArray));
       });
     });
   });
