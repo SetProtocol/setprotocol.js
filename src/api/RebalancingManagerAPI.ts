@@ -517,6 +517,20 @@ export class RebalancingManagerAPI {
     } as AssetPairManagerDetails;
   }
 
+  /**
+   * Fetches the crossover confirmation time of AssetPairManager and MACOStrategyManagerV2 contracts.
+   *
+   * @param  managerType     Enum denoting the manager type
+   * @param  manager         Address of the manager contract
+   * @return                 Object containing the state information related to the manager
+   */
+  public async getAssetPairManagerDetailsAsync(
+    managerTypes: BigNumber[],
+    managers: Address[],
+  ): Promise<BigNumber[]> {
+
+  }
+
   /* ============ Private Functions ============ */
 
   private async assertPropose(managerAddress: Address, rebalancingSetAddress: Address) {

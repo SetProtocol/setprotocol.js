@@ -1259,7 +1259,7 @@ describe('ProtocolViewer', () => {
         subjectIncreaseChainTime = ONE_YEAR_IN_SECONDS;
       });
 
-      async function subject(): Promise<string[]> {
+      async function subject(): Promise<any[]> {
         await increaseChainTimeAsync(web3, subjectIncreaseChainTime);
         await mineBlockAsync(web3);
         return protocolViewerWrapper.batchFetchTradingPoolAccumulation(
