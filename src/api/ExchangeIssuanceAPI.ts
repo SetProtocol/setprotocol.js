@@ -42,6 +42,7 @@ import { coreAPIErrors, exchangeIssuanceErrors } from '../errors';
 export class ExchangeIssuanceAPI {
   private web3: Web3;
   private assert: Assertions;
+  private cTokenWhiteList: Address;
   private exchangeIssuance: ExchangeIssuanceModuleWrapper;
   private setProtocolUtils: SetProtocolUtils;
   private rebalancingSetExchangeIssuanceModule: RebalancingSetExchangeIssuanceModuleWrapper;
@@ -69,6 +70,7 @@ export class ExchangeIssuanceAPI {
     this.setProtocolUtils = new SetProtocolUtils(this.web3);
     this.assert = assertions;
     this.core = new CoreWrapper(this.web3, config.coreAddress, config.transferProxyAddress, config.vaultAddress);
+    this.cTokenWhiteList = config.cTokenWhiteListAddress;
     this.exchangeIssuance = new ExchangeIssuanceModuleWrapper(web3, config.exchangeIssuanceModuleAddress);
     this.kyberNetworkWrapper = new KyberNetworkWrapper(this.web3, config.kyberNetworkWrapperAddress);
     this.rebalancingSetExchangeIssuanceModule = new RebalancingSetExchangeIssuanceModuleWrapper(
@@ -315,7 +317,12 @@ export class ExchangeIssuanceAPI {
       );
     });
 
-    await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
+    await this.assert.exchange.assertExchangeIssuanceParams(
+      exchangeIssuanceParams,
+      orders,
+      this.core.coreAddress,
+      this.cTokenWhiteList
+    );
   }
 
   private async assertIssueRebalancingSetWithEther(
@@ -389,7 +396,12 @@ export class ExchangeIssuanceAPI {
     });
 
     // Assert valid exchange trade and order parameters
-    await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
+    await this.assert.exchange.assertExchangeIssuanceParams(
+      exchangeIssuanceParams,
+      orders,
+      this.core.coreAddress,
+      this.cTokenWhiteList
+    );
   }
 
   private async assertRedeemRebalancingSetIntoERC20(
@@ -454,6 +466,11 @@ export class ExchangeIssuanceAPI {
     );
 
     // Assert valid exchange trade and order parameters
-    await this.assert.exchange.assertExchangeIssuanceParams(exchangeIssuanceParams, orders, this.core.coreAddress);
+    await this.assert.exchange.assertExchangeIssuanceParams(
+      exchangeIssuanceParams,
+      orders,
+      this.core.coreAddress,
+      this.cTokenWhiteList
+    );
   }
 }

@@ -25,6 +25,7 @@ import { coreAPIErrors, exchangeErrors } from '../errors';
 import { CommonAssertions } from './CommonAssertions';
 import { ERC20Assertions } from './ERC20Assertions';
 import { SetTokenAssertions } from './SetTokenAssertions';
+import { AddressToAddressWhiteListWrapper } from '../wrappers';
 import { BigNumber, calculatePartialAmount } from '../util';
 import { Address, KyberTrade, ZeroExSignedFillOrder } from '../types/common';
 import { ZERO } from '../constants';
@@ -33,17 +34,20 @@ export class ExchangeAssertions {
   private erc20Assertions: ERC20Assertions;
   private commonAssertions: CommonAssertions;
   private setTokenAssertions: SetTokenAssertions;
+  private addressToAddressWhiteList: AddressToAddressWhiteListWrapper;
 
   constructor(web3: Web3) {
     this.erc20Assertions = new ERC20Assertions(web3);
     this.commonAssertions = new CommonAssertions();
     this.setTokenAssertions = new SetTokenAssertions(web3);
+    this.addressToAddressWhiteList = new AddressToAddressWhiteListWrapper(web3);
   }
 
   public async assertExchangeIssuanceParams(
     exchangeIssuanceParams: ExchangeIssuanceParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
     coreAddress: Address,
+    cTokenWhiteListAddress: Address,
   ) {
     const {
       setAddress,
@@ -71,7 +75,7 @@ export class ExchangeAssertions {
     this.assertReceiveTokenInputs(receiveTokens, receiveTokenAmounts, setAddress);
 
     // Validate the liquiduity source orders net the correct component tokens
-    await this.assertExchangeIssuanceOrdersValidity(exchangeIssuanceParams, orders);
+    await this.assertExchangeIssuanceOrdersValidity(exchangeIssuanceParams, orders, cTokenWhiteListAddress);
   }
 
   public assertSendTokenInputs(
@@ -132,6 +136,7 @@ export class ExchangeAssertions {
   public async assertExchangeIssuanceOrdersValidity(
     exchangeIssuanceParams: ExchangeIssuanceParams,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
+    cTokenWhiteListAddress: Address,
   ) {
     const {
       setAddress,
@@ -150,7 +155,14 @@ export class ExchangeAssertions {
       })
     );
 
-    this.isValidLiquidityAmounts(quantity, receiveTokens, receiveTokenAmounts, quantity, orders);
+    this.isValidLiquidityAmounts(
+      quantity,
+      receiveTokens,
+      receiveTokenAmounts,
+      quantity,
+      orders,
+      cTokenWhiteListAddress,
+    );
   }
 
   /* ============ Private Helpers =============== */
@@ -161,32 +173,45 @@ export class ExchangeAssertions {
     receiveTokenAmounts: BigNumber[],
     quantityToFill: BigNumber,
     orders: (KyberTrade | ZeroExSignedFillOrder)[],
+    cTokenWhiteListAddress?: Address,
   ) {
     const componentAmountsFromLiquidity = this.calculateLiquidityFills(orders);
 
-    _.each(receiveTokens, (component, i) => {
-      const receiveTokenAmountForFillQuantity = calculatePartialAmount(
-        receiveTokenAmounts[i],
-        quantityToFill,
-        quantity
-      );
+    _.each(receiveTokens, async (component, i) => {
+      // If Whitelist exists, then fetch ctokens and exclude from checks
+      if (cTokenWhiteListAddress) {
+        // Get valid cToken addresses and exclude from checks
+        const [underlyingComponent] =
+          await this.addressToAddressWhiteList.getValues(cTokenWhiteListAddress, [component]);
 
-      const normalizedTokenAddress = component.toLowerCase();
+        const normalizedUnderlyingTokenAddress = underlyingComponent.toLowerCase();
+        this.commonAssertions.isNotUndefined(
+          componentAmountsFromLiquidity[normalizedUnderlyingTokenAddress],
+          exchangeErrors.INSUFFIENT_LIQUIDITY_FOR_REQUIRED_COMPONENT(normalizedUnderlyingTokenAddress),
+        );
+      } else {
+        const receiveTokenAmountForFillQuantity = calculatePartialAmount(
+          receiveTokenAmounts[i],
+          quantityToFill,
+          quantity
+        );
 
-      this.commonAssertions.isNotUndefined(
-        componentAmountsFromLiquidity[normalizedTokenAddress],
-        exchangeErrors.INSUFFIENT_LIQUIDITY_FOR_REQUIRED_COMPONENT(normalizedTokenAddress),
-      );
+        const normalizedTokenAddress = component.toLowerCase();
 
-      this.commonAssertions.isGreaterOrEqualThan(
-        componentAmountsFromLiquidity[normalizedTokenAddress],
-        receiveTokenAmountForFillQuantity,
-        exchangeErrors.INSUFFICIENT_COMPONENT_AMOUNT_FROM_LIQUIDITY(
-          normalizedTokenAddress,
+        this.commonAssertions.isNotUndefined(
+          componentAmountsFromLiquidity[normalizedTokenAddress],
+          exchangeErrors.INSUFFIENT_LIQUIDITY_FOR_REQUIRED_COMPONENT(normalizedTokenAddress),
+        );
+        this.commonAssertions.isGreaterOrEqualThan(
           componentAmountsFromLiquidity[normalizedTokenAddress],
           receiveTokenAmountForFillQuantity,
-        ),
-      );
+          exchangeErrors.INSUFFICIENT_COMPONENT_AMOUNT_FROM_LIQUIDITY(
+            normalizedTokenAddress,
+            componentAmountsFromLiquidity[normalizedTokenAddress],
+            receiveTokenAmountForFillQuantity,
+          )
+        );
+      }
     });
   }
 
