@@ -970,7 +970,7 @@ describe('SocialTradingAPI', () => {
         { from: trader }
       );
 
-      await increaseChainTimeAsync(web3, profitFeePeriod);
+      await increaseChainTimeAsync(web3, profitFeePeriod.add(1));
 
       const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
       const collateralAddress = extractNewSetTokenAddressFromLogs(formattedLogs, 2);
