@@ -30,8 +30,8 @@ import { Address, Bytes, Tx } from '../../types/common';
  *
  */
 export class SocialTradingManagerWrapper {
-  protected web3: Web3;
-  protected contracts: StrategyContractWrapper;
+  public web3: Web3;
+  public contracts: StrategyContractWrapper;
 
   public constructor(web3: Web3) {
     this.web3 = web3;

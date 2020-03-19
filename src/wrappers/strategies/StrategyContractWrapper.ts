@@ -35,6 +35,7 @@ import {
   MACOStrategyManagerContract,
   MACOStrategyManagerV2Contract,
   SocialTradingManagerContract,
+  SocialTradingManagerV2Contract
 } from 'set-protocol-strategies';
 
 import { Address } from '../../types/common';
@@ -332,6 +333,32 @@ export class StrategyContractWrapper {
       return this.cache[cacheKey] as SocialTradingManagerContract;
     } else {
       const socialTradingManagerContract = await SocialTradingManagerContract.at(
+        socialTradingManager,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = socialTradingManagerContract;
+      return socialTradingManagerContract;
+    }
+  }
+
+  /**
+   * Load a SocialTradingManagerV2 contract
+   *
+   * @param  socialTradingManager         Address of the SocialTradingManager contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The SocialTradingManager Contract
+   */
+  public async loadSocialTradingManagerV2ContractAsync(
+    socialTradingManager: Address,
+    transactionOptions: object = {},
+  ): Promise<SocialTradingManagerV2Contract> {
+    const cacheKey = `socialTradingManagerV2_${socialTradingManager}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as SocialTradingManagerV2Contract;
+    } else {
+      const socialTradingManagerContract = await SocialTradingManagerV2Contract.at(
         socialTradingManager,
         this.web3,
         transactionOptions,

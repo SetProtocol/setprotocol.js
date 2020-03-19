@@ -64,13 +64,14 @@ import {
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { SocialTradingAPI } from '@src/api';
 import {
+  DEFAULT_REBALANCING_NATURAL_UNIT,
+  DEFAULT_UNIT_SHARES,
   NULL_ADDRESS,
   ONE_DAY_IN_SECONDS,
   TX_DEFAULTS,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
   ZERO,
-  DEFAULT_REBALANCING_NATURAL_UNIT,
-  DEFAULT_UNIT_SHARES,
+  ZERO_BYTES
 } from '@src/constants';
 import {
   addWhiteListedTokenAsync,
@@ -99,7 +100,7 @@ import {
   getFormattedLogsFromTxHash
 } from '@src/util';
 import { Assertions } from '@src/assertions';
-import { Address, Bytes, SetProtocolConfig, EntryFeePaid } from '@src/types/common';
+import { Address, Bytes, SetProtocolConfig, EntryFeePaid, FeeType } from '@src/types/common';
 import {
   NewTradingPoolInfo,
   NewTradingPoolV2Info,
@@ -280,6 +281,7 @@ describe('SocialTradingAPI', () => {
       rebalancingV3Factory.address,
       [allocator.address]
     );
+    await setManagerV2.setTimeLockPeriod.sendTransactionAsync(ONE_DAY_IN_SECONDS);
 
     protocolViewer = await deployProtocolViewerAsync(web3);
 
@@ -1013,6 +1015,260 @@ describe('SocialTradingAPI', () => {
     });
   });
 
+  describe('adjustPerformanceFeesAsync', async () => {
+    let subjectManager: Address;
+    let subjectTradingPool: Address;
+    let subjectFeeType: FeeType;
+    let subjectFeePercentage: BigNumber;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const manager = setManagerV2.address;
+      const allocatorAddress = allocator.address;
+      const startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = 'CoolPool';
+      const tradingPoolSymbol = 'COOL';
+      const liquidatorAddress = liquidator.address;
+      const feeRecipient = DEFAULT_ACCOUNT;
+      const feeCalculator = performanceFeeCalculator.address;
+      const rebalanceInterval = ONE_DAY_IN_SECONDS;
+      const failAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const lastRebalanceTimestamp = new BigNumber(timestamp);
+      const entryFee = ether(.0001);
+      const profitFeePeriod = ONE_DAY_IN_SECONDS.mul(30);
+      const highWatermarkResetPeriod = ONE_DAY_IN_SECONDS.mul(365);
+      const profitFee = ether(.2);
+      const streamingFee = ether(.02);
+      const trader = DEFAULT_ACCOUNT;
+
+      const txHash = await socialTradingAPI.createTradingPoolV2Async(
+        manager,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidatorAddress,
+        feeRecipient,
+        feeCalculator,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFee,
+        profitFeePeriod,
+        highWatermarkResetPeriod,
+        profitFee,
+        streamingFee,
+        { from: trader }
+      );
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      subjectManager = manager;
+      subjectTradingPool = extractNewSetTokenAddressFromLogs(formattedLogs);
+      subjectFeeType = FeeType.StreamingFee;
+      subjectFeePercentage = ether(.03);
+      subjectCaller = trader;
+
+      const collateralAddress = extractNewSetTokenAddressFromLogs(formattedLogs, 2);
+      const collateralInstance = await SetTokenContract.at(
+        collateralAddress,
+        web3,
+        TX_DEFAULTS,
+      );
+      await collateralInstance.approve.sendTransactionAsync(
+        transferProxy.address,
+        UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+        { from: DEFAULT_ACCOUNT }
+      );
+
+      await core.issue.sendTransactionAsync(collateralAddress, ether(2), { from: subjectCaller });
+      await core.issue.sendTransactionAsync(subjectTradingPool, ether(2), { from: subjectCaller });
+    });
+
+    async function subject(): Promise<string> {
+      return await socialTradingAPI.adjustPerformanceFeesAsync(
+        subjectManager,
+        subjectTradingPool,
+        subjectFeeType,
+        subjectFeePercentage,
+        { from: subjectCaller }
+      );
+    }
+
+    test('successfully initiates adjustFee process', async () => {
+      const txHash = await subject();
+
+      const { input } = await web3.eth.getTransaction(txHash);
+      const upgradeHash = web3.utils.soliditySha3(input);
+
+      const upgradeIdentifier = await setManagerV2.upgradeIdentifier.callAsync(subjectTradingPool);
+      expect(upgradeIdentifier).to.equal(upgradeHash);
+    });
+
+    describe('the confirmation transaction goes through', async () => {
+      beforeEach(async () => {
+        await subject();
+
+        await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
+      });
+
+      test('successfully initiates adjustFee process', async () => {
+        await subject();
+
+        const poolData = await socialTradingAPI.fetchNewTradingPoolV2DetailsAsync(subjectTradingPool);
+        expect(poolData.performanceFeeInfo.streamingFeePercentage).to.be.bignumber.equal(subjectFeePercentage);
+      });
+    });
+    describe('when the caller is not the trader', async () => {
+      beforeEach(async () => {
+        subjectCaller = ACCOUNTS[3].address;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Caller ${subjectCaller} is not trader of tradingPool.`
+        );
+      });
+    });
+
+    describe('when the passed streamingFee is not a multiple of 1 basis point', async () => {
+      beforeEach(async () => {
+        subjectFeePercentage = ether(.00011);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Provided fee ${subjectFeePercentage.toString()} is not multiple of one basis point (10 ** 14)`
+        );
+      });
+    });
+
+    describe('when the passed profitFee is greater than maximum', async () => {
+      beforeEach(async () => {
+        subjectFeePercentage = ether(.5);
+        subjectFeeType = FeeType.ProfitFee;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Passed fee exceeds allowed maximum.`
+        );
+      });
+    });
+
+    describe('when the passed streamingFee is greater than maximum', async () => {
+      beforeEach(async () => {
+        subjectFeePercentage = ether(.1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Passed fee exceeds allowed maximum.`
+        );
+      });
+    });
+  });
+
+  describe('removeFeeUpdateAsync', async () => {
+    let subjectManager: Address;
+    let subjectTradingPool: Address;
+    let subjectUpgradeHash: string;
+    let subjectCaller: Address;
+
+    beforeEach(async () => {
+      const manager = setManagerV2.address;
+      const allocatorAddress = allocator.address;
+      const startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = 'CoolPool';
+      const tradingPoolSymbol = 'COOL';
+      const liquidatorAddress = liquidator.address;
+      const feeRecipient = DEFAULT_ACCOUNT;
+      const feeCalculator = performanceFeeCalculator.address;
+      const rebalanceInterval = ONE_DAY_IN_SECONDS;
+      const failAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const lastRebalanceTimestamp = new BigNumber(timestamp);
+      const entryFee = ether(.0001);
+      const profitFeePeriod = ONE_DAY_IN_SECONDS.mul(30);
+      const highWatermarkResetPeriod = ONE_DAY_IN_SECONDS.mul(365);
+      const profitFee = ether(.2);
+      const streamingFee = ether(.02);
+      const trader = DEFAULT_ACCOUNT;
+
+      const txHash = await socialTradingAPI.createTradingPoolV2Async(
+        manager,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidatorAddress,
+        feeRecipient,
+        feeCalculator,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFee,
+        profitFeePeriod,
+        highWatermarkResetPeriod,
+        profitFee,
+        streamingFee,
+        { from: trader }
+      );
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const tradingPool = extractNewSetTokenAddressFromLogs(formattedLogs);
+      const feeType = FeeType.StreamingFee;
+      const feePercentage = ether(.03);
+      const caller = trader;
+
+      const adjustTxHash = await socialTradingAPI.adjustPerformanceFeesAsync(
+        manager,
+        tradingPool,
+        feeType,
+        feePercentage,
+        { from: caller }
+      );
+
+      const { input } = await web3.eth.getTransaction(adjustTxHash);
+      subjectUpgradeHash = web3.utils.soliditySha3(input);
+      subjectManager = manager;
+      subjectTradingPool = tradingPool;
+      subjectCaller = DEFAULT_ACCOUNT;
+    });
+
+    async function subject(): Promise<string> {
+      return await socialTradingAPI.removeFeeUpdateAsync(
+        subjectManager,
+        subjectTradingPool,
+        subjectUpgradeHash,
+        { from: subjectCaller }
+      );
+    }
+
+    test('successfully removes upgradeHash', async () => {
+      await subject();
+
+      const upgradeIdentifier = await setManagerV2.upgradeIdentifier.callAsync(subjectTradingPool);
+      expect(upgradeIdentifier).to.equal(ZERO_BYTES);
+    });
+
+    describe('when the caller is not the trader', async () => {
+      beforeEach(async () => {
+        subjectCaller = ACCOUNTS[3].address;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Caller ${subjectCaller} is not trader of tradingPool.`
+        );
+      });
+    });
+  });
+
   describe('fetchNewTradingPoolDetailsAsync', async () => {
     let subjectTradingPool: Address;
 
@@ -1139,6 +1395,8 @@ describe('SocialTradingAPI', () => {
       expect(newPoolInfo.poolSymbol).to.equal(symbol);
     });
   });
+
+
 
   describe('fetchNewTradingPoolV2DetailsAsync', async () => {
     let subjectTradingPool: Address;

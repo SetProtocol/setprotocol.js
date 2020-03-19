@@ -26,12 +26,22 @@ import {
   ProtocolViewerWrapper,
   RebalancingSetTokenV2Wrapper,
   RebalancingSetTokenV3Wrapper,
-  SocialTradingManagerWrapper
+  SocialTradingManagerWrapper,
+  SocialTradingManagerV2Wrapper
 } from '../wrappers';
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
-import { Address, Bytes, SetProtocolConfig, Tx, EntryFeePaid, RebalanceFeePaid } from '../types/common';
 import { NewTradingPoolInfo, NewTradingPoolV2Info, TradingPoolRebalanceInfo } from '../types/strategies';
+import {
+  Address,
+  Bytes,
+  FeeType,
+  SetProtocolConfig,
+  Tx,
+  EntryFeePaid,
+  RebalanceFeePaid
+} from '../types/common';
+
 
 const { SetProtocolUtils: SetUtils } = setProtocolUtils;
 
@@ -46,6 +56,7 @@ export class SocialTradingAPI {
   private assert: Assertions;
   private protocolViewer: ProtocolViewerWrapper;
   private socialTradingManager: SocialTradingManagerWrapper;
+  private socialTradingManagerV2: SocialTradingManagerV2Wrapper;
   private rebalancingSetV2: RebalancingSetTokenV2Wrapper;
   private rebalancingSetV3: RebalancingSetTokenV3Wrapper;
   private performanceFeeCalculator: PerformanceFeeCalculatorWrapper;
@@ -62,6 +73,7 @@ export class SocialTradingAPI {
     this.web3 = web3;
     this.protocolViewer = new ProtocolViewerWrapper(web3, config.protocolViewerAddress);
     this.socialTradingManager = new SocialTradingManagerWrapper(web3);
+    this.socialTradingManagerV2 = new SocialTradingManagerV2Wrapper(web3);
     this.rebalancingSetV2 = new RebalancingSetTokenV2Wrapper(web3);
     this.rebalancingSetV3 = new RebalancingSetTokenV3Wrapper(web3);
     this.performanceFeeCalculator = new PerformanceFeeCalculatorWrapper(web3);
@@ -283,6 +295,51 @@ export class SocialTradingAPI {
     txOpts: Tx,
   ): Promise<string> {
     return this.rebalancingSetV3.actualizeFee(tradingPool, txOpts);
+  }
+
+  /**
+   * Calls tradingPool to accrue fees to manager.
+   *
+   * @param  rebalancingSetAddress    Address of tradingPool
+   * @return                          The hash of the resulting transaction.
+   */
+  public async adjustPerformanceFeesAsync(
+    manager: Address,
+    tradingPool: Address,
+    newFeeType: FeeType,
+    newFeePercentage: BigNumber,
+    txOpts: Tx,
+  ): Promise<string> {
+    await this.assertAdjustFees(
+      manager,
+      tradingPool,
+      newFeeType,
+      newFeePercentage,
+      txOpts
+    );
+
+    const newFeeCallData = SetUtils.generateAdjustFeeCallData(
+      new BigNumber(newFeeType),
+      newFeePercentage
+    );
+
+    return this.socialTradingManagerV2.adjustFee(
+      manager,
+      tradingPool,
+      newFeeCallData,
+      txOpts
+    );
+  }
+
+  public async removeFeeUpdateAsync(
+    manager: Address,
+    tradingPool: Address,
+    upgradeHash: string,
+    txOpts: Tx,
+  ): Promise<string> {
+    await this.assertRemoveFeeUpdate(manager, tradingPool, txOpts);
+
+    return this.socialTradingManagerV2.removeRegisteredUpgrade(manager, tradingPool, upgradeHash);
   }
 
   /**
@@ -784,6 +841,46 @@ export class SocialTradingAPI {
     this.assert.socialTrading.isTrader(poolInfo.trader, txOpts.from);
     this.assert.socialTrading.feeChangeInitiated(new BigNumber(poolInfo.feeUpdateTimestamp));
     this.assert.socialTrading.feeChangeTimelockElapsed(new BigNumber(poolInfo.feeUpdateTimestamp));
+  }
+
+  private async assertAdjustFees(
+    manager: Address,
+    tradingPool: Address,
+    newFeeType: FeeType,
+    newFeePercentage: BigNumber,
+    txOpts: Tx
+  ): Promise<void> {
+    const poolInfo: any = await this.socialTradingManager.pools(manager, tradingPool);
+    this.assert.socialTrading.isTrader(poolInfo.trader, txOpts.from);
+    this.assert.socialTrading.feeMultipleOfOneBasisPoint(newFeePercentage);
+
+    const tradingPoolData = await this.fetchNewTradingPoolV2DetailsAsync(tradingPool);
+    let maxFee: BigNumber;
+    if (newFeeType == FeeType.StreamingFee) {
+      maxFee = await this.performanceFeeCalculator.maximumStreamingFeePercentage(
+        tradingPoolData.performanceFeeCalculatorAddress
+      );
+    } else {
+      maxFee = await this.performanceFeeCalculator.maximumProfitFeePercentage(
+        tradingPoolData.performanceFeeCalculatorAddress
+      );
+    }
+
+    this.assert.common.isGreaterOrEqualThan(
+      maxFee,
+      newFeePercentage,
+      'Passed fee exceeds allowed maximum.'
+    );
+  }
+
+  private async assertRemoveFeeUpdate(
+    manager: Address,
+    tradingPool: Address,
+    txOpts: Tx
+  ): Promise<void> {
+    const poolInfo: any = await this.socialTradingManager.pools(manager, tradingPool);
+
+    this.assert.socialTrading.isTrader(poolInfo.trader, txOpts.from);
   }
 
   private assertValidAllocation(
