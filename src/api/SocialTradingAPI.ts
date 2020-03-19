@@ -287,8 +287,8 @@ export class SocialTradingAPI {
   /**
    * Calls tradingPool to accrue fees to manager.
    *
-   * @param  rebalancingSetAddress    Address of tradingPool
-   * @return                          The hash of the resulting transaction.
+   * @param  tradingPool        Address of tradingPool
+   * @return                    The hash of the resulting transaction.
    */
   public async actualizeFeesAsync(
     tradingPool: Address,
@@ -298,9 +298,12 @@ export class SocialTradingAPI {
   }
 
   /**
-   * Calls tradingPool to accrue fees to manager.
+   * Calls manager to adjustFees for tradingPool
    *
-   * @param  rebalancingSetAddress    Address of tradingPool
+   * @param  manager                  Address of manager
+   * @param  tradingPool              Address of tradingPool
+   * @param  newFeeType               Type of fee being changed
+   * @param  newFeePercentage         New fee percentage
    * @return                          The hash of the resulting transaction.
    */
   public async adjustPerformanceFeesAsync(
@@ -331,6 +334,14 @@ export class SocialTradingAPI {
     );
   }
 
+  /**
+   * Cancels previous fee adjustment (before enacted)
+   *
+   * @param  manager                  Address of manager
+   * @param  tradingPool              Address of tradingPool
+   * @param  upgradeHash              Hash of the inital fee adjustment call data
+   * @return                          The hash of the resulting transaction.
+   */
   public async removeFeeUpdateAsync(
     manager: Address,
     tradingPool: Address,
