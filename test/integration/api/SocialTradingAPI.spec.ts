@@ -2218,7 +2218,7 @@ describe('SocialTradingAPI', () => {
     });
   });
 
-  describe('batchFetchTradingPoolOperator', async () => {
+  describe('batchFetchTradingPoolOperatorAsync', async () => {
     let subjectTradingPools: Address[];
 
     let traderOne: Address;
@@ -2287,7 +2287,7 @@ describe('SocialTradingAPI', () => {
     });
 
     async function subject(): Promise<Address[]> {
-      return await socialTradingAPI.batchFetchTradingPoolOperator(
+      return await socialTradingAPI.batchFetchTradingPoolOperatorAsync(
         subjectTradingPools
       );
     }
@@ -2466,7 +2466,7 @@ describe('SocialTradingAPI', () => {
     });
   });
 
-  describe('batchFetchTradingPoolAccumulation', async () => {
+  describe('batchFetchTradingPoolAccumulationAsync', async () => {
     let subjectTradingPools: Address[];
 
     let profitFeeOne: BigNumber;
@@ -2567,7 +2567,7 @@ describe('SocialTradingAPI', () => {
     async function subject(): Promise<TradingPoolAccumulationInfo[]> {
       await increaseChainTimeAsync(web3, subjectIncreaseChainTime);
       await mineBlockAsync(web3);
-      return await socialTradingAPI.batchFetchTradingPoolAccumulation(
+      return await socialTradingAPI.batchFetchTradingPoolAccumulationAsync(
         subjectTradingPools
       );
     }
@@ -2623,7 +2623,7 @@ describe('SocialTradingAPI', () => {
     });
   });
 
-  describe('batchFetchTradingPoolFeeState', async () => {
+  describe('batchFetchTradingPoolFeeStateAsync', async () => {
     let subjectTradingPools: Address[];
 
     let tradingPoolInstanceOne: RebalancingSetTokenV3Contract;
@@ -2716,7 +2716,7 @@ describe('SocialTradingAPI', () => {
     async function subject(): Promise<PerformanceFeeInfo[]> {
       await increaseChainTimeAsync(web3, subjectIncreaseChainTime);
       await mineBlockAsync(web3);
-      return await socialTradingAPI.batchFetchTradingPoolFeeState(
+      return await socialTradingAPI.batchFetchTradingPoolFeeStateAsync(
         subjectTradingPools
       );
     }
@@ -2743,7 +2743,7 @@ describe('SocialTradingAPI', () => {
     });
   });
 
-  describe('fetchEntryFeeEvents', async () => {
+  describe('fetchEntryFeeEventsAsync', async () => {
     let issueOneTransactionHash: string;
     let issueOneBlockNumber: number;
     let issueOneBlockTimestamp: number;
@@ -2834,7 +2834,7 @@ describe('SocialTradingAPI', () => {
     });
 
     async function subject(): Promise<EntryFeePaid[]> {
-      return await socialTradingAPI.fetchEntryFeeEvents(
+      return await socialTradingAPI.fetchEntryFeeEventsAsync(
         subjectRebalancingSetTokenV2,
         subjectFromBlock,
         subjectToBlock,
@@ -2861,7 +2861,7 @@ describe('SocialTradingAPI', () => {
     });
   });
 
-  describe('fetchRebalanceFeePaidEvents', async () => {
+  describe('fetchRebalanceFeePaidEventsAsync', async () => {
     let earlyTxnHash: string;
     let earlyBlockNumber: number;
     let lastTransactionTimestamp: number;
@@ -2978,7 +2978,7 @@ describe('SocialTradingAPI', () => {
     });
 
     async function subject(): Promise<any> {
-      return await socialTradingAPI.fetchRebalanceFeePaidEvents(
+      return await socialTradingAPI.fetchRebalanceFeePaidEventsAsync(
         subjectRebalancingSetTokenV2,
         subjectFromBlock,
         subjectToBlock,

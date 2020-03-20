@@ -542,7 +542,7 @@ export class SocialTradingAPI {
    *
    * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
    */
-  public async batchFetchTradingPoolOperator(
+  public async batchFetchTradingPoolOperatorAsync(
     tradingPoolAddresses: Address[],
   ): Promise<string[]> {
     return this.protocolViewer.batchFetchTradingPoolOperator(tradingPoolAddresses);
@@ -576,7 +576,7 @@ export class SocialTradingAPI {
    *
    * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
    */
-  public async batchFetchTradingPoolAccumulation(
+  public async batchFetchTradingPoolAccumulationAsync(
     tradingPoolAddresses: Address[],
   ): Promise<TradingPoolAccumulationInfo[]> {
     const tradingPoolFees = await this.protocolViewer.batchFetchTradingPoolAccumulation(
@@ -592,7 +592,7 @@ export class SocialTradingAPI {
    *
    * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
    */
-  public async batchFetchTradingPoolFeeState(
+  public async batchFetchTradingPoolFeeStateAsync(
     tradingPoolAddresses: Address[],
   ): Promise<PerformanceFeeInfo[]> {
     return this.protocolViewer.batchFetchTradingPoolFeeState(tradingPoolAddresses);
@@ -609,7 +609,7 @@ export class SocialTradingAPI {
    * @param  toBlock                       The ending block to retrieve events (default is latest)
    * @return                               An array of objects conforming to the EntryFeePaid interface
    */
-  public async fetchEntryFeeEvents(
+  public async fetchEntryFeeEventsAsync(
     tradingPoolAddress: Address,
     fromBlock: number,
     toBlock?: any,
@@ -654,7 +654,7 @@ export class SocialTradingAPI {
    * @param  toBlock                       The ending block to retrieve events (default is latest)
    * @return                               An array of objects conforming to the RebalanceFeePaid interface
    */
-  public async fetchRebalanceFeePaidEvents(
+  public async fetchRebalanceFeePaidEventsAsync(
     tradingPoolAddress: Address,
     fromBlock: number,
     toBlock?: any,
@@ -779,15 +779,15 @@ export class SocialTradingAPI {
     const streamingFees = tradingPoolFees[0];
     const profitFees = tradingPoolFees[1];
 
-    return streamingFees.reduce((accumulator: [], streamingFee: BigNumber, index: number) => {
-      return [
-        ...accumulator,
-        {
-          streamingFee,
-          profitFee: profitFees[index],
-        },
-      ];
-    }, []) as TradingPoolAccumulationInfo[];
+    const accumulationInfo: TradingPoolAccumulationInfo[] = [];
+    _.forEach(streamingFees, (streamingFee, index) => {
+      accumulationInfo.push({
+        streamingFee,
+        profitFee: profitFees[index],
+      } as TradingPoolAccumulationInfo);
+    });
+
+    return accumulationInfo;
   }
 
   /* ============ Private Assertions ============ */
