@@ -70,6 +70,7 @@ export {
   deployConstantAuctionPriceCurveAsync,
   deploySetTokensAsync,
   increaseChainTimeAsync,
+  mineBlockAsync,
   transitionToProposeAsync,
   transitionToRebalanceAsync,
   transitionToDrawdownAsync,

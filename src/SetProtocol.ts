@@ -150,7 +150,7 @@ class SetProtocol {
     this.oracle = new OracleAPI(this.web3);
     this.priceFeed = new PriceFeedAPI(this.web3);
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, config);
-    this.rebalancingManager = new RebalancingManagerAPI(this.web3, assertions);
+    this.rebalancingManager = new RebalancingManagerAPI(this.web3, assertions, config);
     this.rebalancingSetIssuance = new RebalancingSetIssuanceAPI(this.web3, assertions, config);
     this.setToken = new SetTokenAPI(this.web3, assertions);
     this.socialTrading = new SocialTradingAPI(this.web3, assertions, config);

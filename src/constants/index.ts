@@ -43,6 +43,7 @@ export const NULL_ADDRESS = SetProtocolUtils.CONSTANTS.NULL_ADDRESS;
 export const ONE_DAY_IN_SECONDS = new BigNumber(86400);
 export const ONE_HOUR_IN_SECONDS = new BigNumber(3600);
 export const ONE_WEEK_IN_SECONDS = new BigNumber(604800);
+export const ONE_YEAR_IN_SECONDS = new BigNumber(86400 * 365.25);
 export const SET_FULL_TOKEN_UNITS = new BigNumber(10 ** 18);
 export const STANDARD_DECIMALS: BigNumber = new BigNumber(18); // ETH natural unit, wei
 export const STANDARD_SUPPLY: BigNumber = new BigNumber(100000000000000000000); // 100 Ether

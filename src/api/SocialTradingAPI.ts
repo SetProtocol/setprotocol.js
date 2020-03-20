@@ -31,7 +31,6 @@ import {
 } from '../wrappers';
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
-import { NewTradingPoolInfo, NewTradingPoolV2Info, TradingPoolRebalanceInfo } from '../types/strategies';
 import {
   Address,
   Bytes,
@@ -42,6 +41,13 @@ import {
   RebalanceFeePaid
 } from '../types/common';
 
+import {
+  NewTradingPoolInfo,
+  NewTradingPoolV2Info,
+  PerformanceFeeInfo,
+  TradingPoolAccumulationInfo,
+  TradingPoolRebalanceInfo
+} from '../types/strategies';
 
 const { SetProtocolUtils: SetUtils } = setProtocolUtils;
 
@@ -532,6 +538,17 @@ export class SocialTradingAPI {
   }
 
   /**
+   * Fetches all trading pool operators for an array of trading pools
+   *
+   * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchTradingPoolOperatorAsync(
+    tradingPoolAddresses: Address[],
+  ): Promise<string[]> {
+    return this.protocolViewer.batchFetchTradingPoolOperator(tradingPoolAddresses);
+  }
+
+  /**
    * Fetches all entry fees for an array of trading pools
    *
    * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
@@ -554,6 +571,34 @@ export class SocialTradingAPI {
   }
 
   /**
+   * Fetches all profit and streaming fees for an array of trading pools. Return objects adhere to
+   * TradingPoolAccumulationInfo interface
+   *
+   * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchTradingPoolAccumulationAsync(
+    tradingPoolAddresses: Address[],
+  ): Promise<TradingPoolAccumulationInfo[]> {
+    const tradingPoolFees = await this.protocolViewer.batchFetchTradingPoolAccumulation(
+      tradingPoolAddresses
+    );
+
+    return this.createTradingPoolAccumulationObject(tradingPoolFees);
+  }
+
+  /**
+   * Fetches all fee states for an array of trading pools. Return objects adhere to
+   * PerformanceFeeInfo interface
+   *
+   * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchTradingPoolFeeStateAsync(
+    tradingPoolAddresses: Address[],
+  ): Promise<PerformanceFeeInfo[]> {
+    return this.protocolViewer.batchFetchTradingPoolFeeState(tradingPoolAddresses);
+  }
+
+  /**
    * Fetches EntryFeePaid event logs including information about the transactionHash, rebalancingSetToken,
    * feeRecipient, and feeQuantity.
    *
@@ -564,7 +609,7 @@ export class SocialTradingAPI {
    * @param  toBlock                       The ending block to retrieve events (default is latest)
    * @return                               An array of objects conforming to the EntryFeePaid interface
    */
-  public async fetchEntryFeeEvents(
+  public async fetchEntryFeeEventsAsync(
     tradingPoolAddress: Address,
     fromBlock: number,
     toBlock?: any,
@@ -609,7 +654,7 @@ export class SocialTradingAPI {
    * @param  toBlock                       The ending block to retrieve events (default is latest)
    * @return                               An array of objects conforming to the RebalanceFeePaid interface
    */
-  public async fetchRebalanceFeePaidEvents(
+  public async fetchRebalanceFeePaidEventsAsync(
     tradingPoolAddress: Address,
     fromBlock: number,
     toBlock?: any,
@@ -726,6 +771,23 @@ export class SocialTradingAPI {
       rebalanceState: rbSetInfo.rebalanceState,
       nextSetInfo: collateralInfo,
     } as TradingPoolRebalanceInfo;
+  }
+
+  private createTradingPoolAccumulationObject(
+    tradingPoolFees: any,
+  ): TradingPoolAccumulationInfo[] {
+    const streamingFees = tradingPoolFees[0];
+    const profitFees = tradingPoolFees[1];
+
+    const accumulationInfo: TradingPoolAccumulationInfo[] = [];
+    _.forEach(streamingFees, (streamingFee, index) => {
+      accumulationInfo.push({
+        streamingFee,
+        profitFee: profitFees[index],
+      } as TradingPoolAccumulationInfo);
+    });
+
+    return accumulationInfo;
   }
 
   /* ============ Private Assertions ============ */

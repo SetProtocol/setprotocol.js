@@ -29,11 +29,12 @@ import {
   MACOStrategyManagerV2Wrapper,
   MovingAverageOracleWrapper,
   MedianizerWrapper,
+  ProtocolViewerWrapper,
   SetTokenWrapper,
   RebalancingSetTokenWrapper,
 } from '../wrappers';
 import { Assertions } from '../assertions';
-import { Address, ManagerType, Tx } from '../types/common';
+import { Address, ManagerType, SetProtocolConfig, Tx } from '../types/common';
 import {
   DAI_FULL_TOKEN_UNITS,
   DAI_PRICE,
@@ -62,6 +63,7 @@ export class RebalancingManagerAPI {
   private rebalancingSetToken: RebalancingSetTokenWrapper;
   private medianizer: MedianizerWrapper;
   private movingAverageOracleWrapper: MovingAverageOracleWrapper;
+  private protocolViewer: ProtocolViewerWrapper;
 
   private btcEthRebalancingManager: BTCETHRebalancingManagerWrapper;
   private btcDaiRebalancingManager: BTCDAIRebalancingManagerWrapper;
@@ -77,7 +79,7 @@ export class RebalancingManagerAPI {
    *                      with the Ethereum network
    * @param assertions    An instance of the Assertion library
    */
-  constructor(web3: Web3, assertions: Assertions) {
+  constructor(web3: Web3, assertions: Assertions, config: SetProtocolConfig, ) {
     this.btcEthRebalancingManager = new BTCETHRebalancingManagerWrapper(web3);
     this.btcDaiRebalancingManager = new BTCDAIRebalancingManagerWrapper(web3);
     this.ethDaiRebalancingManager = new ETHDAIRebalancingManagerWrapper(web3);
@@ -90,6 +92,7 @@ export class RebalancingManagerAPI {
     this.medianizer = new MedianizerWrapper(web3);
     this.movingAverageOracleWrapper = new MovingAverageOracleWrapper(web3);
     this.rebalancingSetToken = new RebalancingSetTokenWrapper(web3);
+    this.protocolViewer = new ProtocolViewerWrapper(web3, config.protocolViewerAddress);
   }
 
   /**
@@ -515,6 +518,30 @@ export class RebalancingManagerAPI {
       signalConfirmationMaxTime,
       trigger,
     } as AssetPairManagerDetails;
+  }
+
+  /**
+   * Fetches the crossover confirmation time of AssetPairManager contracts.
+   *
+   * @param  managers        Array of addresses of the manager contract
+   * @return                 Object containing the crossover timestamps
+   */
+  public async batchFetchAssetPairCrossoverTimestampAsync(
+    managers: Address[],
+  ): Promise<BigNumber[]> {
+    return await this.protocolViewer.batchFetchAssetPairCrossoverTimestamp(managers);
+  }
+
+  /**
+   * Fetches the crossover confirmation time of AssetPairManager contracts.
+   *
+   * @param  managers        Array of addresses of the manager contract
+   * @return                 Object containing the crossover timestamps
+   */
+  public async batchFetchMACOCrossoverTimestampAsync(
+    managers: Address[],
+  ): Promise<BigNumber[]> {
+    return await this.protocolViewer.batchFetchMACOV2CrossoverTimestamp(managers);
   }
 
   /* ============ Private Functions ============ */

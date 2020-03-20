@@ -270,4 +270,34 @@ export class ProtocolViewerWrapper {
 
     return await protocolViewerInstance.batchFetchExchangeRateStored.callAsync(cTokenAddresses);
   }
+
+  /**
+   * Fetches the crossover confirmation timestamp given an array of MACO V2 managers
+   *
+   * @param  managerAddresses[]    Manager contract instance addresses
+   */
+  public async batchFetchMACOV2CrossoverTimestamp(
+    managerAddresses: Address[],
+  ): Promise<BigNumber[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchMACOV2CrossoverTimestamp.callAsync(managerAddresses);
+  }
+
+  /**
+   * Fetches the crossover confirmation timestamp given an array of Asset Pair managers
+   *
+   * @param  managerAddresses[]    Manager contract instance addresses
+   */
+  public async batchFetchAssetPairCrossoverTimestamp(
+    managerAddresses: Address[],
+  ): Promise<BigNumber[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchAssetPairCrossoverTimestamp.callAsync(managerAddresses);
+  }
 }

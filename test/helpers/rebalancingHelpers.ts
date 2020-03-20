@@ -444,6 +444,10 @@ export const increaseChainTimeAsync = async(
   await sendJSONRpcRequestAsync(web3, 'evm_increaseTime', [duration.toNumber()]);
 };
 
+export const mineBlockAsync = async (web3: Web3) => {
+  await sendJSONRpcRequestAsync(web3, 'evm_mine', []);
+};
+
 const sendJSONRpcRequestAsync = async(
   web3: Web3,
   method: string,

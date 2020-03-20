@@ -152,6 +152,11 @@ export interface NewTradingPoolV2Info {
   performanceFeeCalculatorAddress: Address;
 }
 
+export interface TradingPoolAccumulationInfo {
+  streamingFee: BigNumber;
+  profitFee: BigNumber;
+}
+
 export interface TradingPoolRebalanceInfo {
   trader: Address;
   allocator: Address;
