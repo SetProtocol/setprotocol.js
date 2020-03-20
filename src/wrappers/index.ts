@@ -51,5 +51,6 @@ export { MACOStrategyManagerWrapper } from './strategies/MACOStrategyManagerWrap
 export { MACOStrategyManagerV2Wrapper } from './strategies/MACOStrategyManagerV2Wrapper';
 export { OracleProxyWrapper } from './strategies/OracleProxyWrapper';
 export { SocialTradingManagerWrapper } from './strategies/SocialTradingManagerWrapper';
+export { SocialTradingManagerV2Wrapper } from './strategies/SocialTradingManagerV2Wrapper';
 export { StrategyContractWrapper } from './strategies/StrategyContractWrapper';
 export { TimeSeriesFeedWrapper } from './strategies/TimeSeriesFeedWrapper';

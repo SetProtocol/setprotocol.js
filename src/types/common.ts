@@ -15,6 +15,11 @@ export {
   ZeroExSignedFillOrder,
 } from 'set-protocol-utils';
 
+export enum FeeType {
+  StreamingFee,
+  ProfitFee,
+}
+
 export interface BidPlacedEvent {
   transactionHash: string;
   rebalancingSetToken: Address;

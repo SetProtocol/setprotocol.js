@@ -53,6 +53,7 @@ export const VALUE_TO_CENTS_CONVERSION = new BigNumber(10 ** 16);
 export const WBTC_FULL_TOKEN_UNITS = new BigNumber(10 ** 8);
 export const WETH_FULL_TOKEN_UNITS = new BigNumber(10 ** 18);
 export const ZERO: BigNumber = SetProtocolUtils.CONSTANTS.ZERO;
+export const ZERO_BYTES: string = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
 // Returns a big number that can be passed in as a smart contract parameter
 export function UINT256(value: number): BigNumber {
