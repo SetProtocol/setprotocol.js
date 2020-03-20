@@ -386,7 +386,8 @@ export class SocialTradingAPI {
   }
 
   /**
-   * Calls SocialTradingManager's initiateEntryFeeChange function. Starts entry fee update process.
+   * Calls SocialTradingManager's finalizeEntryFeeChangeAsync function. Finalizes entry fee update process if timelock
+   * period passes.
    *
    * @param  manager                Address of the social trading manager contract
    * @param  tradingPool            Address of tradingPool being updated
