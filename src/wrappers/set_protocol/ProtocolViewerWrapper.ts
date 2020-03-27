@@ -135,6 +135,21 @@ export class ProtocolViewerWrapper {
   }
 
   /**
+   * Fetches all unitShares for an array of RebalancingSetToken contracts
+   *
+   * @param  rebalancingSetTokenAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchUnitSharesAsync(
+    rebalancingSetTokenAddresses: Address[],
+  ): Promise<BigNumber[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchUnitSharesAsync.callAsync(rebalancingSetTokenAddresses);
+  }
+
+  /**
    * Fetches state of trading pool info, underlying RebalancingSetTokenV2, and current collateralSet.
    *
    * @param  tradingPoolAddress      RebalancingSetTokenV2 contract address of tradingPool

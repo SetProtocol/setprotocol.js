@@ -502,6 +502,44 @@ describe('ProtocolViewer', () => {
     });
   });
 
+  describe('#batchFetchUnitSharesAsync', async () => {
+    let subjectRebalancingSetTokenAddresses: Address[];
+
+    let defaultRebalancingSetToken: RebalancingSetTokenContract;
+
+    beforeEach(async () => {
+      // Create another rebalancing set token
+      const proposalPeriod = ONE_DAY_IN_SECONDS;
+      const managerAddress = ACCOUNTS[1].address;
+      defaultRebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      subjectRebalancingSetTokenAddresses = [rebalancingSetToken.address, defaultRebalancingSetToken.address];
+    });
+
+    async function subject(): Promise<any> {
+      return await protocolViewerWrapper.batchFetchUnitSharesAsync(subjectRebalancingSetTokenAddresses);
+    }
+
+    test('fetches the RebalancingSetTokens\' unitShares', async () => {
+      const rebalanceUnitShares: BigNumber[] = await subject();
+
+      const firstUnitShares = rebalanceUnitShares[0];
+      const firstExpectedUnitShares = await rebalancingSetToken.unitShares.callAsync();
+      expect(firstUnitShares).to.be.bignumber.equal(firstExpectedUnitShares);
+
+      const secondUnitShares = rebalanceUnitShares[1];
+      const secondExpectedUnitShares = await defaultRebalancingSetToken.unitShares.callAsync();
+      expect(secondUnitShares).to.be.bignumber.equal(secondExpectedUnitShares);
+    });
+  });
+
   describe('Trading Pool V1 Tests', async () => {
     let rebalancingSetTokenV2: RebalancingSetTokenV2Contract;
 

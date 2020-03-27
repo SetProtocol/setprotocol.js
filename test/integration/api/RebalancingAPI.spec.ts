@@ -3030,6 +3030,68 @@ describe('RebalancingAPI', () => {
     });
   });
 
+  describe('getUnitSharesAsync', async () => {
+    let currentSetToken: SetTokenContract;
+    let rebalancingSetToken: RebalancingSetTokenContract;
+    let proposalPeriod: BigNumber;
+    let managerAddress: Address;
+
+    let subjectRebalancingSetTokenAddresses: Address[];
+
+    beforeEach(async () => {
+      const setTokensToDeploy = 1;
+      [currentSetToken] = await deploySetTokensAsync(
+        web3,
+        core,
+        setTokenFactory.address,
+        transferProxy.address,
+        setTokensToDeploy,
+      );
+
+      proposalPeriod = ONE_DAY_IN_SECONDS;
+      managerAddress = ACCOUNTS[1].address;
+      rebalancingSetToken = await createDefaultRebalancingSetTokenAsync(
+        web3,
+        core,
+        rebalancingSetTokenFactory.address,
+        managerAddress,
+        currentSetToken.address,
+        proposalPeriod
+      );
+
+      subjectRebalancingSetTokenAddresses = [rebalancingSetToken.address];
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return await rebalancingAPI.getUnitSharesAsync(subjectRebalancingSetTokenAddresses);
+    }
+
+    it('returns the rebalancing token state', async () => {
+      const unitShares = await subject();
+
+      const expectedUnitShares = await rebalancingSetToken.unitShares.callAsync();
+      expect(unitShares[0]).to.eql(expectedUnitShares.toString());
+    });
+
+    describe('when the rebalancing set address is invalid', async () => {
+      beforeEach(async () => {
+        subjectRebalancingSetTokenAddresses = ['InvalidRebalancingSetTokenAddress'];
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+      `
+        Expected rebalancingSetTokenAddress to conform to schema /Address.
+
+        Encountered: "InvalidRebalancingSetTokenAddress"
+
+        Validation errors: instance does not match pattern "^0x[0-9a-fA-F]{40}$"
+      `
+        );
+      });
+    });
+  });
+
   describe('getRebalancingSetCurrentSetAsync', async () => {
     let currentSetToken: SetTokenContract;
     let rebalancingSetToken: RebalancingSetTokenContract;
