@@ -657,6 +657,18 @@ export class RebalancingAPI {
   }
 
   /**
+   * Fetches the current unitShares for multiple RebalancingSetToken contracts
+   *
+   * @param  rebalancingSetTokenAddresses    Addressses of the RebalancingSetToken contracts
+   * @return                                 Array of current unitShares
+   */
+  public async getUnitSharesAsync(rebalancingSetTokenAddresses: Address[]): Promise<BigNumber[]> {
+    this.assertGetUnitSharesAsync(rebalancingSetTokenAddresses);
+
+    return await this.protocolViewer.batchFetchUnitSharesAsync(rebalancingSetTokenAddresses);
+  }
+
+  /**
    * Fetches the current collateral set token address of a rebalancing set
    *
    * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
@@ -861,6 +873,12 @@ export class RebalancingAPI {
   }
 
   private assertGetRebalanceStatesAsync(tokenAddresses: Address[]) {
+    tokenAddresses.forEach(tokenAddress => {
+      this.assert.schema.isValidAddress('rebalancingSetTokenAddress', tokenAddress);
+    });
+  }
+
+  private assertGetUnitSharesAsync(tokenAddresses: Address[]) {
     tokenAddresses.forEach(tokenAddress => {
       this.assert.schema.isValidAddress('rebalancingSetTokenAddress', tokenAddress);
     });
