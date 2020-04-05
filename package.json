@@ -81,6 +81,7 @@
     "web3-utils": "1.0.0-beta.36"
   },
   "files": [
+    "src",
     "dist",
     "scripts"
   ],
