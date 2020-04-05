@@ -5,7 +5,7 @@
     "declaration": true,
     "noImplicitAny": true,
     "moduleResolution": "node",
-    "sourceMap": false,
+    "sourceMap": true,
     "outDir": "dist",
     "baseUrl": ".",
     "lib": ["es2015", "es2016", "es2017", "es2018", "dom"],
@@ -24,7 +24,6 @@
   },
   "include": [
     "src/**/*",
-    "test/**/*",
   ],
   "exclude": [
     "node_modules"
