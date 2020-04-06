@@ -1,6 +1,6 @@
 {
   "name": "setprotocol.js",
-  "version": "1.2.8-rc2",
+  "version": "1.2.8-rc3",
   "description": "A javascript library for interacting with the Set protocol",
   "keywords": [
     "setProtocol.js",
@@ -17,10 +17,10 @@
     "prod": "yarn run build",
     "chain": "bash scripts/init_chain_internal.sh",
     "build": "yarn run build-ts && yarn run tslint",
-    "build-ts": "tsc --p tsconfig.dist.json",
+    "build-ts": "tsc",
     "test": "jest --runInBand",
     "test:watch": "jest --watch --runInBand",
-    "tslint": "tslint -c tslint.json -p tsconfig.dist.json",
+    "tslint": "tslint -c tslint.json -p tsconfig.json",
     "precommit": "lint-staged",
     "docs": "bash scripts/docs/generate_docs.sh",
     "prepublishOnly": "yarn build"
