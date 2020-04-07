@@ -18,11 +18,14 @@
 
 import Web3 from 'web3';
 
-import { RebalancingSetEthBidder } from 'set-protocol-contracts';
-
 import { ProtocolContractWrapper } from './ProtocolContractWrapper';
 import { Address, Tx } from '../../types/common';
 import { BigNumber, generateTxOpts } from '../../util';
+
+const RebalancingSetEthBidder =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/RebalancingSetEthBidder'
+  ).RebalancingSetEthBidder;
 
 /**
  * @title  RebalancingSetEthBidderWrapper

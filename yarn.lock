@@ -6568,10 +6568,10 @@ set-blocking@^2.0.0, set-blocking@~2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/set-blocking/-/set-blocking-2.0.0.tgz#045f9782d011ae9a6803ddd382b24392b3d890f7"
 
-set-protocol-contracts@1.3.55-beta, set-protocol-contracts@^1.3.55-beta:
-  version "1.3.55-beta"
-  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.3.55-beta.tgz#8bc25960b9118c32206afc60314bc02d0fa518b0"
-  integrity sha512-BpGN+B+zG61UYeEC+Iz6orz3BDpQd+LVbhWPla7ChOwMbk0kyzMkAVMNUmvrTKsgPI/o81wTbQ7FAUGtUj13zQ==
+set-protocol-contracts@1.4.0-beta, set-protocol-contracts@^1.4.0-beta:
+  version "1.4.0-beta"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.4.0-beta.tgz#b7f482dfaba596c180b4efb2a51aafee02f56082"
+  integrity sha512-zYczLu+8JA4zhvWK6LyzyVx58navvAxF9WcBEhQI2Tpt7DLdkzs2Chy/3iFjjFbn7u+Ar1NJe6yEmLSbDUgMXQ==
   dependencies:
     bn-chai "^1.0.1"
     canonical-weth "^1.3.1"
@@ -6623,10 +6623,10 @@ set-protocol-oracles@^1.0.15:
     web3 "1.0.0-beta.36"
     web3-utils "1.0.0-beta.36"
 
-set-protocol-strategies@^1.1.34:
-  version "1.1.34"
-  resolved "https://registry.yarnpkg.com/set-protocol-strategies/-/set-protocol-strategies-1.1.34.tgz#e25c0d4eeb023b1ae9d5feb7f539467a89372554"
-  integrity sha512-TkpWJMptkjW9qf/Izqnu541G031/1YpHFjLQoDzn4Jsszi4T3B1ViCWpghfmSfc1SrrY6XK90YY11vSBMcbNZw==
+set-protocol-strategies@^1.1.35:
+  version "1.1.35"
+  resolved "https://registry.yarnpkg.com/set-protocol-strategies/-/set-protocol-strategies-1.1.35.tgz#0ee43ec1e350fcfe5fd257c2bb23e410e337b6f7"
+  integrity sha512-1iixB3dLgK1YBIZfGjUtv+zr5dQTn0ED6nHjJ4ZRz6Un8bIdshjdvlQIZZDx63cV28aKmM+xclpXCSCHINsl2w==
   dependencies:
     bn-chai "^1.0.1"
     canonical-weth "^1.3.1"
@@ -6640,7 +6640,7 @@ set-protocol-strategies@^1.1.34:
     minify-all "^1.2.2"
     module-alias "^2.1.0"
     openzeppelin-solidity "^2.2"
-    set-protocol-contracts "^1.3.55-beta"
+    set-protocol-contracts "^1.4.0-beta"
     set-protocol-oracles "^1.0.15"
     set-protocol-utils "^1.1.2"
     tiny-promisify "^1.0.0"
@@ -6683,10 +6683,10 @@ set-protocol-utils@^1.1.2:
     web3 "1.0.0-beta.36"
     web3-utils "1.0.0-beta.36"
 
-set-protocol-viewers@^1.0.8:
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/set-protocol-viewers/-/set-protocol-viewers-1.0.8.tgz#e8d84a6bf104d702670ffaa193a0d1e3819d2b38"
-  integrity sha512-a4RZeVyYFZKUmuqjthRudaMjFA5aBpKadpx1h3GHn5NEiOKw0w5svX09OAbvBoTb9byU/TXpjGwbS6rFKKzyig==
+set-protocol-viewers@^1.0.9:
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/set-protocol-viewers/-/set-protocol-viewers-1.0.9.tgz#40f9410062b661bc35b74d9447ce210f66e005c4"
+  integrity sha512-TUYQKOMP3uhZtdU2gkGBn4av5ovo1FntpXl6fR1Ms8Y26yrebwX7vOMgp6D2161J7Xfqbvfq876/urWw5rvTkA==
   dependencies:
     bn-chai "^1.0.1"
     canonical-weth "^1.3.1"
@@ -6701,9 +6701,9 @@ set-protocol-viewers@^1.0.8:
     minify-all "^1.2.2"
     module-alias "^2.1.0"
     openzeppelin-solidity "^2.2"
-    set-protocol-contracts "^1.3.55-beta"
+    set-protocol-contracts "^1.4.0-beta"
     set-protocol-oracles "^1.0.15"
-    set-protocol-strategies "^1.1.34"
+    set-protocol-strategies "^1.1.35"
     set-protocol-utils "^1.1.2"
     tiny-promisify "^1.0.0"
     truffle-flattener "^1.4.2"
