@@ -28,7 +28,6 @@ import * as chai from 'chai';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
 import {
-  Core,
   CoreContract,
   FeeCalculatorHelper,
   LinearAuctionLiquidatorContract,
@@ -80,6 +79,8 @@ import {
 } from '@src/util';
 import { Address, SetProtocolConfig } from '@src/types/common';
 import { Assertions } from '@src/assertions';
+
+const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));

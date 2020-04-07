@@ -2,7 +2,6 @@ import * as _ from 'lodash';
 import promisify from 'tiny-promisify';
 import Web3 from 'web3';
 import { Address, SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
-import { ConstantAuctionPriceCurve } from 'set-protocol-contracts';
 
 import {
   ConstantAuctionPriceCurveContract,
@@ -34,6 +33,11 @@ import { deployTokensAsync, deploySetTokenAsync, approveForTransferAsync } from 
 import { BigNumber, getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util';
 
 import { setDefaultTruffleContract } from './coreHelpers';
+
+const ConstantAuctionPriceCurve =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/ConstantAuctionPriceCurve'
+  ).ConstantAuctionPriceCurve;
 
 export const deploySetTokensAsync = async(
   web3: Web3,

@@ -36,7 +36,6 @@ import {
   SetTokenFactoryContract,
   WhiteListContract,
 } from 'set-protocol-contracts';
-import { Core } from 'set-protocol-contracts';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { SystemAPI } from '@src/api';
@@ -58,6 +57,8 @@ import {
   deployWhiteListContract,
   registerExchange,
 } from '@test/helpers';
+
+const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');

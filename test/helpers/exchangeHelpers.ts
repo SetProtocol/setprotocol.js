@@ -2,11 +2,8 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import {
   CoreContract,
-  ERC20Wrapper,
-  KyberNetworkWrapper,
   KyberNetworkWrapperContract,
   TransferProxyContract,
-  ZeroExExchangeWrapper,
   ZeroExExchangeWrapperContract,
 } from 'set-protocol-contracts';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
@@ -14,6 +11,14 @@ import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import { TX_DEFAULTS } from '@src/constants';
 
 import { setDefaultTruffleContract } from './coreHelpers';
+
+const ERC20Wrapper =
+  require('set-protocol-contracts/dist/artifacts/ts/ERC20Wrapper').ERC20Wrapper;
+const KyberNetworkWrapper =
+  require('set-protocol-contracts/dist/artifacts/ts/KyberNetworkWrapper').KyberNetworkWrapper;
+const ZeroExExchangeWrapper =
+  require('set-protocol-contracts/dist/artifacts/ts/ZeroExExchangeWrapper').ZeroExExchangeWrapper;
+
 
 export const deployZeroExExchangeWrapperContract = async (
   web3: Web3,

@@ -2,11 +2,6 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 import {
-  RebalancingSetEthBidder,
-  RebalancingSetCTokenBidder,
-} from 'set-protocol-contracts';
-import {
-  ERC20Wrapper,
   RebalancingSetEthBidderContract,
   RebalancingSetCTokenBidderContract,
   RebalanceAuctionModuleContract,
@@ -23,6 +18,17 @@ import { BigNumber } from '@src/util';
 
 
 import { setDefaultTruffleContract } from './coreHelpers';
+
+const ERC20Wrapper =
+  require('set-protocol-contracts/dist/artifacts/ts/ERC20Wrapper').ERC20Wrapper;
+const RebalancingSetEthBidder =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/RebalancingSetEthBidder'
+  ).RebalancingSetEthBidder;
+const RebalancingSetCTokenBidder =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/RebalancingSetCTokenBidder'
+  ).RebalancingSetCTokenBidder;
 
 export const deployRebalancingSetEthBidderAsync = async (
   web3: Web3,

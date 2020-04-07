@@ -28,7 +28,6 @@ import * as chai from 'chai';
 import Web3 from 'web3';
 import { Address, TimeSeriesFeedState, Web3Utils } from 'set-protocol-utils';
 import * as setProtocolUtils from 'set-protocol-utils';
-import { Core } from 'set-protocol-contracts';
 import {
   HistoricalPriceFeedContract,
   LinearizedPriceDataSourceContract,
@@ -50,6 +49,8 @@ import {
   updateMedianizerPriceAsync,
   increaseChainTimeAsync,
 } from '@test/helpers';
+
+const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');

@@ -19,7 +19,10 @@
 import Web3 from 'web3';
 import { Address } from '../../types/common';
 
-import { RebalancingSetTokenV2 } from 'set-protocol-contracts';
+const RebalancingSetTokenV2 =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/RebalancingSetTokenV2'
+  ).RebalancingSetTokenV2;
 
 /**
  * @title  RebalancingSetTokenV2Wrapper

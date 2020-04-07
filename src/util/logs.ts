@@ -6,8 +6,8 @@ import { Address, Log } from 'set-protocol-utils';
 import { TransactionReceipt } from 'ethereum-types';
 import { CreateLogArgs } from '../types/common';
 import { awaitTx } from './transactionUtils';
-import { Core } from 'set-protocol-contracts';
 
+const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
 
 export async function getFormattedLogsFromTxHash(web3: Web3, txHash: string): Promise<Log[]> {
   ABIDecoder.addABI(Core.abi);

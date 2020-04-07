@@ -24,7 +24,6 @@ jest.setTimeout(30000);
 
 import * as chai from 'chai';
 import Web3 from 'web3';
-import { StandardTokenMock } from 'set-protocol-contracts';
 import { StandardTokenMockContract } from 'set-protocol-contracts';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
@@ -33,6 +32,9 @@ import { DEFAULT_ACCOUNT, DEPLOYED_TOKEN_QUANTITY, TX_DEFAULTS } from '@src/cons
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber } from '@src/util';
 import { deployTokenAsync } from '@test/helpers';
+
+const StandardTokenMock =
+  require('set-protocol-contracts/dist/artifacts/ts/StandardTokenMock').StandardTokenMock;
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));

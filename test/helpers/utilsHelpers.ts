@@ -2,13 +2,17 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Address } from 'set-protocol-utils';
 import {
-  AddressToAddressWhiteList,
   AddressToAddressWhiteListContract,
 } from 'set-protocol-contracts';
 
 import { TX_DEFAULTS } from '@src/constants';
 
 import { setDefaultTruffleContract } from './coreHelpers';
+
+const AddressToAddressWhiteList =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/AddressToAddressWhiteList'
+  ).AddressToAddressWhiteList;
 
 export const deployAddressToAddressWhiteListContract = async(
   web3: Web3,

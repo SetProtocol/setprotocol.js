@@ -19,11 +19,12 @@
 import * as _ from 'lodash';
 import Web3 from 'web3';
 
-import { RebalanceAuctionModule } from 'set-protocol-contracts';
-
 import { ProtocolContractWrapper } from './ProtocolContractWrapper';
 import { Address, Tx } from '../../types/common';
 import { BigNumber, generateTxOpts } from '../../util';
+
+const RebalanceAuctionModule =
+  require('set-protocol-contracts/dist/artifacts/ts/RebalanceAuctionModule').RebalanceAuctionModule;
 
 /**
  * @title RebalancingAuctionModuleWrapper

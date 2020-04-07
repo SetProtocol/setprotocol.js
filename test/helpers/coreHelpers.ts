@@ -2,37 +2,6 @@ import * as _ from 'lodash';
 import Web3 from 'web3';
 import { Address, SetProtocolUtils } from 'set-protocol-utils';
 import {
-  Bytes32Library,
-  CommonValidationsLibrary,
-  Core,
-  CoreIssuanceLibrary,
-  ERC20Wrapper,
-  FactoryUtilsLibrary,
-  FixedFeeCalculator,
-  ExchangeIssuanceModule,
-  LinearAuctionLiquidator,
-  NoDecimalTokenMock,
-  OracleWhiteList,
-  RebalancingSetExchangeIssuanceModule,
-  RebalancingSetIssuanceModule,
-  RebalanceAuctionModule,
-  RebalancingSetTokenFactory,
-  RebalancingSetTokenV2Factory,
-  RebalancingSetTokenV3Factory,
-  SetTokenFactory,
-  FailAuctionLibrary,
-  PlaceBidLibrary,
-  ProposeLibrary,
-  SettleRebalanceLibrary,
-  SetTokenLibrary,
-  StartRebalanceLibrary,
-  StandardTokenMock,
-  TransferProxy,
-  Vault,
-  WethMock,
-  WhiteList,
-} from 'set-protocol-contracts';
-import {
   AuthorizableContract,
   CoreContract,
   ExchangeIssuanceModuleContract,
@@ -66,6 +35,76 @@ import {
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
 } from '@src/constants';
 import { BigNumber, getFormattedLogsFromTxHash, extractNewSetTokenAddressFromLogs } from '@src/util';
+
+const Bytes32Library =
+  require('set-protocol-contracts/dist/artifacts/ts/Bytes32Library').Bytes32Library;
+const CommonValidationsLibrary =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/CommonValidationsLibrary'
+  ).CommonValidationsLibrary;
+const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
+const CoreIssuanceLibrary =
+  require('set-protocol-contracts/dist/artifacts/ts/CoreIssuanceLibrary').CoreIssuanceLibrary;
+const ERC20Wrapper =
+  require('set-protocol-contracts/dist/artifacts/ts/ERC20Wrapper').ERC20Wrapper;
+const FactoryUtilsLibrary =
+  require('set-protocol-contracts/dist/artifacts/ts/FactoryUtilsLibrary').FactoryUtilsLibrary;
+const FixedFeeCalculator =
+  require('set-protocol-contracts/dist/artifacts/ts/FixedFeeCalculator').FixedFeeCalculator;
+const ExchangeIssuanceModule =
+  require('set-protocol-contracts/dist/artifacts/ts/ExchangeIssuanceModule').ExchangeIssuanceModule;
+const LinearAuctionLiquidator =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/LinearAuctionLiquidator'
+  ).LinearAuctionLiquidator;
+const NoDecimalTokenMock =
+  require('set-protocol-contracts/dist/artifacts/ts/NoDecimalTokenMock').NoDecimalTokenMock;
+const OracleWhiteList =
+  require('set-protocol-contracts/dist/artifacts/ts/OracleWhiteList').OracleWhiteList;
+const RebalancingSetExchangeIssuanceModule =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/RebalancingSetExchangeIssuanceModule'
+  ).RebalancingSetExchangeIssuanceModule;
+const RebalancingSetIssuanceModule =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/RebalancingSetIssuanceModule'
+  ).RebalancingSetIssuanceModule;
+const RebalanceAuctionModule =
+  require('set-protocol-contracts/dist/artifacts/ts/RebalanceAuctionModule').RebalanceAuctionModule;
+const RebalancingSetTokenFactory =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/RebalancingSetTokenFactory'
+  ).RebalancingSetTokenFactory;
+const RebalancingSetTokenV2Factory =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/RebalancingSetTokenV2Factory'
+  ).RebalancingSetTokenV2Factory;
+const RebalancingSetTokenV3Factory =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/RebalancingSetTokenV3Factory'
+  ).RebalancingSetTokenV3Factory;
+const SetTokenFactory =
+  require('set-protocol-contracts/dist/artifacts/ts/SetTokenFactory').SetTokenFactory;
+const FailAuctionLibrary =
+  require('set-protocol-contracts/dist/artifacts/ts/FailAuctionLibrary').FailAuctionLibrary;
+const PlaceBidLibrary =
+  require('set-protocol-contracts/dist/artifacts/ts/PlaceBidLibrary').PlaceBidLibrary;
+const ProposeLibrary =
+  require('set-protocol-contracts/dist/artifacts/ts/ProposeLibrary').ProposeLibrary;
+const SettleRebalanceLibrary =
+  require('set-protocol-contracts/dist/artifacts/ts/SettleRebalanceLibrary').SettleRebalanceLibrary;
+const SetTokenLibrary =
+  require('set-protocol-contracts/dist/artifacts/ts/SetTokenLibrary').SetTokenLibrary;
+const StartRebalanceLibrary =
+  require('set-protocol-contracts/dist/artifacts/ts/StartRebalanceLibrary').StartRebalanceLibrary;
+const StandardTokenMock =
+  require('set-protocol-contracts/dist/artifacts/ts/StandardTokenMock').StandardTokenMock;
+const TransferProxy =
+  require('set-protocol-contracts/dist/artifacts/ts/TransferProxy').TransferProxy;
+const Vault = require('set-protocol-contracts/dist/artifacts/ts/Vault').Vault;
+const WethMock = require('set-protocol-contracts/dist/artifacts/ts/WethMock').WethMock;
+const WhiteList = require('set-protocol-contracts/dist/artifacts/ts/WhiteList').WhiteList;
+
 
 const contract = require('truffle-contract');
 

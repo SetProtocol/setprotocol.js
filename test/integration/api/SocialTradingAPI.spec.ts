@@ -28,7 +28,6 @@ import * as chai from 'chai';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
 import {
-  Core,
   CoreContract,
   CoreHelper,
   ERC20Helper,
@@ -117,6 +116,9 @@ import {
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 ChaiSetup.configure();
+
+const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
+
 const { expect } = chai;
 const contract = require('truffle-contract');
 const timeKeeper = require('timekeeper');

@@ -27,7 +27,6 @@ import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
-import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
   RebalanceAuctionModuleContract,
@@ -65,6 +64,8 @@ import {
   getFormattedLogsFromTxHash,
 } from '@src/util';
 import { Address } from '@src/types/common';
+
+const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
 
 const chaiBigNumber = require('chai-bignumber');
 chai.use(chaiBigNumber(BigNumber));
