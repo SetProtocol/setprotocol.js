@@ -24,7 +24,6 @@ jest.setTimeout(30000);
 
 import * as chai from 'chai';
 import Web3 from 'web3';
-import { StandardTokenMock } from 'set-protocol-contracts';
 import { StandardTokenMockContract } from 'set-protocol-contracts';
 import { Address, Web3Utils } from 'set-protocol-utils';
 
@@ -45,6 +44,9 @@ import {
   getTokenSupplies,
 } from '@test/helpers';
 import { CompoundHelper } from '@test/helpers/compoundHelper';
+
+const StandardTokenMock =
+  require('set-protocol-contracts/dist/artifacts/ts/StandardTokenMock').StandardTokenMock;
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');

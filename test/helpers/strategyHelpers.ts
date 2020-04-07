@@ -26,7 +26,6 @@ import {
   SocialTradingManagerV2Contract,
 } from 'set-protocol-strategies';
 import {
-  SocialTradingManagerMock,
   SocialTradingManagerMockContract,
 } from 'set-protocol-contracts';
 
@@ -34,6 +33,11 @@ import { DEFAULT_ACCOUNT, ONE_DAY_IN_SECONDS, TX_DEFAULTS } from '@src/constants
 import { BigNumber, ether } from '@src/util';
 
 import { setDefaultTruffleContract } from './coreHelpers';
+
+const SocialTradingManagerMock =
+  require(
+    'set-protocol-contracts/dist/artifacts/ts/SocialTradingManagerMock'
+  ).SocialTradingManagerMock;
 
 export const deployBtcEthManagerContractAsync = async(
   web3: Web3,

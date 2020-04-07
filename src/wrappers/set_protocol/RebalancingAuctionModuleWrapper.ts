@@ -24,7 +24,7 @@ import { Address, Tx } from '../../types/common';
 import { BigNumber, generateTxOpts } from '../../util';
 
 const RebalanceAuctionModule =
-  require('set-protocol-contracts/dist/ts/artifacts/RebalanceAuctionModule').RebalanceAuctionModule;
+  require('set-protocol-contracts/dist/artifacts/ts/RebalanceAuctionModule').RebalanceAuctionModule;
 
 /**
  * @title RebalancingAuctionModuleWrapper

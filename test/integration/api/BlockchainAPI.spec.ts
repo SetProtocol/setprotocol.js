@@ -28,7 +28,6 @@ import * as chai from 'chai';
 import Web3 from 'web3';
 import { Address, Log, Web3Utils } from 'set-protocol-utils';
 import { StandardTokenMockContract } from 'set-protocol-contracts';
-import { StandardTokenMock } from 'set-protocol-contracts';
 import { TransactionReceipt } from 'ethereum-types';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
@@ -38,6 +37,9 @@ import { BigNumber, getFormattedLogsFromReceipt } from '@src/util';
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { TX_DEFAULTS } from '@src/constants';
 import { deployBaseContracts, deployTokenAsync } from '@test/helpers';
+
+const StandardTokenMock =
+  require('set-protocol-contracts/dist/artifacts/ts/StandardTokenMock').StandardTokenMock;
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');

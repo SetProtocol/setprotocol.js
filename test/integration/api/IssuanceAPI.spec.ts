@@ -27,7 +27,6 @@ import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import Web3 from 'web3';
 import { Address, Web3Utils } from 'set-protocol-utils';
-import { Core } from 'set-protocol-contracts';
 import {
   CoreContract,
   SetTokenContract,
@@ -53,6 +52,8 @@ import {
 import { Assertions } from '@src/assertions';
 import { ether } from '@src/util/units';
 import { Component } from '@src/types/common';
+
+const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
 
 ChaiSetup.configure();
 const contract = require('truffle-contract');

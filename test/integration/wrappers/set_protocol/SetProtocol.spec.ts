@@ -26,7 +26,6 @@ import * as _ from 'lodash';
 import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import Web3 from 'web3';
-import { Core, StandardTokenMock } from 'set-protocol-contracts';
 import { TransactionReceipt } from 'ethereum-types';
 import {
   CoreContract,
@@ -66,6 +65,10 @@ import {
   getVaultBalances,
 } from '@test/helpers';
 import { ether, getFormattedLogsFromReceipt } from '@src/util';
+
+const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
+const StandardTokenMock =
+  require('set-protocol-contracts/dist/artifacts/ts/StandardTokenMock').StandardTokenMock;
 
 ChaiSetup.configure();
 const { expect } = chai;
