@@ -16,41 +16,4 @@
 
 'use strict';
 
-export { AddressToAddressWhiteListWrapper } from './set_protocol/AddressToAddressWhiteListWrapper';
-export { AuthorizableWrapper } from './set_protocol/AuthorizableWrapper';
-export { CoreWrapper } from './set_protocol/CoreWrapper';
-export { ERC20Wrapper } from './set_protocol/ERC20Wrapper';
-export { ExchangeIssuanceModuleWrapper } from './set_protocol/ExchangeIssuanceModuleWrapper';
-export { KyberNetworkWrapper } from './set_protocol/KyberNetworkWrapper';
-export { RebalancingSetCTokenBidderWrapper } from './set_protocol/RebalancingSetCTokenBidderWrapper';
-export { RebalancingSetEthBidderWrapper } from './set_protocol/RebalancingSetEthBidderWrapper';
-export { RebalancingSetTokenV2Wrapper } from './set_protocol/RebalancingSetTokenV2Wrapper';
-export { RebalancingSetTokenV3Wrapper } from './set_protocol/RebalancingSetTokenV3Wrapper';
-export {
- RebalancingSetExchangeIssuanceModuleWrapper
-} from './set_protocol/RebalancingSetExchangeIssuanceModuleWrapper';
-export { RebalancingSetIssuanceModuleWrapper } from './set_protocol/RebalancingSetIssuanceModuleWrapper';
-export { MedianizerWrapper } from './set_protocol/MedianizerWrapper';
-export { PerformanceFeeCalculatorWrapper } from './set_protocol/PerformanceFeeCalculatorWrapper';
-export { ProtocolContractWrapper } from './set_protocol/ProtocolContractWrapper';
-export { ProtocolViewerWrapper } from './set_protocol/ProtocolViewerWrapper';
-export { RebalancingAuctionModuleWrapper } from './set_protocol/RebalancingAuctionModuleWrapper';
-export { RebalancingSetTokenWrapper } from './set_protocol/RebalancingSetTokenWrapper';
-export { SetTokenWrapper } from './set_protocol/SetTokenWrapper';
-export { TimeLockUpgradeWrapper } from './set_protocol/TimeLockUpgradeWrapper';
-export { WhitelistWrapper } from './set_protocol/WhitelistWrapper';
-export { VaultWrapper } from './set_protocol/VaultWrapper';
-
-export { AssetPairManagerWrapper } from './strategies/AssetPairManagerWrapper';
-export { BTCDAIRebalancingManagerWrapper } from './strategies/BTCDAIRebalancingManagerWrapper';
-export { BTCETHRebalancingManagerWrapper } from './strategies/BTCETHRebalancingManagerWrapper';
-export { ETHDAIRebalancingManagerWrapper } from './strategies/ETHDAIRebalancingManagerWrapper';
-export { HistoricalPriceFeedWrapper } from './strategies/HistoricalPriceFeedWrapper';
-export { MovingAverageOracleWrapper } from './strategies/MovingAverageOracleWrapper';
-export { MACOStrategyManagerWrapper } from './strategies/MACOStrategyManagerWrapper';
-export { MACOStrategyManagerV2Wrapper } from './strategies/MACOStrategyManagerV2Wrapper';
-export { OracleProxyWrapper } from './strategies/OracleProxyWrapper';
-export { SocialTradingManagerWrapper } from './strategies/SocialTradingManagerWrapper';
-export { SocialTradingManagerV2Wrapper } from './strategies/SocialTradingManagerV2Wrapper';
-export { StrategyContractWrapper } from './strategies/StrategyContractWrapper';
-export { TimeSeriesFeedWrapper } from './strategies/TimeSeriesFeedWrapper';
+export { BidderWrapper } from './bidder/BidderWrapper';

@@ -1,4 +1,11 @@
 export {
+  deployRebalancingSetCTokenBidderAsync,
+  deployRebalancingBidderBotAsync,
+  deployKyberBidExchangeWrapperAsync,
+  deployZeroExBidExchangeWrapperAsync,
+} from './bidderHelpers';
+
+export {
   addAuthorizationAsync,
   addModuleAsync,
   addPriceLibraryAsync,
@@ -40,27 +47,6 @@ export {
 } from './exchangeHelpers';
 
 export {
-  addPriceFeedOwnerToMedianizer,
-  approveContractToOracleProxy,
-  deployConstantPriceOracleAsync,
-  deployHistoricalPriceFeedAsync,
-  deployLegacyMakerOracleAdapterAsync,
-  deployLinearizedPriceDataSourceAsync,
-  deployMedianizerAsync,
-  deployMovingAverageOracleV2Async,
-  deployMovingAverageOracleAsync,
-  deployOracleProxyAsync,
-  deployRSIOracleAsync,
-  deployTimeSeriesFeedAsync,
-  deployUpdatableOracleMockAsync,
-  updateMedianizerPriceAsync,
-} from './oracleHelpers';
-
-export {
-  deployProtocolViewerAsync,
-} from './protocolViewerHelpers';
-
-export {
   addPriceCurveToCoreAsync,
   constructInflowOutflowArraysAsync,
   constructInflowOutflowAddressesArraysAsync,
@@ -77,29 +63,6 @@ export {
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync,
 } from './rebalancingHelpers';
-
-export {
-  deployRebalancingSetCTokenBidderAsync,
-  deployRebalancingSetEthBidderAsync,
-  replaceDetailFlowsWithCTokenUnderlyingAsync,
-  replaceFlowsWithCTokenUnderlyingAsync,
-} from './rebalancingSetBidderHelpers';
-
-export {
-  deployAssetPairManagerAsync,
-  deployBinaryAllocatorAsync,
-  deployBtcDaiManagerContractAsync,
-  deployBtcEthManagerContractAsync,
-  deployEthDaiManagerContractAsync,
-  deployMovingAverageStrategyManagerAsync,
-  deployMovingAverageStrategyManagerV2Async,
-  deployRSITrendingTriggerAsync,
-  deploySocialAllocatorAsync,
-  deploySocialTradingManagerAsync,
-  deploySocialTradingManagerV2Async,
-  deploySocialTradingManagerMockAsync,
-  initializeManagerAsync,
-} from './strategyHelpers';
 
 export {
   deployAddressToAddressWhiteListContract

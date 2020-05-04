@@ -193,8 +193,8 @@ export class KyberNetworkHelper {
     await this.enableTokensForReserve(_sourceToken);
     await this.enableTokensForReserve(_destinationToken);
 
-    const sourceTokenRate = ether(1).div(_sourceTokenQuantity.div(ether(1)));
-    const destinationTokenRate = ether(1).mul(_destinationTokenQuantity.div(ether(1)));
+    const sourceTokenRate = ether(1).div(_sourceTokenQuantity.div(ether(1))).round();
+    const destinationTokenRate = ether(1).mul(_destinationTokenQuantity.div(ether(1))).round();
 
     await this.setUpConversionRatesRaw(
       [_sourceToken, _destinationToken],

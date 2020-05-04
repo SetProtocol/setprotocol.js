@@ -1,0 +1,17 @@
+import Web3 from 'web3';
+import { ConstantPriceOracleContract, HistoricalPriceFeedContract, LegacyMakerOracleAdapterContract, LinearizedPriceDataSourceContract, MedianContract, MovingAverageOracleContract, MovingAverageOracleV2Contract, OracleProxyContract, RSIOracleContract, TimeSeriesFeedContract, UpdatableOracleMockContract } from 'set-protocol-oracles';
+import { BigNumber } from '@src/util';
+export declare const deployMedianizerAsync: (web3: Web3) => Promise<MedianContract>;
+export declare const addPriceFeedOwnerToMedianizer: (medianizer: MedianContract, priceFeedSigner: string) => Promise<string>;
+export declare const updateMedianizerPriceAsync: (web3: Web3, medianizer: MedianContract, price: BigNumber, timestamp: BigNumber, from?: string) => Promise<string>;
+export declare const deployHistoricalPriceFeedAsync: (web3: Web3, updateFrequency: BigNumber, medianizerAddress: string, dataDescription?: string, seededValues?: BigNumber[], from?: string) => Promise<HistoricalPriceFeedContract>;
+export declare const deployLegacyMakerOracleAdapterAsync: (web3: Web3, medianizerInstance: string) => Promise<LegacyMakerOracleAdapterContract>;
+export declare const deployOracleProxyAsync: (web3: Web3, oracleInstance: string) => Promise<OracleProxyContract>;
+export declare const deployConstantPriceOracleAsync: (web3: Web3, price: BigNumber) => Promise<ConstantPriceOracleContract>;
+export declare const deployUpdatableOracleMockAsync: (web3: Web3, price: BigNumber) => Promise<UpdatableOracleMockContract>;
+export declare const deployTimeSeriesFeedAsync: (web3: Web3, dataSourceAddress: string, seededValues?: BigNumber[], updateFrequency?: BigNumber, maxDataPoints?: BigNumber, dataDescription?: string, from?: string) => Promise<TimeSeriesFeedContract>;
+export declare const deployLinearizedPriceDataSourceAsync: (web3: Web3, medianizerAddress: string, interpolationThreshold?: BigNumber, dataDescription?: string, from?: string) => Promise<LinearizedPriceDataSourceContract>;
+export declare const deployMovingAverageOracleAsync: (web3: Web3, priceFeedAddress: string, dataDescription: string, from?: string) => Promise<MovingAverageOracleContract>;
+export declare const deployMovingAverageOracleV2Async: (web3: Web3, priceFeedAddress: string, dataDescription: string, from?: string) => Promise<MovingAverageOracleV2Contract>;
+export declare const deployRSIOracleAsync: (web3: Web3, priceFeedAddress: string, dataDescription: string, from?: string) => Promise<RSIOracleContract>;
+export declare const approveContractToOracleProxy: (oracleProxy: OracleProxyContract, authorizedAddress: string) => Promise<void>;

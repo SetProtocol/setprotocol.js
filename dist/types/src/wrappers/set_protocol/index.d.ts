@@ -1,0 +1,16 @@
+import { AuthorizableWrapper } from './AuthorizableWrapper';
+import { BTCETHRebalancingManagerWrapper } from './BTCETHRebalancingManagerWrapper';
+import { ContractWrapper } from './ContractWrapper';
+import { CoreWrapper } from './CoreWrapper';
+import { ERC20Wrapper } from './ERC20Wrapper';
+import { ExchangeIssuanceModuleWrapper } from './ExchangeIssuanceModuleWrapper';
+import { KyberNetworkWrapper } from './KyberNetworkWrapper';
+import { RebalancingSetExchangeIssuanceModuleWrapper } from './RebalancingSetExchangeIssuanceModuleWrapper';
+import { PriceFeedWrapper } from './PriceFeedWrapper';
+import { RebalancingAuctionModuleWrapper } from './RebalancingAuctionModuleWrapper';
+import { RebalancingSetTokenWrapper } from './RebalancingSetTokenWrapper';
+import { SetTokenWrapper } from './SetTokenWrapper';
+import { TimeLockUpgradeWrapper } from './TimeLockUpgradeWrapper';
+import { WhitelistWrapper } from './WhitelistWrapper';
+import { VaultWrapper } from './VaultWrapper';
+export { AuthorizableWrapper, BTCETHRebalancingManagerWrapper, ContractWrapper, CoreWrapper, ERC20Wrapper, ExchangeIssuanceModuleWrapper, KyberNetworkWrapper, RebalancingSetExchangeIssuanceModuleWrapper, PriceFeedWrapper, RebalancingAuctionModuleWrapper, RebalancingSetTokenWrapper, SetTokenWrapper, TimeLockUpgradeWrapper, WhitelistWrapper, VaultWrapper };

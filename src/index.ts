@@ -1,14 +1,11 @@
 export {
   Address,
   Bytes,
-  Component,
   Constants,
   ECSig,
   KyberTrade,
   Log,
-  SetDetails,
-  SetProtocolConfig,
-  SetUnits,
+  BidderConfig,
   SolidityTypes,
   TransactionReceipt,
   Tx,
@@ -16,5 +13,5 @@ export {
   ZeroExSignedFillOrder,
 } from './types/common';
 
-import SetProtocol from './SetProtocol';
-export default SetProtocol;
+import BidderBot from './BidderBot';
+export default BidderBot;

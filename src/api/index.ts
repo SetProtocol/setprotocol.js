@@ -16,33 +16,8 @@
 
 'use strict';
 
-import { AccountingAPI } from './AccountingAPI';
-import { BlockchainAPI } from './BlockchainAPI';
-import { ERC20API } from './ERC20API';
-import { ExchangeIssuanceAPI } from './ExchangeIssuanceAPI';
-import { FactoryAPI } from './FactoryAPI';
-import { IssuanceAPI } from './IssuanceAPI';
-import { OracleAPI } from './OracleAPI';
-import { PriceFeedAPI } from './PriceFeedAPI';
-import { RebalancingAPI } from './RebalancingAPI';
-import { RebalancingManagerAPI } from './RebalancingManagerAPI';
-export { RebalancingSetIssuanceAPI } from './RebalancingSetIssuanceAPI';
-import { SetTokenAPI } from './SetTokenAPI';
-import { SocialTradingAPI } from './SocialTradingAPI';
-import { SystemAPI } from './SystemAPI';
+import { BidderAPI } from './BidderAPI';
 
 export {
-  AccountingAPI,
-  BlockchainAPI,
-  ERC20API,
-  ExchangeIssuanceAPI,
-  FactoryAPI,
-  IssuanceAPI,
-  OracleAPI,
-  PriceFeedAPI,
-  RebalancingAPI,
-  RebalancingManagerAPI,
-  SetTokenAPI,
-  SocialTradingAPI,
-  SystemAPI
+  BidderAPI
 };

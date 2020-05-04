@@ -1,0 +1,1 @@
+{"version":3,"file":"setTokenErrors.js","sourceRoot":"","sources":["../../../src/errors/setTokenErrors.ts"],"names":[],"mappings":"AAAA;;;;;;;;;;;;;;EAcE;AAEF,YAAY,CAAC;;AAGA,QAAA,wBAAwB,GAAG;IACtC,kBAAkB,EAAE,UAAC,UAAkB,IAAK,OAAA,iBAAe,UAAU,uCAAoC,EAA7D,CAA6D;IACzG,gBAAgB,EAAE,UAAC,eAAuB,EAAE,gBAAwB,IAAK,OAAA,sBAAoB,gBAAgB,MAAG;SAC9G,4CAA0C,eAAe,MAAG,CAAA,EADW,CACX;CAC/D,CAAC"}
