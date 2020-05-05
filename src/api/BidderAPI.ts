@@ -18,14 +18,24 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { Bytes } from 'set-protocol-utils';
+import { SetProtocolUtils, SetProtocolTestUtils } from 'set-protocol-utils';
 
+import { Assertions } from '../assertions';
 import { BidderWrapper } from '../wrappers';
 import {
   BigNumber,
-  generateTxOpts,
 } from '../util';
-import { Address, BidderConfig, TokenFlows, Tx } from '../types/common';
+
+import {
+  Address,
+  BidderConfig,
+  Bytes,
+  KyberTrade,
+  TokenFlows,
+  Tx,
+  ZeroExSignedFillOrder
+} from '../types/common';
+import { coreAPIErrors } from '../errors';
 
 /**
  * @title BidderAPI
@@ -35,7 +45,10 @@ import { Address, BidderConfig, TokenFlows, Tx } from '../types/common';
  */
 export class BidderAPI {
   private web3: Web3;
+  private assert: Assertions;
   private bidder: BidderWrapper;
+  private setProtocolTestUtils: typeof SetProtocolTestUtils;
+  private config: BidderConfig;
 
   /**
    * Instantiates a new BidderAPI instance that contains methods for interacting with the bidder contracts
@@ -45,9 +58,16 @@ export class BidderAPI {
    * @param bidder                    An instance of BidderWrapper to interact with the deployed Bidder contract
    * @param config                    Object conforming to BidderConfig interface with contract addresses
    */
-  constructor(web3: Web3, config: BidderConfig) {
+  constructor(
+    web3: Web3,
+    assertions: Assertions,
+    config: BidderConfig
+  ) {
     this.web3 = web3;
+    this.assert = assertions;
     this.bidder = new BidderWrapper(this.web3, config.bidderAddress);
+    this.setProtocolTestUtils = SetProtocolTestUtils;
+    this.config = config;
   }
 
   /**
@@ -105,20 +125,37 @@ export class BidderAPI {
    * @param  rebalancingSetTokenAddress              The rebalancing Set Token instance
    * @param  bidQuantity                             The amount of currentSet to be rebalanced
    * @param  benchmarkToken                          Address of the token the spread is measured against
-   * @param  exchangeWrapperAddress                  Address of the DEX to arb the rebalance
-   * @param  orderData                               Arbitrary bytes containing order data
+   * @param  exchangeWrapperAddress                  Address of the exchange wrapper to arb the rebalance
+   * @param  order                                   A signed 0x order or Kyber trade
    * @return                                         Tx hash
    */
   public async bidAndExchangeWithWalletAsync(
-      rebalancingSetTokenAddress: Address,
-      bidQuantity: BigNumber,
-      benchmarkToken: Address,
-      exchangeWrapperAddress: Address,
-      orderData: Bytes,
-      txOpts?: Tx,
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    benchmarkToken: Address,
+    exchangeWrapperAddress: Address,
+    order: any,
+    txOpts: Tx,
   ): Promise<string> {
 
-    const txOptions = await generateTxOpts(this.web3, txOpts);
+    await this.assertBidAndExchangeWithWalletAsync(
+      rebalancingSetTokenAddress,
+      bidQuantity,
+      benchmarkToken,
+      order,
+      txOpts
+    );
+
+    let orderData: Bytes;
+    if (exchangeWrapperAddress === this.config.kyberBidExchangeWrapperAddress) {
+      orderData = await this.setProtocolTestUtils.kyberTradeToBytes(order);
+    } else if (exchangeWrapperAddress === this.config.zeroExBidExchangeWrapperAddress) {
+      orderData = await this.setProtocolTestUtils.generateZeroExExchangeWrapperOrder(
+        order,
+        order.signature,
+        order.fillAmount
+      );
+    }
 
     return await this.bidder.bidAndExchangeWithWallet(
       rebalancingSetTokenAddress,
@@ -126,7 +163,88 @@ export class BidderAPI {
       benchmarkToken,
       exchangeWrapperAddress,
       orderData,
-      txOptions
+      txOpts
+    );
+  }
+
+  /* ============ Private Assertions ============ */
+
+  private async assertBidAndExchangeWithWalletAsync(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    benchmarkToken: Address,
+    order: any,
+    txOpts: Tx,
+  ) {
+    // Assert orders are valid
+    if (SetProtocolUtils.isZeroExOrder(order)) {
+      await this.isValidZeroExOrderFill(order);
+    } else if (SetProtocolUtils.isKyberTrade(order)) {
+      this.isValidKyberTradeFill(order);
+    }
+
+    // Check allowances / balances
+    await this.hasSufficientAllowancesAndBalances(
+      rebalancingSetTokenAddress,
+      bidQuantity,
+      benchmarkToken,
+      txOpts
+    );
+  }
+
+  private isValidKyberTradeFill(trade: KyberTrade) {
+    this.assert.common.greaterThanZero(
+      trade.sourceTokenQuantity,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(trade.sourceTokenQuantity),
+    );
+  }
+
+  private async isValidZeroExOrderFill(zeroExOrder: ZeroExSignedFillOrder) {
+    this.assert.common.greaterThanZero(
+      zeroExOrder.fillAmount,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(zeroExOrder.fillAmount),
+    );
+
+    // 0x order maker has sufficient balance of the maker token
+    await this.assert.erc20.hasSufficientBalanceAsync(
+      SetProtocolUtils.extractAddressFromAssetData(zeroExOrder.makerAssetData),
+      zeroExOrder.makerAddress,
+      zeroExOrder.makerAssetAmount,
+    );
+  }
+
+  private async hasSufficientAllowancesAndBalances(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    benchmarkToken: Address,
+    txOpts: Tx,
+  ) {
+     // Get token flow arrays
+    const tokenFlows = await this.bidder.getTokenFlows(
+      rebalancingSetTokenAddress,
+      bidQuantity
+    );
+
+    let requiredQuantity: BigNumber;
+    const benchmarkTokenIndex = tokenFlows.tokens.indexOf(benchmarkToken);
+    if (new BigNumber(tokenFlows.inflow[benchmarkTokenIndex]).gt(0)) {
+      requiredQuantity = new BigNumber(tokenFlows.inflow[benchmarkTokenIndex]);
+    } else {
+      requiredQuantity = new BigNumber(tokenFlows.outflow[benchmarkTokenIndex]);
+    }
+
+    // Check allowances when benchmarkToken is inflow in the auction
+    await this.assert.erc20.hasSufficientAllowanceAsync(
+      benchmarkToken,
+      txOpts.from,
+      this.config.bidderAddress,
+      requiredQuantity
+    );
+    // Check balance when benchmarkToken is inflow in the auction
+    await this.assert.erc20.hasSufficientBalanceAsync(
+      benchmarkToken,
+      txOpts.from,
+      requiredQuantity
     );
   }
 }

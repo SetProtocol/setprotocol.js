@@ -18,10 +18,9 @@
 
 import * as _ from 'lodash';
 import Web3 from 'web3';
-import { Bytes } from 'set-protocol-utils';
 
 import { BidderContractWrapper } from './BidderContractWrapper';
-import { Address, TokenFlows, Tx } from '../../types/common';
+import { Address, Bytes, TokenFlows, Tx } from '../../types/common';
 import { BigNumber, generateTxOpts } from '../../util';
 
 /**

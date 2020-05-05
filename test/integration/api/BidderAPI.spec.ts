@@ -41,12 +41,13 @@ import {
 import {
   BidderContract,
   ZeroExBidExchangeWrapperContract,
+  KyberBidExchangeWrapperContract,
 } from 'set-rebalancing-bot-contracts';
 
-import { Bytes } from 'set-protocol-utils';
 
 import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
 import { BidderAPI } from '@src/api';
+import { Assertions } from '@src/assertions';
 import {
   ONE_DAY_IN_SECONDS,
   DEFAULT_AUCTION_PRICE_DENOMINATOR,
@@ -54,6 +55,7 @@ import {
   DEFAULT_REBALANCING_NATURAL_UNIT,
   NULL_ADDRESS,
   TX_DEFAULTS,
+  UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
   ZERO,
 } from '@src/constants';
 import {
@@ -64,6 +66,7 @@ import {
   deployRebalancingBidderBotAsync,
   deployRebalancingSetCTokenBidderAsync,
   deployTokensSpecifyingDecimals,
+  deployKyberBidExchangeWrapperAsync,
   deployZeroExBidExchangeWrapperAsync,
   transitionToRebalanceAsync,
 } from '@test/helpers';
@@ -71,7 +74,13 @@ import {
   BigNumber,
   ether,
 } from '@src/util';
-import { Address, BidderConfig } from '@src/types/common';
+import {
+  Address,
+  BidderConfig,
+  KyberTrade,
+  ZeroExSignedFillOrder
+} from '@src/types/common';
+import { KyberNetworkHelper } from '@test/helpers/kyberNetworkHelper';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 ChaiSetup.configure();
@@ -98,12 +107,14 @@ coreContract.defaults(TX_DEFAULTS);
 
 let currentSnapshotId: number;
 
-const managerAddress = ACCOUNTS[1].address;
+const kyberReserveOperator = ACCOUNTS[1].address;
 const zeroExOrderMakerAccount = ACCOUNTS[2].address;
+const managerAddress = ACCOUNTS[3].address;
 
 describe('BidderAPI', () => {
   let bidder: BidderContract;
   let zeroExBidExchangeWrapper: ZeroExBidExchangeWrapperContract;
+  let kyberBidExchangeWrapper: KyberBidExchangeWrapperContract;
   let rebalancingSetCTokenBidder: RebalancingSetCTokenBidderContract;
 
   let config: BidderConfig;
@@ -124,6 +135,7 @@ describe('BidderAPI', () => {
     erc20Helper,
     blockchain
   );
+  const kyberNetworkHelper = new KyberNetworkHelper();
 
   beforeAll(async () => {
     ABIDecoder.addABI(coreContract.abi);
@@ -146,6 +158,12 @@ describe('BidderAPI', () => {
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
+
+    await kyberNetworkHelper.setup();
+    await kyberNetworkHelper.fundReserveWithEth(
+      kyberReserveOperator,
+      ether(90),
+    );
 
     const  [
       core,
@@ -180,16 +198,17 @@ describe('BidderAPI', () => {
       dataDescription
     );
 
+    kyberBidExchangeWrapper = await deployKyberBidExchangeWrapperAsync(web3);
     zeroExBidExchangeWrapper = await deployZeroExBidExchangeWrapperAsync(web3);
 
     bidder = await deployRebalancingBidderBotAsync(
       web3,
       rebalancingSetCTokenBidder,
-      [zeroExBidExchangeWrapper.address],
-      // Proxy Addresses: 0x ERC20 proxy
-      [SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS],
-      // Secondary Proxy Addresses: 0x Exchange
-      [SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS],
+      [kyberBidExchangeWrapper.address, zeroExBidExchangeWrapper.address],
+      // Proxy Addresses: 0x ERC20 proxy and Kyber Network Proxy
+      [kyberNetworkHelper.kyberNetworkProxy, SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS],
+      // Secondary Proxy Addresses: 0x Exchange, Kyber is NULL
+      [NULL_ADDRESS, SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS],
     );
 
     await bidder.addAuthorizedAddress.sendTransactionAsync(
@@ -290,12 +309,17 @@ describe('BidderAPI', () => {
       setAuctionPivotPrice,
     );
 
+    const assertions = new Assertions(web3);
+
     config = {
       bidderAddress: bidder.address,
+      kyberBidExchangeWrapperAddress: kyberBidExchangeWrapper.address,
+      zeroExBidExchangeWrapperAddress: zeroExBidExchangeWrapper.address,
     } as BidderConfig;
 
     bidderAPI = new BidderAPI(
       web3,
+      assertions,
       config
     );
   });
@@ -445,21 +469,18 @@ describe('BidderAPI', () => {
     });
   });
 
-  describe('#bidAndExchangeWithWallet', async () => {
+  describe('#bidAndExchangeWithWalletAsync', async () => {
     let subjectRebalancingSetToken: Address;
     let subjectQuantity: BigNumber;
     let subjectBenchmarkToken: Address;
     let subjectExchangeWrapperAddress: Address;
-    let subjectOrdersData: Bytes;
+    let subjectOrder: KyberTrade | ZeroExSignedFillOrder;
     let subjectCaller: Address;
 
     let benchMarkTokenQuantity: BigNumber;
     let benchMarkToken: StandardTokenMockContract;
     let nonBenchMarkTokenQuantity: BigNumber;
     let nonBenchMarkToken: StandardTokenMockContract;
-
-    let isInflow: boolean = true;
-    let spread: BigNumber;
 
     let customBenchmarkToken: StandardTokenMockContract;
     let customNonBenchmarkToken: StandardTokenMockContract;
@@ -493,64 +514,6 @@ describe('BidderAPI', () => {
         nonBenchMarkTokenQuantity = new BigNumber(outflowUnitArray[nonBenchMarkTokenIndex]);
       }
 
-      const zeroExOrderTakerToken = isInflow ? nonBenchMarkToken : benchMarkToken;
-      const zeroExOrderMakerToken = isInflow ? benchMarkToken : nonBenchMarkToken;
-
-      // Create 0x trade
-      await erc20Helper.approveTransferAsync(
-        zeroExOrderMakerToken,
-        SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
-        zeroExOrderMakerAccount
-      );
-
-      // Fund the 0x maker with the taker token
-      await erc20Helper.transferTokensAsync(
-        [zeroExOrderMakerToken],
-        zeroExOrderMakerAccount,
-        ether(1000000),
-        DEFAULT_ACCOUNT,
-      );
-
-      spread = new BigNumber(10);
-
-      const senderAddress = NULL_ADDRESS;
-      const makerAddress = zeroExOrderMakerAccount;
-      const takerAddress = NULL_ADDRESS;
-      const makerFee = ZERO;
-      const takerFee = ZERO;
-      const takerAssetAmount = isInflow ? nonBenchMarkTokenQuantity : benchMarkTokenQuantity.sub(spread);
-      const makerAssetAmount = isInflow ? benchMarkTokenQuantity.add(spread) : nonBenchMarkTokenQuantity;
-      const salt = SetUtils.generateSalt();
-      const feeRecipientAddress = NULL_ADDRESS;
-      const expirationTimeSeconds = SetTestUtils.generateTimestamp(100000000000000); // Set high expiry time
-
-      const zeroExOrder = SetTestUtils.generateZeroExOrder(
-        senderAddress,
-        makerAddress,
-        takerAddress,
-        makerFee,
-        takerFee,
-        makerAssetAmount,
-        takerAssetAmount,
-        zeroExOrderMakerToken.address,
-        zeroExOrderTakerToken.address,
-        salt,
-        SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,
-        feeRecipientAddress,
-        expirationTimeSeconds,
-      );
-
-      const zeroExOrderFillAmount = takerAssetAmount;
-      const zeroExOrderSignature = await setUtils.signZeroExOrderAsync(zeroExOrder);
-      const zeroExExchangeWrapperOrder = SetTestUtils.generateZeroExExchangeWrapperOrder(
-        zeroExOrder,
-        zeroExOrderSignature,
-        zeroExOrderFillAmount
-      );
-
-      subjectBenchmarkToken = benchMarkToken.address;
-      subjectExchangeWrapperAddress = zeroExBidExchangeWrapper.address;
-      subjectOrdersData = zeroExExchangeWrapperOrder;
       subjectRebalancingSetToken = rebalancingSetToken.address;
       subjectQuantity = minBid;
       subjectCaller = DEFAULT_ACCOUNT;
@@ -562,38 +525,75 @@ describe('BidderAPI', () => {
         subjectQuantity,
         subjectBenchmarkToken,
         subjectExchangeWrapperAddress,
-        subjectOrdersData,
+        subjectOrder,
         { from: subjectCaller },
       );
     }
 
-    test('should return the correct tokens from the arb', async () => {
-      const previousBenchmarkBalance = await benchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
-      const previousNonBenchmarkBalance = await nonBenchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+    describe('when Kyber is used for exchange', async () => {
+      let isInflow: boolean = true;
 
-      await subject();
+      let kyberDestinationTokenQuantity: BigNumber;
+      let sourceTokenQuantity: BigNumber;
+      let maxDestinationQuantity: BigNumber;
 
-      const currentBenchmarkBalance = await benchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
-      const currentNonBenchmarkBalance = await nonBenchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
-      const expectedBenchmarkBalance = previousBenchmarkBalance.add(spread);
-      expect(currentBenchmarkBalance).to.bignumber.equal(expectedBenchmarkBalance);
-      expect(currentNonBenchmarkBalance).to.bignumber.equal(previousNonBenchmarkBalance);
-    });
+      let customSourceTokenQuantity: BigNumber;
 
-    describe('when benchMarkToken is an outflow', async () => {
-      beforeAll(async () => {
-        isInflow = false;
-        customBenchmarkToken = wethInstance;
-        customNonBenchmarkToken = daiInstance;
+      beforeEach(async () => {
+        const receiveToken: any = isInflow ? benchMarkToken : nonBenchMarkToken;
+        const sourceToken: any = isInflow ? nonBenchMarkToken : benchMarkToken;
+
+        // Create Kyber trade. Conversion rate pre set on snapshot
+        kyberDestinationTokenQuantity = isInflow ? benchMarkTokenQuantity : nonBenchMarkTokenQuantity;
+        sourceTokenQuantity = isInflow ? nonBenchMarkTokenQuantity : benchMarkTokenQuantity;
+
+        // Factor in spread for the auction
+        const spread = new BigNumber(10);
+        maxDestinationQuantity = isInflow ? kyberDestinationTokenQuantity.add(spread) : kyberDestinationTokenQuantity;
+        const destinationTokenDecimals = (await receiveToken.decimals.callAsync()).toNumber();
+        const sourceTokenDecimals = (await sourceToken.decimals.callAsync()).toNumber();
+        const kyberConversionRatePower = new BigNumber(10).pow(18 + sourceTokenDecimals - destinationTokenDecimals);
+
+        const minimumConversionRate = maxDestinationQuantity.div(sourceTokenQuantity)
+                                                            .mul(kyberConversionRatePower)
+                                                            .round();
+
+        const kyberTrade = {
+          sourceToken: sourceToken.address,
+          destinationToken: receiveToken.address,
+          sourceTokenQuantity: sourceTokenQuantity,
+          minimumConversionRate: minimumConversionRate,
+          maxDestinationQuantity: maxDestinationQuantity,
+        } as KyberTrade;
+
+        await kyberNetworkHelper.approveToReserve(
+          receiveToken,
+          UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+          kyberReserveOperator,
+        );
+
+        // Fund the kyber reserve maker with the receive token
+        await erc20Helper.transferTokenAsync(
+          receiveToken,
+          kyberReserveOperator,
+          ether(1000000),
+          DEFAULT_ACCOUNT,
+        );
+
+        const sourceTokenRateQuantity = customSourceTokenQuantity || sourceTokenQuantity;
+        await kyberNetworkHelper.setConversionRates(
+          sourceToken.address,
+          receiveToken.address,
+          sourceTokenRateQuantity,
+          maxDestinationQuantity,
+        );
+
+        subjectBenchmarkToken = benchMarkToken.address;
+        subjectExchangeWrapperAddress = kyberBidExchangeWrapper.address;
+        subjectOrder = kyberTrade;
       });
 
-      afterAll(async () => {
-        isInflow = true;
-        customBenchmarkToken = undefined;
-        customNonBenchmarkToken = undefined;
-      });
-
-      test('should return the correct tokens from the arb', async () => {
+      it('should return the correct tokens from the arb', async () => {
         const previousBenchmarkBalance = await benchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
         const previousNonBenchmarkBalance = await nonBenchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
 
@@ -601,11 +601,183 @@ describe('BidderAPI', () => {
 
         const currentBenchmarkBalance = await benchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
         const currentNonBenchmarkBalance = await nonBenchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
-
-        const expectedBenchmarkBalance =
-          previousBenchmarkBalance.add(spread);
+        const expectedBenchmarkBalance = previousBenchmarkBalance
+                                           .add(maxDestinationQuantity)
+                                           .sub(kyberDestinationTokenQuantity);
         expect(currentBenchmarkBalance).to.bignumber.equal(expectedBenchmarkBalance);
         expect(currentNonBenchmarkBalance).to.bignumber.equal(previousNonBenchmarkBalance);
+      });
+
+      describe('when benchMarkToken is an outflow', async () => {
+        beforeAll(async () => {
+          isInflow = false;
+          customBenchmarkToken = wethInstance;
+          customNonBenchmarkToken = daiInstance;
+          customSourceTokenQuantity = ether(800);
+        });
+
+        afterAll(async () => {
+          isInflow = true;
+          customBenchmarkToken = undefined;
+          customNonBenchmarkToken = undefined;
+          customSourceTokenQuantity = undefined;
+        });
+
+        it('should return the correct tokens from the arb', async () => {
+          const previousBenchmarkBalance = await benchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+          const previousNonBenchmarkBalance = await nonBenchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+
+          await subject();
+
+          const currentBenchmarkBalance = await benchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+          const currentNonBenchmarkBalance = await nonBenchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+
+          const expectedBenchmarkBalance =
+            previousBenchmarkBalance.sub(customSourceTokenQuantity).add(sourceTokenQuantity);
+          expect(currentBenchmarkBalance).to.bignumber.equal(expectedBenchmarkBalance);
+          expect(currentNonBenchmarkBalance).to.bignumber.equal(previousNonBenchmarkBalance);
+        });
+      });
+
+      describe('and the caller has not approved benchmark token for transfer', async () => {
+        beforeEach(async () => {
+          subjectCaller = ACCOUNTS[3].address;
+        });
+
+        test('throw', async () => {
+          return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${subjectCaller} has allowance of 0
+
+        when required allowance is ${benchMarkTokenQuantity} at token
+
+        address: ${benchMarkToken.address} for spender: ${bidder.address}.
+      `
+          );
+        });
+      });
+
+      describe('and the caller does not have the balance to transfer', async () => {
+        beforeEach(async () => {
+          subjectCaller = ACCOUNTS[3].address;
+          await benchMarkToken.approve.sendTransactionAsync(
+            bidder.address,
+            UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+            { from: subjectCaller }
+          );
+        });
+
+        test('throw', async () => {
+          return expect(subject()).to.be.rejectedWith(
+      `
+        User: ${subjectCaller} has balance of 0
+
+        when required balance is ${benchMarkTokenQuantity} at token address ${benchMarkToken.address}.
+      `
+          );
+        });
+      });
+    });
+
+    describe('when 0x is used for exchange', async () => {
+      let isInflow: boolean = true;
+      let spread: BigNumber;
+
+      beforeEach(async () => {
+
+        const zeroExOrderTakerToken = isInflow ? nonBenchMarkToken : benchMarkToken;
+        const zeroExOrderMakerToken = isInflow ? benchMarkToken : nonBenchMarkToken;
+
+        // Create 0x trade
+        await erc20Helper.approveTransferAsync(
+          zeroExOrderMakerToken,
+          SetTestUtils.ZERO_EX_ERC20_PROXY_ADDRESS,
+          zeroExOrderMakerAccount
+        );
+
+        // Fund the 0x maker with the taker token
+        await erc20Helper.transferTokensAsync(
+          [zeroExOrderMakerToken],
+          zeroExOrderMakerAccount,
+          ether(1000000),
+          DEFAULT_ACCOUNT,
+        );
+
+        spread = new BigNumber(10);
+
+        const senderAddress = NULL_ADDRESS;
+        const makerAddress = zeroExOrderMakerAccount;
+        const takerAddress = NULL_ADDRESS;
+        const makerFee = ZERO;
+        const takerFee = ZERO;
+        const takerAssetAmount = isInflow ? nonBenchMarkTokenQuantity : benchMarkTokenQuantity.sub(spread);
+        const makerAssetAmount = isInflow ? benchMarkTokenQuantity.add(spread) : nonBenchMarkTokenQuantity;
+        const salt = SetUtils.generateSalt();
+        const feeRecipientAddress = NULL_ADDRESS;
+        const expirationTimeSeconds = SetTestUtils.generateTimestamp(100000000000000); // Set high expiry time
+
+        const zeroExOrder = await setUtils.generateZeroExSignedFillOrder(
+          senderAddress,                             // senderAddress
+          makerAddress,                              // makerAddress
+          takerAddress,                              // takerAddress
+          makerFee,                                  // makerFee
+          takerFee,                                  // takerFee
+          makerAssetAmount,                          // makerAssetAmount
+          takerAssetAmount,                          // takerAssetAmount
+          zeroExOrderMakerToken.address,             // makerAssetAddress
+          zeroExOrderTakerToken.address,             // takerAssetAddress
+          salt,                                      // salt
+          SetTestUtils.ZERO_EX_EXCHANGE_ADDRESS,     // exchangeAddress
+          feeRecipientAddress,                       // feeRecipientAddress
+          expirationTimeSeconds,                     // expirationTimeSeconds
+          takerAssetAmount,                          // amount of zeroExOrder to fill
+        );
+
+        subjectBenchmarkToken = benchMarkToken.address;
+        subjectExchangeWrapperAddress = zeroExBidExchangeWrapper.address;
+        subjectOrder = zeroExOrder;
+      });
+
+      it('should return the correct tokens from the arb', async () => {
+        const previousBenchmarkBalance = await benchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+        const previousNonBenchmarkBalance = await nonBenchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+
+        await subject();
+
+        const currentBenchmarkBalance = await benchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+        const currentNonBenchmarkBalance = await nonBenchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+        const expectedBenchmarkBalance = previousBenchmarkBalance.add(spread);
+        expect(currentBenchmarkBalance).to.bignumber.equal(expectedBenchmarkBalance);
+        expect(currentNonBenchmarkBalance).to.bignumber.equal(previousNonBenchmarkBalance);
+      });
+
+      describe('when benchMarkToken is an outflow', async () => {
+        beforeAll(async () => {
+          isInflow = false;
+          customBenchmarkToken = wethInstance;
+          customNonBenchmarkToken = daiInstance;
+        });
+
+        afterAll(async () => {
+          isInflow = true;
+          customBenchmarkToken = undefined;
+          customNonBenchmarkToken = undefined;
+        });
+
+        it('should return the correct tokens from the arb', async () => {
+          const previousBenchmarkBalance = await benchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+          const previousNonBenchmarkBalance = await nonBenchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+
+          await subject();
+
+          const currentBenchmarkBalance = await benchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+          const currentNonBenchmarkBalance = await nonBenchMarkToken.balanceOf.callAsync(DEFAULT_ACCOUNT);
+
+          const expectedBenchmarkBalance =
+            previousBenchmarkBalance.add(spread);
+          expect(currentBenchmarkBalance).to.bignumber.equal(expectedBenchmarkBalance);
+          expect(currentNonBenchmarkBalance).to.bignumber.equal(previousNonBenchmarkBalance);
+        });
       });
     });
   });

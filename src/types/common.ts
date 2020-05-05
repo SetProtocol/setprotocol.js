@@ -17,6 +17,8 @@ export {
 
 export interface BidderConfig {
   bidderAddress: Address;
+  kyberBidExchangeWrapperAddress: Address;
+  zeroExBidExchangeWrapperAddress: Address;
 }
 
 export interface TokenFlows {
