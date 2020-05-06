@@ -17,8 +17,6 @@ import {
   DEFAULT_ACCOUNT,
   TX_DEFAULTS,
 } from '@src/constants';
-import { TokenFlowsDetails, Component } from '@src/types/common';
-import { BigNumber } from '@src/util';
 
 
 import { setDefaultTruffleContract } from './coreHelpers';
@@ -142,110 +140,4 @@ export const deployZeroExBidExchangeWrapperAsync = async (
   );
 
   return zeroExBidExchangeWrapper;
-};
-
-export const replaceFlowsWithCTokenUnderlyingAsync = (
-  expectedTokenFlows: any,
-  combinedTokenArray: Address[],
-  cTokenAddressesArray: Address[],
-  underlyingAddressesArray: Address[],
-  cTokenExchangeRateArray: BigNumber[],
-): any => {
-  const inflow: BigNumber[] = [];
-  const outflow: BigNumber[] = [];
-
-  const cTokenToUnderlyingObject = constructObjectFromArray(
-    cTokenAddressesArray,
-    underlyingAddressesArray
-  );
-
-  const cTokenToExchangeRateObject = constructObjectFromArray(
-    cTokenAddressesArray,
-    cTokenExchangeRateArray
-  );
-
-  for (let i = 0; i < combinedTokenArray.length; i++) {
-    // Check if address is cToken
-    if (cTokenToUnderlyingObject[combinedTokenArray[i]]) {
-      const cTokenConversion = cTokenToExchangeRateObject[combinedTokenArray[i]].div(10 ** 18);
-      let newInflow = expectedTokenFlows['inflow'][i]
-          .mul(cTokenConversion)
-          .round(0, BigNumber.ROUND_DOWN);
-
-      newInflow = newInflow.div(cTokenConversion).gte(expectedTokenFlows['inflow'][i])
-        ? newInflow
-        : newInflow.add(1);
-
-      let newOutflow = expectedTokenFlows['outflow'][i]
-          .mul(cTokenConversion)
-          .round(0, BigNumber.ROUND_DOWN);
-
-      newOutflow = newOutflow.div(cTokenConversion).gte(expectedTokenFlows['outflow'][i])
-        ? newOutflow
-        : newOutflow.add(1);
-
-      inflow.push(newInflow);
-      outflow.push(newOutflow);
-    } else {
-      inflow.push(expectedTokenFlows['inflow'][i]);
-      outflow.push(expectedTokenFlows['outflow'][i]);
-    }
-  }
-
-  return { inflow, outflow };
-};
-
-export const constructObjectFromArray = (
-  array1: any[],
-  array2: any[],
-): any => {
-  return array1.reduce((accumulator: object, currentValue: any, index: number) => {
-    return {
-      ...accumulator,
-      [currentValue]: array2[index],
-    };
-  }, {});
-};
-
-export const replaceDetailFlowsWithCTokenUnderlyingAsync = (
-  expectedTokenFlowsDetails: any,
-  cTokenAddressesArray: Address[],
-  underlyingAddressesArray: Address[],
-  cTokenExchangeRateArray: BigNumber[],
-): TokenFlowsDetails => {
-  const cTokenToUnderlyingObject = constructObjectFromArray(
-    cTokenAddressesArray,
-    underlyingAddressesArray
-  );
-
-  const cTokenToExchangeRateObject = constructObjectFromArray(
-    cTokenAddressesArray,
-    cTokenExchangeRateArray
-  );
-
-  const newInflow = expectedTokenFlowsDetails['inflow'].map((component: Component) => {
-    if (cTokenToUnderlyingObject[component.address]) {
-      const cTokenConversion = cTokenToExchangeRateObject[component.address].div(10 ** 18);
-      const newAddress = cTokenToUnderlyingObject[component.address];
-      const newUnit = component.unit.mul(cTokenConversion).round(0, BigNumber.ROUND_DOWN);
-
-      return { address: newAddress, unit: newUnit };
-    } else {
-      return component;
-    }
-  });
-
-  const newOutflow = expectedTokenFlowsDetails['outflow'].map((component: Component) => {
-    if (cTokenToUnderlyingObject[component.address]) {
-      const cTokenConversion = cTokenToExchangeRateObject[component.address].div(10 ** 18);
-      const newAddress = cTokenToUnderlyingObject[component.address];
-      const newUnit = component.unit.mul(cTokenConversion).round(0, BigNumber.ROUND_DOWN);
-
-      return { address: newAddress, unit: newUnit };
-    } else {
-      return component;
-    }
-  });
-
-  return { inflow: newInflow, outflow: newOutflow };
 };

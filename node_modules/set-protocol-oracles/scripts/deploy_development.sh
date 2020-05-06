@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # NOTE: This script is intended for use by external repos that depend
 #   on the Set Protocol smart contracts in any capacity. To deploy the Set Protocol
 #   smart contracts on your local blockchain environment,
@@ -31,19 +33,16 @@ mkdir artifacts/json
 cp build/contracts/* artifacts/json/
 
 # Remove old transpiled artifacts from the artifacts/ directory
-rm artifacts/ts/*
-
-
+rm -rf artifacts/ts/*
 
 # Transform raw JSON artifacts into Typescript modules.  This makes
 # interacting with the artifacts significantly easier when exporting
 # them as modules.
 for filename in build/contracts/*.json; do
-    filename_base=$(basename $filename .json)
-    echo -e "export const $filename_base = " > "artifacts/ts/$filename_base.ts"
-    cat "build/contracts/$filename_base.json" >> "artifacts/ts/$filename_base.ts"
+  filename_base=$(basename $filename .json)
 
-    echo -e "Transpiled $filename_base.json into $filename_base.ts"
+  # Add export lines to artifacts/ts/index.ts so types will works
+  echo -e "export { $filename_base } from \"./$filename_base\";" >> artifacts/ts/index.ts
 done
 
 echo -e "Successfully deployed contracts onto Development Testnet!"
