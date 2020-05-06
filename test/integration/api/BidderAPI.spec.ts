@@ -683,6 +683,8 @@ describe('BidderAPI', () => {
       let isInflow: boolean = true;
       let spread: BigNumber;
 
+      let customSpread: BigNumber;
+
       beforeEach(async () => {
 
         const zeroExOrderTakerToken = isInflow ? nonBenchMarkToken : benchMarkToken;
@@ -703,7 +705,7 @@ describe('BidderAPI', () => {
           DEFAULT_ACCOUNT,
         );
 
-        spread = new BigNumber(10);
+        spread = customSpread || new BigNumber(10);
 
         const senderAddress = NULL_ADDRESS;
         const makerAddress = zeroExOrderMakerAccount;
@@ -777,6 +779,24 @@ describe('BidderAPI', () => {
             previousBenchmarkBalance.add(spread);
           expect(currentBenchmarkBalance).to.bignumber.equal(expectedBenchmarkBalance);
           expect(currentNonBenchmarkBalance).to.bignumber.equal(previousNonBenchmarkBalance);
+        });
+      });
+
+      describe('and the arb is not profitable', async () => {
+        beforeAll(async () => {
+          isInflow = false;
+          customSpread = ZERO;
+        });
+
+        afterAll(async () => {
+          isInflow = true;
+          customSpread =  ZERO;
+        });
+
+        test('throws', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `The quantity 0 inputted needs to be greater than zero.`
+          );
         });
       });
     });

@@ -107,7 +107,7 @@ export class BidderAPI {
       rebalancingSetTokenAddress,
       bidQuantity,
       benchmarkToken,
-      estimatedReceiveTokenAmount
+      estimatedReceiveTokenAmount,
     );
   }
 
@@ -143,7 +143,7 @@ export class BidderAPI {
       bidQuantity,
       benchmarkToken,
       order,
-      txOpts
+      txOpts,
     );
 
     let orderData: Bytes;
@@ -153,7 +153,7 @@ export class BidderAPI {
       orderData = await this.setProtocolTestUtils.generateZeroExExchangeWrapperOrder(
         order,
         order.signature,
-        order.fillAmount
+        order.fillAmount,
       );
     }
 
@@ -163,7 +163,7 @@ export class BidderAPI {
       benchmarkToken,
       exchangeWrapperAddress,
       orderData,
-      txOpts
+      txOpts,
     );
   }
 
@@ -178,9 +178,14 @@ export class BidderAPI {
   ) {
     // Assert orders are valid
     if (SetProtocolUtils.isZeroExOrder(order)) {
-      await this.isValidZeroExOrderFill(order);
+      await this.isValidZeroExOrderFill(
+        rebalancingSetTokenAddress,
+        bidQuantity,
+        benchmarkToken,
+        order
+      );
     } else if (SetProtocolUtils.isKyberTrade(order)) {
-      this.isValidKyberTradeFill(order);
+      await this.isValidKyberTradeFill(order);
     }
 
     // Check allowances / balances
@@ -192,14 +197,21 @@ export class BidderAPI {
     );
   }
 
-  private isValidKyberTradeFill(trade: KyberTrade) {
+  private async isValidKyberTradeFill(
+    trade: KyberTrade,
+  ) {
     this.assert.common.greaterThanZero(
       trade.sourceTokenQuantity,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(trade.sourceTokenQuantity),
     );
   }
 
-  private async isValidZeroExOrderFill(zeroExOrder: ZeroExSignedFillOrder) {
+  private async isValidZeroExOrderFill(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    benchmarkToken: Address,
+    zeroExOrder: ZeroExSignedFillOrder,
+  ) {
     this.assert.common.greaterThanZero(
       zeroExOrder.fillAmount,
       coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(zeroExOrder.fillAmount),
@@ -211,6 +223,19 @@ export class BidderAPI {
       zeroExOrder.makerAddress,
       zeroExOrder.makerAssetAmount,
     );
+
+    const spread = await this.bidder.getSpread(
+      rebalancingSetTokenAddress,
+      bidQuantity,
+      benchmarkToken,
+      zeroExOrder.fillAmount,
+    );
+
+    // Spread must be positive
+    this.assert.common.greaterThanZero(
+      spread,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(spread),
+    );
   }
 
   private async hasSufficientAllowancesAndBalances(
@@ -219,10 +244,10 @@ export class BidderAPI {
     benchmarkToken: Address,
     txOpts: Tx,
   ) {
-     // Get token flow arrays
+    // Get token flow arrays
     const tokenFlows = await this.bidder.getTokenFlows(
       rebalancingSetTokenAddress,
-      bidQuantity
+      bidQuantity,
     );
 
     let requiredQuantity: BigNumber;
@@ -238,13 +263,13 @@ export class BidderAPI {
       benchmarkToken,
       txOpts.from,
       this.config.bidderAddress,
-      requiredQuantity
+      requiredQuantity,
     );
     // Check balance when benchmarkToken is inflow in the auction
     await this.assert.erc20.hasSufficientBalanceAsync(
       benchmarkToken,
       txOpts.from,
-      requiredQuantity
+      requiredQuantity,
     );
   }
 }
