@@ -56,7 +56,8 @@ import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import {
   ONE_DAY_IN_SECONDS,
   TX_DEFAULTS,
-  ONE_HOUR_IN_SECONDS
+  ONE_HOUR_IN_SECONDS,
+  ZERO
 } from '@src/constants';
 import {
   createDefaultRebalancingSetTokenV3Async,
@@ -95,7 +96,7 @@ coreContract.defaults(TX_DEFAULTS);
 
 let currentSnapshotId: number;
 
-describe('SocialTradingAPI', () => {
+describe('TWAPLiquidatorWrapper', () => {
   let core: CoreContract;
   let transferProxy: TransferProxyContract;
   let factory: SetTokenFactoryContract;
@@ -127,7 +128,7 @@ describe('SocialTradingAPI', () => {
   const feeCalculatorHelper = new FeeCalculatorHelper(DEFAULT_ACCOUNT);
   const liquidatorHelper = new LiquidatorHelper(DEFAULT_ACCOUNT, erc20Helper, valuationHelper);
 
-  let twapLiquidatorWrapper: TWAPLiquidatorWrapper;
+  const twapLiquidatorWrapper = new TWAPLiquidatorWrapper(web3);
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -218,8 +219,6 @@ describe('SocialTradingAPI', () => {
       feeCalculatorWhiteList
     );
     await core.addFactory.sendTransactionAsync(rebalancingV3Factory.address);
-
-    twapLiquidatorWrapper = new TWAPLiquidatorWrapper(web3);
   });
 
   afterEach(async () => {
@@ -304,24 +303,35 @@ describe('SocialTradingAPI', () => {
       );
 
       await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS);
-      console.log(await liquidator.auctions.callAsync(rebalancingSetTokenV3.address));
+
       subjectLiquidator = liquidator.address;
       subjectRebalancingSetToken = rebalancingSetTokenV3.address;
       subjectCaller = DEFAULT_ACCOUNT;
     });
 
     async function subject(): Promise<string> {
-      return await twapLiquidatorWrapper.iterateChunkAuction(
+      return twapLiquidatorWrapper.iterateChunkAuction(
         subjectLiquidator,
         subjectRebalancingSetToken,
         { from: subjectCaller }
       );
     }
 
-    it('fetches the correct poolInfo data', async () => {
+    it.only('calls iterateChunkAuction correctly', async () => {
+      const preTWAPState: any = await liquidator.auctions.callAsync(subjectRebalancingSetToken);
+
       await subject();
 
-      expect();
+      const block = await web3.eth.getBlock('latest');
+      const twapState: any = await liquidator.auctions.callAsync(subjectRebalancingSetToken);
+      const expectedRemainingCurrentSets = new BigNumber(preTWAPState.orderRemaining)
+          .add(preTWAPState.chunkAuction.auction.remainingCurrentSets);
+
+      expect(twapState.orderRemaining).to.be.bignumber.equal(ZERO);
+      expect(expectedRemainingCurrentSets).to.be.bignumber.equal(
+        twapState.chunkAuction.auction.remainingCurrentSets
+      );
+      expect(twapState.chunkAuction.auction.startTime).to.be.bignumber.equal(block.timestamp);
     });
   });
 });
