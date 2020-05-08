@@ -52,14 +52,13 @@ import {
   UpdatableOracleMockContract,
 } from 'set-protocol-oracles';
 
-import { DEFAULT_ACCOUNT, ACCOUNTS } from '@src/constants/accounts';
+import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import {
   ONE_DAY_IN_SECONDS,
   TX_DEFAULTS,
   ONE_HOUR_IN_SECONDS
 } from '@src/constants';
 import {
-  addWhiteListedTokenAsync,
   createDefaultRebalancingSetTokenV3Async,
   approveForTransferAsync,
   deployBaseContracts,
@@ -67,7 +66,6 @@ import {
   deployOracleWhiteListAsync,
   deployRebalancingSetTokenV3FactoryContractAsync,
   deploySetTokenAsync,
-  deploySocialTradingManagerMockAsync,
   deployTokensSpecifyingDecimals,
   deployUpdatableOracleMockAsync,
   deployWhiteListContract,
@@ -128,12 +126,6 @@ describe('SocialTradingAPI', () => {
   const valuationHelper = new ValuationHelper(DEFAULT_ACCOUNT, coreHelper, erc20Helper, oracleHelper);
   const feeCalculatorHelper = new FeeCalculatorHelper(DEFAULT_ACCOUNT);
   const liquidatorHelper = new LiquidatorHelper(DEFAULT_ACCOUNT, erc20Helper, valuationHelper);
-  // const rebalancingSetV3Helper = new RebalancingSetV3Helper(
-  //   DEFAULT_ACCOUNT,
-  //   coreHelper,
-  //   erc20Helper,
-  //   blockchain,
-  // );
 
   let twapLiquidatorWrapper: TWAPLiquidatorWrapper;
 
@@ -148,6 +140,8 @@ describe('SocialTradingAPI', () => {
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
+    [wrappedBTC, wrappedETH] = await deployTokensSpecifyingDecimals(2, [8, 18], web3, DEFAULT_ACCOUNT);
+
     [
       core,
       transferProxy, ,
@@ -155,25 +149,15 @@ describe('SocialTradingAPI', () => {
       ,
       rebalanceAuctionModule,
       rebalancingComponentWhiteList,
-    ] = await deployBaseContracts(web3);
+    ] = await deployBaseContracts(web3, [wrappedBTC.address, wrappedETH.address]);
 
-    initialEthPrice = ether(180);
-    initialBtcPrice = ether(9000);
-
-    [wrappedBTC, wrappedETH] = await deployTokensSpecifyingDecimals(2, [8, 18], web3, DEFAULT_ACCOUNT);
     await approveForTransferAsync(
       [wrappedBTC, wrappedETH],
       transferProxy.address
     );
-    await addWhiteListedTokenAsync(
-      rebalancingComponentWhiteList,
-      wrappedBTC.address,
-    );
-    await addWhiteListedTokenAsync(
-      rebalancingComponentWhiteList,
-      wrappedETH.address,
-    );
 
+    initialEthPrice = ether(180);
+    initialBtcPrice = ether(9000);
     ethOracleProxy = await deployUpdatableOracleMockAsync(
       web3,
       initialEthPrice
@@ -252,12 +236,10 @@ describe('SocialTradingAPI', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const setManager = await deploySocialTradingManagerMockAsync(web3);
-      console.log('here');
-      const collateralNaturalUnit = new BigNumber(10 ** 12);
+      const collateralNaturalUnit = new BigNumber(10 ** 14);
 
       const currentSetComponents = [wrappedETH.address, wrappedBTC.address];
-      const currentSetUnits = [new BigNumber(100), new BigNumber(10 ** 12)];
+      const currentSetUnits = [new BigNumber(10 ** 14), new BigNumber(2 * 10 ** 4)];
       currentSet = await deploySetTokenAsync(
         web3,
         core,
@@ -268,7 +250,7 @@ describe('SocialTradingAPI', () => {
       );
 
       const nextSetComponents = [wrappedETH.address, wrappedBTC.address];
-      const nextSetUnits = [new BigNumber(100), new BigNumber(5 * 10 ** 12)];
+      const nextSetUnits = [new BigNumber(50 * 10 ** 14), new BigNumber(10 ** 4)];
       nextSet = await deploySetTokenAsync(
         web3,
         core,
@@ -277,15 +259,14 @@ describe('SocialTradingAPI', () => {
         nextSetUnits,
         collateralNaturalUnit
       );
-      console.log('here');
+
       const failRebalancePeriod = ONE_DAY_IN_SECONDS;
       const block = await web3.eth.getBlock('latest');
-      console.log(setManager.address);
       rebalancingSetTokenV3 = await createDefaultRebalancingSetTokenV3Async(
         web3,
         core,
         rebalancingV3Factory.address,
-        setManager.address,
+        DEFAULT_ACCOUNT,
         liquidator.address,
         DEFAULT_ACCOUNT,
         performanceFeeCalculator.address,
@@ -293,46 +274,37 @@ describe('SocialTradingAPI', () => {
         failRebalancePeriod,
         new BigNumber(block.timestamp).sub(ONE_DAY_IN_SECONDS),
       );
-      console.log('here');
-      await setManager.updateRecord.sendTransactionAsync(
-        rebalancingSetTokenV3.address,
-        ACCOUNTS[1].address,
-        ACCOUNTS[2].address,
-        ether(.6)
-      );
+
 
       // Issue currentSetToken
       await core.issue.sendTransactionAsync(
         currentSet.address,
-        ether(8),
+        ether(15),
         {from: DEFAULT_ACCOUNT}
       );
       await approveForTransferAsync([currentSet], transferProxy.address);
 
       // Use issued currentSetToken to issue rebalancingSetToken
-      const rebalancingSetQuantityToIssue = ether(7);
+      const rebalancingSetQuantityToIssue = ether(15);
       await core.issue.sendTransactionAsync(rebalancingSetTokenV3.address, rebalancingSetQuantityToIssue);
 
       await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
 
       const liquidatorData = liquidatorHelper.generateTWAPLiquidatorCalldata(
-        ether(10 ** 6),
+        ether(10 ** 5),
         ONE_HOUR_IN_SECONDS,
       );
-      console.log(liquidatorData);
-      await setManager.rebalance.sendTransactionAsync(
-        rebalancingSetTokenV3.address,
-        nextSet.address,
-        ether(.4),
-        liquidatorData
-      );
-      console.log('here');
+
+      await rebalancingSetTokenV3.startRebalance.sendTransactionAsync(nextSet.address, liquidatorData);
+
       await rebalanceAuctionModule.bidAndWithdraw.sendTransactionAsync(
         rebalancingSetTokenV3.address,
         rebalancingSetQuantityToIssue,
         true
       );
 
+      await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS);
+      console.log(await liquidator.auctions.callAsync(rebalancingSetTokenV3.address));
       subjectLiquidator = liquidator.address;
       subjectRebalancingSetToken = rebalancingSetTokenV3.address;
       subjectCaller = DEFAULT_ACCOUNT;
