@@ -23,6 +23,7 @@ export {
   deployTokenSpecifyingDecimalAsync,
   deployTokensSpecifyingDecimals,
   deployTransferProxyContract,
+  deployTWAPLiquidatorAsync,
   deployVaultContract,
   deployWethMockAsync,
   deployWhiteListContract,

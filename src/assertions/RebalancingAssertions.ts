@@ -180,6 +180,22 @@ export class RebalancingAssertions {
   }
 
   /**
+   * Throws if insufficient time between chunk auctions
+   *
+   * @param  nextChunkAuctionStart   UNIX timestamp of next chunk auction start time
+   */
+  public sufficientTimeBetweenChunkAuctions(nextChunkAuctionStart: BigNumber) {
+    const currentTimeStamp = new BigNumber(Date.now());
+    const nextChunkAuctionStartMilliSec = nextChunkAuctionStart.mul(1000);
+
+    if (nextChunkAuctionStartMilliSec.greaterThan(currentTimeStamp)) {
+      const nextChunkAuctionFormattedDate = moment(nextChunkAuctionStartMilliSec.toNumber())
+        .format('dddd, MMMM Do YYYY, h:mm:ss a');
+      throw new Error(rebalancingErrors.INSUFFICIENT_TIME_BETWEEN_CHUNKS(nextChunkAuctionFormattedDate));
+    }
+  }
+
+  /**
    * Throws if not enough time passed between last rebalance on rebalancing set token
    *
    * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
@@ -252,10 +268,45 @@ export class RebalancingAssertions {
 
     if (remainingCurrentSets.greaterThanOrEqualTo(minimumBid)) {
       throw new Error(rebalancingErrors.NOT_ENOUGH_SETS_REBALANCED(
-        rebalancingSetTokenAddress,
         minimumBid.toString(),
         remainingCurrentSets.toString()
       ));
+    }
+  }
+
+  /**
+   * Throws if not enough current sets rebalanced in chunk auction
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   * @param  minimumBid                   Minimum Bid of the auction
+   * @param  remainingCurrentSets         Amount of remainingSet in current chunk auction
+   */
+  public chunkAuctionFinished(
+    minimumBid: BigNumber,
+    remainingCurrentSets: BigNumber,
+  ) {
+    if (remainingCurrentSets.greaterThanOrEqualTo(minimumBid)) {
+      throw new Error(rebalancingErrors.CHUNK_AUCTION_NOT_FINISHED(
+        minimumBid.toString(),
+        remainingCurrentSets.toString()
+      ));
+    }
+  }
+
+  /**
+   * Throws if twap auction is finished
+   *
+   * @param  rebalancingSetTokenAddress   The address of the rebalancing set token
+   * @param  minimumBid                   Minimum Bid of the auction
+   * @param  remainingCurrentSets         Amount of remainingSet in current chunk auction
+   */
+  public twapAuctionNotFinished(
+    rebalancingSetTokenAddress: Address,
+    minimumBid: BigNumber,
+    totalRemainingSets: BigNumber,
+  ) {
+    if (totalRemainingSets.lessThan(minimumBid)) {
+      throw new Error(rebalancingErrors.TWAP_AUCTION_FINISHED(rebalancingSetTokenAddress));
     }
   }
 

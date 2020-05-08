@@ -6594,7 +6594,36 @@ set-protocol-contract-utils@^1.0.3:
     web3-utils "1.0.0-beta.36"
     zos-lib "^2.4.2"
 
-set-protocol-contracts@1.4.5-beta, set-protocol-contracts@^1.4.5-beta:
+set-protocol-contracts@1.4.9-beta, set-protocol-contracts@^1.4.9-beta:
+  version "1.4.9-beta"
+  resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.4.9-beta.tgz#7907185d61451552916efa606b4a25e1d8df9ca6"
+  integrity sha512-D186K1DhlhRmIDRyHMmok/NtKZZqA2CSkkjTKYA0JDzuwgiASR5s4+LwRyRSZ7qJS+wnSRVMSUxOSo//c6kPNw==
+  dependencies:
+    bn-chai "^1.0.1"
+    canonical-weth "^1.3.1"
+    dotenv "^6.2.0"
+    eth-gas-reporter "^0.1.10"
+    ethlint "^1.2.3"
+    expect "^24.1.0"
+    fs-extra "^5.0.0"
+    husky "^0.14.3"
+    lint-staged "^7.2.0"
+    minify-all "^1.2.2"
+    module-alias "^2.1.0"
+    openzeppelin-solidity "^2.2"
+    set-protocol-contract-utils "^1.0.3"
+    set-protocol-oracles "^1.0.16"
+    set-protocol-utils "^1.1.2"
+    tiny-promisify "^1.0.0"
+    truffle-flattener "^1.4.0"
+    ts-mocha "^6.0.0"
+    ts-node "^8.0.2"
+    tslint-eslint-rules "^5.3.1"
+    web3 "1.0.0-beta.36"
+    web3-utils "1.0.0-beta.36"
+    zos-lib "^2.4.2"
+
+set-protocol-contracts@^1.4.5-beta:
   version "1.4.5-beta"
   resolved "https://registry.yarnpkg.com/set-protocol-contracts/-/set-protocol-contracts-1.4.5-beta.tgz#6d03e5ad12eaace1f9852a3d3f03cf1b0c5419af"
   integrity sha512-if2qgYMnqRwcld/cF+lYnkhZ+52FgLo9Iqgt8v8P+2zanUi/5mj3cVml4EwoenCRuNzZcDlLSGGZ6j3yms0fmQ==
@@ -6711,10 +6740,10 @@ set-protocol-utils@^1.0.0-beta.45, set-protocol-utils@^1.1.2:
     web3 "1.0.0-beta.36"
     web3-utils "1.0.0-beta.36"
 
-set-protocol-viewers@^1.0.11:
-  version "1.0.11"
-  resolved "https://registry.yarnpkg.com/set-protocol-viewers/-/set-protocol-viewers-1.0.11.tgz#f88b02787d9e77ae57b9184804132be7ca217811"
-  integrity sha512-kwCG8Ppn1aSBEY4wwEc863M5xMV7nLWC1x84J1mk/D4beajYbDuBh50ZvfoON3IlvCnpgGowptjCWDtgjywF4w==
+set-protocol-viewers@^1.0.12:
+  version "1.0.12"
+  resolved "https://registry.yarnpkg.com/set-protocol-viewers/-/set-protocol-viewers-1.0.12.tgz#6c63b523b5d446f4ef620f4aabeddf36051d009d"
+  integrity sha512-K6ojSw5Ieze7iGU1iLFAUq1QdsmNCx79gR+wmihVAxNIiv7kUI+ROG/a4X36qZXVQMcZDYHBlCkhm1epc6BcOA==
   dependencies:
     bn-chai "^1.0.1"
     canonical-weth "^1.3.1"
@@ -6729,7 +6758,7 @@ set-protocol-viewers@^1.0.11:
     minify-all "^1.2.2"
     module-alias "^2.1.0"
     openzeppelin-solidity "^2.2"
-    set-protocol-contracts "^1.4.5-beta"
+    set-protocol-contracts "^1.4.9-beta"
     set-protocol-oracles "^1.0.16"
     set-protocol-strategies "^1.1.37"
     set-protocol-utils "^1.1.2"

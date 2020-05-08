@@ -19,6 +19,8 @@ import {
   SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
+  TWAPLiquidator,
+  TWAPLiquidatorContract,
   VaultContract,
   WethMockContract,
   WhiteListContract,
@@ -406,6 +408,41 @@ export const deployLinearAuctionLiquidatorContractAsync = async (
   return linearAuctionLiquidatorContract;
 };
 
+export const deployTWAPLiquidatorAsync = async (
+  web3: Web3,
+  core: Address,
+  oracleWhiteList: Address,
+  auctionPeriod: BigNumber,
+  rangeStart: BigNumber,
+  rangeEnd: BigNumber,
+  assetPairHashes: string[],
+  assetPairBounds: {}[],
+  name: string
+): Promise<TWAPLiquidatorContract> => {
+  const assetPairBoundsStr = [];
+  for (let i = 0; i < assetPairBounds.length; i++) {
+    assetPairBoundsStr.push(assetPairBounds[i]);
+  }
+
+  const truffleLiquidator = setDefaultTruffleContract(web3, TWAPLiquidator);
+  const deployedTWAPLiquidator = await truffleLiquidator.new(
+    core,
+    oracleWhiteList,
+    auctionPeriod,
+    rangeStart,
+    rangeEnd,
+    assetPairHashes,
+    assetPairBoundsStr,
+    name,
+  );
+
+  return await TWAPLiquidatorContract.at(
+    deployedTWAPLiquidator.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
 export const deployFixedFeeCalculatorAsync = async (
   web3: Web3,
 ): Promise<FixedFeeCalculatorContract> => {
@@ -488,7 +525,8 @@ export const deployRebalanceAuctionModuleContract = async (
 };
 
 export const deployBaseContracts = async (
-  web3: Web3
+  web3: Web3,
+  whiteListedTokens: Address[] = []
 ): Promise<[
   CoreContract,
   TransferProxyContract,
@@ -505,11 +543,11 @@ export const deployBaseContracts = async (
 
   const core = await deployCoreContract(web3, transferProxy.address, vault.address);
 
-  const whitelist = await deployWhiteListContract(web3, []);
+  const whitelist = await deployWhiteListContract(web3, whiteListedTokens);
+  const setTokenFactory = await deploySetTokenFactoryContract(web3, core);
+  const rebalancingSetTokenFactory = await deployRebalancingSetTokenFactoryContract(web3, core, whitelist);
 
-  const [setTokenFactory, rebalancingSetTokenFactory] = await Promise.all([
-    deploySetTokenFactoryContract(web3, core),
-    deployRebalancingSetTokenFactoryContract(web3, core, whitelist),
+  await Promise.all([
     addAuthorizationAsync(vault, core.address),
     addAuthorizationAsync(transferProxy, core.address),
   ]);
