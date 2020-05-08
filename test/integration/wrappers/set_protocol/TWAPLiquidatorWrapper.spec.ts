@@ -287,8 +287,6 @@ describe('TWAPLiquidatorWrapper', () => {
       const rebalancingSetQuantityToIssue = ether(15);
       await core.issue.sendTransactionAsync(rebalancingSetTokenV3.address, rebalancingSetQuantityToIssue);
 
-      await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
-
       const liquidatorData = liquidatorHelper.generateTWAPLiquidatorCalldata(
         ether(10 ** 5),
         ONE_HOUR_IN_SECONDS,
@@ -310,7 +308,7 @@ describe('TWAPLiquidatorWrapper', () => {
     });
 
     async function subject(): Promise<string> {
-      return twapLiquidatorWrapper.iterateChunkAuction(
+      return await twapLiquidatorWrapper.iterateChunkAuction(
         subjectLiquidator,
         subjectRebalancingSetToken,
         { from: subjectCaller }
