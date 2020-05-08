@@ -363,7 +363,7 @@ export const deployRebalancingSetTokenV3FactoryContractAsync = async (
   );
 
   // Initialize typed contract class
-  const rebalancingSetTokenV2FactoryContract = await RebalancingSetTokenV3FactoryContract.at(
+  const rebalancingSetTokenV3FactoryContract = await RebalancingSetTokenV3FactoryContract.at(
     deployedRebalancingSetTokenV3Factory.address,
     web3,
     TX_DEFAULTS,
@@ -371,11 +371,11 @@ export const deployRebalancingSetTokenV3FactoryContractAsync = async (
 
   // Enable factory for provided core
   await core.addFactory.sendTransactionAsync(
-    rebalancingSetTokenV2FactoryContract.address,
+    rebalancingSetTokenV3FactoryContract.address,
     TX_DEFAULTS
   );
 
-  return rebalancingSetTokenV2FactoryContract;
+  return rebalancingSetTokenV3FactoryContract;
 };
 
 export const deployLinearAuctionLiquidatorContractAsync = async (

@@ -23,7 +23,6 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as _ from 'lodash';
-import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
@@ -55,7 +54,6 @@ import {
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
 import {
   ONE_DAY_IN_SECONDS,
-  TX_DEFAULTS,
   ONE_HOUR_IN_SECONDS,
   ZERO
 } from '@src/constants';
@@ -82,17 +80,10 @@ import { TWAPLiquidatorWrapper } from '@src/wrappers';
 import ChaiSetup from '@test/helpers/chaiSetup';
 ChaiSetup.configure();
 
-const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
-
 const { expect } = chai;
-const contract = require('truffle-contract');
 const web3 = new Web3('http://localhost:8545');
 const { Web3Utils } = setProtocolUtils;
 const web3Utils = new Web3Utils(web3);
-
-const coreContract = contract(Core);
-coreContract.setProvider(web3.currentProvider);
-coreContract.defaults(TX_DEFAULTS);
 
 let currentSnapshotId: number;
 
@@ -129,14 +120,6 @@ describe('TWAPLiquidatorWrapper', () => {
   const liquidatorHelper = new LiquidatorHelper(DEFAULT_ACCOUNT, erc20Helper, valuationHelper);
 
   const twapLiquidatorWrapper = new TWAPLiquidatorWrapper(web3);
-
-  beforeAll(() => {
-    ABIDecoder.addABI(coreContract.abi);
-  });
-
-  afterAll(() => {
-    ABIDecoder.removeABI(coreContract.abi);
-  });
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
@@ -218,7 +201,6 @@ describe('TWAPLiquidatorWrapper', () => {
       liquidatorWhiteList,
       feeCalculatorWhiteList
     );
-    await core.addFactory.sendTransactionAsync(rebalancingV3Factory.address);
   });
 
   afterEach(async () => {
@@ -315,7 +297,7 @@ describe('TWAPLiquidatorWrapper', () => {
       );
     }
 
-    it.only('calls iterateChunkAuction correctly', async () => {
+    it('calls iterateChunkAuction correctly', async () => {
       const preTWAPState: any = await liquidator.auctions.callAsync(subjectRebalancingSetToken);
 
       await subject();

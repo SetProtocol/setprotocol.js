@@ -376,7 +376,7 @@ describe('RebalancingAPI', () => {
       const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
       nextRebalanceAvailableAtSeconds = lastRebalancedTimestampSeconds.toNumber() + rebalanceInterval.toNumber();
       timeKeeper.freeze(nextRebalanceAvailableAtSeconds * 1000);
-      increaseChainTimeAsync(web3, rebalanceInterval.add(1));
+      await increaseChainTimeAsync(web3, rebalanceInterval.add(1));
 
       subjectNextSet = nextSetToken.address;
       subjectAuctionPriceCurveAddress = priceCurve.address;
