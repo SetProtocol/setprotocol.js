@@ -28,20 +28,31 @@ import Web3 from 'web3';
 import {
   ConstantAuctionPriceCurveContract,
   CoreContract,
+  CoreHelper,
   ERC20DetailedContract,
+  ERC20Helper,
+  FeeCalculatorHelper,
+  LiquidatorHelper,
+  OracleWhiteListContract,
+  PerformanceFeeCalculatorContract,
   RebalanceAuctionModuleContract,
   RebalancingSetCTokenBidderContract,
   RebalancingSetEthBidderContract,
   RebalancingSetTokenContract,
   RebalancingSetTokenFactoryContract,
+  RebalancingSetTokenV3Contract,
+  RebalancingSetTokenV3FactoryContract,
   SetTokenContract,
   SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
+  TWAPLiquidatorContract,
+  ValuationHelper,
   VaultContract,
   WhiteListContract,
   WethMockContract,
 } from 'set-protocol-contracts';
+import { UpdatableOracleMockContract, OracleHelper } from 'set-protocol-oracles';
 import { Web3Utils } from 'set-protocol-utils';
 
 import { RebalancingAPI } from '@src/api';
@@ -59,11 +70,13 @@ import {
   DEFAULT_AUCTION_PRICE_DENOMINATOR,
   DEFAULT_REBALANCING_NATURAL_UNIT,
   DEFAULT_UNIT_SHARES,
+  DEPLOYED_TOKEN_QUANTITY,
   ONE_DAY_IN_SECONDS,
   NULL_ADDRESS,
   TX_DEFAULTS,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
   ZERO,
+  ONE_HOUR_IN_SECONDS,
 } from '@src/constants';
 import { ACCOUNTS } from '@src/constants/accounts';
 import { BigNumber, ether } from '@src/util';
@@ -71,20 +84,22 @@ import { Assertions } from '@src/assertions';
 import ChaiSetup from '@test/helpers/chaiSetup';
 import {
   addPriceCurveToCoreAsync,
-  addWhiteListedTokenAsync,
   approveForTransferAsync,
   constructInflowOutflowAddressesArraysAsync,
   constructInflowOutflowArraysAsync,
   createDefaultRebalancingSetTokenAsync,
   deployBaseContracts,
   deployConstantAuctionPriceCurveAsync,
+  deployOracleWhiteListAsync,
   deployProtocolViewerAsync,
   deployRebalancingSetCTokenBidderAsync,
   deployRebalancingSetEthBidderAsync,
+  deployRebalancingSetTokenV3FactoryContractAsync,
   deploySetTokenAsync,
-  deploySetTokensAsync,
   deployTokenAsync,
   deployTokensSpecifyingDecimals,
+  deployTWAPLiquidatorAsync,
+  deployUpdatableOracleMockAsync,
   deployWethMockAsync,
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync,
@@ -97,6 +112,8 @@ import {
   transitionToDrawdownAsync,
   transitionToProposeAsync,
   transitionToRebalanceAsync,
+  createDefaultRebalancingSetTokenV3Async,
+  deployWhiteListContract,
 } from '@test/helpers';
 
 import { CompoundHelper } from '@test/helpers/compoundHelper';
@@ -112,6 +129,10 @@ import {
   TokenFlowsDetails,
 } from '@src/types/common';
 
+import {
+  RBSetTWAPRebalanceInfo
+} from '@src/types/strategies';
+
 ChaiSetup.configure();
 const { expect } = chai;
 const timeKeeper = require('timekeeper');
@@ -120,7 +141,12 @@ const web3Utils = new Web3Utils(web3);
 const moment = require('moment');
 
 const compoundHelper = new CompoundHelper();
-
+const coreHelper = new CoreHelper(DEFAULT_ACCOUNT, DEFAULT_ACCOUNT);
+const erc20Helper = new ERC20Helper(DEFAULT_ACCOUNT);
+const oracleHelper = new OracleHelper(DEFAULT_ACCOUNT);
+const valuationHelper = new ValuationHelper(DEFAULT_ACCOUNT, coreHelper, erc20Helper, oracleHelper);
+const liquidatorHelper = new LiquidatorHelper(DEFAULT_ACCOUNT, erc20Helper, valuationHelper);
+const feeCalculatorHelper = new FeeCalculatorHelper(DEFAULT_ACCOUNT);
 let currentSnapshotId: number;
 
 
@@ -136,6 +162,16 @@ describe('RebalancingAPI', () => {
   let rebalancingSetCTokenBidder: RebalancingSetCTokenBidderContract;
   let rebalancingSetEthBidder: RebalancingSetEthBidderContract;
   let whitelist: WhiteListContract;
+  let priceCurve: ConstantAuctionPriceCurveContract;
+
+  let collateralNaturalUnit: BigNumber;
+  let set1: SetTokenContract;
+  let set1Components: Address[];
+  let set1Units: BigNumber[];
+
+  let set2: SetTokenContract;
+  let set2Components: Address[];
+  let set2Units: BigNumber[];
 
   let erc20Wrapper: ERC20Wrapper;
   let rebalancingSetTokenWrapper: RebalancingSetTokenWrapper;
@@ -145,13 +181,43 @@ describe('RebalancingAPI', () => {
   let rebalancingAPI: RebalancingAPI;
 
   let weth: WethMockContract;
-  let cUSDCInstance: StandardTokenMockContract;
-  let usdcInstance: StandardTokenMockContract;
-  let cDAIInstance: StandardTokenMockContract;
-  let daiInstance: StandardTokenMockContract;
+  let cUSDC: StandardTokenMockContract;
+  let usdc: StandardTokenMockContract;
+  let cDAI: StandardTokenMockContract;
+  let dai: StandardTokenMockContract;
 
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
+
+    // Deploy external dependencies
+    weth = await deployWethMockAsync(web3, DEFAULT_ACCOUNT, DEPLOYED_TOKEN_QUANTITY);
+    const usdcDecimals = 6;
+    const daiDecimals = 18;
+    const componentInstances = await deployTokensSpecifyingDecimals(
+      2,
+      [usdcDecimals, daiDecimals],
+      web3,
+    );
+
+    usdc = componentInstances[0];
+    dai = componentInstances[1];
+
+    // Set up cTokens
+    const cUSDCAddress = await compoundHelper.deployMockCUSDC(usdc.address, DEFAULT_ACCOUNT);
+    await compoundHelper.enableCToken(cUSDCAddress);
+    // Set the Borrow Rate
+    await compoundHelper.setBorrowRate(cUSDCAddress, new BigNumber('43084603999'));
+
+    const cDAIAddress = await compoundHelper.deployMockCDAI(dai.address, DEFAULT_ACCOUNT);
+    await compoundHelper.enableCToken(cDAIAddress);
+    // Set the Borrow Rate
+    await compoundHelper.setBorrowRate(cDAIAddress, new BigNumber('29313252165'));
+    const cTokenInstances = await getTokenInstances(web3, [cUSDCAddress, cDAIAddress]);
+    cUSDC = cTokenInstances[0];
+    cDAI = cTokenInstances[1];
+
+    const whiteListedTokens = [weth, usdc, dai, cUSDC, cDAI];
+    const whiteListedTokenAddresses = _.map(whiteListedTokens, token => token.address);
 
     [
       core,
@@ -161,34 +227,44 @@ describe('RebalancingAPI', () => {
       rebalancingSetTokenFactory,
       rebalanceAuctionModule,
       whitelist,
-    ] = await deployBaseContracts(web3);
+    ] = await deployBaseContracts(web3, whiteListedTokenAddresses);
 
-    weth = await deployWethMockAsync(web3, NULL_ADDRESS, ZERO);
+    approveForTransferAsync(whiteListedTokens, transferProxy.address);
 
-    // Set up cTokens
-    const usdcDecimals = 6;
-    const daiDecimals = 18;
-    const underlyingInstances = await deployTokensSpecifyingDecimals(
-      2,
-      [usdcDecimals, daiDecimals],
+    collateralNaturalUnit = new BigNumber(10 ** 12);
+    set1Components = [weth.address, usdc.address];
+    set1Units = [new BigNumber(10 ** 12), new BigNumber(200)];
+    set1 = await deploySetTokenAsync(
       web3,
+      core,
+      setTokenFactory.address,
+      set1Components,
+      set1Units,
+      collateralNaturalUnit
     );
 
-    usdcInstance = underlyingInstances[0];
-    daiInstance = underlyingInstances[1];
+    set2Components = [weth.address, usdc.address];
+    set2Units = [new BigNumber(10 ** 12), new BigNumber(600)];
+    set2 = await deploySetTokenAsync(
+      web3,
+      core,
+      setTokenFactory.address,
+      set2Components,
+      set2Units,
+      collateralNaturalUnit
+    );
 
-    const cUSDCAddress = await compoundHelper.deployMockCUSDC(usdcInstance.address, DEFAULT_ACCOUNT);
-    await compoundHelper.enableCToken(cUSDCAddress);
-    // Set the Borrow Rate
-    await compoundHelper.setBorrowRate(cUSDCAddress, new BigNumber('43084603999'));
+    // Legacy Section (RebalancingSetTokenV1 and dependencies)
+    priceCurve = await deployConstantAuctionPriceCurveAsync(
+      web3,
+      DEFAULT_AUCTION_PRICE_NUMERATOR,
+      DEFAULT_AUCTION_PRICE_DENOMINATOR
+    );
 
-    const cDAIAddress = await compoundHelper.deployMockCDAI(daiInstance.address, DEFAULT_ACCOUNT);
-    await compoundHelper.enableCToken(cDAIAddress);
-    // Set the Borrow Rate
-    await compoundHelper.setBorrowRate(cDAIAddress, new BigNumber('29313252165'));
-    const cTokenInstances = await getTokenInstances(web3, [cUSDCAddress, cDAIAddress]);
-    cUSDCInstance = cTokenInstances[0];
-    cDAIInstance = cTokenInstances[1];
+    addPriceCurveToCoreAsync(
+      core,
+      priceCurve.address
+    );
 
     rebalancingSetEthBidder = await deployRebalancingSetEthBidderAsync(
       web3,
@@ -202,11 +278,9 @@ describe('RebalancingAPI', () => {
       rebalanceAuctionModule,
       transferProxy,
       [cUSDCAddress, cDAIAddress],
-      [usdcInstance.address, daiInstance.address],
+      [usdc.address, dai.address],
       'cToken Bidder Contract'
     );
-
-    setTokenFactory = setTokenFactory;
 
     const coreWrapper = new CoreWrapper(
       web3,
@@ -261,7 +335,6 @@ describe('RebalancingAPI', () => {
   describe('proposeAsync', async () => {
     let currentSetToken: SetTokenContract;
     let nextSetToken: SetTokenContract;
-    let deployedSetTokenNaturalUnits: BigNumber[] = [];
     let rebalancingSetToken: RebalancingSetTokenContract;
     let rebalanceInterval: BigNumber;
     let managerAddress: Address;
@@ -275,20 +348,8 @@ describe('RebalancingAPI', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 2;
-      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-        deployedSetTokenNaturalUnits,
-      );
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+      currentSetToken = set1;
+      nextSetToken = set2;
 
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       rebalanceInterval = ONE_DAY_IN_SECONDS;
@@ -300,18 +361,6 @@ describe('RebalancingAPI', () => {
         managerAddress,
         currentSetToken.address,
         proposalPeriod
-      );
-
-      // Deploy price curve used in auction
-      const priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
       );
 
       // Issue currentSetToken
@@ -327,7 +376,7 @@ describe('RebalancingAPI', () => {
       const lastRebalancedTimestampSeconds = await rebalancingSetToken.lastRebalanceTimestamp.callAsync();
       nextRebalanceAvailableAtSeconds = lastRebalancedTimestampSeconds.toNumber() + rebalanceInterval.toNumber();
       timeKeeper.freeze(nextRebalanceAvailableAtSeconds * 1000);
-      increaseChainTimeAsync(web3, rebalanceInterval.add(1));
+      await increaseChainTimeAsync(web3, rebalanceInterval.add(1));
 
       subjectNextSet = nextSetToken.address;
       subjectAuctionPriceCurveAddress = priceCurve.address;
@@ -414,17 +463,24 @@ describe('RebalancingAPI', () => {
     });
 
     describe('when the proposed set natural unit is not a multiple of the current set', async () => {
-      beforeAll(async () => {
-        deployedSetTokenNaturalUnits = [ether(.01), ether(.015)];
-      });
+      let badSet: SetTokenContract;
 
-      afterAll(async () => {
-        deployedSetTokenNaturalUnits = [];
+      beforeEach(async () => {
+        badSet = await deploySetTokenAsync(
+          web3,
+          core,
+          setTokenFactory.address,
+          set1Components,
+          set1Units,
+          collateralNaturalUnit.mul(1.5)
+        );
+
+        subjectNextSet = badSet.address;
       });
 
       test('throws', async () => {
         return expect(subject()).to.be.rejectedWith(
-          `${nextSetToken.address} must be a multiple of ${currentSetToken.address},` +
+          `${badSet.address} must be a multiple of ${currentSetToken.address},` +
           ` or vice versa to propose a valid rebalance.`
         );
       });
@@ -465,7 +521,6 @@ describe('RebalancingAPI', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
 
     let nextRebalanceAvailableAtSeconds: number;
 
@@ -473,19 +528,8 @@ describe('RebalancingAPI', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 2;
-      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+      currentSetToken = set1;
+      nextSetToken = set2;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -496,18 +540,6 @@ describe('RebalancingAPI', () => {
         managerAddress,
         currentSetToken.address,
         proposalPeriod
-      );
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR,
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
       );
 
       // Issue currentSetToken
@@ -646,7 +678,6 @@ describe('RebalancingAPI', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
 
     let rebalancingSetQuantityToIssue: BigNumber;
 
@@ -654,19 +685,8 @@ describe('RebalancingAPI', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 2;
-      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+      currentSetToken = set1;
+      nextSetToken = set2;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -686,18 +706,6 @@ describe('RebalancingAPI', () => {
       // Use issued currentSetToken to issue rebalancingSetToken
       rebalancingSetQuantityToIssue = ether(7);
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
       subjectCaller = DEFAULT_ACCOUNT;
@@ -815,7 +823,6 @@ describe('RebalancingAPI', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
 
     let rebalancingSetQuantityToIssue: BigNumber;
 
@@ -825,19 +832,8 @@ describe('RebalancingAPI', () => {
     let pivotTime: BigNumber;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 2;
-      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+      currentSetToken = set1;
+      nextSetToken = set2;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -857,18 +853,6 @@ describe('RebalancingAPI', () => {
       // Use issued currentSetToken to issue rebalancingSetToken
       rebalancingSetQuantityToIssue = ether(7);
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
       subjectCaller = DEFAULT_ACCOUNT;
@@ -1102,7 +1086,6 @@ describe('RebalancingAPI', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
 
     let rebalancingSetQuantityToIssue: BigNumber;
 
@@ -1113,19 +1096,8 @@ describe('RebalancingAPI', () => {
     let subjectAllowPartialFill: boolean;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 2;
-      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+      currentSetToken = set1;
+      nextSetToken = set2;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -1145,18 +1117,6 @@ describe('RebalancingAPI', () => {
       // Use issued currentSetToken to issue rebalancingSetToken
       rebalancingSetQuantityToIssue = ether(7);
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
 
       subjectShouldWithdraw = false;
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
@@ -1361,9 +1321,9 @@ describe('RebalancingAPI', () => {
       `
         User: ${subjectCaller} has allowance of 0
 
-        when required allowance is ${inflowArray[2]} at token
+        when required allowance is ${inflowArray[1]} at token
 
-        address: ${components[2]} for spender: ${transferProxy.address}.
+        address: ${components[1]} for spender: ${transferProxy.address}.
       `
           );
         });
@@ -1373,7 +1333,7 @@ describe('RebalancingAPI', () => {
         beforeEach(async () => {
           subjectCaller = ACCOUNTS[3].address;
           const components = await rebalancingSetToken.getCombinedTokenArray.callAsync();
-          const approvalToken: ERC20DetailedContract = await ERC20DetailedContract.at(components[2], web3, {});
+          const approvalToken: ERC20DetailedContract = await ERC20DetailedContract.at(components[1], web3, {});
           await approvalToken.approve.sendTransactionAsync(
             transferProxy.address,
             UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
@@ -1389,7 +1349,7 @@ describe('RebalancingAPI', () => {
       `
         User: ${subjectCaller} has balance of 0
 
-        when required balance is ${inflowArray[2]} at token address ${components[2]}.
+        when required balance is ${inflowArray[1]} at token address ${components[1]}.
       `
           );
         });
@@ -1401,8 +1361,8 @@ describe('RebalancingAPI', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let defaultSetToken: SetTokenContract;
     let wethSetToken: SetTokenContract;
+
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
 
     let defaultBaseSetComponent: StandardTokenMockContract | WethMockContract;
     let defaultBaseSetComponent2: StandardTokenMockContract | WethMockContract;
@@ -1440,7 +1400,7 @@ describe('RebalancingAPI', () => {
 
       // Create component tokens for Set containing weth
       wethBaseSetComponent = weth;
-      wethBaseSetComponent2 = await deployTokenAsync(web3);
+      wethBaseSetComponent2 = usdc;
 
       // Create the next Set containing WETH
       const nextComponentAddresses = [
@@ -1494,23 +1454,6 @@ describe('RebalancingAPI', () => {
       const rebalancingSetTokenQuantityToIssue = ether(1);
 
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await wethSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
 
       // Determine minimum bid
       const decOne = await defaultSetToken.naturalUnit.callAsync();
@@ -1760,7 +1703,6 @@ describe('RebalancingAPI', () => {
     let defaultSetToken: SetTokenContract;
     let cTokenSetToken: SetTokenContract;
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
 
     let defaultBaseSetComponent: StandardTokenMockContract;
     let defaultBaseSetComponent2: StandardTokenMockContract;
@@ -1796,8 +1738,8 @@ describe('RebalancingAPI', () => {
       );
 
       // Create component tokens for Set containing cTokens
-      cTokenBaseSetComponent = cUSDCInstance;
-      cTokenBaseSetComponent2 = cDAIInstance;
+      cTokenBaseSetComponent = cUSDC;
+      cTokenBaseSetComponent2 = cDAI;
 
       // Create the Set (default is 2 components)
       const nextComponentAddresses = [
@@ -1851,23 +1793,6 @@ describe('RebalancingAPI', () => {
 
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
 
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await cTokenSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
-
       // Determine minimum bid
       const decOne = await defaultSetToken.naturalUnit.callAsync();
       const decTwo = await cTokenSetToken.naturalUnit.callAsync();
@@ -1875,8 +1800,8 @@ describe('RebalancingAPI', () => {
 
       // Approve tokens to rebalancingSetCTokenBidder contract
       await approveForTransferAsync([
-        usdcInstance,
-        daiInstance,
+        usdc,
+        dai,
       ], rebalancingSetCTokenBidder.address);
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
@@ -1982,14 +1907,14 @@ describe('RebalancingAPI', () => {
         const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
 
         // Get current exchange rate
-        const cUSDCExchangeRate = await compoundHelper.getExchangeRateCurrent(cUSDCInstance.address);
-        const cDAIExchangeRate = await compoundHelper.getExchangeRateCurrent(cDAIInstance.address);
+        const cUSDCExchangeRate = await compoundHelper.getExchangeRateCurrent(cUSDC.address);
+        const cDAIExchangeRate = await compoundHelper.getExchangeRateCurrent(cDAI.address);
         // Replace expected token flow arrays with cToken underlying
         const expectedTokenFlowsUnderlying = replaceFlowsWithCTokenUnderlyingAsync(
           expectedTokenFlows,
           combinedTokenArray,
-          [cUSDCInstance.address, cDAIInstance.address],
-          [usdcInstance.address, daiInstance.address],
+          [cUSDC.address, cDAI.address],
+          [usdc.address, dai.address],
           [cUSDCExchangeRate, cDAIExchangeRate],
         );
 
@@ -1999,16 +1924,16 @@ describe('RebalancingAPI', () => {
 
         const oldUnderlyingTokenBalances = await Promise.all(
           [
-            usdcInstance.address,
-            daiInstance.address,
+            usdc.address,
+            dai.address,
           ].map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
         );
 
         // Replace cToken balance with underlying token balance
         const oldReceiverTokenUnderlyingBalances = _.map(oldReceiverTokenBalances, (balance, index) => {
-          if (combinedTokenArray[index] === cUSDCInstance.address) {
+          if (combinedTokenArray[index] === cUSDC.address) {
             return oldUnderlyingTokenBalances[0];
-          } else if (combinedTokenArray[index] === cDAIInstance.address) {
+          } else if (combinedTokenArray[index] === cDAI.address) {
             return oldUnderlyingTokenBalances[1];
           } else {
             return balance;
@@ -2022,15 +1947,15 @@ describe('RebalancingAPI', () => {
         );
         const newUnderlyingTokenBalances = await Promise.all(
           [
-            usdcInstance.address,
-            daiInstance.address,
+            usdc.address,
+            dai.address,
           ].map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
         );
         // Replace cToken balance with underlying token balance
         const newReceiverTokenUnderlyingBalances = _.map(newReceiverTokenBalances, (balance, index) => {
-          if (combinedTokenArray[index] === cUSDCInstance.address) {
+          if (combinedTokenArray[index] === cUSDC.address) {
             return newUnderlyingTokenBalances[0];
-          } else if (combinedTokenArray[index] === cDAIInstance.address) {
+          } else if (combinedTokenArray[index] === cDAI.address) {
             return newUnderlyingTokenBalances[1];
           } else {
             return balance;
@@ -2101,14 +2026,14 @@ describe('RebalancingAPI', () => {
           const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
 
           // Get current exchange rate
-          const cUSDCExchangeRate = await compoundHelper.getExchangeRateCurrent(cUSDCInstance.address);
-          const cDAIExchangeRate = await compoundHelper.getExchangeRateCurrent(cDAIInstance.address);
+          const cUSDCExchangeRate = await compoundHelper.getExchangeRateCurrent(cUSDC.address);
+          const cDAIExchangeRate = await compoundHelper.getExchangeRateCurrent(cDAI.address);
           // Replace expected token flow arrays with cToken underlying
           const expectedTokenFlowsUnderlying = replaceFlowsWithCTokenUnderlyingAsync(
             expectedTokenFlows,
             combinedTokenArray,
-            [cUSDCInstance.address, cDAIInstance.address],
-            [usdcInstance.address, daiInstance.address],
+            [cUSDC.address, cDAI.address],
+            [usdc.address, dai.address],
             [cUSDCExchangeRate, cDAIExchangeRate],
           );
 
@@ -2118,7 +2043,7 @@ describe('RebalancingAPI', () => {
 
         when required allowance is ${expectedTokenFlowsUnderlying['inflow'][2]} at token
 
-        address: ${usdcInstance.address} for spender: ${rebalancingSetCTokenBidder.address}.
+        address: ${usdc.address} for spender: ${rebalancingSetCTokenBidder.address}.
       `
           );
         });
@@ -2127,14 +2052,14 @@ describe('RebalancingAPI', () => {
       describe('and the caller does not have the balance to transfer', async () => {
         beforeEach(async () => {
           subjectCaller = ACCOUNTS[3].address;
-          const approvalToken: ERC20DetailedContract = await ERC20DetailedContract.at(usdcInstance.address, web3, {});
+          const approvalToken: ERC20DetailedContract = await ERC20DetailedContract.at(usdc.address, web3, {});
           await approvalToken.approve.sendTransactionAsync(
             rebalancingSetCTokenBidder.address,
             UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
             { from: subjectCaller }
           );
 
-          const approvalToken2: ERC20DetailedContract = await ERC20DetailedContract.at(daiInstance.address, web3, {});
+          const approvalToken2: ERC20DetailedContract = await ERC20DetailedContract.at(dai.address, web3, {});
           await approvalToken2.approve.sendTransactionAsync(
             rebalancingSetCTokenBidder.address,
             UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
@@ -2151,14 +2076,14 @@ describe('RebalancingAPI', () => {
           const combinedTokenArray = await rebalancingSetToken.getCombinedTokenArray.callAsync();
 
           // Get current exchange rate
-          const cUSDCExchangeRate = await compoundHelper.getExchangeRateCurrent(cUSDCInstance.address);
-          const cDAIExchangeRate = await compoundHelper.getExchangeRateCurrent(cDAIInstance.address);
+          const cUSDCExchangeRate = await compoundHelper.getExchangeRateCurrent(cUSDC.address);
+          const cDAIExchangeRate = await compoundHelper.getExchangeRateCurrent(cDAI.address);
           // Replace expected token flow arrays with cToken underlying
           const expectedTokenFlowsUnderlying = replaceFlowsWithCTokenUnderlyingAsync(
             expectedTokenFlows,
             combinedTokenArray,
-            [cUSDCInstance.address, cDAIInstance.address],
-            [usdcInstance.address, daiInstance.address],
+            [cUSDC.address, cDAI.address],
+            [usdc.address, dai.address],
             [cUSDCExchangeRate, cDAIExchangeRate],
           );
 
@@ -2166,7 +2091,7 @@ describe('RebalancingAPI', () => {
       `
         User: ${subjectCaller} has balance of 0
 
-        when required balance is ${expectedTokenFlowsUnderlying['inflow'][2]} at token address ${usdcInstance.address}.
+        when required balance is ${expectedTokenFlowsUnderlying['inflow'][2]} at token address ${usdc.address}.
       `
           );
         });
@@ -2184,14 +2109,7 @@ describe('RebalancingAPI', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 2;
-      [currentSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
+      currentSetToken = set1;
 
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -2243,7 +2161,6 @@ describe('RebalancingAPI', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
 
     let rebalancingSetQuantityToIssue: BigNumber;
 
@@ -2251,19 +2168,8 @@ describe('RebalancingAPI', () => {
     let subjectCaller: Address;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 2;
-      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+      currentSetToken = set1;
+      nextSetToken = set2;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -2283,18 +2189,6 @@ describe('RebalancingAPI', () => {
       // Use issued currentSetToken to issue rebalancingSetToken
       rebalancingSetQuantityToIssue = ether(7);
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
       subjectCaller = DEFAULT_ACCOUNT;
@@ -2399,7 +2293,6 @@ describe('RebalancingAPI', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
 
     let rebalancingSetQuantityToIssue: BigNumber;
 
@@ -2407,19 +2300,8 @@ describe('RebalancingAPI', () => {
     let subjectBidQuantity: BigNumber;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 2;
-      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+      currentSetToken = set1;
+      nextSetToken = set2;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -2439,18 +2321,6 @@ describe('RebalancingAPI', () => {
       // Use issued currentSetToken to issue rebalancingSetToken
       rebalancingSetQuantityToIssue = ether(7);
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
       subjectBidQuantity = rebalancingSetQuantityToIssue;
@@ -2521,8 +2391,8 @@ describe('RebalancingAPI', () => {
       });
 
       test('it filters out components with zero units from token flows', async () => {
-        const expectedOutflowDetailsZeroCount = 2;
-        const expectedInflowDetailsZeroCount = 2;
+        const expectedOutflowDetailsZeroCount = 1;
+        const expectedInflowDetailsZeroCount = 1;
 
         const returnedTokenFlowDetailsArrays = await subject();
 
@@ -2617,12 +2487,9 @@ describe('RebalancingAPI', () => {
     let defaultSetToken: SetTokenContract;
     let cTokenSetToken: SetTokenContract;
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
 
     let defaultBaseSetComponent: StandardTokenMockContract;
     let defaultBaseSetComponent2: StandardTokenMockContract;
-    let cTokenBaseSetComponent: StandardTokenMockContract;
-    let cTokenBaseSetComponent2: StandardTokenMockContract;
 
     let subjectRebalancingSetTokenAddress: Address;
     let subjectBidQuantity: BigNumber;
@@ -2650,13 +2517,9 @@ describe('RebalancingAPI', () => {
         defaultBaseSetNaturalUnit,
       );
 
-      // Create component tokens for Set containing cTokens
-      cTokenBaseSetComponent = cUSDCInstance;
-      cTokenBaseSetComponent2 = cDAIInstance;
-
       // Create the Set (default is 2 components)
       const nextComponentAddresses = [
-        cTokenBaseSetComponent.address, cTokenBaseSetComponent2.address,
+        cUSDC.address, cDAI.address,
       ];
 
       const nextComponentUnits = [
@@ -2706,23 +2569,6 @@ describe('RebalancingAPI', () => {
 
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
 
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await cTokenSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
-
       // Determine minimum bid
       const decOne = await defaultSetToken.naturalUnit.callAsync();
       const decTwo = await cTokenSetToken.naturalUnit.callAsync();
@@ -2730,8 +2576,8 @@ describe('RebalancingAPI', () => {
 
       // Approve tokens to rebalancingSetCTokenBidder contract
       await approveForTransferAsync([
-        usdcInstance,
-        daiInstance,
+        usdc,
+        dai,
       ], rebalancingSetCTokenBidder.address);
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
@@ -2797,13 +2643,13 @@ describe('RebalancingAPI', () => {
         );
 
         // Get exchange rate stored
-        const cUSDCExchangeRate = await compoundHelper.getExchangeRate(cUSDCInstance.address);
-        const cDAIExchangeRate = await compoundHelper.getExchangeRate(cDAIInstance.address);
+        const cUSDCExchangeRate = await compoundHelper.getExchangeRate(cUSDC.address);
+        const cDAIExchangeRate = await compoundHelper.getExchangeRate(cDAI.address);
         // Replace expected token flow arrays with cToken underlying
         const expectedTokenFlowDetailsUnderlyingArrays: TokenFlowsDetails = replaceDetailFlowsWithCTokenUnderlyingAsync(
           expectedTokenFlowDetailsArrays,
-          [cUSDCInstance.address, cDAIInstance.address],
-          [usdcInstance.address, daiInstance.address],
+          [cUSDC.address, cDAI.address],
+          [usdc.address, dai.address],
           [cUSDCExchangeRate, cDAIExchangeRate],
         );
 
@@ -2917,14 +2763,7 @@ describe('RebalancingAPI', () => {
     let subjectRebalancingSetTokenAddress: Address;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 1;
-      [currentSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
+      currentSetToken = set1;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -2978,14 +2817,7 @@ describe('RebalancingAPI', () => {
     let subjectRebalancingSetTokenAddresses: Address[];
 
     beforeEach(async () => {
-      const setTokensToDeploy = 1;
-      [currentSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
+      currentSetToken = set1;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -3039,14 +2871,7 @@ describe('RebalancingAPI', () => {
     let subjectRebalancingSetTokenAddresses: Address[];
 
     beforeEach(async () => {
-      const setTokensToDeploy = 1;
-      [currentSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
+      currentSetToken = set1;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -3101,14 +2926,7 @@ describe('RebalancingAPI', () => {
     let subjectRebalancingSetTokenAddress: Address;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 1;
-      [currentSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
+      currentSetToken = set1;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -3157,16 +2975,8 @@ describe('RebalancingAPI', () => {
     let subjectGetTimestamp: boolean;
 
     beforeEach(async () => {
-      const setTokens = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        2,
-      );
-
-      currentSetToken = setTokens[0];
-      nextSetToken = setTokens[1];
+      currentSetToken = set1;
+      nextSetToken = set2;
 
       const proposalPeriod = ONE_DAY_IN_SECONDS;
       const managerAddress = ACCOUNTS[1].address;
@@ -3186,23 +2996,6 @@ describe('RebalancingAPI', () => {
       // Use issued currentSetToken to issue rebalancingSetToken
       const rebalancingSetQuantityToIssue = ether(7);
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
-
-      // Deploy price curve used in auction
-      const priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
 
       // Transition to proposal state
       const auctionPriceCurveAddress = priceCurve.address;
@@ -3323,8 +3116,6 @@ describe('RebalancingAPI', () => {
 
     let defaultBaseSetComponent: StandardTokenMockContract | WethMockContract;
     let defaultBaseSetComponent2: StandardTokenMockContract | WethMockContract;
-    let wethBaseSetComponent: StandardTokenMockContract | WethMockContract;
-    let wethBaseSetComponent2: StandardTokenMockContract | WethMockContract;
     let wethComponentUnits: BigNumber;
     let wethBaseSetNaturalUnit: BigNumber;
     let cTokenBaseSetComponent: StandardTokenMockContract;
@@ -3366,13 +3157,9 @@ describe('RebalancingAPI', () => {
         defaultBaseSetNaturalUnit,
       );
 
-      // Create component tokens for Set containing weth
-      wethBaseSetComponent = weth;
-      wethBaseSetComponent2 = await deployTokenAsync(web3);
-
       // Create the Set (default is 2 components)
       const nextWethComponentAddresses = [
-        wethBaseSetComponent.address, wethBaseSetComponent2.address,
+        weth.address, usdc.address,
       ];
 
       wethComponentUnits = ether(0.01);
@@ -3391,8 +3178,8 @@ describe('RebalancingAPI', () => {
       );
 
       // Create component tokens for Set containing cTokens
-      cTokenBaseSetComponent = cUSDCInstance;
-      cTokenBaseSetComponent2 = cDAIInstance;
+      cTokenBaseSetComponent = cUSDC;
+      cTokenBaseSetComponent2 = cDAI;
       // Create the Set (default is 2 components)
       const nextCTokenComponentAddresses = [
         cTokenBaseSetComponent.address, cTokenBaseSetComponent2.address,
@@ -3459,23 +3246,6 @@ describe('RebalancingAPI', () => {
 
         await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
 
-        // Approve proposed Set's components to the whitelist;
-        const [proposalComponentOne, proposalComponentTwo] = await wethSetToken.getComponents.callAsync();
-        await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-        await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
-
-        // Deploy price curve used in auction
-        const priceCurve = await deployConstantAuctionPriceCurveAsync(
-          web3,
-          DEFAULT_AUCTION_PRICE_NUMERATOR,
-          DEFAULT_AUCTION_PRICE_DENOMINATOR
-        );
-
-        addPriceCurveToCoreAsync(
-          core,
-          priceCurve.address
-        );
-
         // Transition to rebalance state
         const auctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
@@ -3503,8 +3273,8 @@ describe('RebalancingAPI', () => {
 
         // Approve tokens to rebalancingSetEthBidder contract
         await approveForTransferAsync([
-          wethBaseSetComponent,
-          wethBaseSetComponent2,
+          weth,
+          usdc,
         ], rebalancingSetEthBidder.address);
 
         subjectEthQuantity = baseSetIssueQuantity.mul(wethComponentUnits).div(wethBaseSetNaturalUnit);
@@ -3623,23 +3393,6 @@ describe('RebalancingAPI', () => {
 
         await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
 
-        // Approve proposed Set's components to the whitelist;
-        const [proposalComponentOne, proposalComponentTwo] = await cTokenSetToken.getComponents.callAsync();
-        await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-        await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
-
-        // Deploy price curve used in auction
-        const priceCurve = await deployConstantAuctionPriceCurveAsync(
-          web3,
-          DEFAULT_AUCTION_PRICE_NUMERATOR,
-          DEFAULT_AUCTION_PRICE_DENOMINATOR
-        );
-
-        addPriceCurveToCoreAsync(
-          core,
-          priceCurve.address
-        );
-
         // Transition to rebalance state
         const auctionPriceCurveAddress = priceCurve.address;
         const setAuctionTimeToPivot = new BigNumber(100000);
@@ -3667,8 +3420,8 @@ describe('RebalancingAPI', () => {
 
         // Approve underlying tokens to rebalancingSetCTokenBidder contract
         await approveForTransferAsync([
-          usdcInstance,
-          daiInstance,
+          usdc,
+          dai,
         ], rebalancingSetCTokenBidder.address);
 
         bid1TxnHash = await rebalancingSetCTokenBidderWrapper.bidAndWithdraw(
@@ -3755,7 +3508,6 @@ describe('RebalancingAPI', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
     let rebalancingSetQuantityToIssue: BigNumber;
 
     let subjectRebalancingSetTokenAddress: Address;
@@ -3763,14 +3515,7 @@ describe('RebalancingAPI', () => {
     const standardRebalanceInterval = ONE_DAY_IN_SECONDS;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 1;
-      [currentSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
+      currentSetToken = set1;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -3790,18 +3535,6 @@ describe('RebalancingAPI', () => {
       // Use issued currentSetToken to issue rebalancingSetToken
       rebalancingSetQuantityToIssue = ether(7);
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
     });
@@ -3837,25 +3570,13 @@ describe('RebalancingAPI', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
     let rebalancingSetQuantityToIssue: BigNumber;
 
     let subjectRebalancingSetTokenAddress: Address;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 2;
-      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+      currentSetToken = set1;
+      nextSetToken = set2;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -3875,18 +3596,6 @@ describe('RebalancingAPI', () => {
       // Use issued currentSetToken to issue rebalancingSetToken
       rebalancingSetQuantityToIssue = ether(7);
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
     });
@@ -3983,26 +3692,14 @@ describe('RebalancingAPI', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
     let rebalancingSetQuantityToIssue: BigNumber;
     let currentSetStartingQuantity: BigNumber;
 
     let subjectRebalancingSetTokenAddress: Address;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 2;
-      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+      currentSetToken = set1;
+      nextSetToken = set2;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -4023,18 +3720,6 @@ describe('RebalancingAPI', () => {
       // Use issued currentSetToken to issue rebalancingSetToken
       rebalancingSetQuantityToIssue = ether(7);
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
     });
@@ -4118,26 +3803,15 @@ describe('RebalancingAPI', () => {
     let rebalancingSetToken: RebalancingSetTokenContract;
     let proposalPeriod: BigNumber;
     let managerAddress: Address;
-    let priceCurve: ConstantAuctionPriceCurveContract;
+
     let rebalancingSetQuantityToIssue: BigNumber;
     let currentSetStartingQuantity: BigNumber;
 
     let subjectRebalancingSetTokenAddress: Address;
 
     beforeEach(async () => {
-      const setTokensToDeploy = 2;
-      [currentSetToken, nextSetToken] = await deploySetTokensAsync(
-        web3,
-        core,
-        setTokenFactory.address,
-        transferProxy.address,
-        setTokensToDeploy,
-      );
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await nextSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
+      currentSetToken = set1;
+      nextSetToken = set2;
 
       proposalPeriod = ONE_DAY_IN_SECONDS;
       managerAddress = ACCOUNTS[1].address;
@@ -4158,18 +3832,6 @@ describe('RebalancingAPI', () => {
       // Use issued currentSetToken to issue rebalancingSetToken
       rebalancingSetQuantityToIssue = ether(7);
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetQuantityToIssue);
-
-      // Deploy price curve used in auction
-      priceCurve = await deployConstantAuctionPriceCurveAsync(
-        web3,
-        DEFAULT_AUCTION_PRICE_NUMERATOR,
-        DEFAULT_AUCTION_PRICE_DENOMINATOR
-      );
-
-      addPriceCurveToCoreAsync(
-        core,
-        priceCurve.address
-      );
 
       subjectRebalancingSetTokenAddress = rebalancingSetToken.address;
     });
@@ -4222,6 +3884,294 @@ describe('RebalancingAPI', () => {
 
         const [, remainingCurrentSets] = await rebalancingSetToken.getBiddingParameters.callAsync();
         expect(rebalancingAuctionRemainingCurrentShares).to.bignumber.equal(remainingCurrentSets);
+      });
+    });
+  });
+
+  describe('RebalancingSetTokenV3', async () => {
+    let currentSetToken: SetTokenContract;
+    let nextSetToken: SetTokenContract;
+    let rebalancingSetTokenV3Factory: RebalancingSetTokenV3FactoryContract;
+    let rebalancingSetTokenV3: RebalancingSetTokenV3Contract;
+
+    let feeCalculator: PerformanceFeeCalculatorContract;
+    let liquidator: TWAPLiquidatorContract;
+    let liquidatorWhiteList: WhiteListContract;
+    let feeCalculatorWhiteList: WhiteListContract;
+
+    let usdcOracleProxy: UpdatableOracleMockContract;
+    let ethOracleProxy: UpdatableOracleMockContract;
+    let oracleWhiteList: OracleWhiteListContract;
+
+    let rebalancingSetQuantityToIssue: BigNumber;
+    let currentSetStartingQuantity: BigNumber;
+
+    beforeEach(async () => {
+      ethOracleProxy = await deployUpdatableOracleMockAsync(
+        web3,
+        ether(200)
+      );
+
+      usdcOracleProxy = await deployUpdatableOracleMockAsync(
+        web3,
+        ether(1)
+      );
+
+      oracleWhiteList = await deployOracleWhiteListAsync(
+        web3,
+        [weth.address, usdc.address],
+        [ethOracleProxy.address, usdcOracleProxy.address],
+      );
+
+      currentSetToken = set1;
+      nextSetToken = set2;
+
+      const auctionPeriod = ONE_HOUR_IN_SECONDS;
+      const rangeStart = new BigNumber(3);
+      const rangeEnd = new BigNumber(21);
+      const assetPairHashes = [
+        liquidatorHelper.generateAssetPairHashes(weth.address, usdc.address),
+      ];
+      const assetPairBounds = [
+        {min: ether(10 ** 4).toString(), max: ether(10 ** 6).toString()},
+      ];
+      liquidator = await deployTWAPLiquidatorAsync(
+        web3,
+        core.address,
+        oracleWhiteList.address,
+        auctionPeriod,
+        rangeStart,
+        rangeEnd,
+        assetPairHashes,
+        assetPairBounds,
+        'TWAPLiquidator'
+      );
+
+      feeCalculator = await feeCalculatorHelper.deployPerformanceFeeCalculatorAsync(
+        core.address,
+        oracleWhiteList.address,
+        ether(.5),
+        ether(.1)
+      );
+
+      liquidatorWhiteList = await deployWhiteListContract(web3, [liquidator.address]);
+      feeCalculatorWhiteList = await deployWhiteListContract(web3, [feeCalculator.address]);
+
+      rebalancingSetTokenV3Factory = await deployRebalancingSetTokenV3FactoryContractAsync(
+        web3,
+        core,
+        whitelist,
+        liquidatorWhiteList,
+        feeCalculatorWhiteList
+      );
+
+      rebalancingSetTokenV3 = await createDefaultRebalancingSetTokenV3Async(
+        web3,
+        core,
+        rebalancingSetTokenV3Factory.address,
+        DEFAULT_ACCOUNT,
+        liquidator.address,
+        DEFAULT_ACCOUNT,
+        feeCalculator.address,
+        currentSetToken.address,
+        ONE_DAY_IN_SECONDS,
+        ZERO,
+      );
+    });
+
+    describe('fetchRBSetTWAPRebalanceDetailsAsync', async () => {
+      const chunkAuctionPeriod: BigNumber = ONE_HOUR_IN_SECONDS;
+      let rebalanceTimestamp: BigNumber;
+
+      let subjectRebalancingSetTokenAddress: Address;
+
+      beforeEach(async () => {
+        // Issue currentSetToken
+        currentSetStartingQuantity = ether(7);
+        await core.issue.sendTransactionAsync(currentSetToken.address, currentSetStartingQuantity, TX_DEFAULTS);
+        await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+        // Use issued currentSetToken to issue rebalancingSetToken
+        rebalancingSetQuantityToIssue = ether(7);
+        await core.issue.sendTransactionAsync(rebalancingSetTokenV3.address, rebalancingSetQuantityToIssue);
+
+        const liquidatorData = liquidatorHelper.generateTWAPLiquidatorCalldata(
+          ether(10 ** 6),
+          chunkAuctionPeriod,
+        );
+        await rebalancingSetTokenV3.startRebalance.sendTransactionAsync(
+          nextSetToken.address,
+          liquidatorData
+        );
+        const lastBlock = await web3.eth.getBlock('latest');
+        rebalanceTimestamp = new BigNumber(lastBlock.timestamp);
+
+        subjectRebalancingSetTokenAddress = rebalancingSetTokenV3.address;
+      });
+
+      async function subject(): Promise<RBSetTWAPRebalanceInfo> {
+        return await rebalancingAPI.fetchRBSetTWAPRebalanceDetailsAsync(subjectRebalancingSetTokenAddress);
+      }
+
+      it('fetches the correct RebalancingSetTokenV3/TradingPool data', async () => {
+        const rbSetData = await subject();
+
+        const auctionPriceParams = await rebalancingSetTokenV3.getAuctionPriceParameters.callAsync();
+        const startingCurrentSets = await rebalancingSetTokenV3.startingCurrentSetAmount.callAsync();
+        const biddingParams = await rebalancingSetTokenV3.getBiddingParameters.callAsync();
+
+        expect(rbSetData.rebalanceStartTime).to.be.bignumber.equal(auctionPriceParams[0]);
+        expect(rbSetData.timeToPivot).to.be.bignumber.equal(auctionPriceParams[1]);
+        expect(rbSetData.startPrice).to.be.bignumber.equal(auctionPriceParams[2]);
+        expect(rbSetData.endPrice).to.be.bignumber.equal(auctionPriceParams[3]);
+        expect(rbSetData.startingCurrentSets).to.be.bignumber.equal(startingCurrentSets);
+        expect(rbSetData.remainingCurrentSets).to.be.bignumber.equal(biddingParams[1]);
+        expect(rbSetData.minimumBid).to.be.bignumber.equal(biddingParams[0]);
+        expect(rbSetData.rebalanceState).to.be.bignumber.equal(new BigNumber(2));
+        expect(rbSetData.nextSet).to.equal(nextSetToken.address);
+        expect(rbSetData.liquidator).to.equal(liquidator.address);
+        expect(rbSetData.orderSize).to.be.bignumber.equal(startingCurrentSets);
+        expect(rbSetData.orderRemaining).to.be.bignumber.equal(ZERO);
+        expect(rbSetData.totalSetsRemaining).to.be.bignumber.equal(startingCurrentSets);
+        expect(rbSetData.chunkSize).to.be.bignumber.equal(startingCurrentSets);
+        expect(rbSetData.chunkAuctionPeriod).to.be.bignumber.equal(chunkAuctionPeriod);
+        expect(rbSetData.lastChunkAuctionEnd).to.be.bignumber.equal(rebalanceTimestamp.sub(chunkAuctionPeriod));
+        expect(JSON.stringify(rbSetData.nextSetInfo.components)).to.equal(JSON.stringify(set2Components));
+        expect(JSON.stringify(rbSetData.nextSetInfo.units)).to.equal(JSON.stringify(set2Units));
+        expect(rbSetData.nextSetInfo.naturalUnit).to.be.bignumber.equal(collateralNaturalUnit);
+        expect(rbSetData.nextSetInfo.name).to.equal('Set Token');
+        expect(rbSetData.nextSetInfo.symbol).to.equal('SET');
+      });
+    });
+
+    describe('iterateChunkAuction', async () => {
+      const chunkAuctionPeriod: BigNumber = ONE_HOUR_IN_SECONDS;
+
+      let bidAmount: BigNumber;
+      let systemTimeIncrease: number;
+
+      let subjectLiquidator: Address;
+      let subjectRebalancingSetTokenAddress: Address;
+
+      beforeAll(async () => {
+        currentSetStartingQuantity = ether(1001);
+        systemTimeIncrease = ONE_HOUR_IN_SECONDS.mul(1000).toNumber();
+        bidAmount = currentSetStartingQuantity;
+      });
+
+      beforeEach(async () => {
+        // Issue currentSetToken
+        await core.issue.sendTransactionAsync(currentSetToken.address, currentSetStartingQuantity, TX_DEFAULTS);
+        await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+        // Use issued currentSetToken to issue rebalancingSetToken
+        const rebalancingSetQuantityToIssue = currentSetStartingQuantity;
+        await core.issue.sendTransactionAsync(rebalancingSetTokenV3.address, rebalancingSetQuantityToIssue);
+
+        const liquidatorData = liquidatorHelper.generateTWAPLiquidatorCalldata(
+          ether(10 ** 5),
+          chunkAuctionPeriod,
+        );
+        await rebalancingSetTokenV3.startRebalance.sendTransactionAsync(
+          nextSetToken.address,
+          liquidatorData
+        );
+
+        await rebalanceAuctionModule.bidAndWithdraw.sendTransactionAsync(
+          rebalancingSetTokenV3.address,
+          bidAmount,
+          true
+        );
+
+        const block = await web3.eth.getBlock('latest');
+        timeKeeper.freeze(block.timestamp * 1000 + systemTimeIncrease);
+        await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS);
+
+        subjectLiquidator = liquidator.address;
+        subjectRebalancingSetTokenAddress = rebalancingSetTokenV3.address;
+      });
+
+      afterEach(async () => {
+        timeKeeper.reset();
+      });
+
+      async function subject(): Promise<string> {
+        return await rebalancingAPI.iterateChunkAuction(
+          subjectLiquidator,
+          subjectRebalancingSetTokenAddress,
+          TX_DEFAULTS
+        );
+      }
+
+      it('runs with no error and sets correct state', async () => {
+        await subject();
+
+        const twapState = await rebalancingAPI.fetchRBSetTWAPRebalanceDetailsAsync(subjectRebalancingSetTokenAddress);
+
+        expect(twapState.remainingCurrentSets).to.be.bignumber.equal(
+          currentSetStartingQuantity.sub(twapState.chunkSize)
+        );
+        expect(twapState.orderSize).to.be.bignumber.equal(currentSetStartingQuantity);
+        expect(twapState.orderRemaining).to.be.bignumber.equal(ZERO);
+        expect(twapState.totalSetsRemaining).to.be.bignumber.equal(currentSetStartingQuantity.sub(twapState.chunkSize));
+      });
+
+      describe('when the TWAP auction is finished', async () => {
+        beforeAll(async () => {
+          currentSetStartingQuantity = ether(999);
+        });
+
+        afterAll(async () => {
+          currentSetStartingQuantity = ether(1001);
+        });
+
+        it('throw', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `The TWAPAuction for ${subjectRebalancingSetTokenAddress} is finished. Cannot iterate to next chunk.`
+          );
+        });
+      });
+
+      describe('when the current chunk auction is not finished', async () => {
+        beforeAll(async () => {
+          bidAmount = ether(1);
+        });
+
+        afterAll(async () => {
+          bidAmount = currentSetStartingQuantity;
+        });
+
+        it('throw', async () => {
+          const twapState = await rebalancingAPI.fetchRBSetTWAPRebalanceDetailsAsync(subjectRebalancingSetTokenAddress);
+          return expect(subject()).to.be.rejectedWith(
+            `In order to iterate the chunk auction there must be less than current ${twapState.minimumBid} sets ` +
+            `remaining to be rebalanced. There are currently ${twapState.remainingCurrentSets} remaining for the ` +
+            `chunk auction.`
+          );
+        });
+      });
+
+      describe('when not enough time has elapsed between chunk auctions', async () => {
+        beforeAll(async () => {
+          systemTimeIncrease = 0;
+        });
+
+        afterAll(async () => {
+          systemTimeIncrease = ONE_HOUR_IN_SECONDS.mul(1000).toNumber();
+        });
+
+        it('throw', async () => {
+          const twapState = await rebalancingAPI.fetchRBSetTWAPRebalanceDetailsAsync(subjectRebalancingSetTokenAddress);
+          const nextAvailableChunk = new BigNumber(twapState.lastChunkAuctionEnd)
+                                        .add(twapState.chunkAuctionPeriod)
+                                        .mul(1000);
+          const nextChunkAuctionFormattedDate = moment(nextAvailableChunk.toNumber())
+          .format('dddd, MMMM Do YYYY, h:mm:ss a');
+          return expect(subject()).to.be.rejectedWith(
+            `Attempting to iterate auction too soon. Next chunk ` +
+            `available at ${nextChunkAuctionFormattedDate}`
+          );
+        });
       });
     });
   });

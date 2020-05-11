@@ -28,7 +28,7 @@ export const rebalancingErrors = {
   `${nextSetAddress} must be a multiple of ${currentSetAddress}, or vice versa to propose a valid rebalance.`,
   INCORRECT_STATE: (rebalancingSetAddress: string, requiredState: string) => `Rebalancing token at ` +
     `${rebalancingSetAddress} must be in ${requiredState} state to call that function.`,
-  NOT_ENOUGH_SETS_REBALANCED: (nextAvailableRebalance: string, minimumBid: string, remainingCurrentSets: string) =>
+  NOT_ENOUGH_SETS_REBALANCED: (minimumBid: string, remainingCurrentSets: string) =>
     `In order to settle rebalance there must be less than current ${minimumBid} sets remaining to be rebalanced. ` +
     `There are currently ${remainingCurrentSets} remaining for rebalance.`,
   BID_AMOUNT_EXCEEDS_REMAINING_CURRENT_SETS: (remainingCurrentSets: string, bidQuantity: string) => `The submitted ` +
@@ -39,4 +39,11 @@ export const rebalancingErrors = {
     `starts at ${pivotTimeStart}`,
   NOT_VALID_DRAWDOWN: (rebalancingSetAddress: string) =>
     `Auction has no remaining bids. Cannot drawdown Set at ${rebalancingSetAddress}.`,
+  TWAP_AUCTION_FINISHED: (rebalancingSetAddress: string) =>
+    `The TWAPAuction for ${rebalancingSetAddress} is finished. Cannot iterate to next chunk.`,
+  CHUNK_AUCTION_NOT_FINISHED: (minimumBid: string, remainingCurrentSets: string) =>
+  `In order to iterate the chunk auction there must be less than current ${minimumBid} sets remaining to be ` +
+  `rebalanced. There are currently ${remainingCurrentSets} remaining for the chunk auction.`,
+  INSUFFICIENT_TIME_BETWEEN_CHUNKS: (nextAvailableRebalance: string) => `Attempting to iterate auction too soon.` +
+    ` Next chunk available at ${nextAvailableRebalance}`,
 };

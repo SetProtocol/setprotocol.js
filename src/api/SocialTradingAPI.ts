@@ -46,7 +46,8 @@ import {
   NewTradingPoolV2Info,
   PerformanceFeeInfo,
   TradingPoolAccumulationInfo,
-  TradingPoolRebalanceInfo
+  TradingPoolRebalanceInfo,
+  TradingPoolTWAPRebalanceInfo,
 } from '../types/strategies';
 
 const { SetProtocolUtils: SetUtils } = setProtocolUtils;
@@ -539,6 +540,23 @@ export class SocialTradingAPI {
   }
 
   /**
+   * Returns relevant details of Trading Pools being rebalanced by TWAP. Return object adheres to the
+   * TradingPoolTWAPRebalanceInfo interface.
+   *
+   * @param  tradingPool            Address of tradingPool being updated
+   * @return                        NewTradingPoolInfo
+   */
+  public async fetchTradingPoolTWAPRebalanceDetailsAsync(
+    tradingPool: Address
+  ): Promise<TradingPoolTWAPRebalanceInfo> {
+    const newPoolInfo = await this.protocolViewer.fetchTradingPoolTWAPRebalanceDetails(
+      tradingPool
+    );
+
+    return this.createTradingPoolTWAPRebalanceObject(newPoolInfo);
+  }
+
+  /**
    * Fetches all trading pool operators for an array of trading pools
    *
    * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
@@ -701,18 +719,18 @@ export class SocialTradingAPI {
     return {
       trader: poolInfo.trader,
       allocator: poolInfo.allocator,
-      currentAllocation: poolInfo.currentAllocation,
+      currentAllocation: new BigNumber(poolInfo.currentAllocation),
       manager: rbSetInfo.manager,
       feeRecipient: rbSetInfo.feeRecipient,
       currentSet: rbSetInfo.currentSet,
       poolName: rbSetInfo.name,
       poolSymbol: rbSetInfo.symbol,
-      unitShares: rbSetInfo.unitShares,
-      naturalUnit: rbSetInfo.naturalUnit,
-      rebalanceInterval: rbSetInfo.rebalanceInterval,
-      entryFee: rbSetInfo.entryFee,
-      rebalanceFee: rbSetInfo.rebalanceFee,
-      lastRebalanceTimestamp: rbSetInfo.lastRebalanceTimestamp,
+      unitShares: new BigNumber(rbSetInfo.unitShares),
+      naturalUnit: new BigNumber(rbSetInfo.naturalUnit),
+      rebalanceInterval: new BigNumber(rbSetInfo.rebalanceInterval),
+      entryFee: new BigNumber(rbSetInfo.entryFee),
+      rebalanceFee: new BigNumber(rbSetInfo.rebalanceFee),
+      lastRebalanceTimestamp: new BigNumber(rbSetInfo.lastRebalanceTimestamp),
       rebalanceState: rbSetInfo.rebalanceState,
       currentSetInfo: collateralInfo,
     } as NewTradingPoolInfo;
@@ -732,18 +750,18 @@ export class SocialTradingAPI {
     return {
       trader: poolInfo.trader,
       allocator: poolInfo.allocator,
-      currentAllocation: poolInfo.currentAllocation,
+      currentAllocation: new BigNumber(poolInfo.currentAllocation),
       manager: rbSetInfo.manager,
       feeRecipient: rbSetInfo.feeRecipient,
       currentSet: rbSetInfo.currentSet,
       poolName: rbSetInfo.name,
       poolSymbol: rbSetInfo.symbol,
-      unitShares: rbSetInfo.unitShares,
-      naturalUnit: rbSetInfo.naturalUnit,
-      rebalanceInterval: rbSetInfo.rebalanceInterval,
-      entryFee: rbSetInfo.entryFee,
-      rebalanceFee: rbSetInfo.rebalanceFee,
-      lastRebalanceTimestamp: rbSetInfo.lastRebalanceTimestamp,
+      unitShares: new BigNumber(rbSetInfo.unitShares),
+      naturalUnit: new BigNumber(rbSetInfo.naturalUnit),
+      rebalanceInterval: new BigNumber(rbSetInfo.rebalanceInterval),
+      entryFee: new BigNumber(rbSetInfo.entryFee),
+      rebalanceFee: new BigNumber(rbSetInfo.rebalanceFee),
+      lastRebalanceTimestamp: new BigNumber(rbSetInfo.lastRebalanceTimestamp),
       rebalanceState: rbSetInfo.rebalanceState,
       currentSetInfo: collateralInfo,
       performanceFeeInfo: perfFeeInfo,
@@ -759,19 +777,48 @@ export class SocialTradingAPI {
     return {
       trader: poolInfo.trader,
       allocator: poolInfo.allocator,
-      currentAllocation: poolInfo.currentAllocation,
+      currentAllocation: new BigNumber(poolInfo.currentAllocation),
       liquidator: rbSetInfo.liquidator,
       nextSet: rbSetInfo.nextSet,
-      rebalanceStartTime: rbSetInfo.rebalanceStartTime,
-      timeToPivot: rbSetInfo.timeToPivot,
-      startPrice: rbSetInfo.startPrice,
-      endPrice: rbSetInfo.endPrice,
-      startingCurrentSets: rbSetInfo.startingCurrentSets,
-      remainingCurrentSets: rbSetInfo.remainingCurrentSets,
-      minimumBid: rbSetInfo.minimumBid,
+      rebalanceStartTime: new BigNumber(rbSetInfo.rebalanceStartTime),
+      timeToPivot: new BigNumber(rbSetInfo.timeToPivot),
+      startPrice: new BigNumber(rbSetInfo.startPrice),
+      endPrice: new BigNumber(rbSetInfo.endPrice),
+      startingCurrentSets: new BigNumber(rbSetInfo.startingCurrentSets),
+      remainingCurrentSets: new BigNumber(rbSetInfo.remainingCurrentSets),
+      minimumBid: new BigNumber(rbSetInfo.minimumBid),
       rebalanceState: rbSetInfo.rebalanceState,
       nextSetInfo: collateralInfo,
     } as TradingPoolRebalanceInfo;
+  }
+
+  private createTradingPoolTWAPRebalanceObject(
+    newPoolInfo: any,
+  ): TradingPoolTWAPRebalanceInfo {
+    const [poolInfo, rbSetInfo, collateralInfo] = newPoolInfo;
+
+    return {
+      trader: poolInfo.trader,
+      allocator: poolInfo.allocator,
+      currentAllocation: new BigNumber(poolInfo.currentAllocation),
+      liquidator: rbSetInfo.liquidator,
+      nextSet: rbSetInfo.nextSet,
+      rebalanceStartTime: new BigNumber(rbSetInfo.rebalanceStartTime),
+      timeToPivot: new BigNumber(rbSetInfo.timeToPivot),
+      startPrice: new BigNumber(rbSetInfo.startPrice),
+      endPrice: new BigNumber(rbSetInfo.endPrice),
+      startingCurrentSets: new BigNumber(rbSetInfo.startingCurrentSets),
+      remainingCurrentSets: new BigNumber(rbSetInfo.remainingCurrentSets),
+      minimumBid: new BigNumber(rbSetInfo.minimumBid),
+      orderSize: new BigNumber(rbSetInfo.orderSize),
+      orderRemaining: new BigNumber(rbSetInfo.orderRemaining),
+      totalSetsRemaining: new BigNumber(rbSetInfo.totalSetsRemaining),
+      chunkSize: new BigNumber(rbSetInfo.chunkSize),
+      chunkAuctionPeriod: new BigNumber(rbSetInfo.chunkAuctionPeriod),
+      lastChunkAuctionEnd: new BigNumber(rbSetInfo.lastChunkAuctionEnd),
+      rebalanceState: rbSetInfo.rebalanceState,
+      nextSetInfo: collateralInfo,
+    } as TradingPoolTWAPRebalanceInfo;
   }
 
   private createTradingPoolAccumulationObject(
