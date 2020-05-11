@@ -4,6 +4,8 @@ import { Address, Bytes } from 'set-protocol-utils';
 import {
   AssetPairManager,
   AssetPairManagerContract,
+  AssetPairManagerV2,
+  AssetPairManagerV2Contract,
   BinaryAllocator,
   BinaryAllocatorContract,
   BTCDaiRebalancingManager,
@@ -258,6 +260,38 @@ export const deployAssetPairManagerAsync = async(
   );
 };
 
+export const deployAssetPairManagerV2Async = async(
+  web3: Web3,
+  coreInstance: Address,
+  allocatorInstance: Address,
+  triggerInstance: Address,
+  useBullishAssetAllocation: boolean,
+  allocationPrecision: BigNumber,
+  bullishBaseAssetAllocation: BigNumber,
+  signalConfirmationMinTime: BigNumber,
+  signalConfirmationMaxTime: BigNumber,
+  liquidatorData: Bytes,
+): Promise<AssetPairManagerV2Contract> => {
+  const truffleAssetPairManager = setDefaultTruffleContract(web3, AssetPairManagerV2);
+
+  // Deploy MACO Strategy Manager V2
+  const deployedAssetPairManagerInstance = await truffleAssetPairManager.new(
+    coreInstance,
+    allocatorInstance,
+    triggerInstance,
+    useBullishAssetAllocation,
+    allocationPrecision,
+    bullishBaseAssetAllocation,
+    [signalConfirmationMinTime, signalConfirmationMaxTime],
+    liquidatorData,
+  );
+  return await AssetPairManagerV2Contract.at(
+    deployedAssetPairManagerInstance.address,
+    web3,
+    TX_DEFAULTS,
+  );
+};
+
 export const deploySocialTradingManagerAsync = async(
   web3: Web3,
   core: Address,
@@ -406,7 +440,7 @@ export const deployRSITrendingTriggerAsync = async(
 };
 
 export const initializeManagerAsync = async(
-  macoManager: MACOStrategyManagerContract | MACOStrategyManagerV2Contract | AssetPairManagerContract,
+  macoManager: MACOStrategyManagerContract | MACOStrategyManagerV2Contract | AssetPairManagerContract | AssetPairManagerV2Contract,
   rebalancingSetTokenAddress: Address,
 ): Promise<void> => {
   await macoManager.initialize.sendTransactionAsync(rebalancingSetTokenAddress);
