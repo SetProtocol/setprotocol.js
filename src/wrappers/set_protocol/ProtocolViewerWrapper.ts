@@ -197,6 +197,38 @@ export class ProtocolViewerWrapper {
   }
 
   /**
+   * Fetches rebalance state of a TWAP auction including info about underlying RebalancingSetTokenV2/V3, and
+   * next collateralSet.
+   *
+   * @param  tradingPoolAddress      RebalancingSetTokenV2/V3 contract address
+   */
+  public async fetchRBSetTWAPRebalanceDetails(
+    rebalancingSetTokenAddress: Address,
+  ): Promise<any> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.fetchRBSetTWAPRebalanceDetails.callAsync(rebalancingSetTokenAddress);
+  }
+
+  /**
+   * Fetches rebalance state of a TWAP auction including info about the trading pool from the manager,
+   *  underlying RebalancingSetTokenV2/V3 info, and next collateralSet.
+   *
+   * @param  tradingPoolAddress      RebalancingSetTokenV2/V3 contract address of tradingPool
+   */
+  public async fetchTradingPoolTWAPRebalanceDetails(
+    tradingPoolAddress: Address,
+  ): Promise<any> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.fetchTradingPoolTWAPRebalanceDetails.callAsync(tradingPoolAddress);
+  }
+
+  /**
    * Fetches all trading pool operators for an array of trading pools
    *
    * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses

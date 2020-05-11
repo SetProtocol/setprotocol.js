@@ -36,6 +36,7 @@ import {
   SetTokenContract,
   TimeLockUpgradeContract,
   TransferProxyContract,
+  TWAPLiquidatorContract,
   WhiteListContract,
   VaultContract,
 } from 'set-protocol-contracts';
@@ -591,7 +592,7 @@ export class ProtocolContractWrapper {
     performanceFeeCalculator: Address,
     transactionOptions: object = {},
   ): Promise<PerformanceFeeCalculatorContract> {
-    const cacheKey = `PerformanceFeeCalculator${performanceFeeCalculator}`;
+    const cacheKey = `PerformanceFeeCalculator_${performanceFeeCalculator}`;
 
     if (cacheKey in this.cache) {
       return this.cache[cacheKey] as PerformanceFeeCalculatorContract;
@@ -603,6 +604,32 @@ export class ProtocolContractWrapper {
       );
       this.cache[cacheKey] = performanceFeeCalculatorContract;
       return performanceFeeCalculatorContract;
+    }
+  }
+
+  /**
+   * Load a TWAPLiquidator contract
+   *
+   * @param  twapLiquidator               Address of the TWAPLiquidator contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The ProtocolViewer Contract
+   */
+  public async loadTWAPLiquidatorContract(
+    twapLiquidator: Address,
+    transactionOptions: object = {},
+  ): Promise<TWAPLiquidatorContract> {
+    const cacheKey = `TWAPLiquidator_${twapLiquidator}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as TWAPLiquidatorContract;
+    } else {
+      const twapLiquidatorContract = await TWAPLiquidatorContract.at(
+        twapLiquidator,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = twapLiquidatorContract;
+      return twapLiquidatorContract;
     }
   }
 }

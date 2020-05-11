@@ -1,6 +1,6 @@
 {
   "name": "setprotocol.js",
-  "version": "1.2.8-rc5",
+  "version": "1.2.8-rc6",
   "description": "A javascript library for interacting with the Set protocol",
   "keywords": [
     "setProtocol.js",
@@ -67,10 +67,10 @@
     "lodash": "^4.17.4",
     "lodash.compact": "^3.0.1",
     "moment": "^2.22.2",
-    "set-protocol-contracts": "1.4.5-beta",
+    "set-protocol-contracts": "1.4.9-beta",
     "set-protocol-oracles": "^1.0.16",
     "set-protocol-strategies": "^1.1.37",
-    "set-protocol-viewers": "^1.0.11",
+    "set-protocol-viewers": "^1.0.12",
     "set-protocol-utils": "^1.1.2",
     "timekeeper": "^2.1.2",
     "tiny-promisify": "^1.0.0",

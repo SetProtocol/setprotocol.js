@@ -173,3 +173,32 @@ export interface TradingPoolRebalanceInfo {
   rebalanceState: BigNumber;
   nextSetInfo: CollateralSetInfo;
 }
+
+export interface RBSetTWAPRebalanceInfo {
+  liquidator: Address;
+  nextSet: Address;
+  rebalanceStartTime: BigNumber;
+  timeToPivot: BigNumber;
+  startPrice: BigNumber;
+  endPrice: BigNumber;
+  startingCurrentSets: BigNumber;
+  remainingCurrentSets: BigNumber;
+  minimumBid: BigNumber;
+  rebalanceState: BigNumber;
+  nextSetInfo: CollateralSetInfo;
+  orderSize: BigNumber;
+  orderRemaining: BigNumber;
+  totalSetsRemaining: BigNumber;
+  chunkSize: BigNumber;
+  chunkAuctionPeriod: BigNumber;
+  lastChunkAuctionEnd: BigNumber;
+}
+
+export interface TradingPoolTWAPRebalanceInfo extends TradingPoolRebalanceInfo {
+  orderSize: BigNumber;
+  orderRemaining: BigNumber;
+  totalSetsRemaining: BigNumber;
+  chunkSize: BigNumber;
+  chunkAuctionPeriod: BigNumber;
+  lastChunkAuctionEnd: BigNumber;
+}

@@ -38,6 +38,7 @@ export { RebalancingAuctionModuleWrapper } from './set_protocol/RebalancingAucti
 export { RebalancingSetTokenWrapper } from './set_protocol/RebalancingSetTokenWrapper';
 export { SetTokenWrapper } from './set_protocol/SetTokenWrapper';
 export { TimeLockUpgradeWrapper } from './set_protocol/TimeLockUpgradeWrapper';
+export { TWAPLiquidatorWrapper } from './set_protocol/TWAPLiquidatorWrapper';
 export { WhitelistWrapper } from './set_protocol/WhitelistWrapper';
 export { VaultWrapper } from './set_protocol/VaultWrapper';
 

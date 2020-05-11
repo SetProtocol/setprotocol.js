@@ -34,6 +34,7 @@ import {
   FeeCalculatorHelper,
   FixedFeeCalculatorContract,
   LinearAuctionLiquidatorContract,
+  LiquidatorHelper,
   OracleWhiteListContract,
   PerformanceFeeCalculatorContract,
   RebalancingSetTokenV2Contract,
@@ -45,6 +46,7 @@ import {
   SetTokenFactoryContract,
   StandardTokenMockContract,
   TransferProxyContract,
+  TWAPLiquidatorContract,
   ValuationHelper,
   WhiteListContract,
 } from 'set-protocol-contracts';
@@ -75,7 +77,8 @@ import {
   TX_DEFAULTS,
   UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
   ZERO,
-  ZERO_BYTES
+  ZERO_BYTES,
+  ONE_HOUR_IN_SECONDS
 } from '@src/constants';
 import {
   addWhiteListedTokenAsync,
@@ -93,6 +96,7 @@ import {
   deploySocialTradingManagerAsync,
   deploySocialTradingManagerV2Async,
   deployTokensSpecifyingDecimals,
+  deployTWAPLiquidatorAsync,
   deployUpdatableOracleMockAsync,
   deployWhiteListContract,
   increaseChainTimeAsync,
@@ -111,7 +115,8 @@ import {
   NewTradingPoolV2Info,
   PerformanceFeeInfo,
   TradingPoolAccumulationInfo,
-  TradingPoolRebalanceInfo
+  TradingPoolRebalanceInfo,
+  TradingPoolTWAPRebalanceInfo,
 } from '@src/types/strategies';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
@@ -142,6 +147,7 @@ describe('SocialTradingAPI', () => {
   let wrappedETH: StandardTokenMockContract;
 
   let liquidator: LinearAuctionLiquidatorContract;
+  let twapLiquidator: TWAPLiquidatorContract;
   let feeCalculator: FixedFeeCalculatorContract;
   let performanceFeeCalculator: PerformanceFeeCalculatorContract;
   let rebalancingFactory: RebalancingSetTokenV2FactoryContract;
@@ -176,6 +182,7 @@ describe('SocialTradingAPI', () => {
   const oracleHelper = new OracleHelper(DEFAULT_ACCOUNT);
   const valuationHelper = new ValuationHelper(DEFAULT_ACCOUNT, coreHelper, erc20Helper, oracleHelper);
   const feeCalculatorHelper = new FeeCalculatorHelper(DEFAULT_ACCOUNT);
+  const liquidatorHelper = new LiquidatorHelper(DEFAULT_ACCOUNT, erc20Helper, valuationHelper);
 
   beforeAll(() => {
     ABIDecoder.addABI(coreContract.abi);
@@ -230,12 +237,35 @@ describe('SocialTradingAPI', () => {
       [ethOracleProxy.address, btcOracleProxy.address],
     );
 
+    const auctionPeriod = ONE_HOUR_IN_SECONDS;
+    const rangeStart = new BigNumber(1);
+    const rangeEnd = new BigNumber(23);
     liquidator = await deployLinearAuctionLiquidatorContractAsync(
       web3,
       core,
-      oracleWhiteList
+      oracleWhiteList,
+      auctionPeriod,
+      rangeStart,
+      rangeEnd
     );
-    liquidatorWhiteList = await deployWhiteListContract(web3, [liquidator.address]);
+    const assetPairHashes = [
+      liquidatorHelper.generateAssetPairHashes(wrappedETH.address, wrappedBTC.address),
+    ];
+    const assetPairBounds = [
+      {min: ether(10 ** 4).toString(), max: ether(10 ** 6).toString()},
+    ];
+    twapLiquidator = await deployTWAPLiquidatorAsync(
+      web3,
+      core.address,
+      oracleWhiteList.address,
+      auctionPeriod,
+      rangeStart,
+      rangeEnd,
+      assetPairHashes,
+      assetPairBounds,
+      'TWAPLiquidator'
+    );
+    liquidatorWhiteList = await deployWhiteListContract(web3, [liquidator.address, twapLiquidator.address]);
 
     feeCalculator = await deployFixedFeeCalculatorAsync(web3);
 
@@ -1721,6 +1751,173 @@ describe('SocialTradingAPI', () => {
       expect(newPoolInfo.remainingCurrentSets).to.be.bignumber.equal(biddingParams[1]);
       expect(newPoolInfo.minimumBid).to.be.bignumber.equal(biddingParams[0]);
       expect(newPoolInfo.rebalanceState).to.be.bignumber.equal(new BigNumber(2));
+    });
+  });
+
+  describe('fetchTradingPoolTWAPRebalanceDetailsAsync', async () => {
+    let subjectTradingPool: Address;
+
+    let newAllocation: BigNumber;
+    let rebalanceTimestamp: BigNumber;
+    const chunkAuctionPeriod: BigNumber = ONE_HOUR_IN_SECONDS;
+
+    let newCollateralInstance: SetTokenContract;
+    let tradingPoolInstance: RebalancingSetTokenV2Contract;
+
+    beforeEach(async () => {
+      const manager = setManagerV2.address;
+      const allocatorAddress = allocator.address;
+      const startingBaseAssetAllocation = ether(0.72);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = 'CoolPool';
+      const tradingPoolSymbol = 'COOL';
+      const liquidatorAddress = twapLiquidator.address;
+      const feeRecipient = DEFAULT_ACCOUNT;
+      const feeCalculatorAddress = performanceFeeCalculator.address;
+      const rebalanceInterval = ONE_DAY_IN_SECONDS;
+      const failAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const lastRebalanceTimestamp = new BigNumber(timestamp);
+      const entryFee = ether(.01);
+      const profitFeePeriod = ONE_DAY_IN_SECONDS.mul(30);
+      const highWatermarkResetPeriod = ONE_DAY_IN_SECONDS.mul(365);
+      const profitFee = ether(.2);
+      const streamingFee = ether(.02);
+
+      const txHash = await socialTradingAPI.createTradingPoolV2Async(
+        manager,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidatorAddress,
+        feeRecipient,
+        feeCalculatorAddress,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFee,
+        profitFeePeriod,
+        highWatermarkResetPeriod,
+        profitFee,
+        streamingFee,
+        { from: DEFAULT_ACCOUNT }
+      );
+
+      await increaseChainTimeAsync(web3, rebalanceInterval.add(1));
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const collateralAddress = extractNewSetTokenAddressFromLogs(formattedLogs, 2);
+      const collateralInstance = await SetTokenContract.at(
+        collateralAddress,
+        web3,
+        TX_DEFAULTS
+      );
+
+      await collateralInstance.approve.sendTransactionAsync(
+        transferProxy.address,
+        UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+        { from: DEFAULT_ACCOUNT }
+      );
+
+      const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+      tradingPoolInstance = await RebalancingSetTokenV3Contract.at(
+        tradingPoolAddress,
+        web3,
+        TX_DEFAULTS
+      );
+
+      // Fast forward to allow propose to be called
+      const lastRebalancedTimestampSeconds = await tradingPoolInstance.lastRebalanceTimestamp.callAsync();
+      const nextRebalanceAvailableAtSeconds = lastRebalancedTimestampSeconds.toNumber() + rebalanceInterval.toNumber();
+      timeKeeper.freeze(nextRebalanceAvailableAtSeconds * 1000);
+      increaseChainTimeAsync(web3, rebalanceInterval.add(1));
+
+      subjectTradingPool = tradingPoolAddress;
+
+      await core.issue.sendTransactionAsync(collateralAddress, ether(2), { from: DEFAULT_ACCOUNT });
+      await core.issue.sendTransactionAsync(subjectTradingPool, ether(2), { from: DEFAULT_ACCOUNT });
+
+      const liquidatorData = liquidatorHelper.generateTWAPLiquidatorCalldata(
+        ether(10 ** 6),
+        chunkAuctionPeriod,
+      );
+      newAllocation = ether(.37);
+      const newTxHash = await socialTradingAPI.updateAllocationAsync(
+        manager,
+        subjectTradingPool,
+        newAllocation,
+        liquidatorData,
+        { from: DEFAULT_ACCOUNT }
+      );
+      const block = await web3.eth.getBlock('latest');
+      rebalanceTimestamp = new BigNumber(block.timestamp);
+
+      const newFormattedLogs = await getFormattedLogsFromTxHash(web3, newTxHash);
+      const newCollateralAddress = extractNewSetTokenAddressFromLogs(newFormattedLogs, 2);
+      newCollateralInstance = await SetTokenContract.at(
+        newCollateralAddress,
+        web3,
+        TX_DEFAULTS
+      );
+    });
+
+    async function subject(): Promise<TradingPoolTWAPRebalanceInfo> {
+      return await socialTradingAPI.fetchTradingPoolTWAPRebalanceDetailsAsync(
+        subjectTradingPool,
+      );
+    }
+
+    test.only('successfully gets info from manager', async () => {
+      const poolRebalanceInfo = await subject();
+
+      const poolInfo: any = await setManagerV2.pools.callAsync(subjectTradingPool);
+
+      expect(poolRebalanceInfo.trader).to.equal(poolInfo.trader);
+      expect(poolRebalanceInfo.allocator).to.equal(poolInfo.allocator);
+      expect(poolRebalanceInfo.currentAllocation).to.be.bignumber.equal(poolInfo.currentAllocation);
+    });
+
+    test('successfully gets info from collateral Set', async () => {
+      const poolRebalanceInfo = await subject();
+
+      const components = await newCollateralInstance.getComponents.callAsync();
+      const units = await newCollateralInstance.getUnits.callAsync();
+      const naturalUnit = await newCollateralInstance.naturalUnit.callAsync();
+      const name = await newCollateralInstance.name.callAsync();
+      const symbol = await newCollateralInstance.symbol.callAsync();
+
+      expect(JSON.stringify(poolRebalanceInfo.nextSetInfo.components)).to.equal(JSON.stringify(components));
+      expect(JSON.stringify(poolRebalanceInfo.nextSetInfo.units)).to.equal(JSON.stringify(units));
+      expect(poolRebalanceInfo.nextSetInfo.naturalUnit).to.be.bignumber.equal(naturalUnit);
+      expect(poolRebalanceInfo.nextSetInfo.name).to.equal(name);
+      expect(poolRebalanceInfo.nextSetInfo.symbol).to.equal(symbol);
+    });
+
+    test('successfully gets info from RebalancingSetTokenV2', async () => {
+      const poolRebalanceInfo = await subject();
+
+      const auctionParams = await tradingPoolInstance.getAuctionPriceParameters.callAsync();
+      const startingCurrentSets = await tradingPoolInstance.startingCurrentSetAmount.callAsync();
+      const biddingParams = await tradingPoolInstance.getBiddingParameters.callAsync();
+
+      expect(poolRebalanceInfo.liquidator).to.equal(liquidator.address);
+      expect(poolRebalanceInfo.nextSet).to.equal(newCollateralInstance.address);
+      expect(poolRebalanceInfo.rebalanceStartTime).to.be.bignumber.equal(auctionParams[0]);
+      expect(poolRebalanceInfo.timeToPivot).to.be.bignumber.equal(auctionParams[1]);
+      expect(poolRebalanceInfo.startPrice).to.be.bignumber.equal(auctionParams[2]);
+      expect(poolRebalanceInfo.endPrice).to.be.bignumber.equal(auctionParams[3]);
+      expect(poolRebalanceInfo.startingCurrentSets).to.be.bignumber.equal(startingCurrentSets);
+      expect(poolRebalanceInfo.remainingCurrentSets).to.be.bignumber.equal(biddingParams[1]);
+      expect(poolRebalanceInfo.minimumBid).to.be.bignumber.equal(biddingParams[0]);
+      expect(poolRebalanceInfo.orderSize).to.be.bignumber.equal(startingCurrentSets);
+      expect(poolRebalanceInfo.orderRemaining).to.be.bignumber.equal(ZERO);
+      expect(poolRebalanceInfo.totalSetsRemaining).to.be.bignumber.equal(startingCurrentSets);
+      expect(poolRebalanceInfo.chunkSize).to.be.bignumber.equal(startingCurrentSets);
+      expect(poolRebalanceInfo.chunkAuctionPeriod).to.be.bignumber.equal(chunkAuctionPeriod);
+      expect(poolRebalanceInfo.lastChunkAuctionEnd).to.be.bignumber.equal(rebalanceTimestamp.sub(chunkAuctionPeriod));
+      expect(poolRebalanceInfo.rebalanceState).to.be.bignumber.equal(new BigNumber(2));
     });
   });
 

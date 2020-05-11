@@ -30,6 +30,7 @@ import {
   RebalancingSetCTokenBidderWrapper,
   RebalancingSetEthBidderWrapper,
   RebalancingSetTokenWrapper,
+  TWAPLiquidatorWrapper,
 } from '../wrappers';
 import { BigNumber, parseRebalanceState } from '../util';
 import {
@@ -44,6 +45,9 @@ import {
   Tx,
   TokenFlowsDetails,
 } from '../types/common';
+import {
+  RBSetTWAPRebalanceInfo
+} from '../types/strategies';
 
 /**
  * @title RebalancingAPI
@@ -62,6 +66,7 @@ export class RebalancingAPI {
   private rebalancingAuctionModule: RebalancingAuctionModuleWrapper;
   private rebalancingSetEthBidder: RebalancingSetEthBidderWrapper;
   private rebalancingSetCTokenBidder: RebalancingSetCTokenBidderWrapper;
+  private twapLiquidator: TWAPLiquidatorWrapper;
   private setToken: SetTokenWrapper;
   private config: SetProtocolConfig;
 
@@ -95,6 +100,7 @@ export class RebalancingAPI {
       new RebalancingSetCTokenBidderWrapper(this.web3, config.rebalancingSetCTokenBidderAddress);
     this.rebalancingSetEthBidder = new RebalancingSetEthBidderWrapper(this.web3, config.rebalancingSetEthBidderAddress);
     this.protocolViewer = new ProtocolViewerWrapper(this.web3, config.protocolViewerAddress);
+    this.twapLiquidator = new TWAPLiquidatorWrapper(this.web3);
 
     this.config = config;
   }
@@ -157,6 +163,25 @@ export class RebalancingAPI {
     await this.assertStartRebalance(rebalancingSetTokenAddress);
 
     return await this.rebalancingSetToken.startRebalance(rebalancingSetTokenAddress, txOpts);
+  }
+
+  /**
+   * Iterate TWAP Auction to the next chunkAuction
+   *
+   * @param  liquidatorAddress              Address of TWAP Liquidator
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
+   *                                          gasPrice data
+   * @return                                Transaction hash
+   */
+  public async iterateChunkAuction(
+    liquidatorAddress: Address,
+    rebalancingSetTokenAddress: Address,
+    txOpts: Tx
+  ): Promise<string> {
+    await this.assertIterateChunkAuction(rebalancingSetTokenAddress);
+
+    return await this.twapLiquidator.iterateChunkAuction(liquidatorAddress, rebalancingSetTokenAddress, txOpts);
   }
 
   /**
@@ -631,6 +656,23 @@ export class RebalancingAPI {
   }
 
   /**
+   * Returns relevant details of RebalancingSetTokens being rebalanced by TWAP. Return object adheres to the
+   * RBSetTWAPRebalanceInfo interface.
+   *
+   * @param  tradingPool            Address of tradingPool being updated
+   * @return                        NewTradingPoolInfo
+   */
+  public async fetchRBSetTWAPRebalanceDetailsAsync(
+    rebalancingSetTokenAddress: Address
+  ): Promise<RBSetTWAPRebalanceInfo> {
+    const newPoolInfo = await this.protocolViewer.fetchRBSetTWAPRebalanceDetails(
+      rebalancingSetTokenAddress
+    );
+
+    return this.createRBSetTWAPRebalanceInfoObject(newPoolInfo);
+  }
+
+  /**
    * Fetches the current state of the RebalancingSetToken
    *
    * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
@@ -690,6 +732,32 @@ export class RebalancingAPI {
     return await this.rebalancingSetToken.remainingCurrentSets(rebalancingSetTokenAddress);
   }
 
+  private createRBSetTWAPRebalanceInfoObject(
+    newPoolInfo: any,
+  ): RBSetTWAPRebalanceInfo {
+    const [rbSetInfo, collateralInfo] = newPoolInfo;
+
+    return {
+      liquidator: rbSetInfo.liquidator,
+      nextSet: rbSetInfo.nextSet,
+      rebalanceStartTime: new BigNumber(rbSetInfo.rebalanceStartTime),
+      timeToPivot: new BigNumber(rbSetInfo.timeToPivot),
+      startPrice: new BigNumber(rbSetInfo.startPrice),
+      endPrice: new BigNumber(rbSetInfo.endPrice),
+      startingCurrentSets: new BigNumber(rbSetInfo.startingCurrentSets),
+      remainingCurrentSets: new BigNumber(rbSetInfo.remainingCurrentSets),
+      minimumBid: new BigNumber(rbSetInfo.minimumBid),
+      orderSize: new BigNumber(rbSetInfo.orderSize),
+      orderRemaining: new BigNumber(rbSetInfo.orderRemaining),
+      totalSetsRemaining: new BigNumber(rbSetInfo.totalSetsRemaining),
+      chunkSize: new BigNumber(rbSetInfo.chunkSize),
+      chunkAuctionPeriod: new BigNumber(rbSetInfo.chunkAuctionPeriod),
+      lastChunkAuctionEnd: new BigNumber(rbSetInfo.lastChunkAuctionEnd),
+      rebalanceState: rbSetInfo.rebalanceState,
+      nextSetInfo: collateralInfo,
+    } as RBSetTWAPRebalanceInfo;
+  }
+
   /* ============ Private Assertions ============ */
 
   private async assertPropose(
@@ -730,6 +798,25 @@ export class RebalancingAPI {
 
     await this.assert.rebalancing.isInProposalState(rebalancingSetTokenAddress);
     await this.assert.rebalancing.sufficientTimeInProposalState(rebalancingSetTokenAddress);
+  }
+
+  private async assertIterateChunkAuction(rebalancingSetTokenAddress: Address) {
+    const twapRebalanceState = await this.fetchRBSetTWAPRebalanceDetailsAsync(rebalancingSetTokenAddress);
+
+    const nextChunkAuctionStart = twapRebalanceState.lastChunkAuctionEnd
+                                    .add(twapRebalanceState.chunkAuctionPeriod);
+    this.assert.rebalancing.sufficientTimeBetweenChunkAuctions(nextChunkAuctionStart);
+
+    this.assert.rebalancing.chunkAuctionFinished(
+      twapRebalanceState.minimumBid,
+      twapRebalanceState.remainingCurrentSets
+    );
+
+    this.assert.rebalancing.twapAuctionNotFinished(
+      rebalancingSetTokenAddress,
+      twapRebalanceState.minimumBid,
+      twapRebalanceState.totalSetsRemaining
+    );
   }
 
   private async assertSettleRebalance(rebalancingSetTokenAddress: Address) {
