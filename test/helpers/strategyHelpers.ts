@@ -440,7 +440,8 @@ export const deployRSITrendingTriggerAsync = async(
 };
 
 export const initializeManagerAsync = async(
-  macoManager: MACOStrategyManagerContract | MACOStrategyManagerV2Contract | AssetPairManagerContract | AssetPairManagerV2Contract,
+  macoManager:
+    MACOStrategyManagerContract | MACOStrategyManagerV2Contract | AssetPairManagerContract | AssetPairManagerV2Contract,
   rebalancingSetTokenAddress: Address,
 ): Promise<void> => {
   await macoManager.initialize.sendTransactionAsync(rebalancingSetTokenAddress);
