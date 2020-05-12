@@ -47,9 +47,7 @@ import {
 
 import {
   ConstantPriceOracleContract,
-  MedianContract,
   RSIOracleContract,
-  OracleProxyContract,
 } from 'set-protocol-oracles';
 
 import { ACCOUNTS, DEFAULT_ACCOUNT } from '@src/constants/accounts';
@@ -63,20 +61,15 @@ import {
   ZERO_BYTES
 } from '@src/constants';
 import {
-  addPriceFeedOwnerToMedianizer,
   addWhiteListedTokenAsync,
-  approveContractToOracleProxy,
   approveForTransferAsync,
   createDefaultRebalancingSetTokenV3Async,
   deployAssetPairManagerV2Async,
   deployBaseContracts,
   deployBinaryAllocatorAsync,
   deployConstantPriceOracleAsync,
-  deployLegacyMakerOracleAdapterAsync,
   deployLinearAuctionLiquidatorContractAsync,
   deployLinearizedPriceDataSourceAsync,
-  deployMedianizerAsync,
-  deployOracleProxyAsync,
   deployOracleWhiteListAsync,
   deployRebalancingSetTokenV3FactoryContractAsync,
   deployRSIOracleAsync,
@@ -87,13 +80,12 @@ import {
   deployWhiteListContract,
   increaseChainTimeAsync,
   initializeManagerAsync,
-  updateMedianizerPriceAsync,
 } from '@test/helpers';
 import {
   BigNumber,
   ether
 } from '@src/util';
-import { Address } from '@src/types/common';
+import { Address, Bytes } from '@src/types/common';
 
 const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
 
@@ -102,7 +94,7 @@ chai.use(chaiBigNumber(BigNumber));
 const { expect } = chai;
 const contract = require('truffle-contract');
 const web3 = new Web3('http://localhost:8545');
-const { SetProtocolTestUtils: SetTestUtils, Web3Utils } = setProtocolUtils;
+const { Web3Utils } = setProtocolUtils;
 const web3Utils = new Web3Utils(web3);
 
 const coreContract = contract(Core);
@@ -122,8 +114,7 @@ describe('AssetPairManagerV2Wrapper', () => {
   let trigger: RSITrendingTriggerContract;
 
   let rsiOracle: RSIOracleContract;
-  let ethMedianizer: MedianContract;
-  let ethOracleProxy: OracleProxyContract;
+  let ethOracleProxy: ConstantPriceOracleContract;
   let usdcOracle: ConstantPriceOracleContract;
 
   let usdc: StandardTokenMockContract;
@@ -134,13 +125,14 @@ describe('AssetPairManagerV2Wrapper', () => {
 
   let seededPriceFeedPrices: BigNumber[];
 
+  let newLiquidatorAddress: Address;
+
   let assetPairManagerV2Wrapper: AssetPairManagerV2Wrapper;
 
   const useBullishBaseAssetAllocation = true;
   const allocationDenominator = new BigNumber(100);
   const bullishBaseAssetAllocation = new BigNumber(100);
   const bearishBaseAssetAllocation = allocationDenominator.sub(bullishBaseAssetAllocation);
-
   const signalConfirmationMinTime = ONE_HOUR_IN_SECONDS.mul(6);
   const signalConfirmationMaxTime = ONE_HOUR_IN_SECONDS.mul(12);
 
@@ -180,23 +172,9 @@ describe('AssetPairManagerV2Wrapper', () => {
       rebalancingComponentWhiteList,
     ] = await deployBaseContracts(web3);
 
-    ethMedianizer = await deployMedianizerAsync(web3);
-    await addPriceFeedOwnerToMedianizer(ethMedianizer, DEFAULT_ACCOUNT);
-    await updateMedianizerPriceAsync(
+    ethOracleProxy = await deployConstantPriceOracleAsync(
       web3,
-      ethMedianizer,
-      initialMedianizerEthPrice,
-      SetTestUtils.generateTimestamp(1000),
-    );
-
-    const medianizerAdapter = await deployLegacyMakerOracleAdapterAsync(
-      web3,
-      ethMedianizer.address
-    );
-
-    ethOracleProxy = await deployOracleProxyAsync(
-      web3,
-      medianizerAdapter.address
+      initialMedianizerEthPrice
     );
 
     usdcOracle = await deployConstantPriceOracleAsync(
@@ -209,11 +187,6 @@ describe('AssetPairManagerV2Wrapper', () => {
       ethOracleProxy.address,
       ONE_HOUR_IN_SECONDS,
       ''
-    );
-
-    await approveContractToOracleProxy(
-      ethOracleProxy,
-      dataSource.address
     );
 
     const timeSeriesFeed = await deployTimeSeriesFeedAsync(
@@ -253,7 +226,15 @@ describe('AssetPairManagerV2Wrapper', () => {
       core,
       oracleWhiteList
     );
-    const liquidatorWhiteList = await deployWhiteListContract(web3, [liquidator.address]);
+    const newLiquidator = await deployLinearAuctionLiquidatorContractAsync(
+      web3,
+      core,
+      oracleWhiteList
+    );
+
+    newLiquidatorAddress = newLiquidator.address;
+
+    const liquidatorWhiteList = await deployWhiteListContract(web3, [liquidator.address, newLiquidator.address]);
 
     const maxProfitFeePercentage = ether(.4);
     const maxStreamingFeePercentage = ether(.07);
@@ -265,7 +246,6 @@ describe('AssetPairManagerV2Wrapper', () => {
     );
 
     const feeCalculatorWhiteList = await deployWhiteListContract(web3, [performanceFeeCalculator.address]);
-    console.log(performanceFeeCalculator.address, feeCalculatorWhiteList.address);
 
     rebalancingFactory = await deployRebalancingSetTokenV3FactoryContractAsync(
       web3,
@@ -273,18 +253,6 @@ describe('AssetPairManagerV2Wrapper', () => {
       rebalancingComponentWhiteList,
       liquidatorWhiteList,
       feeCalculatorWhiteList
-    );
-
-    console.log(rebalancingFactory.address);
-
-    // Create Stable Collateral Set
-    initialQuoteCollateral = await deploySetTokenAsync(
-      web3,
-      core,
-      factory.address,
-      [usdc.address],
-      [quoteCollateralUnit],
-      quoteCollateralNaturalUnit,
     );
 
     // Create Risk Collateral Set
@@ -295,6 +263,16 @@ describe('AssetPairManagerV2Wrapper', () => {
       [wrappedETH.address],
       [baseCollateralUnit],
       baseCollateralNaturalUnit,
+    );
+
+    // Create Stable Collateral Set
+    initialQuoteCollateral = await deploySetTokenAsync(
+      web3,
+      core,
+      factory.address,
+      [usdc.address],
+      [quoteCollateralUnit],
+      quoteCollateralNaturalUnit,
     );
 
     allocator = await deployBinaryAllocatorAsync(
@@ -333,18 +311,6 @@ describe('AssetPairManagerV2Wrapper', () => {
 
     await assetPairManagerV2.setTimeLockPeriod.sendTransactionAsync(ONE_DAY_IN_SECONDS, { from: DEFAULT_ACCOUNT });
 
-    console.log(assetPairManagerV2.address);
-
-    await approveContractToOracleProxy(
-      ethOracleProxy,
-      trigger.address
-    );
-
-    await approveContractToOracleProxy(
-      ethOracleProxy,
-      allocator.address
-    );
-
     // Deploy a RB Set
     const rbSetFeeRecipient = ACCOUNTS[2].address;
     const rebalanceFeeCalculator = performanceFeeCalculator.address;
@@ -354,7 +320,6 @@ describe('AssetPairManagerV2Wrapper', () => {
     const rbSetEntryFee = ether(.01);
     const rbSetProfitFee = ether(.2);
     const rbSetStreamingFee = ether(.02);
-    console.log('hserse');
     rebalancingSetToken = await createDefaultRebalancingSetTokenV3Async(
       web3,
       core,
@@ -370,7 +335,7 @@ describe('AssetPairManagerV2Wrapper', () => {
       rbSetProfitFee,
       rbSetStreamingFee
     );
-    console.log(rebalancingSetToken.address);
+
     await initializeManagerAsync(
       assetPairManagerV2,
       rebalancingSetToken.address
@@ -383,7 +348,7 @@ describe('AssetPairManagerV2Wrapper', () => {
     await web3Utils.revertToSnapshot(currentSnapshotId);
   });
 
-  describe.only('core', async () => {
+  describe('core', async () => {
     let subjectManagerAddress: Address;
 
     beforeEach(async () => {
@@ -594,6 +559,25 @@ describe('AssetPairManagerV2Wrapper', () => {
     });
   });
 
+  describe('liquidatorData', async () => {
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = assetPairManagerV2.address;
+    });
+
+    async function subject(): Promise<string> {
+      return await assetPairManagerV2Wrapper.liquidatorData(
+        subjectManagerAddress,
+      );
+    }
+
+    test('gets the correct liquidatorData', async () => {
+      const liquidatorData = await subject();
+      expect(liquidatorData).to.be.bignumber.equal(ZERO_BYTES);
+    });
+  });
+
   describe('initialPropose', async () => {
     let subjectManagerAddress: Address;
 
@@ -602,13 +586,6 @@ describe('AssetPairManagerV2Wrapper', () => {
 
       // Elapse the rebalance interval
       await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
-
-      await updateMedianizerPriceAsync(
-        web3,
-        ethMedianizer,
-        initialMedianizerEthPrice.div(10),
-        SetTestUtils.generateTimestamp(1000),
-      );
     });
 
     async function subject(): Promise<string> {
@@ -637,15 +614,22 @@ describe('AssetPairManagerV2Wrapper', () => {
 
       // Elapse the rebalance interval
       await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
-
-      await updateMedianizerPriceAsync(
-        web3,
-        ethMedianizer,
-        initialMedianizerEthPrice.div(4),
-        SetTestUtils.generateTimestamp(1000),
-      );
-
       await assetPairManagerV2.initialPropose.sendTransactionAsync();
+
+      // Issue currentSetToken
+      await core.issue.sendTransactionAsync(
+        initialBaseCollateral.address,
+        ether(9),
+        {from: DEFAULT_ACCOUNT },
+      );
+      await approveForTransferAsync([initialBaseCollateral], transferProxy.address);
+
+      // Use issued currentSetToken to issue rebalancingSetToken
+      await core.issue.sendTransactionAsync(
+        rebalancingSetToken.address,
+        ether(7),
+        {from: DEFAULT_ACCOUNT },
+      );
 
       // Elapse the signal confirmation period
       await increaseChainTimeAsync(web3, ONE_HOUR_IN_SECONDS.mul(7));
@@ -657,12 +641,12 @@ describe('AssetPairManagerV2Wrapper', () => {
       );
     }
 
-    test('sets the rebalancing Set into proposal period', async () => {
+    test('sets the rebalancing Set into rebalance period', async () => {
       await subject();
-      const proposalStateEnum = new BigNumber(1);
+      const rebalanceStateEnum = new BigNumber(2);
       const rebalancingSetState = await rebalancingSetToken.rebalanceState.callAsync();
 
-      expect(rebalancingSetState).to.bignumber.equal(proposalStateEnum);
+      expect(rebalancingSetState).to.bignumber.equal(rebalanceStateEnum);
     });
   });
 
@@ -673,13 +657,6 @@ describe('AssetPairManagerV2Wrapper', () => {
     beforeEach(async () => {
       subjectManagerAddress = assetPairManagerV2.address;
       subjectTimeFastForward = ONE_DAY_IN_SECONDS;
-
-      await updateMedianizerPriceAsync(
-        web3,
-        ethMedianizer,
-        initialMedianizerEthPrice.div(10),
-        SetTestUtils.generateTimestamp(1000),
-      );
     });
 
     async function subject(): Promise<boolean> {
@@ -718,14 +695,6 @@ describe('AssetPairManagerV2Wrapper', () => {
 
       // Elapse the rebalance interval
       await increaseChainTimeAsync(web3, ONE_DAY_IN_SECONDS);
-
-      await updateMedianizerPriceAsync(
-        web3,
-        ethMedianizer,
-        initialMedianizerEthPrice.div(4),
-        SetTestUtils.generateTimestamp(1000),
-      );
-
       await assetPairManagerV2.initialPropose.sendTransactionAsync();
     });
 
@@ -752,6 +721,213 @@ describe('AssetPairManagerV2Wrapper', () => {
 
         expect(canInitialPropose).to.be.false;
       });
+    });
+  });
+
+  describe('setLiquidator', async () => {
+    let subjectNewLiquidator: Address;
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = assetPairManagerV2.address;
+      subjectNewLiquidator = newLiquidatorAddress;
+    });
+
+    async function subject(): Promise<string> {
+      return await assetPairManagerV2Wrapper.setLiquidator(
+        subjectManagerAddress,
+        subjectNewLiquidator
+      );
+    }
+
+    test('sets the new liquidator correctly', async () => {
+      await subject();
+
+      const actualLiquidator = await rebalancingSetToken.liquidator.callAsync();
+
+      expect(actualLiquidator).to.equal(subjectNewLiquidator);
+    });
+  });
+
+  describe('setLiquidatorData', async () => {
+    let subjectLiquidatorData: Bytes;
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = assetPairManagerV2.address;
+      subjectLiquidatorData = '0x0000000000000000000000000000000000000000000000000000000000000005';
+    });
+
+    async function subject(): Promise<string> {
+      return await assetPairManagerV2Wrapper.setLiquidatorData(
+        subjectManagerAddress,
+        subjectLiquidatorData
+      );
+    }
+
+    test('sets the new liquidatorData correctly', async () => {
+      await subject();
+
+      const actualLiquidatorData = await assetPairManagerV2.liquidatorData.callAsync();
+
+      expect(actualLiquidatorData).to.equal(subjectLiquidatorData);
+    });
+  });
+
+  describe('setFeeRecipient', async () => {
+    let subjectFeeRecipient: string;
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      subjectManagerAddress = assetPairManagerV2.address;
+      subjectFeeRecipient = ACCOUNTS[3].address;
+    });
+
+    async function subject(): Promise<string> {
+      return await assetPairManagerV2Wrapper.setFeeRecipient(
+        subjectManagerAddress,
+        subjectFeeRecipient
+      );
+    }
+
+    test('sets the new fee recipient correctly', async () => {
+      await subject();
+
+      const actualNewFeeRecipient = await rebalancingSetToken.feeRecipient.callAsync();
+
+      expect(actualNewFeeRecipient).to.equal(subjectFeeRecipient);
+    });
+  });
+
+  describe('adjustFee', async () => {
+    let subjectNewFeeCallData: string;
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      const feeType = ZERO;
+      const newFeePercentage = ether(.03);
+
+      subjectNewFeeCallData = feeCalculatorHelper.generateAdjustFeeCallData(feeType, newFeePercentage);
+      subjectManagerAddress = assetPairManagerV2.address;
+    });
+
+    async function subject(): Promise<string> {
+      return await assetPairManagerV2Wrapper.adjustFee(
+        subjectManagerAddress,
+        subjectNewFeeCallData
+      );
+    }
+
+    test('sets the correct upgrade hash', async () => {
+      const txHash = await subject();
+      const { blockHash, input } = await web3.eth.getTransaction(txHash);
+      const { timestamp } = await web3.eth.getBlock(blockHash as any);
+
+      const upgradeHash = web3.utils.soliditySha3(input);
+      const actualTimestamp = await assetPairManagerV2.timeLockedUpgrades.callAsync(upgradeHash);
+      expect(actualTimestamp).to.bignumber.equal(timestamp);
+    });
+  });
+
+  describe('adjustFee', async () => {
+    let subjectNewFeeCallData: string;
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      const feeType = ZERO;
+      const newFeePercentage = ether(.03);
+
+      subjectNewFeeCallData = feeCalculatorHelper.generateAdjustFeeCallData(feeType, newFeePercentage);
+      subjectManagerAddress = assetPairManagerV2.address;
+    });
+
+    async function subject(): Promise<string> {
+      return await assetPairManagerV2Wrapper.adjustFee(
+        subjectManagerAddress,
+        subjectNewFeeCallData
+      );
+    }
+
+    test('sets the correct upgrade hash', async () => {
+      const txHash = await subject();
+      const { blockHash, input } = await web3.eth.getTransaction(txHash);
+      const { timestamp } = await web3.eth.getBlock(blockHash as any);
+
+      const upgradeHash = web3.utils.soliditySha3(input);
+      const actualTimestamp = await assetPairManagerV2.timeLockedUpgrades.callAsync(upgradeHash);
+      expect(actualTimestamp).to.bignumber.equal(timestamp);
+    });
+  });
+
+  describe('adjustFee', async () => {
+    let subjectNewFeeCallData: string;
+    let subjectManagerAddress: Address;
+
+    beforeEach(async () => {
+      const feeType = ZERO;
+      const newFeePercentage = ether(.03);
+
+      subjectNewFeeCallData = feeCalculatorHelper.generateAdjustFeeCallData(feeType, newFeePercentage);
+      subjectManagerAddress = assetPairManagerV2.address;
+    });
+
+    async function subject(): Promise<string> {
+      return await assetPairManagerV2Wrapper.adjustFee(
+        subjectManagerAddress,
+        subjectNewFeeCallData
+      );
+    }
+
+    test('sets the correct upgrade hash', async () => {
+      const txHash = await subject();
+      const { blockHash, input } = await web3.eth.getTransaction(txHash);
+      const { timestamp } = await web3.eth.getBlock(blockHash as any);
+
+      const upgradeHash = web3.utils.soliditySha3(input);
+      const actualTimestamp = await assetPairManagerV2.timeLockedUpgrades.callAsync(upgradeHash);
+      expect(actualTimestamp).to.bignumber.equal(timestamp);
+    });
+  });
+
+  describe('removeRegisteredUpgrade', async () => {
+    let subjectManager: Address;
+    let subjectUpgradeHash: string;
+
+    let feeType: BigNumber;
+    let feePercentage: BigNumber;
+
+    beforeEach(async () => {
+      feeType = ZERO;
+      feePercentage = ether(.03);
+
+      subjectManager = assetPairManagerV2.address;
+
+      const newFeeCallData = feeCalculatorHelper.generateAdjustFeeCallData(
+        feeType,
+        feePercentage
+      );
+
+      const txHash = await assetPairManagerV2Wrapper.adjustFee(
+        subjectManager,
+        newFeeCallData,
+      );
+
+      const { input } = await web3.eth.getTransaction(txHash);
+      subjectUpgradeHash = web3.utils.soliditySha3(input);
+    });
+
+    async function subject(): Promise<string> {
+      return await assetPairManagerV2Wrapper.removeRegisteredUpgrade(
+        subjectManager,
+        subjectUpgradeHash,
+      );
+    }
+
+    test('successfully removes upgradeHash', async () => {
+      await subject();
+
+      const actualTimestamp = await assetPairManagerV2.timeLockedUpgrades.callAsync(subjectUpgradeHash);
+      expect(actualTimestamp).to.bignumber.equal(ZERO);
     });
   });
 });
