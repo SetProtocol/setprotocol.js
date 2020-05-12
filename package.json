@@ -69,7 +69,7 @@
     "moment": "^2.22.2",
     "set-protocol-contracts": "1.4.9-beta",
     "set-protocol-oracles": "^1.0.16",
-    "set-protocol-strategies": "^1.1.37",
+    "set-protocol-strategies": "^1.1.39",
     "set-protocol-viewers": "^1.0.12",
     "set-protocol-utils": "^1.1.2",
     "timekeeper": "^2.1.2",

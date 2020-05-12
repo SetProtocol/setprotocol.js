@@ -51,6 +51,22 @@ export interface AssetPairManagerDetails {
   trigger: Address;
 }
 
+export interface AssetPairManagerV2Details {
+  allocationDenominator: BigNumber;
+  allocator: Address;
+  baseAssetAllocation: BigNumber;
+  bullishBaseAssetAllocation: BigNumber;
+  bearishBaseAssetAllocation: BigNumber;
+  core: Address;
+  recentInitialProposeTimestamp: BigNumber;
+  rebalancingSetToken: Address;
+  signalConfirmationMinTime: BigNumber;
+  signalConfirmationMaxTime: BigNumber;
+  trigger: Address;
+  liquidatorData: string;
+  rebalanceFeeCalculator: Address;
+}
+
 export interface BTCETHRebalancingManagerDetails {
   core: Address;
   btcPriceFeed: Address;

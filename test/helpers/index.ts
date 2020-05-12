@@ -88,6 +88,7 @@ export {
 
 export {
   deployAssetPairManagerAsync,
+  deployAssetPairManagerV2Async,
   deployBinaryAllocatorAsync,
   deployBtcDaiManagerContractAsync,
   deployBtcEthManagerContractAsync,

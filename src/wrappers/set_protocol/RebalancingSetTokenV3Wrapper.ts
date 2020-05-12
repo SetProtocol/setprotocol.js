@@ -53,4 +53,18 @@ export class RebalancingSetTokenV3Wrapper {
       txOpts
     );
   }
+
+  /**
+   * Get rebalanceFeeCalculator
+   *
+   * @param  rebalancingSetAddress   Address of the Set
+   * @return                         Transaction hash
+   */
+  public async rebalanceFeeCalculator(
+    rebalancingSetAddress: Address,
+  ): Promise<string> {
+    const rebalancingSetTokenInstance = await this.contracts.loadRebalancingSetTokenV3Async(rebalancingSetAddress);
+
+    return await rebalancingSetTokenInstance.rebalanceFeeCalculator.callAsync();
+  }
 }

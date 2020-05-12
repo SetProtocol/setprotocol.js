@@ -28,6 +28,7 @@ import {
 
 import {
   AssetPairManagerContract,
+  AssetPairManagerV2Contract,
   BaseContract as StrategyBaseContract,
   BTCDaiRebalancingManagerContract,
   BTCETHRebalancingManagerContract,
@@ -313,6 +314,32 @@ export class StrategyContractWrapper {
       );
       this.cache[cacheKey] = assetPairManagerContract;
       return assetPairManagerContract;
+    }
+  }
+
+  /**
+   * Load a AssetPairManagerV2 contract
+   *
+   * @param  assetPairManagerV2           Address of the AssetPairManagerV2 contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The AssetPairManagerV2 Contract
+   */
+  public async loadAssetPairManagerV2ContractAsync(
+    assetPairManagerV2: Address,
+    transactionOptions: object = {},
+  ): Promise<AssetPairManagerV2Contract> {
+    const cacheKey = `assetPairManagerV2_${assetPairManagerV2}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as AssetPairManagerV2Contract;
+    } else {
+      const assetPairManagerV2Contract = await AssetPairManagerV2Contract.at(
+        assetPairManagerV2,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = assetPairManagerV2Contract;
+      return assetPairManagerV2Contract;
     }
   }
 

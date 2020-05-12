@@ -43,6 +43,7 @@ export { WhitelistWrapper } from './set_protocol/WhitelistWrapper';
 export { VaultWrapper } from './set_protocol/VaultWrapper';
 
 export { AssetPairManagerWrapper } from './strategies/AssetPairManagerWrapper';
+export { AssetPairManagerV2Wrapper } from './strategies/AssetPairManagerV2Wrapper';
 export { BTCDAIRebalancingManagerWrapper } from './strategies/BTCDAIRebalancingManagerWrapper';
 export { BTCETHRebalancingManagerWrapper } from './strategies/BTCETHRebalancingManagerWrapper';
 export { ETHDAIRebalancingManagerWrapper } from './strategies/ETHDAIRebalancingManagerWrapper';
