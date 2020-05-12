@@ -17,11 +17,13 @@
 'use strict';
 
 import * as _ from 'lodash';
+import * as setProtocolUtils from 'set-protocol-utils';
 import Web3 from 'web3';
 
 import { BigNumber } from '../util';
 import {
   AssetPairManagerWrapper,
+  AssetPairManagerV2Wrapper,
   BTCDAIRebalancingManagerWrapper,
   BTCETHRebalancingManagerWrapper,
   ETHDAIRebalancingManagerWrapper,
@@ -29,12 +31,21 @@ import {
   MACOStrategyManagerV2Wrapper,
   MovingAverageOracleWrapper,
   MedianizerWrapper,
+  PerformanceFeeCalculatorWrapper,
   ProtocolViewerWrapper,
+  RebalancingSetTokenV3Wrapper,
   SetTokenWrapper,
   RebalancingSetTokenWrapper,
 } from '../wrappers';
 import { Assertions } from '../assertions';
-import { Address, ManagerType, SetProtocolConfig, Tx } from '../types/common';
+import {
+  Address,
+  Bytes,
+  FeeType,
+  ManagerType,
+  SetProtocolConfig,
+  Tx
+} from '../types/common';
 import {
   DAI_FULL_TOKEN_UNITS,
   DAI_PRICE,
@@ -45,11 +56,14 @@ import {
 } from '../constants';
 import {
   AssetPairManagerDetails,
+  AssetPairManagerV2Details,
   BTCDAIRebalancingManagerDetails,
   BTCETHRebalancingManagerDetails,
   ETHDAIRebalancingManagerDetails,
   MovingAverageManagerDetails,
 } from '../types/strategies';
+
+const { SetProtocolUtils: SetUtils } = setProtocolUtils;
 
 /**
  * @title RebalancingManagerAPI
@@ -71,6 +85,9 @@ export class RebalancingManagerAPI {
   private macoStrategyManager: MACOStrategyManagerWrapper;
   private macoStrategyManagerV2: MACOStrategyManagerV2Wrapper;
   private assetPairManager: AssetPairManagerWrapper;
+  private assetPairManagerV2: AssetPairManagerV2Wrapper;
+  private performanceFeeCalculator: PerformanceFeeCalculatorWrapper;
+  private rebalancingSetV3: RebalancingSetTokenV3Wrapper;
 
   /**
    * Instantiates a new RebalancingManagerAPI instance that contains methods for issuing and redeeming Sets
@@ -86,6 +103,9 @@ export class RebalancingManagerAPI {
     this.macoStrategyManager = new MACOStrategyManagerWrapper(web3);
     this.macoStrategyManagerV2 = new MACOStrategyManagerV2Wrapper(web3);
     this.assetPairManager = new AssetPairManagerWrapper(web3);
+    this.assetPairManagerV2 = new AssetPairManagerV2Wrapper(web3);
+    this.performanceFeeCalculator = new PerformanceFeeCalculatorWrapper(web3);
+    this.rebalancingSetV3 = new RebalancingSetTokenV3Wrapper(web3);
 
     this.assert = assertions;
     this.setToken = new SetTokenWrapper(web3);
@@ -170,6 +190,121 @@ export class RebalancingManagerAPI {
     }
 
     return await this.macoStrategyManager.confirmPropose(macoManager, txOpts);
+  }
+
+  /**
+   * Calls manager to adjustFees. Only for asset pair manager v2
+   *
+   * @param  manager                  Address of manager
+   * @param  newFeeType               Type of fee being changed
+   * @param  newFeePercentage         New fee percentage
+   * @return                          The hash of the resulting transaction.
+   */
+  public async adjustPerformanceFeesAsync(
+    manager: Address,
+    newFeeType: FeeType,
+    newFeePercentage: BigNumber,
+    txOpts: Tx,
+  ): Promise<string> {
+    await this.assertAdjustFees(
+      manager,
+      newFeeType,
+      newFeePercentage,
+      txOpts
+    );
+
+    const newFeeCallData = SetUtils.generateAdjustFeeCallData(
+      new BigNumber(newFeeType),
+      newFeePercentage
+    );
+
+    return this.assetPairManagerV2.adjustFee(
+      manager,
+      newFeeCallData,
+      txOpts
+    );
+  }
+
+  /**
+   * Cancels previous fee adjustment (before enacted)
+   *
+   * @param  manager                  Address of manager
+   * @param  upgradeHash              Hash of the inital fee adjustment call data
+   * @return                          The hash of the resulting transaction.
+   */
+  public async removeFeeUpdateAsync(
+    manager: Address,
+    upgradeHash: string,
+    txOpts: Tx,
+  ): Promise<string> {
+    return this.assetPairManagerV2.removeRegisteredUpgrade(manager, upgradeHash);
+  }
+
+  /**
+   * Calls AssetPairManagerV2's setLiquidator function. Changes liquidator used in rebalances.
+   *
+   * @param  manager                Address of the asset pair manager contract
+   * @param  newLiquidator          New liquidator address
+   * @param  txOpts                 Transaction options object conforming to `Tx` with signer, gas, and
+   *                                gasPrice data
+   * @return                        The hash of the resulting transaction.
+   */
+  public async setLiquidatorAsync(
+    manager: Address,
+    newLiquidator: Address,
+    txOpts: Tx,
+  ): Promise<string> {
+    await this.assertAddressSetters(manager, newLiquidator);
+
+    return this.assetPairManagerV2.setLiquidator(
+      manager,
+      newLiquidator,
+      txOpts
+    );
+  }
+
+  /**
+   * Calls AssetPairManagerV2's setLiquidatorData function. Changes liquidatorData used in rebalances.
+   *
+   * @param  manager                Address of the asset pair manager contract
+   * @param  newLiquidatorData      New liquidator data
+   * @param  txOpts                 Transaction options object conforming to `Tx` with signer, gas, and
+   *                                gasPrice data
+   * @return                        The hash of the resulting transaction.
+   */
+  public async setLiquidatorDataAsync(
+    manager: Address,
+    newLiquidatorData: Bytes,
+    txOpts: Tx,
+  ): Promise<string> {
+    return this.assetPairManagerV2.setLiquidatorData(
+      manager,
+      newLiquidatorData,
+      txOpts
+    );
+  }
+
+  /**
+   * Calls AssetPairManagerV2's setFeeRecipient function. Changes feeRecipient address.
+   *
+   * @param  manager                Address of the asset pair manager contract
+   * @param  newFeeRecipient        New feeRecipient address
+   * @param  txOpts                 Transaction options object conforming to `Tx` with signer, gas, and
+   *                                gasPrice data
+   * @return                        The hash of the resulting transaction.
+   */
+  public async setFeeRecipientAsync(
+    manager: Address,
+    newFeeRecipient: Address,
+    txOpts: Tx,
+  ): Promise<string> {
+    await this.assertAddressSetters(manager, newFeeRecipient);
+
+    return this.assetPairManagerV2.setFeeRecipient(
+      manager,
+      newFeeRecipient,
+      txOpts
+    );
   }
 
   /**
@@ -521,6 +656,66 @@ export class RebalancingManagerAPI {
   }
 
   /**
+   * Fetches the state variables of the Asset Pair Manager V2 contract.
+   *
+   * @param  manager         Address of the AssetPairManagerV2 contract
+   * @return                 Object containing the state information related to the manager
+   */
+  public async getAssetPairManagerV2DetailsAsync(
+    manager: Address
+  ): Promise<AssetPairManagerV2Details> {
+    const [
+      allocationDenominator,
+      allocator,
+      baseAssetAllocation,
+      bullishBaseAssetAllocation,
+      bearishBaseAssetAllocation,
+      core,
+      recentInitialProposeTimestamp,
+      rebalancingSetToken,
+    ] = await Promise.all([
+      this.assetPairManagerV2.allocationDenominator(manager),
+      this.assetPairManagerV2.allocator(manager),
+      this.assetPairManagerV2.baseAssetAllocation(manager),
+      this.assetPairManagerV2.bullishBaseAssetAllocation(manager),
+      this.assetPairManagerV2.bearishBaseAssetAllocation(manager),
+      this.assetPairManagerV2.core(manager),
+      this.assetPairManagerV2.recentInitialProposeTimestamp(manager),
+      this.assetPairManagerV2.rebalancingSetToken(manager),
+    ]);
+
+    const [
+      signalConfirmationMinTime,
+      signalConfirmationMaxTime,
+      trigger,
+      liquidatorData,
+      rebalanceFeeCalculator,
+    ] = await Promise.all([
+      this.assetPairManagerV2.signalConfirmationMinTime(manager),
+      this.assetPairManagerV2.signalConfirmationMaxTime(manager),
+      this.assetPairManagerV2.trigger(manager),
+      this.assetPairManagerV2.liquidatorData(manager),
+      this.rebalancingSetV3.rebalanceFeeCalculator(rebalancingSetToken),
+    ]);
+
+    return {
+      allocationDenominator,
+      allocator,
+      baseAssetAllocation,
+      bullishBaseAssetAllocation,
+      bearishBaseAssetAllocation,
+      core,
+      recentInitialProposeTimestamp,
+      rebalancingSetToken,
+      signalConfirmationMinTime,
+      signalConfirmationMaxTime,
+      trigger,
+      liquidatorData,
+      rebalanceFeeCalculator,
+    } as AssetPairManagerV2Details;
+  }
+
+  /**
    * Fetches the crossover confirmation time of AssetPairManager contracts.
    *
    * @param  managers        Array of addresses of the manager contract
@@ -787,6 +982,41 @@ export class RebalancingManagerAPI {
       currentPriceBN,
       movingAverageBN
     );
+  }
+
+  private async assertAdjustFees(
+    manager: Address,
+    newFeeType: FeeType,
+    newFeePercentage: BigNumber,
+    txOpts: Tx
+  ): Promise<void> {
+    const managerDetails = await this.getAssetPairManagerV2DetailsAsync(manager);
+    const feeCalculatorAddress = managerDetails.rebalanceFeeCalculator;
+
+    let maxFee: BigNumber;
+    if (newFeeType == FeeType.StreamingFee) {
+      maxFee = await this.performanceFeeCalculator.maximumStreamingFeePercentage(
+        feeCalculatorAddress
+      );
+    } else {
+      maxFee = await this.performanceFeeCalculator.maximumProfitFeePercentage(
+        feeCalculatorAddress
+      );
+    }
+
+    this.assert.common.isGreaterOrEqualThan(
+      maxFee,
+      newFeePercentage,
+      'Passed fee exceeds allowed maximum.'
+    );
+  }
+
+  private async assertAddressSetters(
+    manager: Address,
+    newAddress: Address,
+  ): Promise<void> {
+    this.assert.schema.isValidAddress('manager', manager);
+    this.assert.schema.isValidAddress('newAddress', newAddress);
   }
 
   // Helper functions

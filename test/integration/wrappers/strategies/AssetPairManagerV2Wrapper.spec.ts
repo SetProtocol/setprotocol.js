@@ -1,5 +1,5 @@
 /*
-  Copyright 2018 Set Labs Inc.
+  Copyright 2020 Set Labs Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -796,66 +796,6 @@ describe('AssetPairManagerV2Wrapper', () => {
       const actualNewFeeRecipient = await rebalancingSetToken.feeRecipient.callAsync();
 
       expect(actualNewFeeRecipient).to.equal(subjectFeeRecipient);
-    });
-  });
-
-  describe('adjustFee', async () => {
-    let subjectNewFeeCallData: string;
-    let subjectManagerAddress: Address;
-
-    beforeEach(async () => {
-      const feeType = ZERO;
-      const newFeePercentage = ether(.03);
-
-      subjectNewFeeCallData = feeCalculatorHelper.generateAdjustFeeCallData(feeType, newFeePercentage);
-      subjectManagerAddress = assetPairManagerV2.address;
-    });
-
-    async function subject(): Promise<string> {
-      return await assetPairManagerV2Wrapper.adjustFee(
-        subjectManagerAddress,
-        subjectNewFeeCallData
-      );
-    }
-
-    test('sets the correct upgrade hash', async () => {
-      const txHash = await subject();
-      const { blockHash, input } = await web3.eth.getTransaction(txHash);
-      const { timestamp } = await web3.eth.getBlock(blockHash as any);
-
-      const upgradeHash = web3.utils.soliditySha3(input);
-      const actualTimestamp = await assetPairManagerV2.timeLockedUpgrades.callAsync(upgradeHash);
-      expect(actualTimestamp).to.bignumber.equal(timestamp);
-    });
-  });
-
-  describe('adjustFee', async () => {
-    let subjectNewFeeCallData: string;
-    let subjectManagerAddress: Address;
-
-    beforeEach(async () => {
-      const feeType = ZERO;
-      const newFeePercentage = ether(.03);
-
-      subjectNewFeeCallData = feeCalculatorHelper.generateAdjustFeeCallData(feeType, newFeePercentage);
-      subjectManagerAddress = assetPairManagerV2.address;
-    });
-
-    async function subject(): Promise<string> {
-      return await assetPairManagerV2Wrapper.adjustFee(
-        subjectManagerAddress,
-        subjectNewFeeCallData
-      );
-    }
-
-    test('sets the correct upgrade hash', async () => {
-      const txHash = await subject();
-      const { blockHash, input } = await web3.eth.getTransaction(txHash);
-      const { timestamp } = await web3.eth.getBlock(blockHash as any);
-
-      const upgradeHash = web3.utils.soliditySha3(input);
-      const actualTimestamp = await assetPairManagerV2.timeLockedUpgrades.callAsync(upgradeHash);
-      expect(actualTimestamp).to.bignumber.equal(timestamp);
     });
   });
 

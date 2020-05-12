@@ -284,4 +284,24 @@ describe('RebalancingSetTokenV3Wrapper', () => {
       expect(feeState.lastProfitFeeTimestamp).to.be.bignumber.equal(timestamp);
     });
   });
+
+  describe('rebalanceFeeCalculator', async () => {
+    let subjectRebalancingSetTokenV3: Address;
+
+    beforeEach(async () => {
+      subjectRebalancingSetTokenV3 = rebalancingSetToken.address;
+    });
+
+    async function subject(): Promise<Address> {
+      return await rebalancingSetTokenV3Wrapper.rebalanceFeeCalculator(
+        subjectRebalancingSetTokenV3,
+      );
+    }
+
+    test('successfully returns the rebalanceFeeCalculator address', async () => {
+      const returnedRebalanceFeeCalculator = await subject();
+
+      expect(returnedRebalanceFeeCalculator).to.be.bignumber.equal(performanceFeeCalculator.address);
+    });
+  });
 });
