@@ -65,6 +65,11 @@ export interface Component {
   unit: BigNumber;
 }
 
+export interface RebalancingSetStatus {
+  collateralSet: Address;
+  state: BigNumber;
+}
+
 export const RebalancingState = {
   DEFAULT: new BigNumber(0),
   PROPOSAL: new BigNumber(1),

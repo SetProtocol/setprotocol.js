@@ -22,10 +22,12 @@ import Web3 from 'web3';
 import {
   MovingAverageOracleWrapper,
   MedianizerWrapper,
+  ProtocolViewerWrapper,
 } from '../wrappers';
 import { BigNumber } from '../util';
 import {
-  Address
+  Address,
+  SetProtocolConfig
 } from '../types/common';
 
 /**
@@ -37,6 +39,7 @@ import {
 export class OracleAPI {
   private movingAverageOracleWrapper: MovingAverageOracleWrapper;
   private medianizer: MedianizerWrapper;
+  private protocolViewer: ProtocolViewerWrapper;
 
   /**
    * Instantiates a new OracleAPI instance that contains methods for interacting with and updating price oracles
@@ -44,9 +47,10 @@ export class OracleAPI {
    * @param web3        The Web3.js Provider instance you would like the SetProtocol.js library to use for interacting
    *                      with the Ethereum network
    */
-  constructor(web3: Web3) {
+  constructor(web3: Web3, config: SetProtocolConfig) {
     this.movingAverageOracleWrapper = new MovingAverageOracleWrapper(web3);
     this.medianizer = new MedianizerWrapper(web3);
+    this.protocolViewer = new ProtocolViewerWrapper(web3, config.protocolViewerAddress);
   }
 
   /**
@@ -73,6 +77,16 @@ export class OracleAPI {
     const priceHex = await this.movingAverageOracleWrapper.read(movingAverageOracle, dataPoints);
 
     return new BigNumber(priceHex);
+  }
+
+  /**
+   * Returns the current price feed price
+   *
+   * @param oracleAddresses      Addresseses of oracles to read
+   * @return                     Price in 18 decimal of the asset
+   */
+  public async getOraclePricesAsync(oracleAddresses: Address[]): Promise<BigNumber[]> {
+    return await this.protocolViewer.batchFetchOraclePrices(oracleAddresses);
   }
 }
 

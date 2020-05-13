@@ -135,6 +135,7 @@ export interface NewTradingPoolInfo {
   manager: Address;
   feeRecipient: Address;
   currentSet: Address;
+  liquidator: Address;
   poolName: string;
   poolSymbol: string;
   unitShares: BigNumber;
@@ -154,6 +155,7 @@ export interface NewTradingPoolV2Info {
   manager: Address;
   feeRecipient: Address;
   currentSet: Address;
+  liquidator: Address;
   poolName: string;
   poolSymbol: string;
   unitShares: BigNumber;

@@ -33,6 +33,7 @@ import {
   ERC20Helper,
   FeeCalculatorHelper,
   LiquidatorHelper,
+  LinearAuctionLiquidatorContract,
   OracleWhiteListContract,
   PerformanceFeeCalculatorContract,
   RebalanceAuctionModuleContract,
@@ -114,6 +115,7 @@ import {
   transitionToRebalanceAsync,
   createDefaultRebalancingSetTokenV3Async,
   deployWhiteListContract,
+  deployLinearAuctionLiquidatorContractAsync,
 } from '@test/helpers';
 
 import { CompoundHelper } from '@test/helpers/compoundHelper';
@@ -125,6 +127,7 @@ import {
   RebalancingProgressDetails,
   RebalancingProposalDetails,
   RebalancingSetDetails,
+  RebalancingSetStatus,
   SetProtocolConfig,
   TokenFlowsDetails,
 } from '@src/types/common';
@@ -4172,6 +4175,94 @@ describe('RebalancingAPI', () => {
             `available at ${nextChunkAuctionFormattedDate}`
           );
         });
+      });
+    });
+
+    describe('getLiquidatorsAsync', async () => {
+      let lastRebalanceTimestamp: BigNumber;
+      let secondRBSetV3: RebalancingSetTokenV3Contract;
+      let linearLiquidator: LinearAuctionLiquidatorContract;
+
+      let subjectRebalancingSetTokenAddresses: Address[];
+
+      beforeEach(async () => {
+        linearLiquidator = await deployLinearAuctionLiquidatorContractAsync(
+          web3,
+          core,
+          oracleWhiteList
+        );
+        liquidatorWhiteList.addAddress.sendTransactionAsync(linearLiquidator.address);
+
+        const failPeriod = ONE_DAY_IN_SECONDS;
+        const nextSetTokenV3 = set2;
+        const { timestamp } = await web3.eth.getBlock('latest');
+        lastRebalanceTimestamp = new BigNumber(timestamp);
+        secondRBSetV3 = await createDefaultRebalancingSetTokenV3Async(
+          web3,
+          core,
+          rebalancingSetTokenV3Factory.address,
+          DEFAULT_ACCOUNT[0],
+          linearLiquidator.address,
+          DEFAULT_ACCOUNT[0],
+          feeCalculator.address,
+          nextSetTokenV3.address,
+          failPeriod,
+          lastRebalanceTimestamp,
+        );
+
+        subjectRebalancingSetTokenAddresses = [rebalancingSetTokenV3.address, secondRBSetV3.address];
+      });
+
+      async function subject(): Promise<Address[]> {
+        return await rebalancingAPI.getLiquidatorsAsync(subjectRebalancingSetTokenAddresses);
+      }
+
+      it('fetches the correct liquidators', async () => {
+        const liquidators = await subject();
+
+        const expectedLiquidators = [liquidator.address, linearLiquidator.address];
+        expect(JSON.stringify(liquidators)).to.equal(JSON.stringify(expectedLiquidators));
+      });
+    });
+
+    describe('getRebalanceCompleteStateAsync', async () => {
+      let lastRebalanceTimestamp: BigNumber;
+      let secondRBSetV3: RebalancingSetTokenV3Contract;
+
+      let subjectRebalancingSetTokenAddresses: Address[];
+
+      beforeEach(async () => {
+        const failPeriod = ONE_DAY_IN_SECONDS;
+        const nextSetTokenV3 = set2;
+        const { timestamp } = await web3.eth.getBlock('latest');
+        lastRebalanceTimestamp = new BigNumber(timestamp);
+        secondRBSetV3 = await createDefaultRebalancingSetTokenV3Async(
+          web3,
+          core,
+          rebalancingSetTokenV3Factory.address,
+          DEFAULT_ACCOUNT[0],
+          liquidator.address,
+          DEFAULT_ACCOUNT[0],
+          feeCalculator.address,
+          nextSetTokenV3.address,
+          failPeriod,
+          lastRebalanceTimestamp,
+        );
+
+        subjectRebalancingSetTokenAddresses = [rebalancingSetTokenV3.address, secondRBSetV3.address];
+      });
+
+      async function subject(): Promise<RebalancingSetStatus[]> {
+        return await rebalancingAPI.getRebalanceCompleteStateAsync(subjectRebalancingSetTokenAddresses);
+      }
+
+      it('fetches the correct statuses', async () => {
+        const statuses: any[] = await subject();
+
+        expect(statuses[0].collateralSet).to.equal(set1.address);
+        expect(statuses[1].collateralSet).to.equal(set2.address);
+        expect(statuses[0].state).to.be.bignumber.equal(ZERO);
+        expect(statuses[1].state).to.be.bignumber.equal(ZERO);
       });
     });
   });

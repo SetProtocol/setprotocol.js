@@ -23,34 +23,36 @@ jest.unmock('set-protocol-contracts');
 jest.setTimeout(30000);
 
 import * as _ from 'lodash';
-import * as ABIDecoder from 'abi-decoder';
 import * as chai from 'chai';
 import Web3 from 'web3';
 import { Address, Web3Utils } from 'set-protocol-utils';
 import * as setProtocolUtils from 'set-protocol-utils';
 import {
+  ConstantPriceOracleContract,
   HistoricalPriceFeedContract,
   MedianContract,
-  MovingAverageOracleContract
+  MovingAverageOracleContract,
 } from 'set-protocol-oracles';
+
+import { ProtocolViewerContract } from 'set-protocol-viewers';
 
 import ChaiSetup from '@test/helpers/chaiSetup';
 import { OracleAPI } from '@src/api';
-import { BigNumber } from '@src/util';
+import { BigNumber, ether } from '@src/util';
+import { SetProtocolConfig } from '@src/types/common';
 import { DEFAULT_ACCOUNT } from '@src/constants/accounts';
-import { TX_DEFAULTS } from '@src/constants';
+import { NULL_ADDRESS } from '@src/constants';
 import {
   addPriceFeedOwnerToMedianizer,
+  deployConstantPriceOracleAsync,
   deployHistoricalPriceFeedAsync,
   deployMedianizerAsync,
   deployMovingAverageOracleAsync,
+  deployProtocolViewerAsync,
   updateMedianizerPriceAsync,
 } from '@test/helpers';
 
-const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
-
 ChaiSetup.configure();
-const contract = require('truffle-contract');
 const web3 = new Web3('http://localhost:8545');
 const web3Utils = new Web3Utils(web3);
 const { expect } = chai;
@@ -59,13 +61,10 @@ let currentSnapshotId: number;
 
 const { SetProtocolTestUtils: SetTestUtils } = setProtocolUtils;
 
-const coreContract = contract(Core);
-coreContract.setProvider(web3.currentProvider);
-coreContract.defaults(TX_DEFAULTS);
-
 
 describe('OracleAPI', () => {
   let oracleAPI: OracleAPI;
+  let protocolViewer: ProtocolViewerContract;
 
   const priceFeedUpdateFrequency: BigNumber = new BigNumber(10);
   const initialMedianizerEthPrice: BigNumber = new BigNumber(1000000);
@@ -78,18 +77,27 @@ describe('OracleAPI', () => {
     new BigNumber(5000000),
   ];
 
-  beforeAll(() => {
-    ABIDecoder.addABI(coreContract.abi);
-  });
-
-  afterAll(() => {
-    ABIDecoder.removeABI(coreContract.abi);
-  });
-
   beforeEach(async () => {
     currentSnapshotId = await web3Utils.saveTestSnapshot();
 
-    oracleAPI = new OracleAPI(web3);
+    protocolViewer = await deployProtocolViewerAsync(web3);
+    const setProtocolConfig: SetProtocolConfig = {
+      coreAddress: NULL_ADDRESS,
+      transferProxyAddress: NULL_ADDRESS,
+      vaultAddress: NULL_ADDRESS,
+      setTokenFactoryAddress: NULL_ADDRESS,
+      rebalancingSetTokenFactoryAddress: NULL_ADDRESS,
+      kyberNetworkWrapperAddress: NULL_ADDRESS,
+      rebalanceAuctionModuleAddress: NULL_ADDRESS,
+      exchangeIssuanceModuleAddress: NULL_ADDRESS,
+      rebalancingSetIssuanceModule: NULL_ADDRESS,
+      rebalancingSetEthBidderAddress: NULL_ADDRESS,
+      rebalancingSetExchangeIssuanceModule: NULL_ADDRESS,
+      wrappedEtherAddress: NULL_ADDRESS,
+      protocolViewerAddress: protocolViewer.address,
+    };
+
+    oracleAPI = new OracleAPI(web3, setProtocolConfig);
   });
 
   afterEach(async () => {
@@ -174,6 +182,42 @@ describe('OracleAPI', () => {
       const price = await subject();
 
       expect(price).to.bignumber.equal(btcPrice);
+    });
+  });
+
+  describe('#batchFetchOraclePrices', async () => {
+    let component1Price: BigNumber;
+    let component2Price: BigNumber;
+
+    let component1Oracle: ConstantPriceOracleContract;
+    let component2Oracle: ConstantPriceOracleContract;
+
+    let subjectOracleAddresses: Address[];
+
+    beforeEach(async () => {
+      component1Price = ether(1);
+      component2Price = ether(2);
+
+      component1Oracle = await deployConstantPriceOracleAsync(web3, component1Price);
+      component2Oracle = await deployConstantPriceOracleAsync(web3, component2Price);
+
+      subjectOracleAddresses = [
+        component1Oracle.address,
+        component2Oracle.address,
+      ];
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return oracleAPI.getOraclePricesAsync(
+        subjectOracleAddresses,
+      );
+    }
+
+    it('fetches oracle prices', async () => {
+      const oraclePrices = await subject();
+
+      const expectedOraclePrices = [component1Price, component2Price];
+      expect(JSON.stringify(oraclePrices)).to.equal(JSON.stringify(expectedOraclePrices));
     });
   });
 });
