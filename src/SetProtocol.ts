@@ -147,7 +147,7 @@ class SetProtocol {
     this.exchangeIssuance = new ExchangeIssuanceAPI(this.web3, assertions, config);
     this.factory = new FactoryAPI(this.web3, this.core, assertions, config);
     this.issuance = new IssuanceAPI(this.web3, this.core, assertions);
-    this.oracle = new OracleAPI(this.web3);
+    this.oracle = new OracleAPI(this.web3, config);
     this.priceFeed = new PriceFeedAPI(this.web3);
     this.rebalancing = new RebalancingAPI(this.web3, assertions, this.core, config);
     this.rebalancingManager = new RebalancingManagerAPI(this.web3, assertions, config);
