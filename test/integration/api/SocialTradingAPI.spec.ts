@@ -1904,7 +1904,7 @@ describe('SocialTradingAPI', () => {
       const startingCurrentSets = await tradingPoolInstance.startingCurrentSetAmount.callAsync();
       const biddingParams = await tradingPoolInstance.getBiddingParameters.callAsync();
 
-      expect(poolRebalanceInfo.liquidator).to.equal(liquidator.address);
+      expect(poolRebalanceInfo.liquidator).to.equal(twapLiquidator.address);
       expect(poolRebalanceInfo.nextSet).to.equal(newCollateralInstance.address);
       expect(poolRebalanceInfo.rebalanceStartTime).to.be.bignumber.equal(auctionParams[0]);
       expect(poolRebalanceInfo.timeToPivot).to.be.bignumber.equal(auctionParams[1]);
