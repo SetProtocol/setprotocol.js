@@ -41,6 +41,7 @@ import {
   RebalancingProgressDetails,
   RebalancingProposalDetails,
   RebalancingSetDetails,
+  RebalancingSetStatus,
   SetProtocolConfig,
   Tx,
   TokenFlowsDetails,
@@ -711,6 +712,30 @@ export class RebalancingAPI {
   }
 
   /**
+   * Fetches the liquidators for multiple RebalancingSetToken contracts
+   *
+   * @param  rebalancingSetTokenAddresses    Addressses of the RebalancingSetToken contracts
+   * @return                                 Array of current unitShares
+   */
+  public async getLiquidatorsAsync(rebalancingSetTokenAddresses: Address[]): Promise<Address[]> {
+    this.assertGetLiquidatorAsync(rebalancingSetTokenAddresses);
+
+    return await this.protocolViewer.batchFetchLiquidator(rebalancingSetTokenAddresses);
+  }
+
+  /**
+   * Fetches the currentSet and State for multiple RebalancingSetToken contracts
+   *
+   * @param  rebalancingSetTokenAddresses    Addressses of the RebalancingSetToken contracts
+   * @return                                 Array of current unitShares
+   */
+  public async getRebalanceCompleteStateAsync(
+    rebalancingSetTokenAddresses: Address[]
+  ): Promise<RebalancingSetStatus[]> {
+    return await this.protocolViewer.batchFetchStateAndCollateral(rebalancingSetTokenAddresses);
+  }
+
+  /**
    * Fetches the current collateral set token address of a rebalancing set
    *
    * @param  rebalancingSetTokenAddress    Address of the RebalancingSetToken
@@ -966,6 +991,12 @@ export class RebalancingAPI {
   }
 
   private assertGetUnitSharesAsync(tokenAddresses: Address[]) {
+    tokenAddresses.forEach(tokenAddress => {
+      this.assert.schema.isValidAddress('rebalancingSetTokenAddress', tokenAddress);
+    });
+  }
+
+  private assertGetLiquidatorAsync(tokenAddresses: Address[]) {
     tokenAddresses.forEach(tokenAddress => {
       this.assert.schema.isValidAddress('rebalancingSetTokenAddress', tokenAddress);
     });

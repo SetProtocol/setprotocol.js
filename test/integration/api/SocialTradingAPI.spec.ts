@@ -1428,6 +1428,7 @@ describe('SocialTradingAPI', () => {
       expect(newPoolInfo.manager).to.equal(setManager.address);
       expect(newPoolInfo.feeRecipient).to.equal(feeRecipient);
       expect(newPoolInfo.currentSet).to.equal(currentSet);
+      expect(newPoolInfo.liquidator).to.equal(liquidatorAddress);
       expect(newPoolInfo.unitShares).to.be.bignumber.equal(unitShares);
       expect(newPoolInfo.naturalUnit).to.be.bignumber.equal(naturalUnit);
       expect(newPoolInfo.rebalanceInterval).to.be.bignumber.equal(rebalanceInterval);
@@ -1566,6 +1567,7 @@ describe('SocialTradingAPI', () => {
       expect(newPoolInfo.manager).to.equal(setManager.address);
       expect(newPoolInfo.feeRecipient).to.equal(feeRecipient);
       expect(newPoolInfo.currentSet).to.equal(currentSet);
+      expect(newPoolInfo.liquidator).to.equal(liquidatorAddress);
       expect(newPoolInfo.unitShares).to.be.bignumber.equal(unitShares);
       expect(newPoolInfo.naturalUnit).to.be.bignumber.equal(naturalUnit);
       expect(newPoolInfo.rebalanceInterval).to.be.bignumber.equal(rebalanceInterval);
@@ -1869,7 +1871,7 @@ describe('SocialTradingAPI', () => {
       );
     }
 
-    test.only('successfully gets info from manager', async () => {
+    test('successfully gets info from manager', async () => {
       const poolRebalanceInfo = await subject();
 
       const poolInfo: any = await setManagerV2.pools.callAsync(subjectTradingPool);
@@ -1902,7 +1904,7 @@ describe('SocialTradingAPI', () => {
       const startingCurrentSets = await tradingPoolInstance.startingCurrentSetAmount.callAsync();
       const biddingParams = await tradingPoolInstance.getBiddingParameters.callAsync();
 
-      expect(poolRebalanceInfo.liquidator).to.equal(liquidator.address);
+      expect(poolRebalanceInfo.liquidator).to.equal(twapLiquidator.address);
       expect(poolRebalanceInfo.nextSet).to.equal(newCollateralInstance.address);
       expect(poolRebalanceInfo.rebalanceStartTime).to.be.bignumber.equal(auctionParams[0]);
       expect(poolRebalanceInfo.timeToPivot).to.be.bignumber.equal(auctionParams[1]);

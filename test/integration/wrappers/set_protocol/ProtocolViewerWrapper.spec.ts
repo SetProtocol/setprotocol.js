@@ -63,6 +63,7 @@ import {
 import { Address } from 'set-protocol-utils';
 
 import { ProtocolViewerWrapper } from '@src/wrappers';
+import { RebalancingSetStatus } from '@src/types/common';
 import {
   DEFAULT_ACCOUNT,
   DEFAULT_AUCTION_PRICE_NUMERATOR,
@@ -724,6 +725,7 @@ describe('ProtocolViewer', () => {
         expect(rbSetData.manager).to.equal(setManager.address);
         expect(rbSetData.feeRecipient).to.equal(feeRecipient);
         expect(rbSetData.currentSet).to.equal(currentSetTokenV2.address);
+        expect(rbSetData.liquidator).to.equal(liquidator.address);
         expect(rbSetData.name).to.equal('Rebalancing Set Token');
         expect(rbSetData.symbol).to.equal('RBSET');
         expect(rbSetData.unitShares).to.be.bignumber.equal(DEFAULT_UNIT_SHARES);
@@ -1161,6 +1163,7 @@ describe('ProtocolViewer', () => {
         expect(rbSetData.manager).to.equal(setManager.address);
         expect(rbSetData.feeRecipient).to.equal(feeRecipient);
         expect(rbSetData.currentSet).to.equal(currentSetTokenV3.address);
+        expect(rbSetData.liquidator).to.equal(liquidator.address);
         expect(rbSetData.name).to.equal('Rebalancing Set Token');
         expect(rbSetData.symbol).to.equal('RBSET');
         expect(rbSetData.unitShares).to.be.bignumber.equal(DEFAULT_UNIT_SHARES);
@@ -1502,7 +1505,7 @@ describe('ProtocolViewer', () => {
         secondEntryFee = ether(.01);
         secondProfitFee = ether(.2);
         secondStreamingFee = ether(.02);
-        secondRBSetV3 = await await createDefaultRebalancingSetTokenV3Async(
+        secondRBSetV3 = await createDefaultRebalancingSetTokenV3Async(
           web3,
           core,
           rebalancingFactory.address,
@@ -1592,7 +1595,7 @@ describe('ProtocolViewer', () => {
         secondEntryFee = ether(.01);
         secondProfitFee = ether(.2);
         secondStreamingFee = ether(.02);
-        secondRBSetV3 = await await createDefaultRebalancingSetTokenV3Async(
+        secondRBSetV3 = await createDefaultRebalancingSetTokenV3Async(
           web3,
           core,
           rebalancingFactory.address,
@@ -1641,6 +1644,84 @@ describe('ProtocolViewer', () => {
         );
 
         expect(JSON.stringify(tradingPoolFeeStates)).to.equal(JSON.stringify(expectedFeeStateInfo));
+      });
+    });
+
+    describe('#batchFetchLiquidator', async () => {
+      let subjectRebalancingSets: Address[];
+
+      let secondRBSetV3: RebalancingSetTokenV3Contract;
+
+      beforeEach(async () => {
+        const failPeriod = ONE_DAY_IN_SECONDS;
+        nextSetTokenV3 = set2;
+        secondRBSetV3 = await createDefaultRebalancingSetTokenV3Async(
+          web3,
+          core,
+          rebalancingFactory.address,
+          setManager.address,
+          twapLiquidator.address,
+          trader,
+          performanceFeeCalculator.address,
+          currentSetTokenV3.address,
+          failPeriod,
+          lastRebalanceTimestamp,
+        );
+
+        subjectRebalancingSets = [rebalancingSetTokenV3.address, secondRBSetV3.address];
+      });
+
+      async function subject(): Promise<Address[]> {
+        return protocolViewerWrapper.batchFetchLiquidator(
+          subjectRebalancingSets
+        );
+      }
+
+      it('fetches the correct performanceFee array', async () => {
+        const liquidators = await subject();
+
+        const expectedLiquidators = [liquidator.address, twapLiquidator.address];
+        expect(JSON.stringify(liquidators)).to.equal(JSON.stringify(expectedLiquidators));
+      });
+    });
+
+    describe('#batchFetchStateAndCollateral', async () => {
+      let subjectRebalancingSets: Address[];
+
+      let secondRBSetV3: RebalancingSetTokenV3Contract;
+
+      beforeEach(async () => {
+        const failPeriod = ONE_DAY_IN_SECONDS;
+        nextSetTokenV3 = set2;
+        secondRBSetV3 = await createDefaultRebalancingSetTokenV3Async(
+          web3,
+          core,
+          rebalancingFactory.address,
+          setManager.address,
+          twapLiquidator.address,
+          trader,
+          performanceFeeCalculator.address,
+          nextSetTokenV3.address,
+          failPeriod,
+          lastRebalanceTimestamp,
+        );
+
+        subjectRebalancingSets = [rebalancingSetTokenV3.address, secondRBSetV3.address];
+      });
+
+      async function subject(): Promise<RebalancingSetStatus[]> {
+        return protocolViewerWrapper.batchFetchStateAndCollateral(
+          subjectRebalancingSets
+        );
+      }
+
+      it('fetches the correct performanceFee array', async () => {
+        const statuses: any[] = await subject();
+
+        expect(statuses[0].collateralSet).to.equal(currentSetTokenV3.address);
+        expect(statuses[1].collateralSet).to.equal(nextSetTokenV3.address);
+        expect(statuses[0].state).to.be.bignumber.equal(ZERO);
+        expect(statuses[1].state).to.be.bignumber.equal(ZERO);
       });
     });
   });
@@ -1822,6 +1903,42 @@ describe('ProtocolViewer', () => {
 
       const expectedCrossoverArray = [new BigNumber(0), new BigNumber(0)];
       expect(JSON.stringify(actualCrossoverArray)).to.equal(JSON.stringify(expectedCrossoverArray));
+    });
+  });
+
+  describe('#batchFetchOraclePrices', async () => {
+    let component1Price: BigNumber;
+    let component2Price: BigNumber;
+
+    let component1Oracle: ConstantPriceOracleContract;
+    let component2Oracle: ConstantPriceOracleContract;
+
+    let subjectOracleAddresses: Address[];
+
+    beforeEach(async () => {
+      component1Price = ether(1);
+      component2Price = ether(2);
+
+      component1Oracle = await deployConstantPriceOracleAsync(web3, component1Price);
+      component2Oracle = await deployConstantPriceOracleAsync(web3, component2Price);
+
+      subjectOracleAddresses = [
+        component1Oracle.address,
+        component2Oracle.address,
+      ];
+    });
+
+    async function subject(): Promise<BigNumber[]> {
+      return protocolViewerWrapper.batchFetchOraclePrices(
+        subjectOracleAddresses,
+      );
+    }
+
+    it('fetches oracle prices', async () => {
+      const oraclePrices = await subject();
+
+      const expectedOraclePrices = [component1Price, component2Price];
+      expect(JSON.stringify(oraclePrices)).to.equal(JSON.stringify(expectedOraclePrices));
     });
   });
 });

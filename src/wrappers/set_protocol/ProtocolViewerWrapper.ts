@@ -18,7 +18,7 @@
 
 import Web3 from 'web3';
 
-import { Address } from '../../types/common';
+import { Address, RebalancingSetStatus } from '../../types/common';
 import { BigNumber } from '../../util';
 import { ProtocolContractWrapper } from './ProtocolContractWrapper';
 
@@ -229,6 +229,36 @@ export class ProtocolViewerWrapper {
   }
 
   /**
+   * Fetches all liquidator addresses for an array of RebalancingSetTokens
+   *
+   * @param  rebalancingSetAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchLiquidator(
+    rebalancingSetAddresses: Address[],
+  ): Promise<string[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchLiquidator.callAsync(rebalancingSetAddresses);
+  }
+
+  /**
+   * Fetches rebalanceState and currentSet for an array of RebalancingSetTokens
+   *
+   * @param  rebalancingSetAddresses[]    RebalancingSetToken contract instance addresses
+   */
+  public async batchFetchStateAndCollateral(
+    rebalancingSetAddresses: Address[],
+  ): Promise<RebalancingSetStatus[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchStateAndCollateral.callAsync(rebalancingSetAddresses);
+  }
+
+  /**
    * Fetches all trading pool operators for an array of trading pools
    *
    * @param  tradingPoolAddresses[]    RebalancingSetToken contract instance addresses
@@ -346,5 +376,20 @@ export class ProtocolViewerWrapper {
     );
 
     return await protocolViewerInstance.batchFetchAssetPairCrossoverTimestamp.callAsync(managerAddresses);
+  }
+
+  /**
+   * Fetches oracle prices for a passed array of oracle addresses
+   *
+   * @param  oracleAddresses[]    Oracle addresses to read from
+   */
+  public async batchFetchOraclePrices(
+    oracleAddresses: Address[],
+  ): Promise<BigNumber[]> {
+    const protocolViewerInstance = await this.contracts.loadProtocolViewerContract(
+      this.protocolViewerAddress
+    );
+
+    return await protocolViewerInstance.batchFetchOraclePrices.callAsync(oracleAddresses);
   }
 }
