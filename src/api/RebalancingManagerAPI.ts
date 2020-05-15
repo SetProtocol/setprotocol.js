@@ -166,7 +166,7 @@ export class RebalancingManagerAPI {
     macoManager: Address,
     txOpts: Tx
   ): Promise<string> {
-    if (managerType == ManagerType.PAIR) {
+    if (managerType == ManagerType.PAIR || managerType == ManagerType.PAIRV2) {
       await this.assertAssetPairInitialPropose(macoManager);
     } else {
       await this.assertInitialPropose(managerType, macoManager);
@@ -182,7 +182,7 @@ export class RebalancingManagerAPI {
     macoManager: Address,
     txOpts: Tx
   ): Promise<string> {
-    if (managerType == ManagerType.PAIR) {
+    if (managerType == ManagerType.PAIR || managerType == ManagerType.PAIRV2) {
       await this.assertAssetPairConfirmPropose(macoManager);
     } else {
       await this.assertConfirmPropose(managerType, macoManager);
@@ -347,7 +347,7 @@ export class RebalancingManagerAPI {
   ): Promise<BigNumber> {
     this.assert.schema.isValidAddress('manager', manager);
 
-    if (managerType == ManagerType.PAIR) {
+    if (managerType == ManagerType.PAIR || managerType == ManagerType.PAIRV2) {
       return await this.assetPairManager.recentInitialProposeTimestamp(manager);
     }
 
