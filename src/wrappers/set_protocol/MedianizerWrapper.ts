@@ -44,8 +44,23 @@ export class MedianizerWrapper {
    * @return            Hex representation of the current price on the medianizer
    */
   public async read(medianizerAddress: Address): Promise<Bytes> {
-    const medianizerContract = await this.contracts.loadMedianizerContract(medianizerAddress);
+    // If it is authorizable, pick an authorized address and read. Otherwise, just call read
+    try {
+      const medianizerContract = await this.contracts.loadAuthorizableAsync(medianizerAddress);
+      const authorizedList = await medianizerContract.getAuthorizedAddresses.callAsync();
 
-    return await medianizerContract.read.callAsync();
+      if (authorizedList.length > 0) {
+        return await new web3.eth.Contract(medianizerContract.abi, medianizerAddress).methods
+          .read()
+          .call({ from: authorizedList[0] });
+
+      } else {
+        throw new Error('Requires authorized but is not');
+      }
+    } catch {
+      const medianizerContract = await this.contracts.loadMedianizerContract(medianizerAddress);
+      return await medianizerContract.read.callAsync();
+    }
+
   }
 }
