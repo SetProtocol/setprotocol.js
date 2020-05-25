@@ -970,6 +970,8 @@ describe('ProtocolViewer', () => {
     let auctionPeriod: BigNumber;
     let rangeStart: BigNumber;
     let rangeEnd: BigNumber;
+    let twapRangeStart: BigNumber;
+    let twapRangeEnd: BigNumber;
     let failPeriod: BigNumber;
     let oracleWhiteList: OracleWhiteListContract;
 
@@ -1067,21 +1069,23 @@ describe('ProtocolViewer', () => {
         name,
       );
 
-      const assetPairHashes = [
-        liquidatorHelper.generateAssetPairHashes(component1.address, component2.address),
-      ];
-      const assetPairBounds = [
-        {min: ether(10 ** 4).toString(), max: ether(10 ** 6).toString()},
-      ];
       const twapName = 'TWAPLiquidator';
+      const assetPairBounds = [
+        {
+          assetOne: component1.address,
+          assetTwo: component2.address,
+          bounds: {lower: ether(10 ** 4).toString(), upper: ether(10 ** 6).toString()},
+        },
+      ];
+      twapRangeStart = ether(.01);
+      twapRangeEnd = ether(.23);
       twapLiquidator = await deployTWAPLiquidatorAsync(
         web3,
         core.address,
         oracleWhiteList.address,
         auctionPeriod,
-        rangeStart,
-        rangeEnd,
-        assetPairHashes,
+        twapRangeStart,
+        twapRangeEnd,
         assetPairBounds,
         twapName
       );
@@ -1323,7 +1327,6 @@ describe('ProtocolViewer', () => {
         let subjectTradingPool: Address;
 
         let newAllocation: BigNumber;
-        let rebalanceTimestamp: BigNumber;
 
         beforeEach(async () => {
           twapRebalancingSetToken.setManager.sendTransactionAsync(setManager.address);
@@ -1359,8 +1362,6 @@ describe('ProtocolViewer', () => {
             newAllocation,
             liquidatorData
           );
-          const block = await web3.eth.getBlock('latest');
-          rebalanceTimestamp = new BigNumber(block.timestamp);
 
           subjectTradingPool = twapRebalancingSetToken.address;
         });
@@ -1401,7 +1402,7 @@ describe('ProtocolViewer', () => {
           expect(rbSetData.totalSetsRemaining).to.be.bignumber.equal(startingCurrentSets);
           expect(rbSetData.chunkSize).to.be.bignumber.equal(startingCurrentSets);
           expect(rbSetData.chunkAuctionPeriod).to.be.bignumber.equal(chunkAuctionPeriod);
-          expect(rbSetData.lastChunkAuctionEnd).to.be.bignumber.equal(rebalanceTimestamp.sub(chunkAuctionPeriod));
+          expect(rbSetData.lastChunkAuctionEnd).to.be.bignumber.equal(ZERO);
         });
 
         it('fetches the correct CollateralSet data', async () => {
@@ -1417,8 +1418,6 @@ describe('ProtocolViewer', () => {
 
       describe('#fetchRBSetTWAPRebalanceDetails', async () => {
         let subjectTradingPool: Address;
-
-        let rebalanceTimestamp: BigNumber;
 
         beforeEach(async () => {
           // Issue currentSetToken
@@ -1441,8 +1440,6 @@ describe('ProtocolViewer', () => {
             nextSetTokenV3.address,
             liquidatorData
           );
-          const block = await web3.eth.getBlock('latest');
-          rebalanceTimestamp = new BigNumber(block.timestamp);
 
           subjectTradingPool = twapRebalancingSetToken.address;
         });
@@ -1475,7 +1472,7 @@ describe('ProtocolViewer', () => {
           expect(rbSetData.totalSetsRemaining).to.be.bignumber.equal(startingCurrentSets);
           expect(rbSetData.chunkSize).to.be.bignumber.equal(startingCurrentSets);
           expect(rbSetData.chunkAuctionPeriod).to.be.bignumber.equal(chunkAuctionPeriod);
-          expect(rbSetData.lastChunkAuctionEnd).to.be.bignumber.equal(rebalanceTimestamp.sub(chunkAuctionPeriod));
+          expect(rbSetData.lastChunkAuctionEnd).to.be.bignumber.equal(ZERO);
         });
 
         it('fetches the correct CollateralSet data', async () => {

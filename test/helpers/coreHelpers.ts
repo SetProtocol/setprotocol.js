@@ -415,15 +415,9 @@ export const deployTWAPLiquidatorAsync = async (
   auctionPeriod: BigNumber,
   rangeStart: BigNumber,
   rangeEnd: BigNumber,
-  assetPairHashes: string[],
   assetPairBounds: {}[],
   name: string
 ): Promise<TWAPLiquidatorContract> => {
-  const assetPairBoundsStr = [];
-  for (let i = 0; i < assetPairBounds.length; i++) {
-    assetPairBoundsStr.push(assetPairBounds[i]);
-  }
-
   const truffleLiquidator = setDefaultTruffleContract(web3, TWAPLiquidator);
   const deployedTWAPLiquidator = await truffleLiquidator.new(
     core,
@@ -431,8 +425,7 @@ export const deployTWAPLiquidatorAsync = async (
     auctionPeriod,
     rangeStart,
     rangeEnd,
-    assetPairHashes,
-    assetPairBoundsStr,
+    assetPairBounds,
     name,
   );
 
