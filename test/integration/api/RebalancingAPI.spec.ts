@@ -3930,13 +3930,15 @@ describe('RebalancingAPI', () => {
       nextSetToken = set2;
 
       const auctionPeriod = ONE_HOUR_IN_SECONDS;
-      const rangeStart = new BigNumber(3);
-      const rangeEnd = new BigNumber(21);
-      const assetPairHashes = [
-        liquidatorHelper.generateAssetPairHashes(weth.address, usdc.address),
-      ];
+      const rangeStart = ether(.01);
+      const rangeEnd = ether(.23);
+      const name = 'liquidator';
       const assetPairBounds = [
-        {min: ether(10 ** 4).toString(), max: ether(10 ** 6).toString()},
+        {
+          assetOne: weth.address,
+          assetTwo: usdc.address,
+          bounds: {lower: ether(10 ** 4).toString(), upper: ether(10 ** 6).toString()},
+        },
       ];
       liquidator = await deployTWAPLiquidatorAsync(
         web3,
@@ -3945,9 +3947,8 @@ describe('RebalancingAPI', () => {
         auctionPeriod,
         rangeStart,
         rangeEnd,
-        assetPairHashes,
         assetPairBounds,
-        'TWAPLiquidator'
+        name
       );
 
       feeCalculator = await feeCalculatorHelper.deployPerformanceFeeCalculatorAsync(
@@ -3984,7 +3985,6 @@ describe('RebalancingAPI', () => {
 
     describe('fetchRBSetTWAPRebalanceDetailsAsync', async () => {
       const chunkAuctionPeriod: BigNumber = ONE_HOUR_IN_SECONDS;
-      let rebalanceTimestamp: BigNumber;
 
       let subjectRebalancingSetTokenAddress: Address;
 
@@ -4006,8 +4006,6 @@ describe('RebalancingAPI', () => {
           nextSetToken.address,
           liquidatorData
         );
-        const lastBlock = await web3.eth.getBlock('latest');
-        rebalanceTimestamp = new BigNumber(lastBlock.timestamp);
 
         subjectRebalancingSetTokenAddress = rebalancingSetTokenV3.address;
       });
@@ -4038,7 +4036,7 @@ describe('RebalancingAPI', () => {
         expect(rbSetData.totalSetsRemaining).to.be.bignumber.equal(startingCurrentSets);
         expect(rbSetData.chunkSize).to.be.bignumber.equal(startingCurrentSets);
         expect(rbSetData.chunkAuctionPeriod).to.be.bignumber.equal(chunkAuctionPeriod);
-        expect(rbSetData.lastChunkAuctionEnd).to.be.bignumber.equal(rebalanceTimestamp.sub(chunkAuctionPeriod));
+        expect(rbSetData.lastChunkAuctionEnd).to.be.bignumber.equal(ZERO);
         expect(JSON.stringify(rbSetData.nextSetInfo.components)).to.equal(JSON.stringify(set2Components));
         expect(JSON.stringify(rbSetData.nextSetInfo.units)).to.equal(JSON.stringify(set2Units));
         expect(rbSetData.nextSetInfo.naturalUnit).to.be.bignumber.equal(collateralNaturalUnit);

@@ -248,22 +248,26 @@ describe('SocialTradingAPI', () => {
       rangeStart,
       rangeEnd
     );
-    const assetPairHashes = [
-      liquidatorHelper.generateAssetPairHashes(wrappedETH.address, wrappedBTC.address),
-    ];
+
+    const twapName = 'TWAPLiquidator';
     const assetPairBounds = [
-      {min: ether(10 ** 4).toString(), max: ether(10 ** 6).toString()},
+      {
+        assetOne: wrappedETH.address,
+        assetTwo: wrappedBTC.address,
+        bounds: {lower: ether(10 ** 4).toString(), upper: ether(10 ** 6).toString()},
+      },
     ];
+    const twapRangeStart = ether(.01);
+    const twapRangeEnd = ether(.23);
     twapLiquidator = await deployTWAPLiquidatorAsync(
       web3,
       core.address,
       oracleWhiteList.address,
       auctionPeriod,
-      rangeStart,
-      rangeEnd,
-      assetPairHashes,
+      twapRangeStart,
+      twapRangeEnd,
       assetPairBounds,
-      'TWAPLiquidator'
+      twapName
     );
     liquidatorWhiteList = await deployWhiteListContract(web3, [liquidator.address, twapLiquidator.address]);
 
@@ -1760,7 +1764,6 @@ describe('SocialTradingAPI', () => {
     let subjectTradingPool: Address;
 
     let newAllocation: BigNumber;
-    let rebalanceTimestamp: BigNumber;
     const chunkAuctionPeriod: BigNumber = ONE_HOUR_IN_SECONDS;
 
     let newCollateralInstance: SetTokenContract;
@@ -1853,8 +1856,6 @@ describe('SocialTradingAPI', () => {
         liquidatorData,
         { from: DEFAULT_ACCOUNT }
       );
-      const block = await web3.eth.getBlock('latest');
-      rebalanceTimestamp = new BigNumber(block.timestamp);
 
       const newFormattedLogs = await getFormattedLogsFromTxHash(web3, newTxHash);
       const newCollateralAddress = extractNewSetTokenAddressFromLogs(newFormattedLogs, 2);
@@ -1918,7 +1919,7 @@ describe('SocialTradingAPI', () => {
       expect(poolRebalanceInfo.totalSetsRemaining).to.be.bignumber.equal(startingCurrentSets);
       expect(poolRebalanceInfo.chunkSize).to.be.bignumber.equal(startingCurrentSets);
       expect(poolRebalanceInfo.chunkAuctionPeriod).to.be.bignumber.equal(chunkAuctionPeriod);
-      expect(poolRebalanceInfo.lastChunkAuctionEnd).to.be.bignumber.equal(rebalanceTimestamp.sub(chunkAuctionPeriod));
+      expect(poolRebalanceInfo.lastChunkAuctionEnd).to.be.bignumber.equal(ZERO);
       expect(poolRebalanceInfo.rebalanceState).to.be.bignumber.equal(new BigNumber(2));
     });
   });

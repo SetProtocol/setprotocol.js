@@ -159,14 +159,15 @@ describe('TWAPLiquidatorWrapper', () => {
     );
 
     const auctionPeriod = ONE_HOUR_IN_SECONDS;
-    const rangeStart = new BigNumber(10); // 10% above fair value
-    const rangeEnd = new BigNumber(10); // 10% below fair value
+    const rangeStart = ether(.01);
+    const rangeEnd = ether(.23);
     const name = 'liquidator';
-    const assetPairHashes = [
-      liquidatorHelper.generateAssetPairHashes(wrappedETH.address, wrappedBTC.address),
-    ];
     const assetPairBounds = [
-      {min: ether(10 ** 4).toString(), max: ether(10 ** 6).toString()},
+      {
+        assetOne: wrappedETH.address,
+        assetTwo: wrappedBTC.address,
+        bounds: {lower: ether(10 ** 4).toString(), upper: ether(10 ** 6).toString()},
+      },
     ];
     liquidator = await deployTWAPLiquidatorAsync(
       web3,
@@ -175,7 +176,6 @@ describe('TWAPLiquidatorWrapper', () => {
       auctionPeriod,
       rangeStart,
       rangeEnd,
-      assetPairHashes,
       assetPairBounds,
       name
     );
