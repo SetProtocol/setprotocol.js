@@ -26,8 +26,10 @@ import {
   ProtocolViewerWrapper,
   RebalancingSetTokenV2Wrapper,
   RebalancingSetTokenV3Wrapper,
+  SocialAllocatorWrapper,
   SocialTradingManagerWrapper,
-  SocialTradingManagerV2Wrapper
+  SocialTradingManagerV2Wrapper,
+  TWAPLiquidatorWrapper,
 } from '../wrappers';
 import { Assertions } from '../assertions';
 import { coreAPIErrors } from '../errors';
@@ -38,7 +40,8 @@ import {
   SetProtocolConfig,
   Tx,
   EntryFeePaid,
-  RebalanceFeePaid
+  RebalanceFeePaid,
+  Bounds
 } from '../types/common';
 
 import {
@@ -61,12 +64,14 @@ const { SetProtocolUtils: SetUtils } = setProtocolUtils;
 export class SocialTradingAPI {
   private web3: Web3;
   private assert: Assertions;
+  private performanceFeeCalculator: PerformanceFeeCalculatorWrapper;
   private protocolViewer: ProtocolViewerWrapper;
+  private socialAllocator: SocialAllocatorWrapper;
   private socialTradingManager: SocialTradingManagerWrapper;
   private socialTradingManagerV2: SocialTradingManagerV2Wrapper;
   private rebalancingSetV2: RebalancingSetTokenV2Wrapper;
   private rebalancingSetV3: RebalancingSetTokenV3Wrapper;
-  private performanceFeeCalculator: PerformanceFeeCalculatorWrapper;
+  private twapLiquidator: TWAPLiquidatorWrapper;
 
   /**
    * Instantiates a new RebalancingManagerAPI instance that contains methods for issuing and redeeming Sets
@@ -79,11 +84,13 @@ export class SocialTradingAPI {
   constructor(web3: Web3, assertions: Assertions, config: SetProtocolConfig) {
     this.web3 = web3;
     this.protocolViewer = new ProtocolViewerWrapper(web3, config.protocolViewerAddress);
+    this.socialAllocator = new SocialAllocatorWrapper(web3);
     this.socialTradingManager = new SocialTradingManagerWrapper(web3);
     this.socialTradingManagerV2 = new SocialTradingManagerV2Wrapper(web3);
     this.rebalancingSetV2 = new RebalancingSetTokenV2Wrapper(web3);
     this.rebalancingSetV3 = new RebalancingSetTokenV3Wrapper(web3);
     this.performanceFeeCalculator = new PerformanceFeeCalculatorWrapper(web3);
+    this.twapLiquidator = new TWAPLiquidatorWrapper(web3);
 
     this.assert = assertions;
   }
@@ -282,6 +289,40 @@ export class SocialTradingAPI {
   ): Promise<string> {
     await this.assertUpdateAllocation(manager, tradingPool, newAllocation, txOpts);
 
+    return this.socialTradingManager.updateAllocation(
+      manager,
+      tradingPool,
+      newAllocation,
+      liquidatorData,
+      txOpts
+    );
+  }
+
+  /**
+   * Calls SocialTradingManager's updateAllocation function. This function creates a new collateral Set and
+   * calls startRebalance on RebalancingSetTokenV2 using a TWAPLiquidator Updates allocation state on Manager
+   * contract.
+   *
+   * @param  manager                Address of the social trading manager contract
+   * @param  tradingPool            Address of tradingPool being updated
+   * @param  newAllocation          New allocation amount in base asset percentage
+   * @param  chunkSize              Value to be auctioned in each chunk
+   * @param  chunkAuctionPeriod     Time between chunk auctions
+   * @param  txOpts                 Transaction options object conforming to `Tx` with signer, gas, and
+   *                                  gasPrice data
+   * @return                        The hash of the resulting transaction.
+   */
+  public async updateAllocationWithTWAPAsync(
+    manager: Address,
+    tradingPool: Address,
+    newAllocation: BigNumber,
+    chunkSize: BigNumber,
+    chunkAuctionPeriod: BigNumber,
+    txOpts: Tx,
+  ): Promise<string> {
+    await this.assertUpdateAllocationWithTWAP(manager, tradingPool, newAllocation, chunkSize, txOpts);
+
+    const liquidatorData = SetUtils.generateTWAPLiquidatorCalldata(chunkSize, chunkAuctionPeriod);
     return this.socialTradingManager.updateAllocation(
       manager,
       tradingPool,
@@ -711,6 +752,15 @@ export class SocialTradingAPI {
 
   /* ============ Private Functions ============ */
 
+  private async getTradingPoolAssetPair(
+    allocator: Address
+  ): Promise<[Address, Address]> {
+    const baseAsset = await this.socialAllocator.baseAsset(allocator);
+    const quoteAsset = await this.socialAllocator.quoteAsset(allocator);
+
+    return [baseAsset, quoteAsset];
+  }
+
   private createNewTradingPoolObject(
     newPoolInfo: any,
   ): NewTradingPoolInfo {
@@ -933,6 +983,26 @@ export class SocialTradingAPI {
     this.assert.socialTrading.isTrader(poolInfo.trader, txOpts.from);
 
     this.assertValidAllocation(newAllocation);
+  }
+
+  private async assertUpdateAllocationWithTWAP(
+    manager: Address,
+    tradingPool: Address,
+    newAllocation: BigNumber,
+    chunkSize: BigNumber,
+    txOpts: Tx,
+  ): Promise <void> {
+    const poolInfo = await this.fetchNewTradingPoolV2DetailsAsync(tradingPool);
+    // console.log(poolInfo);
+    const assetPair = await this.getTradingPoolAssetPair(poolInfo.allocator);
+    const chunkSizeBounds: Bounds = await this.twapLiquidator.chunkSizeWhiteList(
+      poolInfo.liquidator,
+      assetPair[0],
+      assetPair[1]
+    );
+    this.assert.socialTrading.chunkSizeIsBetweenBounds(chunkSizeBounds, chunkSize);
+
+    await this.assertUpdateAllocation(manager, tradingPool, newAllocation, txOpts);
   }
 
   private async assertInitiateEntryFeeChange(

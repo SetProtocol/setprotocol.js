@@ -169,6 +169,8 @@ describe('SocialTradingAPI', () => {
   let maxProfitFeePercentage: BigNumber;
   let maxStreamingFeePercentage: BigNumber;
 
+  let assetPairBounds: any[];
+
   let setManager: SocialTradingManagerContract;
   let setManagerV2: SocialTradingManagerV2Contract;
   let protocolViewer: ProtocolViewerContract;
@@ -250,7 +252,7 @@ describe('SocialTradingAPI', () => {
     );
 
     const twapName = 'TWAPLiquidator';
-    const assetPairBounds = [
+    assetPairBounds = [
       {
         assetOne: wrappedETH.address,
         assetTwo: wrappedBTC.address,
@@ -956,6 +958,236 @@ describe('SocialTradingAPI', () => {
     });
 
     describe('when updateAllocationAsync is called before a new rebalance is allowed', async () => {
+      beforeEach(async () => {
+        timeKeeper.freeze((nextRebalanceAvailableAtSeconds * 1000) - 10);
+      });
+
+      test('throws', async () => {
+        const nextAvailableRebalance = nextRebalanceAvailableAtSeconds * 1000;
+        const nextRebalanceFormattedDate = moment(nextAvailableRebalance)
+          .format('dddd, MMMM Do YYYY, h:mm:ss a');
+        return expect(subject()).to.be.rejectedWith(
+          `Attempting to rebalance too soon. Rebalancing next ` +
+          `available on ${nextRebalanceFormattedDate}`
+        );
+      });
+    });
+  });
+
+  describe('updateAllocationWithTWAPAsync', async () => {
+    let subjectManager: Address;
+    let subjectTradingPool: Address;
+    let subjectNewAllocation: BigNumber;
+    let subjectChunkSize: BigNumber;
+    let subjectChunkAuctionPeriod: BigNumber;
+    let subjectCaller: Address;
+
+    let nextRebalanceAvailableAtSeconds: number;
+
+    beforeEach(async () => {
+      const manager = setManagerV2.address;
+      const allocatorAddress = allocator.address;
+      const startingBaseAssetAllocation = ether(0.25);
+      const startingUSDValue = ether(100);
+      const tradingPoolName = 'CoolPool';
+      const tradingPoolSymbol = 'COOL';
+      const liquidatorAddress = twapLiquidator.address;
+      const feeRecipient = DEFAULT_ACCOUNT;
+      const feeCalculatorAddress = performanceFeeCalculator.address;
+      const rebalanceInterval = ONE_DAY_IN_SECONDS;
+      const failAuctionPeriod = ONE_DAY_IN_SECONDS;
+      const { timestamp } = await web3.eth.getBlock('latest');
+      const lastRebalanceTimestamp = new BigNumber(timestamp);
+      const entryFee = ether(.01);
+      const profitFeePeriod = ONE_DAY_IN_SECONDS.mul(30);
+      const highWatermarkResetPeriod = ONE_DAY_IN_SECONDS.mul(365);
+      const profitFee = ether(.2);
+      const streamingFee = ether(.02);
+
+      const txHash = await socialTradingAPI.createTradingPoolV2Async(
+        manager,
+        allocatorAddress,
+        startingBaseAssetAllocation,
+        startingUSDValue,
+        tradingPoolName,
+        tradingPoolSymbol,
+        liquidatorAddress,
+        feeRecipient,
+        feeCalculatorAddress,
+        rebalanceInterval,
+        failAuctionPeriod,
+        lastRebalanceTimestamp,
+        entryFee,
+        profitFeePeriod,
+        highWatermarkResetPeriod,
+        profitFee,
+        streamingFee,
+        { from: DEFAULT_ACCOUNT }
+      );
+
+      await increaseChainTimeAsync(web3, rebalanceInterval.add(1));
+
+      const formattedLogs = await getFormattedLogsFromTxHash(web3, txHash);
+      const collateralAddress = extractNewSetTokenAddressFromLogs(formattedLogs, 2);
+      const collateralInstance = await SetTokenContract.at(
+        collateralAddress,
+        web3,
+        TX_DEFAULTS
+      );
+
+      await collateralInstance.approve.sendTransactionAsync(
+        transferProxy.address,
+        UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+        { from: subjectCaller }
+      );
+
+      const tradingPoolAddress = extractNewSetTokenAddressFromLogs(formattedLogs);
+      const tradingPoolInstance = await RebalancingSetTokenV2Contract.at(
+        tradingPoolAddress,
+        web3,
+        TX_DEFAULTS
+      );
+
+      // Fast forward to allow propose to be called
+      const lastRebalancedTimestampSeconds = await tradingPoolInstance.lastRebalanceTimestamp.callAsync();
+      nextRebalanceAvailableAtSeconds = lastRebalancedTimestampSeconds.toNumber() + rebalanceInterval.toNumber();
+      timeKeeper.freeze(nextRebalanceAvailableAtSeconds * 1000);
+      await increaseChainTimeAsync(web3, rebalanceInterval.add(1));
+
+      subjectManager = setManagerV2.address;
+      subjectTradingPool = tradingPoolAddress;
+      subjectNewAllocation = ether(.95);
+      subjectChunkSize = ether(10 ** 5);
+      subjectChunkAuctionPeriod = ZERO;
+      subjectCaller = DEFAULT_ACCOUNT;
+
+      await core.issue.sendTransactionAsync(collateralAddress, ether(1000), { from: subjectCaller });
+      await core.issue.sendTransactionAsync(subjectTradingPool, ether(2000), { from: subjectCaller });
+    });
+
+    afterEach(async () => {
+      timeKeeper.reset();
+    });
+
+    async function subject(): Promise<string> {
+      return await socialTradingAPI.updateAllocationWithTWAPAsync(
+        subjectManager,
+        subjectTradingPool,
+        subjectNewAllocation,
+        subjectChunkSize,
+        subjectChunkAuctionPeriod,
+        { from: subjectCaller }
+      );
+    }
+
+    test('successfully updates tradingPool allocation', async () => {
+      await subject();
+
+      const poolInfo: any = await setManagerV2.pools.callAsync(subjectTradingPool);
+
+      expect(poolInfo.currentAllocation).to.be.bignumber.equal(subjectNewAllocation);
+    });
+
+    test('successfully updates chunkAuctionPeriod allocation', async () => {
+      await subject();
+
+      const poolInfo: any = await socialTradingAPI.fetchTradingPoolTWAPRebalanceDetailsAsync(subjectTradingPool);
+
+      expect(poolInfo.chunkAuctionPeriod).to.be.bignumber.equal(subjectChunkAuctionPeriod);
+    });
+
+    test('successfully updates chunkSize allocation', async () => {
+      await subject();
+
+      const poolInfo: any = await socialTradingAPI.fetchTradingPoolTWAPRebalanceDetailsAsync(subjectTradingPool);
+      const rebalanceVolume = new BigNumber(poolInfo.orderSize).mul(36000).mul(.7);
+      const expectedChunkSize = subjectChunkSize
+                                  .mul(poolInfo.orderSize)
+                                  .div(rebalanceVolume)
+                                  .div(poolInfo.minimumBid).round(0, 3)
+                                  .mul(poolInfo.minimumBid);
+      expect(poolInfo.chunkSize).to.be.bignumber.equal(expectedChunkSize);
+    });
+
+    describe('when the passed allocation is less than 0', async () => {
+      beforeEach(async () => {
+        subjectNewAllocation = new BigNumber(-1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The quantity ${subjectNewAllocation.toString()} inputted needs to be greater than zero.`
+        );
+      });
+    });
+
+    describe('when the passed allocation is greater than 100', async () => {
+      beforeEach(async () => {
+        subjectNewAllocation = ether(1.1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Provided allocation ${subjectNewAllocation.toString()} is greater than 100%.`
+        );
+      });
+    });
+
+    describe('when the passed allocation is not a multiple of 1%', async () => {
+      beforeEach(async () => {
+        subjectNewAllocation = ether(.012);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Provided allocation ${subjectNewAllocation.toString()} is not multiple of 1% (10 ** 16)`
+        );
+      });
+    });
+
+    describe('when the caller is not the trader', async () => {
+      beforeEach(async () => {
+        subjectCaller = ACCOUNTS[3].address;
+      });
+
+      afterEach(async () => {
+        subjectCaller = DEFAULT_ACCOUNT;
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Caller ${subjectCaller} is not trader of tradingPool.`
+        );
+      });
+    });
+
+    describe('when passed chunkSize is outside of bounds', async () => {
+      beforeEach(async () => {
+        subjectChunkSize = ether(100);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Passed chunk size must be between ${assetPairBounds[0].bounds.lower} and` +
+          ` ${assetPairBounds[0].bounds.upper}.`
+        );
+      });
+    });
+
+    describe('when the tradingPool is in Rebalance state', async () => {
+      beforeEach(async () => {
+        await subject();
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `Rebalancing token at ${subjectTradingPool} is currently in rebalancing state. ` +
+          `Issue, Redeem, and propose functionality is not available during this time`
+        );
+      });
+    });
+
+    describe('when updateAllocationWithTWAPAsync is called before a new rebalance is allowed', async () => {
       beforeEach(async () => {
         timeKeeper.freeze((nextRebalanceAvailableAtSeconds * 1000) - 10);
       });

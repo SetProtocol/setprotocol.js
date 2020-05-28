@@ -27,6 +27,7 @@ import {
 import { CommonAssertions } from './CommonAssertions';
 import { coreAPIErrors, socialTradingErrors } from '../errors';
 import { BigNumber, ether } from '../util';
+import { Bounds } from '../types/common';
 import { ZERO } from '../constants';
 
 const moment = require('moment');
@@ -126,6 +127,12 @@ export class SocialTradingAssertions {
       caller,
       socialTradingErrors.NOT_TRADER(caller)
     );
+  }
+
+  public chunkSizeIsBetweenBounds(bounds: Bounds, chunkSize: BigNumber): void {
+    if (chunkSize > bounds.upper || chunkSize < bounds.lower) {
+      throw new Error(socialTradingErrors.INVALID_CHUNK_SIZE(bounds));
+    }
   }
 
   /**

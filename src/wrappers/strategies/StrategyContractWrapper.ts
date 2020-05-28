@@ -35,6 +35,7 @@ import {
   ETHDaiRebalancingManagerContract,
   MACOStrategyManagerContract,
   MACOStrategyManagerV2Contract,
+  SocialAllocatorContract,
   SocialTradingManagerContract,
   SocialTradingManagerV2Contract
 } from 'set-protocol-strategies';
@@ -340,6 +341,32 @@ export class StrategyContractWrapper {
       );
       this.cache[cacheKey] = assetPairManagerV2Contract;
       return assetPairManagerV2Contract;
+    }
+  }
+
+  /**
+   * Load a SocialAllocator contract
+   *
+   * @param  socialAllocator              Address of the SocialAllocator contract
+   * @param  transactionOptions           Options sent into the contract deployed method
+   * @return                              The SocialAllocator Contract
+   */
+  public async loadSocialAllocatorContractAsync(
+    socialAllocator: Address,
+    transactionOptions: object = {},
+  ): Promise<SocialAllocatorContract> {
+    const cacheKey = `socialAllocator_${socialAllocator}`;
+
+    if (cacheKey in this.cache) {
+      return this.cache[cacheKey] as SocialAllocatorContract;
+    } else {
+      const socialAllocatorContract = await SocialAllocatorContract.at(
+        socialAllocator,
+        this.web3,
+        transactionOptions,
+      );
+      this.cache[cacheKey] = socialAllocatorContract;
+      return socialAllocatorContract;
     }
   }
 
