@@ -1121,6 +1121,18 @@ describe('SocialTradingAPI', () => {
       });
     });
 
+    describe('when the passed chunkAuctionPeriod is less than 0', async () => {
+      beforeEach(async () => {
+        subjectChunkAuctionPeriod = new BigNumber(-1);
+      });
+
+      test('throws', async () => {
+        return expect(subject()).to.be.rejectedWith(
+          `The quantity ${subjectChunkAuctionPeriod.toString()} inputted needs to be greater than zero.`
+        );
+      });
+    });
+
     describe('when the passed allocation is greater than 100', async () => {
       beforeEach(async () => {
         subjectNewAllocation = ether(1.1);

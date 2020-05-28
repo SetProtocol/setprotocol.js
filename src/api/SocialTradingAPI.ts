@@ -320,7 +320,14 @@ export class SocialTradingAPI {
     chunkAuctionPeriod: BigNumber,
     txOpts: Tx,
   ): Promise<string> {
-    await this.assertUpdateAllocationWithTWAP(manager, tradingPool, newAllocation, chunkSize, txOpts);
+    await this.assertUpdateAllocationWithTWAP(
+      manager,
+      tradingPool,
+      newAllocation,
+      chunkSize,
+      chunkAuctionPeriod,
+      txOpts
+    );
 
     const liquidatorData = SetUtils.generateTWAPLiquidatorCalldata(chunkSize, chunkAuctionPeriod);
     return this.socialTradingManager.updateAllocation(
@@ -990,6 +997,7 @@ export class SocialTradingAPI {
     tradingPool: Address,
     newAllocation: BigNumber,
     chunkSize: BigNumber,
+    chunkAuctionPeriod: BigNumber,
     txOpts: Tx,
   ): Promise <void> {
     const poolInfo = await this.fetchNewTradingPoolV2DetailsAsync(tradingPool);
@@ -1001,6 +1009,8 @@ export class SocialTradingAPI {
       assetPair[1]
     );
     this.assert.socialTrading.chunkSizeIsBetweenBounds(chunkSizeBounds, chunkSize);
+
+    this.assert.socialTrading.chunkAuctionPeriodGreaterOrEqualToZero(chunkAuctionPeriod);
 
     await this.assertUpdateAllocation(manager, tradingPool, newAllocation, txOpts);
   }
