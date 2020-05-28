@@ -993,7 +993,7 @@ export class SocialTradingAPI {
     txOpts: Tx,
   ): Promise <void> {
     const poolInfo = await this.fetchNewTradingPoolV2DetailsAsync(tradingPool);
-    // console.log(poolInfo);
+
     const assetPair = await this.getTradingPoolAssetPair(poolInfo.allocator);
     const chunkSizeBounds: Bounds = await this.twapLiquidator.chunkSizeWhiteList(
       poolInfo.liquidator,
