@@ -58,4 +58,26 @@ export class TWAPLiquidatorWrapper {
       txOpts
     );
   }
+
+  /**
+   * Returns chunk size asset bounds for a pair of assets
+   *
+   * @param  liquidatorAddress      Address of TWAPLiquidator contract
+   * @param  assetOne               Address of Asset one in pair
+   * @param  assetTwo               Address of Asset two in pair
+   */
+  public async chunkSizeWhiteList(
+    liquidatorAddress: Address,
+    assetOne: Address,
+    assetTwo: Address,
+  ): Promise<any> {
+    const liquidatorInstance = await this.contracts.loadTWAPLiquidatorContract(
+      liquidatorAddress
+    );
+
+    return await liquidatorInstance.chunkSizeWhiteList.callAsync(
+      assetOne,
+      assetTwo
+    );
+  }
 }

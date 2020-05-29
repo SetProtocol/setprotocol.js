@@ -52,6 +52,7 @@ export { MovingAverageOracleWrapper } from './strategies/MovingAverageOracleWrap
 export { MACOStrategyManagerWrapper } from './strategies/MACOStrategyManagerWrapper';
 export { MACOStrategyManagerV2Wrapper } from './strategies/MACOStrategyManagerV2Wrapper';
 export { OracleProxyWrapper } from './strategies/OracleProxyWrapper';
+export { SocialAllocatorWrapper } from './strategies/SocialAllocatorWrapper';
 export { SocialTradingManagerWrapper } from './strategies/SocialTradingManagerWrapper';
 export { SocialTradingManagerV2Wrapper } from './strategies/SocialTradingManagerV2Wrapper';
 export { StrategyContractWrapper } from './strategies/StrategyContractWrapper';

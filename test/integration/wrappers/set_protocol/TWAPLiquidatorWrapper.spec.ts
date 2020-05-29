@@ -112,6 +112,8 @@ describe('TWAPLiquidatorWrapper', () => {
   let maxProfitFeePercentage: BigNumber;
   let maxStreamingFeePercentage: BigNumber;
 
+  let assetPairBounds: any[];
+
   const coreHelper = new CoreHelper(DEFAULT_ACCOUNT, DEFAULT_ACCOUNT);
   const erc20Helper = new ERC20Helper(DEFAULT_ACCOUNT);
   const oracleHelper = new OracleHelper(DEFAULT_ACCOUNT);
@@ -162,7 +164,7 @@ describe('TWAPLiquidatorWrapper', () => {
     const rangeStart = ether(.01);
     const rangeEnd = ether(.23);
     const name = 'liquidator';
-    const assetPairBounds = [
+    assetPairBounds = [
       {
         assetOne: wrappedETH.address,
         assetTwo: wrappedBTC.address,
@@ -312,6 +314,33 @@ describe('TWAPLiquidatorWrapper', () => {
         twapState.chunkAuction.auction.remainingCurrentSets
       );
       expect(twapState.chunkAuction.auction.startTime).to.be.bignumber.equal(block.timestamp);
+    });
+  });
+
+  describe('chunkSizeWhiteList', async () => {
+    let subjectLiquidator: Address;
+    let subjectAssetOne: Address;
+    let subjectAssetTwo: Address;
+
+    beforeEach(async () => {
+      subjectLiquidator = liquidator.address;
+      subjectAssetOne = wrappedETH.address;
+      subjectAssetTwo = wrappedBTC.address;
+    });
+
+    async function subject(): Promise<string> {
+      return await twapLiquidatorWrapper.chunkSizeWhiteList(
+        subjectLiquidator,
+        subjectAssetOne,
+        subjectAssetTwo,
+      );
+    }
+
+    it('returns the correct chunkSizeWhiteList', async () => {
+      const bounds: any = await subject();
+
+      expect(bounds.lower).to.be.bignumber.equal(assetPairBounds[0].bounds.lower);
+      expect(bounds.upper).to.be.bignumber.equal(assetPairBounds[0].bounds.upper);
     });
   });
 });

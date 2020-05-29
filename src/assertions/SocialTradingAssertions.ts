@@ -27,6 +27,7 @@ import {
 import { CommonAssertions } from './CommonAssertions';
 import { coreAPIErrors, socialTradingErrors } from '../errors';
 import { BigNumber, ether } from '../util';
+import { Bounds } from '../types/common';
 import { ZERO } from '../constants';
 
 const moment = require('moment');
@@ -125,6 +126,31 @@ export class SocialTradingAssertions {
       trader,
       caller,
       socialTradingErrors.NOT_TRADER(caller)
+    );
+  }
+
+  /**
+   * Throws if chunkSize is not between bounds
+   *
+   * @param  bounds         Asset pair volume bounds
+   * @param  chunkSize      Value of each chunk
+   */
+  public chunkSizeIsBetweenBounds(bounds: Bounds, chunkSize: BigNumber): void {
+    if (chunkSize > bounds.upper || chunkSize < bounds.lower) {
+      throw new Error(socialTradingErrors.INVALID_CHUNK_SIZE(bounds));
+    }
+  }
+
+  /**
+   * Throws if chunkAuctionPeriod less than 0.
+   *
+   * @param  chunkAuctionPeriod      Time between chunk auctions
+   */
+  public chunkAuctionPeriodGreaterOrEqualToZero(chunkAuctionPeriod: BigNumber): void {
+    this.commonAssertions.isGreaterOrEqualThan(
+      chunkAuctionPeriod,
+      ZERO,
+      coreAPIErrors.QUANTITY_NEEDS_TO_BE_POSITIVE(chunkAuctionPeriod)
     );
   }
 

@@ -45,6 +45,11 @@ export const BidderHelperType = {
   CTOKEN: new BigNumber(1),
 };
 
+export interface Bounds {
+  lower: BigNumber;
+  upper: BigNumber;
+}
+
 export interface EntryFeePaid {
   transactionHash: string;
   feeRecipient: Address;

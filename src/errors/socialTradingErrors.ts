@@ -17,6 +17,7 @@
 'use strict';
 import { Address } from 'set-protocol-utils';
 import { BigNumber } from '../util';
+import { Bounds } from '../types/common';
 
 export const socialTradingErrors = {
   ALLOCATION_EXCEEDS_ONE_HUNDERED_PERCENT: (allocation: BigNumber) => `Provided allocation ` +
@@ -31,4 +32,6 @@ export const socialTradingErrors = {
   FEE_UPDATE_NOT_INITIATED: () => `Must call initiateEntryFeeChange first to start fee update process.`,
   INSUFFICIENT_TIME_PASSED: (validUpdateTimestamp: string) => `Attempting to finalize fee update too soon. ` +
     `Update available at ${validUpdateTimestamp}`,
+  INVALID_CHUNK_SIZE: (bounds: Bounds) => `Passed chunk size must be between ${bounds.lower} and` +
+    ` ${bounds.upper}.`,
 };
