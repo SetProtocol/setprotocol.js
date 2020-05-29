@@ -136,7 +136,7 @@ export class SocialTradingAssertions {
    * @param  chunkSize      Value of each chunk
    */
   public chunkSizeIsBetweenBounds(bounds: Bounds, chunkSize: BigNumber): void {
-    if (chunkSize > bounds.upper || chunkSize < bounds.lower) {
+    if (chunkSize.greaterThan(bounds.upper) || chunkSize.lessThan(bounds.lower)) {
       throw new Error(socialTradingErrors.INVALID_CHUNK_SIZE(bounds));
     }
   }
