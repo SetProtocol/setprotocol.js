@@ -424,11 +424,6 @@ describe('RebalancingSetCTokenBidderWrapper', () => {
 
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
 
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await cTokenSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
-
       // Deploy price curve used in auction
       const priceCurve = await deployConstantAuctionPriceCurveAsync(
         web3,
@@ -1429,11 +1424,6 @@ describe('RebalancingSetCTokenBidderWrapper', () => {
       const rebalancingSetTokenQuantityToIssue = ether(1);
 
       await core.issue.sendTransactionAsync(rebalancingSetToken.address, rebalancingSetTokenQuantityToIssue);
-
-      // Approve proposed Set's components to the whitelist;
-      const [proposalComponentOne, proposalComponentTwo] = await cTokenSetToken.getComponents.callAsync();
-      await addWhiteListedTokenAsync(whitelist, proposalComponentOne);
-      await addWhiteListedTokenAsync(whitelist, proposalComponentTwo);
 
       // Deploy price curve used in auction
       const priceCurve = await deployConstantAuctionPriceCurveAsync(
