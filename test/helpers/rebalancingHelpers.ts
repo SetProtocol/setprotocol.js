@@ -14,7 +14,7 @@ import {
   VaultContract
 } from 'set-protocol-contracts';
 
-import { TokenFlows, TokenFlowsDetails, Component } from '@src/types/common';
+import { LinearAuction, TokenFlows, TokenFlowsDetails, Component } from '@src/types/common';
 import {
   DEFAULT_ACCOUNT,
   DEFAULT_AUCTION_PIVOT_PRICE,
@@ -531,7 +531,7 @@ export const getAuctionSetUpOutputsAsync = async(
 };
 
 export const constructInflowOutflowArraysAsync = async(
-  rebalancingSetToken: RebalancingSetTokenContract,
+  rebalancingSetToken: RebalancingSetTokenContract | RebalancingSetTokenV3Contract,
   quantity: BigNumber,
   priceNumerator: BigNumber,
 ): Promise<TokenFlows> => {
@@ -644,4 +644,32 @@ export const getExpectedUnitSharesAsync = async(
   const issueAmount = maxIssueAmount.div(newSetNaturalUnit).round(0, 3).mul(newSetNaturalUnit);
   const unitShares = issueAmount.div(naturalUnitsOutstanding).round(0, 3);
   return unitShares;
+};
+
+export const getLinearAuction = (input: any): LinearAuction => {
+  const {
+    minimumBid,
+    startTime,
+    startingCurrentSets,
+    remainingCurrentSets,
+    combinedCurrentSetUnits,
+    combinedNextSetUnits,
+    maxNaturalUnit,
+  } = input.auction;
+
+  return {
+    auction: {
+      maxNaturalUnit: new BigNumber(maxNaturalUnit),
+      minimumBid: new BigNumber(minimumBid),
+      startTime: new BigNumber(startTime),
+      startingCurrentSets: new BigNumber(startingCurrentSets),
+      remainingCurrentSets: new BigNumber(remainingCurrentSets),
+      combinedTokenArray: input.auction.combinedTokenArray,
+      combinedCurrentSetUnits: combinedCurrentSetUnits.map((v: any) => new BigNumber(v)),
+      combinedNextSetUnits: combinedNextSetUnits.map((v: any) => new BigNumber(v)),
+    },
+    endTime: new BigNumber(input.endTime),
+    startPrice: new BigNumber(input.startPrice),
+    endPrice: new BigNumber(input.endPrice),
+  };
 };

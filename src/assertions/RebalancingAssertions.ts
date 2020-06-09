@@ -196,6 +196,17 @@ export class RebalancingAssertions {
   }
 
   /**
+   * Throws if bid intended for different chunk of TWAP Auction.
+   *
+   * @param  nextChunkAuctionStart   UNIX timestamp identifying chunk being bid on
+   */
+  public isExpectedChunk(lastChunkAuction: BigNumber, currentChunkAuction: BigNumber) {
+    if (!lastChunkAuction.equals(currentChunkAuction)) {
+      throw new Error(rebalancingErrors.CHUNK_AUCTION_EXPIRED());
+    }
+  }
+
+  /**
    * Throws if not enough time passed between last rebalance on rebalancing set token
    *
    * @param  rebalancingSetTokenAddress   The address of the rebalancing set token

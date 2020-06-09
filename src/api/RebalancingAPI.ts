@@ -308,6 +308,37 @@ export class RebalancingAPI {
   }
 
   /**
+   * Allows user to bid on a rebalance auction using a TWAP liquidator. Bid is routed through cToken bidder helper
+   * to take advantage of check to make sure that correct chunk is being bid on.
+   *
+   * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
+   * @param  bidQuantity                    Amount of currentSet the bidder wants to rebalance
+   * @param  lastChunkTimestamp             Timestamp identifying which chunk is being bid on
+   * @param  allowPartialFill               Boolean to complete fill if quantity is less than available
+   *                                        Defaults to true
+   * @param  txOpts                         Transaction options object conforming to `Tx` with signer, gas, and
+   *                                        gasPrice data
+   * @return                                Transaction hash
+   */
+  public async bidWithTWAPAsync(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    lastChunkTimestamp: BigNumber,
+    allowPartialFill: boolean = true,
+    txOpts: Tx
+  ): Promise<string> {
+    await this.assertBidTWAP(rebalancingSetTokenAddress, bidQuantity, lastChunkTimestamp, allowPartialFill, txOpts);
+
+    return await this.rebalancingSetCTokenBidder.bidAndWithdrawTWAP(
+      rebalancingSetTokenAddress,
+      bidQuantity,
+      lastChunkTimestamp,
+      allowPartialFill,
+      txOpts,
+    );
+  }
+
+  /**
    * Allows current manager to change manager address to a new address
    *
    * @param  rebalancingSetTokenAddress     Address of the Rebalancing Set
@@ -982,6 +1013,20 @@ export class RebalancingAPI {
         tokenFlows.inflow[index]
       )
     ));
+  }
+
+  private async assertBidTWAP(
+    rebalancingSetTokenAddress: Address,
+    bidQuantity: BigNumber,
+    lastChunkTimestamp: BigNumber,
+    allowPartialFill: boolean,
+    txOpts: Tx
+  ) {
+    await this.assertBidCToken(rebalancingSetTokenAddress, bidQuantity, allowPartialFill, txOpts);
+
+    const details = await this.protocolViewer.fetchRBSetTWAPRebalanceDetails(rebalancingSetTokenAddress);
+
+    this.assert.rebalancing.isExpectedChunk(lastChunkTimestamp, details[0].lastChunkAuctionEnd);
   }
 
   private assertGetRebalanceStatesAsync(tokenAddresses: Address[]) {

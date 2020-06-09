@@ -20,6 +20,24 @@ export enum FeeType {
   ProfitFee,
 }
 
+export interface Auction {
+  maxNaturalUnit: BigNumber;
+  minimumBid: BigNumber;
+  startTime: BigNumber;
+  startingCurrentSets: BigNumber;
+  remainingCurrentSets: BigNumber;
+  combinedTokenArray: Address[];
+  combinedCurrentSetUnits: BigNumber[];
+  combinedNextSetUnits: BigNumber[];
+}
+
+export interface LinearAuction {
+  auction: Auction;
+  endTime: BigNumber;
+  startPrice: BigNumber;
+  endPrice: BigNumber;
+}
+
 export interface BidPlacedEvent {
   transactionHash: string;
   rebalancingSetToken: Address;
