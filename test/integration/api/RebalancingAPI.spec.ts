@@ -105,6 +105,7 @@ import {
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync,
   getGasUsageInEth,
+  getLinearAuction,
   getTokenInstances,
   getVaultBalances,
   increaseChainTimeAsync,
@@ -124,6 +125,7 @@ import {
   Address,
   BidPlacedEvent,
   BidPlacedHelperEvent,
+  LinearAuction,
   RebalancingProgressDetails,
   RebalancingProposalDetails,
   RebalancingSetDetails,
@@ -4172,6 +4174,296 @@ describe('RebalancingAPI', () => {
             `Attempting to iterate auction too soon. Next chunk ` +
             `available at ${nextChunkAuctionFormattedDate}`
           );
+        });
+      });
+    });
+
+    describe('bidWithTWAPAsync', async () => {
+      const chunkAuctionPeriod: BigNumber = ONE_HOUR_IN_SECONDS;
+
+      let subjectRebalancingSetTokenAddress: Address;
+      let subjectBidQuantity: BigNumber;
+      let subjectLastChunkTimestamp: BigNumber;
+      let subjectAllowPartialFill: boolean;
+      let subjectCaller: Address;
+
+      beforeAll(async () => {
+        currentSetStartingQuantity = ether(900);
+      });
+
+      beforeEach(async () => {
+        // Issue currentSetToken
+        await core.issue.sendTransactionAsync(currentSetToken.address, currentSetStartingQuantity, TX_DEFAULTS);
+        await approveForTransferAsync([currentSetToken], transferProxy.address);
+
+        // Use issued currentSetToken to issue rebalancingSetToken
+        const rebalancingSetQuantityToIssue = currentSetStartingQuantity;
+        await core.issue.sendTransactionAsync(rebalancingSetTokenV3.address, rebalancingSetQuantityToIssue);
+
+        // Approve tokens to rebalancingSetCTokenBidder contract
+        await approveForTransferAsync([
+          usdc,
+          weth,
+        ], rebalancingSetCTokenBidder.address);
+
+        subjectRebalancingSetTokenAddress = rebalancingSetTokenV3.address;
+        subjectBidQuantity = currentSetStartingQuantity;
+        subjectLastChunkTimestamp = ZERO;
+        subjectAllowPartialFill = false;
+        subjectCaller = DEFAULT_ACCOUNT;
+      });
+
+      afterEach(async () => {
+        timeKeeper.reset();
+      });
+
+      async function subject(): Promise<string> {
+        return await rebalancingAPI.bidWithTWAPAsync(
+          subjectRebalancingSetTokenAddress,
+          subjectBidQuantity,
+          subjectLastChunkTimestamp,
+          subjectAllowPartialFill,
+          { from: subjectCaller }
+        );
+      }
+
+      describe('when the Rebalancing Set Token is in Default state', async () => {
+        it('throw', async () => {
+          return expect(subject()).to.be.rejectedWith(
+            `Rebalancing token at ${subjectRebalancingSetTokenAddress} must be in Rebalance state to call` +
+            ` that function.`
+          );
+        });
+      });
+
+      describe('when the Rebalancing Set Token is in Rebalance state', async () => {
+        beforeEach(async () => {
+          const liquidatorData = liquidatorHelper.generateTWAPLiquidatorCalldata(
+            ether(10 ** 5),
+            chunkAuctionPeriod,
+          );
+          await rebalancingSetTokenV3.startRebalance.sendTransactionAsync(
+            nextSetToken.address,
+            liquidatorData
+          );
+        });
+
+        test('subtract correct amount from remainingCurrentSets', async () => {
+          const [, existingRemainingCurrentSets] = await rebalancingSetTokenV3.getBiddingParameters.callAsync();
+
+          await subject();
+
+          const expectedRemainingCurrentSets = existingRemainingCurrentSets.sub(subjectBidQuantity);
+          const [, newRemainingCurrentSets] = await rebalancingSetTokenV3.getBiddingParameters.callAsync();
+          expect(newRemainingCurrentSets).to.be.bignumber.eql(expectedRemainingCurrentSets);
+        });
+
+        test('transfers the correct amount of tokens from the bidder to the rebalancing token in Vault', async () => {
+          const auction = await liquidator.auctions.callAsync(subjectRebalancingSetTokenAddress);
+          const linearAuction = getLinearAuction(auction[0]);
+
+          const combinedTokenArray = await rebalancingSetTokenV3.getCombinedTokenArray.callAsync();
+
+          const oldSenderBalances = await getVaultBalances(
+            vault,
+            combinedTokenArray,
+            rebalancingSetTokenV3.address
+          );
+
+          await subject();
+
+          const { timestamp } = await web3.eth.getBlock('latest');
+          const currentPrice = await liquidatorHelper.calculateCurrentPrice(
+            linearAuction,
+            new BigNumber(timestamp),
+            ONE_HOUR_IN_SECONDS,
+          );
+
+          const expectedTokenFlows = liquidatorHelper.constructTokenFlow(
+            linearAuction,
+            subjectBidQuantity,
+            currentPrice,
+          );
+
+          const newSenderBalances = await getVaultBalances(
+            vault,
+            combinedTokenArray,
+            rebalancingSetTokenV3.address
+          );
+          const expectedSenderBalances = _.map(oldSenderBalances, (balance, index) =>
+            balance.add(expectedTokenFlows['inflow'][index]).sub(expectedTokenFlows['outflow'][index])
+          );
+          expect(JSON.stringify(newSenderBalances)).to.equal(JSON.stringify(expectedSenderBalances));
+        });
+
+        test('transfers and withdraws the correct amount of tokens to the bidder wallet', async () => {
+          const auction = await liquidator.auctions.callAsync(subjectRebalancingSetTokenAddress);
+          const linearAuction = getLinearAuction(auction[0]);
+
+          const combinedTokenArray = await rebalancingSetTokenV3.getCombinedTokenArray.callAsync();
+
+          const oldReceiverTokenBalances = await Promise.all(
+            combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+          );
+
+          const oldUnderlyingTokenBalances = await Promise.all(
+            [
+              usdc.address,
+              dai.address,
+            ].map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+          );
+
+          // Replace cToken balance with underlying token balance
+          const oldReceiverTokenUnderlyingBalances = _.map(oldReceiverTokenBalances, (balance, index) => {
+            if (combinedTokenArray[index] === cUSDC.address) {
+              return oldUnderlyingTokenBalances[0];
+            } else if (combinedTokenArray[index] === cDAI.address) {
+              return oldUnderlyingTokenBalances[1];
+            } else {
+              return balance;
+            }
+          });
+
+          await subject();
+
+          const { timestamp } = await web3.eth.getBlock('latest');
+          const currentPrice = await liquidatorHelper.calculateCurrentPrice(
+            linearAuction,
+            new BigNumber(timestamp),
+            ONE_HOUR_IN_SECONDS,
+          );
+
+          const expectedTokenFlows = liquidatorHelper.constructTokenFlow(
+            linearAuction,
+            subjectBidQuantity,
+            currentPrice,
+          );
+
+          // Get current exchange rate
+          const cUSDCExchangeRate = await compoundHelper.getExchangeRateCurrent(cUSDC.address);
+          const cDAIExchangeRate = await compoundHelper.getExchangeRateCurrent(cDAI.address);
+          // Replace expected token flow arrays with cToken underlying
+          const expectedTokenFlowsUnderlying = replaceFlowsWithCTokenUnderlyingAsync(
+            expectedTokenFlows,
+            combinedTokenArray,
+            [cUSDC.address, cDAI.address],
+            [usdc.address, dai.address],
+            [cUSDCExchangeRate, cDAIExchangeRate],
+          );
+
+          const newReceiverTokenBalances = await Promise.all(
+            combinedTokenArray.map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+          );
+          const newUnderlyingTokenBalances = await Promise.all(
+            [
+              usdc.address,
+              dai.address,
+            ].map(tokenAddress => erc20Wrapper.balanceOf(tokenAddress, DEFAULT_ACCOUNT))
+          );
+          // Replace cToken balance with underlying token balance
+          const newReceiverTokenUnderlyingBalances = _.map(newReceiverTokenBalances, (balance, index) => {
+            if (combinedTokenArray[index] === cUSDC.address) {
+              return newUnderlyingTokenBalances[0];
+            } else if (combinedTokenArray[index] === cDAI.address) {
+              return newUnderlyingTokenBalances[1];
+            } else {
+              return balance;
+            }
+          });
+          const expectedReceiverBalances = _.map(oldReceiverTokenUnderlyingBalances, (balance, index) =>
+            balance
+            .add(expectedTokenFlowsUnderlying['outflow'][index])
+            .sub(expectedTokenFlowsUnderlying['inflow'][index])
+          );
+
+          expect(JSON.stringify(newReceiverTokenUnderlyingBalances)).to.equal(JSON.stringify(expectedReceiverBalances));
+        });
+
+        describe('and the passed rebalancingSetToken is not tracked by Core', async () => {
+          beforeEach(async () => {
+            subjectRebalancingSetTokenAddress = ACCOUNTS[5].address;
+          });
+
+          it('throw', async () => {
+            return expect(subject()).to.be.rejectedWith(
+              `Contract at ${subjectRebalancingSetTokenAddress} is not a valid Set token address.`
+            );
+          });
+        });
+
+        describe('and the bid amount is greater than remaining current sets', async () => {
+          beforeEach(async () => {
+            subjectBidQuantity = ether(2000);
+          });
+
+          it('throw', async () => {
+            const [, remainingCurrentSets] = await rebalancingSetTokenV3.getBiddingParameters.callAsync();
+
+            return expect(subject()).to.be.rejectedWith(
+              `The submitted bid quantity, ${subjectBidQuantity}, exceeds the remaining current sets,` +
+                ` ${remainingCurrentSets}.`
+            );
+          });
+        });
+
+        describe('and the bid amount is not a multiple of the minimumBid', async () => {
+          let minimumBid: BigNumber;
+
+          beforeEach(async () => {
+            [minimumBid] = await rebalancingSetTokenV3.getBiddingParameters.callAsync();
+            subjectBidQuantity = minimumBid.mul(0.5);
+          });
+
+          test('throw', async () => {
+            return expect(subject()).to.be.rejectedWith(
+              `The submitted bid quantity, ${subjectBidQuantity}, must be a multiple of the minimumBid, ${minimumBid}.`
+            );
+          });
+        });
+
+        describe('and the identified chunk auction has expired', async () => {
+          beforeEach(async () => {
+            subjectLastChunkTimestamp = new BigNumber(1);
+          });
+
+          test('throw', async () => {
+            return expect(subject()).to.be.rejectedWith(
+              `The chunk you are bidding on has expired.`
+            );
+          });
+        });
+
+        describe('and the caller has not approved inflow tokens for transfer', async () => {
+          beforeEach(async () => {
+            subjectCaller = ACCOUNTS[3].address;
+          });
+
+          test('throw', async () => {
+            return expect(subject()).to.be.rejected;
+          });
+        });
+
+        describe('and the caller does not have the balance to transfer', async () => {
+          beforeEach(async () => {
+            subjectCaller = ACCOUNTS[3].address;
+            const approvalToken: ERC20DetailedContract = await ERC20DetailedContract.at(usdc.address, web3, {});
+            await approvalToken.approve.sendTransactionAsync(
+              rebalancingSetCTokenBidder.address,
+              UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+              { from: subjectCaller }
+            );
+
+            const approvalToken2: ERC20DetailedContract = await ERC20DetailedContract.at(dai.address, web3, {});
+            await approvalToken2.approve.sendTransactionAsync(
+              rebalancingSetCTokenBidder.address,
+              UNLIMITED_ALLOWANCE_IN_BASE_UNITS,
+              { from: subjectCaller }
+            );
+          });
+
+          test('throw', async () => {
+            return expect(subject()).to.be.rejected;
+          });
         });
       });
     });

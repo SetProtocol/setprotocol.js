@@ -77,6 +77,7 @@ export {
   transitionToDrawdownAsync,
   getAuctionSetUpOutputsAsync,
   getExpectedUnitSharesAsync,
+  getLinearAuction,
 } from './rebalancingHelpers';
 
 export {

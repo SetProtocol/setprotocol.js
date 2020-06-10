@@ -46,4 +46,5 @@ export const rebalancingErrors = {
   `rebalanced. There are currently ${remainingCurrentSets} remaining for the chunk auction.`,
   INSUFFICIENT_TIME_BETWEEN_CHUNKS: (nextAvailableRebalance: string) => `Attempting to iterate auction too soon.` +
     ` Next chunk available at ${nextAvailableRebalance}`,
+  CHUNK_AUCTION_EXPIRED: () => `The chunk you are bidding on has expired.`,
 };

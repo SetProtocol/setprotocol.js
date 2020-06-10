@@ -109,6 +109,38 @@ export class RebalancingSetCTokenBidderWrapper {
   }
 
   /**
+   * Asynchronously submit a bid and withdraw bids while transacting in underlying of cTokens
+   * for a rebalancing auction on a rebalancingSetToken
+   *
+   * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
+   * @param  quantity                      Amount of currentSetToken the bidder wants to rebalance
+   * @param  lastChunkTimestamp            Timestamp identifying which chunk is being bid on
+   * @param  allowPartialFill              Boolean that signifies whether to bid if full amount is not possible
+   * @param  txOpts                        The options for executing the transaction
+   * @return                               A transaction hash
+   */
+  public async bidAndWithdrawTWAP(
+    rebalancingSetTokenAddress: Address,
+    quantity: BigNumber,
+    lastChunkTimestamp: BigNumber,
+    allowPartialFill: boolean,
+    txOpts?: Tx,
+  ): Promise<string> {
+    const txSettings = await generateTxOpts(this.web3, txOpts);
+    const rebalancingSetCTokenBidderInstance = await this.contracts.loadRebalancingSetCTokenBidderContract(
+      this.rebalancingSetCTokenBidderAddress
+    );
+
+    return await rebalancingSetCTokenBidderInstance.bidAndWithdrawTWAP.sendTransactionAsync(
+      rebalancingSetTokenAddress,
+      quantity,
+      lastChunkTimestamp,
+      allowPartialFill,
+      txSettings,
+    );
+  }
+
+  /**
    * Fetches the current cToken underlying component addresses, token inflows and outflows for a given bid quantity
    *
    * @param  rebalancingSetTokenAddress    Addresses of rebalancing set token being rebalanced
