@@ -2,7 +2,7 @@
 var fs = require('fs');
 var path = require('path');
 
-var localInitChain = require.resolve(path.join(process.cwd(), "node_modules", "setprotocol.js", "scripts", "init_chain.sh"));
+var localInitChain = require.resolve(path.join(process.cwd(), "node_modules", "set-protocol-bot-js", "scripts", "init_chain.sh"));
 
 fs.chmodSync(localInitChain, 0777);
 
