@@ -2,8 +2,9 @@ import * as ABIDecoder from 'abi-decoder';
 import * as _ from 'lodash';
 import Web3 from 'web3';
 import { BigNumber } from 'bignumber.js';
-import { Log } from 'set-protocol-utils';
+import { Address, Log } from 'set-protocol-utils';
 import { TransactionReceipt } from 'ethereum-types';
+import { CreateLogArgs } from '../types/common';
 import { awaitTx } from './transactionUtils';
 
 const Core = require('set-protocol-contracts/dist/artifacts/ts/Core').Core;
@@ -77,4 +78,10 @@ export function formatLogEntry(logs: ABIDecoder.DecodedLog): Log {
     address,
     args,
   };
+}
+
+export function extractNewSetTokenAddressFromLogs(logs: Log[], logIndex: number = 1): Address {
+  const createLog = logs[logs.length - logIndex];
+  const args: CreateLogArgs = createLog.args;
+  return args._setTokenAddress;
 }

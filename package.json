@@ -6,6 +6,9 @@
   "typings": "dist/types/src/index.d.ts",
   "bin": {},
   "scripts": {
+  	"chain": "yarn clean-chain && ganache-cli --db blockchain --networkId 50 --accounts 20 -l 20000000 -e 10000000000 -m 'concert load couple harbor equip island argue ramp clarify fence smart topic'",
+    "clean": "rm -rf build; rm -rf transpiled; rm -rf types/generated",
+    "clean-chain": "rm -rf blockchain && cp -r snapshots/Set-0x-Kyber-Compound blockchain",
     "prod": "yarn run build",
     "build": "yarn run build-ts && yarn run tslint",
     "build-ts": "tsc",
@@ -16,10 +19,7 @@
     "prepublishOnly": "yarn build"
   },
   "config": {},
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/SetProtocol/setProtocol.js"
-  },
+  "repository": "git@github.com:SetProtocol/set-rebalancing-bot-monorepo.git",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=8.0.0"
@@ -57,7 +57,7 @@
     "lodash": "^4.17.4",
     "lodash.compact": "^3.0.1",
     "moment": "^2.22.2",
-    "set-protocol-contracts": "1.4.9-beta",
+    "set-protocol-contracts": "1.4.17-beta",
     "set-rebalancing-bot-contracts": "^1.0.0",
     "timekeeper": "^2.1.2",
     "tiny-promisify": "^1.0.0",

@@ -21,6 +21,16 @@ export interface BidderConfig {
   zeroExBidExchangeWrapperAddress: Address;
 }
 
+export interface CreateLogArgs {
+  _setTokenAddress: Address;
+  _factoryAddress: Address;
+  _components: Address[];
+  _units: BigNumber[];
+  _naturalUnit: BigNumber;
+  _name: string;
+  _symbol: string;
+}
+
 export interface TokenFlows {
   tokens?: Address[];
   inflow: BigNumber[];

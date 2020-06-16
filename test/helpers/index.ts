@@ -49,7 +49,6 @@ export {
 export {
   addPriceCurveToCoreAsync,
   constructInflowOutflowArraysAsync,
-  constructInflowOutflowAddressesArraysAsync,
   createDefaultRebalancingSetTokenAsync,
   createDefaultRebalancingSetTokenV2Async,
   createDefaultRebalancingSetTokenV3Async,
