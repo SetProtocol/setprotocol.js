@@ -11,7 +11,7 @@ jobs:
           key: module-cache-{{ checksum "yarn.lock" }}
       - run: 
           name: Inject Truffle
-          command: yarn global add truffle
+          command: yarn global add truffle@5.1.12
       - run:
           name: Fetch Dependencies
           command: yarn
