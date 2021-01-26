@@ -12,11 +12,14 @@
   </a>
 </p>
 
+# WARNING
+This developer library is for interacting with Set Protocol V1 smart contracts and is no longer being written to. We do not currently have a SDK available for Set Protocol V2. Refer to our V2 [developer portal](https://docs.tokensets.com/) here for information.
+
 # setprotocol.js
-`setprotocol.js` is a library for interacting with Set Protocol smart contracts.
+`setprotocol.js` is a library for interacting with Set Protocol V1 smart contracts.
 This library enables you to create, issue, redeem, and create and fill issuance orders for Sets.
 
-#### Take a look at our [developer portal](https://docs.setprotocol.com/) for the fastest way to get up and running.
+#### Take a look at our V1 [developer portal](https://docs.setprotocol.com/) for the fastest way to get up and running.
 
 <a href="https://t.me/joinchat/Fx8D6wyprLUlM1jMVnaRdg" target="_blank" rel="noopener">
   Join us on Telegram
