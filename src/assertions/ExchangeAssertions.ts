@@ -167,7 +167,7 @@ export class ExchangeAssertions {
 
   /* ============ Private Helpers =============== */
 
-  private isValidLiquidityAmounts(
+  private async isValidLiquidityAmounts(
     quantity: BigNumber,
     receiveTokens: Address[],
     receiveTokenAmounts: BigNumber[],
@@ -177,10 +177,17 @@ export class ExchangeAssertions {
   ) {
     const componentAmountsFromLiquidity = this.calculateLiquidityFills(orders);
 
+    // Fetch valid cToken array if whitelist exists
+    const validCTokenAddresses = cTokenWhiteListAddress
+      ? await this.addressToAddressWhiteList.validAddresses(cTokenWhiteListAddress)
+      : [];
+
+    const lowerCasedCTokenAddresses = validCTokenAddresses.map(cTokenAddress => cTokenAddress.toLowerCase());
+
     _.each(receiveTokens, async (component, i) => {
-      // If Whitelist exists, then fetch ctokens and exclude from checks
-      if (cTokenWhiteListAddress) {
-        // Get valid cToken addresses and exclude from checks
+      const indexOfComponent = lowerCasedCTokenAddresses.indexOf(component);
+      if (indexOfComponent >= 0) {
+        // Get cToken and exclude from checks
         const [underlyingComponent] =
           await this.addressToAddressWhiteList.getValues(cTokenWhiteListAddress, [component]);
 
